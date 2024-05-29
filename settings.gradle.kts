@@ -3,7 +3,7 @@ rootProject.name = "hedera-block-node"
 pluginManagement { includeBuild("gradle/plugins") }
 
 include("block-node")
-//include("hedera-dependency-versions")
+include("hedera-dependency-versions")
 
 // The HAPI API version to use for Protobuf sources.
 val hapiProtoVersion = "0.50.0"

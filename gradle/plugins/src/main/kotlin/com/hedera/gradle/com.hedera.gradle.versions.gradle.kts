@@ -1,4 +1,4 @@
-package com.hedera.gradle/*
+/*
  * Copyright (C) 2023-2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@ plugins {
     id("java-platform")
 //    id("com.hedera.gradle.jpms-modules")
 //    id("com.hedera.gradle.jpms-module-dependencies")
-//    id("org.gradlex.java-module-versions")
+    id("org.gradlex.java-module-versions")
 }
 
 group = "com.hedera.hashgraph"
