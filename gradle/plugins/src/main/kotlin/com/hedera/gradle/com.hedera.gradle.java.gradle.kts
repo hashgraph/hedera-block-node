@@ -1,4 +1,4 @@
-package com.hedera.gradle/*
+/*
  * Copyright (C) 2022-2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

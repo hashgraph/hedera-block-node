@@ -4,6 +4,7 @@ pluginManagement { includeBuild("gradle/plugins") }
 
 include("block-node")
 include("hedera-dependency-versions")
+//include("hapi")
 
 // The HAPI API version to use for Protobuf sources.
 val hapiProtoVersion = "0.50.0"
