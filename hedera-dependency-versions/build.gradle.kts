@@ -18,11 +18,13 @@ plugins {
     id("com.hedera.gradle.versions")
 }
 
-//repositories {
-//    mavenCentral()
-//}
-
 dependencies.constraints {
+//    api("com.google.protobuf:protobuf-java:3.21.7") {
+//        because("com.google.protobuf")
+//    }
+//    api("com.google.protobuf:protobuf-java-util:3.21.7") {
+//        because("com.google.protobuf.util")
+//    }
     api("com.hedera.pbj:pbj-runtime:0.8.9") {
         because("com.hedera.pbj.runtime")
     }
