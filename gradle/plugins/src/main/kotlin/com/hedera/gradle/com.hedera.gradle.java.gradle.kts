@@ -33,37 +33,37 @@ plugins {
 
 //version =
 //    providers.fileContents(rootProject.layout.projectDirectory.versionTxt()).asText.get().trim()
-//
-//val javaVersionMajor = JavaVersion.VERSION_21
-//val javaVersionPatch = "0.1"
-//
-//val currentJavaVersionMajor = JavaVersion.current()
-//val currentJavaVersion = providers.systemProperty("java.version").get()
-//val expectedJavaVersion = "$javaVersionMajor.$javaVersionPatch"
-//
-//if (currentJavaVersion != expectedJavaVersion) {
-//    val message =
-//        "Gradle runs with Java $currentJavaVersion. This project works best running with Java $expectedJavaVersion. " +
-//            "\n - From commandline: change JAVA_HOME and/or PATH to point at Java $expectedJavaVersion installation." +
-//            "\n - From IntelliJ: change 'Gradle JVM' in 'Gradle Settings' to point at Java $expectedJavaVersion installation."
-//
-//    if (currentJavaVersionMajor.ordinal < javaVersionMajor.ordinal) { // fail if version is too old
-//        throw (RuntimeException(message))
-//    } else {
-//        logger.lifecycle("WARN: $message")
-//    }
-//}
-//
-//java {
-//    sourceCompatibility = javaVersionMajor
-//    targetCompatibility = javaVersionMajor
-//}
-//
-//configurations.all {
-//    // In case published versions of a module are also available, always prefer the local one
-//    resolutionStrategy.preferProjectModules()
-//}
-//
+
+val javaVersionMajor = JavaVersion.VERSION_21
+val javaVersionPatch = "0.1"
+
+val currentJavaVersionMajor = JavaVersion.current()
+val currentJavaVersion = providers.systemProperty("java.version").get()
+val expectedJavaVersion = "$javaVersionMajor.$javaVersionPatch"
+
+if (currentJavaVersion != expectedJavaVersion) {
+    val message =
+        "Gradle runs with Java $currentJavaVersion. This project works best running with Java $expectedJavaVersion. " +
+            "\n - From commandline: change JAVA_HOME and/or PATH to point at Java $expectedJavaVersion installation." +
+            "\n - From IntelliJ: change 'Gradle JVM' in 'Gradle Settings' to point at Java $expectedJavaVersion installation."
+
+    if (currentJavaVersionMajor.ordinal < javaVersionMajor.ordinal) { // fail if version is too old
+        throw (RuntimeException(message))
+    } else {
+        logger.lifecycle("WARN: $message")
+    }
+}
+
+java {
+    sourceCompatibility = javaVersionMajor
+    targetCompatibility = javaVersionMajor
+}
+
+configurations.all {
+    // In case published versions of a module are also available, always prefer the local one
+    resolutionStrategy.preferProjectModules()
+}
+
 //@Suppress("UnstableApiUsage") val internal = configurations.dependencyScope("internal")
 //
 //javaModuleDependencies { versionsFromConsistentResolution(":app") }
