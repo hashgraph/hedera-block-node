@@ -29,8 +29,8 @@ plugins {
     id("com.hedera.gradle.jpms-modules")
     id("com.hedera.gradle.jpms-module-dependencies")
     id("com.hedera.gradle.repositories")
-//    id("com.hedera.gradle.spotless-java")
-//    id("com.hedera.gradle.spotless-kotlin")
+    id("com.hedera.gradle.spotless-java")
+    id("com.hedera.gradle.spotless-kotlin")
 }
 
 version =
@@ -68,7 +68,7 @@ configurations.all {
 
 @Suppress("UnstableApiUsage") val internal = configurations.dependencyScope("internal")
 
-javaModuleDependencies { versionsFromConsistentResolution(":block-node") }
+javaModuleDependencies { versionsFromConsistentResolution(":hapi") }
 
 configurations.getByName("mainRuntimeClasspath") { extendsFrom(internal.get()) }
 

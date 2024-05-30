@@ -5,8 +5,8 @@ pluginManagement { includeBuild("gradle/plugins") }
 plugins { id("com.hedera.gradle.settings") }
 
 include("hedera-dependency-versions")
-//include(":hapi", "hapi")
-include(":block-node", "block-node")
+include(":hapi", "hapi")
+//include(":block-node", "block-node")
 
 fun include(name: String, path: String) {
     include(name)
