@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph;
+package com.hedera.hashgraph.storage;
 
 import com.hedera.hapi.node.base.SemanticVersion;
 import com.hedera.hapi.node.base.Timestamp;

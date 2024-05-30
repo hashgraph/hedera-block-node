@@ -68,7 +68,8 @@ configurations.all {
 
 @Suppress("UnstableApiUsage") val internal = configurations.dependencyScope("internal")
 
-javaModuleDependencies { versionsFromConsistentResolution(":hapi") }
+//javaModuleDependencies { versionsFromConsistentResolution(":block-node", ":hapi") }
+javaModuleDependencies { versionsFromConsistentResolution(":hedera-block-node") }
 
 configurations.getByName("mainRuntimeClasspath") { extendsFrom(internal.get()) }
 
@@ -306,11 +307,12 @@ testlogger {
 tasks.assemble {
     // 'assemble' compiles all sources, including all test sources
     dependsOn(tasks.testClasses)
-    dependsOn(tasks.named("hammerClasses"))
-    dependsOn(tasks.named("timeConsumingClasses"))
-    dependsOn(tasks.named("itestClasses"))
-    dependsOn(tasks.named("eetClasses"))
-    dependsOn(tasks.named("xtestClasses"))
+//    dependsOn(tasks.testClasses)
+//    dependsOn(tasks.named("hammerClasses"))
+//    dependsOn(tasks.named("timeConsumingClasses"))
+//    dependsOn(tasks.named("itestClasses"))
+//    dependsOn(tasks.named("eetClasses"))
+//    dependsOn(tasks.named("xtestClasses"))
 }
 
 tasks.check { dependsOn(tasks.jacocoTestReport) }
