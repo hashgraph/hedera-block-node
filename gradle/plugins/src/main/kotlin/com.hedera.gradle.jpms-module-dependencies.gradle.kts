@@ -25,7 +25,7 @@ plugins { id("org.gradlex.java-module-dependencies") }
 javaModuleDependencies {
     moduleNamePrefixToGroup.put("com.", "com.swirlds")
     moduleNamePrefixToGroup.put("com.hedera.node.", "com.hedera.hashgraph")
-    moduleNamePrefixToGroup.put("com.hedera.storage.", "com.hedera.storage.blocknode")
-    moduleNameToGA.put("com.hedera.evm", "com.hedera.evm:hedera-evm")
-    moduleNameToGA.put("com.hedera.evm.impl", "com.hedera:hedera-evm-impl")
+    moduleNamePrefixToGroup.put("com.hedera.hashgraph.storage.", "com.hedera.hashgraph.storage.blocknode")
+//    moduleNameToGA.put("com.hedera.evm", "com.hedera.evm:hedera-evm")
+//    moduleNameToGA.put("com.hedera.evm.impl", "com.hedera:hedera-evm-impl")
 }

@@ -15,22 +15,6 @@
  */
 
 plugins {
-    id("java")
-}
-
-group = "com.hedera.hashgraph"
-version = "1.0-SNAPSHOT"
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation("com.hedera.pbj:pbj-runtime:0.8.9")
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-}
-
-tasks.test {
-    useJUnitPlatform()
+    id("com.hedera.gradle.blocknode")
+//    id("com.hedera.gradle.blocknode-publish")
 }

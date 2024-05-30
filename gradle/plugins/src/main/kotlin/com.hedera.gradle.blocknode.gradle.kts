@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Hedera Hashgraph, LLC
+ * Copyright (C) 2022-2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,10 @@
  */
 
 plugins {
-    id("java-platform")
-    id("com.hedera.gradle.jpms-modules")
-    id("com.hedera.gradle.jpms-module-dependencies")
-    id("org.gradlex.java-module-versions")
+    id("java-library")
+    id("com.hedera.gradle.java")
 }
 
-group = "com.hedera.hashgraph"
+group = "com.hedera.hashgraph.storage"
 
-javaPlatform { allowDependencies() }
-
-tasks.register("releaseMavenCentral")
+tasks.checkModuleInfo { moduleNamePrefix = "com.hedera.hashgraph.storage" }
