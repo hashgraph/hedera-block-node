@@ -16,20 +16,25 @@
 
 package com.hedera.hapi.util;
 
-import com.hedera.hapi.node.base.*;
+import static java.util.Objects.requireNonNull;
+
+import com.hedera.hapi.node.base.AccountID;
+import com.hedera.hapi.node.base.ContractID;
+import com.hedera.hapi.node.base.HederaFunctionality;
+import com.hedera.hapi.node.base.Key;
+import com.hedera.hapi.node.base.KeyList;
+import com.hedera.hapi.node.base.SemanticVersion;
+import com.hedera.hapi.node.base.Timestamp;
 import com.hedera.hapi.node.state.token.Account;
 import com.hedera.hapi.node.transaction.Query;
 import com.hedera.hapi.node.transaction.TransactionBody;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Set;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Utility class for working with the HAPI. We might move this to the HAPI project.
@@ -182,8 +187,7 @@ public class HapiUtils {
             HederaFunctionality.TOKEN_GET_NFT_INFOS,
             HederaFunctionality.TOKEN_GET_ACCOUNT_NFT_INFOS,
             HederaFunctionality.NETWORK_GET_EXECUTION_TIME,
-            HederaFunctionality.GET_ACCOUNT_DETAILS,
-            HederaFunctionality.NODE_GET_INFO);
+            HederaFunctionality.GET_ACCOUNT_DETAILS);
 
     public static HederaFunctionality functionOf(final TransactionBody txn) throws UnknownHederaFunctionality {
         return switch (txn.data().kind()) {
@@ -233,9 +237,6 @@ public class HapiUtils {
             case TOKEN_WIPE -> HederaFunctionality.TOKEN_ACCOUNT_WIPE;
             case UTIL_PRNG -> HederaFunctionality.UTIL_PRNG;
             case UNCHECKED_SUBMIT -> HederaFunctionality.UNCHECKED_SUBMIT;
-            case NODE_CREATE -> HederaFunctionality.NODE_CREATE;
-            case NODE_UPDATE -> HederaFunctionality.NODE_UPDATE;
-            case NODE_DELETE -> HederaFunctionality.NODE_DELETE;
             case UNSET -> throw new UnknownHederaFunctionality();
         };
     }
@@ -267,7 +268,6 @@ public class HapiUtils {
             case TRANSACTION_GET_RECEIPT -> HederaFunctionality.TRANSACTION_GET_RECEIPT;
             case TRANSACTION_GET_RECORD -> HederaFunctionality.TRANSACTION_GET_RECORD;
             case TRANSACTION_GET_FAST_RECORD -> HederaFunctionality.TRANSACTION_GET_FAST_RECORD;
-            case NODE_GET_INFO -> HederaFunctionality.NODE_GET_INFO;
             case UNSET -> throw new UnknownHederaFunctionality();
         };
     }
