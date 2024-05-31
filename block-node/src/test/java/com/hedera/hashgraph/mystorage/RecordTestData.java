@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph.storage;
+package com.hedera.hashgraph.mystorage;
 
 import com.hedera.hapi.node.base.SemanticVersion;
 import com.hedera.hapi.node.base.Timestamp;
@@ -23,7 +23,11 @@ import com.hedera.hapi.node.base.Transaction;
 import com.hedera.hapi.node.transaction.SignedTransaction;
 import com.hedera.hapi.node.transaction.TransactionBody;
 import com.hedera.hapi.node.transaction.TransactionRecord;
-import com.hedera.hapi.streams.*;
+import com.hedera.hapi.streams.HashAlgorithm;
+import com.hedera.hapi.streams.HashObject;
+import com.hedera.hapi.streams.RecordStreamFile;
+import com.hedera.hapi.streams.SidecarFile;
+import com.hedera.hapi.streams.TransactionSidecarRecord;
 import com.hedera.node.app.records.impl.producers.formats.v6.BlockRecordFormatV6;
 import com.hedera.node.app.state.SingleTransactionRecord;
 import com.hedera.node.app.state.SingleTransactionRecord.TransactionOutputs;
@@ -36,7 +40,6 @@ import com.swirlds.common.stream.Signer;
 import com.swirlds.platform.crypto.KeysAndCerts;
 import com.swirlds.platform.crypto.PlatformSigner;
 import com.swirlds.platform.crypto.PublicStores;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -47,7 +50,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import static com.swirlds.common.stream.LinkedObjectStreamUtilities.getPeriod;
 
 /**
  * Test data for record stream file tests. It starts with a single JSON dump of a real main net record file in
@@ -97,7 +99,7 @@ public class RecordTestData {
             // create signer
             SIGNER = new PlatformSigner(keysAndCerts);
             // create blocks
-            final List<List<SingleTransactionRecord>> testBlocks = new ArrayList<>();
+            final List<List<TransactionRecord>> testBlocks = new ArrayList<>();
             // load real record stream items from a JSON resource file
             final Path jsonPath = Path.of(RecordTestData.class
                     .getResource("/record-files/2023-05-01T00_00_24.038693760Z.json")
@@ -135,9 +137,9 @@ public class RecordTestData {
                 final int count = 100 + RANDOM.nextInt(900);
                 firstTransactionConsensusTime = firstTransactionConsensusTime.plusSeconds(2);
                 Instant consenusTime = firstTransactionConsensusTime;
-                List<SingleTransactionRecord> items = new ArrayList<>(count);
+                List<TransactionRecord> items = new ArrayList<>(count);
                 for (int i = 0; i < count; i++) {
-                    SingleTransactionRecord item =
+                    TransactionRecord item =
                             realRecordStreamItems.get(RANDOM.nextInt(realRecordStreamItems.size()));
                     items.add(changeTransactionConsensusTimeAndGenerateSideCarItems(
                             consenusTime, item, generateSidecarItems, exampleSidecarItems));

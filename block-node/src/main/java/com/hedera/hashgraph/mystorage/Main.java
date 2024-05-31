@@ -1,4 +1,4 @@
-package com.hedera.hashgraph.storage;
+package com.hedera.hashgraph.mystorage;
 
 public class Main {
     public static void main(String[] args) {

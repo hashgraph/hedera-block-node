@@ -68,8 +68,8 @@ configurations.all {
 
 @Suppress("UnstableApiUsage") val internal = configurations.dependencyScope("internal")
 
-//javaModuleDependencies { versionsFromConsistentResolution(":block-node", ":hapi") }
-javaModuleDependencies { versionsFromConsistentResolution(":hedera-block-node") }
+javaModuleDependencies { versionsFromConsistentResolution(":block-node-app") }
+//javaModuleDependencies { versionsFromConsistentResolution(":hapi") }
 
 configurations.getByName("mainRuntimeClasspath") { extendsFrom(internal.get()) }
 

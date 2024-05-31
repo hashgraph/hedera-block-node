@@ -21,5 +21,3 @@ plugins {
 
 group = "com.hedera.hashgraph.storage"
 
-//tasks.checkModuleInfo { moduleNamePrefix = "com.hedera.hashgraph.storage" }
-
