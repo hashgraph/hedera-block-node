@@ -146,6 +146,9 @@ dependencies.constraints {
     api("commons-io:commons-io:2.15.1") {
         because("org.apache.commons.io")
     }
+    api("com.swirlds:swirlds-common:0.48.0") {
+        because(" com.swirlds.common")
+    }
     api("org.apache.commons:commons-lang3:3.14.0") {
         because("org.apache.commons.lang3")
     }

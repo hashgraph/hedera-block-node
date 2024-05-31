@@ -1,6 +1,7 @@
 module block.node.test {
     // works
     requires com.hedera.node.hapi;
+    requires com.swirlds.common;
 //    requires transitive com.hedera.pbj.runtime;
 
 
