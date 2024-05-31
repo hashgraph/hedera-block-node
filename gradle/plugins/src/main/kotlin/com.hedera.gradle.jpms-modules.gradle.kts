@@ -146,9 +146,6 @@ extraJavaModuleInfo {
     module("io.perfmark:perfmark-api", "io.perfmark")
     module("javax.inject:javax.inject", "javax.inject")
     module("commons-codec:commons-codec", "org.apache.commons.codec")
-
-//    module("com.swirlds:swirlds-common", "com.swirlds.common")
-
     module("org.apache.commons:commons-math3", "org.apache.commons.math3")
     module("org.apache.commons:commons-collections4", "org.apache.commons.collections4")
     module("com.esaulpaugh:headlong", "headlong")

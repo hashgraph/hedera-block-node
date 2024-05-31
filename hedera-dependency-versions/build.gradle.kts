@@ -149,6 +149,9 @@ dependencies.constraints {
     api("com.swirlds:swirlds-common:0.48.0") {
         because(" com.swirlds.common")
     }
+    api("com.swirlds:swirlds-platform-core:0.48.0") {
+        because(" com.swirlds.platform")
+    }
     api("org.apache.commons:commons-lang3:3.14.0") {
         because("org.apache.commons.lang3")
     }
