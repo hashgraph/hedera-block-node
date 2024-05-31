@@ -3,11 +3,13 @@ module block.node.test {
     requires com.hedera.node.hapi;
     requires com.swirlds.common;
     requires com.swirlds.platform.core;
+
+    // fails
+//    requires transitive com.swirlds.platform;
 //    requires com.swirlds.platform.crypto;
 //    requires transitive com.hedera.pbj.runtime;
 
 
-    // fails
 //    requires com.hedera.node.hapi.node.base;
 
 //    requires com.google.protobuf;
