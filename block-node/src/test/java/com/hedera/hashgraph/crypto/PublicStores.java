@@ -1,0 +1,107 @@
+
+/*
+ * Copyright (C) 2022-2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.hedera.hashgraph.crypto;
+
+import com.swirlds.common.crypto.CryptographyException;
+
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.Objects;
+import java.util.stream.Stream;
+
+import static com.hedera.hashgraph.crypto.KeyCertPurpose.AGREEMENT;
+import static com.hedera.hashgraph.crypto.KeyCertPurpose.SIGNING;
+
+/**
+ * Public certificates for all the members of the network
+ *
+ * @param agrTrustStore
+ * 		the trust store for all the sig certs (self-signed signing cert)
+ * @param sigTrustStore
+ * 		the trust store for all the enc certs (encryption cert, signed by signing key)
+ */
+public record PublicStores(KeyStore sigTrustStore, KeyStore agrTrustStore) {
+    public PublicStores() throws KeyStoreException {
+        this(CryptoStatic.createEmptyTrustStore(), CryptoStatic.createEmptyTrustStore());
+    }
+
+    public static PublicStores fromAllPublic(final KeyStore allPublic, final Iterable<String> names)
+            throws KeyStoreException, KeyLoadingException {
+        final KeyStore sigTrustStore = CryptoStatic.createEmptyTrustStore();
+        final KeyStore agrTrustStore = CryptoStatic.createEmptyTrustStore();
+
+        for (String name : names) {
+            Certificate sigCert = allPublic.getCertificate(SIGNING.storeName(name));
+            Certificate agrCert = allPublic.getCertificate(AGREEMENT.storeName(name));
+
+            // the agreement certificate is allowed to be absent. The signing certificate is required.
+            if (Stream.of(sigCert).anyMatch(Objects::isNull)) {
+                throw new KeyLoadingException("Cannot find certificates for: " + name);
+            }
+
+            sigTrustStore.setCertificateEntry(SIGNING.storeName(name), sigCert);
+            agrTrustStore.setCertificateEntry(AGREEMENT.storeName(name), agrCert);
+        }
+        return new PublicStores(sigTrustStore, agrTrustStore);
+    }
+
+    /**
+     * @param type
+     * 		the type of certificate
+     * @param certificate
+     * 		the certificate
+     * @param name
+     * 		the name of the member
+     * @throws KeyStoreException
+     * 		if the given alias already exists and does not identify an entry containing a trusted certificate,
+     * 		or this operation fails for some other reason
+     */
+    public void setCertificate(final KeyCertPurpose type, final X509Certificate certificate, final String name)
+            throws KeyStoreException {
+        switch (type) {
+            case SIGNING -> sigTrustStore.setCertificateEntry(type.storeName(name), certificate);
+            case AGREEMENT -> agrTrustStore.setCertificateEntry(type.storeName(name), certificate);
+        }
+    }
+
+    public X509Certificate getCertificate(final KeyCertPurpose type, final String name) throws KeyLoadingException {
+        final Certificate certificate;
+        try {
+            certificate = switch (type) {
+                case SIGNING -> sigTrustStore.getCertificate(type.storeName(name));
+                case AGREEMENT -> agrTrustStore.getCertificate(type.storeName(name));};
+        } catch (KeyStoreException e) {
+            // cannot be thrown because we ensure the key store is initialized in the constructor
+            throw new CryptographyException(e);
+        }
+        if (certificate == null) {
+            throw new KeyLoadingException("Certificate not found", type, name);
+        }
+        if (certificate instanceof X509Certificate x509) {
+            return x509;
+        }
+        throw new KeyLoadingException("Certificate is not an instance of X509Certificate", type, name);
+    }
+
+    public PublicKey getPublicKey(final KeyCertPurpose type, final String name) throws KeyLoadingException {
+        return getCertificate(type, name).getPublicKey();
+    }
+}

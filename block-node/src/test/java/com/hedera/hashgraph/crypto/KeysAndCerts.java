@@ -75,55 +75,55 @@ public record KeysAndCerts(
      * @throws NoSuchAlgorithmException  if the algorithm for recovering a required key cannot be found
 //     * @throws KeyLoadingException       if a required certificate is missing or is not an instance of X509Certificate
      */
-    public static com.hedera.hashgraph.crypto.KeysAndCerts loadExistingAndCreateAgrKeyIfMissing(
-            final String name, final char[] password, final KeyStore privateKeyStore, final PublicStores publicStores)
-            throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyLoadingException,
-            NoSuchProviderException, KeyGeneratingException {
-        final String signingName = KeyCertPurpose.SIGNING.storeName(name);
-        // get the signing key pair and cert, these must exist.
-        final KeyPair signingKeyPair = getKeyPair(privateKeyStore, password, signingName);
-        final X509Certificate signingCert = publicStores.getCertificate(KeyCertPurpose.SIGNING, name);
+//    public static com.hedera.hashgraph.crypto.KeysAndCerts loadExistingAndCreateAgrKeyIfMissing(
+//            final String name, final char[] password, final KeyStore privateKeyStore, final PublicStores publicStores)
+//            throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyLoadingException,
+//            NoSuchProviderException, KeyGeneratingException {
+//        final String signingName = KeyCertPurpose.SIGNING.storeName(name);
+//        // get the signing key pair and cert, these must exist.
+//        final KeyPair signingKeyPair = getKeyPair(privateKeyStore, password, signingName);
+//        final X509Certificate signingCert = publicStores.getCertificate(KeyCertPurpose.SIGNING, name);
+//
+//        // get the agreement key pair and cert, if they exist, otherwise generate them.
+//        final String agreementName = KeyCertPurpose.AGREEMENT.storeName(name);
+//        KeyPair agreementKeyPair;
+//        X509Certificate agreementCert;
+//        try {
+//            agreementKeyPair = getKeyPair(privateKeyStore, password, agreementName);
+//            agreementCert = publicStores.getCertificate(KeyCertPurpose.AGREEMENT, name);
+//        } catch (final KeyLoadingException
+//                       | KeyStoreException
+//                       | NoSuchAlgorithmException
+//                       | UnrecoverableKeyException e) {
+//            // failed to load agreement key or cert from disk, attempt to generate them
+//            agreementKeyPair = generateAgreementKeyPair();
+//            // generate the agreement certificate with the signing certificate as the issuer.
+//            final String dnA = CryptoStatic.distinguishedName(KeyCertPurpose.AGREEMENT.storeName(name));
+//            agreementCert = CryptoStatic.generateCertificate(
+//                    dnA,
+//                    agreementKeyPair,
+//                    signingCert.getSubjectX500Principal().getName(),
+//                    signingKeyPair,
+//                    SecureRandom.getInstanceStrong());
+//            // add agreement certificate to public stores for later retrieval.
+//            publicStores.setCertificate(KeyCertPurpose.AGREEMENT, agreementCert, dnA);
+//        }
+//
+//        return new com.swirlds.platform.crypto.KeysAndCerts(signingKeyPair, agreementKeyPair, signingCert, agreementCert, publicStores);
+//    }
 
-        // get the agreement key pair and cert, if they exist, otherwise generate them.
-        final String agreementName = KeyCertPurpose.AGREEMENT.storeName(name);
-        KeyPair agreementKeyPair;
-        X509Certificate agreementCert;
-        try {
-            agreementKeyPair = getKeyPair(privateKeyStore, password, agreementName);
-            agreementCert = publicStores.getCertificate(KeyCertPurpose.AGREEMENT, name);
-        } catch (final KeyLoadingException
-                       | KeyStoreException
-                       | NoSuchAlgorithmException
-                       | UnrecoverableKeyException e) {
-            // failed to load agreement key or cert from disk, attempt to generate them
-            agreementKeyPair = generateAgreementKeyPair();
-            // generate the agreement certificate with the signing certificate as the issuer.
-            final String dnA = CryptoStatic.distinguishedName(KeyCertPurpose.AGREEMENT.storeName(name));
-            agreementCert = CryptoStatic.generateCertificate(
-                    dnA,
-                    agreementKeyPair,
-                    signingCert.getSubjectX500Principal().getName(),
-                    signingKeyPair,
-                    SecureRandom.getInstanceStrong());
-            // add agreement certificate to public stores for later retrieval.
-            publicStores.setCertificate(KeyCertPurpose.AGREEMENT, agreementCert, dnA);
-        }
-
-        return new com.swirlds.platform.crypto.KeysAndCerts(signingKeyPair, agreementKeyPair, signingCert, agreementCert, publicStores);
-    }
-
-    private static KeyPair getKeyPair(final KeyStore privateKeyStore, final char[] password, final String storeName)
-            throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyLoadingException {
-        final Certificate certificate = privateKeyStore.getCertificate(storeName);
-        if (certificate == null) {
-            throw new KeyLoadingException(String.format("Certificate '%s' not found!", storeName));
-        }
-        Key privateKey = privateKeyStore.getKey(storeName, password);
-        if (privateKey instanceof PrivateKey pk) {
-            return new KeyPair(certificate.getPublicKey(), pk);
-        }
-        throw new KeyLoadingException(String.format("Key '%s' is not an instance of PrivateKey!", storeName));
-    }
+//    private static KeyPair getKeyPair(final KeyStore privateKeyStore, final char[] password, final String storeName)
+//            throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyLoadingException {
+//        final Certificate certificate = privateKeyStore.getCertificate(storeName);
+//        if (certificate == null) {
+//            throw new KeyLoadingException(String.format("Certificate '%s' not found!", storeName));
+//        }
+//        Key privateKey = privateKeyStore.getKey(storeName, password);
+//        if (privateKey instanceof PrivateKey pk) {
+//            return new KeyPair(certificate.getPublicKey(), pk);
+//        }
+//        throw new KeyLoadingException(String.format("Key '%s' is not an instance of PrivateKey!", storeName));
+//    }
 
     /**
      * Creates an instance holding all the keys and certificates. This also generates the key pairs and certs and CSPRNG
@@ -194,14 +194,14 @@ public record KeysAndCerts(
      *
      * @return the generated agreement key pair
      */
-    @NonNull
-    public static KeyPair generateAgreementKeyPair() throws NoSuchAlgorithmException, NoSuchProviderException {
-        // getInstanceStrong() is no longer blocking - https://blogs.oracle.com/linux/post/rngd1
-        final SecureRandom secureRandom = SecureRandom.getInstanceStrong();
-        // generate the agreement key pair
-        final KeyPairGenerator keyPairGenerator =
-                KeyPairGenerator.getInstance(CryptoConstants.AGR_TYPE, CryptoConstants.AGR_PROVIDER);
-        keyPairGenerator.initialize(CryptoConstants.AGR_KEY_SIZE_BITS, secureRandom);
-        return keyPairGenerator.generateKeyPair();
-    }
+//    @NonNull
+//    public static KeyPair generateAgreementKeyPair() throws NoSuchAlgorithmException, NoSuchProviderException {
+//        // getInstanceStrong() is no longer blocking - https://blogs.oracle.com/linux/post/rngd1
+//        final SecureRandom secureRandom = SecureRandom.getInstanceStrong();
+//        // generate the agreement key pair
+//        final KeyPairGenerator keyPairGenerator =
+//                KeyPairGenerator.getInstance(CryptoConstants.AGR_TYPE, CryptoConstants.AGR_PROVIDER);
+//        keyPairGenerator.initialize(CryptoConstants.AGR_KEY_SIZE_BITS, secureRandom);
+//        return keyPairGenerator.generateKeyPair();
+//    }
 }

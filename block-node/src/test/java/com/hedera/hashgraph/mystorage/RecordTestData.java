@@ -28,17 +28,13 @@ import com.hedera.hapi.streams.HashObject;
 import com.hedera.hapi.streams.RecordStreamFile;
 import com.hedera.hapi.streams.SidecarFile;
 import com.hedera.hapi.streams.TransactionSidecarRecord;
-import com.hedera.node.app.state.SingleTransactionRecord;
-import com.hedera.node.app.state.SingleTransactionRecord.TransactionOutputs;
+import com.hedera.hashgraph.crypto.SingleTransactionRecord;
 import com.hedera.pbj.runtime.io.buffer.BufferedData;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.hedera.pbj.runtime.io.stream.ReadableStreamingData;
 import com.swirlds.common.crypto.DigestType;
 import com.swirlds.common.crypto.Hash;
-import com.swirlds.common.stream.Signer;
-import com.swirlds.platform.crypto.KeysAndCerts;
-import com.swirlds.platform.crypto.PlatformSigner;
-import com.swirlds.platform.crypto.PublicStores;
+import com.hedera.hashgraph.crypto.KeysAndCerts;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -71,20 +67,20 @@ public class RecordTestData {
     /** A hash used as the start of running hash changes in tests, in HashObject format */
     public static final HashObject STARTING_RUNNING_HASH_OBJ;
     /** An expected hash to get at the end of all transactions in all blocks */
-    public static final Bytes ENDING_RUNNING_HASH;
+//    public static final Bytes ENDING_RUNNING_HASH;
     /** An expected hash object to get at the end of all transactions in all blocks */
     public static final HashObject ENDING_RUNNING_HASH_OBJ;
     /** List of test blocks, each containing a number of transaction records */
-    public static final List<List<TransactionRecord>> TEST_BLOCKS;
+    public static final List<List<SingleTransactionRecord>> TEST_BLOCKS;
     /** blocks to create, true means generate sidecar items for transactions in that block */
     public static final boolean[] TEST_BLOCKS_WITH_SIDECARS =
             new boolean[] {false, true, true, true, false, true, false, false, true};
     //    block seconds       24,   26,   28,   30,    32,   34,    36,    38,   40
 
     /** Transaction Outputs data */
-    private static final TransactionOutputs SIMPLE_OUTPUT = new TransactionOutputs(TokenType.FUNGIBLE_COMMON);
+    private static final SingleTransactionRecord.TransactionOutputs SIMPLE_OUTPUT = new SingleTransactionRecord.TransactionOutputs(TokenType.FUNGIBLE_COMMON);
     /** Test Signer for signing record stream files */
-    public static final Signer SIGNER;
+//    public static final Signer SIGNER;
     /** Test user public key */
     public static final PublicKey USER_PUBLIC_KEY;
 
@@ -92,21 +88,21 @@ public class RecordTestData {
         try {
             // generate node keys and signer
             final var keysAndCerts =
-                    KeysAndCerts.generate("a-name", EMPTY_ARRAY, EMPTY_ARRAY, EMPTY_ARRAY, new PublicStores());
+                    KeysAndCerts.generate("a-name", EMPTY_ARRAY, EMPTY_ARRAY, EMPTY_ARRAY, new com.hedera.hashgraph.crypto.PublicStores());
             // get public key that was generated for the user
             USER_PUBLIC_KEY = keysAndCerts.sigKeyPair().getPublic();
             // create signer
-            SIGNER = new PlatformSigner(keysAndCerts);
+//            SIGNER = new PlatformSigner(keysAndCerts);
             // create blocks
-            final List<List<TransactionRecord>> testBlocks = new ArrayList<>();
+            final List<List<SingleTransactionRecord>> testBlocks = new ArrayList<>();
             // load real record stream items from a JSON resource file
             final Path jsonPath = Path.of(RecordTestData.class
                     .getResource("/record-files/2023-05-01T00_00_24.038693760Z.json")
                     .toURI());
             final RecordStreamFile recordStreamFile =
                     RecordStreamFile.JSON.parse(new ReadableStreamingData(Files.newInputStream(jsonPath)));
-            final List<TransactionRecord> realRecordStreamItems = recordStreamFile.recordStreamItems().stream()
-                    .map(item -> new TransactionRecord(
+            final List<SingleTransactionRecord> realRecordStreamItems = recordStreamFile.recordStreamItems().stream()
+                    .map(item -> new SingleTransactionRecord(
                             item.transaction(), item.record(), Collections.emptyList(), SIMPLE_OUTPUT))
                     .toList();
             // load real sidecar items from a JSON resource file
@@ -136,9 +132,9 @@ public class RecordTestData {
                 final int count = 100 + RANDOM.nextInt(900);
                 firstTransactionConsensusTime = firstTransactionConsensusTime.plusSeconds(2);
                 Instant consenusTime = firstTransactionConsensusTime;
-                List<TransactionRecord> items = new ArrayList<>(count);
+                List<SingleTransactionRecord> items = new ArrayList<>(count);
                 for (int i = 0; i < count; i++) {
-                    TransactionRecord item =
+                    SingleTransactionRecord item =
                             realRecordStreamItems.get(RANDOM.nextInt(realRecordStreamItems.size()));
                     items.add(changeTransactionConsensusTimeAndGenerateSideCarItems(
                             consenusTime, item, generateSidecarItems, exampleSidecarItems));
@@ -185,9 +181,9 @@ public class RecordTestData {
     }
 
     /** Given a SingleTransactionRecord update its consensus timestamp and generate sidecar items */
-    private static TransactionRecord changeTransactionConsensusTimeAndGenerateSideCarItems(
+    private static SingleTransactionRecord changeTransactionConsensusTimeAndGenerateSideCarItems(
             final Instant newConsensusTime,
-            final TransactionRecord singleTransactionRecord,
+            final SingleTransactionRecord singleTransactionRecord,
             final boolean generateSideCarItems,
             final List<TransactionSidecarRecord> exampleSidecarItems)
             throws Exception {
@@ -218,13 +214,13 @@ public class RecordTestData {
                 .signedTransactionBytes(SignedTransaction.PROTOBUF.toBytes(newSignedTransaction))
                 .build();
         // update transaction record consensus timestamp
-//        final TransactionRecord newTransactionRecord = singleTransactionRecord
-//                .transactionRecord()
-//                .copyBuilder()
-//                .consensusTimestamp(consensusTimestamp)
-//                .build();
+        final TransactionRecord newTransactionRecord = singleTransactionRecord
+                .transactionRecord()
+                .copyBuilder()
+                .consensusTimestamp(consensusTimestamp)
+                .build();
         // generate random number 0-5 of sidecar items
-        final ArrayList<TransactionSidecarRecord> sidecarItems = new ArrayList<>();
+        final List<TransactionSidecarRecord> sidecarItems = new ArrayList<>();
         if (generateSideCarItems) {
             for (int j = 0; j < RANDOM.nextInt(2); j++) {
                 final TransactionSidecarRecord exampleSideCar;
@@ -241,8 +237,7 @@ public class RecordTestData {
                         .build());
             }
         }
-        // return new TransactionRecord
-//        return new SingleTransactionRecord(newTransaction, newTransactionRecord, sidecarItems, SIMPLE_OUTPUT);
-        return TransactionRecord.DEFAULT;
+
+        return new SingleTransactionRecord(newTransaction, newTransactionRecord, sidecarItems, SIMPLE_OUTPUT);
     }
 }
