@@ -43,25 +43,25 @@ public record PublicStores(KeyStore sigTrustStore, KeyStore agrTrustStore) {
         this(CryptoStatic.createEmptyTrustStore(), CryptoStatic.createEmptyTrustStore());
     }
 
-    public static PublicStores fromAllPublic(final KeyStore allPublic, final Iterable<String> names)
-            throws KeyStoreException, KeyLoadingException {
-        final KeyStore sigTrustStore = CryptoStatic.createEmptyTrustStore();
-        final KeyStore agrTrustStore = CryptoStatic.createEmptyTrustStore();
-
-        for (String name : names) {
-            Certificate sigCert = allPublic.getCertificate(SIGNING.storeName(name));
-            Certificate agrCert = allPublic.getCertificate(AGREEMENT.storeName(name));
-
-            // the agreement certificate is allowed to be absent. The signing certificate is required.
-            if (Stream.of(sigCert).anyMatch(Objects::isNull)) {
-                throw new KeyLoadingException("Cannot find certificates for: " + name);
-            }
-
-            sigTrustStore.setCertificateEntry(SIGNING.storeName(name), sigCert);
-            agrTrustStore.setCertificateEntry(AGREEMENT.storeName(name), agrCert);
-        }
-        return new PublicStores(sigTrustStore, agrTrustStore);
-    }
+//    public static PublicStores fromAllPublic(final KeyStore allPublic, final Iterable<String> names)
+//            throws KeyStoreException, KeyLoadingException {
+//        final KeyStore sigTrustStore = CryptoStatic.createEmptyTrustStore();
+//        final KeyStore agrTrustStore = CryptoStatic.createEmptyTrustStore();
+//
+//        for (String name : names) {
+//            Certificate sigCert = allPublic.getCertificate(SIGNING.storeName(name));
+//            Certificate agrCert = allPublic.getCertificate(AGREEMENT.storeName(name));
+//
+//             the agreement certificate is allowed to be absent. The signing certificate is required.
+//            if (Stream.of(sigCert).anyMatch(Objects::isNull)) {
+//                throw new KeyLoadingException("Cannot find certificates for: " + name);
+//            }
+//
+//            sigTrustStore.setCertificateEntry(SIGNING.storeName(name), sigCert);
+//            agrTrustStore.setCertificateEntry(AGREEMENT.storeName(name), agrCert);
+//        }
+//        return new PublicStores(sigTrustStore, agrTrustStore);
+//    }
 
     /**
      * @param type

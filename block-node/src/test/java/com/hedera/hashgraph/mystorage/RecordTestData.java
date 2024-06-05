@@ -16,6 +16,8 @@
 
 package com.hedera.hashgraph.mystorage;
 
+import static com.swirlds.common.stream.LinkedObjectStreamUtilities.getPeriod;
+
 import com.hedera.hapi.node.base.SemanticVersion;
 import com.hedera.hapi.node.base.Timestamp;
 import com.hedera.hapi.node.base.TokenType;
@@ -34,7 +36,9 @@ import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.hedera.pbj.runtime.io.stream.ReadableStreamingData;
 import com.swirlds.common.crypto.DigestType;
 import com.swirlds.common.crypto.Hash;
+import com.swirlds.common.stream.Signer;
 import com.hedera.hashgraph.crypto.KeysAndCerts;
+import com.hedera.hashgraph.crypto.PublicStores;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -44,10 +48,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-
-import static com.swirlds.base.units.UnitConstants.MILLISECONDS_TO_NANOSECONDS;
-import static com.swirlds.base.units.UnitConstants.SECONDS_TO_NANOSECONDS;
-
 
 /**
  * Test data for record stream file tests. It starts with a single JSON dump of a real main net record file in
@@ -72,7 +72,7 @@ public class RecordTestData {
     /** An expected hash to get at the end of all transactions in all blocks */
 //    public static final Bytes ENDING_RUNNING_HASH;
     /** An expected hash object to get at the end of all transactions in all blocks */
-    public static final HashObject ENDING_RUNNING_HASH_OBJ;
+//    public static final HashObject ENDING_RUNNING_HASH_OBJ;
     /** List of test blocks, each containing a number of transaction records */
     public static final List<List<SingleTransactionRecord>> TEST_BLOCKS;
     /** blocks to create, true means generate sidecar items for transactions in that block */
@@ -91,7 +91,7 @@ public class RecordTestData {
         try {
             // generate node keys and signer
             final var keysAndCerts =
-                    KeysAndCerts.generate("a-name", EMPTY_ARRAY, EMPTY_ARRAY, EMPTY_ARRAY, new com.hedera.hashgraph.crypto.PublicStores());
+                    KeysAndCerts.generate("a-name", EMPTY_ARRAY, EMPTY_ARRAY, EMPTY_ARRAY, new PublicStores());
             // get public key that was generated for the user
             USER_PUBLIC_KEY = keysAndCerts.sigKeyPair().getPublic();
             // create signer
@@ -176,8 +176,8 @@ public class RecordTestData {
 //                            .flatMap(List::stream)
 //                            .map(str -> BlockRecordFormatV6.INSTANCE.serialize(str, BLOCK_NUM, VERSION))
 //                            .toList());
-            ENDING_RUNNING_HASH_OBJ =
-                    new HashObject(HashAlgorithm.SHA_384, 0, Bytes.EMPTY);
+//            ENDING_RUNNING_HASH_OBJ =
+//                    new HashObject(HashAlgorithm.SHA_384, (int) ENDING_RUNNING_HASH.length(), ENDING_RUNNING_HASH);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -223,7 +223,7 @@ public class RecordTestData {
                 .consensusTimestamp(consensusTimestamp)
                 .build();
         // generate random number 0-5 of sidecar items
-        final List<TransactionSidecarRecord> sidecarItems = new ArrayList<>();
+        final ArrayList<TransactionSidecarRecord> sidecarItems = new ArrayList<>();
         if (generateSideCarItems) {
             for (int j = 0; j < RANDOM.nextInt(2); j++) {
                 final TransactionSidecarRecord exampleSideCar;
@@ -240,12 +240,7 @@ public class RecordTestData {
                         .build());
             }
         }
-
+        // return new SingleTransactionRecord
         return new SingleTransactionRecord(newTransaction, newTransactionRecord, sidecarItems, SIMPLE_OUTPUT);
-    }
-
-    private static long getPeriod(final Instant consensusTimestamp, final long logPeriodMs) {
-        final long nanos = consensusTimestamp.getEpochSecond() * SECONDS_TO_NANOSECONDS + consensusTimestamp.getNano();
-        return nanos / MILLISECONDS_TO_NANOSECONDS / logPeriodMs;
     }
 }
