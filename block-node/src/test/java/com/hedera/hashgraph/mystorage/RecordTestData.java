@@ -45,6 +45,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import static com.swirlds.base.units.UnitConstants.MILLISECONDS_TO_NANOSECONDS;
+import static com.swirlds.base.units.UnitConstants.SECONDS_TO_NANOSECONDS;
+
 
 /**
  * Test data for record stream file tests. It starts with a single JSON dump of a real main net record file in
@@ -239,5 +242,10 @@ public class RecordTestData {
         }
 
         return new SingleTransactionRecord(newTransaction, newTransactionRecord, sidecarItems, SIMPLE_OUTPUT);
+    }
+
+    private static long getPeriod(final Instant consensusTimestamp, final long logPeriodMs) {
+        final long nanos = consensusTimestamp.getEpochSecond() * SECONDS_TO_NANOSECONDS + consensusTimestamp.getNano();
+        return nanos / MILLISECONDS_TO_NANOSECONDS / logPeriodMs;
     }
 }
