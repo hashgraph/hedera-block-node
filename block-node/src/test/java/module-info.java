@@ -3,6 +3,7 @@ module block.node.test {
     requires com.hedera.node.hapi;
     requires com.swirlds.common;
     requires com.swirlds.platform.core;
+    requires org.bouncycastle.pkix;
     requires org.bouncycastle.provider;
 
     // fails
