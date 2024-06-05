@@ -186,22 +186,6 @@ public record KeysAndCerts(
         publicStores.setCertificate(KeyCertPurpose.SIGNING, sigCert, name);
         publicStores.setCertificate(KeyCertPurpose.AGREEMENT, agrCert, name);
 
-        return new com.swirlds.platform.crypto.KeysAndCerts(sigKeyPair, agrKeyPair, sigCert, agrCert, publicStores);
+        return new KeysAndCerts(sigKeyPair, agrKeyPair, sigCert, agrCert, publicStores);
     }
-
-    /**
-     * Generates a new agreement key pair using {@link SecureRandom#getInstanceStrong()} as the CSPRNG.
-     *
-     * @return the generated agreement key pair
-     */
-//    @NonNull
-//    public static KeyPair generateAgreementKeyPair() throws NoSuchAlgorithmException, NoSuchProviderException {
-//        // getInstanceStrong() is no longer blocking - https://blogs.oracle.com/linux/post/rngd1
-//        final SecureRandom secureRandom = SecureRandom.getInstanceStrong();
-//        // generate the agreement key pair
-//        final KeyPairGenerator keyPairGenerator =
-//                KeyPairGenerator.getInstance(CryptoConstants.AGR_TYPE, CryptoConstants.AGR_PROVIDER);
-//        keyPairGenerator.initialize(CryptoConstants.AGR_KEY_SIZE_BITS, secureRandom);
-//        return keyPairGenerator.generateKeyPair();
-//    }
 }
