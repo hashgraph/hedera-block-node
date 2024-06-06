@@ -17,7 +17,7 @@
 plugins {
     id("application")
     id("com.hedera.block.conventions")
-//    id("com.hedera.gradle.jpms-modules")
+    id("com.hedera.gradle.jpms-modules")
     id("com.google.protobuf") // protobuf plugin is only used for tests
     id("me.champeau.jmh")
 }
