@@ -45,8 +45,3 @@ val maven = publishing.publications.create<MavenPublication>("maven") { from(com
 
 signing.sign(maven)
 
-// Filter JMH benchmarks for testing
-//jmh {
-//    includes.add("WriteBytesBench")
-//    includes.add("WriteBufferedDataBench")
-//}

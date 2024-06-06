@@ -26,5 +26,5 @@ testModuleInfo {
     requires("net.bytebuddy")
     requires("org.junit.jupiter.api")
     requires("org.junit.jupiter.params")
-    requiresStatic("com.github.spotbugs.annotations")
+//    requiresStatic("com.github.spotbugs.annotations")
 }

@@ -5,5 +5,5 @@ module com.hedera.block.server {
     requires io.helidon.webserver.grpc;
     requires com.google.protobuf;
 
-    requires static com.github.spotbugs.annotations;
+//    requires static com.github.spotbugs.annotations;
 }
