@@ -32,11 +32,12 @@ dependencyResolutionManagement {
         create("libs") {
             // Compile time dependencies
             version("io.helidon.webserver", "4.0.8")
-            version("io.helidon.webserver.http2", "4.0.8")
             version("com.github.spotbugs.annotations", "4.7.3")
+            version("io.helidon.webserver.grpc", "4.0.8")
+            version("io.grpc", "1.60.0")
+            version("io.helidon.webserver.testing.junit5", "4.0.8")
 
             // Testing only versions
-            version("com.google.protobuf", "3.21.9")
             version("org.assertj.core", "3.23.1")
             version("org.junit.jupiter.api", "5.10.0")
         }
