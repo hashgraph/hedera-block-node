@@ -4,7 +4,9 @@ module com.hedera.block.server {
     requires com.google.protobuf;
     requires io.grpc.stub;
     requires io.helidon.common;
+    requires io.helidon.config;
     requires io.helidon.webserver.grpc;
     requires io.helidon.webserver;
+    requires jakarta.inject;
     requires java.logging;
 }

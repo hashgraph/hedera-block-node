@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2022-2024 Hedera Hashgraph, LLC
+ * Hedera Block Node
+ *
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +16,16 @@
  * limitations under the License.
  */
 
-plugins {
-    id("application")
-    id("com.hedera.block.server")
-}
+package com.hedera.block.server;
 
-application {
-    mainModule = "com.hedera.block.server"
-    mainClass = "com.hedera.block.server.Server"
-}
+public final class Constants {
+    private Constants() {}
 
-testModuleInfo {
-    requires("org.junit.jupiter.api")
+    // Config Constants
+    public static String BLOCKNODE_STORAGE_ROOT_PATH_KEY = "blocknode.storage.root.path";
+
+    // Constants specified in the service definition of the .proto file
+    public static String SERVICE_NAME = "BlockStreamGrpc";
+    public static String CLIENT_STREAMING_METHOD_NAME = "StreamSink";
+    public static String SERVER_STREAMING_METHOD_NAME = "StreamSource";
 }

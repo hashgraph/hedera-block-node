@@ -1,18 +1,55 @@
+/*
+ * Hedera Block Node
+ *
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hedera.block.server;
 
-import com.hedera.block.protos.EchoServiceGrpcProto;
+import com.hedera.block.protos.BlockStreamServiceGrpcProto;
+import com.hedera.block.server.mediator.LiveStreamMediatorImpl;
+import com.hedera.block.server.persistence.WriteThroughCacheHandler;
+import com.hedera.block.server.persistence.cache.BlockCache;
+import com.hedera.block.server.persistence.cache.LRUCache;
+import com.hedera.block.server.persistence.storage.BlockStorage;
+import com.hedera.block.server.persistence.storage.FileSystemBlockStorage;
+import io.grpc.stub.ServerCalls;
 import io.grpc.stub.StreamObserver;
+import io.helidon.config.Config;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.grpc.GrpcRouting;
 import io.helidon.webserver.http.HttpRouting;
+
+import java.io.IOException;
+import java.util.logging.Logger;
+import java.util.stream.Stream;
+
+import static com.hedera.block.server.Constants.*;
 
 /**
  * Main class for the block node server
  */
 public class Server {
-    private Server() {
-        // Not meant to be instantiated
-    }
+
+    // Function stubs to satisfy the bidi routing param signatures.  The implementations are in the service class.
+    private static ServerCalls.BidiStreamingMethod<Stream<BlockStreamServiceGrpcProto.Block>, StreamObserver<BlockStreamServiceGrpcProto.Block>> clientBidiStreamingMethod;
+    private static ServerCalls.BidiStreamingMethod<Stream<BlockStreamServiceGrpcProto.BlockResponse>, StreamObserver<BlockStreamServiceGrpcProto.Block>> serverBidiStreamingMethod;
+
+    private static final Logger logger = Logger.getLogger(Server.class.getName());
+
+    private Server() {}
 
     /**
      * Main entrypoint for the block node server
@@ -20,19 +57,40 @@ public class Server {
      * @param args Command line arguments. Not used at present,
      */
     public static void main(String[] args) {
-        WebServer.builder()
-                .port(8080)
-                .addRouting(HttpRouting.builder()
-                        .get("/greet", (req, res) -> res.send("Hello World!")))
-                .addRouting(GrpcRouting.builder()
-                        .service(new EchoService())
-                        .unary(EchoServiceGrpcProto.getDescriptor(),
-                                "EchoService",
-                                "Echo",
-                                Server::grpcEcho))
-                .build()
-                .start();
-    }
 
-    static void grpcEcho(EchoServiceGrpcProto.EchoRequest request, StreamObserver<EchoServiceGrpcProto.EchoResponse> responseObserver) {}
+        try {
+
+            // Set the global configuration
+            Config config = Config.create();
+            Config.global(config);
+
+            // Initialize the block storage, cache, and service
+            BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage = new FileSystemBlockStorage(BLOCKNODE_STORAGE_ROOT_PATH_KEY, config);
+            BlockCache<BlockStreamServiceGrpcProto.Block> blockCache = new LRUCache(1000);
+            BlockStreamService blockStreamService = new BlockStreamService(1500,
+                    new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage, blockCache)));
+
+            // Start the web server
+            WebServer.builder()
+                    .port(8080)
+                    .addRouting(HttpRouting.builder()
+                            .get("/greet", (req, res) -> res.send("Hello World!")))
+                    .addRouting(GrpcRouting.builder()
+                            .service(blockStreamService)
+                            .bidi(BlockStreamServiceGrpcProto.getDescriptor(),
+                                    SERVICE_NAME,
+                                    CLIENT_STREAMING_METHOD_NAME,
+                                    clientBidiStreamingMethod)
+                            .bidi(BlockStreamServiceGrpcProto.getDescriptor(),
+                                    SERVICE_NAME,
+                                    SERVER_STREAMING_METHOD_NAME,
+                                    serverBidiStreamingMethod))
+                    .build()
+                    .start();
+
+        } catch (IOException e) {
+            logger.severe("There was an exception starting the server: " + e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
 }
