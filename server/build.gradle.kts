@@ -27,6 +27,7 @@ application {
 
 dependencies {
     implementation(project(":protos"))
+    implementation("com.google.protobuf:protobuf-java:3.24.0")
 }
 
 testModuleInfo {

@@ -15,26 +15,12 @@
  */
 
 plugins {
-    id("java")
-//    id("com.hedera.block.conventions")
-//    id("com.hedera.gradle.jpms-modules")
-    id("com.google.protobuf")
-//    id("me.champeau.jmh")
+    id("java-library")
+    id("com.hedera.block.repositories")
+    id("com.hedera.block.protos")
 }
 
-
-sourceSets {
-    main {
-        proto {
-            srcDir("src/main/protobuf")
-        }
-    }
+dependencies {
+    api("com.google.protobuf:protobuf-java:3.24.0")
 }
 
-protobuf {
-    // Configure the protoc executable
-    protoc {
-        // Download from repositories
-        artifact = "com.google.protobuf:protoc:3.21.10"
-    }
-}

@@ -1,8 +1,7 @@
 package com.hedera.block.server;
 
 import com.google.protobuf.Descriptors;
-import com.hedera.block.protobuf.EchoServiceGrpcProto;
-import io.grpc.stub.StreamObserver;
+import com.hedera.block.protos.EchoServiceGrpcProto;
 import io.helidon.webserver.grpc.GrpcService;
 
 import static io.helidon.webserver.grpc.ResponseHelper.complete;

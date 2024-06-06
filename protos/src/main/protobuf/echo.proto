@@ -1,5 +1,5 @@
 syntax = "proto3";
-option java_package = "com.hedera.block.protobuf";
+option java_package = "com.hedera.block.protos";
 option java_outer_classname = "EchoServiceGrpcProto";
 
 service EchoService {
