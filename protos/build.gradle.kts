@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Hedera Hashgraph, LLC
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,26 @@
  */
 
 plugins {
-    id("application")
-    id("com.hedera.block.conventions")
-//    id("com.hedera.block.server")
+    id("java")
+//    id("com.hedera.block.conventions")
+//    id("com.hedera.gradle.jpms-modules")
+    id("com.google.protobuf")
+//    id("me.champeau.jmh")
 }
 
-application {
-    mainModule = "com.hedera.block.server"
-    mainClass = "com.hedera.block.server.Server"
+
+sourceSets {
+    main {
+        proto {
+            srcDir("src/main/protobuf")
+        }
+    }
 }
 
-dependencies {
-    implementation(project(":protos"))
-}
-
-testModuleInfo {
-    requires("org.assertj.core")
-    requires("net.bytebuddy")
-    requires("org.junit.jupiter.api")
-    requires("org.junit.jupiter.params")
+protobuf {
+    // Configure the protoc executable
+    protoc {
+        // Download from repositories
+        artifact = "com.google.protobuf:protoc:3.21.10"
+    }
 }

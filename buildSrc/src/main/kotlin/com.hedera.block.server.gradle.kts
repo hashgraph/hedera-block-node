@@ -17,29 +17,29 @@
 plugins {
     id("application")
     id("com.hedera.block.conventions")
-    id("com.hedera.gradle.jpms-modules")
-    id("com.google.protobuf") // protobuf plugin is only used for tests
+//    id("com.hedera.gradle.jpms-modules")
+//    id("com.google.protobuf")
     id("me.champeau.jmh")
 }
 
-sourceSets {
-    main {
-        proto {
-            srcDir("src/main/protobuf")
-        }
-        java {
-            srcDir("src/main/java")
-        }
-    }
-}
-
-protobuf {
-    // Configure the protoc executable
-    protoc {
-        // Download from repositories
-        artifact = "com.google.protobuf:protoc:3.21.10"
-    }
-}
+//sourceSets {
+//    main {
+//        proto {
+//            srcDir("src/main/protobuf")
+//        }
+//        java {
+//            srcDir("src/main/java")
+//        }
+//    }
+//}
+//
+//protobuf {
+//     Configure the protoc executable
+//    protoc {
+//         Download from repositories
+//        artifact = "com.google.protobuf:protoc:3.21.10"
+//    }
+//}
 
 val maven = publishing.publications.create<MavenPublication>("maven") { from(components["java"]) }
 
