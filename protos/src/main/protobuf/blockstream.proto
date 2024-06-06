@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option java_package = "com.hedera.block.protos";
+option java_outer_classname = "BlockStreamServiceGrpcProto";
+
+service BlockStreamGrpc {
+    rpc StreamSink(stream Block) returns (stream BlockResponse) {}
+    rpc StreamSource(BlockRequest) returns (stream Block) {}
+}
+
+message Block {
+    int64 id = 1;
+    string value = 2;
+}
+
+message BlockRequest {
+    int64 id = 1;
+    string accountId = 2;
+}
+
+message BlockResponse {
+    int64 id = 1;
+}
+
+message Empty {
+}

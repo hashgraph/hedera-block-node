@@ -15,19 +15,22 @@
  */
 
 plugins {
+    id("java-library")
     id("application")
     id("com.hedera.block.conventions")
 //    id("com.hedera.block.server")
 }
 
 application {
-    mainModule = "com.hedera.block.server"
+//    mainModule = "com.hedera.block.server"
     mainClass = "com.hedera.block.server.Server"
 }
 
 dependencies {
     implementation(project(":protos"))
     implementation("com.google.protobuf:protobuf-java:3.24.0")
+    implementation("io.grpc:grpc-protobuf:1.20.0")
+    implementation("io.helidon.webserver:helidon-webserver-grpc:4.0.8")
 }
 
 testModuleInfo {

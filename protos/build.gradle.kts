@@ -15,12 +15,12 @@
  */
 
 plugins {
-    id("java-library")
+    id("java")
     id("com.hedera.block.repositories")
     id("com.hedera.block.protos")
 }
 
 dependencies {
-    api("com.google.protobuf:protobuf-java:3.24.0")
+    implementation("com.google.protobuf:protobuf-java:3.24.0")
 }
 
