@@ -20,7 +20,7 @@ repositories { gradlePluginPortal() }
 
 dependencies {
     implementation("com.adarshr:gradle-test-logger-plugin:4.0.0")
-    implementation("com.autonomousapps:dependency-analysis-gradle-plugin:1.29.0")
+    implementation("com.autonomousapps:dependency-analysis-gradle-plugin:1.32.0")
     implementation("com.diffplug.spotless:spotless-plugin-gradle:6.25.0")
     implementation("com.google.protobuf:protobuf-gradle-plugin:0.9.4")
     implementation("com.gradle.publish:plugin-publish-plugin:1.2.1")
