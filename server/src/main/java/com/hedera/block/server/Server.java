@@ -1,6 +1,9 @@
 package com.hedera.block.server;
 
+import com.hedera.block.protos.EchoServiceGrpcProto;
+import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.WebServer;
+import io.helidon.webserver.grpc.GrpcRouting;
 import io.helidon.webserver.http.HttpRouting;
 
 /**
@@ -21,7 +24,15 @@ public class Server {
                 .port(8080)
                 .addRouting(HttpRouting.builder()
                         .get("/greet", (req, res) -> res.send("Hello World!")))
+                .addRouting(GrpcRouting.builder()
+                        .service(new EchoService())
+                        .unary(EchoServiceGrpcProto.getDescriptor(),
+                                "EchoService",
+                                "Echo",
+                                Server::grpcEcho))
                 .build()
                 .start();
     }
+
+    static void grpcEcho(EchoServiceGrpcProto.EchoRequest request, StreamObserver<EchoServiceGrpcProto.EchoResponse> responseObserver) {}
 }

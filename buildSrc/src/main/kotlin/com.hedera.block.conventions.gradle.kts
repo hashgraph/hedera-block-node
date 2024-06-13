@@ -22,6 +22,7 @@ plugins {
     id("org.gradlex.java-module-dependencies")
     id("com.adarshr.test-logger")
     id("com.hedera.block.repositories")
+    id("com.hedera.block.jpms-modules")
     id("com.hedera.block.spotless-conventions")
     id("com.hedera.block.spotless-java-conventions")
     id("com.hedera.block.spotless-kotlin-conventions")
@@ -87,5 +88,9 @@ tasks.jacocoTestReport.configure {
     shouldRunAfter(tasks.named("check"))
 }
 
-// Ensure the check task also runs the JaCoCo coverage report
-tasks.named("check").configure { dependsOn(tasks.named<JacocoReport>("jacocoTestReport")) }
+tasks.check {
+    // Ensure the check task also runs the JaCoCo coverage report
+    dependsOn(tasks.jacocoTestReport)
+    // Check dependency scopes in module-info.java
+    dependsOn(tasks.checkAllModuleInfo)
+}

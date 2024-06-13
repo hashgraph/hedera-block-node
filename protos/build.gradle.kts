@@ -15,12 +15,7 @@
  */
 
 plugins {
-    id("application")
-    id("com.hedera.block.conventions")
-    id("me.champeau.jmh")
+    id("java-library")
+    id("com.hedera.block.repositories")
+    id("com.hedera.block.protos")
 }
-
-val maven = publishing.publications.create<MavenPublication>("maven") { from(components["java"]) }
-
-signing.sign(maven)
-

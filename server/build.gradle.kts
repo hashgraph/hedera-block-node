@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-plugins { id("com.hedera.block.server") }
+plugins {
+    id("application")
+    id("com.hedera.block.server")
+}
 
 application {
     mainModule = "com.hedera.block.server"
@@ -22,9 +25,8 @@ application {
 }
 
 testModuleInfo {
-    requires("org.assertj.core")
-    requires("net.bytebuddy")
-    requires("org.junit.jupiter.api")
-    requires("org.junit.jupiter.params")
-    requiresStatic("com.github.spotbugs.annotations")
+    // requires("org.assertj.core")
+    // requires("net.bytebuddy")
+    // requires("org.junit.jupiter.api")
+    // requires("org.junit.jupiter.params")
 }
