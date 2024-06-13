@@ -21,6 +21,8 @@ plugins {
 include(":protos")
 include(":server")
 
+includeBuild(".") // https://github.com/gradle/gradle/issues/21490#issuecomment-1458887481
+
 gradleEnterprise {
     buildScan {
         termsOfServiceUrl = "https://gradle.com/terms-of-service"
@@ -33,6 +35,7 @@ dependencyResolutionManagement {
         create("libs") {
             // Compile time dependencies
 //            version("io.helidon.webserver", "4.0.8")
+            version("com.google.protobuf", "3.24.0")
             version("io.helidon.webserver.http2", "4.0.8")
 //            version("com.github.spotbugs.annotations", "4.7.3")
             version("io.helidon.webserver.grpc", "4.0.8")

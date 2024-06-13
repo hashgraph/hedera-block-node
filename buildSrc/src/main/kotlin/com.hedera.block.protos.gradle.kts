@@ -2,7 +2,6 @@ plugins {
     id("java")
     id("com.google.protobuf")
     id("com.hedera.block.conventions")
-//    id("com.hedera.gradle.jpms-modules")
 }
 
 sourceSets {

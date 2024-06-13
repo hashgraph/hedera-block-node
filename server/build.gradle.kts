@@ -16,8 +16,7 @@
 
 plugins {
     id("application")
-    id("com.hedera.block.conventions")
-//    id("com.hedera.block.server")
+    id("com.hedera.block.server")
 }
 
 application {
@@ -25,14 +24,9 @@ application {
     mainClass = "com.hedera.block.server.Server"
 }
 
-dependencies {
-    implementation(project(":protos"))
-    implementation("com.google.protobuf:protobuf-java:3.24.0")
-}
-
 testModuleInfo {
-    requires("org.assertj.core")
-    requires("net.bytebuddy")
-    requires("org.junit.jupiter.api")
-    requires("org.junit.jupiter.params")
+    // requires("org.assertj.core")
+    // requires("net.bytebuddy")
+    // requires("org.junit.jupiter.api")
+    // requires("org.junit.jupiter.params")
 }

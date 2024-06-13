@@ -19,8 +19,3 @@ plugins {
     id("com.hedera.block.repositories")
     id("com.hedera.block.protos")
 }
-
-dependencies {
-    api("com.google.protobuf:protobuf-java:3.24.0")
-}
-

@@ -17,7 +17,6 @@
 plugins {
     id("application")
     id("com.hedera.block.conventions")
-//    id("com.hedera.gradle.jpms-modules")
 //    id("com.google.protobuf")
     id("me.champeau.jmh")
 }

@@ -1,5 +1,6 @@
 package com.hedera.block.server;
 
+import com.hedera.block.protos.EchoServiceGrpcProto;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
