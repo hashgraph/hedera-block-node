@@ -5,9 +5,14 @@ import com.hedera.block.protos.EchoServiceGrpcProto;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
 
+import java.util.logging.Logger;
+
 import static io.helidon.webserver.grpc.ResponseHelper.complete;
 
 public class EchoService implements GrpcService {
+
+    Logger logger = Logger.getLogger(EchoService.class.getName());
+
     @Override
     public Descriptors.FileDescriptor proto() {
         return EchoServiceGrpcProto.getDescriptor();
@@ -26,6 +31,7 @@ public class EchoService implements GrpcService {
      */
     public void echo(EchoServiceGrpcProto.EchoRequest request, StreamObserver<EchoServiceGrpcProto.EchoResponse> observer) {
         String message = request.getMessage();
+        logger.info("EchoService grpc request: " + message);
         EchoServiceGrpcProto.EchoResponse response = EchoServiceGrpcProto.EchoResponse.newBuilder().setMessage(message).build();
         complete(observer, response);
     }

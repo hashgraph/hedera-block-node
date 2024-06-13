@@ -6,4 +6,5 @@ module com.hedera.block.server {
     requires io.helidon.common;
     requires io.helidon.webserver.grpc;
     requires io.helidon.webserver;
+    requires java.logging;
 }
