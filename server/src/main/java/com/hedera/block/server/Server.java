@@ -47,7 +47,7 @@ public class Server {
     private static ServerCalls.BidiStreamingMethod<Stream<BlockStreamServiceGrpcProto.Block>, StreamObserver<BlockStreamServiceGrpcProto.Block>> clientBidiStreamingMethod;
     private static ServerCalls.BidiStreamingMethod<Stream<BlockStreamServiceGrpcProto.BlockResponse>, StreamObserver<BlockStreamServiceGrpcProto.Block>> serverBidiStreamingMethod;
 
-    private static final Logger logger = Logger.getLogger(Server.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
 
     private Server() {}
 
@@ -89,7 +89,7 @@ public class Server {
                     .start();
 
         } catch (IOException e) {
-            logger.severe("There was an exception starting the server: " + e.getMessage());
+            LOGGER.severe("There was an exception starting the server: " + e.getMessage());
             throw new RuntimeException(e);
         }
     }

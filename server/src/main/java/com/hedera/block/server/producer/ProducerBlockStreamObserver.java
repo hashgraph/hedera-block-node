@@ -35,7 +35,7 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
 
     private final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator;
     private final StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> responseStreamObserver;
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger LOGGER = Logger.getLogger(getClass().getName());
 
     /**
      * Constructor for the ProducerBlockStreamObserver class.  It is responsible for calling the mediator with blocks
@@ -60,8 +60,6 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
      */
     @Override
     public void onNext(BlockStreamServiceGrpcProto.Block block) {
-        logger.finer("onNext called");
-
         streamMediator.notifyAll(block);
 
         BlockStreamServiceGrpcProto.BlockResponse blockResponse = BlockStreamServiceGrpcProto.BlockResponse.newBuilder().setId(block.getId()).build();
@@ -75,7 +73,7 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
      */
     @Override
     public void onError(Throwable t) {
-        logger.severe("onError called with the exception: " + t.getMessage());
+        LOGGER.severe("onError called with the exception: " + t.getMessage());
     }
 
     /**
@@ -85,8 +83,8 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
      */
     @Override
     public void onCompleted() {
-        logger.finer("StreamObserver completed");
+        LOGGER.finer("ProducerBlockStreamObserver completed");
         this.streamMediator.unsubscribeAll();
-        logger.finer("Unsubscribed all downstream consumers");
+        LOGGER.finer("Unsubscribed all downstream consumers");
     }
 }

@@ -42,7 +42,7 @@ import static com.hedera.block.server.Constants.*;
  */
 public class BlockStreamService implements GrpcService {
 
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger LOGGER = Logger.getLogger(getClass().getName());
 
     private final long timeoutThresholdMillis;
     private final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator;
@@ -100,7 +100,7 @@ public class BlockStreamService implements GrpcService {
      * via the streamMediator as well as sending responses back to the producer.
      */
     private StreamObserver<BlockStreamServiceGrpcProto.Block> streamSink(StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> responseStreamObserver) {
-        logger.finer("Executing bidirectional streamSink method");
+        LOGGER.finer("Executing bidirectional streamSink method");
 
         return new ProducerBlockStreamObserver(streamMediator, responseStreamObserver);
     }
@@ -115,7 +115,7 @@ public class BlockStreamService implements GrpcService {
      * handling responses from the consumer.
      */
     private StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> streamSource(StreamObserver<BlockStreamServiceGrpcProto.Block> responseStreamObserver) {
-        logger.finer("Executing bidirectional streamSource method");
+        LOGGER.finer("Executing bidirectional streamSource method");
 
         // Return a custom StreamObserver to handle streaming blocks from the producer.
         LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamObserver = new LiveStreamObserverImpl(

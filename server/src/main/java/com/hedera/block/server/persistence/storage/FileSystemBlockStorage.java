@@ -40,7 +40,7 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
     public static final String BLOCK_FILE_EXTENSION = ".blk";
 
     private final Path blockNodeRootPath;
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger LOGGER = Logger.getLogger(getClass().getName());
 
     /**
      * Constructs a FileSystemBlockStorage object.
@@ -51,15 +51,15 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
      */
     public FileSystemBlockStorage(String key, Config config) throws IOException {
 
-        logger.info("Initializing FileSystemBlockStorage");
-        logger.info(config.toString());
+        LOGGER.info("Initializing FileSystemBlockStorage");
+        LOGGER.info(config.toString());
 
         blockNodeRootPath = Path.of(config
                 .get(key)
                 .asString()
                 .get());
 
-        logger.info("Block Node Root Path: " + blockNodeRootPath);
+        LOGGER.info("Block Node Root Path: " + blockNodeRootPath);
 
         if (!blockNodeRootPath.isAbsolute()) {
             throw new IllegalArgumentException(BLOCKNODE_STORAGE_ROOT_PATH_KEY+ " must be an absolute path");
@@ -68,9 +68,9 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
         // Initialize the block node root directory if it does not exist
         if (Files.notExists(blockNodeRootPath)) {
             Files.createDirectory(blockNodeRootPath);
-            logger.info("Created block node root directory: " + blockNodeRootPath);
+            LOGGER.info("Created block node root directory: " + blockNodeRootPath);
         } else {
-            logger.info("Block node root directory exists: " + blockNodeRootPath);
+            LOGGER.info("Block node root directory exists: " + blockNodeRootPath);
         }
     }
 
@@ -84,14 +84,14 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
     public Optional<Long> write(BlockStreamServiceGrpcProto.Block block) {
         Long id = block.getId();
         String fullPath = resolvePath(id);
-        logger.finer("Wrote the file: " + fullPath);
+        Logger.finer("Wrote the file: " + fullPath);
 
         try (FileOutputStream fos = new FileOutputStream(fullPath)) {
             block.writeTo(fos);
             return Optional.of(id);
         }
         catch (IOException e) {
-            logger.severe("Error writing string to file: " + e.getMessage());
+            LOGGER.severe("Error writing string to file: " + e.getMessage());
             return Optional.empty();
         }
     }
@@ -112,7 +112,7 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
         try (FileInputStream fis = new FileInputStream(filePath)) {
             return Optional.of(BlockStreamServiceGrpcProto.Block.parseFrom(fis));
         } catch (FileNotFoundException io) {
-            logger.severe("Error reading file: " + filePath);
+            LOGGER.severe("Error reading file: " + filePath);
             return Optional.empty();
         } catch (IOException io) {
             throw new RuntimeException("Error reading file: " + filePath, io);
@@ -123,7 +123,7 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
 
         String fileName = id + BLOCK_FILE_EXTENSION;
         Path fullPath = blockNodeRootPath.resolve(fileName);
-        logger.finer("Resolved fullPath: " + fullPath);
+        LOGGER.finer("Resolved fullPath: " + fullPath);
 
         return fullPath.toString();
     }

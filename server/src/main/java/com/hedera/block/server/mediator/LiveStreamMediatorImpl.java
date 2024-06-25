@@ -36,7 +36,7 @@ import java.util.logging.Logger;
  */
 public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> {
 
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger LOGGER = Logger.getLogger(getClass().getName());
     private final Set<LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse>> subscribers = Collections.synchronizedSet(new LinkedHashSet<>());
 
     private final BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler;
@@ -69,9 +69,9 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
     @Override
     public void unsubscribe(LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver) {
         if (this.subscribers.remove(liveStreamObserver)) {
-            logger.finer("Successfully removed observer from subscription list");
+            LOGGER.finer("Successfully removed observer from subscription list");
         } else {
-            logger.finer("Failed to remove observer from subscription list");
+            LOGGER.finer("Failed to remove observer from subscription list");
         }
     }
 

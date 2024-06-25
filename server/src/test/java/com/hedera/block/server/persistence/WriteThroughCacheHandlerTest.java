@@ -50,7 +50,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class WriteThroughCacheHandlerTest {
 
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger LOGGER = Logger.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
     private static final String JUNIT = "my-junit-test";
@@ -61,7 +61,7 @@ public class WriteThroughCacheHandlerTest {
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
-        logger.info("Created temp directory: " + testPath.toString());
+        LOGGER.info("Created temp directory: " + testPath.toString());
 
         Map<String, String> testProperties = Map.of(JUNIT, testPath.toString());
         ConfigSource testConfigSource = MapConfigSource.builder().map(testProperties).build();

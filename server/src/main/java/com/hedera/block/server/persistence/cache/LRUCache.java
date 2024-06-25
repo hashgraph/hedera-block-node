@@ -33,7 +33,7 @@ import java.util.logging.Logger;
 public class LRUCache implements BlockCache<BlockStreamServiceGrpcProto.Block> {
 
     private final Map<Long, BlockStreamServiceGrpcProto.Block> m;
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger LOGGER = Logger.getLogger(getClass().getName());
 
     /**
      * Constructor for the LRUCache class.
@@ -41,7 +41,7 @@ public class LRUCache implements BlockCache<BlockStreamServiceGrpcProto.Block> {
      * @param maxEntries the maximum number of entries in the cache
      */
     public LRUCache(long maxEntries) {
-        logger.finer("Creating LRUCache with maxEntries: " + maxEntries);
+        LOGGER.finer("Creating LRUCache with maxEntries: " + maxEntries);
         m = Collections.synchronizedMap(new BNLinkedHashMap<>(maxEntries));
     }
 
