@@ -16,6 +16,3 @@ message Block {
 message BlockResponse {
     int64 id = 1;
 }
-
-message Empty {
-}
