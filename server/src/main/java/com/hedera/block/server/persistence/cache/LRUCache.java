@@ -33,15 +33,16 @@ import java.util.logging.Logger;
 public class LRUCache implements BlockCache<BlockStreamServiceGrpcProto.Block> {
 
     private final Map<Long, BlockStreamServiceGrpcProto.Block> m;
-    private final Logger LOGGER = Logger.getLogger(getClass().getName());
 
     /**
      * Constructor for the LRUCache class.
      *
      * @param maxEntries the maximum number of entries in the cache
      */
-    public LRUCache(long maxEntries) {
+    public LRUCache(final long maxEntries) {
+        final Logger LOGGER = Logger.getLogger(getClass().getName());
         LOGGER.finer("Creating LRUCache with maxEntries: " + maxEntries);
+
         m = Collections.synchronizedMap(new BNLinkedHashMap<>(maxEntries));
     }
 
@@ -52,8 +53,8 @@ public class LRUCache implements BlockCache<BlockStreamServiceGrpcProto.Block> {
      * @return the id of the block
      */
     @Override
-    public Long insert(BlockStreamServiceGrpcProto.Block block) {
-        long id = block.getId();
+    public Long insert(final BlockStreamServiceGrpcProto.Block block) {
+        final long id = block.getId();
         m.putIfAbsent(id, block);
         return id;
     }
@@ -65,7 +66,7 @@ public class LRUCache implements BlockCache<BlockStreamServiceGrpcProto.Block> {
      * @return the block
      */
     @Override
-    public BlockStreamServiceGrpcProto.Block get(Long id) {
+    public BlockStreamServiceGrpcProto.Block get(final Long id) {
         return m.get(id);
     }
 
@@ -75,7 +76,7 @@ public class LRUCache implements BlockCache<BlockStreamServiceGrpcProto.Block> {
      * @param id the id of the block to query
      */
     @Override
-    public boolean contains(Long id) {
+    public boolean contains(final Long id) {
         return m.containsKey(id);
     }
 }

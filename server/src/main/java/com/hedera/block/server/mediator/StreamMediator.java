@@ -38,14 +38,14 @@ public interface StreamMediator<U, V> {
      *
      * @param observer - the LiveStreamObserver to subscribe
      */
-    void subscribe(LiveStreamObserver<U, V> observer);
+    void subscribe(final LiveStreamObserver<U, V> observer);
 
     /**
      * Unsubscribes a LiveStreamObserver from the producer
      *
      * @param observer - the LiveStreamObserver to unsubscribe
      */
-    void unsubscribe(LiveStreamObserver<U, V> observer);
+    void unsubscribe(final LiveStreamObserver<U, V> observer);
 
     /**
      * Checks if the observer is subscribed to the producer
@@ -53,7 +53,7 @@ public interface StreamMediator<U, V> {
      * @param observer - the LiveStreamObserver to check
      * @return true if the observer is subscribed, false otherwise
      */
-    boolean isSubscribed(LiveStreamObserver<U, V> observer);
+    boolean isSubscribed(final LiveStreamObserver<U, V> observer);
 
     /**
      * Unsubscribes all LiveStreamObservers from the producer
@@ -65,5 +65,5 @@ public interface StreamMediator<U, V> {
      *
      * @param block - the block to pass to the subscribers
      */
-    void notifyAll(U block);
+    void notifyAll(final U block);
 }

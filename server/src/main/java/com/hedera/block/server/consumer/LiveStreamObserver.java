@@ -36,5 +36,5 @@ public interface LiveStreamObserver<U, V> extends StreamObserver<V> {
      *
      * @param block - the block to be passed to the observer
      */
-    void notify(U block);
+    void notify(final U block);
 }

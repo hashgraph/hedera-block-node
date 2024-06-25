@@ -31,7 +31,7 @@ public interface BlockCache<V> {
      * @param block the block to insert
      * @return the id of the block
      */
-    Long insert(V block);
+    Long insert(final V block);
 
     /**
      * Retrieves a block from the cache.
@@ -39,10 +39,10 @@ public interface BlockCache<V> {
      * @param id the id of the block to retrieve
      * @return the block
      */
-    V get(Long id);
+    V get(final Long id);
 
     /**
      * Checks if the cache contains a block with the given id.
      */
-    boolean contains(Long id);
+    boolean contains(final Long id);
 }

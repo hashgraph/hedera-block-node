@@ -46,8 +46,8 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
      * @param responseStreamObserver the response stream observer
      *
      */
-    public ProducerBlockStreamObserver(StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator,
-                                       StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> responseStreamObserver) {
+    public ProducerBlockStreamObserver(final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator,
+                                       final StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> responseStreamObserver) {
         this.streamMediator = streamMediator;
         this.responseStreamObserver = responseStreamObserver;
     }
@@ -59,10 +59,10 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
      * @param block - the block streamed from the upstream producer
      */
     @Override
-    public void onNext(BlockStreamServiceGrpcProto.Block block) {
+    public void onNext(final BlockStreamServiceGrpcProto.Block block) {
         streamMediator.notifyAll(block);
 
-        BlockStreamServiceGrpcProto.BlockResponse blockResponse = BlockStreamServiceGrpcProto.BlockResponse.newBuilder().setId(block.getId()).build();
+        final BlockStreamServiceGrpcProto.BlockResponse blockResponse = BlockStreamServiceGrpcProto.BlockResponse.newBuilder().setId(block.getId()).build();
         this.responseStreamObserver.onNext(blockResponse);
     }
 
@@ -72,7 +72,7 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
      * @param t the error occurred on the stream
      */
     @Override
-    public void onError(Throwable t) {
+    public void onError(final Throwable t) {
         LOGGER.severe("onError called with the exception: " + t.getMessage());
     }
 

@@ -35,7 +35,7 @@ public interface BlockPersistenceHandler<V> {
      * @param block the block to persist
      * @return the id of the block
      */
-    Long persist(V block);
+    Long persist(final V block);
 
     /**
      * Reads a block.
@@ -43,7 +43,7 @@ public interface BlockPersistenceHandler<V> {
      * @param id the id of the block to read
      * @return the block
      */
-    Optional<V> read(long id);
+    Optional<V> read(final long id);
 
     /**
      * Reads a range of blocks.
@@ -52,5 +52,5 @@ public interface BlockPersistenceHandler<V> {
      * @param endBlockId the id of the last block to read
      * @return a queue of blocks
      */
-    Queue<V> readRange(long startBlockId, long endBlockId);
+    Queue<V> readRange(final long startBlockId, final long endBlockId);
 }

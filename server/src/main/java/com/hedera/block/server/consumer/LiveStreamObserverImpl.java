@@ -47,7 +47,7 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
      * @param responseStreamObserver the response stream observer
      *
      */
-    public LiveStreamObserverImpl(long timeoutThresholdMillis,
+    public LiveStreamObserverImpl(final long timeoutThresholdMillis,
             StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> mediator,
             StreamObserver<BlockStreamServiceGrpcProto.Block> responseStreamObserver) {
 
@@ -65,7 +65,7 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
      * @param block - the block to be passed to the observer
      */
     @Override
-    public void notify(BlockStreamServiceGrpcProto.Block block) {
+    public void notify(final BlockStreamServiceGrpcProto.Block block) {
 
         if (System.currentTimeMillis() - this.consumerLivenessMillis > timeoutThresholdMillis) {
             if (mediator.isSubscribed(this)) {
@@ -84,7 +84,7 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
      * @param blockResponse - the BlockResponse passed to the server via the bidirectional stream to the downstream consumer
      */
     @Override
-    public void onNext(BlockStreamServiceGrpcProto.BlockResponse blockResponse) {
+    public void onNext(final BlockStreamServiceGrpcProto.BlockResponse blockResponse) {
 
         if (System.currentTimeMillis() - this.producerLivenessMillis > timeoutThresholdMillis) {
             if (mediator.isSubscribed(this)) {
@@ -104,7 +104,7 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
      * @param t the error occurred on the stream
      */
     @Override
-    public void onError(Throwable t) {
+    public void onError(final Throwable t) {
         LOGGER.severe("onError: " + t.getMessage());
         mediator.unsubscribe(this);
     }

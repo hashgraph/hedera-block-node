@@ -52,8 +52,8 @@ public class BlockStreamService implements GrpcService {
      * @param timeoutThresholdMillis the timeout threshold in milliseconds
      * @param streamMediator the stream mediator
      */
-    public BlockStreamService(long timeoutThresholdMillis,
-                              StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator) {
+    public BlockStreamService(final long timeoutThresholdMillis,
+                              final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator) {
 
         this.timeoutThresholdMillis = timeoutThresholdMillis;
         this.streamMediator = streamMediator;
@@ -85,7 +85,7 @@ public class BlockStreamService implements GrpcService {
      * @param routing the routing for the BlockStreamService
      */
     @Override
-    public void update(Routing routing) {
+    public void update(final Routing routing) {
         routing.bidi(CLIENT_STREAMING_METHOD_NAME, this::streamSink);
         routing.bidi(SERVER_STREAMING_METHOD_NAME, this::streamSource);
     }
@@ -98,7 +98,8 @@ public class BlockStreamService implements GrpcService {
      * @return a custom StreamObserver to handle streaming blocks from the producer to all subscribed consumers
      * via the streamMediator as well as sending responses back to the producer.
      */
-    private StreamObserver<BlockStreamServiceGrpcProto.Block> streamSink(StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> responseStreamObserver) {
+    private StreamObserver<BlockStreamServiceGrpcProto.Block> streamSink(
+            final StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> responseStreamObserver) {
         LOGGER.finer("Executing bidirectional streamSink method");
 
         return new ProducerBlockStreamObserver(streamMediator, responseStreamObserver);
@@ -113,14 +114,16 @@ public class BlockStreamService implements GrpcService {
      * @return a custom StreamObserver to handle streaming blocks from the producer to the consumer as well as
      * handling responses from the consumer.
      */
-    private StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> streamSource(StreamObserver<BlockStreamServiceGrpcProto.Block> responseStreamObserver) {
+    private StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> streamSource(final StreamObserver<BlockStreamServiceGrpcProto.Block> responseStreamObserver) {
         LOGGER.finer("Executing bidirectional streamSource method");
 
         // Return a custom StreamObserver to handle streaming blocks from the producer.
-        LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamObserver = new LiveStreamObserverImpl(
+        final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamObserver = new LiveStreamObserverImpl(
                 timeoutThresholdMillis,
                 streamMediator,
                 responseStreamObserver);
+
+        // Subscribe the observer to the mediator
         streamMediator.subscribe(streamObserver);
 
         return streamObserver;

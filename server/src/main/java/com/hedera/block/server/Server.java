@@ -56,18 +56,18 @@ public class Server {
      *
      * @param args Command line arguments. Not used at present,
      */
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
 
         try {
 
             // Set the global configuration
-            Config config = Config.create();
+            final Config config = Config.create();
             Config.global(config);
 
             // Initialize the block storage, cache, and service
-            BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage = new FileSystemBlockStorage(BLOCKNODE_STORAGE_ROOT_PATH_KEY, config);
-            BlockCache<BlockStreamServiceGrpcProto.Block> blockCache = new LRUCache(1000);
-            BlockStreamService blockStreamService = new BlockStreamService(1500,
+            final BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage = new FileSystemBlockStorage(BLOCKNODE_STORAGE_ROOT_PATH_KEY, config);
+            final BlockCache<BlockStreamServiceGrpcProto.Block> blockCache = new LRUCache(1000);
+            final BlockStreamService blockStreamService = new BlockStreamService(1500,
                     new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage, blockCache)));
 
             // Start the web server

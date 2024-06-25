@@ -22,10 +22,10 @@ public final class Constants {
     private Constants() {}
 
     // Config Constants
-    public static String BLOCKNODE_STORAGE_ROOT_PATH_KEY = "blocknode.storage.root.path";
+    public static final String BLOCKNODE_STORAGE_ROOT_PATH_KEY = "blocknode.storage.root.path";
 
     // Constants specified in the service definition of the .proto file
-    public static String SERVICE_NAME = "BlockStreamGrpc";
-    public static String CLIENT_STREAMING_METHOD_NAME = "StreamSink";
-    public static String SERVER_STREAMING_METHOD_NAME = "StreamSource";
+    public static final String SERVICE_NAME = "BlockStreamGrpc";
+    public static final String CLIENT_STREAMING_METHOD_NAME = "StreamSink";
+    public static final String SERVER_STREAMING_METHOD_NAME = "StreamSource";
 }

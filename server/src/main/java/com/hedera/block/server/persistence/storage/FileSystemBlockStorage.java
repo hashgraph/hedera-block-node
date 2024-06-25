@@ -49,7 +49,7 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
      * @param config the configuration
      * @throws IOException if an I/O error occurs while initializing the block node root directory
      */
-    public FileSystemBlockStorage(String key, Config config) throws IOException {
+    public FileSystemBlockStorage(final String key, final Config config) throws IOException {
 
         LOGGER.info("Initializing FileSystemBlockStorage");
         LOGGER.info(config.toString());
@@ -81,10 +81,10 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
      * @return the id of the block
      */
     @Override
-    public Optional<Long> write(BlockStreamServiceGrpcProto.Block block) {
+    public Optional<Long> write(final BlockStreamServiceGrpcProto.Block block) {
         Long id = block.getId();
-        String fullPath = resolvePath(id);
-        LOGGER.finer("Wrote the file: " + fullPath);
+        final String fullPath = resolvePath(id);
+        LOGGER.finer("Wrote the block file: " + fullPath);
 
         try (FileOutputStream fos = new FileOutputStream(fullPath)) {
             block.writeTo(fos);
@@ -103,11 +103,11 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
      * @return the block
      */
     @Override
-    public Optional<BlockStreamServiceGrpcProto.Block> read(Long id) {
+    public Optional<BlockStreamServiceGrpcProto.Block> read(final Long id) {
         return read(resolvePath(id));
     }
 
-    private Optional<BlockStreamServiceGrpcProto.Block> read(String filePath) {
+    private Optional<BlockStreamServiceGrpcProto.Block> read(final String filePath) {
 
         try (FileInputStream fis = new FileInputStream(filePath)) {
             return Optional.of(BlockStreamServiceGrpcProto.Block.parseFrom(fis));
@@ -119,7 +119,7 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
         }
     }
 
-    private String resolvePath(Long id) {
+    private String resolvePath(final Long id) {
 
         String fileName = id + BLOCK_FILE_EXTENSION;
         Path fullPath = blockNodeRootPath.resolve(fileName);

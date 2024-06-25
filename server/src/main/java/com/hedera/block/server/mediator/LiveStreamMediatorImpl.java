@@ -47,7 +47,7 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
      * @param blockPersistenceHandler the block persistence handler
      *
      */
-    public LiveStreamMediatorImpl(BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler) {
+    public LiveStreamMediatorImpl(final BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler) {
         this.blockPersistenceHandler = blockPersistenceHandler;
     }
 
@@ -57,7 +57,7 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
      * @param liveStreamObserver - the observer to be subscribed
      */
     @Override
-    public void subscribe(LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver) {
+    public void subscribe(final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver) {
         this.subscribers.add(liveStreamObserver);
     }
 
@@ -67,7 +67,7 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
      * @param liveStreamObserver - the observer to be unsubscribed
      */
     @Override
-    public void unsubscribe(LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver) {
+    public void unsubscribe(final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver) {
         if (this.subscribers.remove(liveStreamObserver)) {
             LOGGER.finer("Successfully removed observer from subscription list");
         } else {
@@ -82,7 +82,7 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
      * @return true if the observer is subscribed, false otherwise
      */
     @Override
-    public boolean isSubscribed(LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> observer) {
+    public boolean isSubscribed(final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> observer) {
         return this.subscribers.contains(observer);
     }
 
@@ -100,10 +100,10 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
      * @param block - the block to be notified to all observers
      */
     @Override
-    public void notifyAll(BlockStreamServiceGrpcProto.Block block) {
+    public void notifyAll(final BlockStreamServiceGrpcProto.Block block) {
 
         // Proxy the block to all live stream subscribers
-        for (LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> subscriber : subscribers) {
+        for (final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> subscriber : subscribers) {
             subscriber.notify(block);
         }
 

@@ -33,7 +33,7 @@ public interface BlockStorage<V> {
      * @param block the block to write
      * @return the id of the block
      */
-    Optional<Long> write(V block);
+    Optional<Long> write(final V block);
 
     /**
      * Reads a block from storage.
@@ -41,5 +41,5 @@ public interface BlockStorage<V> {
      * @param blockId the id of the block to read
      * @return the block
      */
-    Optional<V> read(Long blockId);
+    Optional<V> read(final Long blockId);
 }

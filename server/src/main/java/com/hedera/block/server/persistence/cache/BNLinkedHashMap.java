@@ -37,7 +37,7 @@ public class BNLinkedHashMap<K, V> extends LinkedHashMap<K, V> {
      *
      * @param maxEntries the maximum number of entries in the map
      */
-    BNLinkedHashMap(long maxEntries) {
+    BNLinkedHashMap(final long maxEntries) {
         this.maxEntries = maxEntries;
     }
 
@@ -48,7 +48,7 @@ public class BNLinkedHashMap<K, V> extends LinkedHashMap<K, V> {
      * @return true if the eldest entry should be removed, false otherwise
      */
     @Override
-    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+    protected boolean removeEldestEntry(final Map.Entry<K, V> eldest) {
 
         if (size() > maxEntries) {
             return true;

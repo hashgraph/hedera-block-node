@@ -43,8 +43,8 @@ public class WriteThroughCacheHandler implements BlockPersistenceHandler<BlockSt
      * @param blockStorage the block storage
      * @param blockCache the block cache
      */
-    public WriteThroughCacheHandler(BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage,
-                                    BlockCache<BlockStreamServiceGrpcProto.Block> blockCache) {
+    public WriteThroughCacheHandler(final BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage,
+                                    final BlockCache<BlockStreamServiceGrpcProto.Block> blockCache) {
         this.blockStorage = blockStorage;
         this.blockCache = blockCache;
     }
@@ -56,7 +56,7 @@ public class WriteThroughCacheHandler implements BlockPersistenceHandler<BlockSt
      * @return the block id
      */
     @Override
-    public Long persist(BlockStreamServiceGrpcProto.Block block) {
+    public Long persist(final BlockStreamServiceGrpcProto.Block block) {
 
         // Write-Through cache
         blockStorage.write(block);
@@ -71,13 +71,13 @@ public class WriteThroughCacheHandler implements BlockPersistenceHandler<BlockSt
      * @return the blocks
      */
     @Override
-    public Queue<BlockStreamServiceGrpcProto.Block> readRange(long startBlockId, long endBlockId) {
-        Queue<BlockStreamServiceGrpcProto.Block> blocks = new ArrayDeque<>();
+    public Queue<BlockStreamServiceGrpcProto.Block> readRange(final long startBlockId, final long endBlockId) {
+        final Queue<BlockStreamServiceGrpcProto.Block> blocks = new ArrayDeque<>();
 
         long count = startBlockId;
         Optional<BlockStreamServiceGrpcProto.Block> blockOpt = read(count);
         while (count <= endBlockId && blockOpt.isPresent()) {
-            BlockStreamServiceGrpcProto.Block block = blockOpt.get();
+            final BlockStreamServiceGrpcProto.Block block = blockOpt.get();
             blocks.offer(block);
             blockOpt = read(++count);
         }
@@ -92,7 +92,7 @@ public class WriteThroughCacheHandler implements BlockPersistenceHandler<BlockSt
      * @return the block
      */
     @Override
-    public Optional<BlockStreamServiceGrpcProto.Block> read(long id) {
+    public Optional<BlockStreamServiceGrpcProto.Block> read(final long id) {
 
         if (blockCache.contains(id)) {
             return Optional.of(blockCache.get(id));
