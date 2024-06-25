@@ -84,7 +84,7 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
     public Optional<Long> write(BlockStreamServiceGrpcProto.Block block) {
         Long id = block.getId();
         String fullPath = resolvePath(id);
-        Logger.finer("Wrote the file: " + fullPath);
+        LOGGER.finer("Wrote the file: " + fullPath);
 
         try (FileOutputStream fos = new FileOutputStream(fullPath)) {
             block.writeTo(fos);
