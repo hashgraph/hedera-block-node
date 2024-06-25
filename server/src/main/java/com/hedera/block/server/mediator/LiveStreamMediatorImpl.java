@@ -30,7 +30,6 @@ import java.util.Set;
  * LiveStreamMediatorImpl is the implementation of the StreamMediator interface.  It is responsible for managing
  * the subscription and unsubscription operations of downstream consumers.  It also proxies new blocks
  * to the subscribers as they arrive and persists the blocks to the block persistence store.
- *
  */
 public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> {
 
@@ -56,7 +55,7 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
      */
     @Override
     public void subscribe(final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver) {
-        this.subscribers.add(liveStreamObserver);
+        subscribers.add(liveStreamObserver);
     }
 
     /**
@@ -66,7 +65,7 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
      */
     @Override
     public void unsubscribe(final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver) {
-        if (this.subscribers.remove(liveStreamObserver)) {
+        if (subscribers.remove(liveStreamObserver)) {
             LOGGER.log(System.Logger.Level.DEBUG, "Successfully removed observer from subscription list");
         } else {
             LOGGER.log(System.Logger.Level.ERROR, "Failed to remove observer from subscription list");
@@ -81,7 +80,7 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
      */
     @Override
     public boolean isSubscribed(final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> observer) {
-        return this.subscribers.contains(observer);
+        return subscribers.contains(observer);
     }
 
     /**
@@ -89,7 +88,7 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
      */
     @Override
     public void unsubscribeAll() {
-        this.subscribers.clear();
+        subscribers.clear();
     }
 
     /**

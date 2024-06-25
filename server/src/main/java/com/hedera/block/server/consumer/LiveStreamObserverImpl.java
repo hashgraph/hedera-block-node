@@ -46,8 +46,8 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
      *
      */
     public LiveStreamObserverImpl(final long timeoutThresholdMillis,
-            StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> mediator,
-            StreamObserver<BlockStreamServiceGrpcProto.Block> responseStreamObserver) {
+            final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> mediator,
+            final StreamObserver<BlockStreamServiceGrpcProto.Block> responseStreamObserver) {
 
         this.mediator = mediator;
         this.responseStreamObserver = responseStreamObserver;
@@ -65,14 +65,14 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
     @Override
     public void notify(final BlockStreamServiceGrpcProto.Block block) {
 
-        if (System.currentTimeMillis() - this.consumerLivenessMillis > timeoutThresholdMillis) {
+        if (System.currentTimeMillis() - consumerLivenessMillis > timeoutThresholdMillis) {
             if (mediator.isSubscribed(this)) {
                 LOGGER.log(System.Logger.Level.DEBUG, "Consumer timeout threshold exceeded.  Unsubscribing observer.");
                 mediator.unsubscribe(this);
             }
         } else {
-            this.producerLivenessMillis = System.currentTimeMillis();
-            this.responseStreamObserver.onNext(block);
+            producerLivenessMillis = System.currentTimeMillis();
+            responseStreamObserver.onNext(block);
         }
     }
 
@@ -84,14 +84,14 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
     @Override
     public void onNext(final BlockStreamServiceGrpcProto.BlockResponse blockResponse) {
 
-        if (System.currentTimeMillis() - this.producerLivenessMillis > timeoutThresholdMillis) {
+        if (System.currentTimeMillis() - producerLivenessMillis > timeoutThresholdMillis) {
             if (mediator.isSubscribed(this)) {
                 LOGGER.log(System.Logger.Level.DEBUG, "Producer timeout threshold exceeded.  Unsubscribing observer.");
                 mediator.unsubscribe(this);
             }
         } else {
             LOGGER.log(System.Logger.Level.DEBUG, "Received response block " + blockResponse);
-            this.consumerLivenessMillis = System.currentTimeMillis();
+            consumerLivenessMillis = System.currentTimeMillis();
         }
     }
 

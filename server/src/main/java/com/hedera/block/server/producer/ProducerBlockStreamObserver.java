@@ -61,7 +61,7 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
         streamMediator.notifyAll(block);
 
         final BlockStreamServiceGrpcProto.BlockResponse blockResponse = BlockStreamServiceGrpcProto.BlockResponse.newBuilder().setId(block.getId()).build();
-        this.responseStreamObserver.onNext(blockResponse);
+        responseStreamObserver.onNext(blockResponse);
     }
 
     /**
@@ -82,7 +82,7 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
     @Override
     public void onCompleted() {
         LOGGER.log(System.Logger.Level.DEBUG, "ProducerBlockStreamObserver completed");
-        this.streamMediator.unsubscribeAll();
+        streamMediator.unsubscribeAll();
         LOGGER.log(System.Logger.Level.DEBUG, "Unsubscribed all downstream consumers");
     }
 }
