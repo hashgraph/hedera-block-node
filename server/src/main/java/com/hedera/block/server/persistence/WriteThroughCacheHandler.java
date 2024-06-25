@@ -25,8 +25,6 @@ import com.hedera.block.server.persistence.storage.BlockStorage;
 import java.util.ArrayDeque;
 import java.util.Optional;
 import java.util.Queue;
-import java.util.function.Predicate;
-import java.util.logging.Logger;
 
 /**
  * Write-Through cache handler coordinates between the block storage and the block cache to ensure the block

@@ -20,10 +20,10 @@ package com.hedera.block.server;
 
 import com.google.protobuf.Descriptors;
 import com.hedera.block.protos.BlockStreamServiceGrpcProto;
-import com.hedera.block.server.producer.ProducerBlockStreamObserver;
-import com.hedera.block.server.mediator.StreamMediator;
-import com.hedera.block.server.consumer.LiveStreamObserverImpl;
 import com.hedera.block.server.consumer.LiveStreamObserver;
+import com.hedera.block.server.consumer.LiveStreamObserverImpl;
+import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.block.server.producer.ProducerBlockStreamObserver;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
 

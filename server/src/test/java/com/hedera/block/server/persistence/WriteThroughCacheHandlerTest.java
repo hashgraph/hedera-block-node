@@ -29,7 +29,6 @@ import io.helidon.config.MapConfigSource;
 import io.helidon.config.spi.ConfigSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileInputStream;
@@ -39,12 +38,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
-import static com.hedera.block.server.Constants.BLOCKNODE_STORAGE_ROOT_PATH_KEY;
 import static com.hedera.block.server.persistence.PersistTestUtils.generateBlocks;
 import static org.junit.jupiter.api.Assertions.*;
 

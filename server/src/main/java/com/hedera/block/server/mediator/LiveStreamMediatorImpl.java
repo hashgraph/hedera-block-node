@@ -24,7 +24,6 @@ import com.hedera.block.server.persistence.BlockPersistenceHandler;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
