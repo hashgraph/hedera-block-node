@@ -22,8 +22,6 @@ import com.hedera.block.protos.BlockStreamServiceGrpcProto;
 import com.hedera.block.server.mediator.StreamMediator;
 import io.grpc.stub.StreamObserver;
 
-import java.util.logging.Logger;
-
 /**
  * The LiveStreamObserverImpl class implements the LiveStreamObserver interface to pass blocks to the downstream consumer
  * via the notify method and manage the bidirectional stream to the consumer via the onNext, onError, and onCompleted methods.
@@ -31,7 +29,7 @@ import java.util.logging.Logger;
  */
 public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> {
 
-    private final Logger LOGGER = Logger.getLogger(getClass().getName());
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> mediator;
     private final StreamObserver<BlockStreamServiceGrpcProto.Block> responseStreamObserver;
@@ -69,7 +67,7 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
 
         if (System.currentTimeMillis() - this.consumerLivenessMillis > timeoutThresholdMillis) {
             if (mediator.isSubscribed(this)) {
-                LOGGER.info("Consumer timeout threshold exceeded.  Unsubscribing observer.");
+                LOGGER.log(System.Logger.Level.DEBUG, "Consumer timeout threshold exceeded.  Unsubscribing observer.");
                 mediator.unsubscribe(this);
             }
         } else {
@@ -88,11 +86,11 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
 
         if (System.currentTimeMillis() - this.producerLivenessMillis > timeoutThresholdMillis) {
             if (mediator.isSubscribed(this)) {
-                LOGGER.info("Producer timeout threshold exceeded.  Unsubscribing observer.");
+                LOGGER.log(System.Logger.Level.DEBUG, "Producer timeout threshold exceeded.  Unsubscribing observer.");
                 mediator.unsubscribe(this);
             }
         } else {
-            LOGGER.finer("Received response block " + blockResponse);
+            LOGGER.log(System.Logger.Level.DEBUG, "Received response block " + blockResponse);
             this.consumerLivenessMillis = System.currentTimeMillis();
         }
     }
@@ -105,7 +103,7 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
      */
     @Override
     public void onError(final Throwable t) {
-        LOGGER.severe("onError: " + t.getMessage());
+        LOGGER.log(System.Logger.Level.ERROR, t.getMessage());
         mediator.unsubscribe(this);
     }
 
@@ -116,8 +114,8 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
      */
     @Override
     public void onCompleted() {
-        LOGGER.finer("gRPC connection completed.  Unsubscribing observer.");
+        LOGGER.log(System.Logger.Level.DEBUG, "gRPC connection completed.  Unsubscribing observer.");
         mediator.unsubscribe(this);
-        LOGGER.finer("Unsubscribed observer.");
+        LOGGER.log(System.Logger.Level.DEBUG, "Unsubscribed observer.");
     }
 }

@@ -25,7 +25,6 @@ import com.hedera.block.server.persistence.BlockPersistenceHandler;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.logging.Logger;
 
 /**
  * LiveStreamMediatorImpl is the implementation of the StreamMediator interface.  It is responsible for managing
@@ -35,7 +34,7 @@ import java.util.logging.Logger;
  */
 public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> {
 
-    private final Logger LOGGER = Logger.getLogger(getClass().getName());
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
     private final Set<LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse>> subscribers = Collections.synchronizedSet(new LinkedHashSet<>());
 
     private final BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler;
@@ -68,9 +67,9 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
     @Override
     public void unsubscribe(final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver) {
         if (this.subscribers.remove(liveStreamObserver)) {
-            LOGGER.finer("Successfully removed observer from subscription list");
+            LOGGER.log(System.Logger.Level.DEBUG, "Successfully removed observer from subscription list");
         } else {
-            LOGGER.finer("Failed to remove observer from subscription list");
+            LOGGER.log(System.Logger.Level.ERROR, "Failed to remove observer from subscription list");
         }
     }
 

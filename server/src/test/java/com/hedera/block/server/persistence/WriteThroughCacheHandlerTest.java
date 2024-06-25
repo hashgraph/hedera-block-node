@@ -38,14 +38,13 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.Logger;
 
 import static com.hedera.block.server.persistence.PersistTestUtils.generateBlocks;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class WriteThroughCacheHandlerTest {
 
-    private final Logger LOGGER = Logger.getLogger(getClass().getName());
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
     private static final String JUNIT = "my-junit-test";
@@ -56,7 +55,7 @@ public class WriteThroughCacheHandlerTest {
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.info("Created temp directory: " + testPath.toString());
+        LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
 
         Map<String, String> testProperties = Map.of(JUNIT, testPath.toString());
         ConfigSource testConfigSource = MapConfigSource.builder().map(testProperties).build();

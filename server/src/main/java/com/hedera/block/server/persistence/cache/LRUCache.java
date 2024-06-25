@@ -23,7 +23,6 @@ import jakarta.inject.Singleton;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * An LRU cache implementation which uses a custom LinkedHashMap to store blocks in memory and
@@ -40,8 +39,8 @@ public class LRUCache implements BlockCache<BlockStreamServiceGrpcProto.Block> {
      * @param maxEntries the maximum number of entries in the cache
      */
     public LRUCache(final long maxEntries) {
-        final Logger LOGGER = Logger.getLogger(getClass().getName());
-        LOGGER.finer("Creating LRUCache with maxEntries: " + maxEntries);
+        final System.Logger LOGGER = System.getLogger(getClass().getName());
+        LOGGER.log(System.Logger.Level.INFO, "Creating LRUCache with maxEntries: " + maxEntries);
 
         m = Collections.synchronizedMap(new BNLinkedHashMap<>(maxEntries));
     }

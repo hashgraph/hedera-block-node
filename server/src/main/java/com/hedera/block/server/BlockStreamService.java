@@ -27,8 +27,6 @@ import com.hedera.block.server.producer.ProducerBlockStreamObserver;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
 
-import java.util.logging.Logger;
-
 import static com.hedera.block.server.Constants.*;
 
 /**
@@ -41,7 +39,7 @@ import static com.hedera.block.server.Constants.*;
  */
 public class BlockStreamService implements GrpcService {
 
-    private final Logger LOGGER = Logger.getLogger(getClass().getName());
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final long timeoutThresholdMillis;
     private final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator;
@@ -100,7 +98,7 @@ public class BlockStreamService implements GrpcService {
      */
     private StreamObserver<BlockStreamServiceGrpcProto.Block> streamSink(
             final StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> responseStreamObserver) {
-        LOGGER.finer("Executing bidirectional streamSink method");
+        LOGGER.log(System.Logger.Level.DEBUG, "Executing bidirectional streamSink method");
 
         return new ProducerBlockStreamObserver(streamMediator, responseStreamObserver);
     }
@@ -115,7 +113,7 @@ public class BlockStreamService implements GrpcService {
      * handling responses from the consumer.
      */
     private StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> streamSource(final StreamObserver<BlockStreamServiceGrpcProto.Block> responseStreamObserver) {
-        LOGGER.finer("Executing bidirectional streamSource method");
+        LOGGER.log(System.Logger.Level.DEBUG, "Executing bidirectional streamSource method");
 
         // Return a custom StreamObserver to handle streaming blocks from the producer.
         final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamObserver = new LiveStreamObserverImpl(

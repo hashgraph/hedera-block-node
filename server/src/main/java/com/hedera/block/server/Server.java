@@ -33,7 +33,6 @@ import io.helidon.webserver.grpc.GrpcRouting;
 import io.helidon.webserver.http.HttpRouting;
 
 import java.io.IOException;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static com.hedera.block.server.Constants.*;
@@ -47,7 +46,7 @@ public class Server {
     private static ServerCalls.BidiStreamingMethod<Stream<BlockStreamServiceGrpcProto.Block>, StreamObserver<BlockStreamServiceGrpcProto.Block>> clientBidiStreamingMethod;
     private static ServerCalls.BidiStreamingMethod<Stream<BlockStreamServiceGrpcProto.BlockResponse>, StreamObserver<BlockStreamServiceGrpcProto.Block>> serverBidiStreamingMethod;
 
-    private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
+    private static final System.Logger LOGGER = System.getLogger(Server.class.getName());
 
     private Server() {}
 
@@ -89,7 +88,7 @@ public class Server {
                     .start();
 
         } catch (IOException e) {
-            LOGGER.severe("There was an exception starting the server: " + e.getMessage());
+            LOGGER.log(System.Logger.Level.ERROR, "There was an exception starting the server: " + e.getMessage());
             throw new RuntimeException(e);
         }
     }

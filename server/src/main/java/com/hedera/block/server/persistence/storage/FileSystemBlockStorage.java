@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.logging.Logger;
 
 import static com.hedera.block.server.Constants.BLOCKNODE_STORAGE_ROOT_PATH_KEY;
 
@@ -40,7 +39,7 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
     public static final String BLOCK_FILE_EXTENSION = ".blk";
 
     private final Path blockNodeRootPath;
-    private final Logger LOGGER = Logger.getLogger(getClass().getName());
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     /**
      * Constructs a FileSystemBlockStorage object.
@@ -51,15 +50,15 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
      */
     public FileSystemBlockStorage(final String key, final Config config) throws IOException {
 
-        LOGGER.info("Initializing FileSystemBlockStorage");
-        LOGGER.info(config.toString());
+        LOGGER.log(System.Logger.Level.INFO, "Initializing FileSystemBlockStorage");
+        LOGGER.log(System.Logger.Level.INFO, config.toString());
 
         blockNodeRootPath = Path.of(config
                 .get(key)
                 .asString()
                 .get());
 
-        LOGGER.info("Block Node Root Path: " + blockNodeRootPath);
+        LOGGER.log(System.Logger.Level.INFO, "Block Node Root Path: " + blockNodeRootPath);
 
         if (!blockNodeRootPath.isAbsolute()) {
             throw new IllegalArgumentException(BLOCKNODE_STORAGE_ROOT_PATH_KEY+ " must be an absolute path");
@@ -68,9 +67,9 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
         // Initialize the block node root directory if it does not exist
         if (Files.notExists(blockNodeRootPath)) {
             Files.createDirectory(blockNodeRootPath);
-            LOGGER.info("Created block node root directory: " + blockNodeRootPath);
+            LOGGER.log(System.Logger.Level.INFO, "Created block node root directory: " + blockNodeRootPath);
         } else {
-            LOGGER.info("Block node root directory exists: " + blockNodeRootPath);
+            LOGGER.log(System.Logger.Level.INFO, "Block node root directory exists: " + blockNodeRootPath);
         }
     }
 
@@ -84,14 +83,15 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
     public Optional<Long> write(final BlockStreamServiceGrpcProto.Block block) {
         Long id = block.getId();
         final String fullPath = resolvePath(id);
-        LOGGER.finer("Wrote the block file: " + fullPath);
 
         try (FileOutputStream fos = new FileOutputStream(fullPath)) {
             block.writeTo(fos);
+            LOGGER.log(System.Logger.Level.DEBUG, "Wrote the block file: " + fullPath);
+
             return Optional.of(id);
         }
         catch (IOException e) {
-            LOGGER.severe("Error writing string to file: " + e.getMessage());
+            LOGGER.log(System.Logger.Level.ERROR, "Error writing the protobuf to file: " + e.getMessage());
             return Optional.empty();
         }
     }
@@ -112,7 +112,7 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
         try (FileInputStream fis = new FileInputStream(filePath)) {
             return Optional.of(BlockStreamServiceGrpcProto.Block.parseFrom(fis));
         } catch (FileNotFoundException io) {
-            LOGGER.severe("Error reading file: " + filePath);
+            LOGGER.log(System.Logger.Level.ERROR, "Error reading file: " + filePath);
             return Optional.empty();
         } catch (IOException io) {
             throw new RuntimeException("Error reading file: " + filePath, io);
@@ -123,7 +123,7 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
 
         String fileName = id + BLOCK_FILE_EXTENSION;
         Path fullPath = blockNodeRootPath.resolve(fileName);
-        LOGGER.finer("Resolved fullPath: " + fullPath);
+        LOGGER.log(System.Logger.Level.DEBUG, "Resolved fullPath: " + fullPath);
 
         return fullPath.toString();
     }
