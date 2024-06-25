@@ -38,7 +38,6 @@ import static com.hedera.block.server.Constants.*;
  *
  * <p>The class provides two main methods, streamSink and streamSource, which handle the client and server streaming
  * respectively. These methods return custom StreamObservers which are used to observe and respond to the streams.
- *
  */
 public class BlockStreamService implements GrpcService {
 
