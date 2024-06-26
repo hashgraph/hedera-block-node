@@ -25,11 +25,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Clock;
+import java.time.Instant;
+import java.time.InstantSource;
+import java.time.ZoneId;
 
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class LiveStreamObserverImplTest {
+
+    private final long TIMEOUT_THRESHOLD_MILLIS = 50L;
+    private final long TEST_TIME = 1719427664950L;
 
     @Mock
     private StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator;
@@ -41,9 +47,9 @@ public class LiveStreamObserverImplTest {
     @Test
     public void testConsumerTimeoutWithinWindow() {
         final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver = new LiveStreamObserverImpl(
-                50,
-                Clock.systemDefaultZone(),
-                Clock.systemDefaultZone(),
+                TIMEOUT_THRESHOLD_MILLIS,
+                buildClockInsideWindow(TEST_TIME, TIMEOUT_THRESHOLD_MILLIS),
+                buildClockInsideWindow(TEST_TIME, TIMEOUT_THRESHOLD_MILLIS),
                 streamMediator,
                 responseStreamObserver);
         BlockStreamServiceGrpcProto.Block newBlock = BlockStreamServiceGrpcProto.Block.newBuilder().build();
@@ -57,15 +63,15 @@ public class LiveStreamObserverImplTest {
 
     @Test
     public void testConsumerTimeoutOutsideWindow() throws InterruptedException {
+
         final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver = new LiveStreamObserverImpl(
-                50,
-                Clock.systemDefaultZone(),
-                Clock.systemDefaultZone(),
+                TIMEOUT_THRESHOLD_MILLIS,
+                buildClockOutsideWindow(TEST_TIME, TIMEOUT_THRESHOLD_MILLIS),
+                buildClockOutsideWindow(TEST_TIME, TIMEOUT_THRESHOLD_MILLIS),
                 streamMediator,
                 responseStreamObserver);
 
-        Thread.sleep(51);
-        BlockStreamServiceGrpcProto.Block newBlock = BlockStreamServiceGrpcProto.Block.newBuilder().build();
+        final BlockStreamServiceGrpcProto.Block newBlock = BlockStreamServiceGrpcProto.Block.newBuilder().build();
         when(streamMediator.isSubscribed(liveStreamObserver)).thenReturn(true);
         liveStreamObserver.notify(newBlock);
         verify(streamMediator).unsubscribe(liveStreamObserver);
@@ -74,9 +80,9 @@ public class LiveStreamObserverImplTest {
     @Test
     public void testProducerTimeoutWithinWindow() {
         final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver = new LiveStreamObserverImpl(
-                50,
-                Clock.systemDefaultZone(),
-                Clock.systemDefaultZone(),
+                TIMEOUT_THRESHOLD_MILLIS,
+                buildClockInsideWindow(TEST_TIME, TIMEOUT_THRESHOLD_MILLIS),
+                buildClockInsideWindow(TEST_TIME, TIMEOUT_THRESHOLD_MILLIS),
                 streamMediator,
                 responseStreamObserver);
 
@@ -90,9 +96,9 @@ public class LiveStreamObserverImplTest {
     @Test
     public void testProducerTimeoutOutsideWindow() throws InterruptedException {
         final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver = new LiveStreamObserverImpl(
-                50,
-                Clock.systemDefaultZone(),
-                Clock.systemDefaultZone(),
+                TIMEOUT_THRESHOLD_MILLIS,
+                buildClockOutsideWindow(TEST_TIME, TIMEOUT_THRESHOLD_MILLIS),
+                buildClockOutsideWindow(TEST_TIME, TIMEOUT_THRESHOLD_MILLIS),
                 streamMediator,
                 responseStreamObserver);
 
@@ -101,5 +107,33 @@ public class LiveStreamObserverImplTest {
         liveStreamObserver.onNext(blockResponse);
 
         verify(streamMediator).unsubscribe(liveStreamObserver);
+    }
+
+    private static InstantSource buildClockInsideWindow(long testTime, long timeoutThresholdMillis) {
+        return new TestClock(testTime, testTime + timeoutThresholdMillis - 1);
+    }
+
+    private static InstantSource buildClockOutsideWindow(long testTime, long timeoutThresholdMillis) {
+        return new TestClock(testTime, testTime + timeoutThresholdMillis + 1);
+    }
+
+    static class TestClock implements InstantSource {
+
+        private int index;
+        private final Long[] millis;
+
+        TestClock(Long... millis) {
+            this.millis = millis;
+        }
+
+        @Override
+        public long millis() {
+            return millis[index++];
+        }
+
+        @Override
+        public Instant instant() {
+            return null;
+        }
     }
 }
