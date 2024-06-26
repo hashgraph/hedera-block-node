@@ -8,5 +8,4 @@ module com.hedera.block.server {
     requires io.helidon.webserver.grpc;
     requires io.helidon.webserver;
     requires jakarta.inject;
-    requires static java.logging;
 }
