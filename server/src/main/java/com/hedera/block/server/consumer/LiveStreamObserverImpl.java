@@ -23,7 +23,6 @@ import io.grpc.stub.StreamObserver;
 /**
  * The LiveStreamObserverImpl class implements the LiveStreamObserver interface to pass blocks to the downstream consumer
  * via the notify method and manage the bidirectional stream to the consumer via the onNext, onError, and onCompleted methods.
- *
  */
 public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> {
 
@@ -41,7 +40,6 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
      *
      * @param mediator the mediator
      * @param responseStreamObserver the response stream observer
-     *
      */
     public LiveStreamObserverImpl(
             final long timeoutThresholdMillis,
@@ -102,7 +100,7 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
      */
     @Override
     public void onError(final Throwable t) {
-        LOGGER.log(System.Logger.Level.ERROR, t.getMessage());
+        LOGGER.log(System.Logger.Level.ERROR, t);
         mediator.unsubscribe(this);
     }
 

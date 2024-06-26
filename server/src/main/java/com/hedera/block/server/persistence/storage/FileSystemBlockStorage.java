@@ -67,7 +67,7 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
             Files.createDirectory(blockNodeRootPath);
             LOGGER.log(System.Logger.Level.INFO, "Created block node root directory: " + blockNodeRootPath);
         } else {
-            LOGGER.log(System.Logger.Level.INFO, "Block node root directory exists: " + blockNodeRootPath);
+            LOGGER.log(System.Logger.Level.INFO, "Using existing block node root directory: " + blockNodeRootPath);
         }
     }
 
@@ -84,12 +84,11 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
 
         try (FileOutputStream fos = new FileOutputStream(fullPath)) {
             block.writeTo(fos);
-            LOGGER.log(System.Logger.Level.DEBUG, "Wrote the block file: " + fullPath);
+            LOGGER.log(System.Logger.Level.DEBUG, "Successfully wrote the block file: " + fullPath);
 
             return Optional.of(id);
-        }
-        catch (IOException e) {
-            LOGGER.log(System.Logger.Level.ERROR, "Error writing the protobuf to file: " + e.getMessage());
+        } catch (IOException e) {
+            LOGGER.log(System.Logger.Level.ERROR, "Error writing the protobuf to a file", e);
             return Optional.empty();
         }
     }
@@ -110,7 +109,7 @@ public class FileSystemBlockStorage implements BlockStorage<BlockStreamServiceGr
         try (FileInputStream fis = new FileInputStream(filePath)) {
             return Optional.of(BlockStreamServiceGrpcProto.Block.parseFrom(fis));
         } catch (FileNotFoundException io) {
-            LOGGER.log(System.Logger.Level.ERROR, "Error reading file: " + filePath);
+            LOGGER.log(System.Logger.Level.ERROR, "Error reading file: " + filePath, io);
             return Optional.empty();
         } catch (IOException io) {
             throw new RuntimeException("Error reading file: " + filePath, io);

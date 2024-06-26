@@ -28,9 +28,10 @@ import io.grpc.stub.StreamObserver;
  */
 public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamServiceGrpcProto.Block> {
 
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+
     private final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator;
     private final StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> responseStreamObserver;
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     /**
      * Constructor for the ProducerBlockStreamObserver class.  It is responsible for calling the mediator with blocks
@@ -67,7 +68,7 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
      */
     @Override
     public void onError(final Throwable t) {
-        LOGGER.log(System.Logger.Level.ERROR, "onError method called with the exception: " + t.getMessage());
+        LOGGER.log(System.Logger.Level.ERROR, "onError method invoked with an exception", t);
     }
 
     /**

@@ -40,7 +40,6 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
      * Constructor for the LiveStreamMediatorImpl class.
      *
      * @param blockPersistenceHandler the block persistence handler
-     *
      */
     public LiveStreamMediatorImpl(final BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler) {
         this.blockPersistenceHandler = blockPersistenceHandler;
@@ -86,6 +85,7 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
      */
     @Override
     public void unsubscribeAll() {
+        LOGGER.log(System.Logger.Level.DEBUG, "Unsubscribing all observers from the mediator");
         subscribers.clear();
     }
 
@@ -96,6 +96,8 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
      */
     @Override
     public void notifyAll(final BlockStreamServiceGrpcProto.Block block) {
+
+        LOGGER.log(System.Logger.Level.DEBUG, "Notifying " + subscribers.size() + " observers of a new block");
 
         // Proxy the block to all live stream subscribers
         for (final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> subscriber : subscribers) {

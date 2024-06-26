@@ -86,7 +86,7 @@ public class Server {
                     .start();
 
         } catch (IOException e) {
-            LOGGER.log(System.Logger.Level.ERROR, "There was an exception starting the server: " + e.getMessage());
+            LOGGER.log(System.Logger.Level.ERROR, "An exception was thrown starting the server", e);
             throw new RuntimeException(e);
         }
     }
