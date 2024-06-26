@@ -40,7 +40,9 @@ dependencyResolutionManagement {
 
             // Testing only versions
             version("org.assertj.core", "3.23.1")
-            version("org.junit.jupiter.api", "5.10.0")
+            version("org.junit.jupiter.api", "5.10.2")
+            version("org.mockito", "5.8.0")
+            version("org.mockito.junit.jupiter", "5.8.0")
         }
     }
 }

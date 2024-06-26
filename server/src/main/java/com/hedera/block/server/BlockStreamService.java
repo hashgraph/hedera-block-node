@@ -25,6 +25,8 @@ import com.hedera.block.server.producer.ProducerBlockStreamObserver;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
 
+import java.time.Clock;
+
 import static com.hedera.block.server.Constants.*;
 
 /**
@@ -117,6 +119,8 @@ public class BlockStreamService implements GrpcService {
         // Return a custom StreamObserver to handle streaming blocks from the producer.
         final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamObserver = new LiveStreamObserverImpl(
                 timeoutThresholdMillis,
+                Clock.systemDefaultZone(),
+                Clock.systemDefaultZone(),
                 streamMediator,
                 responseStreamObserver);
 
