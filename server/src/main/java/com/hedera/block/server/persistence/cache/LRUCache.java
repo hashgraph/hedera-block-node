@@ -29,7 +29,7 @@ import java.util.Map;
 @Singleton
 public class LRUCache implements BlockCache<BlockStreamServiceGrpcProto.Block> {
 
-    private final Map<Long, BlockStreamServiceGrpcProto.Block> m;
+    private final Map<Long, BlockStreamServiceGrpcProto.Block> cache;
 
     /**
      * Constructor for the LRUCache class.
@@ -40,7 +40,7 @@ public class LRUCache implements BlockCache<BlockStreamServiceGrpcProto.Block> {
         final System.Logger LOGGER = System.getLogger(getClass().getName());
         LOGGER.log(System.Logger.Level.INFO, "Creating LRUCache with maxEntries: " + maxEntries);
 
-        m = Collections.synchronizedMap(new BNLinkedHashMap<>(maxEntries));
+        cache = Collections.synchronizedMap(new BNLinkedHashMap<>(maxEntries));
     }
 
     /**
@@ -52,7 +52,7 @@ public class LRUCache implements BlockCache<BlockStreamServiceGrpcProto.Block> {
     @Override
     public Long insert(final BlockStreamServiceGrpcProto.Block block) {
         final long id = block.getId();
-        m.putIfAbsent(id, block);
+        cache.putIfAbsent(id, block);
         return id;
     }
 
@@ -64,7 +64,7 @@ public class LRUCache implements BlockCache<BlockStreamServiceGrpcProto.Block> {
      */
     @Override
     public BlockStreamServiceGrpcProto.Block get(final Long id) {
-        return m.get(id);
+        return cache.get(id);
     }
 
     /**
@@ -74,6 +74,6 @@ public class LRUCache implements BlockCache<BlockStreamServiceGrpcProto.Block> {
      */
     @Override
     public boolean contains(final Long id) {
-        return m.containsKey(id);
+        return cache.containsKey(id);
     }
 }

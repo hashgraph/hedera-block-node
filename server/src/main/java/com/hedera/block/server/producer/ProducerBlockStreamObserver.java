@@ -25,7 +25,6 @@ import io.grpc.stub.StreamObserver;
  * gRPC service implementation.  Helidon calls methods on this class as networking events occur
  * with the connection to the upstream producer (e.g. blocks streamed from the Consensus Node to
  * the server).
- *
  */
 public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamServiceGrpcProto.Block> {
 
@@ -40,7 +39,6 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
      *
      * @param streamMediator the stream mediator
      * @param responseStreamObserver the response stream observer
-     *
      */
     public ProducerBlockStreamObserver(final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator,
                                        final StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> responseStreamObserver) {
@@ -52,7 +50,7 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
      * Helidon triggers this method when it receives a new block from the upstream producer.  The method notifies all
      * the mediator subscribers and sends a response back to the upstream producer.
      *
-     * @param block - the block streamed from the upstream producer
+     * @param block the block streamed from the upstream producer
      */
     @Override
     public void onNext(final BlockStreamServiceGrpcProto.Block block) {
@@ -75,7 +73,6 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
     /**
      * Helidon triggers this method when the bidirectional stream to the upstream producer is completed.
      * Unsubscribe all the observers from the mediator.
-     *
      */
     @Override
     public void onCompleted() {

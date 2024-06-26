@@ -24,8 +24,8 @@ import io.grpc.stub.StreamObserver;
  * the implementation of this interface can receive and process inbound messages with different types from
  * the producer and response messages from the consumer.
  *
- * @param <U> - the type of the block
- * @param <V> - the type of the StreamObserver
+ * @param <U> the type of the block
+ * @param <V> the type of the StreamObserver
  */
 public interface LiveStreamObserver<U, V> extends StreamObserver<V> {
 

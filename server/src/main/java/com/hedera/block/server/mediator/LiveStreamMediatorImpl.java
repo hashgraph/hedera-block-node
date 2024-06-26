@@ -49,7 +49,7 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
     /**
      * Subscribe a new observer to the mediator
      *
-     * @param liveStreamObserver - the observer to be subscribed
+     * @param liveStreamObserver the observer to be subscribed
      */
     @Override
     public void subscribe(final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver) {
@@ -59,7 +59,7 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
     /**
      * Unsubscribe an observer from the mediator
      *
-     * @param liveStreamObserver - the observer to be unsubscribed
+     * @param liveStreamObserver the observer to be unsubscribed
      */
     @Override
     public void unsubscribe(final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver) {
@@ -73,7 +73,7 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
     /**
      * Check if an observer is subscribed to the mediator
      *
-     * @param observer - the observer to be checked
+     * @param observer the observer to be checked
      * @return true if the observer is subscribed, false otherwise
      */
     @Override
@@ -92,7 +92,7 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
     /**
      * Notify all observers of a new block
      *
-     * @param block - the block to be notified to all observers
+     * @param block the block to be notified to all observers
      */
     @Override
     public void notifyAll(final BlockStreamServiceGrpcProto.Block block) {

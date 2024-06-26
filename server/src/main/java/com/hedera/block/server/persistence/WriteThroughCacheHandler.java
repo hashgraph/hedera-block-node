@@ -64,7 +64,7 @@ public class WriteThroughCacheHandler implements BlockPersistenceHandler<BlockSt
      *
      * @param startBlockId the start block id
      * @param endBlockId the end block id
-     * @return the blocks
+     * @return a queue of blocks
      */
     @Override
     public Queue<BlockStreamServiceGrpcProto.Block> readRange(final long startBlockId, final long endBlockId) {
@@ -82,10 +82,12 @@ public class WriteThroughCacheHandler implements BlockPersistenceHandler<BlockSt
     }
 
     /**
-     * Reads a block from cache first.  If the block is not in cache, read from storage and update the cache.
+     * The read method first checks the cache for the block.
+     * If the block is not in cache, then it reads from storage and
+     * updates the cache.
      *
      * @param id the block id
-     * @return the block
+     * @return an Optional with the block
      */
     @Override
     public Optional<BlockStreamServiceGrpcProto.Block> read(final long id) {

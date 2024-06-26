@@ -34,21 +34,21 @@ public interface StreamMediator<U, V> {
     /**
      * Subscribes a new LiveStreamObserver to receive blocks from the producer as they arrive
      *
-     * @param observer - the LiveStreamObserver to subscribe
+     * @param observer the LiveStreamObserver to subscribe
      */
     void subscribe(final LiveStreamObserver<U, V> observer);
 
     /**
      * Unsubscribes a LiveStreamObserver from the producer
      *
-     * @param observer - the LiveStreamObserver to unsubscribe
+     * @param observer the LiveStreamObserver to unsubscribe
      */
     void unsubscribe(final LiveStreamObserver<U, V> observer);
 
     /**
      * Checks if the observer is subscribed to the producer
      *
-     * @param observer - the LiveStreamObserver to check
+     * @param observer the LiveStreamObserver to check
      * @return true if the observer is subscribed, false otherwise
      */
     boolean isSubscribed(final LiveStreamObserver<U, V> observer);
@@ -61,7 +61,7 @@ public interface StreamMediator<U, V> {
     /**
      * Passes the newly arrived block to all subscribers
      *
-     * @param block - the block to pass to the subscribers
+     * @param block the block to pass to the subscribers
      */
     void notifyAll(final U block);
 }

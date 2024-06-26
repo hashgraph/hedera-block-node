@@ -59,7 +59,7 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
     /**
      * Pass the block to the observer provided by Helidon
      *
-     * @param block - the block to be passed to the observer
+     * @param block the block to be passed to the observer
      */
     @Override
     public void notify(final BlockStreamServiceGrpcProto.Block block) {
@@ -108,8 +108,7 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
 
     /**
      * The onCompleted() method is triggered by Helidon when the bidirectional stream to the downstream consumer is completed.
-     * Unsubscribe the observer from the mediator.
-     *
+     * This implementation will then unsubscribe the observer from the mediator.
      */
     @Override
     public void onCompleted() {

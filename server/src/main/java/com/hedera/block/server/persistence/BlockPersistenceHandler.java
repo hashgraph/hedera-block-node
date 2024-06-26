@@ -39,7 +39,7 @@ public interface BlockPersistenceHandler<V> {
      * Reads a block.
      *
      * @param id the id of the block to read
-     * @return the block
+     * @return an Optional of the block
      */
     Optional<V> read(final long id);
 

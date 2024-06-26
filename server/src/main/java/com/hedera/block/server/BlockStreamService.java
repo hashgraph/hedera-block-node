@@ -69,7 +69,7 @@ public class BlockStreamService implements GrpcService {
      * Returns the service name for the BlockStreamService.  This service name corresponds to the service name in
      * the proto file.
      *
-     * @return the service name
+     * @return the service name corresponding to the service name in the proto file
      */
     @Override
     public String serviceName() {
