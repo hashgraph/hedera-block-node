@@ -1,6 +1,4 @@
 /*
- * Hedera Block Node
- *
  * Copyright (C) 2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,9 +25,9 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * LiveStreamMediatorImpl is the implementation of the StreamMediator interface.  It is responsible for managing
- * the subscription and unsubscription operations of downstream consumers.  It also proxies new blocks
- * to the subscribers as they arrive and persists the blocks to the block persistence store.
+ * LiveStreamMediatorImpl is the implementation of the StreamMediator interface.  It is responsible for
+ * managing the subscribe and unsubscribe operations of downstream consumers.  It also proxies live
+ * blocks to the subscribers as they arrive and persists the blocks to the block persistence store.
  */
 public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> {
 

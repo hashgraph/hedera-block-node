@@ -1,6 +1,4 @@
 /*
- * Hedera Block Node
- *
  * Copyright (C) 2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,7 +66,8 @@ public class BlockStreamService implements GrpcService {
     }
 
     /**
-     * Returns the service name for the BlockStreamService.  This service name corresponds to the service name in the proto file.
+     * Returns the service name for the BlockStreamService.  This service name corresponds to the service name in
+     * the proto file.
      *
      * @return the service name
      */
@@ -91,10 +90,10 @@ public class BlockStreamService implements GrpcService {
     /**
      * The streamSink method is called by Helidon each time a producer initiates a bidirectional stream.
      *
-     * @param responseStreamObserver - Helidon provides a StreamObserver to handle responses back to the producer.
+     * @param responseStreamObserver Helidon provides a StreamObserver to handle responses back to the producer.
      *
-     * @return a custom StreamObserver to handle streaming blocks from the producer to all subscribed consumers
-     * via the streamMediator as well as sending responses back to the producer.
+     * @return a custom StreamObserver to handle streaming blocks from the producer to all subscribed consumer
+     *     via the streamMediator as well as sending responses back to the producer.
      */
     private StreamObserver<BlockStreamServiceGrpcProto.Block> streamSink(
             final StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> responseStreamObserver) {
@@ -106,11 +105,11 @@ public class BlockStreamService implements GrpcService {
     /**
      * The streamSource method is called by Helidon each time a consumer initiates a bidirectional stream.
      *
-     * @param responseStreamObserver - Helidon provides a StreamObserver to handle responses from the consumer
-     *                               back to the server.
+     * @param responseStreamObserver Helidon provides a StreamObserver to handle responses from the consumer
+     *     back to the server.
      *
-     * @return a custom StreamObserver to handle streaming blocks from the producer to the consumer as well as
-     * handling responses from the consumer.
+     * @return a custom StreamObserver to handle streaming blocks from the producer to the consumer as well
+     *     as handling responses from the consumer.
      */
     private StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> streamSource(final StreamObserver<BlockStreamServiceGrpcProto.Block> responseStreamObserver) {
         LOGGER.log(System.Logger.Level.DEBUG, "Executing bidirectional streamSource method");

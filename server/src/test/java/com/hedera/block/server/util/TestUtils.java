@@ -1,6 +1,4 @@
 /*
- * Hedera Block Node
- *
  * Copyright (C) 2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +20,6 @@ import java.io.File;
 
 public final class TestUtils {
     private TestUtils() {}
-
 
     public static void deleteDirectory(File directoryToBeDeleted) {
         File[] allContents = directoryToBeDeleted.listFiles();

@@ -1,6 +1,4 @@
 /*
- * Hedera Block Node
- *
  * Copyright (C) 2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

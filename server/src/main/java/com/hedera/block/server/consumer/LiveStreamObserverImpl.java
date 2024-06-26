@@ -1,6 +1,4 @@
 /*
- * Hedera Block Node
- *
  * Copyright (C) 2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,7 +43,8 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
      * @param responseStreamObserver the response stream observer
      *
      */
-    public LiveStreamObserverImpl(final long timeoutThresholdMillis,
+    public LiveStreamObserverImpl(
+            final long timeoutThresholdMillis,
             final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> mediator,
             final StreamObserver<BlockStreamServiceGrpcProto.Block> responseStreamObserver) {
 
@@ -77,9 +76,9 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
     }
 
     /**
-     * The onNext() method is triggered by Helidon when the consumer sends a blockResponse via the bidirectional stream.
+     * The onNext() method is triggered by Helidon when a consumer sends a blockResponse via the bidirectional stream.
      *
-     * @param blockResponse - the BlockResponse passed to the server via the bidirectional stream to the downstream consumer
+     * @param blockResponse the BlockResponse passed back to the server via the bidirectional stream to the downstream consumer.
      */
     @Override
     public void onNext(final BlockStreamServiceGrpcProto.BlockResponse blockResponse) {
