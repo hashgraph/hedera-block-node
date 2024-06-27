@@ -35,7 +35,7 @@ import static org.mockito.Mockito.*;
 public class LiveStreamObserverImplTest {
 
     private final long TIMEOUT_THRESHOLD_MILLIS = 50L;
-    private final long TEST_TIME = 1719427664950L;
+    private final long TEST_TIME = 1_719_427_664_950L;
 
     @Mock
     private StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator;
