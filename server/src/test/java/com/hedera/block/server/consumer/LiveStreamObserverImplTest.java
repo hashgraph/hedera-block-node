@@ -128,7 +128,12 @@ public class LiveStreamObserverImplTest {
 
         @Override
         public long millis() {
-            return millis[index++];
+            long value = millis[index];
+
+            // cycle through the provided millis
+            // and wrap around if necessary
+            index = index > millis.length - 1 ? 0 : index + 1;
+            return value;
         }
 
         @Override
