@@ -20,6 +20,7 @@ import com.hedera.block.protos.BlockStreamServiceGrpcProto;
 import com.hedera.block.server.persistence.storage.BlockStorage;
 
 import java.util.ArrayDeque;
+import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Queue;
 
@@ -63,13 +64,13 @@ public class WriteThroughCacheHandler implements BlockPersistenceHandler<BlockSt
      */
     @Override
     public Queue<BlockStreamServiceGrpcProto.Block> readRange(final long startBlockId, final long endBlockId) {
-        final Queue<BlockStreamServiceGrpcProto.Block> blocks = new ArrayDeque<>();
+        final Queue<BlockStreamServiceGrpcProto.Block> blocks = new LinkedList<>();
 
         long count = startBlockId;
         Optional<BlockStreamServiceGrpcProto.Block> blockOpt = read(count);
         while (count <= endBlockId && blockOpt.isPresent()) {
             final BlockStreamServiceGrpcProto.Block block = blockOpt.get();
-            blocks.offer(block);
+            blocks.add(block);
             blockOpt = read(++count);
         }
 
