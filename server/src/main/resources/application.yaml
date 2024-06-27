@@ -1,4 +1,0 @@
-blocknode:
-  storage:
-    root:
-      path: /opt/blocknode
