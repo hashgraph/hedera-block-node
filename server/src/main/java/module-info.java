@@ -7,5 +7,4 @@ module com.hedera.block.server {
     requires io.helidon.config;
     requires io.helidon.webserver.grpc;
     requires io.helidon.webserver;
-    requires jakarta.inject;
 }

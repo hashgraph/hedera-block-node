@@ -20,7 +20,6 @@ package com.hedera.block.server.mediator;
 import com.hedera.block.protos.BlockStreamServiceGrpcProto;
 import com.hedera.block.server.consumer.LiveStreamObserver;
 import com.hedera.block.server.persistence.WriteThroughCacheHandler;
-import com.hedera.block.server.persistence.cache.BlockCache;
 import com.hedera.block.server.persistence.storage.BlockStorage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,14 +45,11 @@ public class LiveStreamMediatorImplTest {
     @Mock
     private BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage;
 
-    @Mock
-    private BlockCache<BlockStreamServiceGrpcProto.Block> blockCache;
-
     @Test
     public void testUnsubscribeEach() {
 
         final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator =
-                new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage, blockCache));
+                new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage));
 
         // Set up the subscribers
         streamMediator.subscribe(liveStreamObserver1);
@@ -78,24 +74,23 @@ public class LiveStreamMediatorImplTest {
     public void testMediatorPersistenceWithoutSubscribers() {
 
         final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator =
-                new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage, blockCache));
+                new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage));
 
         final BlockStreamServiceGrpcProto.Block newBlock = BlockStreamServiceGrpcProto.Block.newBuilder().build();
 
         // Acting as a producer, notify the mediator of a new block
         streamMediator.notifyAll(newBlock);
 
-        // Confirm the block was persisted to storage and cache
+        // Confirm the block was persisted to storage
         // even though there are no subscribers
         verify(blockStorage).write(newBlock);
-        verify(blockCache).insert(newBlock);
     }
 
     @Test
     public void testMediatorNotifyAll() {
 
         final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator =
-                new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage, blockCache));
+                new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage));
 
         // Set up the subscribers
         streamMediator.subscribe(liveStreamObserver1);
@@ -118,7 +113,6 @@ public class LiveStreamMediatorImplTest {
 
         // Confirm the block was persisted to storage and cache
         verify(blockStorage).write(newBlock);
-        verify(blockCache).insert(newBlock);
     }
 
 }

@@ -17,7 +17,6 @@
 package com.hedera.block.server.persistence;
 
 import com.hedera.block.protos.BlockStreamServiceGrpcProto;
-import com.hedera.block.server.persistence.cache.BlockCache;
 import com.hedera.block.server.persistence.storage.BlockStorage;
 
 import java.util.ArrayDeque;
@@ -31,18 +30,14 @@ import java.util.Queue;
 public class WriteThroughCacheHandler implements BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> {
 
     private final BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage;
-    private final BlockCache<BlockStreamServiceGrpcProto.Block> blockCache;
 
     /**
      * Constructor for the WriteThroughCacheHandler class.
      *
      * @param blockStorage the block storage
-     * @param blockCache the block cache
      */
-    public WriteThroughCacheHandler(final BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage,
-                                    final BlockCache<BlockStreamServiceGrpcProto.Block> blockCache) {
+    public WriteThroughCacheHandler(final BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage) {
         this.blockStorage = blockStorage;
-        this.blockCache = blockCache;
     }
 
     /**
@@ -56,7 +51,7 @@ public class WriteThroughCacheHandler implements BlockPersistenceHandler<BlockSt
 
         // Write-Through cache
         blockStorage.write(block);
-        return blockCache.insert(block);
+        return block.getId();
     }
 
     /**
@@ -91,15 +86,6 @@ public class WriteThroughCacheHandler implements BlockPersistenceHandler<BlockSt
      */
     @Override
     public Optional<BlockStreamServiceGrpcProto.Block> read(final long id) {
-
-        if (blockCache.contains(id)) {
-            return Optional.of(blockCache.get(id));
-        } else {
-            // Update the cache with the block from storage
-            Optional<BlockStreamServiceGrpcProto.Block> block = blockStorage.read(id);
-            block.ifPresent(blockCache::insert);
-
-            return block;
-        }
+        return blockStorage.read(id);
     }
 }

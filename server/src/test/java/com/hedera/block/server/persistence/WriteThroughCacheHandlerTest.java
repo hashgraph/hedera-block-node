@@ -17,8 +17,6 @@
 package com.hedera.block.server.persistence;
 
 import com.hedera.block.protos.BlockStreamServiceGrpcProto;
-import com.hedera.block.server.persistence.cache.BlockCache;
-import com.hedera.block.server.persistence.cache.LRUCache;
 import com.hedera.block.server.persistence.storage.BlockStorage;
 import com.hedera.block.server.persistence.storage.FileSystemBlockStorage;
 import com.hedera.block.server.util.TestUtils;
@@ -68,28 +66,24 @@ public class WriteThroughCacheHandlerTest {
     @Test
     public void testMaxEntriesGreaterThanBlocks() throws IOException {
 
-        int maxEntries = 5;
         int numOfBlocks = 4;
 
         FileSystemBlockStorage blockStorage = new FileSystemBlockStorage(JUNIT, testConfig);
-        BlockCache<BlockStreamServiceGrpcProto.Block> blockCache = new LRUCache(maxEntries);
-        BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler = new WriteThroughCacheHandler(blockStorage, blockCache);
+        BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler = new WriteThroughCacheHandler(blockStorage);
 
         List<BlockStreamServiceGrpcProto.Block> blocks = generateBlocks(numOfBlocks);
-        verifyPersistenceHandler(numOfBlocks, maxEntries, blockCache, blocks, blockPersistenceHandler, testPath);
+        verifyPersistenceHandler(blocks, blockPersistenceHandler, testPath);
     }
 
     @Test
     public void testMaxEntriesEqualToBlocks() throws IOException {
-        int maxEntries = 3;
         int numOfBlocks = 3;
 
         FileSystemBlockStorage blockStorage = new FileSystemBlockStorage(JUNIT, testConfig);
-        BlockCache<BlockStreamServiceGrpcProto.Block> blockCache = new LRUCache(maxEntries);
-        BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler = new WriteThroughCacheHandler(blockStorage, blockCache);
+        BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler = new WriteThroughCacheHandler(blockStorage);
 
         List<BlockStreamServiceGrpcProto.Block> blocks = generateBlocks(numOfBlocks);
-        verifyPersistenceHandler(numOfBlocks, maxEntries, blockCache, blocks, blockPersistenceHandler, testPath);
+        verifyPersistenceHandler(blocks, blockPersistenceHandler, testPath);
     }
 
     @Test
@@ -98,17 +92,13 @@ public class WriteThroughCacheHandlerTest {
         int numOfBlocks = 4;
 
         BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage = new FileSystemBlockStorage(JUNIT, testConfig);
-        BlockCache<BlockStreamServiceGrpcProto.Block> blockCache = new LRUCache(maxEntries);
-        BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler = new WriteThroughCacheHandler(blockStorage, blockCache);
+        BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler = new WriteThroughCacheHandler(blockStorage);
 
         List<BlockStreamServiceGrpcProto.Block> blocks = generateBlocks(numOfBlocks);
-        verifyPersistenceHandler(numOfBlocks, maxEntries, blockCache, blocks, blockPersistenceHandler, testPath);
+        verifyPersistenceHandler(blocks, blockPersistenceHandler, testPath);
     }
 
     private static void verifyPersistenceHandler(
-            int numOfBlocks,
-            int maxEntries,
-            BlockCache<BlockStreamServiceGrpcProto.Block> blockCache,
             List<BlockStreamServiceGrpcProto.Block> blocks,
             BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler,
             Path testPath) throws IOException {
@@ -125,9 +115,6 @@ public class WriteThroughCacheHandlerTest {
             // Verify the block was written to the fs
             verifyFileExists(blockId, block, testPath);
         }
-
-        // Verify cache behavior
-        verifyCache(numOfBlocks, maxEntries, blockCache, blocks);
     }
 
     private static void verifyPersistedBlockIsAccessible(long blockId, BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler) {
@@ -148,35 +135,6 @@ public class WriteThroughCacheHandlerTest {
             BlockStreamServiceGrpcProto.Block fetchedBlock = BlockStreamServiceGrpcProto.Block.parseFrom(fis);
             assertEquals(blockId, fetchedBlock.getId());
             assertEquals(block.getValue(), fetchedBlock.getValue());
-        }
-    }
-
-    private static void verifyCache(
-            int numOfBlocks,
-            int maxEntries,
-            BlockCache<BlockStreamServiceGrpcProto.Block> blockCache,
-            List<BlockStreamServiceGrpcProto.Block> blocks) {
-
-        // Test the cache after all the entries are inserted
-        for (BlockStreamServiceGrpcProto.Block block : blocks) {
-
-            long blockId = block.getId();
-            BlockStreamServiceGrpcProto.Block cachedBlock = blockCache.get(blockId);
-
-            if (numOfBlocks > maxEntries) {
-                // Calculate if the block should be in the cache or evicted
-                int maxIndexOutsideCache = numOfBlocks - maxEntries;
-                if (blockId <= maxIndexOutsideCache) {
-                    // expect a cache miss
-                    assertNull(cachedBlock);
-                } else {
-                    // expect a cache hit
-                    assertNotNull(cachedBlock);
-                }
-            } else {
-                // All the blocks should be in the cache
-                assertNotNull(cachedBlock);
-            }
         }
     }
 }

@@ -17,14 +17,10 @@
 package com.hedera.block.server.persistence;
 
 import com.hedera.block.protos.BlockStreamServiceGrpcProto;
-import com.hedera.block.server.persistence.cache.BlockCache;
-import com.hedera.block.server.persistence.cache.LRUCache;
 import com.hedera.block.server.persistence.storage.BlockStorage;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Queue;
+import java.util.*;
 
 import static com.hedera.block.server.persistence.PersistTestUtils.generateBlocks;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -100,20 +96,26 @@ public class RangeTest {
     private static BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> generateInMemoryTestBlockPersistenceHandler(int maxEntries) {
         // Mock up a simple, in-memory persistence handler
         BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage = new NoOpTestBlockStorage();
-        BlockCache<BlockStreamServiceGrpcProto.Block> blockCache = new LRUCache(maxEntries);
-        return new WriteThroughCacheHandler(blockStorage, blockCache);
+        return new WriteThroughCacheHandler(blockStorage);
     }
 
     private static class NoOpTestBlockStorage implements BlockStorage<BlockStreamServiceGrpcProto.Block> {
 
+        private final Map<Long, BlockStreamServiceGrpcProto.Block> cache;
+
+        public NoOpTestBlockStorage() {
+            this.cache = new HashMap<>();
+        }
+
         @Override
         public Optional<Long> write(BlockStreamServiceGrpcProto.Block block) {
+            cache.put(block.getId(), block);
             return Optional.of(block.getId());
         }
 
         @Override
         public Optional<BlockStreamServiceGrpcProto.Block> read(Long blockId) {
-            return Optional.empty();
+            return Optional.ofNullable(cache.get(blockId));
         }
     }
 }

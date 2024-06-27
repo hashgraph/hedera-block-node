@@ -19,8 +19,6 @@ package com.hedera.block.server;
 import com.hedera.block.protos.BlockStreamServiceGrpcProto;
 import com.hedera.block.server.mediator.LiveStreamMediatorImpl;
 import com.hedera.block.server.persistence.WriteThroughCacheHandler;
-import com.hedera.block.server.persistence.cache.BlockCache;
-import com.hedera.block.server.persistence.cache.LRUCache;
 import com.hedera.block.server.persistence.storage.BlockStorage;
 import com.hedera.block.server.persistence.storage.FileSystemBlockStorage;
 import io.grpc.stub.ServerCalls;
@@ -63,9 +61,8 @@ public class Server {
 
             // Initialize the block storage, cache, and service
             final BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage = new FileSystemBlockStorage(BLOCKNODE_STORAGE_ROOT_PATH_KEY, config);
-            final BlockCache<BlockStreamServiceGrpcProto.Block> blockCache = new LRUCache(1000);
             final BlockStreamService blockStreamService = new BlockStreamService(1500,
-                    new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage, blockCache)));
+                    new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage)));
 
             // Start the web server
             WebServer.builder()
