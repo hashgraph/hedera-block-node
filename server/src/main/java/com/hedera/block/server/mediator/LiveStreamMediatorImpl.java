@@ -89,7 +89,7 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
         LOGGER.log(System.Logger.Level.DEBUG, "Notifying " + subscribers.size() + " observers of a new block");
 
         // Proxy the block to all live stream subscribers
-        for (final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> subscriber : subscribers) {
+        for (final var subscriber : subscribers) {
             subscriber.notify(block);
         }
 
