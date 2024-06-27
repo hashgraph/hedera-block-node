@@ -52,7 +52,7 @@ public class LRUCache implements BlockCache<BlockStreamServiceGrpcProto.Block> {
     @Override
     public Long insert(final BlockStreamServiceGrpcProto.Block block) {
         final long id = block.getId();
-        cache.putIfAbsent(id, block);
+        cache.put(id, block);
         return id;
     }
 
