@@ -55,8 +55,11 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
      */
     @Override
     public void onNext(final BlockStreamServiceGrpcProto.Block block) {
+
+        // Notify all the mediator subscribers
         streamMediator.notifyAll(block);
 
+        // Send a response back to the upstream producer
         final BlockStreamServiceGrpcProto.BlockResponse blockResponse = BlockStreamServiceGrpcProto.BlockResponse.newBuilder().setId(block.getId()).build();
         responseStreamObserver.onNext(blockResponse);
     }
@@ -69,6 +72,7 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
     @Override
     public void onError(final Throwable t) {
         LOGGER.log(System.Logger.Level.ERROR, "onError method invoked with an exception", t);
+        responseStreamObserver.onError(t);
     }
 
     /**
@@ -78,7 +82,6 @@ public class ProducerBlockStreamObserver implements StreamObserver<BlockStreamSe
     @Override
     public void onCompleted() {
         LOGGER.log(System.Logger.Level.DEBUG, "ProducerBlockStreamObserver completed");
-        streamMediator.unsubscribeAll();
-        LOGGER.log(System.Logger.Level.DEBUG, "Unsubscribed all downstream consumers");
+        responseStreamObserver.onCompleted();
     }
 }

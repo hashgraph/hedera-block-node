@@ -64,8 +64,6 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
     public void unsubscribe(final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> liveStreamObserver) {
         if (subscribers.remove(liveStreamObserver)) {
             LOGGER.log(System.Logger.Level.DEBUG, "Successfully removed observer from subscription list");
-        } else {
-            LOGGER.log(System.Logger.Level.ERROR, "Failed to remove observer from subscription list");
         }
     }
 
@@ -78,15 +76,6 @@ public class LiveStreamMediatorImpl implements StreamMediator<BlockStreamService
     @Override
     public boolean isSubscribed(final LiveStreamObserver<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> observer) {
         return subscribers.contains(observer);
-    }
-
-    /**
-     * Unsubscribe all observers from the mediator
-     */
-    @Override
-    public void unsubscribeAll() {
-        LOGGER.log(System.Logger.Level.DEBUG, "Unsubscribing all observers from the mediator");
-        subscribers.clear();
     }
 
     /**

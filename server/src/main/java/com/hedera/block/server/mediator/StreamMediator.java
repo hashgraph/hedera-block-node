@@ -54,11 +54,6 @@ public interface StreamMediator<U, V> {
     boolean isSubscribed(final LiveStreamObserver<U, V> observer);
 
     /**
-     * Unsubscribes all LiveStreamObservers from the producer
-     */
-    void unsubscribeAll();
-
-    /**
      * Passes the newly arrived block to all subscribers
      *
      * @param block the block to pass to the subscribers

@@ -50,28 +50,6 @@ public class LiveStreamMediatorImplTest {
     private BlockCache<BlockStreamServiceGrpcProto.Block> blockCache;
 
     @Test
-    public void testUnsubscribeAll() {
-
-        final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator =
-                new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage, blockCache));
-
-        // Set up the subscribers
-        streamMediator.subscribe(liveStreamObserver1);
-        streamMediator.subscribe(liveStreamObserver2);
-        streamMediator.subscribe(liveStreamObserver3);
-
-        assertTrue(streamMediator.isSubscribed(liveStreamObserver1), "Expected the mediator to have liveStreamObserver1 subscribed");
-        assertTrue(streamMediator.isSubscribed(liveStreamObserver2), "Expected the mediator to have liveStreamObserver2 subscribed");
-        assertTrue(streamMediator.isSubscribed(liveStreamObserver3), "Expected the mediator to have liveStreamObserver3 subscribed");
-
-        streamMediator.unsubscribeAll();
-
-        assertFalse(streamMediator.isSubscribed(liveStreamObserver1), "Expected the mediator to have unsubscribed liveStreamObserver1");
-        assertFalse(streamMediator.isSubscribed(liveStreamObserver2), "Expected the mediator to have unsubscribed liveStreamObserver2");
-        assertFalse(streamMediator.isSubscribed(liveStreamObserver3), "Expected the mediator to have unsubscribed liveStreamObserver3");
-    }
-
-    @Test
     public void testUnsubscribeEach() {
 
         final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator =
