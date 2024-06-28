@@ -28,3 +28,13 @@ to [oss@hedera.com](mailto:oss@hedera.com).
 
 Please do not file a public ticket mentioning the vulnerability. Refer to the security policy defined in the [SECURITY.md](https://github.com/hashgraph/hedera-sourcify/blob/main/SECURITY.md).
 
+---
+
+# Running Locally
+
+1) Create a local temp directory.  For example, use `mktemp -d -t block-stream-temp-dir` to create a directory
+2) export BLOCKNODE_STORAGE_ROOT_PATH=<path to the temp directory> # You can add this to your .zshrc, etc
+3) ./gradlew run  # ./gradlew run --debug-jvm to run in debug mode
+
+# Running Tests
+1) ./gradlew build

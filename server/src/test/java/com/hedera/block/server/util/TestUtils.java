@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Hedera Hashgraph, LLC
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-plugins {
-    id("application")
-    id("com.hedera.block.server")
-}
+package com.hedera.block.server.util;
 
-application {
-    mainModule = "com.hedera.block.server"
-    mainClass = "com.hedera.block.server.Server"
-}
+import java.io.File;
 
-testModuleInfo {
-    requires("org.junit.jupiter.api")
-    requires("org.mockito")
-    requires("org.mockito.junit.jupiter")
+public final class TestUtils {
+    private TestUtils() {}
+
+    public static void deleteDirectory(File directoryToBeDeleted) {
+        File[] allContents = directoryToBeDeleted.listFiles();
+        if (allContents != null) {
+            for (File file : allContents) {
+                deleteDirectory(file);
+            }
+        }
+
+        directoryToBeDeleted.delete();
+    }
 }

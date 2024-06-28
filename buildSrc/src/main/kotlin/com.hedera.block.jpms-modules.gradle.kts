@@ -87,4 +87,8 @@ extraJavaModuleInfo {
     }
     module("io.grpc:grpc-util", "io.grpc.util")
     module("io.perfmark:perfmark-api", "io.perfmark")
+
+    module("junit:junit", "junit")
+    module("org.mockito:mockito-core", "org.mockito")
+    module("org.mockito:mockito-junit-jupiter", "org.mockito.junit.jupiter")
 }
