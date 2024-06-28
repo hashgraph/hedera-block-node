@@ -61,6 +61,8 @@ public class Server {
 
             // Initialize the block storage, cache, and service
             final BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage = new FileSystemBlockStorage(BLOCKNODE_STORAGE_ROOT_PATH_KEY, config);
+
+            // TODO: Make timeoutThresholdMillis configurable
             final BlockStreamService blockStreamService = new BlockStreamService(1500,
                     new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage)));
 
