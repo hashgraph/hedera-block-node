@@ -35,8 +35,8 @@ dependencyResolutionManagement {
         create("libs") {
             // Compile time dependencies
             version("com.google.protobuf", "3.24.0")
-            version("io.helidon.webserver.http2", "4.0.8")
-            version("io.helidon.webserver.grpc", "4.0.8")
+            version("io.helidon.webserver.http2", "4.0.10")
+            version("io.helidon.webserver.grpc", "4.0.10")
 
             // Testing only versions
             version("org.assertj.core", "3.23.1")
