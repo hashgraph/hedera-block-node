@@ -111,7 +111,7 @@ public class LiveStreamObserverImpl implements LiveStreamObserver<BlockStreamSer
      */
     @Override
     public void onError(final Throwable t) {
-        LOGGER.log(System.Logger.Level.ERROR, "Unexpected consumer stream communication failure: {0}", t.getMessage());
+        LOGGER.log(System.Logger.Level.ERROR, "Unexpected consumer stream communication failure: %s".formatted(t), t);
         mediator.unsubscribe(this);
     }
 
