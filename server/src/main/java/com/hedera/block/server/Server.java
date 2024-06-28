@@ -67,8 +67,6 @@ public class Server {
             // Start the web server
             WebServer.builder()
                     .port(8080)
-                    .addRouting(HttpRouting.builder()
-                            .get("/greet", (req, res) -> res.send("Hello World!")))
                     .addRouting(GrpcRouting.builder()
                             .service(blockStreamService)
                             .bidi(BlockStreamServiceGrpcProto.getDescriptor(),
