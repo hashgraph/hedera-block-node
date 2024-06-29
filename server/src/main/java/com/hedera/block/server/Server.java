@@ -59,11 +59,12 @@ public class Server {
             final Config config = Config.create();
             Config.global(config);
 
+            // Get Timeout threshold from configuration
+            final long consumerTimeoutThreshold = config.get(BLOCKNODE_SERVER_CONSUMER_TIMEOUT_THRESHOLD_KEY).asLong().orElse(1500L);
+
             // Initialize the block storage, cache, and service
             final BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage = new FileSystemBlockStorage(BLOCKNODE_STORAGE_ROOT_PATH_KEY, config);
-
-            // TODO: Make timeoutThresholdMillis configurable
-            final BlockStreamService blockStreamService = new BlockStreamService(1500,
+            final BlockStreamService blockStreamService = new BlockStreamService(consumerTimeoutThreshold,
                     new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage)));
 
             // Start the web server

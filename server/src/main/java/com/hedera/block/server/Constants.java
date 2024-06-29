@@ -24,6 +24,7 @@ public final class Constants {
 
     // Config Constants
     public static final String BLOCKNODE_STORAGE_ROOT_PATH_KEY = "blocknode.storage.root.path";
+    public static final String BLOCKNODE_SERVER_CONSUMER_TIMEOUT_THRESHOLD_KEY = "blocknode.server.consumer.timeout.threshold";
 
     // Constants specified in the service definition of the .proto file
     public static final String SERVICE_NAME = "BlockStreamGrpc";
