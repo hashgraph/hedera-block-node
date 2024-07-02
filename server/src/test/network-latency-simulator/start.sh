@@ -10,6 +10,7 @@ echo "JITTER: $JITTER"
 echo "BANDWIDTH: $BANDWIDTH"
 echo "INCREASE_TIME: $INCREASE_TIME"
 echo "MAX_LATENCY: $MAX_LATENCY"
+echo "PACKET_LOSS: $PACKET_LOSS"
 
 # First Start consumer without any network latency so it connects without issues.
 consumer.sh 1 1000 &
