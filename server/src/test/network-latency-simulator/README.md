@@ -9,9 +9,12 @@ This test aims to make sure that the system is resilient to network issues and t
 ## Running Locally
 
 1. Move to the `network-latency-simulator` directory.
-2. Build the Docker Image with the network latency simulator.
+2. Prepare the Test Context, Build the Docker Image with the network latency simulator.
 ```bash
 cd server/src/test/network-latency-simulator
+
+./setup.sh
+
 docker build -t network-latency-simulator .
 ```
 
@@ -24,7 +27,7 @@ docker build -t network-latency-simulator .
 ```
 5. Start the consumer inside the network latency simulator container, you can start as many as you want.
 ```bash
-docker run -it --cap-add=NET_ADMIN latency-simulator
+docker run -it --cap-add=NET_ADMIN network-latency-simulator
 ```
 
 The consumer inside the container will start consuming the blocks from the BlockNode, and you can see the network issues being simulated.
@@ -52,5 +55,5 @@ There are some environment variables that you can set to change the behavior of 
 
 Example of how to set the environment variables when running the container:
 ```bash
-docker run -it --cap-add=NET_ADMIN -e LATENCY_INCREASE_INTERVAL=5 -e INITIAL_LATENCY=1000 -e JITTER=1000 -e BANDWIDTH=128 -e INCREASE_TIME=5 -e MAX_LATENCY=10000
+docker run -it --cap-add=NET_ADMIN -e LATENCY_INCREASE_INTERVAL=5 -e INITIAL_LATENCY=1000 -e JITTER=1000 -e BANDWIDTH=128 -e INCREASE_TIME=5 -e MAX_LATENCY=10000 network-latency-simulator
 ```

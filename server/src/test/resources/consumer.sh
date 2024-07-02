@@ -21,9 +21,11 @@ if [ "$#" -eq 2 ]; then
   echo "The optional positive integer is: $2"
 fi
 
-GRPC_SERVER="localhost:8080"
-GRPC_METHOD="BlockStreamGrpc/StreamSource"
-PATH_TO_PROTO="../../../../protos/src/main/protobuf/blockstream.proto"
+# Use environment variables or default values
+GRPC_SERVER=${GRPC_SERVER:-"localhost:8080"}
+GRPC_METHOD=${GRPC_METHOD:-"BlockStreamGrpc/StreamSource"}
+PATH_TO_PROTO=${PATH_TO_PROTO:-"../../../../protos/src/main/protobuf/blockstream.proto"}
+PROTO_IMPORT_PATH=${PROTO_IMPORT_PATH:-"../../../../protos/src/main/protobuf"}
 
 echo "Starting consumer..."
 
@@ -54,5 +56,5 @@ trap cleanup SIGINT
     sleep 1
 
   done
-) | grpcurl -plaintext -proto $PATH_TO_PROTO -d @ $GRPC_SERVER $GRPC_METHOD
+) | grpcurl -plaintext -import-path $PROTO_IMPORT_PATH -proto $PATH_TO_PROTO -d @ $GRPC_SERVER $GRPC_METHOD
 
