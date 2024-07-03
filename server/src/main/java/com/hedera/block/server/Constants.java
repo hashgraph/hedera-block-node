@@ -16,18 +16,33 @@
 
 package com.hedera.block.server;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /** Constants used in the BlockNode service. */
 public final class Constants {
     private Constants() {}
 
-    // Config Constants
+    /** Constant mapped to the root path config key where the block files are stored */
+    @NonNull
     public static final String BLOCKNODE_STORAGE_ROOT_PATH_KEY = "blocknode.storage.root.path";
+
+    /** Constant mapped to the timeout for stream consumers in milliseconds */
+    @NonNull
     public static final String BLOCKNODE_SERVER_CONSUMER_TIMEOUT_THRESHOLD_KEY =
             "blocknode.server.consumer.timeout.threshold";
 
-    // Constants specified in the service definition of the .proto file
-    public static final String SERVICE_NAME = "BlockStreamGrpc";
-    public static final String CLIENT_STREAMING_METHOD_NAME = "StreamSink";
-    public static final String SERVER_STREAMING_METHOD_NAME = "StreamSource";
-    public static final String GET_BLOCK_METHOD_NAME = "GetBlock";
+    /** Constant mapped to the name of the service in the .proto file */
+    @NonNull public static final String SERVICE_NAME = "BlockStreamGrpcService";
+
+    /** Constant mapped to the publishBlockStream service method name in the .proto file */
+    @NonNull public static final String CLIENT_STREAMING_METHOD_NAME = "publishBlockStream";
+
+    /** Constant mapped to the subscribeBlockStream service method name in the .proto file */
+    @NonNull public static final String SERVER_STREAMING_METHOD_NAME = "subscribeBlockStream";
+
+    /** Constant mapped to the singleBlock service method name in the .proto file */
+    @NonNull public static final String SINGLE_BLOCK_METHOD_NAME = "singleBlock";
+
+    /** Constant defining the block file extension */
+    @NonNull public static final String BLOCK_FILE_EXTENSION = ".blk";
 }

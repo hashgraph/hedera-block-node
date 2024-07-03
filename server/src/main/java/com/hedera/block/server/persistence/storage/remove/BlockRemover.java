@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.mediator;
+package com.hedera.block.server.persistence.storage.remove;
 
-/**
- * The StreamMediator marker interface defines the combination of Publisher and SubscriptionHandler
- * contracts. It defines multiple views of the underlying implementation, allowing producers to
- * publish data while the service and downstream subscribers can manage which consumers are
- * subscribed to the stream of events.
- *
- * @param <U> the type of the data to publish
- * @param <V> the type of the events the SubscriptionHandler processes
- */
-public interface StreamMediator<U, V> extends Publisher<U>, SubscriptionHandler<V> {}
+import java.io.IOException;
+
+/** The BlockRemover interface defines the contract for removing a block from storage. */
+public interface BlockRemover {
+
+    /**
+     * Remove a block with the given block number.
+     *
+     * @param blockNumber the block number of the block to remove.
+     * @throws IOException when failing to remove a block.
+     */
+    void remove(final long blockNumber) throws IOException;
+}

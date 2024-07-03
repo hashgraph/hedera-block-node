@@ -14,30 +14,23 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage;
+package com.hedera.block.server.persistence.storage.write;
 
-import java.util.Optional;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.IOException;
 
 /**
- * The BlockStorage interface defines operations to write and read blocks to a persistent store.
+ * BlockWriter defines the contract for writing block items to storage.
  *
- * @param <V> the type of block to store
+ * @param <V> the type of the block item to write
  */
-public interface BlockStorage<V> {
+public interface BlockWriter<V> {
 
     /**
-     * Writes a block to storage.
+     * Write the block item to storage.
      *
-     * @param block the block to write
-     * @return the id of the block
+     * @param blockItem the block item to write to storage.
+     * @throws IOException when failing to write the block item to storage.
      */
-    Optional<Long> write(final V block);
-
-    /**
-     * Reads a block from storage.
-     *
-     * @param blockId the id of the block to read
-     * @return the block
-     */
-    Optional<V> read(final Long blockId);
+    void write(@NonNull final V blockItem) throws IOException;
 }

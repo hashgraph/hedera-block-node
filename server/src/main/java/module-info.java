@@ -4,6 +4,7 @@ import com.hedera.block.server.config.BlockNodeConfigExtension;
 module com.hedera.block.server {
     requires com.hedera.block.protos;
     requires com.google.protobuf;
+    requires com.lmax.disruptor;
     requires com.swirlds.common;
     requires com.swirlds.config.api;
     requires com.swirlds.config.extensions;
