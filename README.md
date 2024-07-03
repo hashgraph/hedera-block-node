@@ -33,7 +33,15 @@ Please do not file a public ticket mentioning the vulnerability. Refer to the se
 # Running Locally
 
 1) Create a local temp directory.  For example, use `mktemp -d -t block-stream-temp-dir` to create a directory
-2) export BLOCKNODE_STORAGE_ROOT_PATH=<path to the temp directory> # You can add this to your .zshrc, etc
+2) Configuration variables
+```
+export BLOCKNODE_STORAGE_ROOT_PATH=<path to the temp directory> # You can add this to your .zshrc, etc
+```
+3) Optional Configuration variables
+```
+export BLOCKNODE_SERVER_CONSUMER_TIMEOUT_THRESHOLD="<NumberInMiliseconds>" #Default is 1500
+```
+
 3) ./gradlew run  # ./gradlew run --debug-jvm to run in debug mode
 
 # Running Tests
