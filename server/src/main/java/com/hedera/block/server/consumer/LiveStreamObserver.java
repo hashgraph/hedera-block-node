@@ -27,7 +27,8 @@ import io.grpc.stub.StreamObserver;
  * @param <U> the type of the block
  * @param <V> the type of the StreamObserver
  */
-public interface LiveStreamObserver<U, V> extends StreamObserver<V> {
+public interface LiveStreamObserver<U, V>
+        extends StreamObserver<V> {
 
     /**
      * Pass the block to the observer.
