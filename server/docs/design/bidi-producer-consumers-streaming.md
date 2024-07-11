@@ -52,72 +52,8 @@ unsubscribed from a producer so that internal objects can be cleaned up and reso
 
 ### Block Node gRPC Streaming Services API
 
-The following protobuf definition outlines the gRPC services and messages used to stream BlockItems between a producer,
-consumers and the `hedera-block-node`.  The `BlockStreamGrpc` service definition provides 2 bidirectional streaming
-methods: `StreamSink` and `StreamSource`.  Aside from the gRPC service and method names, all the types will be replaced 
-by those outlined in [hedera-protobufs](https://github.com/hashgraph/hedera-protobufs/pull/342/files).
-
-```protobuf
-
-/**
-  * The BlockStreamGrpc service definition provides 2 bidirectional streaming methods for
-  * exchanging BlockItems with the Block Node server.
-  *
-  * A producer (e.g. Consensus Node) can use the StreamSink method to stream BlockItems to the
-  * Block Node server.  The Block Node server will respond with a BlockResponse message for
-  * each BlockItem received.
-  *
-  * A consumer (e.g. Mirror Node) can use the StreamSource method to request a stream of
-  * BlockItems from the server.  The consumer is expected to respond with a BlockResponse message
-  * with the id of each BlockItem received.
- */
-service BlockStreamGrpc {
-  /**
-  * StreamSink is a bidirectional streaming method that allows a producer to stream BlockItems 
-  * to the Block Node server.  The server will respond with a BlockResponse message for each
-  * BlockItem received.
-  */
-  rpc StreamSink (stream BlockItem) returns (stream BlockItemResponse) {}
-
-  /**
-    * StreamSource is a bidirectional streaming method that allows a consumer to request a
-    * stream of BlockItems from the server.  The consumer is expected to respond with a BlockResponse
-    * message with the id of each BlockItem received.
-    */
-  rpc StreamSource (stream BlockItemResponse) returns (stream BlockItem) {}
-}
-
-/**
- * A BlockItem is a simple message that contains an id and a value.
- * This specification is a simple example meant to expedite development.
- * It will be replaced with a PBJ implementation in the future.
- */
-message BlockItem {
-  /**
-   * The id of the block.  Each block id should be unique.
-   */
-  int64 id = 1;
-
-  /**
-   * The value of the block.  The value can be any string.
-   */
-  string value = 2;
-}
-
-/**
- * A BlockItemResponse is a simple message that contains an id.
- * The BlockItemResponse is meant to confirm the receipt of a BlockItem.
- * A future use case may expand on this type to communicate a failure
- * condition where the BlockItem needs to be resent, etc.
- */
-message BlockItemResponse {
-  /**
-   * The id of the BlockItem which was received. 
-   */
-  int64 id = 1;
-}
-
-```
+The Block Node gRPC Streaming Services API is now aligned with the names and simplified types defined in the 
+[`hedera-protobufs` repository on the `continue-block-node` branch](https://github.com/hashgraph/hedera-protobufs/blob/25783427575ded59d06d6bf1ed253fd24ef3c437/block/block_service.proto#L701-L742).
 
 ---
 
