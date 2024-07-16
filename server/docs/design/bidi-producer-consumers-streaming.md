@@ -36,17 +36,17 @@ services can be used to efficiently transmit a continuous flow of BlockItem mess
 
 **Producer StreamObserver** - The Producer StreamObserver is a custom implementation of the [gRPC StreamObserver 
 interface](https://github.com/grpc/grpc-java/blob/0ff3f8e4ac4c265e91b4a0379a32cf25a0a2b2f7/stub/src/main/java/io/grpc/stub/StreamObserver.java#L45) used by Helidon. It is initialized by the BlockItemStreamService (see Entities section). Helidon invokes
-the Producer StreamObserver at runtime when the producer sends a new BlockItem to the `StreamSink` gRPC service. 
+the Producer StreamObserver at runtime when the producer sends a new BlockItem to the `publishBlockStream` gRPC service. 
 
 **Consumer StreamObserver** - The Consumer StreamObserver is a custom implementation of the [gRPC StreamObserver 
 interface](https://github.com/grpc/grpc-java/blob/0ff3f8e4ac4c265e91b4a0379a32cf25a0a2b2f7/stub/src/main/java/io/grpc/stub/StreamObserver.java#L45) used by Helidon. It is initialized by the BlockItemStreamService (see Entities section). Helidon invokes
-the Consumer StreamObserver at runtime when the downstream consumer of the `StreamSource` gRPC service sends HTTP/2 
+the Consumer StreamObserver at runtime when the downstream consumer of the `subscribeBlockStream` gRPC service sends HTTP/2 
 responses to sent BlockItems. 
 
-**subscribe** - Consumers calling the `StreamSource` gRPC service must be affiliated or subscribed with a producer to 
+**subscribe** - Consumers calling the `subscribeBlockStream` gRPC service must be affiliated or subscribed with a producer to 
 receive a live stream of BlockItems from the `hedera-block-node`.
 
-**unsubscribe** - Consumers terminating their connection with the `StreamSource` gRPC service must be unaffiliated or 
+**unsubscribe** - Consumers terminating their connection with the `subscribeBlockStream` gRPC service must be unaffiliated or 
 unsubscribed from a producer so that internal objects can be cleaned up and resources released.
 
 ---
@@ -68,12 +68,12 @@ streaming API methods defined above. The following objects are used in all appro
 the Helidon routing mechanism to the gRPC streaming methods called by producers and consumers.
 
 `ProducerBlockItemObserver` is a custom implementation of the Helidon gRPC `StreamObserver` interface.  
-`BlockItemStreamService` instantiates a new `ProducerBlockItemObserver` instance when the `StreamSink` gRPC method is
+`BlockItemStreamService` instantiates a new `ProducerBlockItemObserver` instance when the `publishBlockStream` gRPC method is
 called by a producer. Thereafter, Helidon invokes `ProducerBlockItemObserver` methods to receive the latest BlockItem 
 from the producer and return BlockItemResponses via a bidirectional stream.
 
 `ConsumerBlockItemObserver` is also a custom implementation of the Helidon gRPC `StreamObserver` interface.  
-`BlockItemStreamService` instantiates a new `ConsumerBlockItemObserver` instance when the `StreamSource` gRPC method 
+`BlockItemStreamService` instantiates a new `ConsumerBlockItemObserver` instance when the `subscribeBlockStream` gRPC method 
 is called by each consumer. The `ConsumerBlockItemObserver` wraps an instance of `StreamObserver` provided by Helidon
 when the connection is established. The `ConsumerBlockItemObserver` uses the `StreamObserver` to send the latest
 BlockItem to the downstream consumer. Helidon invokes `ConsumerBlockItemObserver` methods to deliver BlockItemResponses 
@@ -178,7 +178,7 @@ streams. Please see the following Entities section and Diagrams for a visual rep
 
 At boot time, the `BlockItemStreamService` will initialize the `StreamMediator` with the LMAX Disruptor RingBuffer.
 
-When a producer calls the `StreamSink` gRPC method, the `BlockItemStreamService` will create a new 
+When a producer calls the `publishBlockStream` gRPC method, the `BlockItemStreamService` will create a new 
 `ProducerBlockItemObserver` instance for Helidon to invoke during the lifecycle of the bidirectional connection to the 
 upstream producer. The `ProducerBlockItemObserver` is constructed with a reference to the `StreamMediator` and to
 the `ResponseStreamObserver` managed by Helidon for transmitting BlockItemResponses to the producer.
@@ -186,7 +186,7 @@ See the Producer Registration Flow diagram for more details.
 
 ### Consumer Registration Flow
 
-When a consumer calls the `StreamSource` gRPC method, the `BlockItemStreamService` will create a new 
+When a consumer calls the `subscribeBlockStream` gRPC method, the `BlockItemStreamService` will create a new 
 `ConsumerBlockItemObserver` instance for Helidon to invoke during the lifecycle of the bidirectional connection to the
 downstream consumer. The `ConsumerBlockItemObserver` is constructed with a reference to the `StreamMediator` and to
 the `ResponseStreamObserver` managed by Helidon for transmitting BlockItemResponses to the downstream consumer. The 
