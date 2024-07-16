@@ -17,7 +17,8 @@ point for custom logic is an implementation of `GrpcService`.
 ## Goals
 
 1) Consumers must be able to dynamically subscribe and unsubscribe from the live stream of BlockItems emitted by the
-    producer.
+    producer.  When a consumer subscribes to the stream, they will begin receiving BlockItems at the start of the next Block.
+    BlockItems transiting before the next Block will be discarded and not sent to the downstream consumer.
 2) Correct, in-order streaming delivery of BlockItems from a producer to all registered consumers.
 3) Minimize latency between the producer and consumers.
 4) Minimize CPU resources consumed by the producer and consumers.
@@ -29,18 +30,18 @@ point for custom logic is an implementation of `GrpcService`.
 **BlockItem** - The BlockItem is the primary data structure passed between the producer, the `hedera-block-node`
 and consumers. A defined sequence of BlockItems represent a Block when stored on the `hedera-block-node`.
 
-**Bidirectional Streaming** - Bidirectional streaming is an [HTTP/2 feature](https://datatracker.ietf.org/doc/html/rfc9113#name-streams-and-multiplexing) allowing both a client and a server to emit 
-a continuous stream of frames without waiting for responses. In this way, gRPC services can be used to efficiently 
-transmit a continuous flow of BlockItem messages while the HTTP/2 connection is open.
+**Bidirectional Streaming** - Bidirectional streaming is an [HTTP/2 feature](https://datatracker.ietf.org/doc/html/rfc9113#name-streams-and-multiplexing) 
+allowing both a client and a server emit a continuous stream of frames without waiting for responses. In this way, gRPC 
+services can be used to efficiently transmit a continuous flow of BlockItem messages while the HTTP/2 connection is open.
 
 **Producer StreamObserver** - The Producer StreamObserver is a custom implementation of the [gRPC StreamObserver 
-interface](https://github.com/grpc/grpc-java/blob/0ff3f8e4ac4c265e91b4a0379a32cf25a0a2b2f7/stub/src/main/java/io/grpc/stub/StreamObserver.java#L45) used by Helidon. It is initialized by the BlockItemStreamService (see Entities section). Helidon invokes the Producer
-StreamObserver at runtime when the producer sends a new BlockItem to the `StreamSink` gRPC service. 
+interface](https://github.com/grpc/grpc-java/blob/0ff3f8e4ac4c265e91b4a0379a32cf25a0a2b2f7/stub/src/main/java/io/grpc/stub/StreamObserver.java#L45) used by Helidon. It is initialized by the BlockItemStreamService (see Entities section). Helidon invokes
+the Producer StreamObserver at runtime when the producer sends a new BlockItem to the `StreamSink` gRPC service. 
 
 **Consumer StreamObserver** - The Consumer StreamObserver is a custom implementation of the [gRPC StreamObserver 
-interface](https://github.com/grpc/grpc-java/blob/0ff3f8e4ac4c265e91b4a0379a32cf25a0a2b2f7/stub/src/main/java/io/grpc/stub/StreamObserver.java#L45) used by Helidon. It is initialized by the BlockItemStreamService (see Entities section). Helidon invokes the Consumer
-StreamObserver at runtime when the downstream consumer of the `StreamSource` gRPC service sends HTTP/2 responses to 
-sent BlockItems. 
+interface](https://github.com/grpc/grpc-java/blob/0ff3f8e4ac4c265e91b4a0379a32cf25a0a2b2f7/stub/src/main/java/io/grpc/stub/StreamObserver.java#L45) used by Helidon. It is initialized by the BlockItemStreamService (see Entities section). Helidon invokes
+the Consumer StreamObserver at runtime when the downstream consumer of the `StreamSource` gRPC service sends HTTP/2 
+responses to sent BlockItems. 
 
 **subscribe** - Consumers calling the `StreamSource` gRPC service must be affiliated or subscribed with a producer to 
 receive a live stream of BlockItems from the `hedera-block-node`.
