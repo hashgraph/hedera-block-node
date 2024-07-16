@@ -18,7 +18,7 @@ point for custom logic is an implementation of `GrpcService`.
 
 1) Consumers must be able to dynamically subscribe and unsubscribe from the live stream of BlockItems emitted by the
     producer.  When a consumer subscribes to the stream, they will begin receiving BlockItems at the start of the next Block.
-    BlockItems transiting before the next Block will be discarded and not sent to the downstream consumer.
+    BlockItems transiting before the start of the next Block will not be sent to that downstream consumer.
 2) Correct, in-order streaming delivery of BlockItems from a producer to all registered consumers.
 3) Minimize latency between the producer and consumers.
 4) Minimize CPU resources consumed by the producer and consumers.
