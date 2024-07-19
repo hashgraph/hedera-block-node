@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  block-node-server:
+    image: block-node-server:${VERSION}
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
