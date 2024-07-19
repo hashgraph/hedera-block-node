@@ -1,0 +1,9 @@
+*.iml
+*.md
+*.sw*
+*.csv
+
+mvnw*
+LICENSE*
+
+.java-version
