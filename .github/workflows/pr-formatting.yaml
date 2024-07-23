@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
+
 name: "PR Formatting"
 on:
   pull_request:
@@ -40,8 +41,8 @@ permissions:
   statuses: write
 
 jobs:
-  pr-formatting-checks:
-    name: PR Formatting Checks
+  pr-checks:
+    name: PR Checks
     runs-on: [self-hosted, Linux, medium, ephemeral]
     steps:
       - name: Check PR Title
@@ -63,7 +64,7 @@ jobs:
       - name: Check Assignee
         id: assignee-check
         run: |
-          if [[ "${{ github.event.pull_request.assignees }}" == "null" || "${{ github.event.pull_request.assignees[0] }}" == "null" ]]; then
+          if [[ "${{ github.event.pull_request.assignees }}" == "[]" ]]; then
             echo "Assignee is not set. Failing the workflow."
             exit 1
           fi
@@ -72,21 +73,47 @@ jobs:
       - name: Check Labels
         id: label-check
         run: |
-          if [[ "${{ github.event.pull_request.labels }}" == "null" || "${{ github.event.pull_request.labels.size }}" == 0 ]]; then
+          if [[ "${{ github.event.pull_request.labels }}" == "[]" ]]; then
             echo "No labels are set. Failing the workflow."
             exit 1
           fi
         continue-on-error: true
 
+      - name: Set Result for Title Check
+        if: steps.title-check.outcome == 'failure'
+        run: echo "TITLE_CHECK_FAILED=true" >> $GITHUB_ENV
+
+      - name: Set Result for Milestone Check
+        if: steps.milestone-check.outcome == 'failure'
+        run: echo "MILESTONE_CHECK_FAILED=true" >> $GITHUB_ENV
+
+      - name: Set Result for Assignee Check
+        if: steps.assignee-check.outcome == 'failure'
+        run: echo "ASSIGNEE_CHECK_FAILED=true" >> $GITHUB_ENV
+
+      - name: Set Result for Label Check
+        if: steps.label-check.outcome == 'failure'
+        run: echo "LABEL_CHECK_FAILED=true" >> $GITHUB_ENV
+
       - name: Aggregate Results
         run: |
           failed=false
-          for step in title-check milestone-check assignee-check label-check; do
-            if [ "${{ steps.$step.outcome }}" == "failure" ]; then
-              echo "Step $step failed"
-              failed=true
-            fi
-          done
+          if [ "${{ env.TITLE_CHECK_FAILED }}" == "true" ]; then
+            echo "Title Check failed"
+            failed=true
+          fi
+          if [ "${{ env.MILESTONE_CHECK_FAILED }}" == "true" ]; then
+            echo "Milestone Check failed"
+            failed=true
+          fi
+          if [ "${{ env.ASSIGNEE_CHECK_FAILED }}" == "true" ]; then
+            echo "Assignee Check failed"
+            failed=true
+          fi
+          if [ "${{ env.LABEL_CHECK_FAILED }}" == "true" ]; then
+            echo "Label Check failed"
+            failed=true
+          fi
           if [ "$failed" == "true" ]; then
             exit 1
           fi
