@@ -98,20 +98,28 @@ jobs:
         run: |
           failed=false
           if [ "${{ env.TITLE_CHECK_FAILED }}" == "true" ]; then
-            echo "Title Check failed"
+            echo "::error title=Title Check::❌ Title Check failed"
             failed=true
+          else
+            echo "::notice title=Title Check::✅ Title Check passed"
           fi
           if [ "${{ env.MILESTONE_CHECK_FAILED }}" == "true" ]; then
-            echo "Milestone Check failed"
+            echo "::error title=Milestone Check::❌ Milestone Check failed"
             failed=true
+          else
+            echo "::notice title=Milestone Check::✅ Milestone Check passed"
           fi
           if [ "${{ env.ASSIGNEE_CHECK_FAILED }}" == "true" ]; then
-            echo "Assignee Check failed"
+            echo "::error title=Assignee Check::❌ Assignee Check failed"
             failed=true
+          else
+            echo "::notice title=Assignee Check::✅ Assignee Check passed"
           fi
           if [ "${{ env.LABEL_CHECK_FAILED }}" == "true" ]; then
-            echo "Label Check failed"
+            echo "::error title=Label Check::❌ Label Check failed"
             failed=true
+          else
+            echo "::notice title=Label Check::✅ Label Check passed"
           fi
           if [ "$failed" == "true" ]; then
             exit 1
