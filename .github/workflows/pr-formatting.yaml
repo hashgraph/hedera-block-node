@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-
 name: "PR Formatting"
 on:
   pull_request:
@@ -41,8 +40,8 @@ permissions:
   statuses: write
 
 jobs:
-  pr-checks:
-    name: PR Checks
+  pr-formatting-checks:
+    name: PR Formatting Checks
     runs-on: [self-hosted, Linux, medium, ephemeral]
     steps:
       - name: Check PR Title
