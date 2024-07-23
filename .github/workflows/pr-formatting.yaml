@@ -1,0 +1,82 @@
+##
+# Copyright (C) 2024 Hedera Hashgraph, LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##
+
+name: "PR Formatting"
+on:
+  pull_request_target:
+    types:
+      - assigned
+      - unassigned
+      - labeled
+      - unlabeled
+      - opened
+      - reopened
+      - edited
+      - converted_to_draft
+      - ready_for_review
+      - review_requested
+      - review_request_removed
+      - locked
+      - unlocked
+      - synchronize
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  statuses: write
+
+jobs:
+  title-check:
+    name: Title Check
+    runs-on: [self-hosted, Linux, medium, ephemeral]
+    steps:
+      - name: Check PR Title
+        uses: step-security/conventional-pr-title-action@0eae74515f5a79f8773fa04142dd746df76666ac # v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  milestone-check:
+    name: Milestone Check
+    runs-on: [self-hosted, Linux, medium, ephemeral]
+    steps:
+      - name: Check Milestone
+        if: ${{ github.event.pull_request.milestone == null }}
+        run: |
+          echo "Milestone is not set. Failing the workflow."
+          exit 1
+
+  assignee-check:
+    name: Assignee Check
+    runs-on: [ self-hosted, Linux, medium, ephemeral ]
+
+    steps:
+      - name: Check Assignee
+        if: ${{ github.event.pull_request.assignees == null || github.event.pull_request.assignees[0] == null }}
+        run: |
+          echo "Assignee is not set. Failing the workflow."
+          exit 1
+
+  label-check:
+    name: Label Check
+    runs-on: [self-hosted, Linux, medium, ephemeral]
+    steps:
+      - name: Check Labels
+        if: ${{ github.event.pull_request.labels == null || github.event.pull_request.labels.size == 0 }}
+        run: |
+          echo "No labels are set. Failing the workflow."
+          exit 1
