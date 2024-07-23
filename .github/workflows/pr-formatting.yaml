@@ -16,7 +16,7 @@
 
 name: "PR Formatting"
 on:
-  pull_request_target:
+  pull_request:
     types:
       - assigned
       - unassigned
@@ -32,6 +32,8 @@ on:
       - locked
       - unlocked
       - synchronize
+    branches:
+      - "*"
 
 defaults:
   run:
