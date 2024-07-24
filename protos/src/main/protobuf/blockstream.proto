@@ -81,3 +81,16 @@ message BlockResponse {
      */
     int64 id = 1;
 }
+
+/**
+ * A block request is a simple message that contains an id.
+ * This specification is a simple example meant to expedite development.
+ * It will be replaced with a PBJ implementation in the future.
+ */
+message BlockRequest {
+    /**
+    * The id of the block which was requested.  Each block id should
+    * correlate with the id of a Block message id.
+    */
+    int64 id = 1;
+}

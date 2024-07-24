@@ -64,7 +64,7 @@ public class Server {
             // Initialize the block storage, cache, and service
             final BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage = new FileSystemBlockStorage(BLOCKNODE_STORAGE_ROOT_PATH_KEY, config);
 
-            // TODO: Make timeoutThresholdMillis configurable
+            // Initialize blockStreamService with Live Stream and Cache
             final BlockStreamService blockStreamService = new BlockStreamService(consumerTimeoutThreshold,
                     new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage)),
                     new WriteThroughCacheHandler(blockStorage));
@@ -83,8 +83,8 @@ public class Server {
                                     SERVER_STREAMING_METHOD_NAME,
                                     serverBidiStreamingMethod)
                             .unary(BlockStreamServiceGrpcProto.getDescriptor(),
-                            "BlockStreamGrpc",
-                            "GetBlock",
+                                    SERVICE_NAME,
+                                    GET_BLOCK_METHOD_NAME,
                             Server::grpcGetBlock))
                     .build()
                     .start();

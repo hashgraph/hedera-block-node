@@ -3,6 +3,7 @@ module com.hedera.block.server {
     requires com.hedera.block.protos;
     requires com.google.protobuf;
     requires io.grpc.stub;
+    requires io.grpc;
     requires io.helidon.common;
     requires io.helidon.config;
     requires io.helidon.webserver.grpc;

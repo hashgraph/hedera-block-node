@@ -95,7 +95,7 @@ public class BlockStreamService implements GrpcService {
     public void update(final Routing routing) {
         routing.bidi(CLIENT_STREAMING_METHOD_NAME, this::streamSink);
         routing.bidi(SERVER_STREAMING_METHOD_NAME, this::streamSource);
-        routing.unary("GetBlock", this::getBlock);
+        routing.unary(GET_BLOCK_METHOD_NAME, this::getBlock);
     }
 
     /**
@@ -153,6 +153,7 @@ public class BlockStreamService implements GrpcService {
                     .withDescription("DID NOT FIND YOUR BLOCK")
                     .asRuntimeException()
             );
+            // Keeping below comments for the fix needed above.
             // complete(responseObserver, BlockStreamServiceGrpcProto.Block.getDefaultInstance());
         }
     }
