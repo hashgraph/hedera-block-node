@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-name: "PR Checks"
+name: "PR Gradle Checks"
 on:
   push:
     branches:
@@ -32,7 +32,7 @@ env:
 
 jobs:
   compile:
-    name: "Build"
+    name: "Gradle Checks"
     runs-on: [ self-hosted, Linux, medium, ephemeral ]
     steps:
       - name: Harden Runner
