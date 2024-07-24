@@ -46,6 +46,8 @@ service BlockStreamGrpc {
      * message with the id of each block received.
      */
     rpc StreamSource(stream BlockResponse) returns (stream Block) {}
+
+    rpc GetBlock(Block) returns (Block) {}
 }
 
 /**

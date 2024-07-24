@@ -47,5 +47,7 @@ gradle-app.setting
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
 
+.idea
+.DS_Store
 # .env files
 server/docker/.env

@@ -26,7 +26,6 @@ import io.grpc.stub.StreamObserver;
 import io.helidon.config.Config;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.grpc.GrpcRouting;
-import io.helidon.webserver.http.HttpRouting;
 
 import java.io.IOException;
 import java.util.stream.Stream;
@@ -64,8 +63,11 @@ public class Server {
 
             // Initialize the block storage, cache, and service
             final BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage = new FileSystemBlockStorage(BLOCKNODE_STORAGE_ROOT_PATH_KEY, config);
+
+            // TODO: Make timeoutThresholdMillis configurable
             final BlockStreamService blockStreamService = new BlockStreamService(consumerTimeoutThreshold,
-                    new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage)));
+                    new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage)),
+                    new WriteThroughCacheHandler(blockStorage));
 
             // Start the web server
             WebServer.builder()
@@ -79,13 +81,18 @@ public class Server {
                             .bidi(BlockStreamServiceGrpcProto.getDescriptor(),
                                     SERVICE_NAME,
                                     SERVER_STREAMING_METHOD_NAME,
-                                    serverBidiStreamingMethod))
+                                    serverBidiStreamingMethod)
+                            .unary(BlockStreamServiceGrpcProto.getDescriptor(),
+                            "BlockStreamGrpc",
+                            "GetBlock",
+                            Server::grpcGetBlock))
                     .build()
                     .start();
-
         } catch (IOException e) {
             LOGGER.log(System.Logger.Level.ERROR, "An exception was thrown starting the server", e);
             throw new RuntimeException(e);
         }
     }
+
+    static void grpcGetBlock(BlockStreamServiceGrpcProto.BlockRequest request, StreamObserver<BlockStreamServiceGrpcProto.Block> responseObserver) {}
 }

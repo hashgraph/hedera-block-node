@@ -21,11 +21,16 @@ import com.hedera.block.protos.BlockStreamServiceGrpcProto;
 import com.hedera.block.server.consumer.LiveStreamObserver;
 import com.hedera.block.server.consumer.LiveStreamObserverImpl;
 import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.block.server.persistence.BlockPersistenceHandler;
 import com.hedera.block.server.producer.ProducerBlockStreamObserver;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
 
 import java.time.Clock;
+import java.util.Optional;
+
+import static io.helidon.webserver.grpc.ResponseHelper.complete;
 
 import static com.hedera.block.server.Constants.*;
 
@@ -43,6 +48,7 @@ public class BlockStreamService implements GrpcService {
 
     private final long timeoutThresholdMillis;
     private final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator;
+    private final BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler;
 
     /**
      * Constructor for the BlockStreamService class.
@@ -51,10 +57,12 @@ public class BlockStreamService implements GrpcService {
      * @param streamMediator the stream mediator
      */
     public BlockStreamService(final long timeoutThresholdMillis,
-                              final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator) {
+                              final StreamMediator<BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse> streamMediator,
+                              final BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block> blockPersistenceHandler) {
 
         this.timeoutThresholdMillis = timeoutThresholdMillis;
         this.streamMediator = streamMediator;
+        this.blockPersistenceHandler = blockPersistenceHandler;
     }
 
     /**
@@ -87,6 +95,7 @@ public class BlockStreamService implements GrpcService {
     public void update(final Routing routing) {
         routing.bidi(CLIENT_STREAMING_METHOD_NAME, this::streamSink);
         routing.bidi(SERVER_STREAMING_METHOD_NAME, this::streamSource);
+        routing.unary("GetBlock", this::getBlock);
     }
 
     /**
@@ -128,6 +137,24 @@ public class BlockStreamService implements GrpcService {
         streamMediator.subscribe(streamObserver);
 
         return streamObserver;
+    }
+
+    private void getBlock(BlockStreamServiceGrpcProto.Block block, StreamObserver<BlockStreamServiceGrpcProto.Block> responseObserver) {
+        String message = "GET BLOCK RESPONSE! ";
+        LOGGER.log(System.Logger.Level.INFO, "GetBlock request received");
+        Optional<BlockStreamServiceGrpcProto.Block> responseBlock = blockPersistenceHandler.read(block.getId());
+        if(responseBlock.isPresent()) {
+            LOGGER.log(System.Logger.Level.INFO, "SENDING BLOCK # " + block.getId());
+            complete(responseObserver, responseBlock.get()); // TODO: Should return int and not quoted string
+        } else {
+            LOGGER.log(System.Logger.Level.INFO, "DID NOT FIND YOUR BLOCK");
+            // TODO: Fix below. It could return gRPC equivalent of 404 NOT FOUND
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("DID NOT FIND YOUR BLOCK")
+                    .asRuntimeException()
+            );
+            // complete(responseObserver, BlockStreamServiceGrpcProto.Block.getDefaultInstance());
+        }
     }
 }
 
