@@ -162,12 +162,13 @@ public class BlockStreamService implements GrpcService {
         final Optional<BlockStreamServiceGrpcProto.Block> responseBlock =
                 blockPersistenceHandler.read(block.getId());
         if (responseBlock.isPresent()) {
-            LOGGER.log(System.Logger.Level.INFO, "SENDING BLOCK # " + block.getId());
-            complete(
-                    responseObserver,
-                    responseBlock.get()); // TODO: Should return int and not quoted string
+            LOGGER.log(System.Logger.Level.INFO, "Returning block with id: {0}", block.getId());
+            complete(responseObserver, responseBlock.get());
         } else {
-            LOGGER.log(System.Logger.Level.INFO, "DID NOT FIND YOUR BLOCK");
+            LOGGER.log(
+                    System.Logger.Level.INFO,
+                    "Did not find your block with id: {0}",
+                    block.getId());
             responseObserver.onNext(
                     BlockStreamServiceGrpcProto.Block.newBuilder().setId(0).build());
         }
