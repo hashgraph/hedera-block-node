@@ -26,7 +26,6 @@ import com.hedera.block.server.consumer.LiveStreamObserverImpl;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.persistence.BlockPersistenceHandler;
 import com.hedera.block.server.producer.ProducerBlockStreamObserver;
-import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
 import java.time.Clock;
@@ -169,7 +168,8 @@ public class BlockStreamService implements GrpcService {
                     responseBlock.get()); // TODO: Should return int and not quoted string
         } else {
             LOGGER.log(System.Logger.Level.INFO, "DID NOT FIND YOUR BLOCK");
-            responseObserver.onNext(BlockStreamServiceGrpcProto.Block.newBuilder().setId(0).build());
+            responseObserver.onNext(
+                    BlockStreamServiceGrpcProto.Block.newBuilder().setId(0).build());
         }
     }
 }
