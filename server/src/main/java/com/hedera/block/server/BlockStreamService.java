@@ -156,12 +156,11 @@ public class BlockStreamService implements GrpcService {
         return streamObserver;
     }
 
-    private void getBlock(
+    void getBlock(
             BlockStreamServiceGrpcProto.Block block,
             StreamObserver<BlockStreamServiceGrpcProto.Block> responseObserver) {
-        String message = "GET BLOCK RESPONSE! ";
         LOGGER.log(System.Logger.Level.INFO, "GetBlock request received");
-        Optional<BlockStreamServiceGrpcProto.Block> responseBlock =
+        final Optional<BlockStreamServiceGrpcProto.Block> responseBlock =
                 blockPersistenceHandler.read(block.getId());
         if (responseBlock.isPresent()) {
             LOGGER.log(System.Logger.Level.INFO, "SENDING BLOCK # " + block.getId());
@@ -170,13 +169,7 @@ public class BlockStreamService implements GrpcService {
                     responseBlock.get()); // TODO: Should return int and not quoted string
         } else {
             LOGGER.log(System.Logger.Level.INFO, "DID NOT FIND YOUR BLOCK");
-            // TODO: Fix below. It could return gRPC equivalent of 404 NOT FOUND
-            responseObserver.onError(
-                    Status.NOT_FOUND
-                            .withDescription("DID NOT FIND YOUR BLOCK")
-                            .asRuntimeException());
-            // Keeping below comments for the fix needed above.
-            // complete(responseObserver, BlockStreamServiceGrpcProto.Block.getDefaultInstance());
+            responseObserver.onNext(BlockStreamServiceGrpcProto.Block.newBuilder().setId(0).build());
         }
     }
 }
