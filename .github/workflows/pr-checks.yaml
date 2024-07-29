@@ -13,15 +13,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
+name: "PR Gradle Checks"
+on:
+  push:
+    branches:
+      - main
+      - release/*
+  pull_request:
+    branches:
+      - "*"
 
-name: Spotless Check
+defaults:
+  run:
+    shell: bash
 
-on: [pull_request]
+env:
+  GRADLE_EXEC: ./gradlew
 
 jobs:
-  spotless:
-    runs-on: ubuntu-latest
-
+  compile:
+    name: "Gradle Checks"
+    runs-on: [ self-hosted, Linux, medium, ephemeral ]
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
@@ -57,11 +69,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Run Spotless Check
-        run: |
-          ./gradlew spotlessCheck
-          if [ $? -ne 0 ]; then
-            echo "Spotless found formatting issues. Please run './gradlew spotlessApply' to fix them."
-            exit 1
-          fi
-        continue-on-error: false
+      - name: Build
+        id: gradle-build
+        run: ${GRADLE_EXEC} build
+
+      - name: Style Check
+        id: spotless-check
+        run: ${GRADLE_EXEC} spotlessCheck
+
+      - name: Unit Tests
+        id: unit-tests
+        run: ${GRADLE_EXEC} check
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
