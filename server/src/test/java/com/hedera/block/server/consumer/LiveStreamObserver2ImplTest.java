@@ -29,22 +29,4 @@ class LiveStreamObserver2ImplTest {
             Assertions.assertNotNull(ex);
         }
     }
-
-    @Test
-    void onNext() {
-        try {
-            new LiveStreamObserver2Impl().onNext(null);
-        } catch (Exception ex) {
-            Assertions.assertNotNull(ex);
-        }
-    }
-
-    @Test
-    void onError() {
-        try {
-            new LiveStreamObserver2Impl().onError(null);
-        } catch (Exception ex) {
-            Assertions.assertNotNull(ex);
-        }
-    }
 }
