@@ -46,6 +46,8 @@ service BlockStreamGrpc {
      * message with the id of each block received.
      */
     rpc StreamSource(stream BlockResponse) returns (stream Block) {}
+
+    rpc GetBlock(Block) returns (Block) {}
 }
 
 /**
@@ -77,5 +79,18 @@ message BlockResponse {
      * The id of the block which was received.  Each block id should
      * correlate with the id of a Block message id.
      */
+    int64 id = 1;
+}
+
+/**
+ * A block request is a simple message that contains an id.
+ * This specification is a simple example meant to expedite development.
+ * It will be replaced with a PBJ implementation in the future.
+ */
+message BlockRequest {
+    /**
+    * The id of the block which was requested.  Each block id should
+    * correlate with the id of a Block message id.
+    */
     int64 id = 1;
 }
