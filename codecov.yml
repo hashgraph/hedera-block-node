@@ -4,4 +4,3 @@ coverage:
       default:
         threshold: 0.8
 ignore:
-  - "server/src/main/java/com/hedera/block/server/consumer/LiveStreamObserver2Impl.java"
