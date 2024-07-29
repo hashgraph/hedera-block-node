@@ -108,4 +108,4 @@ jobs:
           build-args: |
             VERSION=${{ env.VERSION }}
           build-contexts: |
-            distributions=../build/distributions
+            distributions=./server/build/distributions
