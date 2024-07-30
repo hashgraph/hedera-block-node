@@ -60,14 +60,14 @@ jobs:
 
       - name: Check Assignee
         run: |
-          if [[ "${{ github.event.pull_request.assignees[1] }}" == "" ]]; then
+          if [[ "${{ github.event.pull_request.assignees[0] }}" == "" ]]; then
             echo "Assignee is not set. Setting failure."
             echo "ASSIGNEE_CHECK_FAILED=true" >> $GITHUB_ENV
           fi        
 
       - name: Check Labels
         run: |
-          if [[ "${{ github.event.pull_request.labels[1] }}" == "" ]]; then
+          if [[ "${{ github.event.pull_request.labels[0] }}" == "" ]]; then
             echo "No labels are set. Setting failure."
             echo "LABEL_CHECK_FAILED=true" >> $GITHUB_ENV
           fi        
