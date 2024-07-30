@@ -58,6 +58,19 @@ tasks.register<Exec>("startDockerContainer") {
     commandLine("sh", "-c", "docker-compose -p block-node up -d")
 }
 
+tasks.register<Exec>("startDockerDebugContainer") {
+    description = "Starts the docker container of the Block Node Server of the current version"
+    group = "docker"
+
+    workingDir(layout.projectDirectory.dir("docker"))
+
+    commandLine(
+        "sh",
+        "-c",
+        "./update-env.sh ${project.version} true && docker compose -p block-node up -d"
+    )
+}
+
 tasks.register<Exec>("stopDockerContainer") {
     description = "Stops running docker containers of the Block Node Server"
     group = "docker"
