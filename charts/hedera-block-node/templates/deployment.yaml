@@ -40,6 +40,7 @@ spec:
               name: {{ include "hedera-block-node.fullname" . }}-config
           - secretRef:
               name: {{ include "hedera-block-node.fullname" . }}-secret
+
         # TODO: Uncomment them once we have the health and readiness probes in our application
         #livenessProbe:
         #  httpGet:

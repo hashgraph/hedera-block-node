@@ -1,5 +1,0 @@
-image:
-  repository: localhost
-  tag: "0.1.0-SNAPSHOT"
-  pullPolicy: always
-
