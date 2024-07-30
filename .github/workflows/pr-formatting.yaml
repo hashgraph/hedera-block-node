@@ -52,47 +52,29 @@ jobs:
         continue-on-error: true
 
       - name: Check Milestone
-        id: milestone-check
         run: |
-          if [[ "${{ github.event.pull_request.milestone }}" == "null" ]]; then
-            echo "Milestone is not set. Failing the workflow."
-            exit 1
+          if [[ "${{ github.event.pull_request.milestone }}" == "" ]]; then
+            echo "Milestone is not set. Setting failure."
+            echo "MILESTONE_CHECK_FAILED=true" >> $GITHUB_ENV
           fi
-        continue-on-error: true
 
       - name: Check Assignee
-        id: assignee-check
         run: |
-          if [[ "${{ github.event.pull_request.assignees }}" == "[]" ]]; then
-            echo "Assignee is not set. Failing the workflow."
-            exit 1
+          if [[ "${{ github.event.pull_request.assignees[0] }}" == "" ]]; then
+            echo "Assignee is not set. Setting failure."
+            echo "ASSIGNEE_CHECK_FAILED=true" >> $GITHUB_ENV
           fi
-        continue-on-error: true
 
       - name: Check Labels
-        id: label-check
         run: |
-          if [[ "${{ github.event.pull_request.labels }}" == "[]" ]]; then
-            echo "No labels are set. Failing the workflow."
-            exit 1
+          if [[ "${{ github.event.pull_request.labels[0] }}" == "" ]]; then
+            echo "No labels are set. Setting failure."
+            echo "LABEL_CHECK_FAILED=true" >> $GITHUB_ENV
           fi
-        continue-on-error: true
 
       - name: Set Result for Title Check
         if: steps.title-check.outcome == 'failure'
         run: echo "TITLE_CHECK_FAILED=true" >> $GITHUB_ENV
-
-      - name: Set Result for Milestone Check
-        if: steps.milestone-check.outcome == 'failure'
-        run: echo "MILESTONE_CHECK_FAILED=true" >> $GITHUB_ENV
-
-      - name: Set Result for Assignee Check
-        if: steps.assignee-check.outcome == 'failure'
-        run: echo "ASSIGNEE_CHECK_FAILED=true" >> $GITHUB_ENV
-
-      - name: Set Result for Label Check
-        if: steps.label-check.outcome == 'failure'
-        run: echo "LABEL_CHECK_FAILED=true" >> $GITHUB_ENV
 
       - name: Aggregate Results
         run: |
