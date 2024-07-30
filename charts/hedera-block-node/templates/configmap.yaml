@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hedera-block-node.fullname" . }}-config
+data:
+  VERSION: {{ include "hedera-block-node.appVersion" .  | quote }}
+  BLOCKNODE_STORAGE_ROOT_PATH: {{ .Values.blockNode.storageRootPath | quote }}
