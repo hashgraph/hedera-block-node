@@ -64,7 +64,11 @@ tasks.register<Exec>("startDockerDebugContainer") {
 
     workingDir(layout.projectDirectory.dir("docker"))
 
-    commandLine("sh", "-c", "./update-env.sh ${project.version} true && docker compose -p block-node up -d")
+    commandLine(
+        "sh",
+        "-c",
+        "./update-env.sh ${project.version} true && docker compose -p block-node up -d"
+    )
 }
 
 tasks.register<Exec>("stopDockerContainer") {
