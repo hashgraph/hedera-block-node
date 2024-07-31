@@ -21,9 +21,13 @@ helm template --name-template my-bn hedera-block-node/ --dry-run --output-dir ou
 To install the chart:
 ```bash
 helm repo add hedera-block-node https://hashgraph.github.io/hedera-block-node/charts
-helm upgrade --install "${RELEASE}" hedera-block-node/hedera-block-node
+helm install "${RELEASE}" hedera-block-node/hedera-block-node -f <path-to-custom-values-file>
 ```
-
+*Note:* If using the chart directly after cloning the github repo, there is no need to add the repo. and install can be directly.
+Assuming you are at the root folder of the repo.
+```bash
+helm install "${RELEASE}" charts/hedera-block-node -f <path-to-custom-values-file>
+```
 
 ## Configure
 

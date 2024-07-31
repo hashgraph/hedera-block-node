@@ -73,14 +73,12 @@ tolerations: []
 affinity: {}
 
 blockNode:
-  version: "" # if blank will use same as AppVersion of chart.
+  # if blank will use same as AppVersion of chart.
+  version: ""
   config:
     # Add any additional env configuration here
     # key: value
     BLOCKNODE_STORAGE_ROOT_PATH: "/app/storage"
   secret:
-    PRIVATE_KEY_TYPE: "ED25519" # ED25519 or ECDSA
-    PRIVATE_KEY_ENCODING: "HEX" # HEX or DER
-    PRIVATE_KEY_ACCOUNT_ID: "0.0.0" # Hedera account ID
-    PRIVATE_KEY: "fake_private_key" # Hedera account private key, format depends on encoding
-    HEDERA_NETWORK: "testnet" # testnet, previewnet or mainnet
+    # if blank will use same as AppVersion of chart.
+    PRIVATE_KEY: "fake_private_key"
