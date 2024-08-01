@@ -112,7 +112,10 @@ jobs:
 
 
   helm-chart-release:
+    # depends-on: publish
     runs-on: [ self-hosted, Linux, medium, ephemeral ]
+    permissions:
+      contents: write
 
     steps:
       - name: Harden Runner
