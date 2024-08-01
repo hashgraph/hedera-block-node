@@ -125,3 +125,4 @@ jobs:
           target_dir: charts
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages
+          app_version: ${{ env.VERSION }}
