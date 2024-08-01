@@ -55,16 +55,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
-      - name: Get tag
-        run: |
-          if [[ "${{ github.event.inputs.version }}" ]]; then
-            echo "TAG=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-          elif [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            echo "TAG=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-          else
-            echo "TAG=main" >> $GITHUB_ENV
-          fi
-
       - name: Install JDK
         uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
         with:
@@ -104,7 +94,7 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64, linux/arm64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.TAG }}
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.VERSION }}
           build-args: |
             VERSION=${{ env.VERSION }}
           build-contexts: |
@@ -112,7 +102,7 @@ jobs:
 
 
   helm-chart-release:
-    # depends-on: publish
+    needs: publish
     runs-on: [ self-hosted, Linux, medium, ephemeral ]
     permissions:
       contents: write
@@ -126,31 +116,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
-      - name: Get tag
-        run: |
-          if [[ "${{ github.event.inputs.version }}" ]]; then
-            echo "TAG=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-          elif [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            echo "TAG=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-          else
-            echo "TAG=main" >> $GITHUB_ENV
-          fi
-
-      - name: Extract version
-        id: extract_version
-        run: |
-          VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
-
       - name: Install Helm
         uses: azure/setup-helm@fe7b79cd5ee1e45176fcad797de68ecaf3ca4814 # v4.2.0
-
-      - name: Use yq to update image tag
-        uses: mikefarah/yq@f15500b20a1c991c8729870ba60a4dc3524b6a94 # v4.44.2
-        with:
-          cmd: "yq eval '.image.tag = strenv(TAG)' -i charts/hedera-block-node/values.yaml"
-        env:
-          TAG: ${{ env.TAG }}
 
       - name: Publish helm chart
         uses: stefanprodan/helm-gh-pages@0ad2bb377311d61ac04ad9eb6f252fb68e207260 # v1.7.0
