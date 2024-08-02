@@ -22,8 +22,8 @@ The release process is automated using a GitHub Actions workflow (`release-autom
 
 1. **Create or Update Release Branch**:
     - Create a new release branch `release/0.n` if it doesn't exist.
-    - If the release branch was created, means it's a new release, create a PR on the main branch to increase the snapshot version to the next version. 
-    - Bump the version to the input provided in the release branch.    
+    - If the release branch was created, means it's a new release, create a PR on the main branch to increase the snapshot version to the next version.
+    - Bump the version to the input provided in the release branch.
 
 2. **Tagging**:
     - After bumping the version on the release branch, tag the version as `vX.n.p` (where `X.n.p` is the input).
@@ -33,6 +33,7 @@ The release process is automated using a GitHub Actions workflow (`release-autom
     - Create release notes for the new Tag.
     - Close the milestone associated with the release.
     - Upload distribution artifacts to the release.
+    - Publish the artifacts to Sonatype Nexus / Maven Central.
 
 ### Publish Release Workflow
 
