@@ -9,7 +9,13 @@ This document outlines the release process for our project, detailing the steps 
 1. **Milestone and Label Check**:
     - Ensure all Pull Requests (PRs) have a milestone set and appropriate labels. This is important for generating accurate release notes.
     - There is a CI check to ensure that all PRs have a milestone and labels set. If not, the PR will not be merged.
-    - Make sure all PRs and Issues related to the related milestone are already closed, if not closed them before proceeding or move them to the next milestone.    
+    - Make sure all PRs and Issues related to the related milestone are already closed, if not closed them before proceeding or move them to the next milestone.
+2. **Trigger Release Automation Workflow**:
+    - Manually trigger the `release-automation.yaml` workflow with the desired version to be released.
+    - The workflow will create a new release branch, bump the version, and tag the release.
+    - The release branch will be used for any patch versions or hot-fixes.
+    - If the release branch already exists, the workflow should be triggered using the branch release, and the version should be bumped accordingly.
+      - for example: if `release/0.1` exists, and you want to release `0.1.1`, trigger the workflow with `0.1.1` as the semver input and select `release/0.1` on "Use workflow from" dropdown.
 
 ### Release Automation Workflow
 
