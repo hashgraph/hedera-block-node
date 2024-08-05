@@ -52,6 +52,7 @@ public class Server {
     private static final System.Logger LOGGER = System.getLogger(Server.class.getName());
 
     private static Metrics metrics;
+    private static MetricsService metricsService;
 
 
     private Server() {}
@@ -67,8 +68,9 @@ public class Server {
             // init metrics
             BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
             metrics = blockNodeContext.metrics();
-            MetricsService metricsService = new MetricsService(metrics);
+            metricsService = new MetricsService(metrics);
 
+            // increase by 1 just for the sake of an example
             metricsService.exampleCounter.increment();
 
             // Set the global configuration
