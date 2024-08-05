@@ -38,6 +38,35 @@ testModuleInfo {
     requiresStatic("com.github.spotbugs.annotations")
 }
 
+// Release related tasks
+
+fun replaceVersion(files: String, match: String) {
+    ant.withGroovyBuilder {
+        "replaceregexp"(
+            "match" to match,
+            "replace" to project.version,
+            "flags" to "gm"
+        ) {
+            "fileset"(
+                "dir" to rootProject.projectDir,
+                "includes" to files,
+                "excludes" to "**/node_modules/"
+            )
+        }
+    }
+}
+
+tasks.register("bumpVersion") {
+    description = "Bump versions of the project"
+    group = "release"
+
+    replaceVersion("charts/**/Chart.yaml", "(?<=^(appVersion|version): ).+")
+    replaceVersion("gradle.properties", "(?<=^version=).+")
+}
+
+
+// Docker related tasks
+
 var updateDockerEnv =
     tasks.register<Exec>("updateDockerEnv") {
         description =

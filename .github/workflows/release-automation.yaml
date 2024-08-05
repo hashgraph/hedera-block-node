@@ -99,8 +99,12 @@ jobs:
             git checkout ${RELEASE_BRANCH}
           fi
 
-      - name: Gradle Release
-        run: ./gradlew release -Pversion=${{ env.VERSION }}
+      # task is currently failing due to needing credentials.username for PublishToMavenRepository task
+      #- name: Gradle Release
+      #  run: ./gradlew release -Pversion=${{ env.VERSION }}
+
+      - name: Bump Version
+        run: ./gradlew bumpVersion -Pversion=${{ env.VERSION }}
 
       - name: Close the Milestone
         if: ${{ steps.version_parser.outputs.prerelease == '' }}
@@ -186,7 +190,7 @@ jobs:
           git reset --hard $RELEASE_BRANCH
 
       - name: Gradle Release for Next Minor Snapshot
-        run: ./gradlew release -Pversion=${{ env.NEXT_VERSION_SNAPSHOT }}
+        run: ./gradlew bumpVersion -Pversion=${{ env.NEXT_VERSION_SNAPSHOT }}
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6.1.0
