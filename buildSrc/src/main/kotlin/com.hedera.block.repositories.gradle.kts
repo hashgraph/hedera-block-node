@@ -14,4 +14,10 @@
  * limitations under the License.
  */
 
-repositories { mavenCentral() }
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://hyperledger.jfrog.io/artifactory/besu-maven")
+        content { includeGroupByRegex("org\\.hyperledger\\..*") }
+    }
+}

@@ -24,6 +24,11 @@ application {
     mainClass = "com.hedera.block.server.Server"
 }
 
+mainModuleInfo {
+    annotationProcessor("com.google.auto.service.processor")
+    runtimeOnly("com.swirlds.config.impl")
+}
+
 testModuleInfo {
     requires("org.junit.jupiter.api")
     requires("org.mockito")

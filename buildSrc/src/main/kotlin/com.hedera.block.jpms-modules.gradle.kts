@@ -52,6 +52,11 @@ jvmDependencyConflicts.patch {
     }
     module("io.grpc:grpc-stub") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-util") { annotationLibraries.forEach { removeDependency(it) } }
+    // Added for metrics and logging, but also several platform classes
+    module("io.prometheus:simpleclient") {
+        removeDependency("io.prometheus:simpleclient_tracer_otel")
+        removeDependency("io.prometheus:simpleclient_tracer_otel_agent")
+    }
 }
 
 // Fix or enhance the 'module-info.class' of third-party Modules. This is about the
@@ -95,4 +100,21 @@ extraJavaModuleInfo {
     // spotbugs
     module("com.github.spotbugs:spotbugs-annotations", "com.github.spotbugs.annotations")
     module("com.google.code.findbugs:jsr305", "java.annotation") { exportAllPackages() }
+
+    // needed for metrics and logging, but also several platform classes
+    module("com.goterl:resource-loader", "resource.loader")
+    module("com.goterl:lazysodium-java", "lazysodium.java")
+    module("org.hyperledger.besu:secp256k1", "org.hyperledger.besu.nativelib.secp256k1")
+    module("io.prometheus:simpleclient", "io.prometheus.simpleclient")
+    module("io.prometheus:simpleclient_common", "io.prometheus.simpleclient_common")
+    module("io.prometheus:simpleclient_httpserver", "io.prometheus.simpleclient.httpserver") {
+        exportAllPackages()
+        requireAllDefinedDependencies()
+        requires("jdk.httpserver")
+    }
+
+    // Annotation processing only
+    module("com.google.auto.service:auto-service-annotations", "com.google.auto.service")
+    module("com.google.auto.service:auto-service", "com.google.auto.service.processor")
+    module("com.google.auto:auto-common", "com.google.auto.common")
 }
