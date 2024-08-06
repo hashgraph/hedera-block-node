@@ -32,9 +32,8 @@ tasks.register<GitClone>("cloneHederaProtobufs") {
 sourceSets {
     main {
         proto {
-            srcDir("build/hedera-protobufs/services")
-            srcDir("build/hedera-protobufs/streams")
-            srcDir("build/hedera-protobufs/platform")
+            srcDir("build/hedera-protobufs/block")
+//            srcDir("build/hedera-protobufs")
         }
     }
 }
@@ -51,6 +50,9 @@ protobuf {
     }
     generateProtoTasks { ofSourceSet("main").forEach { it.plugins { id("grpc") } } }
 }
+
+
+
 
 //sourceSets.all {
 //    val compileProtoPath = getTaskName("", "compileProtoPath")

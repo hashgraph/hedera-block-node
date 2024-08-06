@@ -6,6 +6,8 @@ module com.hedera.block.server {
     exports com.hedera.block.server.persistence.storage;
 
     requires com.hedera.hapi.block;
+    requires com.hedera.block.stream;
+    requires com.hedera.pbj.runtime;
     requires com.google.protobuf;
     requires com.lmax.disruptor;
     requires com.swirlds.common;

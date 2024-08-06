@@ -19,6 +19,8 @@ plugins {
     alias(libs.plugins.pbj)
 }
 
+group = "com.hedera.block"
+
 description = "Hedera API"
 
 // Remove the following line to enable all 'javac' lint checks that we have turned on by default
@@ -39,15 +41,26 @@ sourceSets {
     main {
         pbj {
             srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("services") })
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("streams") })
+            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("block") })
             srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("platform") })
+            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("streams") })
         }
         proto {
             srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("services") })
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("streams") })
+            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("block") })
             srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("platform") })
+            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("streams") })
         }
     }
+}
+
+dependencies {
+    implementation("io.grpc:grpc-netty:1.64.0")
+    implementation("io.grpc:grpc-protobuf:1.64.0")
+    implementation("io.grpc:grpc-stub:1.64.0")
+    implementation("com.hedera.pbj:pbj-runtime:0.8.9")
+    implementation("org.antlr:antlr4-runtime:4.13.1")
+    implementation("com.github.spotbugs:spotbugs-annotations:4.7.3")
 }
 
 //testModuleInfo {

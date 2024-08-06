@@ -19,7 +19,7 @@ plugins {
 }
 
 
-include(":hapi")
+include(":stream", "stream")
 //include(":protos")
 include(":server")
 
@@ -33,7 +33,7 @@ gradleEnterprise {
 }
 
 // The HAPI API version to use for Protobuf sources.
-val hapiProtoVersion = "0.53.0"
+//val hapiProtoVersion = "0.53.0"
 
 dependencyResolutionManagement {
     versionCatalogs {
@@ -64,21 +64,25 @@ dependencyResolutionManagement {
 
 //            version("google-proto", "3.19.4")
 //            version("grpc-proto", "1.45.1")
-//            version("hapi-proto", hapiProtoVersion)
+//            version("hapi.proto", hapiProtoVersion)
 
             // PBJ dependencies
-            version("google.proto", "3.21.10")
-            version("grpc.protobuf.grpc", "1.45.1")
             plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.8.9")
+            version("com.hedera.pbj.runtime", "0.8.9")
+//            version("pbj.runtime", "0.8.9")
 
             // Testing only versions
             version("org.assertj.core", "3.23.1")
             version("org.junit.jupiter.api", "5.10.2")
             version("org.mockito", "5.8.0")
             version("org.mockito.junit.jupiter", "5.8.0")
+            version("google.proto", "3.21.10")
+            version("grpc.protobuf.grpc", "1.45.1")
+
         }
     }
 }
+
 
 // Build cache configuration
 val isCiServer = System.getenv().containsKey("CI")
@@ -102,4 +106,9 @@ buildCache {
             }
         }
     }
+}
+
+fun include(name: String, path: String) {
+    include(name)
+    project(name).projectDir = File(rootDir, path)
 }
