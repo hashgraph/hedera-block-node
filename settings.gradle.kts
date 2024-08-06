@@ -31,6 +31,9 @@ gradleEnterprise {
     }
 }
 
+// The HAPI API version to use for Protobuf sources.
+val hapiProtoVersion = "0.53.0"
+
 dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
@@ -53,6 +56,13 @@ dependencyResolutionManagement {
             version("com.google.auto.service.processor", "1.1.1")
             version("com.google.auto.service", "1.1.1")
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
+
+            version("google-proto", "3.19.4")
+            version("grpc-proto", "1.45.1")
+            version("hapi-proto", hapiProtoVersion)
+
+            plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.8.9")
+
             // Testing only versions
             version("org.assertj.core", "3.23.1")
             version("org.junit.jupiter.api", "5.10.2")

@@ -32,6 +32,7 @@ tasks.register<GitClone>("cloneHederaProtobufs") {
 protobuf {
     val libs = the<VersionCatalogsExtension>().named("libs")
     protoc { artifact = "com.google.protobuf:protoc:" + libs.findVersion("google-proto").get() }
+//    protoc { artifact = "com.google.protobuf:protoc:3.21.10" }
     plugins {
         // Add GRPC plugin as we need to generate GRPC services
         id("grpc") {
@@ -57,13 +58,13 @@ sourceSets.all {
     }
 }
 
-//tasks.javadoc {
-//    options {
-//        this as StandardJavadocDocletOptions
-//        // There are violations in the generated protobuf code
-//        addStringOption("Xdoclint:-reference,-html", "-quiet")
-//    }
-//}
+tasks.javadoc {
+    options {
+        this as StandardJavadocDocletOptions
+        // There are violations in the generated protobuf code
+        addStringOption("Xdoclint:-reference,-html", "-quiet")
+    }
+}
 
 // Give JUnit more ram and make it execute tests in parallel
 //tasks.test {
