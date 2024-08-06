@@ -18,7 +18,7 @@ plugins {
     id("com.hedera.block.protobuf")
 //    id("com.hedera.gradle.services-publish")
 //    id("com.hedera.gradle.java-test-fixtures")
-//    alias(libs.plugins.pbj)
+    alias(libs.plugins.pbj)
 }
 
 description = "Hedera API"

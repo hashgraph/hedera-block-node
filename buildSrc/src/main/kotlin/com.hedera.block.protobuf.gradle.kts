@@ -16,9 +16,10 @@
 
 import com.google.protobuf.gradle.id
 import com.hedera.block.tasks.GitClone
+import gradle.kotlin.dsl.accessors._37e002b0739411f5e26da8237c8ebcec.sourceSets
 
 plugins {
-    id("java")
+    id("com.hedera.block.server")
     id("com.google.protobuf")
 }
 
@@ -28,43 +29,53 @@ tasks.register<GitClone>("cloneHederaProtobufs") {
     localCloneDirectory = layout.buildDirectory.dir("hedera-protobufs")
 }
 
+sourceSets {
+    main {
+        proto {
+            srcDir("build/hedera-protobufs/services")
+            srcDir("build/hedera-protobufs/streams")
+            srcDir("build/hedera-protobufs/platform")
+        }
+    }
+}
+
 // Configure Protobuf Plugin to download protoc executable rather than using local installed version
 protobuf {
     val libs = the<VersionCatalogsExtension>().named("libs")
-    protoc { artifact = "com.google.protobuf:protoc:" + libs.findVersion("google-proto").get() }
-//    protoc { artifact = "com.google.protobuf:protoc:3.21.10" }
+    protoc { artifact = "com.google.protobuf:protoc:" + libs.findVersion("google.proto").get() }
     plugins {
         // Add GRPC plugin as we need to generate GRPC services
         id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:" + libs.findVersion("grpc-proto").get()
+            artifact = "io.grpc:protoc-gen-grpc-java:" + libs.findVersion("grpc.protobuf.grpc").get()
         }
     }
     generateProtoTasks { ofSourceSet("main").forEach { it.plugins { id("grpc") } } }
 }
 
-sourceSets.all {
-    val compileProtoPath = getTaskName("", "compileProtoPath")
-    dependencies {
+//sourceSets.all {
+//    val compileProtoPath = getTaskName("", "compileProtoPath")
+//    dependencies {
         // For dependencies of protobuf compilation use versions from 'hedera-dependency-versions',
         // but not 'runtime' dependencies of the platform (JAVA_API instead of JAVA_RUNTIME).
-        dependencies {
-            compileProtoPath("com.hedera.hashgraph:hedera-dependency-versions") {
-                attributes {
-                    attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_API))
-                    attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.REGULAR_PLATFORM))
-                }
-            }
-        }
-    }
-}
+//        dependencies {
+//            compileProtoPath("com.hedera.hashgraph:hedera-dependency-versions") {
+//                attributes {
+//                    attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_API))
+//                    attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.REGULAR_PLATFORM))
+//                }
+//            }
+//            compileProtoPath("com.hedera.block")
+//        }
+//    }
+//}
 
-tasks.javadoc {
-    options {
-        this as StandardJavadocDocletOptions
-        // There are violations in the generated protobuf code
-        addStringOption("Xdoclint:-reference,-html", "-quiet")
-    }
-}
+//tasks.javadoc {
+//    options {
+//        this as StandardJavadocDocletOptions
+//        // There are violations in the generated protobuf code
+//        addStringOption("Xdoclint:-reference,-html", "-quiet")
+//    }
+//}
 
 // Give JUnit more ram and make it execute tests in parallel
 //tasks.test {

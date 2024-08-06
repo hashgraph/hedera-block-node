@@ -18,8 +18,9 @@ plugins {
     id("com.gradle.enterprise").version("3.15.1")
 }
 
+
 include(":hapi")
-include(":protos")
+//include(":protos")
 include(":server")
 
 includeBuild(".") // https://github.com/gradle/gradle/issues/21490#issuecomment-1458887481
@@ -61,6 +62,13 @@ dependencyResolutionManagement {
             version("grpc-proto", "1.45.1")
             version("hapi-proto", hapiProtoVersion)
 
+//            version("google-proto", "3.19.4")
+//            version("grpc-proto", "1.45.1")
+//            version("hapi-proto", hapiProtoVersion)
+
+            // PBJ dependencies
+            version("google.proto", "3.21.10")
+            version("grpc.protobuf.grpc", "1.45.1")
             plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.8.9")
 
             // Testing only versions
