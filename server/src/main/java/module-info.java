@@ -16,6 +16,6 @@ module com.hedera.block.server {
     requires static com.github.spotbugs.annotations;
     requires static com.google.auto.service;
 
-    provides com.swirlds.config.api.ConfigurationExtension with BlockNodeConfigExtension;
-
+    provides com.swirlds.config.api.ConfigurationExtension with
+            BlockNodeConfigExtension;
 }

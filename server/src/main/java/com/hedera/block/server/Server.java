@@ -21,8 +21,8 @@ import static com.hedera.block.server.Constants.*;
 import com.hedera.block.protos.BlockStreamServiceGrpcProto;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
-import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.mediator.LiveStreamMediatorImpl;
+import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.WriteThroughCacheHandler;
 import com.hedera.block.server.persistence.storage.BlockStorage;
 import com.hedera.block.server.persistence.storage.FileSystemBlockStorage;
@@ -53,7 +53,6 @@ public class Server {
 
     private static Metrics metrics;
     private static MetricsService metricsService;
-
 
     private Server() {}
 
