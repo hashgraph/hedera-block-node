@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.gradle.tasks
+package com.hedera.block.tasks
 
 import javax.inject.Inject
 import org.gradle.api.DefaultTask

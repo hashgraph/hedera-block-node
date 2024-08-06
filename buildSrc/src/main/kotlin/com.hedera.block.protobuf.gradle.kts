@@ -15,7 +15,7 @@
  */
 
 import com.google.protobuf.gradle.id
-import com.hedera.gradle.tasks.GitClone
+import com.hedera.block.tasks.GitClone
 
 plugins {
     id("java")
