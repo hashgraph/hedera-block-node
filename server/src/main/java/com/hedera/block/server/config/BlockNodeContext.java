@@ -16,7 +16,8 @@
 
 package com.hedera.block.server.config;
 
+import com.hedera.block.server.metrics.MetricsService;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.metrics.api.Metrics;
 
-public record BlockNodeContext(Metrics metrics, Configuration configuration) {}
+public record BlockNodeContext(Metrics metrics, MetricsService metricsService, Configuration configuration) {}

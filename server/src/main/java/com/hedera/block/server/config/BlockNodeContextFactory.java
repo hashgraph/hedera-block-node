@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.config;
 
+import com.hedera.block.server.metrics.MetricsService;
 import com.swirlds.common.metrics.platform.DefaultMetricsProvider;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
@@ -37,7 +38,8 @@ public class BlockNodeContextFactory {
     public static BlockNodeContext create() {
         final Configuration configuration = getConfiguration();
         final Metrics metrics = getMetrics(configuration);
-        return new BlockNodeContext(metrics, configuration);
+        final MetricsService metricsService = new MetricsService(metrics);
+        return new BlockNodeContext(metrics, metricsService, configuration);
     }
 
     private static Configuration getConfiguration() {

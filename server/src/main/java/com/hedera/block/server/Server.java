@@ -26,7 +26,6 @@ import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.WriteThroughCacheHandler;
 import com.hedera.block.server.persistence.storage.BlockStorage;
 import com.hedera.block.server.persistence.storage.FileSystemBlockStorage;
-import com.swirlds.metrics.api.Metrics;
 import io.grpc.stub.ServerCalls;
 import io.grpc.stub.StreamObserver;
 import io.helidon.config.Config;
@@ -51,9 +50,6 @@ public class Server {
 
     private static final System.Logger LOGGER = System.getLogger(Server.class.getName());
 
-    private static Metrics metrics;
-    private static MetricsService metricsService;
-
     private Server() {}
 
     /**
@@ -66,10 +62,9 @@ public class Server {
         try {
             // init metrics
             BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
-            metrics = blockNodeContext.metrics();
-            metricsService = new MetricsService(metrics);
 
             // increase by 1 just for the sake of an example
+            MetricsService metricsService = blockNodeContext.metricsService();
             metricsService.exampleCounter.increment();
 
             // Set the global configuration

@@ -19,6 +19,7 @@ package com.hedera.block.server.config;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.hedera.block.server.metrics.MetricsService;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.metrics.api.Metrics;
 import org.junit.jupiter.api.Test;
@@ -29,10 +30,12 @@ class BlockNodeContextTest {
     void BlockNodeContext_initializesWithMetricsAndConfiguration() {
         Metrics metrics = mock(Metrics.class);
         Configuration configuration = mock(Configuration.class);
+        MetricsService metricsService = mock(MetricsService.class);
 
-        BlockNodeContext context = new BlockNodeContext(metrics, configuration);
+        BlockNodeContext context = new BlockNodeContext(metrics, metricsService, configuration);
 
         assertEquals(metrics, context.metrics());
+        assertEquals(metricsService, context.metricsService());
         assertEquals(configuration, context.configuration());
     }
 }
