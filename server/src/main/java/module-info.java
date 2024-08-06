@@ -5,7 +5,7 @@ module com.hedera.block.server {
     exports com.hedera.block.server.consumer;
     exports com.hedera.block.server.persistence.storage;
 
-//    requires com.hedera.block.protos;
+    requires com.hedera.hapi.block;
     requires com.google.protobuf;
     requires com.lmax.disruptor;
     requires com.swirlds.common;

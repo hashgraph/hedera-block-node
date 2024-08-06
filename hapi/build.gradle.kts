@@ -16,8 +16,6 @@
 
 plugins {
     id("com.hedera.block.protobuf")
-//    id("com.hedera.gradle.services-publish")
-//    id("com.hedera.gradle.java-test-fixtures")
     alias(libs.plugins.pbj)
 }
 
@@ -34,7 +32,7 @@ tasks.cloneHederaProtobufs {
     // uncomment below to use a specific tag
     // tag = "v0.53.0"
     // uncomment below to use a specific branch
-    branch = "main"
+    branch = "continue-block-node"
 }
 
 sourceSets {
