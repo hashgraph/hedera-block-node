@@ -27,7 +27,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class BlockNodeContextFactory {
-    private static final System.Logger logger = System.getLogger(BlockNodeContextFactory.class.getName());
+    private static final System.Logger logger =
+            System.getLogger(BlockNodeContextFactory.class.getName());
 
     private static final String APPLICATION_PROPERTIES_1 = "app.properties";
 
