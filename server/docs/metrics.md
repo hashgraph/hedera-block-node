@@ -27,4 +27,11 @@ All classes that need to observe metrics can get them from the BlockNodeContext.
 If a new metric is needed, it can be added to MetricsService, and then used in the classes that need it. This is to avoid having to define the metrics in several places.
 MetricsService centralizes the creation of metrics and provides a way to access them from any other class.
 
+To check the metrics you can access the Prometheus endpoint at `http://localhost:9999/metrics`.
 
+## Existing Metrics
+
+| Metric Name    | Description               | Type    |
+|----------------|---------------------------|---------|
+| exampleGauge   | An example gauge metric   | Gauge   |
+| exampleCounter | An example counter metric | Counter |
