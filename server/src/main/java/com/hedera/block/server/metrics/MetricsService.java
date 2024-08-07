@@ -28,17 +28,13 @@ public class MetricsService {
     private static final LongGauge.Config EXAMPLE_GAUGE =
             new LongGauge.Config(CATEGORY, "exampleGauge").withDescription("An example gauge");
 
-    /**
-     * An example gauge.
-     */
+    /** An example gauge. */
     public final LongGauge exampleGauge;
 
     private static final Counter.Config EXAMPLE_COUNTER =
             new Counter.Config(CATEGORY, "exampleCounter").withDescription("An example counter");
 
-    /**
-     * An example counter.
-     */
+    /** An example counter. */
     public final Counter exampleCounter;
 
     /**
