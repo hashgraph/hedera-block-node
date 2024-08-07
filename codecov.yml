@@ -1,0 +1,22 @@
+codecov:
+  max_report_age: off
+
+# Always comment on PRs
+comment:
+  layout: "diff, flags, files"
+  behavior: new # deletes old comment and posts a new one
+  require_changes: false
+
+coverage:
+  status:
+    patch:
+      default:
+        target: 80%
+        threshold: 1%
+    project:
+      default:
+        target: 80%
+        threshold: 1%
+
+ignore:
+  - "server/src/main/java/com/hedera/block/server/Server.java"
