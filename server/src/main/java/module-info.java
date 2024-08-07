@@ -7,4 +7,5 @@ module com.hedera.block.server {
     requires io.helidon.config;
     requires io.helidon.webserver.grpc;
     requires io.helidon.webserver;
+    requires static com.github.spotbugs.annotations;
 }
