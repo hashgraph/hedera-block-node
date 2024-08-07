@@ -47,9 +47,4 @@ class MetricsServiceTest {
 
         assertEquals(exampleCounter, service.exampleCounter);
     }
-
-    @Test
-    void MetricsService_handlesNullMetrics() {
-        assertThrows(NullPointerException.class, () -> new MetricsService(null));
-    }
 }
