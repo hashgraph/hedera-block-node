@@ -21,6 +21,7 @@ import com.swirlds.common.config.BasicCommonConfig;
 import com.swirlds.common.metrics.config.MetricsConfig;
 import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.ConfigurationExtension;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Set;
 
 /** Registers configuration types for the server. */
@@ -32,6 +33,7 @@ public class BlockNodeConfigExtension implements ConfigurationExtension {
      *
      * @return Set of configuration data types for the server
      */
+    @NonNull
     @Override
     public Set<Class<? extends Record>> getConfigDataTypes() {
         return Set.of(BasicCommonConfig.class, MetricsConfig.class, PrometheusConfig.class);

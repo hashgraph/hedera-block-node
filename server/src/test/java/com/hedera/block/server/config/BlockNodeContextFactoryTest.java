@@ -18,12 +18,13 @@ package com.hedera.block.server.config;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 class BlockNodeContextFactoryTest {
 
     @Test
-    void create_returnsBlockNodeContext() {
+    void create_returnsBlockNodeContext() throws IOException {
         BlockNodeContext context = BlockNodeContextFactory.create();
 
         assertNotNull(context.metrics());

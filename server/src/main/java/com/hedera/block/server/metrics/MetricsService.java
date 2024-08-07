@@ -19,6 +19,7 @@ package com.hedera.block.server.metrics;
 import com.swirlds.metrics.api.Counter;
 import com.swirlds.metrics.api.LongGauge;
 import com.swirlds.metrics.api.Metrics;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public class MetricsService {
 
@@ -34,7 +35,7 @@ public class MetricsService {
 
     public final Counter exampleCounter;
 
-    public MetricsService(final Metrics metrics) {
+    public MetricsService(@NonNull final Metrics metrics) {
         this.exampleGauge = metrics.getOrCreate(EXAMPLE_GAUGE);
         this.exampleCounter = metrics.getOrCreate(EXAMPLE_COUNTER);
     }

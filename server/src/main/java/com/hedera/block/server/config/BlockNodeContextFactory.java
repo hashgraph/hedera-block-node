@@ -24,13 +24,12 @@ import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
 import com.swirlds.config.extensions.sources.SystemEnvironmentConfigSource;
 import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import com.swirlds.metrics.api.Metrics;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Path;
 
 /** Static factory that creates {@link BlockNodeContext} */
 public class BlockNodeContextFactory {
-    private static final System.Logger logger =
-            System.getLogger(BlockNodeContextFactory.class.getName());
 
     private static final String APPLICATION_PROPERTIES_1 = "app.properties";
 
@@ -40,28 +39,25 @@ public class BlockNodeContextFactory {
      * @return an instance of {@link BlockNodeContext} which holds {@link Configuration}, {@link
      *     Metrics} and {@link MetricsService} for the rest of the application to use.
      */
-    public static BlockNodeContext create() {
+    public static BlockNodeContext create() throws IOException {
         final Configuration configuration = getConfiguration();
         final Metrics metrics = getMetrics(configuration);
         final MetricsService metricsService = new MetricsService(metrics);
         return new BlockNodeContext(metrics, metricsService, configuration);
     }
 
-    private static Configuration getConfiguration() {
-        try {
-            return ConfigurationBuilder.create()
-                    .withSource(SystemEnvironmentConfigSource.getInstance())
-                    .withSource(SystemPropertiesConfigSource.getInstance())
-                    .withSource(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES_1)))
-                    .autoDiscoverExtensions()
-                    .build();
-        } catch (IOException e) {
-            logger.log(System.Logger.Level.ERROR, "Error reading configuration", e);
-            throw new RuntimeException("Error reading configuration", e);
-        }
+    private static Configuration getConfiguration() throws IOException {
+
+        return ConfigurationBuilder.create()
+                .withSource(SystemEnvironmentConfigSource.getInstance())
+                .withSource(SystemPropertiesConfigSource.getInstance())
+                .withSource(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES_1)))
+                .autoDiscoverExtensions()
+                .build();
     }
 
-    private static Metrics getMetrics(final Configuration configuration) {
+    @NonNull
+    private static Metrics getMetrics(@NonNull final Configuration configuration) {
         final DefaultMetricsProvider metricsProvider = new DefaultMetricsProvider(configuration);
         final Metrics metrics = metricsProvider.createGlobalMetrics();
         metricsProvider.start();
