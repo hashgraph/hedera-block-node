@@ -55,7 +55,7 @@ sourceSets {
 }
 
 dependencies {
-    implementation("io.grpc:grpc-netty:1.64.0")
+//    implementation("io.grpc:grpc-netty:1.64.0")
     implementation("io.grpc:grpc-protobuf:1.64.0")
     implementation("io.grpc:grpc-stub:1.64.0")
     implementation("com.hedera.pbj:pbj-runtime:0.8.9")
