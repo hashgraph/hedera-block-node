@@ -27,6 +27,7 @@ import com.swirlds.metrics.api.Metrics;
 import java.io.IOException;
 import java.nio.file.Path;
 
+/** Static factory that creates {@link BlockNodeContext} */
 public class BlockNodeContextFactory {
     private static final System.Logger logger =
             System.getLogger(BlockNodeContextFactory.class.getName());
@@ -35,6 +36,10 @@ public class BlockNodeContextFactory {
 
     private BlockNodeContextFactory() {}
 
+    /**
+     * @return an instance of {@link BlockNodeContext} which holds {@link Configuration}, {@link
+     *     Metrics} and {@link MetricsService} for the rest of the application to use.
+     */
     public static BlockNodeContext create() {
         final Configuration configuration = getConfiguration();
         final Metrics metrics = getMetrics(configuration);

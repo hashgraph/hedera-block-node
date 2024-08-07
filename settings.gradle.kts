@@ -33,17 +33,20 @@ gradleEnterprise {
 dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
+            // define a constant for the com.swirlds version, since they are all in lockstep
+            val swirldsVersion = "0.51.5"
+
             // Compile time dependencies
             version("com.google.protobuf", "3.24.0")
             version("io.helidon.webserver.http2", "4.0.10")
             version("io.helidon.webserver.grpc", "4.0.10")
             version("com.github.spotbugs.annotations", "4.7.3")
-            version("com.swirlds.metrics.api","0.51.5")
-            version("com.swirlds.metrics.impl","0.51.5")
-            version("com.swirlds.common", "0.51.5")
-            version("com.swirlds.config.impl", "0.51.5")
-            version("com.swirlds.config.processor", "0.51.5")
-            version("com.swirlds.config.extensions", "0.51.5")
+            version("com.swirlds.metrics.api", swirldsVersion)
+            version("com.swirlds.metrics.impl", swirldsVersion)
+            version("com.swirlds.common", swirldsVersion)
+            version("com.swirlds.config.impl", swirldsVersion)
+            version("com.swirlds.config.processor", swirldsVersion)
+            version("com.swirlds.config.extensions", swirldsVersion)
             version("com.google.auto.service.processor", "1.1.1")
             version("com.google.auto.service", "1.1.1")
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")

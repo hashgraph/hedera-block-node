@@ -20,5 +20,13 @@ import com.hedera.block.server.metrics.MetricsService;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.metrics.api.Metrics;
 
+/**
+ * Context for the block node. This record is returned by the BlockNodeContextFactory when a new
+ * configuration is created.
+ *
+ * @param metrics the metrics used for monitoring and reporting
+ * @param metricsService the service responsible for handling metrics
+ * @param configuration the configuration settings for the block node
+ */
 public record BlockNodeContext(
         Metrics metrics, MetricsService metricsService, Configuration configuration) {}

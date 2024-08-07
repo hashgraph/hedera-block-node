@@ -23,9 +23,16 @@ import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.ConfigurationExtension;
 import java.util.Set;
 
+/** Registers configuration types for the server. */
 @AutoService(ConfigurationExtension.class)
 public class BlockNodeConfigExtension implements ConfigurationExtension {
 
+    /**
+     * {@inheritDoc}
+     *
+     * @return Set of configuration data types for the server
+     */
+    @Override
     public Set<Class<? extends Record>> getConfigDataTypes() {
         return Set.of(BasicCommonConfig.class, MetricsConfig.class, PrometheusConfig.class);
     }
