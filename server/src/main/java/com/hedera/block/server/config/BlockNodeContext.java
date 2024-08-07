@@ -19,6 +19,7 @@ package com.hedera.block.server.config;
 import com.hedera.block.server.metrics.MetricsService;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.metrics.api.Metrics;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Context for the block node. This record is returned by the BlockNodeContextFactory when a new
@@ -29,4 +30,6 @@ import com.swirlds.metrics.api.Metrics;
  * @param configuration the configuration settings for the block node
  */
 public record BlockNodeContext(
-        Metrics metrics, MetricsService metricsService, Configuration configuration) {}
+        @NonNull Metrics metrics,
+        @NonNull MetricsService metricsService,
+        @NonNull Configuration configuration) {}
