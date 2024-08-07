@@ -28,13 +28,24 @@ public class MetricsService {
     private static final LongGauge.Config EXAMPLE_GAUGE =
             new LongGauge.Config(CATEGORY, "exampleGauge").withDescription("An example gauge");
 
+    /**
+     * An example gauge.
+     */
     public final LongGauge exampleGauge;
 
     private static final Counter.Config EXAMPLE_COUNTER =
             new Counter.Config(CATEGORY, "exampleCounter").withDescription("An example counter");
 
+    /**
+     * An example counter.
+     */
     public final Counter exampleCounter;
 
+    /**
+     * Creates a new instance of {@link MetricsService}.
+     *
+     * @param metrics the metrics instance
+     */
     public MetricsService(@NonNull final Metrics metrics) {
         this.exampleGauge = metrics.getOrCreate(EXAMPLE_GAUGE);
         this.exampleCounter = metrics.getOrCreate(EXAMPLE_COUNTER);
