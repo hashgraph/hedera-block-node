@@ -37,7 +37,7 @@ dependencyResolutionManagement {
             version("com.google.protobuf", "3.24.0")
             version("io.helidon.webserver.http2", "4.0.10")
             version("io.helidon.webserver.grpc", "4.0.10")
-
+            version("com.github.spotbugs.annotations", "4.7.3")
             // Testing only versions
             version("org.assertj.core", "3.23.1")
             version("org.junit.jupiter.api", "5.10.2")
