@@ -19,7 +19,10 @@ package com.hedera.block.server;
 import static com.hedera.block.server.Constants.*;
 
 import com.hedera.block.protos.BlockStreamServiceGrpcProto;
+import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.mediator.LiveStreamMediatorImpl;
+import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.WriteThroughCacheHandler;
 import com.hedera.block.server.persistence.storage.BlockStorage;
 import com.hedera.block.server.persistence.storage.FileSystemBlockStorage;
@@ -57,6 +60,12 @@ public class Server {
     public static void main(final String[] args) {
 
         try {
+            // init metrics
+            BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+
+            // increase by 1 just for the sake of an example
+            MetricsService metricsService = blockNodeContext.metricsService();
+            metricsService.exampleCounter.increment();
 
             // Set the global configuration
             final Config config = Config.create();

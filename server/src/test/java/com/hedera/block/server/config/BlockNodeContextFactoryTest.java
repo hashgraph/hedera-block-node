@@ -14,10 +14,20 @@
  * limitations under the License.
  */
 
-repositories {
-    mavenCentral()
-    maven {
-        url = uri("https://hyperledger.jfrog.io/artifactory/besu-maven")
-        content { includeGroupByRegex("org\\.hyperledger\\..*") }
+package com.hedera.block.server.config;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.IOException;
+import org.junit.jupiter.api.Test;
+
+class BlockNodeContextFactoryTest {
+
+    @Test
+    void create_returnsBlockNodeContext() throws IOException {
+        BlockNodeContext context = BlockNodeContextFactory.create();
+
+        assertNotNull(context.metrics());
+        assertNotNull(context.configuration());
     }
 }

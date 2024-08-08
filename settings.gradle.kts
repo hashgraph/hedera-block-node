@@ -33,11 +33,24 @@ gradleEnterprise {
 dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
+            // Define a constant for the platform SDK version.
+            // Platform SDK modules are all released together with matching versions.
+            val swirldsVersion = "0.51.5"
+
             // Compile time dependencies
             version("com.google.protobuf", "3.24.0")
             version("io.helidon.webserver.http2", "4.0.11")
             version("io.helidon.webserver.grpc", "4.0.11")
             version("com.github.spotbugs.annotations", "4.7.3")
+            version("com.swirlds.metrics.api", swirldsVersion)
+            version("com.swirlds.metrics.impl", swirldsVersion)
+            version("com.swirlds.common", swirldsVersion)
+            version("com.swirlds.config.impl", swirldsVersion)
+            version("com.swirlds.config.processor", swirldsVersion)
+            version("com.swirlds.config.extensions", swirldsVersion)
+            version("com.google.auto.service.processor", "1.1.1")
+            version("com.google.auto.service", "1.1.1")
+            version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
             // Testing only versions
             version("org.assertj.core", "3.23.1")
             version("org.junit.jupiter.api", "5.10.2")
