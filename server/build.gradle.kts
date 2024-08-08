@@ -42,11 +42,7 @@ testModuleInfo {
 
 fun replaceVersion(files: String, match: String) {
     ant.withGroovyBuilder {
-        "replaceregexp"(
-            "match" to match,
-            "replace" to project.version,
-            "flags" to "gm"
-        ) {
+        "replaceregexp"("match" to match, "replace" to project.version, "flags" to "gm") {
             "fileset"(
                 "dir" to rootProject.projectDir,
                 "includes" to files,
@@ -63,7 +59,6 @@ tasks.register("bumpVersion") {
     replaceVersion("charts/**/Chart.yaml", "(?<=^(appVersion|version): ).+")
     replaceVersion("gradle.properties", "(?<=^version=).+")
 }
-
 
 // Docker related tasks
 
