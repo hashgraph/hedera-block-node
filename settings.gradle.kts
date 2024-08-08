@@ -33,7 +33,8 @@ gradleEnterprise {
 dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
-            // define a constant for the com.swirlds version, since they are all in lockstep
+            // Define a constant for the platform SDK version.
+            // Platform SDK modules are all released together with matching versions.
             val swirldsVersion = "0.51.5"
 
             // Compile time dependencies
