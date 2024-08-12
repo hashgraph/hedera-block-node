@@ -33,7 +33,7 @@ gradleEnterprise {
 }
 
 // The HAPI API version to use for Protobuf sources.
-//val hapiProtoVersion = "0.53.0"
+val hapiProtoVersion = "0.53.0"
 
 dependencyResolutionManagement {
     versionCatalogs {
