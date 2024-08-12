@@ -58,6 +58,17 @@ dependencyResolutionManagement {
             version("com.google.auto.service", "1.1.1")
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
 
+            version("com.google.guava", "31.1-jre")
+            version("org.antlr.antlr4.runtime","4.13.1")
+//            version("io.grpc:grpc-netty:1.64.0") {
+//                because("io.grpc.netty")
+//            }
+
+            version("grpc.protobuf", "1.64.0")
+            version("io.grpc", "1.64.0")
+
+            version("javax.annotation", "1.3.2")
+
             version("google-proto", "3.19.4")
             version("grpc-proto", "1.45.1")
             version("hapi-proto", hapiProtoVersion)
