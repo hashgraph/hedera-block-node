@@ -16,13 +16,23 @@
 
 package com.hedera.block.server.mediator;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.IOException;
+
 /**
- * The StreamMediator marker interface defines the combination of Publisher and SubscriptionHandler
- * contracts. It defines multiple views of the underlying implementation, allowing producers to
- * publish data while the service and downstream subscribers can manage which consumers are
- * subscribed to the stream of events.
+ * The Publisher interface defines the contract for publishing data emitted by the producer to
+ * downstream subscribers.
  *
- * @param <U> the type of the data to publish
- * @param <V> the type of the events the SubscriptionHandler processes
+ * @param <U> the type of data to publish
  */
-public interface StreamMediator<U, V> extends Publisher<U>, SubscriptionHandler<V> {}
+public interface Publisher<U> {
+
+    /**
+     * Publishes the given data to the downstream subscribers.
+     *
+     * @param data the data emitted by an upstream producer to publish to downstream subscribers.
+     * @throws IOException thrown if an I/O error occurs while publishing the item to the
+     *     subscribers.
+     */
+    void publish(@NonNull final U data) throws IOException;
+}

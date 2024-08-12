@@ -16,70 +16,82 @@
 
 package com.hedera.block.server;
 
+import static com.hedera.block.protos.BlockStreamService.*;
 import static com.hedera.block.server.Constants.*;
-import static io.helidon.webserver.grpc.ResponseHelper.complete;
 
 import com.google.protobuf.Descriptors;
-import com.hedera.block.protos.BlockStreamServiceGrpcProto;
-import com.hedera.block.server.consumer.LiveStreamObserver;
-import com.hedera.block.server.consumer.LiveStreamObserverImpl;
+import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
+import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
-import com.hedera.block.server.persistence.BlockPersistenceHandler;
-import com.hedera.block.server.producer.ProducerBlockStreamObserver;
+import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.persistence.storage.read.BlockReader;
+import com.hedera.block.server.producer.ItemAckBuilder;
+import com.hedera.block.server.producer.ProducerBlockItemObserver;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
+import java.io.IOException;
 import java.time.Clock;
 import java.util.Optional;
 
 /**
- * This class implements the GrpcService interface and provides the functionality for the
- * BlockStreamService. It sets up the bidirectional streaming methods for the service and handles
- * the routing for these methods. It also initializes the StreamMediator, BlockStorage, and
- * BlockCache upon creation.
- *
- * <p>The class provides two main methods, streamSink and streamSource, which handle the client and
- * server streaming respectively. These methods return custom StreamObservers which are used to
- * observe and respond to the streams.
+ * The BlockStreamService class defines the gRPC service for the block stream service. It provides
+ * the implementation for the bidirectional streaming, server streaming, and unary methods defined
+ * in the proto file.
  */
 public class BlockStreamService implements GrpcService {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final long timeoutThresholdMillis;
-    private final StreamMediator<
-                    BlockStreamServiceGrpcProto.Block, BlockStreamServiceGrpcProto.BlockResponse>
-            streamMediator;
-    private final BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block>
-            blockPersistenceHandler;
+    private final ItemAckBuilder itemAckBuilder;
+    private final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
+    private final ServiceStatus serviceStatus;
+    private final BlockReader<Block> blockReader;
+    private final BlockNodeContext blockNodeContext;
 
     /**
-     * Constructor for the BlockStreamService class.
+     * Constructor for the BlockStreamService class. It initializes the BlockStreamService with the
+     * given parameters.
      *
-     * @param timeoutThresholdMillis the timeout threshold in milliseconds
-     * @param streamMediator the stream mediator
+     * @param timeoutThresholdMillis the timeout threshold in milliseconds for the producer to
+     *     publish block items
+     * @param itemAckBuilder the item acknowledgement builder to send responses back to the producer
+     * @param streamMediator the stream mediator to proxy block items from the producer to the
+     *     subscribers and manage the subscription lifecycle for subscribers
+     * @param blockReader the block reader to fetch blocks from storage for unary singleBlock
+     *     service calls
+     * @param serviceStatus the service status provides methods to check service availability and to
+     *     stop the service and web server in the event of an unrecoverable exception
      */
-    public BlockStreamService(
+    BlockStreamService(
             final long timeoutThresholdMillis,
-            final StreamMediator<
-                            BlockStreamServiceGrpcProto.Block,
-                            BlockStreamServiceGrpcProto.BlockResponse>
-                    streamMediator,
-            final BlockPersistenceHandler<BlockStreamServiceGrpcProto.Block>
-                    blockPersistenceHandler) {
-
+            @NonNull final ItemAckBuilder itemAckBuilder,
+            @NonNull
+                    final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
+                            streamMediator,
+            @NonNull final BlockReader<Block> blockReader,
+            @NonNull final ServiceStatus serviceStatus,
+            @NonNull final BlockNodeContext blockNodeContext) {
         this.timeoutThresholdMillis = timeoutThresholdMillis;
+        this.itemAckBuilder = itemAckBuilder;
         this.streamMediator = streamMediator;
-        this.blockPersistenceHandler = blockPersistenceHandler;
+        this.blockReader = blockReader;
+        this.serviceStatus = serviceStatus;
+        this.blockNodeContext = blockNodeContext;
     }
 
     /**
-     * Returns the FileDescriptor for the BlockStreamServiceGrpcProto.
+     * Returns the proto descriptor for the BlockStreamService. This descriptor corresponds to the
+     * proto file for the BlockStreamService.
      *
-     * @return the FileDescriptor for the BlockStreamServiceGrpcProto
+     * @return the proto descriptor for the BlockStreamService
      */
+    @NonNull
     @Override
     public Descriptors.FileDescriptor proto() {
-        return BlockStreamServiceGrpcProto.getDescriptor();
+        return com.hedera.block.protos.BlockStreamService.getDescriptor();
     }
 
     /**
@@ -88,89 +100,225 @@ public class BlockStreamService implements GrpcService {
      *
      * @return the service name corresponding to the service name in the proto file
      */
+    @NonNull
     @Override
     public String serviceName() {
         return SERVICE_NAME;
     }
 
     /**
-     * Updates the routing for the BlockStreamService. It sets up the bidirectional streaming
-     * methods for the service.
+     * Updates the routing definitions for the BlockStreamService. It establishes the bidirectional
+     * streaming method for publishBlockStream, server streaming method for subscribeBlockStream and
+     * a unary method for singleBlock.
      *
      * @param routing the routing for the BlockStreamService
      */
     @Override
-    public void update(final Routing routing) {
-        routing.bidi(CLIENT_STREAMING_METHOD_NAME, this::streamSink);
-        routing.bidi(SERVER_STREAMING_METHOD_NAME, this::streamSource);
-        routing.unary(GET_BLOCK_METHOD_NAME, this::getBlock);
+    public void update(@NonNull final Routing routing) {
+        routing.bidi(CLIENT_STREAMING_METHOD_NAME, this::publishBlockStream);
+        routing.serverStream(SERVER_STREAMING_METHOD_NAME, this::subscribeBlockStream);
+        routing.unary(SINGLE_BLOCK_METHOD_NAME, this::singleBlock);
     }
 
-    /**
-     * The streamSink method is called by Helidon each time a producer initiates a bidirectional
-     * stream.
-     *
-     * @param responseStreamObserver Helidon provides a StreamObserver to handle responses back to
-     *     the producer.
-     * @return a custom StreamObserver to handle streaming blocks from the producer to all
-     *     subscribed consumer via the streamMediator as well as sending responses back to the
-     *     producer.
-     */
-    private StreamObserver<BlockStreamServiceGrpcProto.Block> streamSink(
-            final StreamObserver<BlockStreamServiceGrpcProto.BlockResponse>
-                    responseStreamObserver) {
-        LOGGER.log(System.Logger.Level.DEBUG, "Executing bidirectional streamSink method");
+    StreamObserver<PublishStreamRequest> publishBlockStream(
+            @NonNull final StreamObserver<PublishStreamResponse> publishStreamResponseObserver) {
+        LOGGER.log(
+                System.Logger.Level.DEBUG,
+                "Executing bidirectional publishBlockStream gRPC method");
 
-        return new ProducerBlockStreamObserver(streamMediator, responseStreamObserver);
+        return new ProducerBlockItemObserver(
+                streamMediator, publishStreamResponseObserver, itemAckBuilder, serviceStatus);
     }
 
-    /**
-     * The streamSource method is called by Helidon each time a consumer initiates a bidirectional
-     * stream.
-     *
-     * @param responseStreamObserver Helidon provides a StreamObserver to handle responses from the
-     *     consumer back to the server.
-     * @return a custom StreamObserver to handle streaming blocks from the producer to the consumer
-     *     as well as handling responses from the consumer.
-     */
-    private StreamObserver<BlockStreamServiceGrpcProto.BlockResponse> streamSource(
-            final StreamObserver<BlockStreamServiceGrpcProto.Block> responseStreamObserver) {
-        LOGGER.log(System.Logger.Level.DEBUG, "Executing bidirectional streamSource method");
+    void subscribeBlockStream(
+            @NonNull final SubscribeStreamRequest subscribeStreamRequest,
+            @NonNull
+                    final StreamObserver<SubscribeStreamResponse> subscribeStreamResponseObserver) {
+        LOGGER.log(
+                System.Logger.Level.DEBUG,
+                "Executing Server Streaming subscribeBlockStream gRPC Service");
 
         // Return a custom StreamObserver to handle streaming blocks from the producer.
-        final LiveStreamObserver<
-                        BlockStreamServiceGrpcProto.Block,
-                        BlockStreamServiceGrpcProto.BlockResponse>
-                streamObserver =
-                        new LiveStreamObserverImpl(
-                                timeoutThresholdMillis,
-                                Clock.systemDefaultZone(),
-                                Clock.systemDefaultZone(),
-                                streamMediator,
-                                responseStreamObserver);
+        if (serviceStatus.isRunning()) {
+            @NonNull
+            final var streamObserver =
+                    new ConsumerStreamResponseObserver(
+                            timeoutThresholdMillis,
+                            Clock.systemDefaultZone(),
+                            streamMediator,
+                            subscribeStreamResponseObserver);
 
-        // Subscribe the observer to the mediator
-        streamMediator.subscribe(streamObserver);
-
-        return streamObserver;
-    }
-
-    void getBlock(
-            BlockStreamServiceGrpcProto.Block block,
-            StreamObserver<BlockStreamServiceGrpcProto.Block> responseObserver) {
-        LOGGER.log(System.Logger.Level.INFO, "GetBlock request received");
-        final Optional<BlockStreamServiceGrpcProto.Block> responseBlock =
-                blockPersistenceHandler.read(block.getId());
-        if (responseBlock.isPresent()) {
-            LOGGER.log(System.Logger.Level.INFO, "Returning block with id: {0}", block.getId());
-            complete(responseObserver, responseBlock.get());
+            streamMediator.subscribe(streamObserver);
         } else {
             LOGGER.log(
-                    System.Logger.Level.INFO,
-                    "Did not find your block with id: {0}",
-                    block.getId());
-            responseObserver.onNext(
-                    BlockStreamServiceGrpcProto.Block.newBuilder().setId(0).build());
+                    System.Logger.Level.ERROR,
+                    "Server Streaming subscribeBlockStream gRPC Service is not currently running");
+
+            subscribeStreamResponseObserver.onNext(buildSubscribeStreamNotAvailableResponse());
         }
+    }
+
+    /*
+        public static class SingleBlockUnaryMethod implements GrpcService.Routing.UnaryMethod<SingleBlockRequest, SingleBlockResponse> {
+    //            implements ServerCalls.UnaryMethod<
+    //                    SingleBlockRequest, StreamObserver<SingleBlockResponse>> {
+
+            private final System.Logger LOGGER = System.getLogger(getClass().getName());
+
+            private final BlockReader<Block> blockReader;
+            private final ServiceStatus serviceStatus;
+            private final BlockNodeContext blockNodeContext;
+
+            private SingleBlockUnaryMethod(@NonNull final BlockReader<Block> blockReader,
+                                           @NonNull final ServiceStatus serviceStatus,
+                                           @NonNull final BlockNodeContext blockNodeContext) {
+                this.blockReader = blockReader;
+                this.serviceStatus = serviceStatus;
+                this.blockNodeContext = blockNodeContext;
+            }
+
+            @Override
+            public void afterClose() {
+                LOGGER.log(System.Logger.Level.DEBUG, "Unary singleBlock gRPC method closed");
+            }
+
+            @Override
+            public void invoke(
+                    SingleBlockRequest singleBlockRequest,
+                    StreamObserver<StreamObserver<SingleBlockResponse>> singleBlockResponseStreamObserver) {
+
+                LOGGER.log(System.Logger.Level.DEBUG, "Executing Unary singleBlock gRPC method");
+
+                if (serviceStatus.isRunning()) {
+                    final long blockNumber = singleBlockRequest.getBlockNumber();
+                    try {
+                        @NonNull final Optional<Block> blockOpt = blockReader.read(blockNumber);
+                        if (blockOpt.isPresent()) {
+                            LOGGER.log(
+                                    System.Logger.Level.DEBUG,
+                                    "Successfully returning block number: {0}",
+                                    blockNumber);
+                            singleBlockResponseStreamObserver.onNext(
+                                    buildSingleBlockResponse(blockOpt.get()));
+
+                            @NonNull
+                            final MetricsService metricsService = blockNodeContext.metricsService();
+                            metricsService.singleBlockRetrievedCounter.increment();
+                        } else {
+                            LOGGER.log(
+                                    System.Logger.Level.DEBUG,
+                                    "Block number {0} not found",
+                                    blockNumber);
+                            singleBlockResponseStreamObserver.onNext(
+                                    buildSingleBlockNotFoundResponse());
+                        }
+                    } catch (IOException e) {
+                        LOGGER.log(
+                                System.Logger.Level.ERROR,
+                                "Error reading block number: {0}",
+                                blockNumber);
+                        singleBlockResponseStreamObserver.onNext(
+                                buildSingleBlockNotAvailableResponse());
+                    }
+                } else {
+                    LOGGER.log(
+                            System.Logger.Level.ERROR,
+                            "Unary singleBlock gRPC method is not currently running");
+                    singleBlockResponseStreamObserver.onNext(buildSingleBlockNotAvailableResponse());
+                }
+
+                // Send the response
+                singleBlockResponseStreamObserver.onCompleted();
+            }
+
+            @NonNull
+            static StreamObserver<SingleBlockResponse> buildSingleBlockNotAvailableResponse() {
+                return SingleBlockResponse.newBuilder()
+                        .setStatus(SingleBlockResponse.SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
+                        .build();
+            }
+
+            @NonNull
+            static StreamObserver<SingleBlockResponse> buildSingleBlockNotFoundResponse() {
+                return SingleBlockResponse.newBuilder()
+                        .setStatus(SingleBlockResponse.SingleBlockResponseCode.READ_BLOCK_NOT_FOUND)
+                        .build();
+            }
+
+            @NonNull
+            private static StreamObserver<SingleBlockResponse> buildSingleBlockResponse(@NonNull final Block block) {
+                return SingleBlockResponse.newBuilder().setBlock(block).build();
+            }
+        }
+        */
+
+    void singleBlock(
+            @NonNull final SingleBlockRequest singleBlockRequest,
+            @NonNull final StreamObserver<SingleBlockResponse> singleBlockResponseStreamObserver) {
+
+        LOGGER.log(System.Logger.Level.DEBUG, "Executing Unary singleBlock gRPC method");
+
+        if (serviceStatus.isRunning()) {
+            final long blockNumber = singleBlockRequest.getBlockNumber();
+            try {
+                @NonNull final Optional<Block> blockOpt = blockReader.read(blockNumber);
+                if (blockOpt.isPresent()) {
+                    LOGGER.log(
+                            System.Logger.Level.DEBUG,
+                            "Successfully returning block number: {0}",
+                            blockNumber);
+                    singleBlockResponseStreamObserver.onNext(
+                            buildSingleBlockResponse(blockOpt.get()));
+
+                    @NonNull
+                    final MetricsService metricsService = blockNodeContext.metricsService();
+                    metricsService.singleBlocksRetrieved.increment();
+                } else {
+                    LOGGER.log(
+                            System.Logger.Level.DEBUG, "Block number {0} not found", blockNumber);
+                    singleBlockResponseStreamObserver.onNext(buildSingleBlockNotFoundResponse());
+                }
+            } catch (IOException e) {
+                LOGGER.log(
+                        System.Logger.Level.ERROR, "Error reading block number: {0}", blockNumber);
+                singleBlockResponseStreamObserver.onNext(buildSingleBlockNotAvailableResponse());
+            }
+        } else {
+            LOGGER.log(
+                    System.Logger.Level.ERROR,
+                    "Unary singleBlock gRPC method is not currently running");
+            singleBlockResponseStreamObserver.onNext(buildSingleBlockNotAvailableResponse());
+        }
+
+        // Send the response
+        singleBlockResponseStreamObserver.onCompleted();
+    }
+
+    // TODO: Fix this error type once it's been standardized in `hedera-protobufs`
+    //  this should not be success
+    @NonNull
+    static SubscribeStreamResponse buildSubscribeStreamNotAvailableResponse() {
+        return SubscribeStreamResponse.newBuilder()
+                .setStatus(SubscribeStreamResponse.SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
+                .build();
+    }
+
+    @NonNull
+    static SingleBlockResponse buildSingleBlockNotAvailableResponse() {
+        return SingleBlockResponse.newBuilder()
+                .setStatus(SingleBlockResponse.SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
+                .build();
+    }
+
+    @NonNull
+    static SingleBlockResponse buildSingleBlockNotFoundResponse() {
+        return SingleBlockResponse.newBuilder()
+                .setStatus(SingleBlockResponse.SingleBlockResponseCode.READ_BLOCK_NOT_FOUND)
+                .build();
+    }
+
+    @NonNull
+    private static SingleBlockResponse buildSingleBlockResponse(@NonNull final Block block) {
+        return SingleBlockResponse.newBuilder().setBlock(block).build();
     }
 }

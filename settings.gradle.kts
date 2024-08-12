@@ -41,6 +41,7 @@ dependencyResolutionManagement {
             version("com.google.protobuf", "3.24.0")
             version("io.helidon.webserver.http2", "4.0.11")
             version("io.helidon.webserver.grpc", "4.0.11")
+            version("com.lmax.disruptor", "4.0.0")
             version("com.github.spotbugs.annotations", "4.7.3")
             version("com.swirlds.metrics.api", swirldsVersion)
             version("com.swirlds.metrics.impl", swirldsVersion)

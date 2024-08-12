@@ -17,80 +17,150 @@ syntax = "proto3";
  */
 
 option java_package = "com.hedera.block.protos";
-option java_outer_classname = "BlockStreamServiceGrpcProto";
+option java_outer_classname = "BlockStreamService";
 
-/**
-  * The BlockStreamGrpc service definition provides 2 bidirectional streaming methods for
-  * exchanging blocks with the Block Node server.
-  *
-  * A producer (e.g. Consensus Node) can use the StreamSink method to stream blocks to the
-  * Block Node server.  The Block Node server will respond with a BlockResponse message for
-  * each block received.
-  *
-  * A consumer (e.g. Mirror Node) can use the StreamSource method to request a stream of
-  * blocks from the server.  The consumer is expected to respond with a BlockResponse message
-  * with the id of each block received.
- */
-service BlockStreamGrpc {
+service BlockStreamGrpcService {
 
-    /**
-     * StreamSink is a bidirectional streaming method that allows a producer to stream blocks
-     * to the Block Node server.  The server will respond with a BlockResponse message for each
-     * block received.
-     */
-    rpc StreamSink(stream Block) returns (stream BlockResponse) {}
+    rpc publishBlockStream (stream PublishStreamRequest) returns (stream PublishStreamResponse) {}
 
-    /**
-     * StreamSource is a bidirectional streaming method that allows a consumer to request a
-     * stream of blocks from the server.  The consumer is expected to respond with a BlockResponse
-     * message with the id of each block received.
-     */
-    rpc StreamSource(stream BlockResponse) returns (stream Block) {}
+    rpc subscribeBlockStream (SubscribeStreamRequest) returns (stream SubscribeStreamResponse) {}
 
-    rpc GetBlock(Block) returns (Block) {}
+    rpc singleBlock(SingleBlockRequest) returns (SingleBlockResponse) {}
 }
 
-/**
- * A block is a simple message that contains an id and a value.
- * This specification is a simple example meant to expedite development.
- * It will be replaced with a PBJ implementation in the future.
- */
-message Block {
-    /**
-     * The id of the block.  Each block id should be unique.
-     */
-    int64 id = 1;
-
-    /**
-     * The value of the block.  The value can be any string.
-     */
-    string value = 2;
+message PublishStreamRequest {
+    BlockItem block_item = 1;
 }
 
-/**
- * A block response is a simple message that contains an id.
- * The block response message is simply meant to disambiguate it
- * from the original request. This specification is a simple
- * example meant to expedite development. It will be replaced with
- * a PBJ implementation in the future.
- */
-message BlockResponse {
-    /**
-     * The id of the block which was received.  Each block id should
-     * correlate with the id of a Block message id.
-     */
-    int64 id = 1;
-}
+message PublishStreamResponse {
+    oneof response {
+        /**
+         * A response sent for each item and for each block.
+         */
+        ItemAcknowledgement acknowledgement = 1;
 
-/**
- * A block request is a simple message that contains an id.
- * This specification is a simple example meant to expedite development.
- * It will be replaced with a PBJ implementation in the future.
- */
-message BlockRequest {
+        /**
+         * A response sent when a stream ends.
+         */
+        EndOfStream status = 2;
+    }
+
+    message ItemAcknowledgement {
+        bytes item_ack = 1;
+    }
+
+    message EndOfStream {
+        PublishStreamResponseCode status = 1;
+    }
+
     /**
-    * The id of the block which was requested.  Each block id should
-    * correlate with the id of a Block message id.
+    * An enumeration indicating the status of this request.
+    *
+    * This enumeration describes the reason a block stream
+    * (sent via `writeBlockStream`) ended.
     */
-    int64 id = 1;
+    enum PublishStreamResponseCode {
+        /**
+         * An "unset value" flag, this value SHALL NOT be used.<br/>
+         * This status indicates the server software failed to set a
+         * status, and SHALL be considered a software defect.
+         */
+        STREAM_ITEMS_UNKNOWN = 0;
+
+        /**
+         * The request succeeded.<br/>
+         * No errors occurred and the source node orderly ended the stream.
+         */
+        STREAM_ITEMS_SUCCESS = 1;
+
+        /**
+         * The delay between items was too long.<br/>
+         * The source MUST start a new stream before the failed block.
+         */
+        STREAM_ITEMS_TIMEOUT = 2;
+
+        /**
+         * An item was received out-of-order.<br/>
+         * The source MUST start a new stream before the failed block.
+         */
+        STREAM_ITEMS_OUT_OF_ORDER = 3;
+
+        /**
+         * A block state proof item could not be validated.<br/>
+         * The source MUST start a new stream before the failed block.
+         */
+        STREAM_ITEMS_BAD_STATE_PROOF = 4;
+    }
+}
+
+message SubscribeStreamRequest {
+    uint64 start_block_number = 1;
+}
+
+message SubscribeStreamResponse {
+    oneof response {
+        SubscribeStreamResponseCode status = 1;
+        BlockItem block_item = 2;
+    }
+
+    enum SubscribeStreamResponseCode {
+        READ_STREAM_UNKNOWN = 0;
+        READ_STREAM_INSUFFICIENT_BALANCE = 1;
+        READ_STREAM_SUCCESS = 2;
+        READ_STREAM_INVALID_START_BLOCK_NUMBER = 3;
+        READ_STREAM_INVALID_END_BLOCK_NUMBER = 4;
+    }
+}
+
+
+
+message Block {
+    repeated BlockItem block_items = 1;
+}
+
+/**
+ * A BlockItem is a simple message that contains an id and a value.
+ * This specification is a simple example meant to expedite development.
+ * It will be replaced with a PBJ implementation in the future.
+ */
+message BlockItem {
+
+    oneof items {
+        BlockHeader header = 1;
+        EventMetadata start_event = 2;
+        BlockProof state_proof = 3;
+    }
+
+    string value = 4;
+}
+
+message BlockHeader {
+    uint64 block_number = 1;
+}
+
+message EventMetadata {
+    uint64 creator_id = 1;
+}
+
+message BlockProof {
+    uint64 block = 1;
+}
+
+message SingleBlockRequest {
+    uint64 block_number = 1;
+}
+
+message SingleBlockResponse {
+    oneof response {
+        SingleBlockResponseCode status = 1;
+        Block block = 2;
+    }
+
+    enum SingleBlockResponseCode {
+        READ_BLOCK_UNKNOWN = 0;
+        READ_BLOCK_INSUFFICIENT_BALANCE = 1;
+        READ_BLOCK_SUCCESS = 2;
+        READ_BLOCK_NOT_FOUND = 3;
+        READ_BLOCK_NOT_AVAILABLE = 4;
+    }
 }

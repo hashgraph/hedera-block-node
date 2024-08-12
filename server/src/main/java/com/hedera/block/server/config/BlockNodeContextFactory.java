@@ -36,8 +36,12 @@ public class BlockNodeContextFactory {
     private BlockNodeContextFactory() {}
 
     /**
+     * Use the create method to build a singleton block node context to manage system-wide metrics.
+     *
      * @return an instance of {@link BlockNodeContext} which holds {@link Configuration}, {@link
      *     Metrics} and {@link MetricsService} for the rest of the application to use.
+     * @throws IOException when the java libraries fail to read information from a configuration
+     *     source.
      */
     public static BlockNodeContext create() throws IOException {
         final Configuration configuration = getConfiguration();

@@ -1,0 +1,321 @@
+/*
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.hedera.block.server.persistence.storage.write;
+
+import static com.hedera.block.protos.BlockStreamService.Block;
+import static com.hedera.block.protos.BlockStreamService.BlockItem;
+import static com.hedera.block.server.persistence.storage.read.BlockAsDirReaderTest.removeBlockReadPerms;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.config.BlockNodeContextFactory;
+import com.hedera.block.server.persistence.storage.Util;
+import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
+import com.hedera.block.server.persistence.storage.read.BlockReader;
+import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
+import com.hedera.block.server.persistence.storage.remove.BlockRemover;
+import com.hedera.block.server.util.PersistTestUtils;
+import com.hedera.block.server.util.TestUtils;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import io.helidon.config.Config;
+import io.helidon.config.MapConfigSource;
+import io.helidon.config.spi.ConfigSource;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class BlockAsDirWriterTest {
+
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+
+    private static final String TEMP_DIR = "block-node-unit-test-dir";
+    private static final String JUNIT = "my-junit-test";
+
+    private Path testPath;
+    private Config testConfig;
+
+    @BeforeEach
+    public void setUp() throws IOException {
+        testPath = Files.createTempDirectory(TEMP_DIR);
+        LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
+
+        Map<String, String> testProperties = Map.of(JUNIT, testPath.toString());
+        ConfigSource testConfigSource = MapConfigSource.builder().map(testProperties).build();
+        testConfig = Config.builder(testConfigSource).build();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        if (!TestUtils.deleteDirectory(testPath.toFile())) {
+            LOGGER.log(
+                    System.Logger.Level.ERROR,
+                    "Failed to delete temp directory: " + testPath.toString());
+        }
+    }
+
+    @Test
+    public void testConstructorWithInvalidPath() throws IOException {
+        final Map<String, String> testProperties = Map.of(JUNIT, "invalid-path");
+        final ConfigSource testConfigSource = MapConfigSource.builder().map(testProperties).build();
+        final Config testConfig = Config.builder(testConfigSource).build();
+
+        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext)
+                                .build());
+    }
+
+    @Test
+    public void testWriterAndReaderHappyPath() throws IOException {
+
+        // Write a block
+        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+
+        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockWriter<BlockItem> blockWriter =
+                BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext).build();
+        for (BlockItem blockItem : blockItems) {
+            blockWriter.write(blockItem);
+        }
+
+        // Confirm the block
+        BlockReader<Block> blockReader =
+                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
+        Optional<Block> blockOpt = blockReader.read(1);
+        assertFalse(blockOpt.isEmpty());
+
+        boolean hasHeader = false;
+        boolean hasBlockProof = false;
+        boolean hasStartEvent = false;
+
+        Block block = blockOpt.get();
+        for (BlockItem blockItem : block.getBlockItemsList()) {
+            if (blockItem.hasHeader()) {
+                hasHeader = true;
+            } else if (blockItem.hasStateProof()) {
+                hasBlockProof = true;
+            } else if (blockItem.hasStartEvent()) {
+                hasStartEvent = true;
+            }
+        }
+
+        assertTrue(hasHeader, "Block should have a header");
+        assertTrue(hasBlockProof, "Block should have a block proof");
+        assertTrue(hasStartEvent, "Block should have a start event");
+    }
+
+    @Test
+    public void testRemoveBlockWritePerms() throws IOException {
+
+        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+
+        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockWriter<BlockItem> blockWriter =
+                BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext).build();
+
+        // Change the permissions on the block node root directory
+        removeRootWritePerms(testConfig);
+
+        // The first BlockItem contains a header which will create a new block directory.
+        // The BlockWriter will attempt to repair the permissions and should succeed.
+        blockWriter.write(blockItems.getFirst());
+
+        // Confirm we're able to read 1 block item
+        BlockReader<Block> blockReader =
+                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
+        Optional<Block> blockOpt = blockReader.read(1);
+        assertFalse(blockOpt.isEmpty());
+        assertEquals(1, blockOpt.get().getBlockItemsList().size());
+        assertTrue(blockOpt.get().getBlockItems(0).hasHeader());
+
+        // Remove all permissions on the block directory and
+        // attempt to write the next block item
+        removeBlockAllPerms(1, testConfig);
+        blockWriter.write(blockItems.get(1));
+
+        // There should now be 2 blockItems in the block
+        blockOpt = blockReader.read(1);
+        assertFalse(blockOpt.isEmpty());
+        assertEquals(2, blockOpt.get().getBlockItemsList().size());
+        assertFalse(blockOpt.get().getBlockItems(1).hasHeader());
+
+        // Remove read permission on the block directory
+        removeBlockReadPerms(1, testConfig);
+        blockWriter.write(blockItems.get(2));
+
+        // There should now be 3 blockItems in the block
+        blockOpt = blockReader.read(1);
+        assertFalse(blockOpt.isEmpty());
+        assertEquals(3, blockOpt.get().getBlockItemsList().size());
+        assertFalse(blockOpt.get().getBlockItems(1).hasHeader());
+    }
+
+    @Test
+    public void testUnrecoverableIOExceptionOnWrite() throws IOException {
+
+        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+        final BlockRemover blockRemover =
+                new BlockAsDirRemover(
+                        Path.of(testConfig.get(JUNIT).asString().get()), Util.defaultPerms);
+
+        // Use a spy to simulate an IOException when the first block item is written
+        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockWriter<BlockItem> blockWriter =
+                spy(
+                        BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext)
+                                .blockRemover(blockRemover)
+                                .build());
+        doThrow(IOException.class).when(blockWriter).write(blockItems.getFirst());
+        assertThrows(IOException.class, () -> blockWriter.write(blockItems.getFirst()));
+    }
+
+    @Test
+    public void testRemoveRootDirReadPerm() throws IOException {
+        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+
+        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockWriter<BlockItem> blockWriter =
+                BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext).build();
+
+        // Write the first block item to create the block
+        // directory
+        blockWriter.write(blockItems.getFirst());
+
+        // Remove root dir read permissions and
+        // block dir read permissions
+        removeRootReadPerms(testConfig);
+        removeBlockReadPerms(1, testConfig);
+
+        // Attempt to write the remaining block
+        // items
+        for (int i = 1; i < 10; i++) {
+            blockWriter.write(blockItems.get(i));
+        }
+
+        BlockReader<Block> blockReader =
+                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
+        Optional<Block> blockOpt = blockReader.read(1);
+        assertFalse(blockOpt.isEmpty());
+        assertEquals(10, blockOpt.get().getBlockItemsList().size());
+    }
+
+    @Test
+    public void testPartialBlockRemoval() throws IOException {
+        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(3);
+        final BlockRemover blockRemover =
+                new BlockAsDirRemover(
+                        Path.of(testConfig.get(JUNIT).asString().get()), Util.defaultPerms);
+
+        // Use a spy of TestBlockAsDirWriter to proxy block items to the real writer
+        // for the first 22 block items.  Then simulate an IOException on the 23rd block item
+        // thrown from a protected write method in the real class.  This should trigger the
+        // blockRemover instance to remove the partially written block.
+        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final TestBlockAsDirWriter blockWriter =
+                spy(
+                        new TestBlockAsDirWriter(
+                                JUNIT,
+                                testConfig,
+                                blockRemover,
+                                Util.defaultPerms,
+                                blockNodeContext));
+
+        for (int i = 0; i < 23; i++) {
+            // Prepare the block writer to call the actual write method
+            // for 23 block items
+            doCallRealMethod().when(blockWriter).write(same(blockItems.get(i)));
+        }
+
+        // Simulate an IOException when writing the 24th block item
+        // from an overridden write method in sub-class.
+        doThrow(IOException.class).when(blockWriter).write(any(), same(blockItems.get(23)));
+
+        // Now make the calls
+        for (int i = 0; i < 23; i++) {
+            blockWriter.write(blockItems.get(i));
+        }
+
+        // Verify the IOException was thrown on the 23rd block item
+        assertThrows(IOException.class, () -> blockWriter.write(blockItems.get(23)));
+
+        // Verify the partially written block was removed
+        final BlockReader<Block> blockReader =
+                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
+        Optional<Block> blockOpt = blockReader.read(3);
+        assertTrue(blockOpt.isEmpty());
+
+        // Confirm blocks 1 and 2 still exist
+        blockOpt = blockReader.read(1);
+        assertFalse(blockOpt.isEmpty());
+        assertEquals(10, blockOpt.get().getBlockItemsList().size());
+        assertEquals(1, blockOpt.get().getBlockItems(0).getHeader().getBlockNumber());
+
+        blockOpt = blockReader.read(2);
+        assertFalse(blockOpt.isEmpty());
+        assertEquals(10, blockOpt.get().getBlockItemsList().size());
+        assertEquals(2, blockOpt.get().getBlockItems(0).getHeader().getBlockNumber());
+    }
+
+    private void removeRootWritePerms(final Config config) throws IOException {
+        final Path blockNodeRootPath = Path.of(config.get(JUNIT).asString().get());
+        Files.setPosixFilePermissions(blockNodeRootPath, TestUtils.getNoWrite().value());
+    }
+
+    private void removeRootReadPerms(final Config config) throws IOException {
+        final Path blockNodeRootPath = Path.of(config.get(JUNIT).asString().get());
+        Files.setPosixFilePermissions(blockNodeRootPath, TestUtils.getNoRead().value());
+    }
+
+    private void removeBlockAllPerms(final int blockNumber, final Config config)
+            throws IOException {
+        final Path blockNodeRootPath = Path.of(config.get(JUNIT).asString().get());
+        final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
+        Files.setPosixFilePermissions(blockPath, TestUtils.getNoPerms().value());
+    }
+
+    // TestBlockAsDirWriter overrides the write() method to allow a test spy to simulate an
+    // IOException while allowing the real write() method to remain protected.
+    private static final class TestBlockAsDirWriter extends BlockAsDirWriter {
+        public TestBlockAsDirWriter(
+                final String key,
+                final Config config,
+                final BlockRemover blockRemover,
+                final FileAttribute<Set<PosixFilePermission>> filePerms,
+                final BlockNodeContext blockNodeContext)
+                throws IOException {
+            super(key, config, blockRemover, filePerms, blockNodeContext);
+        }
+
+        @Override
+        public void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItem blockItem)
+                throws IOException {
+            super.write(blockItemFilePath, blockItem);
+        }
+    }
+}

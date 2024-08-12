@@ -23,7 +23,7 @@ fi
 
 
 GRPC_SERVER="localhost:8080"
-GRPC_METHOD="BlockStreamGrpc/StreamSink"
+GRPC_METHOD="BlockStreamGrpcService/publishBlockStream"
 PATH_TO_PROTO="../../../../protos/src/main/protobuf/blockstream.proto"
 
 echo "Starting producer..."
@@ -42,16 +42,29 @@ trap cleanup SIGINT
 # Response messages from the gRPC server are printed to stdout.
 (
   iter=$1
+  block_items=10
   while true; do
-    echo "{\"id\": $iter, \"value\": \"block-stream-$iter\"}"
+
+    # Generate 10 BlockItems per Block
+    for ((i=1; i<=$block_items; i++))
+    do
+
+      if [[ $i -eq 1 ]]; then
+        echo "{\"block_item\": {\"header\": {\"block_number\": $iter},\"value\": \"Payload[...]\"}}"
+      elif [[ $i -eq $block_items ]]; then
+        echo "{\"block_item\": {\"state_proof\": {\"block\": $iter},\"value\": \"Payload[...]\"}}"
+      else
+        echo "{\"block_item\": {\"start_event\": {\"creator_id\": $i},\"value\": \"Payload[...]\"}}"
+      fi
+
+      sleep 0.01
+    done
 
     if [ $iter -eq $2 ]; then
       exit 0
     fi
-
     ((iter++))
 
-    sleep 1
   done
 ) | grpcurl -vv -plaintext -proto $PATH_TO_PROTO -d @ $GRPC_SERVER $GRPC_METHOD &
 

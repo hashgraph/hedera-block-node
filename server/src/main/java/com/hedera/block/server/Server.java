@@ -16,37 +16,29 @@
 
 package com.hedera.block.server;
 
-import static com.hedera.block.server.Constants.*;
+import static com.hedera.block.protos.BlockStreamService.*;
+import static com.hedera.block.server.Constants.BLOCKNODE_SERVER_CONSUMER_TIMEOUT_THRESHOLD_KEY;
+import static com.hedera.block.server.Constants.BLOCKNODE_STORAGE_ROOT_PATH_KEY;
 
-import com.hedera.block.protos.BlockStreamServiceGrpcProto;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
-import com.hedera.block.server.mediator.LiveStreamMediatorImpl;
+import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
+import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.persistence.WriteThroughCacheHandler;
-import com.hedera.block.server.persistence.storage.BlockStorage;
-import com.hedera.block.server.persistence.storage.FileSystemBlockStorage;
-import io.grpc.stub.ServerCalls;
-import io.grpc.stub.StreamObserver;
+import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
+import com.hedera.block.server.persistence.storage.read.BlockReader;
+import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
+import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.producer.ItemAckBuilder;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.config.Config;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.grpc.GrpcRouting;
 import java.io.IOException;
-import java.util.stream.Stream;
 
 /** Main class for the block node server */
 public class Server {
-
-    // Function stubs to satisfy the bidi routing param signatures.  The implementations are in the
-    // service class.
-    private static ServerCalls.BidiStreamingMethod<
-                    Stream<BlockStreamServiceGrpcProto.Block>,
-                    StreamObserver<BlockStreamServiceGrpcProto.Block>>
-            clientBidiStreamingMethod;
-    private static ServerCalls.BidiStreamingMethod<
-                    Stream<BlockStreamServiceGrpcProto.BlockResponse>,
-                    StreamObserver<BlockStreamServiceGrpcProto.Block>>
-            serverBidiStreamingMethod;
 
     private static final System.Logger LOGGER = System.getLogger(Server.class.getName());
 
@@ -55,69 +47,86 @@ public class Server {
     /**
      * Main entrypoint for the block node server
      *
-     * @param args Command line arguments. Not used at present,
+     * @param args Command line arguments. Not used at present.
      */
     public static void main(final String[] args) {
 
+        LOGGER.log(System.Logger.Level.INFO, "Starting BlockNode Server");
+
         try {
             // init metrics
-            BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+            @NonNull final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
 
             // increase by 1 just for the sake of an example
-            MetricsService metricsService = blockNodeContext.metricsService();
+            @NonNull final MetricsService metricsService = blockNodeContext.metricsService();
             metricsService.exampleCounter.increment();
 
             // Set the global configuration
-            final Config config = Config.create();
+            @NonNull final Config config = Config.create();
             Config.global(config);
 
-            // Get Timeout threshold from configuration
-            final long consumerTimeoutThreshold =
-                    config.get(BLOCKNODE_SERVER_CONSUMER_TIMEOUT_THRESHOLD_KEY)
-                            .asLong()
-                            .orElse(1500L);
+            @NonNull final ServiceStatus serviceStatus = new ServiceStatusImpl();
 
-            // Initialize the block storage, cache, and service
-            final BlockStorage<BlockStreamServiceGrpcProto.Block> blockStorage =
-                    new FileSystemBlockStorage(BLOCKNODE_STORAGE_ROOT_PATH_KEY, config);
+            @NonNull
+            final BlockWriter<BlockItem> blockWriter =
+                    BlockAsDirWriterBuilder.newBuilder(
+                                    BLOCKNODE_STORAGE_ROOT_PATH_KEY, config, blockNodeContext)
+                            .build();
+            @NonNull
+            final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator =
+                    LiveStreamMediatorBuilder.newBuilder(
+                                    blockWriter, blockNodeContext, serviceStatus)
+                            .build();
 
-            // Initialize blockStreamService with Live Stream and Cache
+            @NonNull
+            final BlockReader<Block> blockReader =
+                    BlockAsDirReaderBuilder.newBuilder(BLOCKNODE_STORAGE_ROOT_PATH_KEY, config)
+                            .build();
+
+            @NonNull
             final BlockStreamService blockStreamService =
-                    new BlockStreamService(
-                            consumerTimeoutThreshold,
-                            new LiveStreamMediatorImpl(new WriteThroughCacheHandler(blockStorage)),
-                            new WriteThroughCacheHandler(blockStorage));
+                    buildBlockStreamService(
+                            config, streamMediator, blockReader, serviceStatus, blockNodeContext);
+
+            @NonNull
+            final GrpcRouting.Builder grpcRouting =
+                    GrpcRouting.builder().service(blockStreamService);
+
+            // Build the web server
+            @NonNull
+            final WebServer webServer =
+                    WebServer.builder().port(8080).addRouting(grpcRouting).build();
+
+            // Update the serviceStatus with the web server
+            serviceStatus.setWebServer(webServer);
 
             // Start the web server
-            WebServer.builder()
-                    .port(8080)
-                    .addRouting(
-                            GrpcRouting.builder()
-                                    .service(blockStreamService)
-                                    .bidi(
-                                            BlockStreamServiceGrpcProto.getDescriptor(),
-                                            SERVICE_NAME,
-                                            CLIENT_STREAMING_METHOD_NAME,
-                                            clientBidiStreamingMethod)
-                                    .bidi(
-                                            BlockStreamServiceGrpcProto.getDescriptor(),
-                                            SERVICE_NAME,
-                                            SERVER_STREAMING_METHOD_NAME,
-                                            serverBidiStreamingMethod)
-                                    .unary(
-                                            BlockStreamServiceGrpcProto.getDescriptor(),
-                                            SERVICE_NAME,
-                                            GET_BLOCK_METHOD_NAME,
-                                            Server::grpcGetBlock))
-                    .build()
-                    .start();
+            webServer.start();
         } catch (IOException e) {
-            LOGGER.log(System.Logger.Level.ERROR, "An exception was thrown starting the server", e);
             throw new RuntimeException(e);
         }
     }
 
-    static void grpcGetBlock(
-            BlockStreamServiceGrpcProto.BlockRequest request,
-            StreamObserver<BlockStreamServiceGrpcProto.Block> responseObserver) {}
+    @NonNull
+    private static BlockStreamService buildBlockStreamService(
+            @NonNull final Config config,
+            @NonNull
+                    final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
+                            streamMediator,
+            @NonNull final BlockReader<Block> blockReader,
+            @NonNull final ServiceStatus serviceStatus,
+            @NonNull final BlockNodeContext blockNodeContext) {
+
+        // Get Timeout threshold from configuration
+        final long consumerTimeoutThreshold =
+                config.get(BLOCKNODE_SERVER_CONSUMER_TIMEOUT_THRESHOLD_KEY).asLong().orElse(1500L);
+
+        return new BlockStreamService(
+                consumerTimeoutThreshold,
+                new ItemAckBuilder(),
+                streamMediator,
+                blockReader,
+                serviceStatus,
+                blockNodeContext);
+    }
 }
