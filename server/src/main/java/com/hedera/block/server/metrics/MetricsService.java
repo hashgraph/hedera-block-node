@@ -31,12 +31,6 @@ public class MetricsService {
 
     private static final String CATEGORY = "hedera_block_node";
 
-    private static final LongGauge.Config EXAMPLE_GAUGE =
-            new LongGauge.Config(CATEGORY, "exampleGauge").withDescription("An example gauge");
-
-    private static final Counter.Config EXAMPLE_COUNTER =
-            new Counter.Config(CATEGORY, "exampleCounter").withDescription("An example counter");
-
     // Live BlockItem Counter
     private static final Counter.Config LIVE_BLOCK_ITEM_COUNTER =
             new Counter.Config(CATEGORY, "live_block_items").withDescription("Live BlockItems");
@@ -53,12 +47,6 @@ public class MetricsService {
     private static final Counter.Config SINGLE_BLOCK_RETRIEVED_COUNTER =
             new Counter.Config(CATEGORY, "single_blocks_retrieved")
                     .withDescription("Single Blocks Retrieved");
-
-    /** An example gauge. */
-    public final LongGauge exampleGauge;
-
-    /** An example counter. */
-    public final Counter exampleCounter;
 
     /** Update the counter of live block items transiting via the live stream. */
     public final Counter liveBlockItems;
@@ -78,9 +66,6 @@ public class MetricsService {
      * @param metrics the metrics instance
      */
     public MetricsService(@NonNull final Metrics metrics) {
-        this.exampleGauge = metrics.getOrCreate(EXAMPLE_GAUGE);
-        this.exampleCounter = metrics.getOrCreate(EXAMPLE_COUNTER);
-
         this.liveBlockItems = metrics.getOrCreate(LIVE_BLOCK_ITEM_COUNTER);
         this.blocksPersisted = metrics.getOrCreate(BLOCK_PERSISTENCE_COUNTER);
         this.singleBlocksRetrieved = metrics.getOrCreate(SINGLE_BLOCK_RETRIEVED_COUNTER);
