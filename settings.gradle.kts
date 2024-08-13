@@ -19,7 +19,7 @@ plugins {
 }
 
 
-include(":stream", "stream")
+include(":stream")
 //include(":protos")
 include(":server")
 
@@ -58,8 +58,9 @@ dependencyResolutionManagement {
             version("com.google.auto.service", "1.1.1")
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
 
-            version("com.google.guava", "31.1-jre")
-            version("org.antlr.antlr4.runtime","4.13.1")
+            // moving to the stream sub project
+//            version("com.google.guava", "31.1-jre")
+//            version("org.antlr.antlr4.runtime","4.13.1")
 //            version("io.grpc:grpc-netty:1.64.0") {
 //                because("io.grpc.netty")
 //            }
@@ -73,14 +74,9 @@ dependencyResolutionManagement {
             version("grpc-proto", "1.45.1")
             version("hapi-proto", hapiProtoVersion)
 
-//            version("google-proto", "3.19.4")
-//            version("grpc-proto", "1.45.1")
-//            version("hapi.proto", hapiProtoVersion)
-
             // PBJ dependencies
             plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.8.9")
             version("com.hedera.pbj.runtime", "0.8.9")
-//            version("pbj.runtime", "0.8.9")
 
             // Testing only versions
             version("org.assertj.core", "3.23.1")

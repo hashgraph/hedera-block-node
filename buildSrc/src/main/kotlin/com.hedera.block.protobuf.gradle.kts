@@ -33,7 +33,9 @@ sourceSets {
     main {
         proto {
             srcDir("build/hedera-protobufs/block")
-//            srcDir("build/hedera-protobufs")
+            srcDir("build/hedera-protobufs/services")
+            srcDir("build/hedera-protobufs/platform")
+            srcDir("build/hedera-protobufs/streams")
         }
     }
 }

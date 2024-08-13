@@ -31,7 +31,6 @@ jvmDependencyConflicts.patch {
             "com.google.code.findbugs:jsr305",
             "com.google.errorprone:error_prone_annotations",
             "com.google.guava:listenablefuture",
-            "com.google.j2objc:j2objc-annotations",
             "org.checkerframework:checker-compat-qual",
             "org.checkerframework:checker-qual",
             "org.codehaus.mojo:animal-sniffer-annotations"
@@ -107,7 +106,6 @@ extraJavaModuleInfo {
     }
     module("com.google.errorprone:error_prone_annotations", "com.google.errorprone.annotations")
     module("com.google.j2objc:j2objc-annotations", "com.google.j2objc.annotations")
-    module("com.google.j2objc:j2objc-annotations", "com.google.j2objc.annotations")
     module("com.google.protobuf:protobuf-java", "com.google.protobuf") {
         exportAllPackages()
         requireAllDefinedDependencies()
@@ -124,7 +122,6 @@ extraJavaModuleInfo {
     module("io.perfmark:perfmark-api", "io.perfmark")
     module("javax.inject:javax.inject", "javax.inject")
     module("org.checkerframework:checker-qual", "org.checkerframework.checker.qual")
-    module("org.jetbrains:annotations", "org.jetbrains.annotations")
     module("io.tmio:tuweni-units", "tuweni.units")
     module("io.tmio:tuweni-bytes", "tuweni.bytes")
     module("net.i2p.crypto:eddsa", "net.i2p.crypto.eddsa")
@@ -172,4 +169,5 @@ extraJavaModuleInfo {
     module("com.google.auto.service:auto-service-annotations", "com.google.auto.service")
     module("com.google.auto.service:auto-service", "com.google.auto.service.processor")
     module("com.google.auto:auto-common", "com.google.auto.common")
+
 }
