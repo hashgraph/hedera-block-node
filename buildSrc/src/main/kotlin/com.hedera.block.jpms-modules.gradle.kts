@@ -102,7 +102,7 @@ extraJavaModuleInfo {
     module("com.github.spotbugs:spotbugs-annotations", "com.github.spotbugs.annotations")
     module("com.google.code.findbugs:jsr305", "java.annotation") {
         exportAllPackages()
-        mergeJar("javax.annotation:javax.annotation-api")
+//        mergeJar("javax.annotation:javax.annotation-api")
     }
     module("com.google.errorprone:error_prone_annotations", "com.google.errorprone.annotations")
     module("com.google.j2objc:j2objc-annotations", "com.google.j2objc.annotations")

@@ -16,6 +16,9 @@
 
 plugins {
     id("com.hedera.block.protobuf")
+    id("java")
+    id("com.google.protobuf")
+    id("com.hedera.block.conventions")
     alias(libs.plugins.pbj)
 }
 
@@ -54,22 +57,22 @@ sourceSets {
     }
 }
 
-dependencies {
-    implementation("io.grpc:grpc-protobuf:1.64.0")
-    implementation("io.grpc:grpc-stub:1.64.0")
-//    implementation("com.hedera.pbj:pbj-runtime:0.8.9")
-    implementation("org.antlr:antlr4-runtime:4.13.1")
-    implementation("com.google.guava:guava:33.0.0-jre")
-
-    // explicit in services config
-//    implementation("com.google.api.grpc:proto-google-common-protos:2.29.0")
-//    implementation("io.grpc:grpc-api:1.64.0")
-    implementation("com.github.spotbugs:spotbugs-annotations:4.7.3")
-    implementation("com.google.code.findbugs:jsr305:3.0.2")
-
-    // annotations?
-    implementation("org.checkerframework:checker-qual:3.41.0")
-    implementation("com.google.errorprone:error_prone_annotations:2.23.0")
+//dependencies {
+//    implementation("io.grpc:grpc-protobuf:1.64.0")
+//    implementation("io.grpc:grpc-stub:1.64.0")
+////    implementation("com.hedera.pbj:pbj-runtime:0.8.9")
+//    implementation("org.antlr:antlr4-runtime:4.13.1")
+//    implementation("com.google.guava:guava:33.0.0-jre")
+//
+//    // explicit in services config
+////    implementation("com.google.api.grpc:proto-google-common-protos:2.29.0")
+////    implementation("io.grpc:grpc-api:1.64.0")
+//    implementation("com.github.spotbugs:spotbugs-annotations:4.7.3")
+//    implementation("com.google.code.findbugs:jsr305:3.0.2")
+//
+//    // annotations?
+//    implementation("org.checkerframework:checker-qual:3.41.0")
+//    implementation("com.google.errorprone:error_prone_annotations:2.23.0")
 
 //    implementation("com.google.guava:failureaccess:1.0.2")
 //    implementation("com.google.protobuf:protobuf-java:3.25.1")
@@ -86,7 +89,8 @@ dependencies {
 //    > Execution failed for ExtraJavaModuleInfoTransform: /Users/mattpeterson/.gradle/caches/modules-2/files-2.1/com.google.guava/guava/32.1.3-jre/f306708742ce2bf0fb0901216183bc14073feae/guava-32.1.3-jre.jar.
 //    > [requires directives from metadata] Cannot find dependencies for 'com.google.common'. Are 'com.google.guava:guava' the correct component coordinates?
 //    implementation("com.google.guava:guava:31.1-jre")
-}
+
+//}
 
 
 //dependencies.constraints {

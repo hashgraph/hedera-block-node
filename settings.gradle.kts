@@ -58,7 +58,7 @@ dependencyResolutionManagement {
             version("com.google.auto.service", "1.1.1")
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
 
-            version("grpc.protobuf", "1.64.0")
+            version("io.grpc.protobuf", "1.64.0")
             version("io.grpc", "1.64.0")
 
             version("javax.annotation", "1.3.2")
@@ -66,10 +66,12 @@ dependencyResolutionManagement {
             version("google-proto", "3.19.4")
             version("grpc-proto", "1.45.1")
             version("hapi-proto", hapiProtoVersion)
+            version("io.grpc.stub", "1.64.0")
 
             // PBJ dependencies
             plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.8.9")
             version("com.hedera.pbj.runtime", "0.8.9")
+            version("com.google.common", "33.0.0-jre")
 
             // Testing only versions
             version("org.assertj.core", "3.23.1")
