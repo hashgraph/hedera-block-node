@@ -20,7 +20,7 @@ plugins {
 
 
 include(":stream")
-//include(":server")
+include(":server")
 
 includeBuild(".") // https://github.com/gradle/gradle/issues/21490#issuecomment-1458887481
 
@@ -73,15 +73,8 @@ dependencyResolutionManagement {
             version("com.google.protobuf.util", "3.21.7")
 
             version("hapi-proto", hapiProtoVersion)
-//            api("com.google.guava:guava:31.1-jre") {
-//                because("com.google.common")
-//            }
             version("com.google.common", "33.0.0-jre")
 //            version("com.google.common", "31.1-jre")
-
-            // not relevant?
-//            version("google-proto", "3.19.4")
-//            version("grpc-proto", "1.45.1")
 
             version("org.apache.commons.codec", "1.15")
             version("org.apache.commons.collections4", "4.4")
