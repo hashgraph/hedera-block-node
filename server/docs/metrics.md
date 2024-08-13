@@ -30,7 +30,7 @@ MetricsService centralizes the creation of metrics and provides a way to access 
 To check the metrics you can access the Prometheus endpoint at `http://localhost:9999/metrics`.
 
 ### Local Development
-For developers, when using the gradle task `startDockerContainer` it will automatically start a prometheus and grafana services preconfigured locally with credentials: username `admin` and paassword  `admin` and the dashboard already provisioned with the current metrics and widgets. 
+For developers, when using the gradle task `startDockerContainer` it will automatically start a prometheus and grafana services preconfigured locally with credentials: username `admin` and password  `admin` and the dashboard already provisioned with the current metrics and widgets. 
 
 Dashboard is called `Block-Node Server Dashboard` and its source is kept on folder: `server/docker/metrics/dashboards` as: `block-node-server.json`.
 
@@ -45,8 +45,8 @@ All metrics have `hedera_block_node` prefix.
 
 | Metric Name                     | Description                           | Type      |
 |---------------------------------|---------------------------------------|-----------|
-| live_block_items                | The amount of block items received    | Counter   |
-| blocks_persisted                | the amount of blocks persisted        | Counter   |
-| subscribers                     | The amount of subscribers             | Gauge     |
-| single_blocks_retrieved         | the amount of single blocks requested | Counter   |
+| live_block_items                | The number of block items received    | Counter   |
+| blocks_persisted                | the number of blocks persisted        | Counter   |
+| subscribers                     | The number of subscribers             | Gauge     |
+| single_blocks_retrieved         | the number of single blocks requested | Counter   |
 
