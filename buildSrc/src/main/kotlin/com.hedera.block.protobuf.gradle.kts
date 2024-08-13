@@ -29,16 +29,7 @@ tasks.register<GitClone>("cloneHederaProtobufs") {
     localCloneDirectory = layout.buildDirectory.dir("hedera-protobufs")
 }
 
-sourceSets {
-    main {
-        proto {
-            srcDir("build/hedera-protobufs/block")
-            srcDir("build/hedera-protobufs/services")
-            srcDir("build/hedera-protobufs/platform")
-            srcDir("build/hedera-protobufs/streams")
-        }
-    }
-}
+
 
 // Configure Protobuf Plugin to download protoc executable rather than using local installed version
 protobuf {
@@ -53,13 +44,24 @@ protobuf {
     generateProtoTasks { ofSourceSet("main").forEach { it.plugins { id("grpc") } } }
 }
 
-//tasks.javadoc {
-//    options {
-//        this as StandardJavadocDocletOptions
-//        // There are violations in the generated protobuf code
-//        addStringOption("Xdoclint:-reference,-html", "-quiet")
-//    }
-//}
+sourceSets {
+    main {
+        proto {
+            srcDir("build/hedera-protobufs/block")
+            srcDir("build/hedera-protobufs/services")
+            srcDir("build/hedera-protobufs/platform")
+            srcDir("build/hedera-protobufs/streams")
+        }
+    }
+}
+
+tasks.javadoc {
+    options {
+        this as StandardJavadocDocletOptions
+        // There are violations in the generated protobuf code
+        addStringOption("Xdoclint:-reference,-html", "-quiet")
+    }
+}
 
 // Give JUnit more ram and make it execute tests in parallel
 //tasks.test {

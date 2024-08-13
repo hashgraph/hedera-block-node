@@ -121,6 +121,13 @@ extraJavaModuleInfo {
 
     module("io.perfmark:perfmark-api", "io.perfmark")
     module("javax.inject:javax.inject", "javax.inject")
+
+    module("commons-codec:commons-codec", "org.apache.commons.codec")
+    module("org.apache.commons:commons-math3", "org.apache.commons.math3")
+    module("org.apache.commons:commons-collections4", "org.apache.commons.collections4")
+    module("com.esaulpaugh:headlong", "headlong")
+
+
     module("org.checkerframework:checker-qual", "org.checkerframework.checker.qual")
     module("io.tmio:tuweni-units", "tuweni.units")
     module("io.tmio:tuweni-bytes", "tuweni.bytes")
@@ -144,11 +151,7 @@ extraJavaModuleInfo {
     module("io.netty:netty-transport", "io.netty.transport")
     module("io.netty:netty-transport-classes-epoll", "io.netty.transport.classes.epoll")
 
-    module("junit:junit", "junit")
-    module("org.mockito:mockito-core", "org.mockito")
-    module("org.mockito:mockito-junit-jupiter", "org.mockito.junit.jupiter")
-
-    // spotbugs
+    // spotbugs - these clobbered the ones above
 //    module("com.github.spotbugs:spotbugs-annotations", "com.github.spotbugs.annotations")
 //    module("com.google.code.findbugs:jsr305", "java.annotation") { exportAllPackages() }
 
@@ -170,4 +173,38 @@ extraJavaModuleInfo {
     module("com.google.auto.service:auto-service", "com.google.auto.service.processor")
     module("com.google.auto:auto-common", "com.google.auto.common")
 
+    // Testing only
+//    module("com.google.jimfs:jimfs", "com.google.jimfs")
+//    module("org.awaitility:awaitility", "awaitility")
+//    module("uk.org.webcompere:system-stubs-core", "uk.org.webcompere.systemstubs.core")
+//    module("uk.org.webcompere:system-stubs-jupiter", "uk.org.webcompere.systemstubs.jupiter")
+
+    // JMH only
+    module("net.sf.jopt-simple:jopt-simple", "jopt.simple")
+    module("org.openjdk.jmh:jmh-core", "jmh.core")
+    module("org.openjdk.jmh:jmh-generator-asm", "jmh.generator.asm")
+    module("org.openjdk.jmh:jmh-generator-bytecode", "jmh.generator.bytecode")
+    module("org.openjdk.jmh:jmh-generator-reflection", "jmh.generator.reflection")
+
+    // Test clients only
+//    module("com.github.docker-java:docker-java-api", "com.github.docker.java.api")
+//    module("com.github.docker-java:docker-java-transport", "com.github.docker.java.transport")
+//    module(
+//        "com.github.docker-java:docker-java-transport-zerodep",
+//        "com.github.docker.transport.zerodep"
+//    )
+    module("com.google.protobuf:protobuf-java-util", "com.google.protobuf.util")
+//    module("com.squareup:javapoet", "com.squareup.javapoet") {
+//        exportAllPackages()
+//        requires("java.compiler")
+//    }
+    module("junit:junit", "junit")
+    module("org.hamcrest:hamcrest", "org.hamcrest")
+    module("org.json:json", "org.json")
+    module("org.mockito:mockito-core", "org.mockito")
+//    module("org.objenesis:objenesis", "org.objenesis")
+//    module("org.rnorth.duct-tape:duct-tape", "org.rnorth.ducttape")
+//    module("org.testcontainers:junit-jupiter", "org.testcontainers.junit.jupiter")
+//    module("org.testcontainers:testcontainers", "org.testcontainers")
+    module("org.mockito:mockito-junit-jupiter", "org.mockito.junit.jupiter")
 }

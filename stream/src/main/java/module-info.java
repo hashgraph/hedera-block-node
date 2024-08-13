@@ -13,5 +13,5 @@ module com.hedera.block.stream {
     requires org.antlr.antlr4.runtime;
     requires static com.github.spotbugs.annotations;
 //    requires static java.annotation;
-    requires static java.compiler;
+//    requires static java.compiler;
 }
