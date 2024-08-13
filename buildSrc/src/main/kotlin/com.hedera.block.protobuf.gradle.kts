@@ -53,26 +53,6 @@ protobuf {
     generateProtoTasks { ofSourceSet("main").forEach { it.plugins { id("grpc") } } }
 }
 
-
-
-
-//sourceSets.all {
-//    val compileProtoPath = getTaskName("", "compileProtoPath")
-//    dependencies {
-        // For dependencies of protobuf compilation use versions from 'hedera-dependency-versions',
-        // but not 'runtime' dependencies of the platform (JAVA_API instead of JAVA_RUNTIME).
-//        dependencies {
-//            compileProtoPath("com.hedera.hashgraph:hedera-dependency-versions") {
-//                attributes {
-//                    attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_API))
-//                    attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.REGULAR_PLATFORM))
-//                }
-//            }
-//            compileProtoPath("com.hedera.block")
-//        }
-//    }
-//}
-
 //tasks.javadoc {
 //    options {
 //        this as StandardJavadocDocletOptions

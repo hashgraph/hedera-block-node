@@ -57,7 +57,7 @@ sourceSets {
 dependencies {
     implementation("io.grpc:grpc-protobuf:1.64.0")
     implementation("io.grpc:grpc-stub:1.64.0")
-    implementation("com.hedera.pbj:pbj-runtime:0.8.9")
+//    implementation("com.hedera.pbj:pbj-runtime:0.8.9")
     implementation("org.antlr:antlr4-runtime:4.13.1")
     implementation("com.google.guava:guava:33.0.0-jre")
 
@@ -70,9 +70,6 @@ dependencies {
     // annotations?
     implementation("org.checkerframework:checker-qual:3.41.0")
     implementation("com.google.errorprone:error_prone_annotations:2.23.0")
-
-    implementation("javax.annotation:javax.annotation-api:1.3.2")
-//    implementation("javax.inject:javax.inject:1")
 
 //    implementation("com.google.guava:failureaccess:1.0.2")
 //    implementation("com.google.protobuf:protobuf-java:3.25.1")
@@ -92,9 +89,9 @@ dependencies {
 }
 
 
-dependencies.constraints {
-    implementation("javax.annotation:javax.annotation-api:1.3.2")
-}
+//dependencies.constraints {
+//    implementation("javax.annotation:javax.annotation-api:1.3.2")
+//}
 
 //testModuleInfo {
 //    requires("com.hedera.node.hapi")

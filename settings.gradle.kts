@@ -58,13 +58,6 @@ dependencyResolutionManagement {
             version("com.google.auto.service", "1.1.1")
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
 
-            // moving to the stream sub project
-//            version("com.google.guava", "31.1-jre")
-//            version("org.antlr.antlr4.runtime","4.13.1")
-//            version("io.grpc:grpc-netty:1.64.0") {
-//                because("io.grpc.netty")
-//            }
-
             version("grpc.protobuf", "1.64.0")
             version("io.grpc", "1.64.0")
 
