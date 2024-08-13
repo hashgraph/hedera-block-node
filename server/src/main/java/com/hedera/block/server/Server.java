@@ -25,7 +25,6 @@ import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.mediator.StreamMediator;
-import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
@@ -54,12 +53,8 @@ public class Server {
         LOGGER.log(System.Logger.Level.INFO, "Starting BlockNode Server");
 
         try {
-            // init metrics
+            // init context, metrics, and configuration.
             @NonNull final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
-
-            // increase by 1 just for the sake of an example
-            @NonNull final MetricsService metricsService = blockNodeContext.metricsService();
-            metricsService.exampleCounter.increment();
 
             // Set the global configuration
             @NonNull final Config config = Config.create();

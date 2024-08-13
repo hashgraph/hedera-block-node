@@ -28,21 +28,33 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Path;
 
-/** Static factory that creates {@link BlockNodeContext} */
+/**
+ * Use the static method create() to obtain a new {@link BlockNodeContext} when initializing the
+ * application.
+ *
+ * <p>When a context is created all enabled sources of configuration information will be read and
+ * applicable values made available through the context created.<br>
+ * The application should use the context to obtain configuration and metrics support.
+ */
 public class BlockNodeContextFactory {
 
-    private static final String APPLICATION_PROPERTIES_1 = "app.properties";
+    /**
+     * A resource file name from which application configuration is read. The properties in this
+     * file are available as configuration from the {@link BlockNodeContext}.
+     */
+    private static final String APPLICATION_PROPERTIES = "app.properties";
 
     private BlockNodeContextFactory() {}
 
     /**
-     * Use the create method to build a singleton block node context to manage system-wide metrics.
+     * Create a new application context for use in the system. The context is needed at
+     * initialization.
      *
-     * @return an instance of {@link BlockNodeContext} which holds {@link Configuration}, {@link
-     *     Metrics} and {@link MetricsService} for the rest of the application to use.
+     * @return a context with configuration and metrics.
      * @throws IOException when the java libraries fail to read information from a configuration
      *     source.
      */
+    @NonNull
     public static BlockNodeContext create() throws IOException {
         final Configuration configuration = getConfiguration();
         final Metrics metrics = getMetrics(configuration);
@@ -50,12 +62,21 @@ public class BlockNodeContextFactory {
         return new BlockNodeContext(metrics, metricsService, configuration);
     }
 
+    /**
+     * Read configuration for this system. The configuration sources will include environment
+     * variables, system properties, and the properties file named {@value APPLICATION_PROPERTIES}.
+     *
+     * @return the configuration as read from environment, properties, and files.
+     * @throws IOException when the java libraries fail to read information from a configuration
+     *     source.
+     */
+    @NonNull
     private static Configuration getConfiguration() throws IOException {
 
         return ConfigurationBuilder.create()
                 .withSource(SystemEnvironmentConfigSource.getInstance())
                 .withSource(SystemPropertiesConfigSource.getInstance())
-                .withSource(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES_1)))
+                .withSource(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES)))
                 .autoDiscoverExtensions()
                 .build();
     }

@@ -27,24 +27,58 @@ import org.junit.jupiter.api.Test;
 class MetricsServiceTest {
 
     @Test
-    void MetricsService_initializesExampleGauge() {
+    void MetricsService_initializesLiveBlockItemsCounter() {
         Metrics metrics = mock(Metrics.class);
-        LongGauge exampleGauge = mock(LongGauge.class);
-        when(metrics.getOrCreate(any(LongGauge.Config.class))).thenReturn(exampleGauge);
+        Counter liveBlockItems = mock(Counter.class);
+        when(metrics.getOrCreate(any(Counter.Config.class))).thenReturn(liveBlockItems);
 
         MetricsService service = new MetricsService(metrics);
 
-        assertEquals(exampleGauge, service.exampleGauge);
+        assertEquals(liveBlockItems, service.liveBlockItems);
+
+        service.liveBlockItems.increment();
+        verify(liveBlockItems, times(1)).increment();
     }
 
     @Test
-    void MetricsService_initializesExampleCounter() {
+    void MetricsService_initializesBlocksPersistedCounter() {
         Metrics metrics = mock(Metrics.class);
-        Counter exampleCounter = mock(Counter.class);
-        when(metrics.getOrCreate(any(Counter.Config.class))).thenReturn(exampleCounter);
+        Counter blocksPersisted = mock(Counter.class);
+        when(metrics.getOrCreate(any(Counter.Config.class))).thenReturn(blocksPersisted);
 
         MetricsService service = new MetricsService(metrics);
 
-        assertEquals(exampleCounter, service.exampleCounter);
+        assertEquals(blocksPersisted, service.blocksPersisted);
+
+        service.blocksPersisted.increment();
+        verify(blocksPersisted, times(1)).increment();
+    }
+
+    @Test
+    void MetricsService_initializesSingleBlocksRetrievedCounter() {
+        Metrics metrics = mock(Metrics.class);
+        Counter singleBlocksRetrieved = mock(Counter.class);
+        when(metrics.getOrCreate(any(Counter.Config.class))).thenReturn(singleBlocksRetrieved);
+
+        MetricsService service = new MetricsService(metrics);
+
+        assertEquals(singleBlocksRetrieved, service.singleBlocksRetrieved);
+
+        service.singleBlocksRetrieved.increment();
+        verify(singleBlocksRetrieved, times(1)).increment();
+    }
+
+    @Test
+    void MetricsService_initializesSubscribersGauge() {
+        Metrics metrics = mock(Metrics.class);
+        LongGauge subscribers = mock(LongGauge.class);
+        when(metrics.getOrCreate(any(LongGauge.Config.class))).thenReturn(subscribers);
+
+        MetricsService service = new MetricsService(metrics);
+
+        assertEquals(subscribers, service.subscribers);
+
+        service.subscribers.set(5);
+        verify(subscribers, times(1)).set(5);
     }
 }
