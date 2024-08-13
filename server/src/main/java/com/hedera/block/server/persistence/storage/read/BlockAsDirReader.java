@@ -16,12 +16,13 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
-import static com.hedera.block.protos.BlockStreamService.Block;
 import static com.hedera.block.protos.BlockStreamService.Block.Builder;
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.Block;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
 import java.io.FileInputStream;

@@ -16,8 +16,8 @@
 
 package com.hedera.block.server.mediator;
 
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
-import static com.hedera.block.protos.BlockStreamService.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.SubscribeStreamResponse;
 
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;

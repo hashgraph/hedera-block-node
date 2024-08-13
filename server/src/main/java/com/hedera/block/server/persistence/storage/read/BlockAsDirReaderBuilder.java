@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
-import static com.hedera.block.protos.BlockStreamService.Block;
+import com.hedera.hapi.block.stream.Block;
 
 import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;

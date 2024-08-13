@@ -16,7 +16,10 @@
 
 package com.hedera.block.server;
 
-import static com.hedera.block.protos.BlockStreamService.*;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
