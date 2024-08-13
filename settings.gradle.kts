@@ -21,7 +21,7 @@ plugins {
 
 include(":stream")
 //include(":protos")
-include(":server")
+//include(":server")
 
 includeBuild(".") // https://github.com/gradle/gradle/issues/21490#issuecomment-1458887481
 
@@ -58,20 +58,23 @@ dependencyResolutionManagement {
             version("com.google.auto.service", "1.1.1")
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
 
-            version("io.grpc.protobuf", "1.64.0")
             version("io.grpc", "1.64.0")
-
-            version("javax.annotation", "1.3.2")
-
-            version("google-proto", "3.19.4")
-            version("grpc-proto", "1.45.1")
-            version("hapi-proto", hapiProtoVersion)
+            version("io.grpc.protobuf", "1.64.0")
             version("io.grpc.stub", "1.64.0")
+
+//            version("javax.annotation", "1.3.2")
+//            version("javax.inject", "1")
 
             // PBJ dependencies
             plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.8.9")
             version("com.hedera.pbj.runtime", "0.8.9")
             version("com.google.common", "33.0.0-jre")
+
+            version("hapi-proto", hapiProtoVersion)
+
+            // not relevant?
+//            version("google-proto", "3.19.4")
+//            version("grpc-proto", "1.45.1")
 
             // Testing only versions
             version("org.assertj.core", "3.23.1")

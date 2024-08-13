@@ -31,7 +31,7 @@ class Utils {
                 lines = gradlePropFile.readLines(Charsets.UTF_8)
             }
 
-            var versionStr = "version=${newVersion.toString()}"
+            var versionStr = "version=$newVersion"
             val finalLines: List<String>
 
 

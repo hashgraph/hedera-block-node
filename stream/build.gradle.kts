@@ -16,9 +16,6 @@
 
 plugins {
     id("com.hedera.block.protobuf")
-    id("java")
-    id("com.google.protobuf")
-    id("com.hedera.block.conventions")
     alias(libs.plugins.pbj)
 }
 
@@ -57,45 +54,9 @@ sourceSets {
     }
 }
 
-//dependencies {
-//    implementation("io.grpc:grpc-protobuf:1.64.0")
-//    implementation("io.grpc:grpc-stub:1.64.0")
-////    implementation("com.hedera.pbj:pbj-runtime:0.8.9")
-//    implementation("org.antlr:antlr4-runtime:4.13.1")
-//    implementation("com.google.guava:guava:33.0.0-jre")
-//
-//    // explicit in services config
-////    implementation("com.google.api.grpc:proto-google-common-protos:2.29.0")
-////    implementation("io.grpc:grpc-api:1.64.0")
-//    implementation("com.github.spotbugs:spotbugs-annotations:4.7.3")
-//    implementation("com.google.code.findbugs:jsr305:3.0.2")
-//
-//    // annotations?
-//    implementation("org.checkerframework:checker-qual:3.41.0")
-//    implementation("com.google.errorprone:error_prone_annotations:2.23.0")
-
-//    implementation("com.google.guava:failureaccess:1.0.2")
-//    implementation("com.google.protobuf:protobuf-java:3.25.1")
-//    implementation("com.google.j2objc:j2objc-annotations:2.8")
-
-    // breaks every time
-//    > Failed to transform javax.annotation-api-1.3.2.jar (javax.annotation:javax.annotation-api:1.3.2) to match attributes {artifactType=jar, javaModule=true, org.gradle.category=library, org.gradle.libraryelements=jar, org.gradle.status=release, org.gradle.usage=java-api}.
-//    > Execution failed for ExtraJavaModuleInfoTransform: /Users/mattpeterson/.gradle/caches/modules-2/files-2.1/javax.annotation/javax.annotation-api/1.3.2/934c04d3cfef185a8008e7bf34331b79730a9d43/javax.annotation-api-1.3.2.jar.
-//    > Found an automatic module: java.annotation (javax.annotation-api-1.3.2.jar)
-//    implementation("javax.annotation:javax.annotation-api:1.3.2")
-
-    // old?
-//    > Failed to transform guava-32.1.3-jre.jar (com.google.guava:guava:32.1.3-android) to match attributes {artifactType=jar, javaModule=true, org.gradle.category=library, org.gradle.dependency.bundling=external, org.gradle.jvm.environment=standard-jvm, org.gradle.jvm.version=8, org.gradle.libraryelements=jar, org.gradle.status=release, org.gradle.usage=java-api}.
-//    > Execution failed for ExtraJavaModuleInfoTransform: /Users/mattpeterson/.gradle/caches/modules-2/files-2.1/com.google.guava/guava/32.1.3-jre/f306708742ce2bf0fb0901216183bc14073feae/guava-32.1.3-jre.jar.
-//    > [requires directives from metadata] Cannot find dependencies for 'com.google.common'. Are 'com.google.guava:guava' the correct component coordinates?
-//    implementation("com.google.guava:guava:31.1-jre")
-
-//}
-
-
-//dependencies.constraints {
-//    implementation("javax.annotation:javax.annotation-api:1.3.2")
-//}
+dependencies {
+    implementation("javax.annotation:javax.annotation-api:1.3.2")
+}
 
 //testModuleInfo {
 //    requires("com.hedera.node.hapi")

@@ -12,5 +12,6 @@ module com.hedera.block.stream {
     requires io.grpc.protobuf;
     requires org.antlr.antlr4.runtime;
     requires static com.github.spotbugs.annotations;
-    requires static java.annotation;
+//    requires static java.annotation;
+    requires static java.compiler;
 }
