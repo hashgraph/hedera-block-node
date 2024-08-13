@@ -3,9 +3,9 @@ entries:
   hedera-block-node:
   - apiVersion: v2
     appVersion: 0.1.0-SNAPSHOT
-    created: "2024-08-12T15:56:36.82561642Z"
+    created: "2024-08-13T19:20:58.678069523Z"
     description: A Helm chart for Hedera Block Node
-    digest: cb17998f670c5cdce0265509bb2e23cd848c3a2bb99902e57e8b6e8404891ae1
+    digest: f4824a20577f0ff39a325c2a166e95c3b180dcbcf8a387c232a1f1517cac83e7
     home: https://github.com/hashgraph/hedera-block-node
     keywords:
     - blocknode
@@ -21,4 +21,4 @@ entries:
     urls:
     - https://hashgraph.github.io/hedera-block-node/charts/hedera-block-node-0.1.0-SNAPSHOT.tgz
     version: 0.1.0-SNAPSHOT
-generated: "2024-08-12T15:56:36.824856849Z"
+generated: "2024-08-13T19:20:58.67596404Z"
