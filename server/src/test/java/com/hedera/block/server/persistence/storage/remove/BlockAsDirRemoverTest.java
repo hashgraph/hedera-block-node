@@ -21,8 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.hedera.block.protos.BlockStreamService.Block;
 import com.hedera.block.protos.BlockStreamService.BlockItem;
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.Util;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
@@ -73,7 +73,7 @@ public class BlockAsDirRemoverTest {
         }
 
         // Remove a block that does not exist
-        final BlockRemover blockRemover = new BlockAsDirRemover(testPath, Util.defaultPerms);
+        final BlockRemover blockRemover = new BlockAsDirRemover(testPath, FileUtils.defaultPerms);
         blockRemover.remove(2);
 
         // Verify the block was not removed
@@ -117,7 +117,7 @@ public class BlockAsDirRemoverTest {
                 blockItems.getFirst().getHeader(), blockOpt.get().getBlockItems(0).getHeader());
 
         // Now remove the block
-        blockRemover = new BlockAsDirRemover(testPath, Util.defaultPerms);
+        blockRemover = new BlockAsDirRemover(testPath, FileUtils.defaultPerms);
         blockRemover.remove(1);
 
         // Verify the block is removed

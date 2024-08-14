@@ -28,11 +28,16 @@ import org.junit.jupiter.api.Test;
 
 class PersistenceStorageConfigTest {
 
+    final String TEMP_DIR = "block-node-unit-test-dir";
+
     @Test
-    void testPersistenceStorageConfig() {
+    void testPersistenceStorageConfig_happyPath() throws IOException {
+
+        Path testPath = Files.createTempDirectory(TEMP_DIR);
+
         PersistenceStorageConfig persistenceStorageConfig =
-                new PersistenceStorageConfig("rootPath");
-        assertEquals("rootPath", persistenceStorageConfig.rootPath());
+                new PersistenceStorageConfig(testPath.toString());
+        assertEquals(testPath.toString(), persistenceStorageConfig.rootPath());
     }
 
     @Test
@@ -44,6 +49,26 @@ class PersistenceStorageConfigTest {
 
         PersistenceStorageConfig persistenceStorageConfig = new PersistenceStorageConfig("");
         assertEquals(expectedDefaultRootPath, persistenceStorageConfig.rootPath());
+    }
+
+    @Test
+    void persistenceStorageConfig_throwsExceptionForRelativePath() {
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> new PersistenceStorageConfig("relative/path"));
+        assertEquals("relative/path Root path must be absolute", exception.getMessage());
+    }
+
+    @Test
+    void persistenceStorageConfig_throwsRuntimeExceptionOnIOException() {
+        Path invalidPath = Paths.get("/invalid/path");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> new PersistenceStorageConfig(invalidPath.toString()));
+        assertInstanceOf(IOException.class, exception.getCause());
     }
 
     public static void deleteDirectory(Path path) throws IOException {

@@ -18,8 +18,8 @@ package com.hedera.block.server.persistence.storage.read;
 
 import static com.hedera.block.protos.BlockStreamService.Block;
 
+import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.Util;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
@@ -32,7 +32,7 @@ import java.util.Set;
  */
 public class BlockAsDirReaderBuilder {
 
-    private FileAttribute<Set<PosixFilePermission>> filePerms = Util.defaultPerms;
+    private FileAttribute<Set<PosixFilePermission>> filePerms = FileUtils.defaultPerms;
     private final PersistenceStorageConfig config;
 
     private BlockAsDirReaderBuilder(@NonNull PersistenceStorageConfig config) {
@@ -56,8 +56,8 @@ public class BlockAsDirReaderBuilder {
      * and directories.
      *
      * <p>By default, the block reader will use the permissions defined in {@link
-     * Util#defaultPerms}. This method is primarily used for testing purposes. Default values should
-     * be sufficient for production use.
+     * FileUtils#defaultPerms}. This method is primarily used for testing purposes. Default values
+     * should be sufficient for production use.
      *
      * @param filePerms the file permissions to use when managing block files and directories.
      * @return a block reader builder configured with required parameters.

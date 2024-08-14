@@ -23,8 +23,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.Util;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
@@ -75,19 +75,6 @@ public class BlockAsDirWriterTest {
                     System.Logger.Level.ERROR,
                     "Failed to delete temp directory: " + testPath.toString());
         }
-    }
-
-    @Test
-    public void testConstructorWithInvalidPath() throws IOException {
-        final Map<String, String> testProperties =
-                Map.of(PERSISTENCE_STORAGE_ROOT_PATH_KEY, "invalid-path");
-
-        final BlockNodeContext blockNodeContext =
-                TestConfigUtil.getTestBlockNodeContext(testProperties);
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build());
     }
 
     @Test
@@ -176,7 +163,7 @@ public class BlockAsDirWriterTest {
 
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
         final BlockRemover blockRemover =
-                new BlockAsDirRemover(Path.of(testConfig.rootPath()), Util.defaultPerms);
+                new BlockAsDirRemover(Path.of(testConfig.rootPath()), FileUtils.defaultPerms);
 
         // Use a spy to simulate an IOException when the first block item is written
         final BlockWriter<BlockItem> blockWriter =
@@ -220,14 +207,16 @@ public class BlockAsDirWriterTest {
     public void testPartialBlockRemoval() throws IOException {
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(3);
         final BlockRemover blockRemover =
-                new BlockAsDirRemover(Path.of(testConfig.rootPath()), Util.defaultPerms);
+                new BlockAsDirRemover(Path.of(testConfig.rootPath()), FileUtils.defaultPerms);
 
         // Use a spy of TestBlockAsDirWriter to proxy block items to the real writer
         // for the first 22 block items.  Then simulate an IOException on the 23rd block item
         // thrown from a protected write method in the real class.  This should trigger the
         // blockRemover instance to remove the partially written block.
         final TestBlockAsDirWriter blockWriter =
-                spy(new TestBlockAsDirWriter(blockRemover, Util.defaultPerms, blockNodeContext));
+                spy(
+                        new TestBlockAsDirWriter(
+                                blockRemover, FileUtils.defaultPerms, blockNodeContext));
 
         for (int i = 0; i < 23; i++) {
             // Prepare the block writer to call the actual write method

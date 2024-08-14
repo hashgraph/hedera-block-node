@@ -19,8 +19,8 @@ package com.hedera.block.server.persistence.storage.write;
 import static com.hedera.block.protos.BlockStreamService.BlockItem;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.Util;
 import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -38,7 +38,7 @@ import java.util.Set;
 public class BlockAsDirWriterBuilder {
 
     private final BlockNodeContext blockNodeContext;
-    private FileAttribute<Set<PosixFilePermission>> filePerms = Util.defaultPerms;
+    private FileAttribute<Set<PosixFilePermission>> filePerms = FileUtils.defaultPerms;
     private BlockRemover blockRemover;
 
     private BlockAsDirWriterBuilder(@NonNull final BlockNodeContext blockNodeContext) {
@@ -46,7 +46,8 @@ public class BlockAsDirWriterBuilder {
         PersistenceStorageConfig config =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
 
-        this.blockRemover = new BlockAsDirRemover(Path.of(config.rootPath()), Util.defaultPerms);
+        this.blockRemover =
+                new BlockAsDirRemover(Path.of(config.rootPath()), FileUtils.defaultPerms);
     }
 
     /**
@@ -67,8 +68,8 @@ public class BlockAsDirWriterBuilder {
      * and directories.
      *
      * <p>By default, the block writer will use the permissions defined in {@link
-     * Util#defaultPerms}. This method is primarily used for testing purposes. Default values should
-     * be sufficient for production use.
+     * FileUtils#defaultPerms}. This method is primarily used for testing purposes. Default values
+     * should be sufficient for production use.
      *
      * @param filePerms the file permissions to use when managing block files and directories.
      * @return a block writer builder configured with required parameters.

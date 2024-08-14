@@ -21,6 +21,7 @@ import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -79,12 +80,8 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
         this.blockRemover = blockRemover;
         this.filePerms = filePerms;
 
-        if (!blockNodeRootPath.isAbsolute()) {
-            throw new IllegalArgumentException(config.rootPath() + " must be an absolute path");
-        }
-
         // Initialize the block node root directory if it does not exist
-        createPath(blockNodeRootPath, System.Logger.Level.INFO);
+        FileUtils.createPathIfNotExists(blockNodeRootPath, System.Logger.Level.INFO, filePerms);
 
         this.blockNodeContext = blockNodeContext;
     }
@@ -145,7 +142,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                 final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
             blockItem.writeTo(fos);
             LOGGER.log(
-                    System.Logger.Level.INFO,
+                    System.Logger.Level.DEBUG,
                     "Successfully wrote the block item file: {0}",
                     blockItemFilePath);
         } catch (IOException e) {
@@ -167,7 +164,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
         repairPermissions(blockNodeRootPath);
 
         // Construct the path to the block directory
-        createPath(calculateBlockPath(), System.Logger.Level.DEBUG);
+        FileUtils.createPathIfNotExists(calculateBlockPath(), System.Logger.Level.DEBUG, filePerms);
 
         // Reset
         blockNodeFileNameIndex = 0;
@@ -209,17 +206,5 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
     @NonNull
     private Path calculateBlockPath() {
         return blockNodeRootPath.resolve(currentBlockDir);
-    }
-
-    private void createPath(
-            @NonNull final Path blockNodePath, @NonNull final System.Logger.Level logLevel)
-            throws IOException {
-        // Initialize the Block directory if it does not exist
-        if (Files.notExists(blockNodePath)) {
-            Files.createDirectory(blockNodePath, filePerms);
-            LOGGER.log(logLevel, "Created block node root directory: " + blockNodePath);
-        } else {
-            LOGGER.log(logLevel, "Using existing block node root directory: " + blockNodePath);
-        }
     }
 }

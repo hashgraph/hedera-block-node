@@ -31,21 +31,31 @@ import java.nio.file.Paths;
  */
 @ConfigData("persistence.storage")
 public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String rootPath) {
+
     /**
      * Constructor to set the default root path if not provided, it will be set to the data
      * directory in the current working directory
      */
     public PersistenceStorageConfig {
+        // verify rootPath prop
+        Path path = Path.of(rootPath);
         if (rootPath.isEmpty()) {
-            Path defaultPath = Paths.get(rootPath).toAbsolutePath().resolve("data");
-            if (!Files.exists(defaultPath)) {
-                try {
-                    Files.createDirectories(defaultPath);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            rootPath = defaultPath.toString();
+            path = Paths.get(rootPath).toAbsolutePath().resolve("data");
         }
+        // Check if absolute
+        if (!path.isAbsolute()) {
+            throw new IllegalArgumentException(rootPath + " Root path must be absolute");
+        }
+        // Create Directory if it does not exist
+        if (Files.notExists(path)) {
+            try {
+                FileUtils.createPathIfNotExists(
+                        path, System.Logger.Level.ERROR, FileUtils.defaultPerms);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        rootPath = path.toString();
     }
 }

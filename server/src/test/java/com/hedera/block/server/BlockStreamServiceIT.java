@@ -26,8 +26,8 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.Util;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
@@ -318,7 +318,7 @@ public class BlockStreamServiceIT {
                         EventHandler<ObjectEvent<SubscribeStreamResponse>>,
                         BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
                 subscribers = new LinkedHashMap<>();
-        final var streamMediator = buildStreamMediator(subscribers, Util.defaultPerms);
+        final var streamMediator = buildStreamMediator(subscribers, FileUtils.defaultPerms);
         final var blockStreamService =
                 buildBlockStreamService(streamMediator, blockReader, serviceStatus);
 
@@ -566,7 +566,7 @@ public class BlockStreamServiceIT {
 
     private BlockStreamService buildBlockStreamService() throws IOException {
         final var streamMediator =
-                buildStreamMediator(new ConcurrentHashMap<>(32), Util.defaultPerms);
+                buildStreamMediator(new ConcurrentHashMap<>(32), FileUtils.defaultPerms);
 
         return buildBlockStreamService(streamMediator, blockReader, serviceStatus);
     }
@@ -581,7 +581,7 @@ public class BlockStreamServiceIT {
 
         // Initialize with concrete a concrete BlockReader, BlockWriter and Mediator
         final BlockRemover blockRemover =
-                new BlockAsDirRemover(Path.of(testConfig.rootPath()), Util.defaultPerms);
+                new BlockAsDirRemover(Path.of(testConfig.rootPath()), FileUtils.defaultPerms);
 
         final BlockWriter<BlockItem> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext)
