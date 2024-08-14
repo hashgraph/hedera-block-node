@@ -83,7 +83,6 @@ public class BlockStreamServiceIT {
     @Mock private BlockWriter<BlockItem> blockWriter;
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
-    private static final String JUNIT = "my-junit-test";
 
     private Path testPath;
     private BlockNodeContext blockNodeContext;
@@ -110,8 +109,6 @@ public class BlockStreamServiceIT {
     @Test
     public void testPublishBlockStreamRegistrationAndExecution()
             throws IOException, NoSuchAlgorithmException {
-
-        // final BlockNodeContext blockNodeContext = mock(BlockNodeContext.class);
 
         final BlockStreamService blockStreamService =
                 new BlockStreamService(

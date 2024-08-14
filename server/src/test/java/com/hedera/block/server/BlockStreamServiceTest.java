@@ -72,7 +72,6 @@ public class BlockStreamServiceTest {
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
-    private static final String JUNIT = "my-junit-test";
 
     private Path testPath;
     // private Config testConfig;
@@ -84,12 +83,7 @@ public class BlockStreamServiceTest {
         testPath = Files.createTempDirectory(TEMP_DIR);
         LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
 
-        // Map<String, String> testProperties = Map.of(JUNIT, testPath.toString());
-        // ConfigSource testConfigSource = MapConfigSource.builder().map(testProperties).build();
-        // testConfig = Config.builder(testConfigSource).build();
-
         config = new PersistenceStorageConfig(testPath.toString());
-
         blockNodeContext =
                 TestConfigUtil.getSpyBlockNodeContext(
                         Map.of("persistence.storage.rootPath", testPath.toString()));
@@ -103,7 +97,6 @@ public class BlockStreamServiceTest {
     @Test
     public void testServiceName() throws IOException, NoSuchAlgorithmException {
 
-        // final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         itemAckBuilder,
@@ -122,7 +115,6 @@ public class BlockStreamServiceTest {
 
     @Test
     public void testProto() throws IOException, NoSuchAlgorithmException {
-        // final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         itemAckBuilder,
@@ -144,7 +136,6 @@ public class BlockStreamServiceTest {
     void testSingleBlockHappyPath() throws IOException {
 
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
-        // final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         itemAckBuilder,
@@ -187,8 +178,6 @@ public class BlockStreamServiceTest {
     @Test
     void testSingleBlockNotFoundPath() throws IOException {
 
-        // final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
-
         // Get the block so we can verify the response payload
         when(blockReader.read(1)).thenReturn(Optional.empty());
 
@@ -216,9 +205,8 @@ public class BlockStreamServiceTest {
     }
 
     @Test
-    void testSingleBlockServiceNotAvailable() throws IOException {
+    void testSingleBlockServiceNotAvailable() {
 
-        // final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         itemAckBuilder,
@@ -241,7 +229,6 @@ public class BlockStreamServiceTest {
 
     @Test
     public void testSingleBlockIOExceptionPath() throws IOException {
-        // final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         itemAckBuilder,
@@ -264,9 +251,8 @@ public class BlockStreamServiceTest {
     }
 
     @Test
-    public void testUpdateInvokesRoutingWithLambdas() throws IOException {
+    public void testUpdateInvokesRoutingWithLambdas() {
 
-        // final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         itemAckBuilder,
