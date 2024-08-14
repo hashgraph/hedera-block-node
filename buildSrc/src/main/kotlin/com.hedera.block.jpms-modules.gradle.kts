@@ -207,9 +207,9 @@ extraJavaModuleInfo {
     module("org.hamcrest:hamcrest", "org.hamcrest")
     module("org.json:json", "org.json")
     module("org.mockito:mockito-core", "org.mockito")
-//    module("org.objenesis:objenesis", "org.objenesis")
-//    module("org.rnorth.duct-tape:duct-tape", "org.rnorth.ducttape")
-//    module("org.testcontainers:junit-jupiter", "org.testcontainers.junit.jupiter")
-//    module("org.testcontainers:testcontainers", "org.testcontainers")
+    module("org.objenesis:objenesis", "org.objenesis")
+    module("org.rnorth.duct-tape:duct-tape", "org.rnorth.ducttape")
+    module("org.testcontainers:junit-jupiter", "org.testcontainers.junit.jupiter")
+    module("org.testcontainers:testcontainers", "org.testcontainers")
     module("org.mockito:mockito-junit-jupiter", "org.mockito.junit.jupiter")
 }
