@@ -33,7 +33,7 @@ import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
-import com.hedera.block.server.producer.ItemAckBuilder;
+import com.hedera.block.server.producer.AckBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.grpc.GrpcRouting;
@@ -130,6 +130,6 @@ public class Server {
             @NonNull final BlockNodeContext blockNodeContext) {
 
         return new BlockStreamService(
-                new ItemAckBuilder(), streamMediator, blockReader, serviceStatus, blockNodeContext);
+                new AckBuilder(), streamMediator, blockReader, serviceStatus, blockNodeContext);
     }
 }

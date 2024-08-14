@@ -24,6 +24,7 @@ import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import java.time.InstantSource;
@@ -159,17 +160,19 @@ public class ConsumerStreamResponseObserver
                 // Only start sending BlockItems after we've reached
                 // the beginning of a block.
                 @NonNull final SubscribeStreamResponse subscribeStreamResponse = event.get();
-                @NonNull final BlockItem blockItem = subscribeStreamResponse.getBlockItem();
-                if (!streamStarted && blockItem.hasHeader()) {
-                    streamStarted = true;
-                }
+                @Nullable final BlockItem blockItem = subscribeStreamResponse.blockItem();
+                if (blockItem != null) {
+                    if (!streamStarted && blockItem.hasBlockHeader()) {
+                        streamStarted = true;
+                    }
 
-                if (streamStarted) {
-                    LOGGER.log(
-                            System.Logger.Level.DEBUG,
-                            "Send BlockItem downstream: {0} ",
-                            blockItem);
-                    subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
+                    if (streamStarted) {
+                        LOGGER.log(
+                                System.Logger.Level.DEBUG,
+                                "Send BlockItem downstream: {0} ",
+                                blockItem);
+                        subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
+                    }
                 }
             }
         }

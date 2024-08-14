@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.mediator;
 
+import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 
@@ -113,7 +114,7 @@ class LiveStreamMediatorImpl
             LOGGER.log(System.Logger.Level.DEBUG, "Publishing BlockItem: {0}", blockItem);
             @NonNull
             final var subscribeStreamResponse =
-                    SubscribeStreamResponse.newBuilder().setBlockItem(blockItem).build();
+                    SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
 
             // Increment the block item counter
@@ -203,7 +204,7 @@ class LiveStreamMediatorImpl
         // SubscribeStreamResponseCode.
         // TODO: Replace READ_STREAM_SUCCESS (2) with a generic error code?
         return SubscribeStreamResponse.newBuilder()
-                .setStatus(SubscribeStreamResponse.SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
+                .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
                 .build();
     }
 

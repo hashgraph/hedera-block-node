@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.producer;
 
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
+import com.hedera.hapi.block.stream.BlockItem;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

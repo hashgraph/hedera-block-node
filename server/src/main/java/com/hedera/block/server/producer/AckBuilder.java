@@ -16,11 +16,12 @@
 
 package com.hedera.block.server.producer;
 
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
-import static com.hedera.block.protos.BlockStreamService.PublishStreamResponse.ItemAcknowledgement;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 
-import com.google.protobuf.ByteString;
+import com.hedera.hapi.block.Acknowledgement;
+import com.hedera.hapi.block.ItemAcknowledgement;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -30,25 +31,19 @@ import java.security.NoSuchAlgorithmException;
  * acknowledgement type response. This is a placeholder and should be replaced with real hash
  * functionality once the hedera-protobufs types are integrated.
  */
-public class ItemAckBuilder {
+public class AckBuilder {
 
     /** Constructor for the ItemAckBuilder class. */
-    public ItemAckBuilder() {}
+    public AckBuilder() {}
 
-    /**
-     * Builds an item acknowledgement for the given block item.
-     *
-     * @param blockItem the block item to build the acknowledgement for
-     * @return the item acknowledgement for the given block item
-     * @throws IOException thrown if an I/O error occurs while building the acknowledgement
-     * @throws NoSuchAlgorithmException thrown if the SHA-384 algorithm is not available
-     */
     @NonNull
-    public ItemAcknowledgement buildAck(@NonNull final BlockItem blockItem)
+    public Acknowledgement buildAck(@NonNull final BlockItem blockItem)
             throws IOException, NoSuchAlgorithmException {
-        // TODO: Use real hash and real hedera-protobufs types
-        return ItemAcknowledgement.newBuilder()
-                .setItemAck(ByteString.copyFrom(getFakeHash(blockItem)))
+        ItemAcknowledgement itemAck = ItemAcknowledgement.newBuilder()
+                .itemHash(Bytes.wrap(getFakeHash(blockItem)))
+                .build();
+        return Acknowledgement.newBuilder()
+                .itemAck(itemAck)
                 .build();
     }
 }

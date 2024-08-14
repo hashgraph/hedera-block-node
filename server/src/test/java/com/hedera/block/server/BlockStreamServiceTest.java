@@ -16,7 +16,6 @@
 
 package com.hedera.block.server;
 
-import static com.hedera.block.protos.BlockStreamService.*;
 import static com.hedera.block.server.BlockStreamService.buildSingleBlockNotAvailableResponse;
 import static com.hedera.block.server.BlockStreamService.buildSingleBlockNotFoundResponse;
 import static com.hedera.block.server.Constants.*;
@@ -35,9 +34,14 @@ import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
-import com.hedera.block.server.producer.ItemAckBuilder;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.block.server.producer.AckBuilder;
 import com.hedera.block.server.util.TestUtils;
+import com.hedera.hapi.block.SingleBlockRequest;
+import com.hedera.hapi.block.SingleBlockResponse;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
 import io.grpc.stub.ServerCalls;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
@@ -60,7 +64,7 @@ public class BlockStreamServiceTest {
 
     @Mock private StreamObserver<SingleBlockResponse> responseObserver;
 
-    @Mock private ItemAckBuilder itemAckBuilder;
+    @Mock private AckBuilder ackBuilder;
 
     @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
 
@@ -97,7 +101,7 @@ public class BlockStreamServiceTest {
 
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        itemAckBuilder,
+                        ackBuilder,
                         streamMediator,
                         blockReader,
                         serviceStatus,
@@ -107,7 +111,7 @@ public class BlockStreamServiceTest {
         assertEquals(Constants.SERVICE_NAME, blockStreamService.serviceName());
 
         // Verify other methods not invoked
-        verify(itemAckBuilder, never()).buildAck(any(BlockItem.class));
+        verify(ackBuilder, never()).buildAck(any(BlockItem.class));
         verify(streamMediator, never()).publish(any(BlockItem.class));
     }
 
@@ -115,7 +119,7 @@ public class BlockStreamServiceTest {
     public void testProto() throws IOException, NoSuchAlgorithmException {
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        itemAckBuilder,
+                        ackBuilder,
                         streamMediator,
                         blockReader,
                         serviceStatus,
@@ -126,7 +130,7 @@ public class BlockStreamServiceTest {
         assertEquals(3, fileDescriptor.getServices().getFirst().getMethods().size());
 
         // Verify other methods not invoked
-        verify(itemAckBuilder, never()).buildAck(any(BlockItem.class));
+        verify(ackBuilder, never()).buildAck(any(BlockItem.class));
         verify(streamMediator, never()).publish(any(BlockItem.class));
     }
 
@@ -136,7 +140,7 @@ public class BlockStreamServiceTest {
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        itemAckBuilder,
+                        ackBuilder,
                         streamMediator,
                         blockReader,
                         serviceStatus,
@@ -162,11 +166,11 @@ public class BlockStreamServiceTest {
 
         // Build a response to verify what's passed to the response observer
         final SingleBlockResponse expectedSingleBlockResponse =
-                SingleBlockResponse.newBuilder().setBlock(blockOpt.get()).build();
+                SingleBlockResponse.newBuilder().block(blockOpt.get()).build();
 
         // Build a request to invoke the service
         final SingleBlockRequest singleBlockRequest =
-                SingleBlockRequest.newBuilder().setBlockNumber(1).build();
+                SingleBlockRequest.newBuilder().blockNumber(1).build();
 
         // Call the service
         blockStreamService.singleBlock(singleBlockRequest, responseObserver);
@@ -184,12 +188,12 @@ public class BlockStreamServiceTest {
 
         // Build a request to invoke the service
         final SingleBlockRequest singleBlockRequest =
-                SingleBlockRequest.newBuilder().setBlockNumber(1).build();
+                SingleBlockRequest.newBuilder().blockNumber(1).build();
 
         // Call the service
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        itemAckBuilder,
+                        ackBuilder,
                         streamMediator,
                         blockReader,
                         serviceStatus,
@@ -207,7 +211,7 @@ public class BlockStreamServiceTest {
 
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        itemAckBuilder,
+                        ackBuilder,
                         streamMediator,
                         blockReader,
                         serviceStatus,
@@ -220,7 +224,7 @@ public class BlockStreamServiceTest {
 
         // Build a request to invoke the service
         final SingleBlockRequest singleBlockRequest =
-                SingleBlockRequest.newBuilder().setBlockNumber(1).build();
+                SingleBlockRequest.newBuilder().blockNumber(1).build();
         blockStreamService.singleBlock(singleBlockRequest, responseObserver);
         verify(responseObserver, times(1)).onNext(expectedNotAvailable);
     }
@@ -229,7 +233,7 @@ public class BlockStreamServiceTest {
     public void testSingleBlockIOExceptionPath() throws IOException {
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        itemAckBuilder,
+                        ackBuilder,
                         streamMediator,
                         blockReader,
                         serviceStatus,
@@ -243,7 +247,7 @@ public class BlockStreamServiceTest {
 
         // Build a request to invoke the service
         final SingleBlockRequest singleBlockRequest =
-                SingleBlockRequest.newBuilder().setBlockNumber(1).build();
+                SingleBlockRequest.newBuilder().blockNumber(1).build();
         blockStreamService.singleBlock(singleBlockRequest, responseObserver);
         verify(responseObserver, times(1)).onNext(expectedNotAvailable);
     }
@@ -253,7 +257,7 @@ public class BlockStreamServiceTest {
 
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        itemAckBuilder,
+                        ackBuilder,
                         streamMediator,
                         blockReader,
                         serviceStatus,

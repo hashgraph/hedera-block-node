@@ -16,11 +16,11 @@
 
 package com.hedera.block.server.util;
 
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
-import static com.hedera.block.protos.BlockStreamService.BlockProof;
-import static com.hedera.block.protos.BlockStreamService.EventMetadata;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.BlockProof;
+import com.hedera.hapi.block.stream.input.EventHeader;
+import com.hedera.hapi.block.stream.output.BlockHeader;
 
-import com.hedera.block.protos.BlockStreamService;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,26 +38,24 @@ public final class PersistTestUtils {
                         // First block is always the header
                         blockItems.add(
                                 BlockItem.newBuilder()
-                                        .setHeader(
-                                                BlockStreamService.BlockHeader.newBuilder()
-                                                        .setBlockNumber(i)
+                                        .blockHeader(
+                                                BlockHeader.newBuilder()
+                                                        .number(i)
                                                         .build())
-                                        .setValue("block-item-" + (j))
                                         .build());
                         break;
                     case 10:
                         // Last block is always the state proof
                         blockItems.add(
                                 BlockItem.newBuilder()
-                                        .setStateProof(BlockProof.newBuilder().setBlock(i).build())
+                                        .blockProof(BlockProof.newBuilder().block(i).build())
                                         .build());
                         break;
                     default:
                         // Middle blocks are events
                         blockItems.add(
                                 BlockItem.newBuilder()
-                                        .setStartEvent(
-                                                EventMetadata.newBuilder().setCreatorId(i).build())
+                                        .eventHeader(EventHeader.newBuilder().eventCore("Event " + j).build())
                                         .build());
                         break;
                 }

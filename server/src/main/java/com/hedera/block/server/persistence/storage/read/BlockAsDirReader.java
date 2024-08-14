@@ -16,7 +16,6 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
-import static com.hedera.block.protos.BlockStreamService.Block.Builder;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
@@ -103,13 +102,13 @@ class BlockAsDirReader implements BlockReader<Block> {
             // 10.blk), the loop will directly fetch the BlockItems in order based on
             // their file names. The loop will exit when it attempts to read a
             // BlockItem file that does not exist (e.g., 11.blk).
-            @NonNull final Builder builder = Block.newBuilder();
+            @NonNull final Block.Builder builder = Block.newBuilder();
             for (int i = 1; ; i++) {
                 @NonNull final Path blockItemPath = blockPath.resolve(i + BLOCK_FILE_EXTENSION);
                 @NonNull
                 final Optional<BlockItem> blockItemOpt = readBlockItem(blockItemPath.toString());
                 if (blockItemOpt.isPresent()) {
-                    builder.addBlockItems(blockItemOpt.get());
+                    builder.items(blockItemOpt.get());
                     continue;
                 }
 
@@ -130,6 +129,7 @@ class BlockAsDirReader implements BlockReader<Block> {
             throws IOException {
 
         try (FileInputStream fis = new FileInputStream(blockItemPath)) {
+
             return Optional.of(BlockItem.parseFrom(fis));
         } catch (FileNotFoundException io) {
             final File f = new File(blockItemPath);

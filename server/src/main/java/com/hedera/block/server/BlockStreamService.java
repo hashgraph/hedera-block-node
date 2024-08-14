@@ -16,7 +16,6 @@
 
 package com.hedera.block.server;
 
-import static com.hedera.block.protos.BlockStreamService.*;
 import static com.hedera.block.server.Constants.*;
 
 import com.google.protobuf.Descriptors;
@@ -26,8 +25,11 @@ import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
-import com.hedera.block.server.producer.ItemAckBuilder;
+import com.hedera.block.server.producer.AckBuilder;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
+import com.hedera.hapi.block.*;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
@@ -44,7 +46,7 @@ public class BlockStreamService implements GrpcService {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final ItemAckBuilder itemAckBuilder;
+    private final AckBuilder ackBuilder;
     private final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
     private final ServiceStatus serviceStatus;
     private final BlockReader<Block> blockReader;
@@ -54,7 +56,7 @@ public class BlockStreamService implements GrpcService {
      * Constructor for the BlockStreamService class. It initializes the BlockStreamService with the
      * given parameters.
      *
-     * @param itemAckBuilder the item acknowledgement builder to send responses back to the producer
+     * @param ackBuilder the acknowledgement builder to send responses back to the producer
      * @param streamMediator the stream mediator to proxy block items from the producer to the
      *     subscribers and manage the subscription lifecycle for subscribers
      * @param blockReader the block reader to fetch blocks from storage for unary singleBlock
@@ -63,14 +65,14 @@ public class BlockStreamService implements GrpcService {
      *     stop the service and web server in the event of an unrecoverable exception
      */
     BlockStreamService(
-            @NonNull final ItemAckBuilder itemAckBuilder,
+            @NonNull final AckBuilder ackBuilder,
             @NonNull
                     final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
                             streamMediator,
             @NonNull final BlockReader<Block> blockReader,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
-        this.itemAckBuilder = itemAckBuilder;
+        this.ackBuilder = ackBuilder;
         this.streamMediator = streamMediator;
         this.blockReader = blockReader;
         this.serviceStatus = serviceStatus;
@@ -122,7 +124,7 @@ public class BlockStreamService implements GrpcService {
                 "Executing bidirectional publishBlockStream gRPC method");
 
         return new ProducerBlockItemObserver(
-                streamMediator, publishStreamResponseObserver, itemAckBuilder, serviceStatus);
+                streamMediator, publishStreamResponseObserver, ackBuilder, serviceStatus);
     }
 
     void subscribeBlockStream(
@@ -160,7 +162,7 @@ public class BlockStreamService implements GrpcService {
         LOGGER.log(System.Logger.Level.DEBUG, "Executing Unary singleBlock gRPC method");
 
         if (serviceStatus.isRunning()) {
-            final long blockNumber = singleBlockRequest.getBlockNumber();
+            final long blockNumber = singleBlockRequest.blockNumber();
             try {
                 @NonNull final Optional<Block> blockOpt = blockReader.read(blockNumber);
                 if (blockOpt.isPresent()) {
@@ -200,26 +202,26 @@ public class BlockStreamService implements GrpcService {
     @NonNull
     static SubscribeStreamResponse buildSubscribeStreamNotAvailableResponse() {
         return SubscribeStreamResponse.newBuilder()
-                .setStatus(SubscribeStreamResponse.SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
+                .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
                 .build();
     }
 
     @NonNull
     static SingleBlockResponse buildSingleBlockNotAvailableResponse() {
         return SingleBlockResponse.newBuilder()
-                .setStatus(SingleBlockResponse.SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
+                .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
                 .build();
     }
 
     @NonNull
     static SingleBlockResponse buildSingleBlockNotFoundResponse() {
         return SingleBlockResponse.newBuilder()
-                .setStatus(SingleBlockResponse.SingleBlockResponseCode.READ_BLOCK_NOT_FOUND)
+                .status(SingleBlockResponseCode.READ_BLOCK_NOT_FOUND)
                 .build();
     }
 
     @NonNull
     private static SingleBlockResponse buildSingleBlockResponse(@NonNull final Block block) {
-        return SingleBlockResponse.newBuilder().setBlock(block).build();
+        return SingleBlockResponse.newBuilder().block(block).build();
     }
 }

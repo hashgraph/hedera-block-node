@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
+import com.hedera.hapi.block.stream.BlockItem;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 
 import com.hedera.block.server.config.BlockNodeContext;
@@ -94,7 +94,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
     @Override
     public void write(@NonNull final BlockItem blockItem) throws IOException {
 
-        if (blockItem.hasHeader()) {
+        if (blockItem.hasBlockHeader()) {
             resetState(blockItem);
         }
 
@@ -156,7 +156,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
     private void resetState(@NonNull final BlockItem blockItem) throws IOException {
         // Here a "block" is represented as a directory of BlockItems.
         // Create the "block" directory based on the block_number
-        currentBlockDir = Path.of(String.valueOf(blockItem.getHeader().getBlockNumber()));
+        currentBlockDir = Path.of(String.valueOf(blockItem.blockHeader().number()));
 
         // Check the blockNodeRootPath permissions and
         // attempt to repair them if possible

@@ -16,8 +16,6 @@
 
 package com.hedera.block.server.producer;
 
-import static com.hedera.block.protos.BlockStreamService.*;
-import static com.hedera.block.protos.BlockStreamService.PublishStreamResponse.ItemAcknowledgement;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.block.server.util.TestConfigUtil.CONSUMER_TIMEOUT_THRESHOLD_KEY;
@@ -26,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 import com.google.protobuf.ByteString;
-import com.hedera.block.protos.BlockStreamService;
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
@@ -37,8 +34,16 @@ import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.hapi.block.*;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.block.server.util.TestConfigUtil;
 import io.grpc.stub.StreamObserver;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.time.InstantSource;
@@ -49,10 +54,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 public class ProducerBlockItemObserverTest {
 
-    @Mock private ItemAckBuilder itemAckBuilder;
+    @Mock private AckBuilder ackBuilder;
     @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
     @Mock private StreamObserver<PublishStreamResponse> publishStreamResponseObserver;
 
@@ -73,25 +83,22 @@ public class ProducerBlockItemObserverTest {
                 new ProducerBlockItemObserver(
                         streamMediator,
                         publishStreamResponseObserver,
-                        new ItemAckBuilder(),
+                        new AckBuilder(),
                         serviceStatus);
 
         when(serviceStatus.isRunning()).thenReturn(true);
 
         final BlockItem blockHeader = blockItems.getFirst();
         final PublishStreamRequest publishStreamRequest =
-                PublishStreamRequest.newBuilder().setBlockItem(blockHeader).build();
+                PublishStreamRequest.newBuilder().blockItem(blockHeader).build();
         producerBlockItemObserver.onNext(publishStreamRequest);
 
         verify(streamMediator, timeout(50).times(1)).publish(blockHeader);
 
-        final ItemAcknowledgement itemAck =
-                ItemAcknowledgement.newBuilder()
-                        .setItemAck(ByteString.copyFrom(getFakeHash(blockHeader)))
-                        .build();
-        final BlockStreamService.PublishStreamResponse publishStreamResponse =
-                BlockStreamService.PublishStreamResponse.newBuilder()
-                        .setAcknowledgement(itemAck)
+        final Acknowledgement ack = new AckBuilder().buildAck(blockHeader);
+        final PublishStreamResponse publishStreamResponse =
+                PublishStreamResponse.newBuilder()
+                        .acknowledgement(ack)
                         .build();
         verify(publishStreamResponseObserver, timeout(50).times(1)).onNext(publishStreamResponse);
 
@@ -149,10 +156,10 @@ public class ProducerBlockItemObserverTest {
                 streamMediator.isSubscribed(concreteObserver3),
                 "Expected the mediator to have observer3 subscribed");
 
-        final BlockHeader blockHeader = BlockHeader.newBuilder().setBlockNumber(1).build();
-        final BlockItem blockItem = BlockItem.newBuilder().setHeader(blockHeader).build();
+        final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
+        final BlockItem blockItem = BlockItem.newBuilder().blockHeader(blockHeader).build();
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().setBlockItem(blockItem).build();
+                SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
 
         when(serviceStatus.isRunning()).thenReturn(true);
 
@@ -160,11 +167,11 @@ public class ProducerBlockItemObserverTest {
                 new ProducerBlockItemObserver(
                         streamMediator,
                         publishStreamResponseObserver,
-                        new ItemAckBuilder(),
+                        new AckBuilder(),
                         serviceStatus);
 
         final PublishStreamRequest publishStreamRequest =
-                PublishStreamRequest.newBuilder().setBlockItem(blockItem).build();
+                PublishStreamRequest.newBuilder().blockItem(blockItem).build();
         producerBlockItemObserver.onNext(publishStreamRequest);
 
         // Confirm the block item counter was incremented
@@ -186,7 +193,7 @@ public class ProducerBlockItemObserverTest {
                 new ProducerBlockItemObserver(
                         streamMediator,
                         publishStreamResponseObserver,
-                        new ItemAckBuilder(),
+                        new AckBuilder(),
                         serviceStatus);
 
         final Throwable t = new Throwable("Test error");
@@ -201,27 +208,27 @@ public class ProducerBlockItemObserverTest {
                 new ProducerBlockItemObserver(
                         streamMediator,
                         publishStreamResponseObserver,
-                        itemAckBuilder,
+                        ackBuilder,
                         serviceStatus);
 
         when(serviceStatus.isRunning()).thenReturn(true);
-        when(itemAckBuilder.buildAck(any()))
+        when(ackBuilder.buildAck(any()))
                 .thenThrow(new NoSuchAlgorithmException("Test exception"));
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final BlockItem blockHeader = blockItems.getFirst();
         final PublishStreamRequest publishStreamRequest =
-                PublishStreamRequest.newBuilder().setBlockItem(blockHeader).build();
+                PublishStreamRequest.newBuilder().blockItem(blockHeader).build();
         producerBlockItemObserver.onNext(publishStreamRequest);
 
-        final PublishStreamResponse.EndOfStream endOfStream =
-                PublishStreamResponse.EndOfStream.newBuilder()
-                        .setStatus(
-                                PublishStreamResponse.PublishStreamResponseCode
+        final EndOfStream endOfStream =
+                EndOfStream.newBuilder()
+                        .status(
+                                PublishStreamResponseCode
                                         .STREAM_ITEMS_UNKNOWN)
                         .build();
         final PublishStreamResponse errorResponse =
-                PublishStreamResponse.newBuilder().setStatus(endOfStream).build();
+                PublishStreamResponse.newBuilder().status(endOfStream).build();
         verify(publishStreamResponseObserver, timeout(50).times(1)).onNext(errorResponse);
     }
 }

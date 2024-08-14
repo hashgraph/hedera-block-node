@@ -16,12 +16,13 @@
 
 package com.hedera.block.server.producer;
 
-import static com.hedera.block.protos.BlockStreamService.*;
-import static com.hedera.block.protos.BlockStreamService.PublishStreamResponse.*;
+import com.hedera.hapi.block.*;
+import com.hedera.hapi.block.stream.BlockItem;
 
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.mediator.Publisher;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -38,7 +39,7 @@ public class ProducerBlockItemObserver implements StreamObserver<PublishStreamRe
 
     private final StreamObserver<PublishStreamResponse> publishStreamResponseObserver;
     private final Publisher<BlockItem> publisher;
-    private final ItemAckBuilder itemAckBuilder;
+    private final AckBuilder ackBuilder;
     private final ServiceStatus serviceStatus;
 
     /**
@@ -50,7 +51,7 @@ public class ProducerBlockItemObserver implements StreamObserver<PublishStreamRe
      *     arrive from the upstream producer
      * @param publishStreamResponseObserver the response stream observer to send responses back to
      *     the upstream producer for each block item processed
-     * @param itemAckBuilder the item acknowledgement builder to use when sending responses back to
+     * @param ackBuilder the item acknowledgement builder to use when sending responses back to
      *     the upstream producer for each block item processed
      * @param serviceStatus the service status used to determine if the downstream service is
      *     accepting block items. In the event of an unrecoverable exception, it will be used to
@@ -59,12 +60,12 @@ public class ProducerBlockItemObserver implements StreamObserver<PublishStreamRe
     public ProducerBlockItemObserver(
             @NonNull final Publisher<BlockItem> publisher,
             @NonNull final StreamObserver<PublishStreamResponse> publishStreamResponseObserver,
-            @NonNull final ItemAckBuilder itemAckBuilder,
+            @NonNull final AckBuilder ackBuilder,
             @NonNull final ServiceStatus serviceStatus) {
 
         this.publisher = publisher;
         this.publishStreamResponseObserver = publishStreamResponseObserver;
-        this.itemAckBuilder = itemAckBuilder;
+        this.ackBuilder = ackBuilder;
         this.serviceStatus = serviceStatus;
     }
 
@@ -78,7 +79,11 @@ public class ProducerBlockItemObserver implements StreamObserver<PublishStreamRe
     @Override
     public void onNext(@NonNull final PublishStreamRequest publishStreamRequest) {
 
-        @NonNull final BlockItem blockItem = publishStreamRequest.getBlockItem();
+        @Nullable final BlockItem blockItem = publishStreamRequest.blockItem();
+        if (blockItem == null) {
+            LOGGER.log(System.Logger.Level.ERROR, "BlockItem within the publishStreamRequest was null");
+            return;
+        }
 
         try {
             // Publish the block to all the subscribers unless
@@ -117,8 +122,9 @@ public class ProducerBlockItemObserver implements StreamObserver<PublishStreamRe
     @NonNull
     private PublishStreamResponse buildSuccessStreamResponse(@NonNull final BlockItem blockItem)
             throws IOException, NoSuchAlgorithmException {
-        @NonNull final ItemAcknowledgement itemAck = itemAckBuilder.buildAck(blockItem);
-        return PublishStreamResponse.newBuilder().setAcknowledgement(itemAck).build();
+        @NonNull final Acknowledgement ack = ackBuilder.buildAck(blockItem);
+
+        return PublishStreamResponse.newBuilder().acknowledgement(ack).build();
     }
 
     @NonNull
@@ -127,9 +133,9 @@ public class ProducerBlockItemObserver implements StreamObserver<PublishStreamRe
         @NonNull
         final EndOfStream endOfStream =
                 EndOfStream.newBuilder()
-                        .setStatus(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
+                        .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
                         .build();
-        return PublishStreamResponse.newBuilder().setStatus(endOfStream).build();
+        return PublishStreamResponse.newBuilder().status(endOfStream).build();
     }
 
     /**
