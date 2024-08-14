@@ -24,6 +24,7 @@ import static org.mockito.Mockito.*;
 import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
+import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
@@ -59,6 +60,8 @@ public class LiveStreamMediatorImplTest {
     private final long TEST_TIME = 1_719_427_664_950L;
 
     private static final int testTimeout = 200;
+
+    private final ConsumerConfig consumerConfig = new ConsumerConfig(TIMEOUT_THRESHOLD_MILLIS);
 
     @Test
     public void testUnsubscribeEach() throws InterruptedException, IOException {
@@ -139,15 +142,15 @@ public class LiveStreamMediatorImplTest {
 
         final var concreteObserver1 =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS, testClock, streamMediator, streamObserver1);
+                        consumerConfig, testClock, streamMediator, streamObserver1);
 
         final var concreteObserver2 =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS, testClock, streamMediator, streamObserver2);
+                        consumerConfig, testClock, streamMediator, streamObserver2);
 
         final var concreteObserver3 =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS, testClock, streamMediator, streamObserver3);
+                        consumerConfig, testClock, streamMediator, streamObserver3);
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -196,15 +199,15 @@ public class LiveStreamMediatorImplTest {
 
         final var concreteObserver1 =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS, testClock, streamMediator, streamObserver1);
+                        consumerConfig, testClock, streamMediator, streamObserver1);
 
         final var concreteObserver2 =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS, testClock, streamMediator, streamObserver2);
+                        consumerConfig, testClock, streamMediator, streamObserver2);
 
         final var concreteObserver3 =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS, testClock, streamMediator, streamObserver3);
+                        consumerConfig, testClock, streamMediator, streamObserver3);
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -232,7 +235,7 @@ public class LiveStreamMediatorImplTest {
 
         final var testConsumerBlockItemObserver =
                 new TestConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS,
+                        consumerConfig,
                         testClock,
                         streamMediator,
                         serverCallStreamObserver);
@@ -271,7 +274,7 @@ public class LiveStreamMediatorImplTest {
 
         final var testConsumerBlockItemObserver =
                 new TestConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS,
+                        consumerConfig,
                         testClock,
                         streamMediator,
                         serverCallStreamObserver);
@@ -340,7 +343,7 @@ public class LiveStreamMediatorImplTest {
                         .build();
         final var testConsumerBlockItemObserver =
                 new TestConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS,
+                        consumerConfig,
                         testClock,
                         streamMediator,
                         serverCallStreamObserver);
@@ -357,13 +360,13 @@ public class LiveStreamMediatorImplTest {
 
     private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
         public TestConsumerStreamResponseObserver(
-                long timeoutThresholdMillis,
+                ConsumerConfig consumerConfig,
                 final InstantSource producerLivenessClock,
                 final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
                         streamMediator,
                 final StreamObserver<SubscribeStreamResponse> responseStreamObserver) {
             super(
-                    timeoutThresholdMillis,
+                    consumerConfig,
                     producerLivenessClock,
                     streamMediator,
                     responseStreamObserver);

@@ -66,15 +66,14 @@ public class ConsumerStreamResponseObserver
      * SubscribeStreamResponse events from the Disruptor and passing them to the downstream consumer
      * via the subscribeStreamResponseObserver.
      *
-     * @param timeoutThresholdMillis the timeout threshold in milliseconds for the producer to
-     *     publish block items
+     * @param consumerConfig contains the Consumer configuration settings
      * @param producerLivenessClock the clock to use to determine the producer liveness
      * @param subscriptionHandler the subscription handler to use to manage the subscription
      *     lifecycle
      * @param subscribeStreamResponseObserver the observer to use to send responses to the consumer
      */
     public ConsumerStreamResponseObserver(
-            final long timeoutThresholdMillis,
+            @NonNull final ConsumerConfig consumerConfig,
             @NonNull final InstantSource producerLivenessClock,
             @NonNull
                     final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>>
@@ -82,7 +81,7 @@ public class ConsumerStreamResponseObserver
             @NonNull
                     final StreamObserver<SubscribeStreamResponse> subscribeStreamResponseObserver) {
 
-        this.timeoutThresholdMillis = timeoutThresholdMillis;
+        this.timeoutThresholdMillis = consumerConfig.timeoutThresholdMillis();
         this.subscriptionHandler = subscriptionHandler;
 
         // The ServerCallStreamObserver can be configured with Runnable handlers to

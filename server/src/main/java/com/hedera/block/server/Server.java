@@ -17,7 +17,6 @@
 package com.hedera.block.server;
 
 import static com.hedera.block.protos.BlockStreamService.*;
-import static com.hedera.block.server.Constants.BLOCKNODE_SERVER_CONSUMER_TIMEOUT_THRESHOLD_KEY;
 import static com.hedera.block.server.Constants.BLOCKNODE_STORAGE_ROOT_PATH_KEY;
 
 import com.hedera.block.server.config.BlockNodeContext;
@@ -112,12 +111,7 @@ public class Server {
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
 
-        // Get Timeout threshold from configuration
-        final long consumerTimeoutThreshold =
-                config.get(BLOCKNODE_SERVER_CONSUMER_TIMEOUT_THRESHOLD_KEY).asLong().orElse(1500L);
-
         return new BlockStreamService(
-                consumerTimeoutThreshold,
                 new ItemAckBuilder(),
                 streamMediator,
                 blockReader,

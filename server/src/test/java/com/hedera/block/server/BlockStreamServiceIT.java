@@ -35,6 +35,7 @@ import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.producer.ItemAckBuilder;
+import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import com.lmax.disruptor.BatchEventProcessor;
 import com.lmax.disruptor.EventHandler;
@@ -111,11 +112,12 @@ public class BlockStreamServiceIT {
     public void testPublishBlockStreamRegistrationAndExecution()
             throws IOException, NoSuchAlgorithmException {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockNodeContext blockNodeContext = mock(BlockNodeContext.class);
+
+
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        1500L,
-                        new ItemAckBuilder(),
+                         new ItemAckBuilder(),
                         streamMediator,
                         blockReader,
                         serviceStatus,
@@ -159,7 +161,8 @@ public class BlockStreamServiceIT {
         final ServiceStatus serviceStatus = new ServiceStatusImpl();
         serviceStatus.setWebServer(webServer);
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getSpyBlockNodeContext();
+
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
                         .build();
@@ -167,7 +170,6 @@ public class BlockStreamServiceIT {
         // Build the BlockStreamService
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        2000L,
                         new ItemAckBuilder(),
                         streamMediator,
                         blockReader,
@@ -607,9 +609,9 @@ public class BlockStreamServiceIT {
             final ServiceStatus serviceStatus)
             throws IOException {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getSpyBlockNodeContext();
+
         return new BlockStreamService(
-                2000,
                 new ItemAckBuilder(),
                 streamMediator,
                 blockReader,

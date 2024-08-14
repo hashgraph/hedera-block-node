@@ -101,7 +101,6 @@ public class BlockStreamServiceTest {
         final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        TIMEOUT_THRESHOLD_MILLIS,
                         itemAckBuilder,
                         streamMediator,
                         blockReader,
@@ -121,7 +120,6 @@ public class BlockStreamServiceTest {
         final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        TIMEOUT_THRESHOLD_MILLIS,
                         itemAckBuilder,
                         streamMediator,
                         blockReader,
@@ -145,7 +143,6 @@ public class BlockStreamServiceTest {
         final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        TIMEOUT_THRESHOLD_MILLIS,
                         itemAckBuilder,
                         streamMediator,
                         blockReader,
@@ -201,7 +198,6 @@ public class BlockStreamServiceTest {
         // Call the service
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        TIMEOUT_THRESHOLD_MILLIS,
                         itemAckBuilder,
                         streamMediator,
                         blockReader,
@@ -221,7 +217,6 @@ public class BlockStreamServiceTest {
         final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        TIMEOUT_THRESHOLD_MILLIS,
                         itemAckBuilder,
                         streamMediator,
                         blockReader,
@@ -245,7 +240,6 @@ public class BlockStreamServiceTest {
         final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        TIMEOUT_THRESHOLD_MILLIS,
                         itemAckBuilder,
                         streamMediator,
                         blockReader,
@@ -271,7 +265,6 @@ public class BlockStreamServiceTest {
         final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        TIMEOUT_THRESHOLD_MILLIS,
                         itemAckBuilder,
                         streamMediator,
                         blockReader,

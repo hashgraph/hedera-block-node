@@ -30,6 +30,7 @@ import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
+import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
@@ -108,21 +109,21 @@ public class ProducerBlockItemObserverTest {
 
         // Mock a clock with 2 different return values in response to anticipated
         // millis() calls. Here the second call will always be inside the timeout window.
-        long TIMEOUT_THRESHOLD_MILLIS = 100L;
+        ConsumerConfig consumerConfig = new ConsumerConfig(100);
         long TEST_TIME = 1_719_427_664_950L;
-        when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
+        when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + consumerConfig.timeoutThresholdMillis());
 
         final var concreteObserver1 =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS, testClock, streamMediator, streamObserver1);
+                        consumerConfig, testClock, streamMediator, streamObserver1);
 
         final var concreteObserver2 =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS, testClock, streamMediator, streamObserver2);
+                        consumerConfig, testClock, streamMediator, streamObserver2);
 
         final var concreteObserver3 =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS, testClock, streamMediator, streamObserver3);
+                        consumerConfig, testClock, streamMediator, streamObserver3);
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);

@@ -44,14 +44,17 @@ public class ConsumerStreamResponseObserverTest {
     @Mock private ServerCallStreamObserver<SubscribeStreamResponse> serverCallStreamObserver;
     @Mock private InstantSource testClock;
 
+    final ConsumerConfig consumerConfig = new ConsumerConfig(TIMEOUT_THRESHOLD_MILLIS);
+
     @Test
     public void testProducerTimeoutWithinWindow() {
+
 
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
         final var consumerBlockItemObserver =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS,
+                        consumerConfig,
                         testClock,
                         streamMediator,
                         responseStreamObserver);
@@ -81,7 +84,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final var consumerBlockItemObserver =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS,
+                        consumerConfig,
                         testClock,
                         streamMediator,
                         responseStreamObserver);
@@ -98,7 +101,7 @@ public class ConsumerStreamResponseObserverTest {
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
         new ConsumerStreamResponseObserver(
-                TIMEOUT_THRESHOLD_MILLIS, testClock, streamMediator, serverCallStreamObserver);
+                consumerConfig, testClock, streamMediator, serverCallStreamObserver);
 
         verify(serverCallStreamObserver, timeout(50).times(1)).setOnCloseHandler(any());
         verify(serverCallStreamObserver, timeout(50).times(1)).setOnCancelHandler(any());
@@ -109,7 +112,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final TestConsumerStreamResponseObserver consumerStreamResponseObserver =
                 new TestConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS,
+                        consumerConfig,
                         testClock,
                         streamMediator,
                         serverCallStreamObserver);
@@ -137,7 +140,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final TestConsumerStreamResponseObserver consumerStreamResponseObserver =
                 new TestConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS,
+                        consumerConfig,
                         testClock,
                         streamMediator,
                         serverCallStreamObserver);
@@ -169,7 +172,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final var consumerBlockItemObserver =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS,
+                        consumerConfig,
                         testClock,
                         streamMediator,
                         responseStreamObserver);
@@ -209,12 +212,12 @@ public class ConsumerStreamResponseObserverTest {
     private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
 
         public TestConsumerStreamResponseObserver(
-                long timeoutThresholdMillis,
+                ConsumerConfig consumerConfig,
                 InstantSource producerLivenessClock,
                 StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> subscriptionHandler,
                 StreamObserver<SubscribeStreamResponse> subscribeStreamResponseObserver) {
             super(
-                    timeoutThresholdMillis,
+                    consumerConfig,
                     producerLivenessClock,
                     subscriptionHandler,
                     subscribeStreamResponseObserver);
