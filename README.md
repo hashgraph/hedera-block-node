@@ -41,7 +41,7 @@ Please do not file a public ticket mentioning the vulnerability. Refer to the se
 
 
 
-# Staring locally:
+# Starting locally:
 ```bash
 ./gradlew run
 ```
