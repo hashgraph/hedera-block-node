@@ -30,19 +30,17 @@ Please do not file a public ticket mentioning the vulnerability. Refer to the se
 
 ---
 
-# Running Locally
+# Configuration
 
-1) Create a local temp directory.  For example, use `mktemp -d -t block-stream-temp-dir` to create a directory
-2) Configuration variables
-```
-export BLOCKNODE_STORAGE_ROOT_PATH=<path to the temp directory> # You can add this to your .zshrc, etc
-```
-3) Optional Configuration variables
-```
-export BLOCKNODE_SERVER_CONSUMER_TIMEOUT_THRESHOLD="<NumberInMiliseconds>" #Default is 1500
-```
+| Environment Variable            | Description                                                                                                   | Default Value |
+|---------------------------------|---------------------------------------------------------------------------------------------------------------|---------------|
+| persistence.storage.rootPath    | The root path for the storage, if not provided will attempt to create a `data` on the working dir of the app. | ./data        |
+| consumer.timeoutThresholdMillis | Time to wait for subscribers before disconnecting in milliseconds                                             | 1500          |
 
-3) ./gradlew run  # ./gradlew run --debug-jvm to run in debug mode
+3) To run in debug mode:
+```bash
+./gradlew run  # ./gradlew run --debug-jvm to run in debug mode
+```
 
 # Running Tests
 1) ./gradlew build
