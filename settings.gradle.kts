@@ -82,9 +82,11 @@ dependencyResolutionManagement {
             version("org.apache.commons.lang3", "3.14.0")
             version("org.apache.commons.compress", "1.26.0")
 
-//            version("org.apache.logging.log4j.slf4j2.impl", "2.21.1")
+//            version("org.slf4j", "2.21.1")
+            version("org.slf4j", "1.7.30")
 
 //            version("lazysodium.java", "5.1.1")
+//            version("resource.loader", "")
 
             // Testing only versions
             version("org.assertj.core", "3.23.1")

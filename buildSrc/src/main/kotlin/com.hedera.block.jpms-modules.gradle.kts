@@ -152,11 +152,12 @@ extraJavaModuleInfo {
     module("io.netty:netty-transport-classes-epoll", "io.netty.transport.classes.epoll")
     module("org.antlr:antlr4-runtime", "org.antlr.antlr4.runtime")
 
-    // spotbugs - these clobbered the ones above
-//    module("com.github.spotbugs:spotbugs-annotations", "com.github.spotbugs.annotations")
-//    module("com.google.code.findbugs:jsr305", "java.annotation") { exportAllPackages() }
-
     // needed for metrics and logging, but also several platform classes
+    module("org.slf4j:slf4j-api", "org.slf4j") {
+        exportAllPackages()
+        requireAllDefinedDependencies()
+        requires("java.logging")
+    }
     module("com.goterl:resource-loader", "resource.loader")
     module("com.goterl:lazysodium-java", "lazysodium.java")
     module("org.hyperledger.besu:secp256k1", "org.hyperledger.besu.nativelib.secp256k1")
