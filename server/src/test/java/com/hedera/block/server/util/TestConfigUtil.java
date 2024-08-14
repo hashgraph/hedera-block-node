@@ -32,7 +32,7 @@ public class TestConfigUtil {
 
     public static final String CONSUMER_TIMEOUT_THRESHOLD_KEY = "consumer.timeoutThresholdMillis";
 
-    private static final String TEST_APP_PROPERTIES_FILE = "test.app.properties";
+    private static final String TEST_APP_PROPERTIES_FILE = "app.properties";
 
     private TestConfigUtil() {}
 
