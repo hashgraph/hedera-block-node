@@ -16,13 +16,19 @@
 
 package com.hedera.block.server.consumer;
 
-import static com.hedera.block.protos.BlockStreamService.*;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.mockito.Mockito.*;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.BlockProof;
+import com.hedera.hapi.block.stream.input.EventHeader;
+import com.hedera.hapi.block.stream.input.protoc.EventMetadata;
+import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.hapi.platform.event.EventCore;
 import com.hedera.block.server.util.TestConfigUtil;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -67,10 +73,10 @@ public class ConsumerStreamResponseObserverTest {
                 new ConsumerStreamResponseObserver(
                         testContext, testClock, streamMediator, responseStreamObserver);
 
-        final BlockHeader blockHeader = BlockHeader.newBuilder().setBlockNumber(1).build();
-        final BlockItem blockItem = BlockItem.newBuilder().setHeader(blockHeader).build();
+        final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
+        final BlockItem blockItem = BlockItem.newBuilder().blockHeader(blockHeader).build();
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().setBlockItem(blockItem).build();
+                SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
 
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
@@ -121,7 +127,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().setBlockItem(blockItems.getFirst()).build();
+                SubscribeStreamResponse.newBuilder().blockItem(blockItems.getFirst()).build();
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
         // Confirm that the observer is called with the first BlockItem
@@ -146,7 +152,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().setBlockItem(blockItems.getFirst()).build();
+                SubscribeStreamResponse.newBuilder().blockItem(blockItems.getFirst()).build();
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
         // Confirm that the observer is called with the first BlockItem
@@ -177,19 +183,19 @@ public class ConsumerStreamResponseObserverTest {
         for (int i = 1; i <= 10; i++) {
 
             if (i % 2 == 0) {
-                final EventMetadata eventMetadata =
-                        EventMetadata.newBuilder().setCreatorId(i).build();
+                final EventHeader eventHeader =
+                        EventHeader.newBuilder().eventCore(EventCore.newBuilder().build()).build();
                 final BlockItem blockItem =
-                        BlockItem.newBuilder().setStartEvent(eventMetadata).build();
+                        BlockItem.newBuilder().eventHeader(eventHeader).build();
                 final SubscribeStreamResponse subscribeStreamResponse =
-                        SubscribeStreamResponse.newBuilder().setBlockItem(blockItem).build();
+                        SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
                 when(objectEvent.get()).thenReturn(subscribeStreamResponse);
             } else {
-                final BlockProof blockProof = BlockProof.newBuilder().setBlock(i).build();
+                final BlockProof blockProof = BlockProof.newBuilder().block(i).build();
                 final BlockItem blockItem =
-                        BlockItem.newBuilder().setStateProof(blockProof).build();
+                        BlockItem.newBuilder().blockProof(blockProof).build();
                 final SubscribeStreamResponse subscribeStreamResponse =
-                        SubscribeStreamResponse.newBuilder().setBlockItem(blockItem).build();
+                        SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
                 when(objectEvent.get()).thenReturn(subscribeStreamResponse);
             }
 
@@ -198,7 +204,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final BlockItem blockItem = BlockItem.newBuilder().build();
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().setBlockItem(blockItem).build();
+                SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
 
         // Confirm that the observer was called with the next BlockItem
         // since we never send a BlockItem with a Header to start the stream.

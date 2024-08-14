@@ -20,6 +20,7 @@ import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.hapi.block.stream.input.EventHeader;
 import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.hapi.platform.event.EventCore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +56,7 @@ public final class PersistTestUtils {
                         // Middle blocks are events
                         blockItems.add(
                                 BlockItem.newBuilder()
-                                        .eventHeader(EventHeader.newBuilder().eventCore("Event " + j).build())
+                                        .eventHeader(EventHeader.newBuilder().eventCore(EventCore.DEFAULT).build())
                                         .build());
                         break;
                 }

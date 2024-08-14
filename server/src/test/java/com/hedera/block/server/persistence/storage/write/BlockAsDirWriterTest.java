@@ -16,8 +16,6 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import static com.hedera.block.protos.BlockStreamService.Block;
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
 import static com.hedera.block.server.persistence.storage.read.BlockAsDirReaderTest.removeBlockReadPerms;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -32,6 +30,8 @@ import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -99,12 +99,15 @@ public class BlockAsDirWriterTest {
         boolean hasStartEvent = false;
 
         Block block = blockOpt.get();
-        for (BlockItem blockItem : block.getBlockItemsList()) {
-            if (blockItem.hasHeader()) {
+        for (BlockItem blockItem : block.items()) {
+            if (blockItem.hasBlockHeader()) {
                 hasHeader = true;
-            } else if (blockItem.hasStateProof()) {
+                // TODO: Is this the right check??
+            } else if (blockItem.hasStateChanges()) {
                 hasBlockProof = true;
-            } else if (blockItem.hasStartEvent()) {
+
+                // TODO: Is this the right check??
+            } else if (blockItem.hasEventHeader()) {
                 hasStartEvent = true;
             }
         }
@@ -133,8 +136,8 @@ public class BlockAsDirWriterTest {
         BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(testConfig).build();
         Optional<Block> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(1, blockOpt.get().getBlockItemsList().size());
-        assertTrue(blockOpt.get().getBlockItems(0).hasHeader());
+        assertEquals(1, blockOpt.get().items().size());
+        assertTrue(blockOpt.get().items().get(0).hasBlockHeader());
 
         // Remove all permissions on the block directory and
         // attempt to write the next block item
@@ -144,8 +147,8 @@ public class BlockAsDirWriterTest {
         // There should now be 2 blockItems in the block
         blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(2, blockOpt.get().getBlockItemsList().size());
-        assertFalse(blockOpt.get().getBlockItems(1).hasHeader());
+        assertEquals(2, blockOpt.get().items().size());
+        assertFalse(blockOpt.get().items().get(1).hasBlockHeader());
 
         // Remove read permission on the block directory
         removeBlockReadPerms(1, testConfig);
@@ -154,8 +157,8 @@ public class BlockAsDirWriterTest {
         // There should now be 3 blockItems in the block
         blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(3, blockOpt.get().getBlockItemsList().size());
-        assertFalse(blockOpt.get().getBlockItems(1).hasHeader());
+        assertEquals(3, blockOpt.get().items().size());
+        assertFalse(blockOpt.get().items().get(1).hasBlockHeader());
     }
 
     @Test
@@ -200,7 +203,7 @@ public class BlockAsDirWriterTest {
         BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(testConfig).build();
         Optional<Block> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(10, blockOpt.get().getBlockItemsList().size());
+        assertEquals(10, blockOpt.get().items().size());
     }
 
     @Test
@@ -245,13 +248,13 @@ public class BlockAsDirWriterTest {
         // Confirm blocks 1 and 2 still exist
         blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(10, blockOpt.get().getBlockItemsList().size());
-        assertEquals(1, blockOpt.get().getBlockItems(0).getHeader().getBlockNumber());
+        assertEquals(10, blockOpt.get().items().size());
+        assertEquals(1, blockOpt.get().items().getFirst().blockHeader().number());
 
         blockOpt = blockReader.read(2);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(10, blockOpt.get().getBlockItemsList().size());
-        assertEquals(2, blockOpt.get().getBlockItems(0).getHeader().getBlockNumber());
+        assertEquals(10, blockOpt.get().items().size());
+        assertEquals(2, blockOpt.get().items().getFirst().blockHeader().number());
     }
 
     private void removeRootWritePerms(final PersistenceStorageConfig config) throws IOException {

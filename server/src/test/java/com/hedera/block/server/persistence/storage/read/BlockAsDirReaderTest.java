@@ -16,8 +16,6 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
-import static com.hedera.block.protos.BlockStreamService.Block;
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,9 +30,12 @@ import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
@@ -101,7 +102,7 @@ public class BlockAsDirReaderTest {
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final Optional<Block> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(10, blockOpt.get().getBlockItemsList().size());
+        assertEquals(10, blockOpt.get().items().size());
     }
 
     @Test
@@ -197,8 +198,9 @@ public class BlockAsDirReaderTest {
     }
 
     private void writeFileToPath(final Path path, final BlockItem blockItem) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(path.toString())) {
-            blockItem.writeTo(fos);
+        try (FileOutputStream fos = new FileOutputStream(path.toString());
+             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(blockItem);
             LOGGER.log(
                     System.Logger.Level.INFO, "Successfully wrote the block item file: {0}", path);
         }

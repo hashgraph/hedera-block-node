@@ -18,8 +18,6 @@ package com.hedera.block.server.persistence.storage.remove;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.hedera.block.protos.BlockStreamService.Block;
-import com.hedera.block.protos.BlockStreamService.BlockItem;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
@@ -30,6 +28,11 @@ import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
+import io.helidon.config.Config;
+import io.helidon.config.MapConfigSource;
+import io.helidon.config.spi.ConfigSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,7 +67,7 @@ public class BlockAsDirRemoverTest {
     public void testRemoveNonExistentBlock() throws IOException {
 
         // Write a block
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+        final var blockItems = PersistTestUtils.generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
@@ -82,7 +85,7 @@ public class BlockAsDirRemoverTest {
         Optional<Block> blockOpt = blockReader.read(1);
         assert (blockOpt.isPresent());
         assertEquals(
-                blockItems.getFirst().getHeader(), blockOpt.get().getBlockItems(0).getHeader());
+                blockItems.getFirst().blockHeader(), blockOpt.get().items().getFirst().blockHeader());
 
         // Now remove the block
         blockRemover.remove(1);
@@ -114,7 +117,7 @@ public class BlockAsDirRemoverTest {
         Optional<Block> blockOpt = blockReader.read(1);
         assert (blockOpt.isPresent());
         assertEquals(
-                blockItems.getFirst().getHeader(), blockOpt.get().getBlockItems(0).getHeader());
+                blockItems.getFirst().blockHeader(), blockOpt.get().items().getFirst().blockHeader());
 
         // Now remove the block
         blockRemover = new BlockAsDirRemover(testPath, FileUtils.defaultPerms);

@@ -132,8 +132,7 @@ public class BlockStreamServiceIT {
         // Calling onNext() as Helidon will
         streamObserver.onNext(publishStreamRequest);
 
-//        final ItemAcknowledgement itemAck = new AckBuilder().buildAck(blockItem);
-        final Acknowledgement ack =
+        final Acknowledgement itemAck = new AckBuilder().buildAck(blockItem);
         final PublishStreamResponse publishStreamResponse =
                 PublishStreamResponse.newBuilder().acknowledgement(itemAck).build();
 
