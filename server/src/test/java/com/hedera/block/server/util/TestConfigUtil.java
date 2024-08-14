@@ -1,4 +1,23 @@
+/*
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hedera.block.server.util;
+
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
@@ -7,20 +26,17 @@ import com.hedera.block.server.consumer.ConsumerConfig;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
 import edu.umd.cs.findbugs.annotations.NonNull;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-
 public class TestConfigUtil {
     private TestConfigUtil() {}
 
     @NonNull
-    public static BlockNodeContext getSpyBlockNodeContext(Map<String, String> customProperties) throws IOException {
+    public static BlockNodeContext getSpyBlockNodeContext(Map<String, String> customProperties)
+            throws IOException {
         // If customProperties is null, assign it an empty map
         if (customProperties == null) {
             customProperties = Collections.emptyMap();
@@ -32,8 +48,9 @@ public class TestConfigUtil {
         BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
 
         // create test configuration
-        TestConfigBuilder testConfigBuilder = new TestConfigBuilder(true)
-                .withSource(new ClasspathFileConfigSource(Path.of("app.properties")));
+        TestConfigBuilder testConfigBuilder =
+                new TestConfigBuilder(true)
+                        .withSource(new ClasspathFileConfigSource(Path.of("app.properties")));
 
         for (Map.Entry<String, String> entry : customProperties.entrySet()) {
             String key = entry.getKey();

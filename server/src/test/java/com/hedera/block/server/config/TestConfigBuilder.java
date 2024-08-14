@@ -32,8 +32,8 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
 
 /**
- * Helper for use the config in test and change the config for specific tests. Instance can be used per class or per
- * test.
+ * Helper for use the config in test and change the config for specific tests. Instance can be used
+ * per class or per test.
  */
 public class TestConfigBuilder {
 
@@ -44,16 +44,18 @@ public class TestConfigBuilder {
     private final ConfigurationBuilder builder;
 
     /**
-     * Creates a new instance and automatically registers all config data records (see {@link ConfigData}) on classpath
-     * / modulepath that are part of the packages {@code com.swirlds} and {@code com.hedera}.
+     * Creates a new instance and automatically registers all config data records (see {@link
+     * ConfigData}) on classpath / modulepath that are part of the packages {@code com.swirlds} and
+     * {@code com.hedera}.
      */
     public TestConfigBuilder() {
         this(true);
     }
 
     /**
-     * Creates a new instance and automatically registers all given config data records. This call will not do a class
-     * scan for config data records on classpath / modulepath like some of the other constructors do.
+     * Creates a new instance and automatically registers all given config data records. This call
+     * will not do a class scan for config data records on classpath / modulepath like some of the
+     * other constructors do.
      *
      * @param dataTypes
      */
@@ -65,11 +67,12 @@ public class TestConfigBuilder {
     }
 
     /**
-     * Creates a new instance and automatically registers all config data records (see {@link ConfigData}) on classpath
-     * / modulepath that are part of the packages {@code com.swirlds} and {@code com.hedera}.
-     * if the {@code registerAllTypes} param is true.
+     * Creates a new instance and automatically registers all config data records (see {@link
+     * ConfigData}) on classpath / modulepath that are part of the packages {@code com.swirlds} and
+     * {@code com.hedera}. if the {@code registerAllTypes} param is true.
      *
-     * @param registerAllTypes if true all config data records on classpath will automatically be registered
+     * @param registerAllTypes if true all config data records on classpath will automatically be
+     *     registered
      */
     public TestConfigBuilder(final boolean registerAllTypes) {
         if (registerAllTypes) {
@@ -83,11 +86,12 @@ public class TestConfigBuilder {
      * Sets the value for the config.
      *
      * @param propertyName name of the property
-     * @param value        the value
+     * @param value the value
      * @return the {@link TestConfigBuilder} instance (for fluent API)
      */
     @NonNull
-    public TestConfigBuilder withValue(@NonNull final String propertyName, @Nullable final String value) {
+    public TestConfigBuilder withValue(
+            @NonNull final String propertyName, @Nullable final String value) {
         return withSource(new SimpleConfigSource(propertyName, value));
     }
 
@@ -95,7 +99,7 @@ public class TestConfigBuilder {
      * Sets the value for the config.
      *
      * @param propertyName name of the property
-     * @param value        the value
+     * @param value the value
      * @return the {@link TestConfigBuilder} instance (for fluent API)
      */
     @NonNull
@@ -107,7 +111,7 @@ public class TestConfigBuilder {
      * Sets the value for the config.
      *
      * @param propertyName name of the property
-     * @param value        the value
+     * @param value the value
      * @return the {@link TestConfigBuilder} instance (for fluent API)
      */
     @NonNull
@@ -119,7 +123,7 @@ public class TestConfigBuilder {
      * Sets the value for the config.
      *
      * @param propertyName name of the property
-     * @param value        the value
+     * @param value the value
      * @return the {@link TestConfigBuilder} instance (for fluent API)
      */
     @NonNull
@@ -131,7 +135,7 @@ public class TestConfigBuilder {
      * Sets the value for the config.
      *
      * @param propertyName name of the property
-     * @param value        the value
+     * @param value the value
      * @return the {@link TestConfigBuilder} instance (for fluent API)
      */
     @NonNull
@@ -143,20 +147,21 @@ public class TestConfigBuilder {
      * Sets the value for the config.
      *
      * @param propertyName name of the property
-     * @param value        the value
+     * @param value the value
      * @return the {@link TestConfigBuilder} instance (for fluent API)
      */
     @NonNull
-    public TestConfigBuilder withValue(@NonNull final String propertyName, @NonNull final Object value) {
+    public TestConfigBuilder withValue(
+            @NonNull final String propertyName, @NonNull final Object value) {
         Objects.requireNonNull(value, "value must not be null");
         return withSource(new SimpleConfigSource(propertyName, value.toString()));
     }
 
     /**
-     * This method returns the {@link Configuration} instance. If the method is called for the first time the
-     * {@link Configuration} instance will be created. All values that have been set (see
-     * {@link #withValue(String, int)}) methods will be part of the config. Next to this the config will support all
-     * config data record types (see {@link ConfigData}) that are on the classpath.
+     * This method returns the {@link Configuration} instance. If the method is called for the first
+     * time the {@link Configuration} instance will be created. All values that have been set (see
+     * {@link #withValue(String, int)}) methods will be part of the config. Next to this the config
+     * will support all config data record types (see {@link ConfigData}) that are on the classpath.
      *
      * @return the created configuration
      */
@@ -224,7 +229,7 @@ public class TestConfigBuilder {
      * Adds the given config data type to the builder
      *
      * @param type the config data type that will be added
-     * @param <T>  the type of the config data type
+     * @param <T> the type of the config data type
      * @return the {@link TestConfigBuilder} instance (for fluent API)
      */
     @NonNull

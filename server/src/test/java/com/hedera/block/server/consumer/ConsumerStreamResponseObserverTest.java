@@ -49,15 +49,11 @@ public class ConsumerStreamResponseObserverTest {
     @Test
     public void testProducerTimeoutWithinWindow() {
 
-
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
         final var consumerBlockItemObserver =
                 new ConsumerStreamResponseObserver(
-                        consumerConfig,
-                        testClock,
-                        streamMediator,
-                        responseStreamObserver);
+                        consumerConfig, testClock, streamMediator, responseStreamObserver);
 
         final BlockHeader blockHeader = BlockHeader.newBuilder().setBlockNumber(1).build();
         final BlockItem blockItem = BlockItem.newBuilder().setHeader(blockHeader).build();
@@ -84,10 +80,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final var consumerBlockItemObserver =
                 new ConsumerStreamResponseObserver(
-                        consumerConfig,
-                        testClock,
-                        streamMediator,
-                        responseStreamObserver);
+                        consumerConfig, testClock, streamMediator, responseStreamObserver);
 
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
         verify(streamMediator).unsubscribe(consumerBlockItemObserver);
@@ -112,10 +105,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final TestConsumerStreamResponseObserver consumerStreamResponseObserver =
                 new TestConsumerStreamResponseObserver(
-                        consumerConfig,
-                        testClock,
-                        streamMediator,
-                        serverCallStreamObserver);
+                        consumerConfig, testClock, streamMediator, serverCallStreamObserver);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final SubscribeStreamResponse subscribeStreamResponse =
@@ -140,10 +130,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final TestConsumerStreamResponseObserver consumerStreamResponseObserver =
                 new TestConsumerStreamResponseObserver(
-                        consumerConfig,
-                        testClock,
-                        streamMediator,
-                        serverCallStreamObserver);
+                        consumerConfig, testClock, streamMediator, serverCallStreamObserver);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final SubscribeStreamResponse subscribeStreamResponse =
@@ -172,10 +159,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final var consumerBlockItemObserver =
                 new ConsumerStreamResponseObserver(
-                        consumerConfig,
-                        testClock,
-                        streamMediator,
-                        responseStreamObserver);
+                        consumerConfig, testClock, streamMediator, responseStreamObserver);
 
         // Send non-header BlockItems to validate that the observer does not send them
         for (int i = 1; i <= 10; i++) {

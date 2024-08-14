@@ -112,10 +112,6 @@ public class Server {
             @NonNull final BlockNodeContext blockNodeContext) {
 
         return new BlockStreamService(
-                new ItemAckBuilder(),
-                streamMediator,
-                blockReader,
-                serviceStatus,
-                blockNodeContext);
+                new ItemAckBuilder(), streamMediator, blockReader, serviceStatus, blockNodeContext);
     }
 }

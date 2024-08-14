@@ -235,10 +235,7 @@ public class LiveStreamMediatorImplTest {
 
         final var testConsumerBlockItemObserver =
                 new TestConsumerStreamResponseObserver(
-                        consumerConfig,
-                        testClock,
-                        streamMediator,
-                        serverCallStreamObserver);
+                        consumerConfig, testClock, streamMediator, serverCallStreamObserver);
 
         streamMediator.subscribe(testConsumerBlockItemObserver);
         assertTrue(streamMediator.isSubscribed(testConsumerBlockItemObserver));
@@ -274,10 +271,7 @@ public class LiveStreamMediatorImplTest {
 
         final var testConsumerBlockItemObserver =
                 new TestConsumerStreamResponseObserver(
-                        consumerConfig,
-                        testClock,
-                        streamMediator,
-                        serverCallStreamObserver);
+                        consumerConfig, testClock, streamMediator, serverCallStreamObserver);
 
         streamMediator.subscribe(testConsumerBlockItemObserver);
         assertTrue(streamMediator.isSubscribed(testConsumerBlockItemObserver));
@@ -343,10 +337,7 @@ public class LiveStreamMediatorImplTest {
                         .build();
         final var testConsumerBlockItemObserver =
                 new TestConsumerStreamResponseObserver(
-                        consumerConfig,
-                        testClock,
-                        streamMediator,
-                        serverCallStreamObserver);
+                        consumerConfig, testClock, streamMediator, serverCallStreamObserver);
 
         // Confirm the observer is not subscribed
         assertFalse(streamMediator.isSubscribed(testConsumerBlockItemObserver));
@@ -365,11 +356,7 @@ public class LiveStreamMediatorImplTest {
                 final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
                         streamMediator,
                 final StreamObserver<SubscribeStreamResponse> responseStreamObserver) {
-            super(
-                    consumerConfig,
-                    producerLivenessClock,
-                    streamMediator,
-                    responseStreamObserver);
+            super(consumerConfig, producerLivenessClock, streamMediator, responseStreamObserver);
         }
 
         @NonNull

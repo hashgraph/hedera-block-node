@@ -114,10 +114,9 @@ public class BlockStreamServiceIT {
 
         final BlockNodeContext blockNodeContext = mock(BlockNodeContext.class);
 
-
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                         new ItemAckBuilder(),
+                        new ItemAckBuilder(),
                         streamMediator,
                         blockReader,
                         serviceStatus,
@@ -612,10 +611,6 @@ public class BlockStreamServiceIT {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getSpyBlockNodeContext();
 
         return new BlockStreamService(
-                new ItemAckBuilder(),
-                streamMediator,
-                blockReader,
-                serviceStatus,
-                blockNodeContext);
+                new ItemAckBuilder(), streamMediator, blockReader, serviceStatus, blockNodeContext);
     }
 }

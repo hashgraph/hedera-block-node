@@ -111,7 +111,8 @@ public class ProducerBlockItemObserverTest {
         // millis() calls. Here the second call will always be inside the timeout window.
         ConsumerConfig consumerConfig = new ConsumerConfig(100);
         long TEST_TIME = 1_719_427_664_950L;
-        when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + consumerConfig.timeoutThresholdMillis());
+        when(testClock.millis())
+                .thenReturn(TEST_TIME, TEST_TIME + consumerConfig.timeoutThresholdMillis());
 
         final var concreteObserver1 =
                 new ConsumerStreamResponseObserver(
