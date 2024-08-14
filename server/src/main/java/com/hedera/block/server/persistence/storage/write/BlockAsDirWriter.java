@@ -139,9 +139,9 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
     protected void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItem blockItem)
             throws IOException {
         try (@NonNull
-                final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString());
-             @NonNull final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-            oos.writeObject(blockItem);
+                final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
+
+            BlockItem.PROTOBUF.toBytes(blockItem).writeTo(fos);
             LOGGER.log(
                     System.Logger.Level.DEBUG,
                     "Successfully wrote the block item file: {0}",

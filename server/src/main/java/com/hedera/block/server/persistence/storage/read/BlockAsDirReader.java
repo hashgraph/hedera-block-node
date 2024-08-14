@@ -22,6 +22,8 @@ import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.Block;
 
+import com.hedera.pbj.runtime.ParseException;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,6 +36,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -106,17 +110,25 @@ class BlockAsDirReader implements BlockReader<Block> {
             // their file names. The loop will exit when it attempts to read a
             // BlockItem file that does not exist (e.g., 11.blk).
             @NonNull final Block.Builder builder = Block.newBuilder();
+            @NonNull final List<BlockItem> blockItems = new ArrayList<>();
             for (int i = 1; ; i++) {
                 @NonNull final Path blockItemPath = blockPath.resolve(i + BLOCK_FILE_EXTENSION);
                 @NonNull
                 final Optional<BlockItem> blockItemOpt = readBlockItem(blockItemPath.toString());
                 if (blockItemOpt.isPresent()) {
-                    builder.items(blockItemOpt.get());
+                    blockItems.add(blockItemOpt.get());
                     continue;
                 }
 
                 break;
             }
+
+            if (blockItems.isEmpty()) {
+                LOGGER.log(System.Logger.Level.ERROR, "No block items found in block: " + blockPath);
+                return Optional.empty();
+            }
+
+            builder.items(blockItems);
 
             // Return the Block
             return Optional.of(builder.build());
@@ -131,11 +143,10 @@ class BlockAsDirReader implements BlockReader<Block> {
     private Optional<BlockItem> readBlockItem(@NonNull final String blockItemPath)
             throws IOException {
 
-        try (@NonNull final FileInputStream fis = new FileInputStream(blockItemPath);
-                @NonNull final ObjectInputStream ooi = new ObjectInputStream(fis)) {
+        try (@NonNull final FileInputStream fis = new FileInputStream(blockItemPath)) {
 
-            BlockItem blockItem = (BlockItem)ooi.readObject();
-            return Optional.ofNullable(blockItem);
+            BlockItem blockItem = BlockItem.PROTOBUF.parse(Bytes.wrap(fis.readAllBytes()));
+            return Optional.of(blockItem);
         } catch (FileNotFoundException io) {
             final File f = new File(blockItemPath);
             if (!f.exists()) {
@@ -150,7 +161,7 @@ class BlockAsDirReader implements BlockReader<Block> {
             // FileNotFound is also thrown when a file cannot be read.
             // So re-throw here to make a different decision upstream.
             throw io;
-        } catch (ClassNotFoundException e) {
+        } catch (ParseException e) {
             throw new RuntimeException(e);
         }
     }

@@ -102,11 +102,8 @@ public class BlockAsDirWriterTest {
         for (BlockItem blockItem : block.items()) {
             if (blockItem.hasBlockHeader()) {
                 hasHeader = true;
-                // TODO: Is this the right check??
-            } else if (blockItem.hasStateChanges()) {
+            } else if (blockItem.hasBlockProof()) {
                 hasBlockProof = true;
-
-                // TODO: Is this the right check??
             } else if (blockItem.hasEventHeader()) {
                 hasStartEvent = true;
             }
