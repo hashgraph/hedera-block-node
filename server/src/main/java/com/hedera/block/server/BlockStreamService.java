@@ -139,6 +139,7 @@ public class BlockStreamService implements GrpcService {
             @NonNull
             final var streamObserver =
                     new ConsumerStreamResponseObserver(
+                            // TODO, send the context anyway.
                             blockNodeContext.configuration().getConfigData(ConsumerConfig.class),
                             Clock.systemDefaultZone(),
                             streamMediator,

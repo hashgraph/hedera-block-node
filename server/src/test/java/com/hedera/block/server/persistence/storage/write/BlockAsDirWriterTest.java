@@ -62,10 +62,10 @@ public class BlockAsDirWriterTest {
         testPath = Files.createTempDirectory(TEMP_DIR);
         LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
 
-        testConfig = new PersistenceStorageConfig(testPath.toString());
         blockNodeContext =
-                TestConfigUtil.getSpyBlockNodeContext(
+                TestConfigUtil.getTestBlockNodeContext(
                         Map.of(PERSISTENCE_STORAGE_ROOT_PATH_KEY, testPath.toString()));
+        testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
     }
 
     @AfterEach
@@ -83,7 +83,7 @@ public class BlockAsDirWriterTest {
                 Map.of(PERSISTENCE_STORAGE_ROOT_PATH_KEY, "invalid-path");
 
         final BlockNodeContext blockNodeContext =
-                TestConfigUtil.getSpyBlockNodeContext(testProperties);
+                TestConfigUtil.getTestBlockNodeContext(testProperties);
 
         assertThrows(
                 IllegalArgumentException.class,

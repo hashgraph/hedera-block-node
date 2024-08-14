@@ -54,10 +54,6 @@ public class Server {
             // init context, metrics, and configuration.
             @NonNull final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
 
-            // Set the global configuration
-            // @NonNull final Config config = Config.create();
-            // Config.global(config);
-
             @NonNull final ServiceStatus serviceStatus = new ServiceStatusImpl();
 
             @NonNull

@@ -16,8 +16,6 @@
 
 package com.hedera.block.server.util;
 
-import static org.mockito.Mockito.spy;
-
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.config.TestConfigBuilder;
@@ -29,18 +27,16 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
-import org.mockito.Mockito;
 
 public class TestConfigUtil {
+
+    public static final String TEST_APP_PROPERTIES_FILE = "test.app.properties";
+
     private TestConfigUtil() {}
 
     @NonNull
-    public static BlockNodeContext getSpyBlockNodeContext(Map<String, String> customProperties)
-            throws IOException {
-        // If customProperties is null, assign it an empty map
-        if (customProperties == null) {
-            customProperties = Collections.emptyMap();
-        }
+    public static BlockNodeContext getTestBlockNodeContext(
+            @NonNull Map<String, String> customProperties) throws IOException {
 
         // we still use the BlockNodeContextFactory to create the BlockNodeContext temporally,
         // but we will replace the configuration with a test configuration
@@ -50,7 +46,8 @@ public class TestConfigUtil {
         // create test configuration
         TestConfigBuilder testConfigBuilder =
                 new TestConfigBuilder(true)
-                        .withSource(new ClasspathFileConfigSource(Path.of("app.properties")));
+                        .withSource(
+                                new ClasspathFileConfigSource(Path.of(TEST_APP_PROPERTIES_FILE)));
 
         for (Map.Entry<String, String> entry : customProperties.entrySet()) {
             String key = entry.getKey();
@@ -62,12 +59,11 @@ public class TestConfigUtil {
 
         Configuration testConfiguration = testConfigBuilder.getOrCreateConfig();
 
-        BlockNodeContext spyBlockNodeContext = spy(blockNodeContext);
-        Mockito.lenient().when(spyBlockNodeContext.configuration()).thenReturn(testConfiguration);
-        return spyBlockNodeContext;
+        return new BlockNodeContext(
+                blockNodeContext.metrics(), blockNodeContext.metricsService(), testConfiguration);
     }
 
-    public static BlockNodeContext getSpyBlockNodeContext() throws IOException {
-        return getSpyBlockNodeContext(null);
+    public static BlockNodeContext getTestBlockNodeContext() throws IOException {
+        return getTestBlockNodeContext(Collections.emptyMap());
     }
 }

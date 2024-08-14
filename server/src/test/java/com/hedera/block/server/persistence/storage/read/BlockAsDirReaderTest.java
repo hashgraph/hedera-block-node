@@ -63,15 +63,10 @@ public class BlockAsDirReaderTest {
         testPath = Files.createTempDirectory(TEMP_DIR);
         LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
 
-        // final Map<String, String> testProperties = Map.of(JUNIT, testPath.toString());
-        // final ConfigSource testConfigSource =
-        // MapConfigSource.builder().map(testProperties).build();
-        // testConfig = Config.builder(testConfigSource).build();
-
-        config = new PersistenceStorageConfig(testPath.toString());
         blockNodeContext =
-                TestConfigUtil.getSpyBlockNodeContext(
+                TestConfigUtil.getTestBlockNodeContext(
                         Map.of("persistence.storage.rootPath", testPath.toString()));
+        config = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
     }
 
     @AfterEach
@@ -94,7 +89,6 @@ public class BlockAsDirReaderTest {
     public void testReadPermsRepairSucceeded() throws IOException {
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
-        // final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockWriter<BlockItem> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         for (BlockItem blockItem : blockItems) {

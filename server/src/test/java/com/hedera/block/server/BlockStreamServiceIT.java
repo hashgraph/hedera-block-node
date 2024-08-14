@@ -95,10 +95,10 @@ public class BlockStreamServiceIT {
         testPath = Files.createTempDirectory(TEMP_DIR);
         LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
 
-        testConfig = new PersistenceStorageConfig(testPath.toString());
         blockNodeContext =
-                TestConfigUtil.getSpyBlockNodeContext(
+                TestConfigUtil.getTestBlockNodeContext(
                         Map.of("persistence.storage.rootPath", testPath.toString()));
+        testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
     }
 
     @AfterEach
@@ -156,7 +156,7 @@ public class BlockStreamServiceIT {
         final ServiceStatus serviceStatus = new ServiceStatusImpl();
         serviceStatus.setWebServer(webServer);
 
-        final BlockNodeContext blockNodeContext = TestConfigUtil.getSpyBlockNodeContext();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
@@ -603,7 +603,7 @@ public class BlockStreamServiceIT {
             final ServiceStatus serviceStatus)
             throws IOException {
 
-        final BlockNodeContext blockNodeContext = TestConfigUtil.getSpyBlockNodeContext();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         return new BlockStreamService(
                 new ItemAckBuilder(), streamMediator, blockReader, serviceStatus, blockNodeContext);

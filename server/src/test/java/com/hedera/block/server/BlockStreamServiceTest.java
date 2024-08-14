@@ -83,10 +83,10 @@ public class BlockStreamServiceTest {
         testPath = Files.createTempDirectory(TEMP_DIR);
         LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
 
-        config = new PersistenceStorageConfig(testPath.toString());
         blockNodeContext =
-                TestConfigUtil.getSpyBlockNodeContext(
+                TestConfigUtil.getTestBlockNodeContext(
                         Map.of("persistence.storage.rootPath", testPath.toString()));
+        config = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
     }
 
     @AfterEach
