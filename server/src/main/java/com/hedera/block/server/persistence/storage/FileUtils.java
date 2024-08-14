@@ -49,6 +49,14 @@ public final class FileUtils {
                             PosixFilePermission.OTHERS_READ,
                             PosixFilePermission.OTHERS_EXECUTE));
 
+    /**
+     * Use this to create a Dir if it does not exist with the given permissions and log the result.
+     *
+     * @param blockNodePath the path to create
+     * @param logLevel the log level to use
+     * @param perms the permissions to use when creating the directory
+     * @throws IOException if the directory cannot be created
+     */
     public static void createPathIfNotExists(
             @NonNull final Path blockNodePath,
             @NonNull final System.Logger.Level logLevel,
