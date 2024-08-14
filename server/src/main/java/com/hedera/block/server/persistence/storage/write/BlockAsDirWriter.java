@@ -27,6 +27,7 @@ import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
@@ -138,8 +139,9 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
     protected void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItem blockItem)
             throws IOException {
         try (@NonNull
-                final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
-            blockItem.writeTo(fos);
+                final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString());
+             @NonNull final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(blockItem);
             LOGGER.log(
                     System.Logger.Level.DEBUG,
                     "Successfully wrote the block item file: {0}",

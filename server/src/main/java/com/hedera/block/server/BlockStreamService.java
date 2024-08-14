@@ -28,6 +28,8 @@ import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.producer.AckBuilder;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
 import com.hedera.hapi.block.*;
+import com.hedera.hapi.block.protoc.BlockService;
+import com.hedera.hapi.block.protoc.BlockStreamServiceGrpc;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -88,7 +90,7 @@ public class BlockStreamService implements GrpcService {
     @NonNull
     @Override
     public Descriptors.FileDescriptor proto() {
-        return com.hedera.block.protos.BlockStreamService.getDescriptor();
+        return BlockService.getDescriptor();
     }
 
     /**

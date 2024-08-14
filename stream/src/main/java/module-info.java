@@ -1,5 +1,6 @@
 module com.hedera.block.stream {
     exports com.hedera.hapi.block;
+    exports com.hedera.hapi.block.protoc;
     exports com.hedera.hapi.block.stream;
     exports com.hedera.hapi.block.stream.input;
     exports com.hedera.hapi.block.stream.output;

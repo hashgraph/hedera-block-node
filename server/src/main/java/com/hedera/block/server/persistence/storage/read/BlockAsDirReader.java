@@ -27,6 +27,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import io.helidon.config.Config;
+
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
@@ -128,9 +131,11 @@ class BlockAsDirReader implements BlockReader<Block> {
     private Optional<BlockItem> readBlockItem(@NonNull final String blockItemPath)
             throws IOException {
 
-        try (FileInputStream fis = new FileInputStream(blockItemPath)) {
+        try (@NonNull final FileInputStream fis = new FileInputStream(blockItemPath);
+                @NonNull final ObjectInputStream ooi = new ObjectInputStream(fis)) {
 
-            return Optional.of(BlockItem.parseFrom(fis));
+            BlockItem blockItem = (BlockItem)ooi.readObject();
+            return Optional.ofNullable(blockItem);
         } catch (FileNotFoundException io) {
             final File f = new File(blockItemPath);
             if (!f.exists()) {
@@ -145,6 +150,8 @@ class BlockAsDirReader implements BlockReader<Block> {
             // FileNotFound is also thrown when a file cannot be read.
             // So re-throw here to make a different decision upstream.
             throw io;
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 

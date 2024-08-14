@@ -23,7 +23,7 @@ public final class Constants {
     private Constants() {}
 
     /** Constant mapped to the name of the service in the .proto file */
-    @NonNull public static final String SERVICE_NAME = "BlockStreamGrpcService";
+    @NonNull public static final String SERVICE_NAME = "com.hedera.hapi.block.BlockStreamService";
 
     /** Constant mapped to the publishBlockStream service method name in the .proto file */
     @NonNull public static final String CLIENT_STREAMING_METHOD_NAME = "publishBlockStream";
