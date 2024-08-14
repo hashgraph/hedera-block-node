@@ -17,14 +17,13 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.protos.BlockStreamService.BlockItem;
-import static com.hedera.block.server.Constants.BLOCKNODE_STORAGE_ROOT_PATH_KEY;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.helidon.config.Config;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -57,16 +56,12 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
      * Constructor for the BlockAsDirWriter class. It initializes the BlockAsDirWriter with the
      * given key, config, block remover, and file permissions.
      *
-     * @param key the key to use to retrieve the block node root path from the config
-     * @param config the config to use to retrieve the block node root path
      * @param blockRemover the block remover to use to remove blocks if there is an exception while
      *     writing a partial block
      * @param filePerms the file permissions to set on the block node root path
      * @throws IOException if an error occurs while initializing the BlockAsDirWriter
      */
     BlockAsDirWriter(
-            @NonNull final String key,
-            @NonNull final Config config,
             @NonNull final BlockRemover blockRemover,
             @NonNull final FileAttribute<Set<PosixFilePermission>> filePerms,
             @NonNull final BlockNodeContext blockNodeContext)
@@ -74,9 +69,12 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
 
         LOGGER.log(System.Logger.Level.INFO, "Initializing FileSystemBlockStorage");
 
-        final Path blockNodeRootPath = Path.of(config.get(key).asString().get());
+        PersistenceStorageConfig config =
+                blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
+        final Path blockNodeRootPath = Path.of(config.rootPath());
 
-        LOGGER.log(System.Logger.Level.INFO, config.toString());
+        // TODO: Remove comment but, Ask matt why we are logging the config?
+        // LOGGER.log(System.Logger.Level.INFO, config.toString());
         LOGGER.log(System.Logger.Level.INFO, "Block Node Root Path: " + blockNodeRootPath);
 
         this.blockNodeRootPath = blockNodeRootPath;
@@ -84,8 +82,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
         this.filePerms = filePerms;
 
         if (!blockNodeRootPath.isAbsolute()) {
-            throw new IllegalArgumentException(
-                    BLOCKNODE_STORAGE_ROOT_PATH_KEY + " must be an absolute path");
+            throw new IllegalArgumentException(config.rootPath() + " must be an absolute path");
         }
 
         // Initialize the block node root directory if it does not exist

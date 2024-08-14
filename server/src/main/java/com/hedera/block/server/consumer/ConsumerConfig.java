@@ -19,5 +19,11 @@ package com.hedera.block.server.consumer;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 
+/**
+ * Use this configuration across the consumer package.
+ *
+ * @param timeoutThresholdMillis after this time of inactivity, the consumer will be considered
+ *     timed out and will be disconnected
+ */
 @ConfigData("consumer")
 public record ConsumerConfig(@ConfigProperty(defaultValue = "1500") long timeoutThresholdMillis) {}

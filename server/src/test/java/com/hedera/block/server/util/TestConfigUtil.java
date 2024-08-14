@@ -17,7 +17,6 @@
 package com.hedera.block.server.util;
 
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
@@ -30,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
+import org.mockito.Mockito;
 
 public class TestConfigUtil {
     private TestConfigUtil() {}
@@ -63,7 +63,7 @@ public class TestConfigUtil {
         Configuration testConfiguration = testConfigBuilder.getOrCreateConfig();
 
         BlockNodeContext spyBlockNodeContext = spy(blockNodeContext);
-        when(spyBlockNodeContext.configuration()).thenReturn(testConfiguration);
+        Mockito.lenient().when(spyBlockNodeContext.configuration()).thenReturn(testConfiguration);
         return spyBlockNodeContext;
     }
 

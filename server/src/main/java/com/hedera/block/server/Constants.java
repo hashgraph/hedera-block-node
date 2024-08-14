@@ -22,15 +22,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public final class Constants {
     private Constants() {}
 
-    /** Constant mapped to the root path config key where the block files are stored */
-    @NonNull
-    public static final String BLOCKNODE_STORAGE_ROOT_PATH_KEY = "blocknode.storage.root.path";
-
-    /** Constant mapped to the timeout for stream consumers in milliseconds */
-    @NonNull
-    public static final String BLOCKNODE_SERVER_CONSUMER_TIMEOUT_THRESHOLD_KEY =
-            "blocknode.server.consumer.timeout.threshold";
-
     /** Constant mapped to the name of the service in the .proto file */
     @NonNull public static final String SERVICE_NAME = "BlockStreamGrpcService";
 

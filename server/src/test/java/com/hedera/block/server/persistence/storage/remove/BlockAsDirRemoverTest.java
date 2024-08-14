@@ -21,17 +21,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.hedera.block.protos.BlockStreamService.Block;
 import com.hedera.block.protos.BlockStreamService.BlockItem;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.config.BlockNodeContextFactory;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.Util;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.PersistTestUtils;
+import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
-import io.helidon.config.Config;
-import io.helidon.config.MapConfigSource;
-import io.helidon.config.spi.ConfigSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,16 +47,18 @@ public class BlockAsDirRemoverTest {
     private static final String JUNIT = "my-junit-test";
 
     private Path testPath;
-    private Config testConfig;
+    private BlockNodeContext blockNodeContext;
+    private PersistenceStorageConfig testConfig;
 
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
         LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
 
-        Map<String, String> testProperties = Map.of(JUNIT, testPath.toString());
-        ConfigSource testConfigSource = MapConfigSource.builder().map(testProperties).build();
-        testConfig = Config.builder(testConfigSource).build();
+        testConfig = new PersistenceStorageConfig(testPath.toString());
+        blockNodeContext =
+                TestConfigUtil.getSpyBlockNodeContext(
+                        Map.of("persistence.storage.rootPath", testPath.toString()));
     }
 
     @Test
@@ -67,9 +67,8 @@ public class BlockAsDirRemoverTest {
         // Write a block
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext).build();
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         for (final BlockItem blockItem : blockItems) {
             blockWriter.write(blockItem);
         }
@@ -80,7 +79,7 @@ public class BlockAsDirRemoverTest {
 
         // Verify the block was not removed
         final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
+                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
         Optional<Block> blockOpt = blockReader.read(1);
         assert (blockOpt.isPresent());
         assertEquals(
@@ -100,9 +99,8 @@ public class BlockAsDirRemoverTest {
         // Write a block
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext).build();
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         for (final BlockItem blockItem : blockItems) {
             blockWriter.write(blockItem);
         }
@@ -113,7 +111,7 @@ public class BlockAsDirRemoverTest {
 
         // Verify the block was not removed
         final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
+                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
         Optional<Block> blockOpt = blockReader.read(1);
         assert (blockOpt.isPresent());
         assertEquals(

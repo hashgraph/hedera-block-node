@@ -25,16 +25,14 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.config.BlockNodeContextFactory;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.Util;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.PersistTestUtils;
+import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.helidon.config.Config;
-import io.helidon.config.MapConfigSource;
-import io.helidon.config.spi.ConfigSource;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -53,19 +51,27 @@ public class BlockAsDirReaderTest {
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
-    private static final String JUNIT = "my-junit-test";
+    // private static final String JUNIT = "my-junit-test";
 
     private Path testPath;
-    private Config testConfig;
+    // private Config testConfig;
+    private BlockNodeContext blockNodeContext;
+    private PersistenceStorageConfig config;
 
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
         LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
 
-        final Map<String, String> testProperties = Map.of(JUNIT, testPath.toString());
-        final ConfigSource testConfigSource = MapConfigSource.builder().map(testProperties).build();
-        testConfig = Config.builder(testConfigSource).build();
+        // final Map<String, String> testProperties = Map.of(JUNIT, testPath.toString());
+        // final ConfigSource testConfigSource =
+        // MapConfigSource.builder().map(testProperties).build();
+        // testConfig = Config.builder(testConfigSource).build();
+
+        config = new PersistenceStorageConfig(testPath.toString());
+        blockNodeContext =
+                TestConfigUtil.getSpyBlockNodeContext(
+                        Map.of("persistence.storage.rootPath", testPath.toString()));
     }
 
     @AfterEach
@@ -79,8 +85,7 @@ public class BlockAsDirReaderTest {
 
     @Test
     public void testReadBlockDoesNotExist() throws IOException {
-        final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
+        final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final Optional<Block> blockOpt = blockReader.read(10000);
         assertTrue(blockOpt.isEmpty());
     }
@@ -89,19 +94,18 @@ public class BlockAsDirReaderTest {
     public void testReadPermsRepairSucceeded() throws IOException {
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        // final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext).build();
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         for (BlockItem blockItem : blockItems) {
             blockWriter.write(blockItem);
         }
 
         // Make the block unreadable
-        removeBlockReadPerms(1, testConfig);
+        removeBlockReadPerms(1, config);
 
         // The default BlockReader will attempt to repair the permissions and should succeed
-        final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
+        final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final Optional<Block> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
         assertEquals(10, blockOpt.get().getBlockItemsList().size());
@@ -111,20 +115,19 @@ public class BlockAsDirReaderTest {
     public void testRemoveBlockReadPermsRepairFailed() throws IOException {
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext).build();
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         for (BlockItem blockItem : blockItems) {
             blockWriter.write(blockItem);
         }
 
         // Make the block unreadable
-        removeBlockReadPerms(1, testConfig);
+        removeBlockReadPerms(1, config);
 
         // For this test, build the Reader with ineffective repair permissions to
         // simulate a failed repair (root changed the perms, etc.)
         final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig)
+                BlockAsDirReaderBuilder.newBuilder(config)
                         .filePerms(TestUtils.getNoPerms())
                         .build();
         final Optional<Block> blockOpt = blockReader.read(1);
@@ -135,31 +138,28 @@ public class BlockAsDirReaderTest {
     public void testRemoveBlockItemReadPerms() throws IOException {
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext).build();
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         for (BlockItem blockItem : blockItems) {
             blockWriter.write(blockItem);
         }
 
-        removeBlockItemReadPerms(1, 1, testConfig);
+        removeBlockItemReadPerms(1, 1, config);
 
-        final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
+        final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         assertThrows(IOException.class, () -> blockReader.read(1));
     }
 
     @Test
     public void testPathIsNotDirectory() throws IOException {
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
-        final Path blockNodeRootPath = Path.of(testConfig.get(JUNIT).asString().get());
+        final Path blockNodeRootPath = Path.of(config.rootPath());
 
         // Write a file named "1" where a directory should be
         writeFileToPath(blockNodeRootPath.resolve(Path.of("1")), blockItems.getFirst());
 
         // Should return empty because the path is not a directory
-        final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
+        final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final Optional<Block> blockOpt = blockReader.read(1);
         assertTrue(blockOpt.isEmpty());
     }
@@ -169,19 +169,18 @@ public class BlockAsDirReaderTest {
 
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext).build();
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         for (final BlockItem blockItem : blockItems) {
             blockWriter.write(blockItem);
         }
 
-        removeBlockReadPerms(1, testConfig);
+        removeBlockReadPerms(1, config);
 
         // Use a spy on a subclass of the BlockAsDirReader to proxy calls
         // to the actual methods but to also throw an IOException when
         // the setPerm method is called.
-        final TestBlockAsDirReader blockReader = spy(new TestBlockAsDirReader(JUNIT, testConfig));
+        final TestBlockAsDirReader blockReader = spy(new TestBlockAsDirReader(config));
         doThrow(IOException.class).when(blockReader).setPerm(any(), any());
 
         final Optional<Block> blockOpt = blockReader.read(1);
@@ -192,12 +191,12 @@ public class BlockAsDirReaderTest {
     public void testBlockNodePathReadFails() throws IOException {
 
         // Remove read perm on the root path
-        removePathReadPerms(Path.of(testConfig.get(JUNIT).asString().get()));
+        removePathReadPerms(Path.of(config.rootPath()));
 
         // Use a spy on a subclass of the BlockAsDirReader to proxy calls
         // to the actual methods but to also throw an IOException when
         // the setPerm method is called.
-        final TestBlockAsDirReader blockReader = spy(new TestBlockAsDirReader(JUNIT, testConfig));
+        final TestBlockAsDirReader blockReader = spy(new TestBlockAsDirReader(config));
         doThrow(IOException.class).when(blockReader).setPerm(any(), any());
 
         final Optional<Block> blockOpt = blockReader.read(1);
@@ -212,9 +211,9 @@ public class BlockAsDirReaderTest {
         }
     }
 
-    public static void removeBlockReadPerms(int blockNumber, final Config config)
+    public static void removeBlockReadPerms(int blockNumber, final PersistenceStorageConfig config)
             throws IOException {
-        final Path blockNodeRootPath = Path.of(config.get(JUNIT).asString().get());
+        final Path blockNodeRootPath = Path.of(config.rootPath());
         final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
         removePathReadPerms(blockPath);
     }
@@ -223,9 +222,9 @@ public class BlockAsDirReaderTest {
         Files.setPosixFilePermissions(path, TestUtils.getNoRead().value());
     }
 
-    private void removeBlockItemReadPerms(int blockNumber, int blockItem, Config config)
-            throws IOException {
-        final Path blockNodeRootPath = Path.of(config.get(JUNIT).asString().get());
+    private void removeBlockItemReadPerms(
+            int blockNumber, int blockItem, PersistenceStorageConfig config) throws IOException {
+        final Path blockNodeRootPath = Path.of(config.rootPath());
         final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
         final Path blockItemPath = blockPath.resolve(blockItem + BLOCK_FILE_EXTENSION);
         Files.setPosixFilePermissions(blockItemPath, TestUtils.getNoRead().value());
@@ -234,8 +233,8 @@ public class BlockAsDirReaderTest {
     // TestBlockAsDirReader overrides the setPerm() method to allow a test spy to simulate an
     // IOException while allowing the real setPerm() method to remain protected.
     private static final class TestBlockAsDirReader extends BlockAsDirReader {
-        public TestBlockAsDirReader(String key, Config config) {
-            super(key, config, Util.defaultPerms);
+        public TestBlockAsDirReader(PersistenceStorageConfig config) {
+            super(config, Util.defaultPerms);
         }
 
         @Override

@@ -23,10 +23,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.Util;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
@@ -40,9 +40,6 @@ import com.hedera.block.server.util.TestUtils;
 import com.lmax.disruptor.BatchEventProcessor;
 import com.lmax.disruptor.EventHandler;
 import io.grpc.stub.StreamObserver;
-import io.helidon.config.Config;
-import io.helidon.config.MapConfigSource;
-import io.helidon.config.spi.ConfigSource;
 import io.helidon.webserver.WebServer;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -89,7 +86,8 @@ public class BlockStreamServiceIT {
     private static final String JUNIT = "my-junit-test";
 
     private Path testPath;
-    private Config testConfig;
+    private BlockNodeContext blockNodeContext;
+    private PersistenceStorageConfig testConfig;
 
     private static final int testTimeout = 200;
 
@@ -98,9 +96,10 @@ public class BlockStreamServiceIT {
         testPath = Files.createTempDirectory(TEMP_DIR);
         LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
 
-        Map<String, String> testProperties = Map.of(JUNIT, testPath.toString());
-        ConfigSource testConfigSource = MapConfigSource.builder().map(testProperties).build();
-        testConfig = Config.builder(testConfigSource).build();
+        testConfig = new PersistenceStorageConfig(testPath.toString());
+        blockNodeContext =
+                TestConfigUtil.getSpyBlockNodeContext(
+                        Map.of("persistence.storage.rootPath", testPath.toString()));
     }
 
     @AfterEach
@@ -112,7 +111,7 @@ public class BlockStreamServiceIT {
     public void testPublishBlockStreamRegistrationAndExecution()
             throws IOException, NoSuchAlgorithmException {
 
-        final BlockNodeContext blockNodeContext = mock(BlockNodeContext.class);
+        // final BlockNodeContext blockNodeContext = mock(BlockNodeContext.class);
 
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
@@ -499,7 +498,7 @@ public class BlockStreamServiceIT {
 
         // Now verify the block was removed from the file system.
         final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
+                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
         final Optional<Block> blockOpt = blockReader.read(1);
         assertTrue(blockOpt.isEmpty());
 
@@ -525,8 +524,9 @@ public class BlockStreamServiceIT {
                 .onNext(expectedSubscriberStreamNotAvailable);
     }
 
-    private void removeRootPathWritePerms(final Config config) throws IOException {
-        final Path blockNodeRootPath = Path.of(config.get(JUNIT).asString().get());
+    private void removeRootPathWritePerms(final PersistenceStorageConfig config)
+            throws IOException {
+        final Path blockNodeRootPath = Path.of(config.rootPath());
         Files.setPosixFilePermissions(blockNodeRootPath, TestUtils.getNoWrite().value());
     }
 
@@ -584,12 +584,10 @@ public class BlockStreamServiceIT {
 
         // Initialize with concrete a concrete BlockReader, BlockWriter and Mediator
         final BlockRemover blockRemover =
-                new BlockAsDirRemover(
-                        Path.of(testConfig.get(JUNIT).asString().get()), Util.defaultPerms);
+                new BlockAsDirRemover(Path.of(testConfig.rootPath()), Util.defaultPerms);
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext)
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext)
                         .blockRemover(blockRemover)
                         .filePerms(filePerms)
                         .build();
