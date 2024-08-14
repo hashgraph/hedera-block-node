@@ -54,8 +54,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
     private final BlockNodeContext blockNodeContext;
 
     /**
-     * Use the corresponding builder to construct a new BlockAsDirWriter with the
-     * given parameters.
+     * Use the corresponding builder to construct a new BlockAsDirWriter with the given parameters.
      *
      * @param blockRemover the block remover to use for removing blocks
      * @param filePerms the file permissions to use for writing blocks
