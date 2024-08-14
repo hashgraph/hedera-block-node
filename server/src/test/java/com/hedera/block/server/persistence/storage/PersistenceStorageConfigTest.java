@@ -47,7 +47,7 @@ class PersistenceStorageConfigTest {
     }
 
     public static void deleteDirectory(Path path) throws IOException {
-        if(!Files.exists(path)) {
+        if (!Files.exists(path)) {
             return;
         }
         try (Stream<Path> walk = Files.walk(path)) {

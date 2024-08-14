@@ -73,8 +73,6 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
         final Path blockNodeRootPath = Path.of(config.rootPath());
 
-        // TODO: Remove comment but, Ask matt why we are logging the config?
-        // LOGGER.log(System.Logger.Level.INFO, config.toString());
         LOGGER.log(System.Logger.Level.INFO, "Block Node Root Path: " + blockNodeRootPath);
 
         this.blockNodeRootPath = blockNodeRootPath;
