@@ -21,8 +21,8 @@ import static com.hedera.block.protos.BlockStreamService.Block.Builder;
 import static com.hedera.block.protos.BlockStreamService.BlockItem;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.helidon.config.Config;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -49,18 +49,16 @@ class BlockAsDirReader implements BlockReader<Block> {
      * Constructor for the BlockAsDirReader class. It initializes the BlockAsDirReader with the
      * given parameters.
      *
-     * @param key the key to retrieve the block node root path from the configuration
      * @param config the configuration to retrieve the block node root path
      * @param filePerms the file permissions to set on the block node root path
      */
     BlockAsDirReader(
-            @NonNull final String key,
-            @NonNull final Config config,
+            @NonNull final PersistenceStorageConfig config,
             @NonNull final FileAttribute<Set<PosixFilePermission>> filePerms) {
 
         LOGGER.log(System.Logger.Level.INFO, "Initializing FileSystemBlockReader");
 
-        @NonNull final Path blockNodeRootPath = Path.of(config.get(key).asString().get());
+        @NonNull final Path blockNodeRootPath = Path.of(config.rootPath());
 
         LOGGER.log(System.Logger.Level.INFO, config.toString());
         LOGGER.log(System.Logger.Level.INFO, "Block Node Root Path: " + blockNodeRootPath);

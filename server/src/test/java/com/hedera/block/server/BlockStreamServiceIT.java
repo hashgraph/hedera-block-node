@@ -23,11 +23,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.mediator.StreamMediator;
-import com.hedera.block.server.persistence.storage.Util;
+import com.hedera.block.server.persistence.storage.FileUtils;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
@@ -35,13 +35,11 @@ import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.producer.ItemAckBuilder;
+import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import com.lmax.disruptor.BatchEventProcessor;
 import com.lmax.disruptor.EventHandler;
 import io.grpc.stub.StreamObserver;
-import io.helidon.config.Config;
-import io.helidon.config.MapConfigSource;
-import io.helidon.config.spi.ConfigSource;
 import io.helidon.webserver.WebServer;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -85,10 +83,10 @@ public class BlockStreamServiceIT {
     @Mock private BlockWriter<BlockItem> blockWriter;
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
-    private static final String JUNIT = "my-junit-test";
 
     private Path testPath;
-    private Config testConfig;
+    private BlockNodeContext blockNodeContext;
+    private PersistenceStorageConfig testConfig;
 
     private static final int testTimeout = 200;
 
@@ -97,9 +95,10 @@ public class BlockStreamServiceIT {
         testPath = Files.createTempDirectory(TEMP_DIR);
         LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
 
-        Map<String, String> testProperties = Map.of(JUNIT, testPath.toString());
-        ConfigSource testConfigSource = MapConfigSource.builder().map(testProperties).build();
-        testConfig = Config.builder(testConfigSource).build();
+        blockNodeContext =
+                TestConfigUtil.getTestBlockNodeContext(
+                        Map.of("persistence.storage.rootPath", testPath.toString()));
+        testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
     }
 
     @AfterEach
@@ -111,10 +110,8 @@ public class BlockStreamServiceIT {
     public void testPublishBlockStreamRegistrationAndExecution()
             throws IOException, NoSuchAlgorithmException {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        1500L,
                         new ItemAckBuilder(),
                         streamMediator,
                         blockReader,
@@ -159,7 +156,8 @@ public class BlockStreamServiceIT {
         final ServiceStatus serviceStatus = new ServiceStatusImpl();
         serviceStatus.setWebServer(webServer);
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
+
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
                         .build();
@@ -167,7 +165,6 @@ public class BlockStreamServiceIT {
         // Build the BlockStreamService
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        2000L,
                         new ItemAckBuilder(),
                         streamMediator,
                         blockReader,
@@ -321,7 +318,7 @@ public class BlockStreamServiceIT {
                         EventHandler<ObjectEvent<SubscribeStreamResponse>>,
                         BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
                 subscribers = new LinkedHashMap<>();
-        final var streamMediator = buildStreamMediator(subscribers, Util.defaultPerms);
+        final var streamMediator = buildStreamMediator(subscribers, FileUtils.defaultPerms);
         final var blockStreamService =
                 buildBlockStreamService(streamMediator, blockReader, serviceStatus);
 
@@ -498,7 +495,7 @@ public class BlockStreamServiceIT {
 
         // Now verify the block was removed from the file system.
         final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
+                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
         final Optional<Block> blockOpt = blockReader.read(1);
         assertTrue(blockOpt.isEmpty());
 
@@ -524,8 +521,9 @@ public class BlockStreamServiceIT {
                 .onNext(expectedSubscriberStreamNotAvailable);
     }
 
-    private void removeRootPathWritePerms(final Config config) throws IOException {
-        final Path blockNodeRootPath = Path.of(config.get(JUNIT).asString().get());
+    private void removeRootPathWritePerms(final PersistenceStorageConfig config)
+            throws IOException {
+        final Path blockNodeRootPath = Path.of(config.rootPath());
         Files.setPosixFilePermissions(blockNodeRootPath, TestUtils.getNoWrite().value());
     }
 
@@ -568,7 +566,7 @@ public class BlockStreamServiceIT {
 
     private BlockStreamService buildBlockStreamService() throws IOException {
         final var streamMediator =
-                buildStreamMediator(new ConcurrentHashMap<>(32), Util.defaultPerms);
+                buildStreamMediator(new ConcurrentHashMap<>(32), FileUtils.defaultPerms);
 
         return buildBlockStreamService(streamMediator, blockReader, serviceStatus);
     }
@@ -583,12 +581,10 @@ public class BlockStreamServiceIT {
 
         // Initialize with concrete a concrete BlockReader, BlockWriter and Mediator
         final BlockRemover blockRemover =
-                new BlockAsDirRemover(
-                        Path.of(testConfig.get(JUNIT).asString().get()), Util.defaultPerms);
+                new BlockAsDirRemover(Path.of(testConfig.rootPath()), FileUtils.defaultPerms);
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext)
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext)
                         .blockRemover(blockRemover)
                         .filePerms(filePerms)
                         .build();
@@ -607,13 +603,9 @@ public class BlockStreamServiceIT {
             final ServiceStatus serviceStatus)
             throws IOException {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
+
         return new BlockStreamService(
-                2000,
-                new ItemAckBuilder(),
-                streamMediator,
-                blockReader,
-                serviceStatus,
-                blockNodeContext);
+                new ItemAckBuilder(), streamMediator, blockReader, serviceStatus, blockNodeContext);
     }
 }

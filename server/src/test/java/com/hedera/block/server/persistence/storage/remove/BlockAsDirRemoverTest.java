@@ -21,17 +21,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.hedera.block.protos.BlockStreamService.Block;
 import com.hedera.block.protos.BlockStreamService.BlockItem;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.config.BlockNodeContextFactory;
-import com.hedera.block.server.persistence.storage.Util;
+import com.hedera.block.server.persistence.storage.FileUtils;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.PersistTestUtils;
+import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
-import io.helidon.config.Config;
-import io.helidon.config.MapConfigSource;
-import io.helidon.config.spi.ConfigSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,19 +44,20 @@ public class BlockAsDirRemoverTest {
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
-    private static final String JUNIT = "my-junit-test";
 
     private Path testPath;
-    private Config testConfig;
+    private BlockNodeContext blockNodeContext;
+    private PersistenceStorageConfig testConfig;
 
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
         LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
 
-        Map<String, String> testProperties = Map.of(JUNIT, testPath.toString());
-        ConfigSource testConfigSource = MapConfigSource.builder().map(testProperties).build();
-        testConfig = Config.builder(testConfigSource).build();
+        blockNodeContext =
+                TestConfigUtil.getTestBlockNodeContext(
+                        Map.of("persistence.storage.rootPath", testPath.toString()));
+        testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
     }
 
     @Test
@@ -67,20 +66,19 @@ public class BlockAsDirRemoverTest {
         // Write a block
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext).build();
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         for (final BlockItem blockItem : blockItems) {
             blockWriter.write(blockItem);
         }
 
         // Remove a block that does not exist
-        final BlockRemover blockRemover = new BlockAsDirRemover(testPath, Util.defaultPerms);
+        final BlockRemover blockRemover = new BlockAsDirRemover(testPath, FileUtils.defaultPerms);
         blockRemover.remove(2);
 
         // Verify the block was not removed
         final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
+                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
         Optional<Block> blockOpt = blockReader.read(1);
         assert (blockOpt.isPresent());
         assertEquals(
@@ -100,9 +98,8 @@ public class BlockAsDirRemoverTest {
         // Write a block
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext).build();
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         for (final BlockItem blockItem : blockItems) {
             blockWriter.write(blockItem);
         }
@@ -113,14 +110,14 @@ public class BlockAsDirRemoverTest {
 
         // Verify the block was not removed
         final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
+                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
         Optional<Block> blockOpt = blockReader.read(1);
         assert (blockOpt.isPresent());
         assertEquals(
                 blockItems.getFirst().getHeader(), blockOpt.get().getBlockItems(0).getHeader());
 
         // Now remove the block
-        blockRemover = new BlockAsDirRemover(testPath, Util.defaultPerms);
+        blockRemover = new BlockAsDirRemover(testPath, FileUtils.defaultPerms);
         blockRemover.remove(1);
 
         // Verify the block is removed

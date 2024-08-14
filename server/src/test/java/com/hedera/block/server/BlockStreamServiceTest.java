@@ -28,20 +28,18 @@ import static org.mockito.Mockito.*;
 
 import com.google.protobuf.Descriptors;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.producer.ItemAckBuilder;
+import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import io.grpc.stub.ServerCalls;
 import io.grpc.stub.StreamObserver;
-import io.helidon.config.Config;
-import io.helidon.config.MapConfigSource;
-import io.helidon.config.spi.ConfigSource;
 import io.helidon.webserver.grpc.GrpcService;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -60,8 +58,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class BlockStreamServiceTest {
 
-    private final long TIMEOUT_THRESHOLD_MILLIS = 50L;
-
     @Mock private StreamObserver<SingleBlockResponse> responseObserver;
 
     @Mock private ItemAckBuilder itemAckBuilder;
@@ -75,19 +71,20 @@ public class BlockStreamServiceTest {
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
-    private static final String JUNIT = "my-junit-test";
 
     private Path testPath;
-    private Config testConfig;
+    private BlockNodeContext blockNodeContext;
+    private PersistenceStorageConfig config;
 
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
         LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
 
-        Map<String, String> testProperties = Map.of(JUNIT, testPath.toString());
-        ConfigSource testConfigSource = MapConfigSource.builder().map(testProperties).build();
-        testConfig = Config.builder(testConfigSource).build();
+        blockNodeContext =
+                TestConfigUtil.getTestBlockNodeContext(
+                        Map.of("persistence.storage.rootPath", testPath.toString()));
+        config = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
     }
 
     @AfterEach
@@ -98,10 +95,8 @@ public class BlockStreamServiceTest {
     @Test
     public void testServiceName() throws IOException, NoSuchAlgorithmException {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        TIMEOUT_THRESHOLD_MILLIS,
                         itemAckBuilder,
                         streamMediator,
                         blockReader,
@@ -118,10 +113,8 @@ public class BlockStreamServiceTest {
 
     @Test
     public void testProto() throws IOException, NoSuchAlgorithmException {
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        TIMEOUT_THRESHOLD_MILLIS,
                         itemAckBuilder,
                         streamMediator,
                         blockReader,
@@ -140,12 +133,9 @@ public class BlockStreamServiceTest {
     @Test
     void testSingleBlockHappyPath() throws IOException {
 
-        final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(JUNIT, testConfig).build();
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        TIMEOUT_THRESHOLD_MILLIS,
                         itemAckBuilder,
                         streamMediator,
                         blockReader,
@@ -157,7 +147,7 @@ public class BlockStreamServiceTest {
 
         // Generate and persist a block
         final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(JUNIT, testConfig, blockNodeContext).build();
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         final List<BlockItem> blockItems = generateBlockItems(1);
         for (BlockItem blockItem : blockItems) {
             blockWriter.write(blockItem);
@@ -186,8 +176,6 @@ public class BlockStreamServiceTest {
     @Test
     void testSingleBlockNotFoundPath() throws IOException {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
-
         // Get the block so we can verify the response payload
         when(blockReader.read(1)).thenReturn(Optional.empty());
 
@@ -201,7 +189,6 @@ public class BlockStreamServiceTest {
         // Call the service
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        TIMEOUT_THRESHOLD_MILLIS,
                         itemAckBuilder,
                         streamMediator,
                         blockReader,
@@ -216,12 +203,10 @@ public class BlockStreamServiceTest {
     }
 
     @Test
-    void testSingleBlockServiceNotAvailable() throws IOException {
+    void testSingleBlockServiceNotAvailable() {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        TIMEOUT_THRESHOLD_MILLIS,
                         itemAckBuilder,
                         streamMediator,
                         blockReader,
@@ -242,10 +227,8 @@ public class BlockStreamServiceTest {
 
     @Test
     public void testSingleBlockIOExceptionPath() throws IOException {
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        TIMEOUT_THRESHOLD_MILLIS,
                         itemAckBuilder,
                         streamMediator,
                         blockReader,
@@ -266,12 +249,10 @@ public class BlockStreamServiceTest {
     }
 
     @Test
-    public void testUpdateInvokesRoutingWithLambdas() throws IOException {
+    public void testUpdateInvokesRoutingWithLambdas() {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        TIMEOUT_THRESHOLD_MILLIS,
                         itemAckBuilder,
                         streamMediator,
                         blockReader,

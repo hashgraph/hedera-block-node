@@ -17,14 +17,14 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.protos.BlockStreamService.BlockItem;
-import static com.hedera.block.server.Constants.BLOCKNODE_STORAGE_ROOT_PATH_KEY;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.persistence.storage.FileUtils;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.helidon.config.Config;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -54,19 +54,14 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
     private final BlockNodeContext blockNodeContext;
 
     /**
-     * Constructor for the BlockAsDirWriter class. It initializes the BlockAsDirWriter with the
-     * given key, config, block remover, and file permissions.
+     * Use the corresponding builder to construct a new BlockAsDirWriter with the given parameters.
      *
-     * @param key the key to use to retrieve the block node root path from the config
-     * @param config the config to use to retrieve the block node root path
-     * @param blockRemover the block remover to use to remove blocks if there is an exception while
-     *     writing a partial block
-     * @param filePerms the file permissions to set on the block node root path
+     * @param blockRemover the block remover to use for removing blocks
+     * @param filePerms the file permissions to use for writing blocks
+     * @param blockNodeContext the block node context to use for writing blocks
      * @throws IOException if an error occurs while initializing the BlockAsDirWriter
      */
     BlockAsDirWriter(
-            @NonNull final String key,
-            @NonNull final Config config,
             @NonNull final BlockRemover blockRemover,
             @NonNull final FileAttribute<Set<PosixFilePermission>> filePerms,
             @NonNull final BlockNodeContext blockNodeContext)
@@ -74,22 +69,18 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
 
         LOGGER.log(System.Logger.Level.INFO, "Initializing FileSystemBlockStorage");
 
-        final Path blockNodeRootPath = Path.of(config.get(key).asString().get());
+        PersistenceStorageConfig config =
+                blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
+        final Path blockNodeRootPath = Path.of(config.rootPath());
 
-        LOGGER.log(System.Logger.Level.INFO, config.toString());
         LOGGER.log(System.Logger.Level.INFO, "Block Node Root Path: " + blockNodeRootPath);
 
         this.blockNodeRootPath = blockNodeRootPath;
         this.blockRemover = blockRemover;
         this.filePerms = filePerms;
 
-        if (!blockNodeRootPath.isAbsolute()) {
-            throw new IllegalArgumentException(
-                    BLOCKNODE_STORAGE_ROOT_PATH_KEY + " must be an absolute path");
-        }
-
         // Initialize the block node root directory if it does not exist
-        createPath(blockNodeRootPath, System.Logger.Level.INFO);
+        FileUtils.createPathIfNotExists(blockNodeRootPath, System.Logger.Level.INFO, filePerms);
 
         this.blockNodeContext = blockNodeContext;
     }
@@ -150,7 +141,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                 final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
             blockItem.writeTo(fos);
             LOGGER.log(
-                    System.Logger.Level.INFO,
+                    System.Logger.Level.DEBUG,
                     "Successfully wrote the block item file: {0}",
                     blockItemFilePath);
         } catch (IOException e) {
@@ -172,7 +163,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
         repairPermissions(blockNodeRootPath);
 
         // Construct the path to the block directory
-        createPath(calculateBlockPath(), System.Logger.Level.DEBUG);
+        FileUtils.createPathIfNotExists(calculateBlockPath(), System.Logger.Level.DEBUG, filePerms);
 
         // Reset
         blockNodeFileNameIndex = 0;
@@ -214,17 +205,5 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
     @NonNull
     private Path calculateBlockPath() {
         return blockNodeRootPath.resolve(currentBlockDir);
-    }
-
-    private void createPath(
-            @NonNull final Path blockNodePath, @NonNull final System.Logger.Level logLevel)
-            throws IOException {
-        // Initialize the Block directory if it does not exist
-        if (Files.notExists(blockNodePath)) {
-            Files.createDirectory(blockNodePath, filePerms);
-            LOGGER.log(logLevel, "Created block node root directory: " + blockNodePath);
-        } else {
-            LOGGER.log(logLevel, "Using existing block node root directory: " + blockNodePath);
-        }
     }
 }

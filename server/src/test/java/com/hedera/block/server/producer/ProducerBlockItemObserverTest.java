@@ -20,6 +20,7 @@ import static com.hedera.block.protos.BlockStreamService.*;
 import static com.hedera.block.protos.BlockStreamService.PublishStreamResponse.ItemAcknowledgement;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
+import static com.hedera.block.server.util.TestConfigUtil.CONSUMER_TIMEOUT_THRESHOLD_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
@@ -30,16 +31,19 @@ import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
+import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.util.TestConfigUtil;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.time.InstantSource;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -108,21 +112,27 @@ public class ProducerBlockItemObserverTest {
 
         // Mock a clock with 2 different return values in response to anticipated
         // millis() calls. Here the second call will always be inside the timeout window.
-        long TIMEOUT_THRESHOLD_MILLIS = 100L;
+        final BlockNodeContext testContext =
+                TestConfigUtil.getTestBlockNodeContext(
+                        Map.of(CONSUMER_TIMEOUT_THRESHOLD_KEY, "100"));
+        final ConsumerConfig consumerConfig =
+                testContext.configuration().getConfigData(ConsumerConfig.class);
+
         long TEST_TIME = 1_719_427_664_950L;
-        when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
+        when(testClock.millis())
+                .thenReturn(TEST_TIME, TEST_TIME + consumerConfig.timeoutThresholdMillis());
 
         final var concreteObserver1 =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS, testClock, streamMediator, streamObserver1);
+                        testContext, testClock, streamMediator, streamObserver1);
 
         final var concreteObserver2 =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS, testClock, streamMediator, streamObserver2);
+                        testContext, testClock, streamMediator, streamObserver2);
 
         final var concreteObserver3 =
                 new ConsumerStreamResponseObserver(
-                        TIMEOUT_THRESHOLD_MILLIS, testClock, streamMediator, streamObserver3);
+                        testContext, testClock, streamMediator, streamObserver3);
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);

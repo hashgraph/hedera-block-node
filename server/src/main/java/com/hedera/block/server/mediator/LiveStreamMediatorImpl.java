@@ -88,6 +88,7 @@ class LiveStreamMediatorImpl
         // Initialize and start the disruptor
         @NonNull
         final Disruptor<ObjectEvent<SubscribeStreamResponse>> disruptor =
+                // TODO: replace ring buffer size with a configurable value, create a MediatorConfig
                 new Disruptor<>(ObjectEvent::new, 1024, DaemonThreadFactory.INSTANCE);
         this.ringBuffer = disruptor.start();
         this.executor = Executors.newCachedThreadPool(DaemonThreadFactory.INSTANCE);

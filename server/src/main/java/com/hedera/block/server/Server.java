@@ -17,21 +17,19 @@
 package com.hedera.block.server;
 
 import static com.hedera.block.protos.BlockStreamService.*;
-import static com.hedera.block.server.Constants.BLOCKNODE_SERVER_CONSUMER_TIMEOUT_THRESHOLD_KEY;
-import static com.hedera.block.server.Constants.BLOCKNODE_STORAGE_ROOT_PATH_KEY;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.producer.ItemAckBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.helidon.config.Config;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.grpc.GrpcRouting;
 import java.io.IOException;
@@ -56,17 +54,11 @@ public class Server {
             // init context, metrics, and configuration.
             @NonNull final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
 
-            // Set the global configuration
-            @NonNull final Config config = Config.create();
-            Config.global(config);
-
             @NonNull final ServiceStatus serviceStatus = new ServiceStatusImpl();
 
             @NonNull
             final BlockWriter<BlockItem> blockWriter =
-                    BlockAsDirWriterBuilder.newBuilder(
-                                    BLOCKNODE_STORAGE_ROOT_PATH_KEY, config, blockNodeContext)
-                            .build();
+                    BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
             @NonNull
             final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator =
                     LiveStreamMediatorBuilder.newBuilder(
@@ -75,13 +67,16 @@ public class Server {
 
             @NonNull
             final BlockReader<Block> blockReader =
-                    BlockAsDirReaderBuilder.newBuilder(BLOCKNODE_STORAGE_ROOT_PATH_KEY, config)
+                    BlockAsDirReaderBuilder.newBuilder(
+                                    blockNodeContext
+                                            .configuration()
+                                            .getConfigData(PersistenceStorageConfig.class))
                             .build();
 
             @NonNull
             final BlockStreamService blockStreamService =
                     buildBlockStreamService(
-                            config, streamMediator, blockReader, serviceStatus, blockNodeContext);
+                            streamMediator, blockReader, serviceStatus, blockNodeContext);
 
             @NonNull
             final GrpcRouting.Builder grpcRouting =
@@ -104,7 +99,6 @@ public class Server {
 
     @NonNull
     private static BlockStreamService buildBlockStreamService(
-            @NonNull final Config config,
             @NonNull
                     final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
                             streamMediator,
@@ -112,16 +106,7 @@ public class Server {
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
 
-        // Get Timeout threshold from configuration
-        final long consumerTimeoutThreshold =
-                config.get(BLOCKNODE_SERVER_CONSUMER_TIMEOUT_THRESHOLD_KEY).asLong().orElse(1500L);
-
         return new BlockStreamService(
-                consumerTimeoutThreshold,
-                new ItemAckBuilder(),
-                streamMediator,
-                blockReader,
-                serviceStatus,
-                blockNodeContext);
+                new ItemAckBuilder(), streamMediator, blockReader, serviceStatus, blockNodeContext);
     }
 }

@@ -44,7 +44,6 @@ public class BlockStreamService implements GrpcService {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final long timeoutThresholdMillis;
     private final ItemAckBuilder itemAckBuilder;
     private final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
     private final ServiceStatus serviceStatus;
@@ -55,8 +54,6 @@ public class BlockStreamService implements GrpcService {
      * Constructor for the BlockStreamService class. It initializes the BlockStreamService with the
      * given parameters.
      *
-     * @param timeoutThresholdMillis the timeout threshold in milliseconds for the producer to
-     *     publish block items
      * @param itemAckBuilder the item acknowledgement builder to send responses back to the producer
      * @param streamMediator the stream mediator to proxy block items from the producer to the
      *     subscribers and manage the subscription lifecycle for subscribers
@@ -66,7 +63,6 @@ public class BlockStreamService implements GrpcService {
      *     stop the service and web server in the event of an unrecoverable exception
      */
     BlockStreamService(
-            final long timeoutThresholdMillis,
             @NonNull final ItemAckBuilder itemAckBuilder,
             @NonNull
                     final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
@@ -74,7 +70,6 @@ public class BlockStreamService implements GrpcService {
             @NonNull final BlockReader<Block> blockReader,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
-        this.timeoutThresholdMillis = timeoutThresholdMillis;
         this.itemAckBuilder = itemAckBuilder;
         this.streamMediator = streamMediator;
         this.blockReader = blockReader;
@@ -143,7 +138,7 @@ public class BlockStreamService implements GrpcService {
             @NonNull
             final var streamObserver =
                     new ConsumerStreamResponseObserver(
-                            timeoutThresholdMillis,
+                            blockNodeContext,
                             Clock.systemDefaultZone(),
                             streamMediator,
                             subscribeStreamResponseObserver);

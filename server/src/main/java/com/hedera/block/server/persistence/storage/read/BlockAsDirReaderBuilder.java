@@ -18,9 +18,9 @@ package com.hedera.block.server.persistence.storage.read;
 
 import static com.hedera.block.protos.BlockStreamService.Block;
 
-import com.hedera.block.server.persistence.storage.Util;
+import com.hedera.block.server.persistence.storage.FileUtils;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.helidon.config.Config;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Set;
@@ -32,27 +32,23 @@ import java.util.Set;
  */
 public class BlockAsDirReaderBuilder {
 
-    private final String key;
-    private final Config config;
-    private FileAttribute<Set<PosixFilePermission>> filePerms = Util.defaultPerms;
+    private FileAttribute<Set<PosixFilePermission>> filePerms = FileUtils.defaultPerms;
+    private final PersistenceStorageConfig config;
 
-    private BlockAsDirReaderBuilder(@NonNull final String key, @NonNull final Config config) {
-        this.key = key;
+    private BlockAsDirReaderBuilder(@NonNull PersistenceStorageConfig config) {
         this.config = config;
     }
 
     /**
      * Creates a new block reader builder using the minimum required parameters.
      *
-     * @param key is required to read pertinent configuration info.
      * @param config is required to supply pertinent configuration info for the block reader to
      *     access storage.
      * @return a block reader builder configured with required parameters.
      */
     @NonNull
-    public static BlockAsDirReaderBuilder newBuilder(
-            @NonNull final String key, @NonNull final Config config) {
-        return new BlockAsDirReaderBuilder(key, config);
+    public static BlockAsDirReaderBuilder newBuilder(@NonNull PersistenceStorageConfig config) {
+        return new BlockAsDirReaderBuilder(config);
     }
 
     /**
@@ -60,8 +56,8 @@ public class BlockAsDirReaderBuilder {
      * and directories.
      *
      * <p>By default, the block reader will use the permissions defined in {@link
-     * Util#defaultPerms}. This method is primarily used for testing purposes. Default values should
-     * be sufficient for production use.
+     * FileUtils#defaultPerms}. This method is primarily used for testing purposes. Default values
+     * should be sufficient for production use.
      *
      * @param filePerms the file permissions to use when managing block files and directories.
      * @return a block reader builder configured with required parameters.
@@ -80,6 +76,6 @@ public class BlockAsDirReaderBuilder {
      */
     @NonNull
     public BlockReader<Block> build() {
-        return new BlockAsDirReader(key, config, filePerms);
+        return new BlockAsDirReader(config, filePerms);
     }
 }

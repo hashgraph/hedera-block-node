@@ -19,11 +19,11 @@ package com.hedera.block.server.persistence.storage.write;
 import static com.hedera.block.protos.BlockStreamService.BlockItem;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.persistence.storage.Util;
+import com.hedera.block.server.persistence.storage.FileUtils;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.helidon.config.Config;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
@@ -37,39 +37,30 @@ import java.util.Set;
  */
 public class BlockAsDirWriterBuilder {
 
-    private final String key;
-    private final Config config;
     private final BlockNodeContext blockNodeContext;
-    private FileAttribute<Set<PosixFilePermission>> filePerms = Util.defaultPerms;
+    private FileAttribute<Set<PosixFilePermission>> filePerms = FileUtils.defaultPerms;
     private BlockRemover blockRemover;
 
-    private BlockAsDirWriterBuilder(
-            @NonNull final String key,
-            @NonNull final Config config,
-            @NonNull final BlockNodeContext blockNodeContext) {
-        this.key = key;
-        this.config = config;
+    private BlockAsDirWriterBuilder(@NonNull final BlockNodeContext blockNodeContext) {
         this.blockNodeContext = blockNodeContext;
+        PersistenceStorageConfig config =
+                blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
+
         this.blockRemover =
-                new BlockAsDirRemover(Path.of(config.get(key).asString().get()), Util.defaultPerms);
+                new BlockAsDirRemover(Path.of(config.rootPath()), FileUtils.defaultPerms);
     }
 
     /**
      * Creates a new block writer builder using the minimum required parameters.
      *
-     * @param key is required to read pertinent configuration info.
-     * @param config is required to supply pertinent configuration info for the block writer to
-     *     access storage.
      * @param blockNodeContext is required to provide metrics reporting mechanisms .
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
     public static BlockAsDirWriterBuilder newBuilder(
-            @NonNull final String key,
-            @NonNull final Config config,
             @NonNull final BlockNodeContext blockNodeContext) {
 
-        return new BlockAsDirWriterBuilder(key, config, blockNodeContext);
+        return new BlockAsDirWriterBuilder(blockNodeContext);
     }
 
     /**
@@ -77,8 +68,8 @@ public class BlockAsDirWriterBuilder {
      * and directories.
      *
      * <p>By default, the block writer will use the permissions defined in {@link
-     * Util#defaultPerms}. This method is primarily used for testing purposes. Default values should
-     * be sufficient for production use.
+     * FileUtils#defaultPerms}. This method is primarily used for testing purposes. Default values
+     * should be sufficient for production use.
      *
      * @param filePerms the file permissions to use when managing block files and directories.
      * @return a block writer builder configured with required parameters.
@@ -114,6 +105,6 @@ public class BlockAsDirWriterBuilder {
      */
     @NonNull
     public BlockWriter<BlockItem> build() throws IOException {
-        return new BlockAsDirWriter(key, config, blockRemover, filePerms, blockNodeContext);
+        return new BlockAsDirWriter(blockRemover, filePerms, blockNodeContext);
     }
 }
