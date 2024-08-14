@@ -28,7 +28,6 @@ import static org.mockito.Mockito.*;
 
 import com.google.protobuf.Descriptors;
 import com.hedera.block.server.config.BlockNodeContext;
-// import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;

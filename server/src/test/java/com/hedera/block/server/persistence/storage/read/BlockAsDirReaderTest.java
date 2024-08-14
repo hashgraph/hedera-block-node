@@ -51,10 +51,9 @@ public class BlockAsDirReaderTest {
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
-    // private static final String JUNIT = "my-junit-test";
 
     private Path testPath;
-    // private Config testConfig;
+
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig config;
 
