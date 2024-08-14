@@ -19,6 +19,8 @@ module com.hedera.block.server {
     requires io.helidon.common;
     requires io.helidon.webserver.grpc;
     requires io.helidon.webserver;
+//    requires lazysodium.java;
+//    requires resource.loader;
     requires static com.github.spotbugs.annotations;
     requires static com.google.auto.service;
 

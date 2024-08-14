@@ -150,6 +150,7 @@ extraJavaModuleInfo {
     module("io.netty:netty-resolver", "io.netty.resolver")
     module("io.netty:netty-transport", "io.netty.transport")
     module("io.netty:netty-transport-classes-epoll", "io.netty.transport.classes.epoll")
+    module("org.antlr:antlr4-runtime", "org.antlr.antlr4.runtime")
 
     // spotbugs - these clobbered the ones above
 //    module("com.github.spotbugs:spotbugs-annotations", "com.github.spotbugs.annotations")
@@ -158,8 +159,11 @@ extraJavaModuleInfo {
     // needed for metrics and logging, but also several platform classes
     module("com.goterl:resource-loader", "resource.loader")
     module("com.goterl:lazysodium-java", "lazysodium.java")
-    module("org.antlr:antlr4-runtime", "org.antlr.antlr4.runtime")
     module("org.hyperledger.besu:secp256k1", "org.hyperledger.besu.nativelib.secp256k1")
+    module("net.java.dev.jna:jna", "com.sun.jna") {
+        exportAllPackages()
+        requires("java.logging")
+    }
     module("io.prometheus:simpleclient", "io.prometheus.simpleclient")
     module("io.prometheus:simpleclient_common", "io.prometheus.simpleclient_common")
     module("io.prometheus:simpleclient_httpserver", "io.prometheus.simpleclient.httpserver") {
