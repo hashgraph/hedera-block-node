@@ -26,8 +26,8 @@ import java.nio.file.Paths;
 /**
  * Use this configuration across the persistent storage package
  *
- * @param rootPath provides the root path for saving block data, if you want to override it need to set
- *     it as persistence.storage.rootPath
+ * @param rootPath provides the root path for saving block data, if you want to override it need to
+ *     set it as persistence.storage.rootPath
  */
 @ConfigData("persistence.storage")
 public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String rootPath) {
