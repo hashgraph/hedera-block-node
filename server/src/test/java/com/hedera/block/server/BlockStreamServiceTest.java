@@ -73,7 +73,6 @@ public class BlockStreamServiceTest {
     private static final String TEMP_DIR = "block-node-unit-test-dir";
 
     private Path testPath;
-    // private Config testConfig;
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig config;
 
