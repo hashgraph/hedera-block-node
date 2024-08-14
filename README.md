@@ -30,16 +30,30 @@ Please do not file a public ticket mentioning the vulnerability. Refer to the se
 
 ---
 
-# Configuration
+# Usage
+
+## Configuration
 
 | Environment Variable            | Description                                                                                                   | Default Value |
 |---------------------------------|---------------------------------------------------------------------------------------------------------------|---------------|
 | persistence.storage.rootPath    | The root path for the storage, if not provided will attempt to create a `data` on the working dir of the app. | ./data        |
 | consumer.timeoutThresholdMillis | Time to wait for subscribers before disconnecting in milliseconds                                             | 1500          |
 
-3) To run in debug mode:
+
+
+# Staring locally:
 ```bash
-./gradlew run  # ./gradlew run --debug-jvm to run in debug mode
+./gradlew run
+```
+
+In debug mode, you can attach a debugger to the port 5005.
+```bash
+./gradlew run --debug-jvm
+```
+
+Also you can run on docker locally:
+```bash
+./gradlew startDockerContainer
 ```
 
 # Running Tests
