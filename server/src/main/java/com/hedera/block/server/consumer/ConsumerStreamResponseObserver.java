@@ -19,6 +19,7 @@ package com.hedera.block.server.consumer;
 import static com.hedera.block.protos.BlockStreamService.BlockItem;
 import static com.hedera.block.protos.BlockStreamService.SubscribeStreamResponse;
 
+import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.lmax.disruptor.EventHandler;
@@ -66,14 +67,14 @@ public class ConsumerStreamResponseObserver
      * SubscribeStreamResponse events from the Disruptor and passing them to the downstream consumer
      * via the subscribeStreamResponseObserver.
      *
-     * @param consumerConfig contains the Consumer configuration settings
+     * @param context contains the context with metrics and configuration for the application
      * @param producerLivenessClock the clock to use to determine the producer liveness
      * @param subscriptionHandler the subscription handler to use to manage the subscription
      *     lifecycle
      * @param subscribeStreamResponseObserver the observer to use to send responses to the consumer
      */
     public ConsumerStreamResponseObserver(
-            @NonNull final ConsumerConfig consumerConfig,
+            @NonNull final BlockNodeContext context,
             @NonNull final InstantSource producerLivenessClock,
             @NonNull
                     final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>>
@@ -81,7 +82,10 @@ public class ConsumerStreamResponseObserver
             @NonNull
                     final StreamObserver<SubscribeStreamResponse> subscribeStreamResponseObserver) {
 
-        this.timeoutThresholdMillis = consumerConfig.timeoutThresholdMillis();
+        this.timeoutThresholdMillis =
+                context.configuration()
+                        .getConfigData(ConsumerConfig.class)
+                        .timeoutThresholdMillis();
         this.subscriptionHandler = subscriptionHandler;
 
         // The ServerCallStreamObserver can be configured with Runnable handlers to

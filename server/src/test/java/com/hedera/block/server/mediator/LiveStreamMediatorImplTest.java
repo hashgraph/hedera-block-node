@@ -28,6 +28,7 @@ import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.util.TestConfigUtil;
 import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
@@ -35,6 +36,7 @@ import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.time.InstantSource;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -62,6 +64,15 @@ public class LiveStreamMediatorImplTest {
     private static final int testTimeout = 200;
 
     private final ConsumerConfig consumerConfig = new ConsumerConfig(TIMEOUT_THRESHOLD_MILLIS);
+    private final BlockNodeContext testContext;
+
+    public LiveStreamMediatorImplTest() throws IOException {
+        this.testContext =
+                TestConfigUtil.getTestBlockNodeContext(
+                        Map.of(
+                                TestConfigUtil.CONSUMER_TIMEOUT_THRESHOLD_KEY,
+                                String.valueOf(TIMEOUT_THRESHOLD_MILLIS)));
+    }
 
     @Test
     public void testUnsubscribeEach() throws InterruptedException, IOException {
@@ -142,15 +153,15 @@ public class LiveStreamMediatorImplTest {
 
         final var concreteObserver1 =
                 new ConsumerStreamResponseObserver(
-                        consumerConfig, testClock, streamMediator, streamObserver1);
+                        testContext, testClock, streamMediator, streamObserver1);
 
         final var concreteObserver2 =
                 new ConsumerStreamResponseObserver(
-                        consumerConfig, testClock, streamMediator, streamObserver2);
+                        testContext, testClock, streamMediator, streamObserver2);
 
         final var concreteObserver3 =
                 new ConsumerStreamResponseObserver(
-                        consumerConfig, testClock, streamMediator, streamObserver3);
+                        testContext, testClock, streamMediator, streamObserver3);
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -199,15 +210,15 @@ public class LiveStreamMediatorImplTest {
 
         final var concreteObserver1 =
                 new ConsumerStreamResponseObserver(
-                        consumerConfig, testClock, streamMediator, streamObserver1);
+                        testContext, testClock, streamMediator, streamObserver1);
 
         final var concreteObserver2 =
                 new ConsumerStreamResponseObserver(
-                        consumerConfig, testClock, streamMediator, streamObserver2);
+                        testContext, testClock, streamMediator, streamObserver2);
 
         final var concreteObserver3 =
                 new ConsumerStreamResponseObserver(
-                        consumerConfig, testClock, streamMediator, streamObserver3);
+                        testContext, testClock, streamMediator, streamObserver3);
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -235,7 +246,7 @@ public class LiveStreamMediatorImplTest {
 
         final var testConsumerBlockItemObserver =
                 new TestConsumerStreamResponseObserver(
-                        consumerConfig, testClock, streamMediator, serverCallStreamObserver);
+                        testContext, testClock, streamMediator, serverCallStreamObserver);
 
         streamMediator.subscribe(testConsumerBlockItemObserver);
         assertTrue(streamMediator.isSubscribed(testConsumerBlockItemObserver));
@@ -271,7 +282,7 @@ public class LiveStreamMediatorImplTest {
 
         final var testConsumerBlockItemObserver =
                 new TestConsumerStreamResponseObserver(
-                        consumerConfig, testClock, streamMediator, serverCallStreamObserver);
+                        testContext, testClock, streamMediator, serverCallStreamObserver);
 
         streamMediator.subscribe(testConsumerBlockItemObserver);
         assertTrue(streamMediator.isSubscribed(testConsumerBlockItemObserver));
@@ -337,7 +348,7 @@ public class LiveStreamMediatorImplTest {
                         .build();
         final var testConsumerBlockItemObserver =
                 new TestConsumerStreamResponseObserver(
-                        consumerConfig, testClock, streamMediator, serverCallStreamObserver);
+                        testContext, testClock, streamMediator, serverCallStreamObserver);
 
         // Confirm the observer is not subscribed
         assertFalse(streamMediator.isSubscribed(testConsumerBlockItemObserver));
@@ -351,12 +362,12 @@ public class LiveStreamMediatorImplTest {
 
     private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
         public TestConsumerStreamResponseObserver(
-                ConsumerConfig consumerConfig,
+                BlockNodeContext context,
                 final InstantSource producerLivenessClock,
                 final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
                         streamMediator,
                 final StreamObserver<SubscribeStreamResponse> responseStreamObserver) {
-            super(consumerConfig, producerLivenessClock, streamMediator, responseStreamObserver);
+            super(context, producerLivenessClock, streamMediator, responseStreamObserver);
         }
 
         @NonNull

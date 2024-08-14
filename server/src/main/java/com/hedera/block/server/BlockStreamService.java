@@ -21,7 +21,6 @@ import static com.hedera.block.server.Constants.*;
 
 import com.google.protobuf.Descriptors;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
@@ -139,8 +138,7 @@ public class BlockStreamService implements GrpcService {
             @NonNull
             final var streamObserver =
                     new ConsumerStreamResponseObserver(
-                            // TODO, send the context anyway.
-                            blockNodeContext.configuration().getConfigData(ConsumerConfig.class),
+                            blockNodeContext,
                             Clock.systemDefaultZone(),
                             streamMediator,
                             subscribeStreamResponseObserver);
