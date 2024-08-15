@@ -42,11 +42,11 @@ spec:
               name: {{ include "hedera-block-node.fullname" . }}-secret
         livenessProbe:
           httpGet:
-            path: {{ .Values.blockNode.health.liveness }}
+            path: {{ .Values.blockNode.health.liveness.endpoint }}
             port: {{ .Values.service.port }}
         readinessProbe:
             httpGet:
-              path: {{ .Values.blockNode.health.readiness }}
+              path: {{ .Values.blockNode.health.readiness.endpoint }}
               port: {{ .Values.service.port }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
