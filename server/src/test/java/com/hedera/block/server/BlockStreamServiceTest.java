@@ -119,7 +119,7 @@ public class BlockStreamServiceTest {
         Descriptors.FileDescriptor fileDescriptor = blockStreamService.proto();
 
         // Verify the current rpc methods
-        assertEquals(3, fileDescriptor.getServices().getFirst().getMethods().size());
+        assertEquals(5, fileDescriptor.getServices().getFirst().getMethods().size());
 
         // Verify other methods not invoked
         verify(ackBuilder, never()).buildAck(any(BlockItem.class));
