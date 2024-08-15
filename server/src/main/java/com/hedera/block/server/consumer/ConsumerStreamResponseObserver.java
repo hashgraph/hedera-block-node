@@ -158,14 +158,16 @@ public class ConsumerStreamResponseObserver
                 producerLivenessMillis = currentMillis;
 
                 @NonNull final SubscribeStreamResponse subscribeStreamResponse = event.get();
-                @NonNull final ResponseSender responseSender = getResponseSender(subscribeStreamResponse);
+                @NonNull
+                final ResponseSender responseSender = getResponseSender(subscribeStreamResponse);
                 responseSender.send(subscribeStreamResponse);
             }
         }
     }
 
     @NonNull
-    private ResponseSender getResponseSender(@NonNull final SubscribeStreamResponse subscribeStreamResponse) {
+    private ResponseSender getResponseSender(
+            @NonNull final SubscribeStreamResponse subscribeStreamResponse) {
         if (subscribeStreamResponse.hasStatus()) {
             return statusResponseSender;
         }

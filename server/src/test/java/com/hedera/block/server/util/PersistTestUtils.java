@@ -23,7 +23,6 @@ import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.hapi.node.base.SemanticVersion;
 import com.hedera.hapi.platform.event.EventCore;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -32,11 +31,12 @@ import java.util.List;
 
 public final class PersistTestUtils {
 
-    private final static System.Logger LOGGER = System.getLogger(PersistTestUtils.class.getName());
+    private static final System.Logger LOGGER = System.getLogger(PersistTestUtils.class.getName());
 
     private PersistTestUtils() {}
 
-    public static void writeBlockItemToPath(final Path path, final BlockItem blockItem) throws IOException {
+    public static void writeBlockItemToPath(final Path path, final BlockItem blockItem)
+            throws IOException {
 
         try (FileOutputStream fos = new FileOutputStream(path.toString())) {
             Bytes bytes = BlockItem.PROTOBUF.toBytes(blockItem);
@@ -80,7 +80,10 @@ public final class PersistTestUtils {
                                 BlockItem.newBuilder()
                                         .eventHeader(
                                                 EventHeader.newBuilder()
-                                                        .eventCore(EventCore.newBuilder().creatorNodeId(i).build())
+                                                        .eventCore(
+                                                                EventCore.newBuilder()
+                                                                        .creatorNodeId(i)
+                                                                        .build())
                                                         .build())
                                         .build());
                         break;

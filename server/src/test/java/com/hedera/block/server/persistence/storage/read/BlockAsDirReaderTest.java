@@ -16,6 +16,12 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
+import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
+
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
@@ -27,10 +33,6 @@ import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,12 +41,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
-import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class BlockAsDirReaderTest {
 
@@ -149,7 +148,8 @@ public class BlockAsDirReaderTest {
         final Path blockNodeRootPath = Path.of(config.rootPath());
 
         // Write a file named "1" where a directory should be
-        PersistTestUtils.writeBlockItemToPath(blockNodeRootPath.resolve(Path.of("1")), blockItems.getFirst());
+        PersistTestUtils.writeBlockItemToPath(
+                blockNodeRootPath.resolve(Path.of("1")), blockItems.getFirst());
 
         // Should return empty because the path is not a directory
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
