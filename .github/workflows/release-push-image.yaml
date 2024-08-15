@@ -44,7 +44,7 @@ env:
 
 jobs:
   publish:
-    runs-on: [self-hosted, Linux, medium, ephemeral]
+    runs-on: block-node-linux-medium
 
     steps:
       - name: Harden Runner
@@ -103,7 +103,7 @@ jobs:
 
   helm-chart-release:
     needs: publish
-    runs-on: [ self-hosted, Linux, medium, ephemeral ]
+    runs-on: block-node-linux-medium
     permissions:
       contents: write
 

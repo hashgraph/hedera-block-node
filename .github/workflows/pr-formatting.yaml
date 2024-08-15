@@ -42,7 +42,7 @@ permissions:
 jobs:
   pr-formatting-checks:
     name: PR Formatting Checks
-    runs-on: [self-hosted, Linux, medium, ephemeral]
+    runs-on: block-node-linux-medium
     steps:
       - name: Check PR Title
         id: title-check
