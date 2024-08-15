@@ -23,7 +23,6 @@ import com.hedera.hapi.block.ItemAcknowledgement;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
 /**
@@ -39,11 +38,10 @@ public class AckBuilder {
     @NonNull
     public Acknowledgement buildAck(@NonNull final BlockItem blockItem)
             throws NoSuchAlgorithmException {
-        ItemAcknowledgement itemAck = ItemAcknowledgement.newBuilder()
-                .itemHash(Bytes.wrap(getFakeHash(blockItem)))
-                .build();
-        return Acknowledgement.newBuilder()
-                .itemAck(itemAck)
-                .build();
+        ItemAcknowledgement itemAck =
+                ItemAcknowledgement.newBuilder()
+                        .itemHash(Bytes.wrap(getFakeHash(blockItem)))
+                        .build();
+        return Acknowledgement.newBuilder().itemAck(itemAck).build();
     }
 }

@@ -31,8 +31,8 @@ mainModuleInfo {
 
 dependencies {
     implementation("javax.annotation:javax.annotation-api:1.3.2")
-//    implementation("org.slf4j:slf4j-api:1.7.30")
-//    implementation("com.google.guava:guava:32.1.3-android")
+    //    implementation("org.slf4j:slf4j-api:1.7.30")
+    //    implementation("com.google.guava:guava:32.1.3-android")
 }
 
 testModuleInfo {

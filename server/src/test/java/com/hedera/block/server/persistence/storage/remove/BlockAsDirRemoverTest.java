@@ -30,9 +30,6 @@ import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
-import io.helidon.config.Config;
-import io.helidon.config.MapConfigSource;
-import io.helidon.config.spi.ConfigSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -85,7 +82,8 @@ public class BlockAsDirRemoverTest {
         Optional<Block> blockOpt = blockReader.read(1);
         assert (blockOpt.isPresent());
         assertEquals(
-                blockItems.getFirst().blockHeader(), blockOpt.get().items().getFirst().blockHeader());
+                blockItems.getFirst().blockHeader(),
+                blockOpt.get().items().getFirst().blockHeader());
 
         // Now remove the block
         blockRemover.remove(1);
@@ -117,7 +115,8 @@ public class BlockAsDirRemoverTest {
         Optional<Block> blockOpt = blockReader.read(1);
         assert (blockOpt.isPresent());
         assertEquals(
-                blockItems.getFirst().blockHeader(), blockOpt.get().items().getFirst().blockHeader());
+                blockItems.getFirst().blockHeader(),
+                blockOpt.get().items().getFirst().blockHeader());
 
         // Now remove the block
         blockRemover = new BlockAsDirRemover(testPath, FileUtils.defaultPerms);

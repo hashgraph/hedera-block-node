@@ -29,8 +29,6 @@ tasks.register<GitClone>("cloneHederaProtobufs") {
     localCloneDirectory = layout.buildDirectory.dir("hedera-protobufs")
 }
 
-
-
 // Configure Protobuf Plugin to download protoc executable rather than using local installed version
 protobuf {
     val libs = the<VersionCatalogsExtension>().named("libs")
@@ -38,7 +36,8 @@ protobuf {
     plugins {
         // Add GRPC plugin as we need to generate GRPC services
         id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:" + libs.findVersion("grpc.protobuf.grpc").get()
+            artifact =
+                "io.grpc:protoc-gen-grpc-java:" + libs.findVersion("grpc.protobuf.grpc").get()
         }
     }
     generateProtoTasks { ofSourceSet("main").forEach { it.plugins { id("grpc") } } }
@@ -64,7 +63,7 @@ tasks.javadoc {
 }
 
 // Give JUnit more ram and make it execute tests in parallel
-//tasks.test {
+// tasks.test {
     // We are running a lot of tests 10s of thousands, so they need to run in parallel. Make each
     // class run in parallel.
 //    systemProperties["junit.jupiter.execution.parallel.enabled"] = true
@@ -74,4 +73,4 @@ tasks.javadoc {
     // us parallel GC to keep up with high temporary garbage creation,
     // and allow GC to use 40% of CPU if needed
 //    jvmArgs("-XX:+UseParallelGC", "-XX:GCTimeRatio=90")
-//}
+// }

@@ -16,12 +16,11 @@
 
 package com.hedera.block.server.consumer;
 
-import com.hedera.hapi.block.stream.BlockItem;
-import com.hedera.hapi.block.SubscribeStreamResponse;
-
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;

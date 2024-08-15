@@ -19,19 +19,16 @@ package com.hedera.block.server.persistence.storage.read;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.Block;
-
+import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import io.helidon.config.Config;
-
-import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
@@ -124,7 +121,8 @@ class BlockAsDirReader implements BlockReader<Block> {
             }
 
             if (blockItems.isEmpty()) {
-                LOGGER.log(System.Logger.Level.ERROR, "No block items found in block: " + blockPath);
+                LOGGER.log(
+                        System.Logger.Level.ERROR, "No block items found in block: " + blockPath);
                 return Optional.empty();
             }
 

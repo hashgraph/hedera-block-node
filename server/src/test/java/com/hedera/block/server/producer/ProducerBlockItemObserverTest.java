@@ -16,14 +16,12 @@
 
 package com.hedera.block.server.producer;
 
-import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.block.server.util.TestConfigUtil.CONSUMER_TIMEOUT_THRESHOLD_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
-import com.google.protobuf.ByteString;
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
@@ -34,16 +32,11 @@ import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.*;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.output.BlockHeader;
-import com.hedera.block.server.util.TestConfigUtil;
 import io.grpc.stub.StreamObserver;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.time.InstantSource;
@@ -53,11 +46,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ProducerBlockItemObserverTest {
@@ -97,9 +85,7 @@ public class ProducerBlockItemObserverTest {
 
         final Acknowledgement ack = new AckBuilder().buildAck(blockHeader);
         final PublishStreamResponse publishStreamResponse =
-                PublishStreamResponse.newBuilder()
-                        .acknowledgement(ack)
-                        .build();
+                PublishStreamResponse.newBuilder().acknowledgement(ack).build();
         verify(publishStreamResponseObserver, timeout(50).times(1)).onNext(publishStreamResponse);
 
         // Helidon will call onCompleted after onNext
@@ -206,14 +192,10 @@ public class ProducerBlockItemObserverTest {
 
         final ProducerBlockItemObserver producerBlockItemObserver =
                 new ProducerBlockItemObserver(
-                        streamMediator,
-                        publishStreamResponseObserver,
-                        ackBuilder,
-                        serviceStatus);
+                        streamMediator, publishStreamResponseObserver, ackBuilder, serviceStatus);
 
         when(serviceStatus.isRunning()).thenReturn(true);
-        when(ackBuilder.buildAck(any()))
-                .thenThrow(new NoSuchAlgorithmException("Test exception"));
+        when(ackBuilder.buildAck(any())).thenThrow(new NoSuchAlgorithmException("Test exception"));
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final BlockItem blockHeader = blockItems.getFirst();
@@ -223,9 +205,7 @@ public class ProducerBlockItemObserverTest {
 
         final EndOfStream endOfStream =
                 EndOfStream.newBuilder()
-                        .status(
-                                PublishStreamResponseCode
-                                        .STREAM_ITEMS_UNKNOWN)
+                        .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
                         .build();
         final PublishStreamResponse errorResponse =
                 PublishStreamResponse.newBuilder().status(endOfStream).build();

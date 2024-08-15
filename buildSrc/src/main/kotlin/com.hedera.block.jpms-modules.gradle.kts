@@ -127,7 +127,6 @@ extraJavaModuleInfo {
     module("org.apache.commons:commons-collections4", "org.apache.commons.collections4")
     module("com.esaulpaugh:headlong", "headlong")
 
-
     module("org.checkerframework:checker-qual", "org.checkerframework.checker.qual")
     module("io.tmio:tuweni-units", "tuweni.units")
     module("io.tmio:tuweni-bytes", "tuweni.bytes")
@@ -179,10 +178,10 @@ extraJavaModuleInfo {
     module("com.google.auto:auto-common", "com.google.auto.common")
 
     // Testing only
-//    module("com.google.jimfs:jimfs", "com.google.jimfs")
-//    module("org.awaitility:awaitility", "awaitility")
-//    module("uk.org.webcompere:system-stubs-core", "uk.org.webcompere.systemstubs.core")
-//    module("uk.org.webcompere:system-stubs-jupiter", "uk.org.webcompere.systemstubs.jupiter")
+    //    module("com.google.jimfs:jimfs", "com.google.jimfs")
+    //    module("org.awaitility:awaitility", "awaitility")
+    //    module("uk.org.webcompere:system-stubs-core", "uk.org.webcompere.systemstubs.core")
+    //    module("uk.org.webcompere:system-stubs-jupiter", "uk.org.webcompere.systemstubs.jupiter")
 
     // JMH only
     module("net.sf.jopt-simple:jopt-simple", "jopt.simple")
@@ -192,17 +191,17 @@ extraJavaModuleInfo {
     module("org.openjdk.jmh:jmh-generator-reflection", "jmh.generator.reflection")
 
     // Test clients only
-//    module("com.github.docker-java:docker-java-api", "com.github.docker.java.api")
-//    module("com.github.docker-java:docker-java-transport", "com.github.docker.java.transport")
-//    module(
-//        "com.github.docker-java:docker-java-transport-zerodep",
-//        "com.github.docker.transport.zerodep"
-//    )
+    //    module("com.github.docker-java:docker-java-api", "com.github.docker.java.api")
+    //    module("com.github.docker-java:docker-java-transport", "com.github.docker.java.transport")
+    //    module(
+    //        "com.github.docker-java:docker-java-transport-zerodep",
+    //        "com.github.docker.transport.zerodep"
+    //    )
     module("com.google.protobuf:protobuf-java-util", "com.google.protobuf.util")
-//    module("com.squareup:javapoet", "com.squareup.javapoet") {
-//        exportAllPackages()
-//        requires("java.compiler")
-//    }
+    //    module("com.squareup:javapoet", "com.squareup.javapoet") {
+    //        exportAllPackages()
+    //        requires("java.compiler")
+    //    }
     module("junit:junit", "junit")
     module("org.hamcrest:hamcrest", "org.hamcrest")
     module("org.json:json", "org.json")

@@ -22,14 +22,13 @@ import static org.mockito.Mockito.*;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.hapi.block.stream.input.EventHeader;
-import com.hedera.hapi.block.stream.input.protoc.EventMetadata;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.hapi.platform.event.EventCore;
-import com.hedera.block.server.util.TestConfigUtil;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
@@ -185,15 +184,13 @@ public class ConsumerStreamResponseObserverTest {
             if (i % 2 == 0) {
                 final EventHeader eventHeader =
                         EventHeader.newBuilder().eventCore(EventCore.newBuilder().build()).build();
-                final BlockItem blockItem =
-                        BlockItem.newBuilder().eventHeader(eventHeader).build();
+                final BlockItem blockItem = BlockItem.newBuilder().eventHeader(eventHeader).build();
                 final SubscribeStreamResponse subscribeStreamResponse =
                         SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
                 when(objectEvent.get()).thenReturn(subscribeStreamResponse);
             } else {
                 final BlockProof blockProof = BlockProof.newBuilder().block(i).build();
-                final BlockItem blockItem =
-                        BlockItem.newBuilder().blockProof(blockProof).build();
+                final BlockItem blockItem = BlockItem.newBuilder().blockProof(blockProof).build();
                 final SubscribeStreamResponse subscribeStreamResponse =
                         SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
                 when(objectEvent.get()).thenReturn(subscribeStreamResponse);

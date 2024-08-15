@@ -16,11 +16,10 @@
 
 package com.hedera.block.server.producer;
 
-import com.hedera.hapi.block.*;
-import com.hedera.hapi.block.stream.BlockItem;
-
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.mediator.Publisher;
+import com.hedera.hapi.block.*;
+import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.grpc.stub.StreamObserver;
@@ -51,8 +50,8 @@ public class ProducerBlockItemObserver implements StreamObserver<PublishStreamRe
      *     arrive from the upstream producer
      * @param publishStreamResponseObserver the response stream observer to send responses back to
      *     the upstream producer for each block item processed
-     * @param ackBuilder the item acknowledgement builder to use when sending responses back to
-     *     the upstream producer for each block item processed
+     * @param ackBuilder the item acknowledgement builder to use when sending responses back to the
+     *     upstream producer for each block item processed
      * @param serviceStatus the service status used to determine if the downstream service is
      *     accepting block items. In the event of an unrecoverable exception, it will be used to
      *     stop the web server.
@@ -81,7 +80,9 @@ public class ProducerBlockItemObserver implements StreamObserver<PublishStreamRe
 
         @Nullable final BlockItem blockItem = publishStreamRequest.blockItem();
         if (blockItem == null) {
-            LOGGER.log(System.Logger.Level.ERROR, "BlockItem within the publishStreamRequest was null");
+            LOGGER.log(
+                    System.Logger.Level.ERROR,
+                    "BlockItem within the publishStreamRequest was null");
             return;
         }
 

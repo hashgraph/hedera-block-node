@@ -16,7 +16,6 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import com.hedera.hapi.block.stream.BlockItem;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 
 import com.hedera.block.server.config.BlockNodeContext;
@@ -24,10 +23,10 @@ import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
+import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;

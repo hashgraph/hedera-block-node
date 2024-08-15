@@ -2,10 +2,21 @@ import com.hedera.block.server.config.BlockNodeConfigExtension;
 
 /** Runtime module of the server. */
 module com.hedera.block.server {
+    //    exports com.hedera.block.server.consumer to
+    //            com.swirlds.config.impl;
+    //    exports com.hedera.block.server.persistence.storage to
+    //            com.swirlds.config.impl;
+
+    exports com.hedera.block.server;
     exports com.hedera.block.server.consumer;
     exports com.hedera.block.server.persistence.storage;
+    exports com.hedera.block.server.persistence.storage.write;
+    exports com.hedera.block.server.persistence.storage.read;
+    exports com.hedera.block.server.persistence.storage.remove;
+    exports com.hedera.block.server.config;
+    exports com.hedera.block.server.mediator;
+    exports com.hedera.block.server.data;
 
-    requires com.hedera.hapi.block;
     requires com.google.common;
     requires com.hedera.block.stream;
     requires com.hedera.pbj.runtime;
@@ -19,8 +30,8 @@ module com.hedera.block.server {
     requires io.helidon.common;
     requires io.helidon.webserver.grpc;
     requires io.helidon.webserver;
-//    requires lazysodium.java;
-//    requires resource.loader;
+    //    requires lazysodium.java;
+    //    requires resource.loader;
     requires static com.github.spotbugs.annotations;
     requires static com.google.auto.service;
 

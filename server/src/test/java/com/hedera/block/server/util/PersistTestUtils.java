@@ -22,8 +22,6 @@ import com.hedera.hapi.block.stream.input.EventHeader;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.hapi.node.base.SemanticVersion;
 import com.hedera.hapi.platform.event.EventCore;
-import com.swirlds.logging.legacy.payload.SoftwareVersionPayload;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,9 +43,12 @@ public final class PersistTestUtils {
                                                 BlockHeader.newBuilder()
                                                         .number(i)
                                                         .softwareVersion(
-                                                                SemanticVersion.newBuilder().major(1).minor(0).build()
-                                                        ).build())
-                                                        .build());
+                                                                SemanticVersion.newBuilder()
+                                                                        .major(1)
+                                                                        .minor(0)
+                                                                        .build())
+                                                        .build())
+                                        .build());
                         break;
                     case 10:
                         // Last block is always the state proof
@@ -60,7 +61,10 @@ public final class PersistTestUtils {
                         // Middle blocks are events
                         blockItems.add(
                                 BlockItem.newBuilder()
-                                        .eventHeader(EventHeader.newBuilder().eventCore(EventCore.DEFAULT).build())
+                                        .eventHeader(
+                                                EventHeader.newBuilder()
+                                                        .eventCore(EventCore.DEFAULT)
+                                                        .build())
                                         .build());
                         break;
                 }

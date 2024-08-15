@@ -16,6 +16,10 @@
 
 package com.hedera.block.server.mediator;
 
+import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
@@ -23,10 +27,10 @@ import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.output.BlockHeader;
-import com.hedera.block.server.util.TestConfigUtil;
 import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
@@ -39,14 +43,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.io.IOException;
-import java.time.InstantSource;
-import java.util.List;
-
-import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class LiveStreamMediatorImplTest {

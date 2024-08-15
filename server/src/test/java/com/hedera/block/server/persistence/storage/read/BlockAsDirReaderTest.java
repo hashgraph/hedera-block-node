@@ -199,7 +199,7 @@ public class BlockAsDirReaderTest {
 
     private void writeFileToPath(final Path path, final BlockItem blockItem) throws IOException {
         try (FileOutputStream fos = new FileOutputStream(path.toString());
-             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             oos.writeObject(blockItem);
             LOGGER.log(
                     System.Logger.Level.INFO, "Successfully wrote the block item file: {0}", path);
