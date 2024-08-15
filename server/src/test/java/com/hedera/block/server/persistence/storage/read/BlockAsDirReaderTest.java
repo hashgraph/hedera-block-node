@@ -16,12 +16,6 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
-import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
-
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
@@ -33,9 +27,11 @@ import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.FileOutputStream;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
@@ -43,9 +39,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+
+import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 
 public class BlockAsDirReaderTest {
 
@@ -150,7 +149,7 @@ public class BlockAsDirReaderTest {
         final Path blockNodeRootPath = Path.of(config.rootPath());
 
         // Write a file named "1" where a directory should be
-        writeFileToPath(blockNodeRootPath.resolve(Path.of("1")), blockItems.getFirst());
+        PersistTestUtils.writeBlockItemToPath(blockNodeRootPath.resolve(Path.of("1")), blockItems.getFirst());
 
         // Should return empty because the path is not a directory
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
@@ -195,15 +194,6 @@ public class BlockAsDirReaderTest {
 
         final Optional<Block> blockOpt = blockReader.read(1);
         assertTrue(blockOpt.isEmpty());
-    }
-
-    private void writeFileToPath(final Path path, final BlockItem blockItem) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(path.toString());
-                ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-            oos.writeObject(blockItem);
-            LOGGER.log(
-                    System.Logger.Level.INFO, "Successfully wrote the block item file: {0}", path);
-        }
     }
 
     public static void removeBlockReadPerms(int blockNumber, final PersistenceStorageConfig config)

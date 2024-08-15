@@ -22,12 +22,29 @@ import com.hedera.hapi.block.stream.input.EventHeader;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.hapi.node.base.SemanticVersion;
 import com.hedera.hapi.platform.event.EventCore;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class PersistTestUtils {
 
+    private final static System.Logger LOGGER = System.getLogger(PersistTestUtils.class.getName());
+
     private PersistTestUtils() {}
+
+    public static void writeBlockItemToPath(final Path path, final BlockItem blockItem) throws IOException {
+
+        try (FileOutputStream fos = new FileOutputStream(path.toString())) {
+            Bytes bytes = BlockItem.PROTOBUF.toBytes(blockItem);
+            fos.write(bytes.toByteArray());
+            LOGGER.log(
+                    System.Logger.Level.INFO, "Successfully wrote the block item file: {0}", path);
+        }
+    }
 
     public static List<BlockItem> generateBlockItems(int numOfBlocks) {
 
