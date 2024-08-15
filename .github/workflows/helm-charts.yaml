@@ -18,7 +18,8 @@ name: Lint and Test Charts
 on: pull_request
 
 jobs:
-  lint-test:
+  lint-install-test:
+    name: Lint and Install Charts
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
