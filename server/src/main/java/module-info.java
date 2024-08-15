@@ -2,10 +2,8 @@ import com.hedera.block.server.config.BlockNodeConfigExtension;
 
 /** Runtime module of the server. */
 module com.hedera.block.server {
-    exports com.hedera.block.server.consumer to
-            com.swirlds.config.impl;
-    exports com.hedera.block.server.persistence.storage to
-            com.swirlds.config.impl;
+    exports com.hedera.block.server.consumer;
+    exports com.hedera.block.server.persistence.storage;
 
     requires com.hedera.block.protos;
     requires com.google.protobuf;
