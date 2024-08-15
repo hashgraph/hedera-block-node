@@ -47,8 +47,9 @@ public class ConsumerStreamResponseObserver
     private final InstantSource producerLivenessClock;
     private long producerLivenessMillis;
 
-    private boolean streamStarted;
     private final AtomicBoolean isResponsePermitted = new AtomicBoolean(true);
+    private final ResponseSender statusResponseSender = new StatusResponseSender();
+    private final ResponseSender blockItemResponseSender = new BlockItemResponseSender();
 
     /**
      * The onCancel handler to execute when the consumer cancels the stream. This handler is
@@ -156,24 +157,57 @@ public class ConsumerStreamResponseObserver
                 // Refresh the producer liveness and pass the BlockItem to the downstream observer.
                 producerLivenessMillis = currentMillis;
 
-                // Only start sending BlockItems after we've reached
-                // the beginning of a block.
                 @NonNull final SubscribeStreamResponse subscribeStreamResponse = event.get();
-                @Nullable final BlockItem blockItem = subscribeStreamResponse.blockItem();
-                if (blockItem != null) {
-                    if (!streamStarted && blockItem.hasBlockHeader()) {
-                        streamStarted = true;
-                    }
+                @NonNull final ResponseSender responseSender = getResponseSender(subscribeStreamResponse);
+                responseSender.send(subscribeStreamResponse);
+            }
+        }
+    }
 
-                    if (streamStarted) {
-                        LOGGER.log(
-                                System.Logger.Level.DEBUG,
-                                "Send BlockItem downstream: {0} ",
-                                blockItem);
-                        subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
-                    }
+    @NonNull
+    private ResponseSender getResponseSender(@NonNull final SubscribeStreamResponse subscribeStreamResponse) {
+        if (subscribeStreamResponse.hasStatus()) {
+            return statusResponseSender;
+        }
+
+        return blockItemResponseSender;
+    }
+
+    private interface ResponseSender {
+        void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse);
+    }
+
+    private final class BlockItemResponseSender implements ResponseSender {
+        private boolean streamStarted = false;
+
+        public void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse) {
+
+            // Only start sending BlockItems after we've reached
+            // the beginning of a block.
+            @Nullable final BlockItem blockItem = subscribeStreamResponse.blockItem();
+            if (blockItem != null) {
+                if (!streamStarted && blockItem.hasBlockHeader()) {
+                    streamStarted = true;
+                }
+
+                if (streamStarted) {
+                    LOGGER.log(
+                            System.Logger.Level.DEBUG,
+                            "Send BlockItem downstream: {0} ",
+                            blockItem);
+                    subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
                 }
             }
+        }
+    }
+
+    private final class StatusResponseSender implements ResponseSender {
+        public void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse) {
+            LOGGER.log(
+                    System.Logger.Level.DEBUG,
+                    "Send SubscribeStreamResponse downstream: {0} ",
+                    subscribeStreamResponse);
+            subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
         }
     }
 }

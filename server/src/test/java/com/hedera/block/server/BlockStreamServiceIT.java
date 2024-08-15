@@ -207,8 +207,7 @@ public class BlockStreamServiceIT {
 
     @Test
     public void testFullHappyPath() throws IOException {
-        //        int numberOfBlocks = 100;
-        int numberOfBlocks = 2;
+        int numberOfBlocks = 100;
 
         final BlockStreamService blockStreamService = buildBlockStreamService();
 
@@ -222,10 +221,10 @@ public class BlockStreamServiceIT {
         final List<BlockItem> blockItems = generateBlockItems(numberOfBlocks);
 
         blockStreamService.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver1);
-        //        blockStreamService.subscribeBlockStream(subscribeStreamRequest,
-        // subscribeStreamObserver2);
-        //        blockStreamService.subscribeBlockStream(subscribeStreamRequest,
-        // subscribeStreamObserver3);
+                blockStreamService.subscribeBlockStream(subscribeStreamRequest,
+         subscribeStreamObserver2);
+                blockStreamService.subscribeBlockStream(subscribeStreamRequest,
+         subscribeStreamObserver3);
 
         for (BlockItem blockItem : blockItems) {
             final PublishStreamRequest publishStreamRequest =
@@ -235,10 +234,10 @@ public class BlockStreamServiceIT {
 
         verifySubscribeStreamResponse(
                 numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver1, blockItems);
-        //        verifySubscribeStreamResponse(
-        //                numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver2, blockItems);
-        //        verifySubscribeStreamResponse(
-        //                numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver3, blockItems);
+                verifySubscribeStreamResponse(
+                        numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver2, blockItems);
+                verifySubscribeStreamResponse(
+                        numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver3, blockItems);
 
         streamObserver.onCompleted();
     }

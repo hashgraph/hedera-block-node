@@ -80,7 +80,7 @@ public final class PersistTestUtils {
                                 BlockItem.newBuilder()
                                         .eventHeader(
                                                 EventHeader.newBuilder()
-                                                        .eventCore(EventCore.DEFAULT)
+                                                        .eventCore(EventCore.newBuilder().creatorNodeId(i).build())
                                                         .build())
                                         .build());
                         break;
