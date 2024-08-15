@@ -38,7 +38,7 @@ public class AckBuilder {
 
     @NonNull
     public Acknowledgement buildAck(@NonNull final BlockItem blockItem)
-            throws IOException, NoSuchAlgorithmException {
+            throws NoSuchAlgorithmException {
         ItemAcknowledgement itemAck = ItemAcknowledgement.newBuilder()
                 .itemHash(Bytes.wrap(getFakeHash(blockItem)))
                 .build();

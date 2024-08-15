@@ -17,6 +17,8 @@
 package com.hedera.block.server.producer;
 
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,23 +36,15 @@ public final class Util {
      *
      * @param blockItem the block item to get the fake hash for
      * @return the fake hash for the given block item
-     * @throws IOException thrown if an I/O error occurs while getting the fake hash
      * @throws NoSuchAlgorithmException thrown if the SHA-384 algorithm is not available
      */
     public static byte[] getFakeHash(BlockItem blockItem)
-            throws IOException, NoSuchAlgorithmException {
+            throws NoSuchAlgorithmException {
 
-        try (final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                final ObjectOutputStream objectOutputStream =
-                        new ObjectOutputStream(byteArrayOutputStream)) {
-            objectOutputStream.writeObject(blockItem);
+        @NonNull final Bytes bytes = BlockItem.PROTOBUF.toBytes(blockItem);
 
-            // Get the serialized bytes
-            byte[] serializedObject = byteArrayOutputStream.toByteArray();
-
-            // Calculate the SHA-384 hash
-            MessageDigest digest = MessageDigest.getInstance("SHA-384");
-            return digest.digest(serializedObject);
-        }
+        // Calculate the SHA-384 hash
+        MessageDigest digest = MessageDigest.getInstance("SHA-384");
+        return digest.digest(bytes.toByteArray());
     }
 }
