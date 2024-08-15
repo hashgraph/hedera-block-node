@@ -5,10 +5,10 @@ module com.hedera.block.stream {
     exports com.hedera.hapi.block.stream.input;
     exports com.hedera.hapi.block.stream.output;
 
-    requires com.google.common;
+    requires transitive com.google.common;
     requires com.google.protobuf;
-    requires com.hedera.pbj.runtime;
-    requires io.grpc.stub;
+    requires transitive com.hedera.pbj.runtime;
+    requires transitive io.grpc.stub;
     requires io.grpc;
     requires io.grpc.protobuf;
     requires org.antlr.antlr4.runtime;

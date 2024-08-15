@@ -20,7 +20,7 @@ plugins {
 
 
 include(":stream")
-include(":server")
+//include(":server")
 
 includeBuild(".") // https://github.com/gradle/gradle/issues/21490#issuecomment-1458887481
 
@@ -57,36 +57,29 @@ dependencyResolutionManagement {
             version("com.google.auto.service", "1.1.1")
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
 
-            version("io.grpc", "1.64.0")
+            // PBJ dependencies
+//            version("io.grpc", "1.64.0")
             version("io.grpc.protobuf", "1.64.0")
             version("io.grpc.stub", "1.64.0")
 
-            // this didn't work
-//            version("javax.annotation", "1.3.2")
-//            version("javax.inject", "1")
-
-            // PBJ dependencies
             plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.8.9")
             version("com.hedera.pbj.runtime", "0.8.9")
+            version("org.antlr.antlr4.runtime", "4.13.1")
 
+            version("java.annotation", "1.3.2")
+            version("javax.inject", "1")
             version("com.google.protobuf", "3.21.7")
             version("com.google.protobuf.util", "3.21.7")
 
             version("hapi-proto", hapiProtoVersion)
             version("com.google.common", "33.0.0-jre")
-//            version("com.google.common", "31.1-jre")
 
             version("org.apache.commons.codec", "1.15")
             version("org.apache.commons.collections4", "4.4")
             version("org.apache.commons.io", "2.15.1")
             version("org.apache.commons.lang3", "3.14.0")
             version("org.apache.commons.compress", "1.26.0")
-
-//            version("org.slf4j", "2.21.1")
             version("org.slf4j", "1.7.30")
-
-//            version("lazysodium.java", "5.1.1")
-//            version("resource.loader", "")
 
             // Testing only versions
             version("org.assertj.core", "3.23.1")

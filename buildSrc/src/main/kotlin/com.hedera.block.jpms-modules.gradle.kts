@@ -54,7 +54,16 @@ jvmDependencyConflicts.patch {
     module("io.grpc:grpc-stub") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-testing") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-util") { annotationLibraries.forEach { removeDependency(it) } }
-
+    module("com.github.ben-manes.caffeine:caffeine") {
+        annotationLibraries.forEach { removeDependency(it) }
+    }
+    module("com.google.dagger:dagger-compiler") {
+        annotationLibraries.forEach { removeDependency(it) }
+    }
+    module("com.google.dagger:dagger-producers") {
+        annotationLibraries.forEach { removeDependency(it) }
+    }
+    module("com.google.dagger:dagger-spi") { annotationLibraries.forEach { removeDependency(it) } }
     module("com.google.guava:guava") {
         (annotationLibraries -
                 "com.google.code.findbugs:jsr305" -
@@ -67,12 +76,15 @@ jvmDependencyConflicts.patch {
     }
     module("org.apache.tuweni:tuweni-bytes") { removeDependency("com.google.code.findbugs:jsr305") }
     module("org.apache.tuweni:tuweni-units") { removeDependency("com.google.code.findbugs:jsr305") }
-
-    // Added for metrics and logging, but also several platform classes
     module("io.prometheus:simpleclient") {
         removeDependency("io.prometheus:simpleclient_tracer_otel")
         removeDependency("io.prometheus:simpleclient_tracer_otel_agent")
     }
+    module("org.jetbrains.kotlin:kotlin-stdlib") {
+        removeDependency("org.jetbrains.kotlin:kotlin-stdlib-common")
+    }
+    module("junit:junit") { removeDependency("org.hamcrest:hamcrest-core") }
+    module("org.hyperledger.besu:secp256k1") { addApiDependency("net.java.dev.jna:jna") }
 }
 
 // Fix or enhance the 'module-info.class' of third-party Modules. This is about the
