@@ -23,10 +23,11 @@ import io.helidon.webserver.http.ServerResponse;
 
 /** Defines the contract for health http service, needed for implementing an standard */
 public interface HealthService extends HttpService {
-    /** The path for the health group endpoints. Root path for all health endpoints.
+    /**
+     * The path for the health group endpoints. Root path for all health endpoints.
      *
      * @return the root path for the health group endpoints
-     *  */
+     */
     String getHealthRootPath();
 
     /**
