@@ -33,7 +33,7 @@ class HealthServiceTest {
 
     private static final String READINESS_PATH = "/readiness";
     private static final String LIVENESS_PATH = "/liveness";
-    private static final String HEALTH_PATH = "/health";
+    private static final String HEALTH_PATH = "/healthz";
 
     @Mock private ServiceStatus serviceStatus;
 
