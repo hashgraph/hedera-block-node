@@ -38,7 +38,18 @@ public interface HealthService extends HttpService {
     @Override
     void routing(HttpRules httpRules);
 
+    /**
+     * Handles the request for liveness endpoint, that it most be defined on routing implementation.
+     *
+     * @param req the server request
+     * @param res the server response
+     */
     void handleLiveness(ServerRequest req, ServerResponse res);
 
+    /**
+     * Handles the request for readiness endpoint, that it most be defined on routing implementation.
+     * @param req the server request
+     * @param res the server response
+     */
     void handleReadiness(ServerRequest req, ServerResponse res);
 }
