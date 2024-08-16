@@ -94,7 +94,12 @@ jvmDependencyConflicts.patch {
 extraJavaModuleInfo {
     failOnAutomaticModules = true // Only allow Jars with 'module-info' on all module paths
 
-    module("io.grpc:grpc-api", "io.grpc")
+//    module("io.grpc:grpc-api", "io.grpc")
+    module("io.grpc:grpc-api", "io.grpc") {
+        exportAllPackages()
+        requireAllDefinedDependencies()
+        requires("java.logging")
+    }
     module("io.grpc:grpc-core", "io.grpc.internal")
     module("io.grpc:grpc-context", "io.grpc.context")
     module("io.grpc:grpc-netty", "io.grpc.netty") {
