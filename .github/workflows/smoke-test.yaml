@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-name: "PR Gradle Checks"
+name: "Smoke Test"
 on:
   push:
     branches:
@@ -69,12 +69,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Build application
+        run: ${{ env.GRADLE_EXEC }} build
+
       - name: Run application in background, capture logs, and save PID in a variable
         run: |
-          nohup ./gradlew run > app.log 2>&1 &
+          ${{ env.GRADLE_EXEC }} run 2> output.log < /dev/null
           APP_PID=$!
           echo "Application started with PID $APP_PID"
-          sleep 5
+          sleep 10
           
       - name: Smoke Test
         run: ./server/src/test/resources/smoke-test.sh app.log
