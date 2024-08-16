@@ -59,7 +59,27 @@ sourceSets {
 }
 
 dependencies {
-    implementation("javax.annotation:javax.annotation-api:1.3.2")
+//    val libs = versionCatalogs.named("libs")
+
+    api("com.google.protobuf:protobuf-java:3.24.0") {
+        because("com.google.protobuf")
+    }
+    api("com.hedera.pbj:pbj-runtime:0.8.9") {
+        because("com.hedera.pbj.runtime")
+    }
+    api("io.grpc:grpc-stub:1.64.0") {
+        because("io.grpc.stub")
+    }
+    runtimeOnly("com.github.spotbugs:spotbugs-annotations:4.7.3") {
+        because("com.github.spotbugs.annotations")
+    }
+    runtimeOnly("javax.annotation:javax.annotation-api:1.3.2") {
+        because("java.annotation")
+    }
+//    compileOnly("java.annotation")
+//    api(libs.findVersion("com.google.common").get())
+//    api(libs.findVersion("com.google.protobuf").get())
+//    compileOnly(libs.findVersion("java.annotation").get())
 //    implementation("com.google.guava:guava:33.0.0-jre")
 //    implementation("com.hedera.pbj:pbj-runtime:0.8.9")
 //    implementation("io.grpc:grpc-stub:1.64.0")
