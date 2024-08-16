@@ -70,12 +70,12 @@ dependencies {
     api("io.grpc:grpc-stub:1.64.0") {
         because("io.grpc.stub")
     }
-//    api("io.grpc:grpc-api:1.64.0") {
-//        because("io.grpc")
-//    }
-//    api("com.google.guava:guava:33.0.0-jre") {
-//        because("com.google.common")
-//    }
+    api("io.grpc:grpc-api:1.64.0") {
+        because("io.grpc")
+    }
+    api("com.google.guava:guava:33.0.0-jre") {
+        because("com.google.common")
+    }
 
     // requires static in the module-info.java
     runtimeOnly("com.github.spotbugs:spotbugs-annotations:4.7.3") {
