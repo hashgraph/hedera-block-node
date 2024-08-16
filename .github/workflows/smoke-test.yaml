@@ -59,6 +59,13 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Install grpcurl
+        run: |
+          curl -L https://github.com/fullstorydev/grpcurl/releases/download/v1.8.7/grpcurl_1.8.7_linux_x86_64.tar.gz -o grpcurl.tar.gz
+          sudo tar -xzf grpcurl.tar.gz -C /usr/local/bin grpcurl
+          rm grpcurl.tar.gz
+
+
       - name: Cache Gradle packages
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
@@ -72,15 +79,15 @@ jobs:
       - name: Build application
         run: ${{ env.GRADLE_EXEC }} build
 
-      - name: Run application in background, capture logs, and save PID in a variable
+      - name: Run application in background, capture logs in app.log
         run: |
-          ${{ env.GRADLE_EXEC }} run 2> output.log < /dev/null
-          APP_PID=$!
+          ${{ env.GRADLE_EXEC }} run 2> server/src/test/resources/app.log < /dev/null &
           echo "Application started with PID $APP_PID"
           sleep 10
-          
-      - name: Smoke Test
-        run: ./server/src/test/resources/smoke-test.sh app.log
 
-      - name: Kill application
-        run: kill $APP_PID
+      - name: Print App Logs
+        run: cat server/src/test/resources/app.log
+
+      - name: Smoke Test
+        working-directory: server/src/test/resources/
+        run: ./smoke-test.sh app.log

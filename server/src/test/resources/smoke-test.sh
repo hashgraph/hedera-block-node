@@ -44,7 +44,7 @@ trap "shutdown; exit 1" ERR SIGINT SIGTERM
 
 # 1. Verify that the logs have the startup pattern (only if log file is provided)
 LOG_FILE=$1
-STARTUP_PATTERN="Expected startup pattern"
+STARTUP_PATTERN="Block Node Server started at port"
 
 if [[ -n "$LOG_FILE" ]]; then
     if grep -q "$STARTUP_PATTERN" "$LOG_FILE"; then
