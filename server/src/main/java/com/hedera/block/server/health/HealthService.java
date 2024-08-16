@@ -47,7 +47,9 @@ public interface HealthService extends HttpService {
     void handleLiveness(ServerRequest req, ServerResponse res);
 
     /**
-     * Handles the request for readiness endpoint, that it most be defined on routing implementation.
+     * Handles the request for readiness endpoint, that it most be defined on routing
+     * implementation.
+     *
      * @param req the server request
      * @param res the server response
      */
