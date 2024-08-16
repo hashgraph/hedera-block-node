@@ -2,7 +2,7 @@
 ##### Global Protection Rule ######
 ###################################
 # NOTE: This rule is overriden by the more specific rules below. This is the catch-all rule for all files not covered by the more specific rules below
-*                                                 @hashgraph/block-node
+*                                               @hashgraph/block-node
 
 #########################
 #####  Core Files  ######
@@ -11,23 +11,24 @@
 # NOTE: Must be placed last to ensure enforcement over all other rules
 
 # Protection Rules for Github Configuration Files and Actions Workflows
-/.github/                                       @hashgraph/release-engineering @hashgraph/release-engineering-managers
-/.github/workflows/                             @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/block-node
+/.github/                                       @hashgraph/devops-ci @hashgraph/release-engineering-managers
+/.github/workflows/                             @hashgraph/devops-ci @hashgraph/devops-ci-committers
 
 # Codacy Tool Configurations
-/config/                                        @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/block-node
-.remarkrc                                       @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/block-node
+/config/                                        @hashgraph/devops-ci @hashgraph/devops-ci-committers @hashgraph/release-engineering-managers
+.remarkrc                                       @hashgraph/devops-ci @hashgraph/devops-ci-committers @hashgraph/release-engineering-managers
 
 # Self-protection for root CODEOWNERS files (this file should not exist and should definitely require approval)
-/CODEOWNERS                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/block-node
+/CODEOWNERS                                      @hashgraph/release-engineering-managers
 
 # Protect the repository root files
-/README.md                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/block-node
-**/LICENSE                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers
+/README.md                                      @hashgraph/devops-ci @hashgraph/release-engineering-managers
+**/LICENSE                                      @hashgraph/release-engineering-managers
+
 # CodeCov configuration
-**/codecov.yml                                  @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/block-node
+**/codecov.yml                                  @hashgraph/devops-ci @hashgraph/release-engineering-managers
 
 # Git Ignore definitions
-**/.gitignore                                   @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/block-node
-**/.gitignore.*                                 @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/block-node
+**/.gitignore                                   @hashgraph/devops-ci @hashgraph/release-engineering-managers
+**/.gitignore.*                                 @hashgraph/devops-ci @hashgraph/release-engineering-managers
 
