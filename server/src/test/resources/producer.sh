@@ -21,10 +21,22 @@ if [ "$#" -eq 2 ]; then
   echo "The optional positive integer is: $2"
 fi
 
+generate_header() {
+    local number=$1
+
+    # Read the JSON template from the file
+    local header_template=$(cat "header_template.json")
+
+    # Interpolate the integer parameter into the JSON template
+    local result=$(echo "$header_template" | jq --argjson block_number "$number" '.block_item.header.block_number = $id')
+
+    echo "$result"
+}
 
 GRPC_SERVER="localhost:8080"
 GRPC_METHOD="BlockStreamGrpcService/publishBlockStream"
-PATH_TO_PROTO="../../../../protos/src/main/protobuf/blockstream.proto"
+#PATH_TO_PROTO="../../../../protos/src/main/protobuf/blockstream.proto"
+PATH_TO_PROTO="../../../../stream/build/hedera-protobufs/block/block_service.proto"
 
 echo "Starting producer..."
 
@@ -42,7 +54,7 @@ trap cleanup SIGINT
 # Response messages from the gRPC server are printed to stdout.
 (
   iter=$1
-  block_items=10
+  block_items=1
   while true; do
 
     # Generate 10 BlockItems per Block
@@ -50,14 +62,15 @@ trap cleanup SIGINT
     do
 
       if [[ $i -eq 1 ]]; then
-        echo "{\"block_item\": {\"header\": {\"block_number\": $iter},\"value\": \"Payload[...]\"}}"
+        result=$(generate_header "$iter")
+        echo result
       elif [[ $i -eq $block_items ]]; then
         echo "{\"block_item\": {\"state_proof\": {\"block\": $iter},\"value\": \"Payload[...]\"}}"
       else
         echo "{\"block_item\": {\"start_event\": {\"creator_id\": $i},\"value\": \"Payload[...]\"}}"
       fi
 
-      sleep 0.01
+      sleep 1.0
     done
 
     if [ $iter -eq $2 ]; then
