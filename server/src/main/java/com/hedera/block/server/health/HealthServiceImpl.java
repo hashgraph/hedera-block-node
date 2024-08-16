@@ -40,6 +40,7 @@ public class HealthServiceImpl implements HealthService {
     }
 
     @Override
+    @NonNull
     public String getHealthRootPath() {
         return "/healthz";
     }

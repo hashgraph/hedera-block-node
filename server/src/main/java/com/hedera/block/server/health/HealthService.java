@@ -29,6 +29,7 @@ public interface HealthService extends HttpService {
      *
      * @return the root path for the health group endpoints
      */
+    @NonNull
     String getHealthRootPath();
 
     /**
