@@ -58,7 +58,7 @@ dependencyResolutionManagement {
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
 
             // PBJ dependencies
-//            version("io.grpc", "1.64.0")
+            version("io.grpc", "1.64.0")
             version("io.grpc.protobuf", "1.64.0")
             version("io.grpc.stub", "1.64.0")
 

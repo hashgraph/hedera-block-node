@@ -59,8 +59,8 @@ sourceSets {
 }
 
 dependencies {
-//    val libs = versionCatalogs.named("libs")
 
+    // requires transitive in the module-info.java
     api("com.google.protobuf:protobuf-java:3.24.0") {
         because("com.google.protobuf")
     }
@@ -70,12 +70,21 @@ dependencies {
     api("io.grpc:grpc-stub:1.64.0") {
         because("io.grpc.stub")
     }
+//    api("io.grpc:grpc-api:1.64.0") {
+//        because("io.grpc")
+//    }
+//    api("com.google.guava:guava:33.0.0-jre") {
+//        because("com.google.common")
+//    }
+
+    // requires static in the module-info.java
     runtimeOnly("com.github.spotbugs:spotbugs-annotations:4.7.3") {
         because("com.github.spotbugs.annotations")
     }
     runtimeOnly("javax.annotation:javax.annotation-api:1.3.2") {
         because("java.annotation")
     }
+
 //    compileOnly("java.annotation")
 //    api(libs.findVersion("com.google.common").get())
 //    api(libs.findVersion("com.google.protobuf").get())

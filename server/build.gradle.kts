@@ -27,14 +27,14 @@ application {
 mainModuleInfo {
     annotationProcessor("com.google.auto.service.processor")
     runtimeOnly("com.swirlds.config.impl")
+//    runtimeOnly("java.logging")
 }
 
 dependencies {
     runtimeOnly("javax.annotation:javax.annotation-api:1.3.2") { because("java.annotation") }
     runtimeOnly("com.google.guava:guava:33.0.0-jre") { because("com.google.common") }
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:2.21.1") { because("org.apache.logging.log4j.slf4j2.impl") }
-//    api("org.apache.logging.log4j:log4j-slf4j2-impl:2.21.1") { because("org.apache.logging.log4j.slf4j2.impl") }
-//    runtimeOnly("org.apache.logging.log4j.slf4j2.impl") { because("org.apache.logging.log4j.slf4j2.impl") }
+    implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.21.1") { because("org.apache.logging.log4j.slf4j2.impl") }
+//    runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:2.21.1") { because("java.logging") }
 }
 
 testModuleInfo {

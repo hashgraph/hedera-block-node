@@ -59,7 +59,7 @@ message SingleBlockRequest {
 
 message SingleBlockResponse {
     SingleBlockResponseCode status = 1;
-    com.hedera.hapi.block.stream.Block block = 2;
+    Block block = 2;
 }
 enum SingleBlockResponseCode {
     READ_BLOCK_UNKNOWN = 0;
@@ -71,12 +71,12 @@ enum SingleBlockResponseCode {
     VERIFIED_BLOCK_UNAVAILABLE = 6;
 }
 
-message SubscribeStreamRequest {
-    uint64 start_block_number = 1;
-    uint64 end_block_number = 2;
-    bool allow_unverified = 3;
-}
-//
+//message SubscribeStreamRequest {
+//    uint64 start_block_number = 1;
+//    uint64 end_block_number = 2;
+//    bool allow_unverified = 3;
+//}
+
 //message SubscribeStreamResponse {
 //    oneof response {
 //        SubscribeStreamResponseCode status = 1;
@@ -130,3 +130,44 @@ service BlockStreamService {
 //    rpc publishBlockStream (stream PublishStreamRequest) returns (stream PublishStreamResponse);
 //    rpc subscribeBlockStream(SubscribeStreamRequest) returns (stream SubscribeStreamResponse);
 }
+
+// block.proto
+
+message Block {
+    repeated BlockItem items = 1;
+}
+
+// block_item.proto
+
+message BlockItem {
+    oneof item {
+        BlockHeader block_header = 1;
+//        EventHeader event_header = 2;
+//        RoundHeader round_header = 3;
+//        EventTransaction event_transaction = 4;
+//        TransactionResult transaction_result = 5;
+//        TransactionOutput transaction_output = 6;
+//        StateChanges state_changes = 7;
+//        FilteredItemHash filtered_item_hash = 8;
+//        BlockProof block_proof = 9;
+//        RecordFileItem record_file = 10;
+    }
+}
+
+//message FilteredItemHash {
+//    bytes item_hash = 1;
+//    uint64 filtered_path = 3;
+//}
+
+// output/block_header.proto
+
+message BlockHeader {
+//    proto.SemanticVersion hapi_proto_version = 1;
+//    proto.SemanticVersion software_version = 2;
+    uint64 number = 1;
+//    bytes previous_block_hash = 4;
+//    proto.Timestamp first_transaction_consensus_time = 5;
+//    proto.BlockHashAlgorithm hash_algorithm = 6;
+//    proto.SemanticVersion address_book_version = 7;
+}
+
