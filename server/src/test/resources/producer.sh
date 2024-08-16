@@ -36,7 +36,7 @@ generate_header() {
 GRPC_SERVER="localhost:8080"
 GRPC_METHOD="BlockStreamGrpcService/publishBlockStream"
 #PATH_TO_PROTO="../../../../protos/src/main/protobuf/blockstream.proto"
-PATH_TO_PROTO="../../../../stream/build/hedera-protobufs/block/block_service.proto"
+PATH_TO_PROTO="./block_service.proto"
 
 echo "Starting producer..."
 
@@ -62,7 +62,7 @@ trap cleanup SIGINT
     do
 
       if [[ $i -eq 1 ]]; then
-        result=$(generate_header "$iter")
+        result=$(generate_header "$i")
         echo result
       elif [[ $i -eq $block_items ]]; then
         echo "{\"block_item\": {\"state_proof\": {\"block\": $iter},\"value\": \"Payload[...]\"}}"
