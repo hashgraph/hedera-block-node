@@ -21,6 +21,8 @@ import static com.hedera.block.protos.BlockStreamService.*;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.health.HealthService;
+import com.hedera.block.server.health.HealthServiceImpl;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
@@ -32,6 +34,7 @@ import com.hedera.block.server.producer.ItemAckBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.grpc.GrpcRouting;
+import io.helidon.webserver.http.HttpRouting;
 import java.io.IOException;
 
 /** Main class for the block node server */
@@ -82,16 +85,33 @@ public class Server {
             final GrpcRouting.Builder grpcRouting =
                     GrpcRouting.builder().service(blockStreamService);
 
+            @NonNull final HealthService healthService = new HealthServiceImpl(serviceStatus);
+
+            @NonNull
+            final HttpRouting.Builder httpRouting =
+                    HttpRouting.builder()
+                            .register(healthService.getHealthRootPath(), healthService);
+
             // Build the web server
+            // TODO: make port server a configurable value.
             @NonNull
             final WebServer webServer =
-                    WebServer.builder().port(8080).addRouting(grpcRouting).build();
+                    WebServer.builder()
+                            .port(8080)
+                            .addRouting(grpcRouting)
+                            .addRouting(httpRouting)
+                            .build();
 
             // Update the serviceStatus with the web server
             serviceStatus.setWebServer(webServer);
 
             // Start the web server
             webServer.start();
+
+            // Log the server status
+            LOGGER.log(
+                    System.Logger.Level.INFO,
+                    "Block Node Server started at port: " + webServer.port());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

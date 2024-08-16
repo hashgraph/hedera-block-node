@@ -82,3 +82,8 @@ blockNode:
   secret:
     # if blank will use same as AppVersion of chart.
     PRIVATE_KEY: "fake_private_key"
+  health:
+    readiness:
+      endpoint: "/healthz/readiness"
+    liveness:
+      endpoint: "/healthz/liveness"

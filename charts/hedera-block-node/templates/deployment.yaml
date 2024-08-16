@@ -40,16 +40,14 @@ spec:
               name: {{ include "hedera-block-node.fullname" . }}-config
           - secretRef:
               name: {{ include "hedera-block-node.fullname" . }}-secret
-
-        # TODO: Uncomment them once we have the health and readiness probes in our application
-        #livenessProbe:
-        #  httpGet:
-        #    path: /health # we need to define this in our application
-        #    port: 8080 # will be the same as server port?
-        #readinessProbe:
-        #    httpGet:
-        #      path: /ready # we need to define this in our application
-        #      port: 8080 # will be the same as server port?
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.blockNode.health.liveness.endpoint }}
+            port: {{ .Values.service.port }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.blockNode.health.readiness.endpoint }}
+            port: {{ .Values.service.port }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
