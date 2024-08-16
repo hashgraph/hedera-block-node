@@ -19,7 +19,8 @@ import com.hedera.block.tasks.GitClone
 import gradle.kotlin.dsl.accessors._37e002b0739411f5e26da8237c8ebcec.sourceSets
 
 plugins {
-    id("com.hedera.block.server")
+    id("java-library")
+    id("com.hedera.block.conventions")
     id("com.google.protobuf")
 }
 

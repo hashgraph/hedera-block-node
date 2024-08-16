@@ -73,6 +73,7 @@ dependencyResolutionManagement {
 
             version("hapi-proto", hapiProtoVersion)
             version("com.google.common", "33.0.0-jre")
+//            version("com.google.common", "31.1-jre")
 
             version("org.apache.commons.codec", "1.15")
             version("org.apache.commons.collections4", "4.4")

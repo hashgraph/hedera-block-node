@@ -27,7 +27,7 @@ application {
 mainModuleInfo {
     annotationProcessor("com.google.auto.service.processor")
     runtimeOnly("com.swirlds.config.impl")
-    annotationProcessor("com.google.common")
+//    annotationProcessor("com.google.common")
 //    runtimeOnly("com.google.common")
 //    runtimeOnly("java.annotation")
 }
@@ -35,7 +35,7 @@ mainModuleInfo {
 //dependencies {
 //    implementation("javax.annotation:javax.annotation-api:1.3.2")
 //    implementation("com.google.guava:guava:33.0.0-jre")
-//}
+//    }
 
 testModuleInfo {
     requires("org.junit.jupiter.api")

@@ -60,9 +60,9 @@ sourceSets {
 
 dependencies {
     implementation("javax.annotation:javax.annotation-api:1.3.2")
-    implementation("com.google.guava:guava:33.0.0-jre")
-    implementation("com.hedera.pbj:pbj-runtime:0.8.9")
-    implementation("io.grpc:grpc-stub:1.64.0")
+//    implementation("com.google.guava:guava:33.0.0-jre")
+//    implementation("com.hedera.pbj:pbj-runtime:0.8.9")
+//    implementation("io.grpc:grpc-stub:1.64.0")
 }
 
 //mainModuleInfo {

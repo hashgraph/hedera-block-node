@@ -1,3 +1,5 @@
+import gradle.kotlin.dsl.accessors._37e002b0739411f5e26da8237c8ebcec.implementation
+
 /*
  * Copyright (C) 2016-2024 Hedera Hashgraph, LLC
  *
@@ -54,16 +56,16 @@ jvmDependencyConflicts.patch {
     module("io.grpc:grpc-stub") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-testing") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-util") { annotationLibraries.forEach { removeDependency(it) } }
-    module("com.github.ben-manes.caffeine:caffeine") {
-        annotationLibraries.forEach { removeDependency(it) }
-    }
-    module("com.google.dagger:dagger-compiler") {
-        annotationLibraries.forEach { removeDependency(it) }
-    }
-    module("com.google.dagger:dagger-producers") {
-        annotationLibraries.forEach { removeDependency(it) }
-    }
-    module("com.google.dagger:dagger-spi") { annotationLibraries.forEach { removeDependency(it) } }
+//    module("com.github.ben-manes.caffeine:caffeine") {
+//        annotationLibraries.forEach { removeDependency(it) }
+//    }
+//    module("com.google.dagger:dagger-compiler") {
+//        annotationLibraries.forEach { removeDependency(it) }
+//    }
+//    module("com.google.dagger:dagger-producers") {
+//        annotationLibraries.forEach { removeDependency(it) }
+//    }
+//    module("com.google.dagger:dagger-spi") { annotationLibraries.forEach { removeDependency(it) } }
     module("com.google.guava:guava") {
         (annotationLibraries -
                 "com.google.code.findbugs:jsr305" -
@@ -224,3 +226,9 @@ extraJavaModuleInfo {
     module("org.testcontainers:testcontainers", "org.testcontainers")
     module("org.mockito:mockito-junit-jupiter", "org.mockito.junit.jupiter")
 }
+
+//dependencies.constraints {
+//    // required to merge 'javax.annotation-api' into 'com.google.code.findbugs:jsr305'
+//    // to have all annotations on the classpath available at compile time
+//    implementation("javax.annotation:javax.annotation-api:1.3.2")
+//}
