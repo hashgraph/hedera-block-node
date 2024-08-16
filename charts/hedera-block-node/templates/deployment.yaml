@@ -45,9 +45,9 @@ spec:
             path: {{ .Values.blockNode.health.liveness.endpoint }}
             port: {{ .Values.service.port }}
         readinessProbe:
-            httpGet:
-              path: {{ .Values.blockNode.health.readiness.endpoint }}
-              port: {{ .Values.service.port }}
+          httpGet:
+            path: {{ .Values.blockNode.health.readiness.endpoint }}
+            port: {{ .Values.service.port }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

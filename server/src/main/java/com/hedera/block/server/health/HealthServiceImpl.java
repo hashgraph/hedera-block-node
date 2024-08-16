@@ -41,7 +41,7 @@ public class HealthServiceImpl implements HealthService {
 
     @Override
     public String getHealthRootPath() {
-        return "/health";
+        return "/healthz";
     }
 
     /**
@@ -50,14 +50,21 @@ public class HealthServiceImpl implements HealthService {
      * @param httpRules is used to configure the health endpoints routes
      */
     @Override
-    public void routing(HttpRules httpRules) {
+    public void routing(@NonNull final HttpRules httpRules) {
         httpRules
                 .get(LIVENESS_PATH, this::handleLiveness)
                 .get(READINESS_PATH, this::handleReadiness);
     }
 
+    /**
+     * Handles the request for liveness endpoint, that it most be defined on routing implementation.
+     *
+     * @param req the server request
+     * @param res the server response
+     */
     @Override
-    public void handleLiveness(ServerRequest req, ServerResponse res) {
+    public final void handleLiveness(
+            @NonNull final ServerRequest req, @NonNull final ServerResponse res) {
         if (serviceStatus.isRunning()) {
             res.status(200).send("OK");
         } else {
@@ -65,8 +72,16 @@ public class HealthServiceImpl implements HealthService {
         }
     }
 
+    /**
+     * Handles the request for readiness endpoint, that it most be defined on routing
+     * implementation.
+     *
+     * @param req the server request
+     * @param res the server response
+     */
     @Override
-    public void handleReadiness(ServerRequest req, ServerResponse res) {
+    public final void handleReadiness(
+            @NonNull final ServerRequest req, @NonNull final ServerResponse res) {
         if (serviceStatus.isRunning()) {
             res.status(200).send("OK");
         } else {

@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.health;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.http.HttpRules;
 import io.helidon.webserver.http.HttpService;
 import io.helidon.webserver.http.ServerRequest;
@@ -36,7 +37,7 @@ public interface HealthService extends HttpService {
      * @param httpRules is used to configure the health endpoints routes
      */
     @Override
-    void routing(HttpRules httpRules);
+    void routing(@NonNull final HttpRules httpRules);
 
     /**
      * Handles the request for liveness endpoint, that it most be defined on routing implementation.
@@ -44,7 +45,7 @@ public interface HealthService extends HttpService {
      * @param req the server request
      * @param res the server response
      */
-    void handleLiveness(ServerRequest req, ServerResponse res);
+    void handleLiveness(@NonNull final ServerRequest req, @NonNull final ServerResponse res);
 
     /**
      * Handles the request for readiness endpoint, that it most be defined on routing
@@ -53,5 +54,5 @@ public interface HealthService extends HttpService {
      * @param req the server request
      * @param res the server response
      */
-    void handleReadiness(ServerRequest req, ServerResponse res);
+    void handleReadiness(@NonNull final ServerRequest req, @NonNull final ServerResponse res);
 }
