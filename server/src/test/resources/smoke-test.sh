@@ -97,7 +97,7 @@ if ! curl -f $SERVER_URL$READINESS_URL; then
     shutdown
     exit 1
 fi
-echo "$READINESS_URL endpoint is ready."z
+echo "$READINESS_URL endpoint is ready."
 
 # 6. Shut everything down
 shutdown
