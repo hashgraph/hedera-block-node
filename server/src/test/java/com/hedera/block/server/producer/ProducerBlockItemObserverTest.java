@@ -16,8 +16,7 @@
 
 package com.hedera.block.server.producer;
 
-import static com.hedera.block.server.Translator.toProtocPublishStreamRequest;
-import static com.hedera.block.server.Translator.toProtocPublishStreamResponse;
+import static com.hedera.block.server.Translator.*;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.block.server.util.TestConfigUtil.CONSUMER_TIMEOUT_THRESHOLD_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,9 +60,14 @@ public class ProducerBlockItemObserverTest {
 
     @Mock private BlockWriter<BlockItem> blockWriter;
 
-    @Mock private StreamObserver<SubscribeStreamResponse> streamObserver1;
-    @Mock private StreamObserver<SubscribeStreamResponse> streamObserver2;
-    @Mock private StreamObserver<SubscribeStreamResponse> streamObserver3;
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse> streamObserver1;
+
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse> streamObserver2;
+
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse> streamObserver3;
 
     @Mock private ServiceStatus serviceStatus;
     @Mock private InstantSource testClock;
@@ -171,9 +175,12 @@ public class ProducerBlockItemObserverTest {
         assertEquals(1, blockNodeContext.metricsService().liveBlockItems.get());
 
         // Confirm each subscriber was notified of the new block
-        verify(streamObserver1, timeout(50).times(1)).onNext(subscribeStreamResponse);
-        verify(streamObserver2, timeout(50).times(1)).onNext(subscribeStreamResponse);
-        verify(streamObserver3, timeout(50).times(1)).onNext(subscribeStreamResponse);
+        verify(streamObserver1, timeout(50).times(1))
+                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+        verify(streamObserver2, timeout(50).times(1))
+                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+        verify(streamObserver3, timeout(50).times(1))
+                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
 
         // Confirm the BlockStorage write method was
         // called despite the absence of subscribers

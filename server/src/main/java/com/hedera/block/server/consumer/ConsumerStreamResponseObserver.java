@@ -16,6 +16,8 @@
 
 package com.hedera.block.server.consumer;
 
+import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
+
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
@@ -40,7 +42,8 @@ public class ConsumerStreamResponseObserver
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final StreamObserver<SubscribeStreamResponse> subscribeStreamResponseObserver;
+    private final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+            subscribeStreamResponseObserver;
     private final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>> subscriptionHandler;
 
     private final long timeoutThresholdMillis;
@@ -81,7 +84,8 @@ public class ConsumerStreamResponseObserver
                     final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>>
                             subscriptionHandler,
             @NonNull
-                    final StreamObserver<SubscribeStreamResponse> subscribeStreamResponseObserver) {
+                    final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+                            subscribeStreamResponseObserver) {
 
         this.timeoutThresholdMillis =
                 context.configuration()
@@ -94,7 +98,7 @@ public class ConsumerStreamResponseObserver
         // unsubscribe this observer.
         if (subscribeStreamResponseObserver
                 instanceof
-                ServerCallStreamObserver<SubscribeStreamResponse>
+                ServerCallStreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
                 serverCallStreamObserver) {
 
             onCancel =
@@ -197,7 +201,8 @@ public class ConsumerStreamResponseObserver
                             System.Logger.Level.DEBUG,
                             "Send BlockItem downstream: {0} ",
                             blockItem);
-                    subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
+                    subscribeStreamResponseObserver.onNext(
+                            toProtocSubscribeStreamResponse(subscribeStreamResponse));
                 }
             }
         }
@@ -209,7 +214,8 @@ public class ConsumerStreamResponseObserver
                     System.Logger.Level.DEBUG,
                     "Send SubscribeStreamResponse downstream: {0} ",
                     subscribeStreamResponse);
-            subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
+            subscribeStreamResponseObserver.onNext(
+                    toProtocSubscribeStreamResponse(subscribeStreamResponse));
         }
     }
 }

@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.consumer;
 
+import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.mockito.Mockito.*;
 
@@ -47,10 +48,17 @@ public class ConsumerStreamResponseObserverTest {
     private final long TEST_TIME = 1_719_427_664_950L;
 
     @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
-    @Mock private StreamObserver<SubscribeStreamResponse> responseStreamObserver;
+
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+            responseStreamObserver;
+
     @Mock private ObjectEvent<SubscribeStreamResponse> objectEvent;
 
-    @Mock private ServerCallStreamObserver<SubscribeStreamResponse> serverCallStreamObserver;
+    @Mock
+    private ServerCallStreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+            serverCallStreamObserver;
+
     @Mock private InstantSource testClock;
 
     final BlockNodeContext testContext;
@@ -82,7 +90,8 @@ public class ConsumerStreamResponseObserverTest {
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         // verify the observer is called with the next BlockItem
-        verify(responseStreamObserver).onNext(subscribeStreamResponse);
+        verify(responseStreamObserver)
+                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
 
         // verify the mediator is NOT called to unsubscribe the observer
         verify(streamMediator, never()).unsubscribe(consumerBlockItemObserver);
@@ -139,7 +148,8 @@ public class ConsumerStreamResponseObserverTest {
         consumerStreamResponseObserver.onEvent(objectEvent, 0, true);
 
         // Confirm that canceling the observer allowed only 1 response to be sent.
-        verify(serverCallStreamObserver, timeout(50).times(1)).onNext(subscribeStreamResponse);
+        verify(serverCallStreamObserver, timeout(50).times(1))
+                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
     }
 
     @Test
@@ -164,7 +174,8 @@ public class ConsumerStreamResponseObserverTest {
         consumerStreamResponseObserver.onEvent(objectEvent, 0, true);
 
         // Confirm that canceling the observer allowed only 1 response to be sent.
-        verify(serverCallStreamObserver, timeout(50).times(1)).onNext(subscribeStreamResponse);
+        verify(serverCallStreamObserver, timeout(50).times(1))
+                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
     }
 
     @Test
@@ -205,7 +216,8 @@ public class ConsumerStreamResponseObserverTest {
 
         // Confirm that the observer was called with the next BlockItem
         // since we never send a BlockItem with a Header to start the stream.
-        verify(responseStreamObserver, timeout(50).times(0)).onNext(subscribeStreamResponse);
+        verify(responseStreamObserver, timeout(50).times(0))
+                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
     }
 
     private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
@@ -214,7 +226,8 @@ public class ConsumerStreamResponseObserverTest {
                 BlockNodeContext context,
                 InstantSource producerLivenessClock,
                 StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> subscriptionHandler,
-                StreamObserver<SubscribeStreamResponse> subscribeStreamResponseObserver) {
+                StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+                        subscribeStreamResponseObserver) {
             super(
                     context,
                     producerLivenessClock,

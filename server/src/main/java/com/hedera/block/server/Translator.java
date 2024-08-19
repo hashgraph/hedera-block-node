@@ -88,4 +88,38 @@ public final class Translator {
             throw new RuntimeException(e);
         }
     }
+
+    @NonNull
+    public static com.hedera.hapi.block.protoc.SubscribeStreamResponse
+            toProtocSubscribeStreamResponse(
+                    @NonNull
+                            final com.hedera.hapi.block.SubscribeStreamResponse
+                                    subscribeStreamResponse) {
+        try {
+            byte[] pbjBytes =
+                    com.hedera.hapi.block.SubscribeStreamResponse.PROTOBUF
+                            .toBytes(subscribeStreamResponse)
+                            .toByteArray();
+            return com.hedera.hapi.block.protoc.SubscribeStreamResponse.parseFrom(pbjBytes);
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @NonNull
+    public static com.hedera.hapi.block.protoc.SubscribeStreamRequest
+            toProtocSubscribeStreamRequest(
+                    @NonNull
+                            final com.hedera.hapi.block.SubscribeStreamRequest
+                                    subscribeStreamRequest) {
+        try {
+            byte[] pbjBytes =
+                    com.hedera.hapi.block.SubscribeStreamRequest.PROTOBUF
+                            .toBytes(subscribeStreamRequest)
+                            .toByteArray();
+            return com.hedera.hapi.block.protoc.SubscribeStreamRequest.parseFrom(pbjBytes);
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
