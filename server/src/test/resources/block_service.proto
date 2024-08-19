@@ -71,27 +71,27 @@ enum SingleBlockResponseCode {
     VERIFIED_BLOCK_UNAVAILABLE = 6;
 }
 
-//message SubscribeStreamRequest {
-//    uint64 start_block_number = 1;
-//    uint64 end_block_number = 2;
-//    bool allow_unverified = 3;
-//}
+message SubscribeStreamRequest {
+    uint64 start_block_number = 1;
+    uint64 end_block_number = 2;
+    bool allow_unverified = 3;
+}
 
-//message SubscribeStreamResponse {
-//    oneof response {
-//        SubscribeStreamResponseCode status = 1;
-//        com.hedera.hapi.block.stream.BlockItem block_item = 2;
-//    }
-//}
-//
-//enum SubscribeStreamResponseCode {
-//    READ_STREAM_UNKNOWN = 0;
-//    READ_STREAM_INSUFFICIENT_BALANCE = 1;
-//    READ_STREAM_SUCCESS = 2;
-//    READ_STREAM_INVALID_START_BLOCK_NUMBER = 3;
-//    READ_STREAM_INVALID_END_BLOCK_NUMBER = 4;
-//}
-//
+message SubscribeStreamResponse {
+    oneof response {
+        SubscribeStreamResponseCode status = 1;
+        BlockItem block_item = 2;
+    }
+}
+
+enum SubscribeStreamResponseCode {
+    READ_STREAM_UNKNOWN = 0;
+    READ_STREAM_INSUFFICIENT_BALANCE = 1;
+    READ_STREAM_SUCCESS = 2;
+    READ_STREAM_INVALID_START_BLOCK_NUMBER = 3;
+    READ_STREAM_INVALID_END_BLOCK_NUMBER = 4;
+}
+
 //message StateSnapshotRequest {
 //    uint64 last_block_number = 2;
 //    bool retrieve_latest = 3;
@@ -128,7 +128,7 @@ service BlockStreamService {
     rpc singleBlock(SingleBlockRequest) returns (SingleBlockResponse);
 //    rpc stateSnapshot(StateSnapshotRequest) returns (StateSnapshotResponse);
     rpc publishBlockStream (stream PublishStreamRequest) returns (stream PublishStreamResponse);
-//    rpc subscribeBlockStream(SubscribeStreamRequest) returns (stream SubscribeStreamResponse);
+    rpc subscribeBlockStream(SubscribeStreamRequest) returns (stream SubscribeStreamResponse);
 }
 
 // block.proto
