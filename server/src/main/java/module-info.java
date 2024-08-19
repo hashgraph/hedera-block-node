@@ -20,7 +20,6 @@ module com.hedera.block.server {
     requires com.swirlds.config.api;
     requires com.swirlds.config.extensions;
     requires com.swirlds.metrics.api;
-
     requires io.grpc.stub;
     requires io.helidon.common;
     requires io.helidon.webserver.grpc;

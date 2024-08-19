@@ -16,6 +16,9 @@
 
 package com.hedera.block.server.producer;
 
+import static com.hedera.block.server.Translator.toPbjBlockItem;
+import static com.hedera.block.server.Translator.toProtocPublishStreamResponse;
+
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.hapi.block.*;
@@ -32,11 +35,13 @@ import java.security.NoSuchAlgorithmException;
  * connection to the upstream producer (e.g. block items streamed from the Consensus Node to the
  * server).
  */
-public class ProducerBlockItemObserver implements StreamObserver<PublishStreamRequest> {
+public class ProducerBlockItemObserver
+        implements StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest> {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final StreamObserver<PublishStreamResponse> publishStreamResponseObserver;
+    private final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
+            publishStreamResponseObserver;
     private final Publisher<BlockItem> publisher;
     private final AckBuilder ackBuilder;
     private final ServiceStatus serviceStatus;
@@ -58,7 +63,9 @@ public class ProducerBlockItemObserver implements StreamObserver<PublishStreamRe
      */
     public ProducerBlockItemObserver(
             @NonNull final Publisher<BlockItem> publisher,
-            @NonNull final StreamObserver<PublishStreamResponse> publishStreamResponseObserver,
+            @NonNull
+                    final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
+                            publishStreamResponseObserver,
             @NonNull final AckBuilder ackBuilder,
             @NonNull final ServiceStatus serviceStatus) {
 
@@ -76,9 +83,10 @@ public class ProducerBlockItemObserver implements StreamObserver<PublishStreamRe
      * @param publishStreamRequest the PublishStreamRequest received from the upstream producer
      */
     @Override
-    public void onNext(@NonNull final PublishStreamRequest publishStreamRequest) {
+    public void onNext(
+            @NonNull final com.hedera.hapi.block.protoc.PublishStreamRequest publishStreamRequest) {
 
-        @Nullable final BlockItem blockItem = publishStreamRequest.blockItem();
+        @Nullable final BlockItem blockItem = toPbjBlockItem(publishStreamRequest.getBlockItem());
         if (blockItem == null) {
             LOGGER.log(
                     System.Logger.Level.ERROR,
@@ -121,22 +129,24 @@ public class ProducerBlockItemObserver implements StreamObserver<PublishStreamRe
     }
 
     @NonNull
-    private PublishStreamResponse buildSuccessStreamResponse(@NonNull final BlockItem blockItem)
-            throws IOException, NoSuchAlgorithmException {
+    private com.hedera.hapi.block.protoc.PublishStreamResponse buildSuccessStreamResponse(
+            @NonNull final BlockItem blockItem) throws IOException, NoSuchAlgorithmException {
         @NonNull final Acknowledgement ack = ackBuilder.buildAck(blockItem);
 
-        return PublishStreamResponse.newBuilder().acknowledgement(ack).build();
+        return toProtocPublishStreamResponse(
+                PublishStreamResponse.newBuilder().acknowledgement(ack).build());
     }
 
     @NonNull
-    private static PublishStreamResponse buildErrorStreamResponse() {
+    private static com.hedera.hapi.block.protoc.PublishStreamResponse buildErrorStreamResponse() {
         // TODO: Replace this with a real error enum.
         @NonNull
         final EndOfStream endOfStream =
                 EndOfStream.newBuilder()
                         .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
                         .build();
-        return PublishStreamResponse.newBuilder().status(endOfStream).build();
+        return toProtocPublishStreamResponse(
+                PublishStreamResponse.newBuilder().status(endOfStream).build());
     }
 
     /**

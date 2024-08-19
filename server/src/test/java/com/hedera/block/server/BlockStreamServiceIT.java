@@ -16,7 +16,7 @@
 
 package com.hedera.block.server;
 
-import static com.hedera.block.server.BlockStreamService.toProtocSingleBlockResponse;
+import static com.hedera.block.server.Translator.*;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -65,8 +65,13 @@ public class BlockStreamServiceIT {
 
     @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
 
-    @Mock private StreamObserver<PublishStreamResponse> publishStreamResponseObserver;
-    @Mock private StreamObserver<com.hedera.hapi.block.protoc.SingleBlockResponse> singleBlockResponseStreamObserver;
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
+            publishStreamResponseObserver;
+
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.SingleBlockResponse>
+            singleBlockResponseStreamObserver;
 
     @Mock private SubscribeStreamRequest subscribeStreamRequest;
 
@@ -123,15 +128,15 @@ public class BlockStreamServiceIT {
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
 
-        final StreamObserver<PublishStreamRequest> streamObserver =
-                blockStreamService.publishBlockStream(publishStreamResponseObserver);
+        final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest> streamObserver =
+                blockStreamService.protocPublishBlockStream(publishStreamResponseObserver);
 
         final BlockItem blockItem = generateBlockItems(1).getFirst();
         final PublishStreamRequest publishStreamRequest =
                 PublishStreamRequest.newBuilder().blockItem(blockItem).build();
 
         // Calling onNext() as Helidon will
-        streamObserver.onNext(publishStreamRequest);
+        streamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
 
         final Acknowledgement itemAck = new AckBuilder().buildAck(blockItem);
         final PublishStreamResponse publishStreamResponse =
@@ -143,7 +148,7 @@ public class BlockStreamServiceIT {
         // Verify our custom StreamObserver implementation builds and sends
         // a response back to the producer
         verify(publishStreamResponseObserver, timeout(testTimeout).times(1))
-                .onNext(publishStreamResponse);
+                .onNext(toProtocPublishStreamResponse(publishStreamResponse));
 
         // Close the stream as Helidon does
         streamObserver.onCompleted();
@@ -179,8 +184,8 @@ public class BlockStreamServiceIT {
         blockStreamService.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver3);
 
         // Subscribe the producer
-        final StreamObserver<PublishStreamRequest> streamObserver =
-                blockStreamService.publishBlockStream(publishStreamResponseObserver);
+        final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest> streamObserver =
+                blockStreamService.protocPublishBlockStream(publishStreamResponseObserver);
 
         // Build the BlockItem
         final List<BlockItem> blockItems = generateBlockItems(1);
@@ -188,7 +193,7 @@ public class BlockStreamServiceIT {
                 PublishStreamRequest.newBuilder().blockItem(blockItems.getFirst()).build();
 
         // Calling onNext() with a BlockItem
-        streamObserver.onNext(publishStreamRequest);
+        streamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
 
         // Verify the counter was incremented
         assertEquals(1, blockNodeContext.metricsService().liveBlockItems.get());
@@ -216,8 +221,8 @@ public class BlockStreamServiceIT {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         // Pass a StreamObserver to the producer as Helidon does
-        final StreamObserver<PublishStreamRequest> streamObserver =
-                blockStreamService.publishBlockStream(publishStreamResponseObserver);
+        final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest> streamObserver =
+                blockStreamService.protocPublishBlockStream(publishStreamResponseObserver);
 
         final List<BlockItem> blockItems = generateBlockItems(numberOfBlocks);
 
@@ -228,7 +233,7 @@ public class BlockStreamServiceIT {
         for (BlockItem blockItem : blockItems) {
             final PublishStreamRequest publishStreamRequest =
                     PublishStreamRequest.newBuilder().blockItem(blockItem).build();
-            streamObserver.onNext(publishStreamRequest);
+            streamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
         }
 
         verifySubscribeStreamResponse(
@@ -252,8 +257,8 @@ public class BlockStreamServiceIT {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         // Pass a StreamObserver to the producer as Helidon does
-        final StreamObserver<PublishStreamRequest> streamObserver =
-                blockStreamService.publishBlockStream(publishStreamResponseObserver);
+        final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest> streamObserver =
+                blockStreamService.protocPublishBlockStream(publishStreamResponseObserver);
 
         final List<BlockItem> blockItems = generateBlockItems(numberOfBlocks);
 
@@ -273,7 +278,7 @@ public class BlockStreamServiceIT {
             }
 
             // Transmit the BlockItem
-            streamObserver.onNext(publishStreamRequest);
+            streamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
 
             // Add a new subscriber
             if (i == 76) {
@@ -328,8 +333,8 @@ public class BlockStreamServiceIT {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         // Pass a StreamObserver to the producer as Helidon does
-        final StreamObserver<PublishStreamRequest> streamObserver =
-                blockStreamService.publishBlockStream(publishStreamResponseObserver);
+        final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest> streamObserver =
+                blockStreamService.protocPublishBlockStream(publishStreamResponseObserver);
 
         final List<BlockItem> blockItems = generateBlockItems(numberOfBlocks);
 
@@ -359,7 +364,7 @@ public class BlockStreamServiceIT {
             }
 
             // Transmit the BlockItem
-            streamObserver.onNext(publishStreamRequest);
+            streamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
 
             if (i == 70) {
                 final var k = subscribers.firstEntry().getKey();
@@ -423,8 +428,8 @@ public class BlockStreamServiceIT {
         blockStreamService.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver3);
 
         // Initialize the producer
-        final StreamObserver<PublishStreamRequest> streamObserver =
-                blockStreamService.publishBlockStream(publishStreamResponseObserver);
+        final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest> streamObserver =
+                blockStreamService.protocPublishBlockStream(publishStreamResponseObserver);
 
         // Change the permissions on the file system to trigger an
         // IOException when the BlockPersistenceHandler tries to write
@@ -435,17 +440,20 @@ public class BlockStreamServiceIT {
         final List<BlockItem> blockItems = generateBlockItems(1);
         final PublishStreamRequest publishStreamRequest =
                 PublishStreamRequest.newBuilder().blockItem(blockItems.getFirst()).build();
-        streamObserver.onNext(publishStreamRequest);
+        streamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
 
         // Simulate another producer attempting to connect to the Block Node after the exception.
         // Later, verify they received a response indicating the stream is closed.
-        final StreamObserver<PublishStreamRequest> expectedNoOpStreamObserver =
-                blockStreamService.publishBlockStream(publishStreamResponseObserver);
-        expectedNoOpStreamObserver.onNext(publishStreamRequest);
+        final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest>
+                expectedNoOpStreamObserver =
+                        blockStreamService.protocPublishBlockStream(publishStreamResponseObserver);
+        expectedNoOpStreamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
 
         // Build a request to invoke the singleBlock service
         final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
-                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder().setBlockNumber(1).build();
+                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
+                        .setBlockNumber(1)
+                        .build();
 
         // Simulate a consumer attempting to connect to the Block Node after the exception.
         blockStreamService.protocSingleBlock(singleBlockRequest, singleBlockResponseStreamObserver);
@@ -491,7 +499,7 @@ public class BlockStreamServiceIT {
         final var endOfStreamResponse =
                 PublishStreamResponse.newBuilder().status(endOfStream).build();
         verify(publishStreamResponseObserver, timeout(testTimeout).times(2))
-                .onNext(endOfStreamResponse);
+                .onNext(toProtocPublishStreamResponse(endOfStreamResponse));
         verify(webServer, timeout(testTimeout).times(1)).stop();
 
         // Now verify the block was removed from the file system.

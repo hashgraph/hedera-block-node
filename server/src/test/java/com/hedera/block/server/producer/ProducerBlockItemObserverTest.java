@@ -16,6 +16,8 @@
 
 package com.hedera.block.server.producer;
 
+import static com.hedera.block.server.Translator.toProtocPublishStreamRequest;
+import static com.hedera.block.server.Translator.toProtocPublishStreamResponse;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.block.server.util.TestConfigUtil.CONSUMER_TIMEOUT_THRESHOLD_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,7 +54,10 @@ public class ProducerBlockItemObserverTest {
 
     @Mock private AckBuilder ackBuilder;
     @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
-    @Mock private StreamObserver<PublishStreamResponse> publishStreamResponseObserver;
+
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
+            publishStreamResponseObserver;
 
     @Mock private BlockWriter<BlockItem> blockWriter;
 
@@ -79,14 +84,16 @@ public class ProducerBlockItemObserverTest {
         final BlockItem blockHeader = blockItems.getFirst();
         final PublishStreamRequest publishStreamRequest =
                 PublishStreamRequest.newBuilder().blockItem(blockHeader).build();
-        producerBlockItemObserver.onNext(publishStreamRequest);
+        producerBlockItemObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
 
         verify(streamMediator, timeout(50).times(1)).publish(blockHeader);
 
         final Acknowledgement ack = new AckBuilder().buildAck(blockHeader);
         final PublishStreamResponse publishStreamResponse =
                 PublishStreamResponse.newBuilder().acknowledgement(ack).build();
-        verify(publishStreamResponseObserver, timeout(50).times(1)).onNext(publishStreamResponse);
+
+        verify(publishStreamResponseObserver, timeout(50).times(1))
+                .onNext(toProtocPublishStreamResponse(publishStreamResponse));
 
         // Helidon will call onCompleted after onNext
         producerBlockItemObserver.onCompleted();
@@ -158,7 +165,7 @@ public class ProducerBlockItemObserverTest {
 
         final PublishStreamRequest publishStreamRequest =
                 PublishStreamRequest.newBuilder().blockItem(blockItem).build();
-        producerBlockItemObserver.onNext(publishStreamRequest);
+        producerBlockItemObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
 
         // Confirm the block item counter was incremented
         assertEquals(1, blockNodeContext.metricsService().liveBlockItems.get());
@@ -201,7 +208,7 @@ public class ProducerBlockItemObserverTest {
         final BlockItem blockHeader = blockItems.getFirst();
         final PublishStreamRequest publishStreamRequest =
                 PublishStreamRequest.newBuilder().blockItem(blockHeader).build();
-        producerBlockItemObserver.onNext(publishStreamRequest);
+        producerBlockItemObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
 
         final EndOfStream endOfStream =
                 EndOfStream.newBuilder()
@@ -209,6 +216,7 @@ public class ProducerBlockItemObserverTest {
                         .build();
         final PublishStreamResponse errorResponse =
                 PublishStreamResponse.newBuilder().status(endOfStream).build();
-        verify(publishStreamResponseObserver, timeout(50).times(1)).onNext(errorResponse);
+        verify(publishStreamResponseObserver, timeout(50).times(1))
+                .onNext(toProtocPublishStreamResponse(errorResponse));
     }
 }
