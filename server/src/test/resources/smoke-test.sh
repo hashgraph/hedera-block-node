@@ -82,22 +82,22 @@ echo "get-block.sh executed successfully."
 
 # 5. Call the endpoints /health/liveness and /health/readiness
 SERVER_URL="http://localhost:8080"
-LIVENESS_URL="/healthz/liveness"
-READINESS_URL="/healthz/readiness"
+LIVENESS_ENDPOINT="/healthz/liveness"
+READINESS_ENDPOINT="/healthz/readiness"
 
-if ! curl -f $SERVER_URL$LIVENESS_URL; then
-    echo "$LIVENESS_URL failed."
+if ! curl -f $SERVER_URL$LIVENESS_ENDPOINT; then
+    echo "$LIVENESS_ENDPOINT failed."
     shutdown
     exit 1
 fi
-echo "$LIVENESS_URL endpoint is healthy."
+echo "$LIVENESS_ENDPOINT endpoint is healthy."
 
-if ! curl -f $SERVER_URL$READINESS_URL; then
-    echo "$READINESS_URL endpoint failed."
+if ! curl -f $SERVER_URL$READINESS_ENDPOINT; then
+    echo "$READINESS_ENDPOINT endpoint failed."
     shutdown
     exit 1
 fi
-echo "$READINESS_URL endpoint is ready."
+echo "$READINESS_ENDPOINT endpoint is ready."
 
 # 6. Shut everything down
 shutdown
