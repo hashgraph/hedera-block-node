@@ -16,9 +16,8 @@
 
 package com.hedera.block.server;
 
-import static com.hedera.block.server.Constants.*;
-
 import com.google.protobuf.Descriptors;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
@@ -31,12 +30,17 @@ import com.hedera.hapi.block.*;
 import com.hedera.hapi.block.protoc.BlockService;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
+
 import java.io.IOException;
 import java.time.Clock;
 import java.util.Optional;
+
+import static com.hedera.block.server.Constants.*;
 
 /**
  * The BlockStreamService class defines the gRPC service for the block stream service. It provides
@@ -115,7 +119,7 @@ public class BlockStreamService implements GrpcService {
     public void update(@NonNull final Routing routing) {
         routing.bidi(CLIENT_STREAMING_METHOD_NAME, this::publishBlockStream);
         routing.serverStream(SERVER_STREAMING_METHOD_NAME, this::subscribeBlockStream);
-        routing.unary(SINGLE_BLOCK_METHOD_NAME, this::singleBlock);
+        routing.unary(SINGLE_BLOCK_METHOD_NAME, this::protocSingleBlock);
     }
 
     StreamObserver<PublishStreamRequest> publishBlockStream(
@@ -156,9 +160,29 @@ public class BlockStreamService implements GrpcService {
         }
     }
 
-    void singleBlock(
+    void protocSingleBlock(
+            @NonNull final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest,
+            @NonNull final StreamObserver<com.hedera.hapi.block.protoc.SingleBlockResponse> singleBlockResponseStreamObserver) {
+        LOGGER.log(System.Logger.Level.DEBUG, "Executing Unary singleBlock gRPC method");
+
+        singleBlock(toPbjSingleBlockRequest(singleBlockRequest), singleBlockResponseStreamObserver);
+    }
+
+//    private static <T extends MessageLite, U> U build(@NonNull final T t) {
+//        byte[] protocBytes = t.toByteArray();
+//        Bytes bytes = Bytes.wrap(protocBytes);
+//        try {
+////            Codec<U> codec = (Codec<U>) Codec.getCodec(t.getClass());
+//            Codec<U> codec =
+//            return (U) SingleBlockRequest.PROTOBUF.parse(bytes);
+//        } catch (ParseException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+
+    private void singleBlock(
             @NonNull final SingleBlockRequest singleBlockRequest,
-            @NonNull final StreamObserver<SingleBlockResponse> singleBlockResponseStreamObserver) {
+            @NonNull final StreamObserver<com.hedera.hapi.block.protoc.SingleBlockResponse> singleBlockResponseStreamObserver) {
 
         LOGGER.log(System.Logger.Level.DEBUG, "Executing Unary singleBlock gRPC method");
 
@@ -172,7 +196,7 @@ public class BlockStreamService implements GrpcService {
                             "Successfully returning block number: {0}",
                             blockNumber);
                     singleBlockResponseStreamObserver.onNext(
-                            buildSingleBlockResponse(blockOpt.get()));
+                            toProtocSingleBlockResponse(blockOpt.get()));
 
                     @NonNull
                     final MetricsService metricsService = blockNodeContext.metricsService();
@@ -208,21 +232,58 @@ public class BlockStreamService implements GrpcService {
     }
 
     @NonNull
-    static SingleBlockResponse buildSingleBlockNotAvailableResponse() {
-        return SingleBlockResponse.newBuilder()
+    static com.hedera.hapi.block.protoc.SingleBlockResponse buildSingleBlockNotAvailableResponse() {
+        @NonNull final SingleBlockResponse response = SingleBlockResponse.newBuilder()
                 .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
                 .build();
+
+        return toProtocSingleBlockResponse(response);
     }
 
     @NonNull
-    static SingleBlockResponse buildSingleBlockNotFoundResponse() {
-        return SingleBlockResponse.newBuilder()
+    static com.hedera.hapi.block.protoc.SingleBlockResponse buildSingleBlockNotFoundResponse() {
+        @NonNull final SingleBlockResponse response = SingleBlockResponse.newBuilder()
                 .status(SingleBlockResponseCode.READ_BLOCK_NOT_FOUND)
                 .build();
+
+        return toProtocSingleBlockResponse(response);
+    }
+
+    private static com.hedera.hapi.block.SingleBlockRequest toPbjSingleBlockRequest(@NonNull final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest) {
+        try {
+            byte[] protocBytes = singleBlockRequest.toByteArray();
+            Bytes bytes = Bytes.wrap(protocBytes);
+            return SingleBlockRequest.PROTOBUF.parse(bytes);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+//    private static com.hedera.hapi.block.SingleBlockResponse toPbjSingleBlockResponse(@NonNull final com.hedera.hapi.block.protoc.SingleBlockResponse singleBlockResponse) {
+//
+//        try {
+//            byte[] protocBytes = singleBlockResponse.toByteArray();
+//            Bytes bytes = Bytes.wrap(protocBytes);
+//            return SingleBlockResponse.PROTOBUF.parse(bytes);
+//        } catch (ParseException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+
+    @NonNull
+    public static com.hedera.hapi.block.protoc.SingleBlockResponse toProtocSingleBlockResponse(@NonNull final SingleBlockResponse singleBlockResponse) {
+
+        try {
+            byte[] pbjBytes = SingleBlockResponse.PROTOBUF.toBytes(singleBlockResponse).toByteArray();
+            return com.hedera.hapi.block.protoc.SingleBlockResponse.parseFrom(pbjBytes);
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @NonNull
-    private static SingleBlockResponse buildSingleBlockResponse(@NonNull final Block block) {
-        return SingleBlockResponse.newBuilder().block(block).build();
+    public static com.hedera.hapi.block.protoc.SingleBlockResponse toProtocSingleBlockResponse(@NonNull final Block block) {
+        @NonNull final SingleBlockResponse singleBlockResponse = SingleBlockResponse.newBuilder().block(block).build();
+        return toProtocSingleBlockResponse(singleBlockResponse);
     }
 }

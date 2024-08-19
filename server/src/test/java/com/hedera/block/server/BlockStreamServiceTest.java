@@ -62,7 +62,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class BlockStreamServiceTest {
 
-    @Mock private StreamObserver<SingleBlockResponse> responseObserver;
+    @Mock private StreamObserver<com.hedera.hapi.block.protoc.SingleBlockResponse> responseObserver;
 
     @Mock private AckBuilder ackBuilder;
 
@@ -153,15 +153,15 @@ public class BlockStreamServiceTest {
         }
 
         // Build a response to verify what's passed to the response observer
-        final SingleBlockResponse expectedSingleBlockResponse =
-                SingleBlockResponse.newBuilder().block(blockOpt.get()).build();
+        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedSingleBlockResponse =
+                BlockStreamService.toProtocSingleBlockResponse(blockOpt.get());
 
         // Build a request to invoke the service
-        final SingleBlockRequest singleBlockRequest =
-                SingleBlockRequest.newBuilder().blockNumber(1).build();
+        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
+                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder().setBlockNumber(1).build();
 
         // Call the service
-        blockStreamService.singleBlock(singleBlockRequest, responseObserver);
+        blockStreamService.protocSingleBlock(singleBlockRequest, responseObserver);
         verify(responseObserver, times(1)).onNext(expectedSingleBlockResponse);
     }
 
@@ -172,11 +172,11 @@ public class BlockStreamServiceTest {
         when(blockReader.read(1)).thenReturn(Optional.empty());
 
         // Build a response to verify what's passed to the response observer
-        final SingleBlockResponse expectedNotFound = buildSingleBlockNotFoundResponse();
+        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedNotFound = buildSingleBlockNotFoundResponse();
 
         // Build a request to invoke the service
-        final SingleBlockRequest singleBlockRequest =
-                SingleBlockRequest.newBuilder().blockNumber(1).build();
+        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
+                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder().setBlockNumber(1).build();
 
         // Call the service
         final BlockStreamService blockStreamService =
@@ -186,7 +186,7 @@ public class BlockStreamServiceTest {
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
 
-        blockStreamService.singleBlock(singleBlockRequest, responseObserver);
+        blockStreamService.protocSingleBlock(singleBlockRequest, responseObserver);
         verify(responseObserver, times(1)).onNext(expectedNotFound);
     }
 
@@ -200,12 +200,12 @@ public class BlockStreamServiceTest {
         // Set the service status to not running
         when(serviceStatus.isRunning()).thenReturn(false);
 
-        final SingleBlockResponse expectedNotAvailable = buildSingleBlockNotAvailableResponse();
+        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedNotAvailable = buildSingleBlockNotAvailableResponse();
 
         // Build a request to invoke the service
-        final SingleBlockRequest singleBlockRequest =
-                SingleBlockRequest.newBuilder().blockNumber(1).build();
-        blockStreamService.singleBlock(singleBlockRequest, responseObserver);
+        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
+                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder().setBlockNumber(1).build();
+        blockStreamService.protocSingleBlock(singleBlockRequest, responseObserver);
         verify(responseObserver, times(1)).onNext(expectedNotAvailable);
     }
 
@@ -219,12 +219,12 @@ public class BlockStreamServiceTest {
         when(serviceStatus.isRunning()).thenReturn(true);
         when(blockReader.read(1)).thenThrow(new IOException("Test exception"));
 
-        final SingleBlockResponse expectedNotAvailable = buildSingleBlockNotAvailableResponse();
+        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedNotAvailable = buildSingleBlockNotAvailableResponse();
 
         // Build a request to invoke the service
-        final SingleBlockRequest singleBlockRequest =
-                SingleBlockRequest.newBuilder().blockNumber(1).build();
-        blockStreamService.singleBlock(singleBlockRequest, responseObserver);
+        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
+                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder().setBlockNumber(1).build();
+        blockStreamService.protocSingleBlock(singleBlockRequest, responseObserver);
         verify(responseObserver, times(1)).onNext(expectedNotAvailable);
     }
 

@@ -16,6 +16,7 @@
 
 package com.hedera.block.server;
 
+import static com.hedera.block.server.BlockStreamService.toProtocSingleBlockResponse;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -65,7 +66,7 @@ public class BlockStreamServiceIT {
     @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
 
     @Mock private StreamObserver<PublishStreamResponse> publishStreamResponseObserver;
-    @Mock private StreamObserver<SingleBlockResponse> singleBlockResponseStreamObserver;
+    @Mock private StreamObserver<com.hedera.hapi.block.protoc.SingleBlockResponse> singleBlockResponseStreamObserver;
 
     @Mock private SubscribeStreamRequest subscribeStreamRequest;
 
@@ -443,10 +444,11 @@ public class BlockStreamServiceIT {
         expectedNoOpStreamObserver.onNext(publishStreamRequest);
 
         // Build a request to invoke the singleBlock service
-        final SingleBlockRequest singleBlockRequest =
-                SingleBlockRequest.newBuilder().blockNumber(1).build();
+        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
+                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder().setBlockNumber(1).build();
+
         // Simulate a consumer attempting to connect to the Block Node after the exception.
-        blockStreamService.singleBlock(singleBlockRequest, singleBlockResponseStreamObserver);
+        blockStreamService.protocSingleBlock(singleBlockRequest, singleBlockResponseStreamObserver);
 
         // Build a request to invoke the subscribeBlockStream service
         final SubscribeStreamRequest subscribeStreamRequest =
@@ -504,8 +506,9 @@ public class BlockStreamServiceIT {
                 SingleBlockResponse.newBuilder()
                         .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
                         .build();
+
         verify(singleBlockResponseStreamObserver, timeout(testTimeout).times(1))
-                .onNext(expectedSingleBlockNotAvailable);
+                .onNext(toProtocSingleBlockResponse(expectedSingleBlockNotAvailable));
 
         // TODO: Fix the response code when it's available
         final SubscribeStreamResponse expectedSubscriberStreamNotAvailable =
