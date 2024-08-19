@@ -57,15 +57,15 @@ else
     echo "No log file provided, skipping startup pattern check."
 fi
 
-# 2. Start the producer script with parameter 1 and save logs to producer.log
-./producer.sh 1 > producer.log 2>&1 &
-PRODUCER_PID=$!
-echo "Started producer with PID $PRODUCER_PID, logging to producer.log"
-
-# 3. Start the consumer script with parameters 1 1000 and save logs to consumer.log
+# 2. Start the consumer script with parameters 1 1000 and save logs to consumer.log
 ./consumer.sh 1 1000 > consumer.log 2>&1 &
 CONSUMER_PID=$!
 echo "Started consumer with PID $CONSUMER_PID, logging to consumer.log"
+
+# 3. Start the producer script with parameter 1 and save logs to producer.log
+./producer.sh 1 > producer.log 2>&1 &
+PRODUCER_PID=$!
+echo "Started producer with PID $PRODUCER_PID, logging to producer.log"
 
 # Sleep time after starting the consumer
 sleep 5  # Adjust sleep time as needed
