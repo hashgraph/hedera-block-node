@@ -9,48 +9,48 @@ option java_multiple_files = true;
 //import "stream/block.proto";
 //import "stream/block_item.proto";
 
-//message PublishStreamRequest {
-//    com.hedera.hapi.block.stream.BlockItem block_item = 1;
-//}
-//
-//message PublishStreamResponse {
-//    oneof response {
-//        Acknowledgement acknowledgement = 1;
-//        EndOfStream status = 2;
-//    }
-//
-//    message Acknowledgement {
-//        oneof acknowledgements {
-//            BlockAcknowledgement block_ack = 1;
-//            ItemAcknowledgement item_ack = 2;
-//        }
-//    }
-//
-//    message ItemAcknowledgement {
-//        bytes item_hash = 1;
-//    }
-//
-//    message BlockAcknowledgement {
-//        uint64 block_number = 1;
-//        bytes block_root_hash = 2;
-//        bool block_already_exists = 3;
-//    }
-//
-//    message EndOfStream {
-//        PublishStreamResponseCode status = 1;
-//        uint64 block_number = 2;
-//    }
-//}
-//
-//enum PublishStreamResponseCode {
-//    STREAM_ITEMS_UNKNOWN = 0;
-//    STREAM_ITEMS_SUCCESS = 1;
-//    STREAM_ITEMS_TIMEOUT = 2;
-//    STREAM_ITEMS_OUT_OF_ORDER = 3;
-//    STREAM_ITEMS_BAD_STATE_PROOF = 4;
-//    STREAM_ITEMS_BEHIND = 5;
-//}
-//
+message PublishStreamRequest {
+    BlockItem block_item = 1;
+}
+
+message PublishStreamResponse {
+    oneof response {
+        Acknowledgement acknowledgement = 1;
+        EndOfStream status = 2;
+    }
+
+    message Acknowledgement {
+        oneof acknowledgements {
+            BlockAcknowledgement block_ack = 1;
+            ItemAcknowledgement item_ack = 2;
+        }
+    }
+
+    message ItemAcknowledgement {
+        bytes item_hash = 1;
+    }
+
+    message BlockAcknowledgement {
+        uint64 block_number = 1;
+        bytes block_root_hash = 2;
+        bool block_already_exists = 3;
+    }
+
+    message EndOfStream {
+        PublishStreamResponseCode status = 1;
+        uint64 block_number = 2;
+    }
+}
+
+enum PublishStreamResponseCode {
+    STREAM_ITEMS_UNKNOWN = 0;
+    STREAM_ITEMS_SUCCESS = 1;
+    STREAM_ITEMS_TIMEOUT = 2;
+    STREAM_ITEMS_OUT_OF_ORDER = 3;
+    STREAM_ITEMS_BAD_STATE_PROOF = 4;
+    STREAM_ITEMS_BEHIND = 5;
+}
+
 message SingleBlockRequest {
     uint64 block_number = 1;
     bool allow_unverified = 2;
@@ -127,7 +127,7 @@ service BlockStreamService {
 //    rpc serverStatus(ServerStatusRequest) returns (ServerStatusResponse);
     rpc singleBlock(SingleBlockRequest) returns (SingleBlockResponse);
 //    rpc stateSnapshot(StateSnapshotRequest) returns (StateSnapshotResponse);
-//    rpc publishBlockStream (stream PublishStreamRequest) returns (stream PublishStreamResponse);
+    rpc publishBlockStream (stream PublishStreamRequest) returns (stream PublishStreamResponse);
 //    rpc subscribeBlockStream(SubscribeStreamRequest) returns (stream SubscribeStreamResponse);
 }
 
@@ -142,7 +142,7 @@ message Block {
 message BlockItem {
     oneof item {
         BlockHeader block_header = 1;
-//        EventHeader event_header = 2;
+        EventHeader event_header = 2;
 //        RoundHeader round_header = 3;
 //        EventTransaction event_transaction = 4;
 //        TransactionResult transaction_result = 5;
@@ -162,12 +162,36 @@ message BlockItem {
 // output/block_header.proto
 
 message BlockHeader {
-//    proto.SemanticVersion hapi_proto_version = 1;
-//    proto.SemanticVersion software_version = 2;
-    uint64 number = 1;
+    SemanticVersion hapi_proto_version = 1;
+    SemanticVersion software_version = 2;
+    uint64 number = 3;
 //    bytes previous_block_hash = 4;
 //    proto.Timestamp first_transaction_consensus_time = 5;
 //    proto.BlockHashAlgorithm hash_algorithm = 6;
 //    proto.SemanticVersion address_book_version = 7;
 }
 
+message SemanticVersion {
+    int32 major = 1;
+    int32 minor = 2;
+    int32 patch = 3;
+    string pre = 4;
+    string build = 5;
+}
+
+// input/event_metadata.proto
+
+message EventHeader {
+    EventCore event_core = 1;
+//    bytes signature = 2;
+}
+
+// platform/event/event_core.proto
+
+message EventCore {
+    int64 creator_node_id = 1;
+//    int64 birth_round = 2;
+//    proto.Timestamp time_created = 3;
+//    repeated EventDescriptor parents = 4;
+//    proto.SemanticVersion version = 17; // This field is temporary until birth_round migration is complete. Field number 17 chosen to avoid polluting cheaper 1 byte field numbers 1-16
+}

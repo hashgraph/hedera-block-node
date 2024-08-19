@@ -86,13 +86,7 @@ public class ProducerBlockItemObserver
     public void onNext(
             @NonNull final com.hedera.hapi.block.protoc.PublishStreamRequest publishStreamRequest) {
 
-        @Nullable final BlockItem blockItem = toPbjBlockItem(publishStreamRequest.getBlockItem());
-        if (blockItem == null) {
-            LOGGER.log(
-                    System.Logger.Level.ERROR,
-                    "BlockItem within the publishStreamRequest was null");
-            return;
-        }
+        @NonNull final BlockItem blockItem = toPbjBlockItem(publishStreamRequest.getBlockItem());
 
         try {
             // Publish the block to all the subscribers unless
