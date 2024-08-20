@@ -255,11 +255,12 @@ public class BlockStreamService implements GrpcService {
         return toProtocSingleBlockResponse(response);
     }
 
+    @NonNull
     private static com.hedera.hapi.block.SingleBlockRequest toPbjSingleBlockRequest(
             @NonNull final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest) {
         try {
-            byte[] protocBytes = singleBlockRequest.toByteArray();
-            Bytes bytes = Bytes.wrap(protocBytes);
+            @NonNull final byte[] protocBytes = singleBlockRequest.toByteArray();
+            @NonNull final Bytes bytes = Bytes.wrap(protocBytes);
             return SingleBlockRequest.PROTOBUF.parse(bytes);
         } catch (ParseException e) {
             throw new RuntimeException(e);

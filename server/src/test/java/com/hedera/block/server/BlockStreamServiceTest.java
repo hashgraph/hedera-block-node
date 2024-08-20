@@ -19,6 +19,7 @@ package com.hedera.block.server;
 import static com.hedera.block.server.BlockStreamService.buildSingleBlockNotAvailableResponse;
 import static com.hedera.block.server.BlockStreamService.buildSingleBlockNotFoundResponse;
 import static com.hedera.block.server.Constants.*;
+import static com.hedera.block.server.Translator.toProtocSingleBlockResponse;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -152,7 +153,7 @@ public class BlockStreamServiceTest {
 
         // Build a response to verify what's passed to the response observer
         final com.hedera.hapi.block.protoc.SingleBlockResponse expectedSingleBlockResponse =
-                Translator.toProtocSingleBlockResponse(blockOpt.get());
+                toProtocSingleBlockResponse(blockOpt.get());
 
         // Build a request to invoke the service
         final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =

@@ -72,7 +72,7 @@ trap cleanup SIGINT
     for ((i=1; i<=$block_items; i++))
     do
       if [[ $i -eq 1 ]]; then
-        result=$(generate_header "$i")
+        result=$(generate_header $iter)
         echo "$result"
       elif [[ $i -eq $block_items ]]; then
         echo "{\"block_item\": {\"state_proof\": {\"block\": $iter},\"value\": \"Payload[...]\"}}"
