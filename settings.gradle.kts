@@ -21,6 +21,7 @@ plugins {
 // Include the subprojects
 include(":stream")
 include(":server")
+include(":simulator")
 
 includeBuild(".") // https://github.com/gradle/gradle/issues/21490#issuecomment-1458887481
 
