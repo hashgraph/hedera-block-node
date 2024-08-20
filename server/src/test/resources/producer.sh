@@ -22,13 +22,13 @@ if [ "$#" -eq 2 ]; then
 fi
 
 generate_header() {
-    local i=$1
+    local block_header_number=$1
 
     # Read the JSON template from the file
     local header_template=$(cat "header_template.json")
 
     # Interpolate the integer parameter into the JSON template
-    local result=$(echo "$header_template" | jq --argjson number "$i" ".block_item.block_header.number = $i")
+    local result=$(echo "$header_template" | jq --argjson number "$block_header_number" ".block_item.block_header.number = $block_header_number")
 
     echo "$result"
 }
@@ -40,7 +40,19 @@ generate_event() {
     local event_template=$(cat "event_template.json")
 
     # Interpolate the integer parameter into the JSON template
-    local result=$(echo "$event_template" | jq --argjson creator_id "$creator_node_id" '.block_item.event_header.event_core.creator_node_id = $id')
+    local result=$(echo "$event_template" | jq --argjson creator_id "$creator_node_id" ".block_item.event_header.event_core.creator_node_id = $creator_node_id")
+
+    echo "$result"
+}
+
+generate_block_proof() {
+    local block_number=$1
+
+    # Read the JSON template from the file
+    local block_proof_template=$(cat "block_proof_template.json")
+
+    # Interpolate the integer parameter into the JSON template
+    local result=$(echo "$block_proof_template" | jq --argjson block "$block_number" ".block_item.block_proof.block = $block_number")
 
     echo "$result"
 }
@@ -65,7 +77,7 @@ trap cleanup SIGINT
 # Response messages from the gRPC server are printed to stdout.
 (
   iter=$1
-  block_items=1
+  block_items=10
   while true; do
 
     # Generate 10 BlockItems per Block
@@ -75,9 +87,11 @@ trap cleanup SIGINT
         result=$(generate_header $iter)
         echo "$result"
       elif [[ $i -eq $block_items ]]; then
-        echo "{\"block_item\": {\"state_proof\": {\"block\": $iter},\"value\": \"Payload[...]\"}}"
+        result=$(generate_block_proof $iter)
+        echo "$result"
       else
-        echo "{\"block_item\": {\"start_event\": {\"creator_id\": $i},\"value\": \"Payload[...]\"}}"
+        result=$(generate_event $iter)
+        echo "$result"
       fi
 
       sleep 1.0

@@ -61,6 +61,7 @@ message SingleBlockResponse {
     SingleBlockResponseCode status = 1;
     Block block = 2;
 }
+
 enum SingleBlockResponseCode {
     READ_BLOCK_UNKNOWN = 0;
     READ_BLOCK_INSUFFICIENT_BALANCE = 1;
@@ -150,6 +151,7 @@ message BlockItem {
 //        StateChanges state_changes = 7;
 //        FilteredItemHash filtered_item_hash = 8;
 //        BlockProof block_proof = 9;
+        BlockProof block_proof = 3;
 //        RecordFileItem record_file = 10;
     }
 }
@@ -194,4 +196,14 @@ message EventCore {
 //    proto.Timestamp time_created = 3;
 //    repeated EventDescriptor parents = 4;
 //    proto.SemanticVersion version = 17; // This field is temporary until birth_round migration is complete. Field number 17 chosen to avoid polluting cheaper 1 byte field numbers 1-16
+}
+
+// block_proof.proto
+
+message BlockProof {
+    uint64 block = 1;
+//    bytes previous_block_root_hash = 2;
+//    bytes start_of_block_state_root_hash = 3;
+//    bytes block_signature = 4;
+//    repeated MerkleSiblingHash sibling_hashes = 5;
 }
