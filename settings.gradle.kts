@@ -18,7 +18,7 @@ plugins {
     id("com.gradle.enterprise").version("3.15.1")
 }
 
-
+// Include the subprojects
 include(":stream")
 include(":server")
 

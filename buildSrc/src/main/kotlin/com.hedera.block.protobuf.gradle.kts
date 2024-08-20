@@ -44,17 +44,6 @@ protobuf {
     generateProtoTasks { ofSourceSet("main").forEach { it.plugins { id("grpc") } } }
 }
 
-sourceSets {
-    main {
-        proto {
-            srcDir("build/hedera-protobufs/block")
-            srcDir("build/hedera-protobufs/services")
-            srcDir("build/hedera-protobufs/platform")
-            srcDir("build/hedera-protobufs/streams")
-        }
-    }
-}
-
 tasks.javadoc {
     options {
         this as StandardJavadocDocletOptions
@@ -64,14 +53,14 @@ tasks.javadoc {
 }
 
 // Give JUnit more ram and make it execute tests in parallel
-// tasks.test {
+ tasks.test {
     // We are running a lot of tests 10s of thousands, so they need to run in parallel. Make each
     // class run in parallel.
-//    systemProperties["junit.jupiter.execution.parallel.enabled"] = true
-//    systemProperties["junit.jupiter.execution.parallel.mode.default"] = "concurrent"
+    systemProperties["junit.jupiter.execution.parallel.enabled"] = true
+    systemProperties["junit.jupiter.execution.parallel.mode.default"] = "concurrent"
     // limit amount of threads, so we do not use all CPU
-//    systemProperties["junit.jupiter.execution.parallel.config.dynamic.factor"] = "0.9"
+    systemProperties["junit.jupiter.execution.parallel.config.dynamic.factor"] = "0.9"
     // us parallel GC to keep up with high temporary garbage creation,
     // and allow GC to use 40% of CPU if needed
-//    jvmArgs("-XX:+UseParallelGC", "-XX:GCTimeRatio=90")
-// }
+    jvmArgs("-XX:+UseParallelGC", "-XX:GCTimeRatio=90")
+ }

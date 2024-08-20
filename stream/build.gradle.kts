@@ -29,10 +29,6 @@ tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.add("-Xlint:-exports,-deprecation,-removal")
 }
 
-tasks.withType<Copy>().configureEach {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
 // Add downloaded HAPI repo protobuf files into build directory and add to sources to build them
 tasks.cloneHederaProtobufs {
     // uncomment below to use a specific tag
@@ -84,24 +80,13 @@ dependencies {
     runtimeOnly("javax.annotation:javax.annotation-api:1.3.2") {
         because("java.annotation")
     }
-
-//    compileOnly("java.annotation")
-//    api(libs.findVersion("com.google.common").get())
-//    api(libs.findVersion("com.google.protobuf").get())
-//    compileOnly(libs.findVersion("java.annotation").get())
-//    implementation("com.google.guava:guava:33.0.0-jre")
-//    implementation("com.hedera.pbj:pbj-runtime:0.8.9")
-//    implementation("io.grpc:grpc-stub:1.64.0")
 }
-
-//mainModuleInfo {
-//    runtimeOnly("javax.annotation:javax.annotation-api")
-//}
 
 testModuleInfo {
     requires("com.hedera.node.hapi")
-//     we depend on the protoc compiled hapi during test as we test our pbj generated code
-//     against it to make sure it is compatible
+
+    // we depend on the protoc compiled hapi during test as we test our pbj generated code
+    // against it to make sure it is compatible
     requires("com.google.protobuf.util")
     requires("org.junit.jupiter.api")
     requires("org.junit.jupiter.params")
