@@ -16,15 +16,19 @@
 
 package com.hedera.block.simulator;
 
+import com.hedera.block.simulator.config.ConfigProvider;
+import com.hedera.block.simulator.config.ConfigProviderImpl;
+import com.hedera.block.simulator.config.data.GrpcConfig;
+
 public class BlockStreamSimulator {
-    private static final System.Logger LOGGER = System.getLogger(BlockStreamSimulator.class.getName());
+    private static final System.Logger LOGGER =
+            System.getLogger(BlockStreamSimulator.class.getName());
 
-    public BlockStreamSimulator() {
-
-    }
+    public BlockStreamSimulator() {}
 
     public static void main(String[] args) {
         LOGGER.log(System.Logger.Level.INFO, "Starting Block Stream Simulator");
-
+        ConfigProvider configProvider = new ConfigProviderImpl();
+        LOGGER.log(System.Logger.Level.INFO, configProvider.getConfiguration().getConfigData(GrpcConfig.class).port());
     }
 }

@@ -19,6 +19,8 @@ plugins {
     id("com.hedera.block.simulator")
 }
 
+description = "Hedera Block Stream Simulator"
+
 application {
     mainModule = "com.hedera.block.simulator"
     mainClass = "com.hedera.block.simulator.BlockStreamSimulator"
@@ -28,10 +30,3 @@ mainModuleInfo {
     annotationProcessor("com.google.auto.service.processor")
     runtimeOnly("com.swirlds.config.impl")
 }
-
-//testModuleInfo {
-//    requires("org.junit.jupiter.api")
-//    requires("org.mockito")
-//    requires("org.mockito.junit.jupiter")
-//    requiresStatic("com.github.spotbugs.annotations")
-//}
