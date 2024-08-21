@@ -54,17 +54,6 @@ jvmDependencyConflicts.patch {
     module("io.grpc:grpc-stub") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-testing") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-util") { annotationLibraries.forEach { removeDependency(it) } }
-    //    module("com.github.ben-manes.caffeine:caffeine") {
-    //        annotationLibraries.forEach { removeDependency(it) }
-    //    }
-    //    module("com.google.dagger:dagger-compiler") {
-    //        annotationLibraries.forEach { removeDependency(it) }
-    //    }
-    //    module("com.google.dagger:dagger-producers") {
-    //        annotationLibraries.forEach { removeDependency(it) }
-    //    }
-    //    module("com.google.dagger:dagger-spi") { annotationLibraries.forEach {
-    // removeDependency(it) } }
     module("com.google.guava:guava") {
         (annotationLibraries -
                 "com.google.code.findbugs:jsr305" -
@@ -94,9 +83,6 @@ jvmDependencyConflicts.patch {
 extraJavaModuleInfo {
     failOnAutomaticModules = true // Only allow Jars with 'module-info' on all module paths
 
-//    module("io.grpc:grpc-api", "io.grpc")
-
-    // working
     module("io.grpc:grpc-api", "io.grpc") {
         exportAllPackages()
         requireAllDefinedDependencies()
@@ -193,12 +179,6 @@ extraJavaModuleInfo {
     module("com.google.auto.service:auto-service", "com.google.auto.service.processor")
     module("com.google.auto:auto-common", "com.google.auto.common")
 
-    // Testing only
-    //    module("com.google.jimfs:jimfs", "com.google.jimfs")
-    //    module("org.awaitility:awaitility", "awaitility")
-    //    module("uk.org.webcompere:system-stubs-core", "uk.org.webcompere.systemstubs.core")
-    //    module("uk.org.webcompere:system-stubs-jupiter", "uk.org.webcompere.systemstubs.jupiter")
-
     // JMH only
     module("net.sf.jopt-simple:jopt-simple", "jopt.simple")
     module("org.openjdk.jmh:jmh-core", "jmh.core")
@@ -206,18 +186,7 @@ extraJavaModuleInfo {
     module("org.openjdk.jmh:jmh-generator-bytecode", "jmh.generator.bytecode")
     module("org.openjdk.jmh:jmh-generator-reflection", "jmh.generator.reflection")
 
-    // Test clients only
-    //    module("com.github.docker-java:docker-java-api", "com.github.docker.java.api")
-    //    module("com.github.docker-java:docker-java-transport", "com.github.docker.java.transport")
-    //    module(
-    //        "com.github.docker-java:docker-java-transport-zerodep",
-    //        "com.github.docker.transport.zerodep"
-    //    )
     module("com.google.protobuf:protobuf-java-util", "com.google.protobuf.util")
-    //    module("com.squareup:javapoet", "com.squareup.javapoet") {
-    //        exportAllPackages()
-    //        requires("java.compiler")
-    //    }
     module("junit:junit", "junit")
     module("org.hamcrest:hamcrest", "org.hamcrest")
     module("org.json:json", "org.json")
@@ -228,9 +197,3 @@ extraJavaModuleInfo {
     module("org.testcontainers:testcontainers", "org.testcontainers")
     module("org.mockito:mockito-junit-jupiter", "org.mockito.junit.jupiter")
 }
-
-// dependencies.constraints {
-//    // required to merge 'javax.annotation-api' into 'com.google.code.findbugs:jsr305'
-//    // to have all annotations on the classpath available at compile time
-//    implementation("javax.annotation:javax.annotation-api:1.3.2")
-// }

@@ -16,7 +16,6 @@
 
 import com.google.protobuf.gradle.id
 import com.hedera.block.tasks.GitClone
-import gradle.kotlin.dsl.accessors._37e002b0739411f5e26da8237c8ebcec.sourceSets
 
 plugins {
     id("java-library")
@@ -53,7 +52,7 @@ tasks.javadoc {
 }
 
 // Give JUnit more ram and make it execute tests in parallel
- tasks.test {
+tasks.test {
     // We are running a lot of tests 10s of thousands, so they need to run in parallel. Make each
     // class run in parallel.
     systemProperties["junit.jupiter.execution.parallel.enabled"] = true
@@ -63,4 +62,4 @@ tasks.javadoc {
     // us parallel GC to keep up with high temporary garbage creation,
     // and allow GC to use 40% of CPU if needed
     jvmArgs("-XX:+UseParallelGC", "-XX:GCTimeRatio=90")
- }
+}
