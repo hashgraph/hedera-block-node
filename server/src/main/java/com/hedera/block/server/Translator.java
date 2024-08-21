@@ -16,14 +16,19 @@
 
 package com.hedera.block.server;
 
+import static java.util.Objects.requireNonNull;
+
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.hedera.hapi.block.SingleBlockResponse;
-import com.hedera.hapi.block.SingleBlockResponseCode;
+import com.hedera.hapi.block.*;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.Codec;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
+import com.hedera.pbj.runtime.io.stream.WritableStreamingData;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 /**
  * TODO: Remove this class once the Helidon PBJ gRPC work is integrated. Translator class to convert
@@ -46,8 +51,7 @@ public final class Translator {
             @NonNull final SingleBlockResponse singleBlockResponse) {
         try {
             @NonNull
-            final byte[] pbjBytes =
-                    SingleBlockResponse.PROTOBUF.toBytes(singleBlockResponse).toByteArray();
+            final byte[] pbjBytes = asBytes(SingleBlockResponse.PROTOBUF, singleBlockResponse);
             return com.hedera.hapi.block.protoc.SingleBlockResponse.parseFrom(pbjBytes);
         } catch (InvalidProtocolBufferException e) {
             LOGGER.log(
@@ -92,10 +96,7 @@ public final class Translator {
             @NonNull final com.hedera.hapi.block.PublishStreamResponse publishStreamResponse) {
         try {
             @NonNull
-            final byte[] pbjBytes =
-                    com.hedera.hapi.block.PublishStreamResponse.PROTOBUF
-                            .toBytes(publishStreamResponse)
-                            .toByteArray();
+            final byte[] pbjBytes = asBytes(PublishStreamResponse.PROTOBUF, publishStreamResponse);
             return com.hedera.hapi.block.protoc.PublishStreamResponse.parseFrom(pbjBytes);
         } catch (InvalidProtocolBufferException e) {
             LOGGER.log(
@@ -120,10 +121,7 @@ public final class Translator {
             @NonNull final com.hedera.hapi.block.PublishStreamRequest publishStreamRequest) {
         try {
             @NonNull
-            final byte[] pbjBytes =
-                    com.hedera.hapi.block.PublishStreamRequest.PROTOBUF
-                            .toBytes(publishStreamRequest)
-                            .toByteArray();
+            final byte[] pbjBytes = asBytes(PublishStreamRequest.PROTOBUF, publishStreamRequest);
             return com.hedera.hapi.block.protoc.PublishStreamRequest.parseFrom(pbjBytes);
         } catch (InvalidProtocolBufferException e) {
             LOGGER.log(
@@ -150,10 +148,9 @@ public final class Translator {
                             final com.hedera.hapi.block.SubscribeStreamResponse
                                     subscribeStreamResponse) {
         try {
-            byte[] pbjBytes =
-                    com.hedera.hapi.block.SubscribeStreamResponse.PROTOBUF
-                            .toBytes(subscribeStreamResponse)
-                            .toByteArray();
+            @NonNull
+            final byte[] pbjBytes =
+                    asBytes(SubscribeStreamResponse.PROTOBUF, subscribeStreamResponse);
             return com.hedera.hapi.block.protoc.SubscribeStreamResponse.parseFrom(pbjBytes);
         } catch (InvalidProtocolBufferException e) {
             LOGGER.log(
@@ -181,10 +178,9 @@ public final class Translator {
                             final com.hedera.hapi.block.SubscribeStreamRequest
                                     subscribeStreamRequest) {
         try {
-            byte[] pbjBytes =
-                    com.hedera.hapi.block.SubscribeStreamRequest.PROTOBUF
-                            .toBytes(subscribeStreamRequest)
-                            .toByteArray();
+            @NonNull
+            final byte[] pbjBytes =
+                    asBytes(SubscribeStreamRequest.PROTOBUF, subscribeStreamRequest);
             return com.hedera.hapi.block.protoc.SubscribeStreamRequest.parseFrom(pbjBytes);
         } catch (InvalidProtocolBufferException e) {
             LOGGER.log(
@@ -209,8 +205,18 @@ public final class Translator {
     public static BlockItem toPbjBlockItem(
             @NonNull final com.hedera.hapi.block.stream.protoc.BlockItem blockItem)
             throws ParseException {
-        @NonNull final byte[] protocBytes = blockItem.toByteArray();
-        @NonNull final Bytes bytes = Bytes.wrap(protocBytes);
-        return BlockItem.PROTOBUF.parse(bytes);
+        return BlockItem.PROTOBUF.parse(Bytes.wrap(blockItem.toByteArray()));
+    }
+
+    private static <T extends Record> byte[] asBytes(@NonNull Codec<T> codec, @NonNull T tx) {
+        requireNonNull(codec);
+        requireNonNull(tx);
+        try {
+            final var bytes = new ByteArrayOutputStream();
+            codec.write(tx, new WritableStreamingData(bytes));
+            return bytes.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to convert from PBJ to bytes", e);
+        }
     }
 }
