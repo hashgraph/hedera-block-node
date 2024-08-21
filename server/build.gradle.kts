@@ -32,16 +32,6 @@ mainModuleInfo {
 dependencies {
     runtimeOnly("javax.annotation:javax.annotation-api:1.3.2") { because("java.annotation") }
     runtimeOnly("com.google.guava:guava:33.0.0-jre") { because("com.google.common") }
-
-    // Fixes:
-    //    > Error while evaluating property 'relativeClasspath' of task ':server:startScripts'.
-    //    > Could not resolve all files for configuration ':server:runtimeClasspath'.
-    //    > Failed to transform slf4j-api-1.7.30.jar (org.slf4j:slf4j-api:1.7.30) to match
-    // attributes {artifactType=jar, javaModule=true, org.gradle.category=library,
-    // org.gradle.libraryelements=jar, org.gradle.status=release, org.gradle.usage=java-runtime}.
-    //    > Execution failed for ExtraJavaModuleInfoTransform:
-    // /Users/mattpeterson/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.30/b5a4b6d16ab13e34a88fae84c35cd5d68cac922c/slf4j-api-1.7.30.jar.
-    //    > Found an automatic module: org.slf4j (slf4j-api-1.7.30.jar)
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:2.21.1") { because("java.logging") }
 }
 
