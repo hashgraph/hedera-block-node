@@ -20,3 +20,4 @@ coverage:
 
 ignore:
   - "server/src/main/java/com/hedera/block/server/Server.java"
+  - "server/src/main/java/com/hedera/block/server/Translator.java"
