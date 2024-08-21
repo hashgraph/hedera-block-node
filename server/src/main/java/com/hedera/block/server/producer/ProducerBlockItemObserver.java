@@ -152,8 +152,7 @@ public class ProducerBlockItemObserver
     }
 
     /**
-     * Protected method meant for testing.
-     * Builds an Acknowledgement for the block item.
+     * Protected method meant for testing. Builds an Acknowledgement for the block item.
      *
      * @param blockItem the block item to build the Acknowledgement for
      * @return the Acknowledgement for the block item
