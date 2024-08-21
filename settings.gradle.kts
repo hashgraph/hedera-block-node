@@ -41,6 +41,9 @@ dependencyResolutionManagement {
             // Platform SDK modules are all released together with matching versions.
             val swirldsVersion = "0.51.5"
 
+            // Define a constant for the Dagger version.
+            val daggerVersion = "2.42"
+
             // Compile time dependencies
             version("com.google.protobuf", "3.24.0")
             version("io.helidon.webserver.http2", "4.0.11")
@@ -80,6 +83,11 @@ dependencyResolutionManagement {
             version("org.apache.commons.lang3", "3.14.0")
             version("org.apache.commons.compress", "1.26.0")
             version("org.apache.logging.log4j.slf4j2.impl", "2.21.1")
+
+            // needed for dagger
+            version("dagger", daggerVersion)
+            version("dagger.compiler", daggerVersion)
+            version("com.squareup.javapoet", "1.13.0")
 
             // Testing only versions
             version("org.assertj.core", "3.23.1")
