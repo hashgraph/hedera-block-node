@@ -19,17 +19,21 @@ package com.hedera.block.server;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * The ServiceStatusImpl class implements the ServiceStatus interface. It provides the
  * implementation for checking the status of the service and shutting down the web server.
  */
+@Singleton
 public class ServiceStatusImpl implements ServiceStatus {
 
     private final AtomicBoolean isRunning = new AtomicBoolean(true);
     private WebServer webServer;
 
     /** Constructor for the ServiceStatusImpl class. */
+    @Inject
     public ServiceStatusImpl() {}
 
     /**

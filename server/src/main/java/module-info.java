@@ -20,10 +20,12 @@ module com.hedera.block.server {
     requires com.swirlds.config.api;
     requires com.swirlds.config.extensions;
     requires com.swirlds.metrics.api;
+    requires dagger;
     requires io.grpc.stub;
     requires io.helidon.common;
     requires io.helidon.webserver.grpc;
     requires io.helidon.webserver;
+    requires javax.inject;
     requires static com.github.spotbugs.annotations;
     requires static com.google.auto.service;
 
