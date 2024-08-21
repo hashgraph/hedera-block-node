@@ -174,7 +174,8 @@ public class ConsumerStreamResponseObserver
     private ResponseSender getResponseSender(
             @NonNull final SubscribeStreamResponse subscribeStreamResponse) {
 
-        final OneOf<SubscribeStreamResponse.ResponseOneOfType> oneOfTypeOneOf = subscribeStreamResponse.response();
+        final OneOf<SubscribeStreamResponse.ResponseOneOfType> oneOfTypeOneOf =
+                subscribeStreamResponse.response();
         return switch (oneOfTypeOneOf.kind()) {
             case STATUS -> statusResponseSender;
             case BLOCK_ITEM -> blockItemResponseSender;
@@ -198,9 +199,11 @@ public class ConsumerStreamResponseObserver
             if (blockItem == null) {
                 LOGGER.log(
                         System.Logger.Level.ERROR,
-                        "SubscribeStreamResponse was of type BLOCK_ITEM but block_item is null. This is a protocol violation: {0}",
+                        "SubscribeStreamResponse was of type BLOCK_ITEM but block_item is null."
+                                + " This is a protocol violation: {0}",
                         subscribeStreamResponse.toString());
-                throw new IllegalArgumentException("SubscribeStreamResponse was of type BlockItem but block_item is null");
+                throw new IllegalArgumentException(
+                        "SubscribeStreamResponse was of type BlockItem but block_item is null");
             } else {
                 if (!streamStarted && blockItem.hasBlockHeader()) {
                     streamStarted = true;

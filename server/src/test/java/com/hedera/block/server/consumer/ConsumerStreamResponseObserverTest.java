@@ -237,21 +237,25 @@ public class ConsumerStreamResponseObserverTest {
         final var consumerBlockItemObserver =
                 new ConsumerStreamResponseObserver(
                         testContext, testClock, streamMediator, responseStreamObserver);
-        assertThrows(IllegalArgumentException.class, () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
     }
 
     @Test
     public void testSubscribeStreamResponseTypeNotSupported() {
 
-            final SubscribeStreamResponse subscribeStreamResponse =
-                    SubscribeStreamResponse.newBuilder().build();
-            when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+        final SubscribeStreamResponse subscribeStreamResponse =
+                SubscribeStreamResponse.newBuilder().build();
+        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
-            final var consumerBlockItemObserver =
-                    new ConsumerStreamResponseObserver(
-                            testContext, testClock, streamMediator, responseStreamObserver);
+        final var consumerBlockItemObserver =
+                new ConsumerStreamResponseObserver(
+                        testContext, testClock, streamMediator, responseStreamObserver);
 
-            assertThrows(IllegalArgumentException.class, () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
     }
 
     private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
