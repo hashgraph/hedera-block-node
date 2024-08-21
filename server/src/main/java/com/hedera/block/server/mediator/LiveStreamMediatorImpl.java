@@ -59,6 +59,7 @@ class LiveStreamMediatorImpl
     private final BlockWriter<BlockItem> blockWriter;
     private final ServiceStatus serviceStatus;
     private final BlockNodeContext blockNodeContext;
+    private final MetricsService metricsService;
 
     /**
      * Constructs a new LiveStreamMediatorImpl instance with the given subscribers, block writer,
@@ -89,11 +90,12 @@ class LiveStreamMediatorImpl
         @NonNull
         final Disruptor<ObjectEvent<SubscribeStreamResponse>> disruptor =
                 // TODO: replace ring buffer size with a configurable value, create a MediatorConfig
-                new Disruptor<>(ObjectEvent::new, 1024, DaemonThreadFactory.INSTANCE);
+                new Disruptor<>(ObjectEvent::new, 2048, DaemonThreadFactory.INSTANCE);
         this.ringBuffer = disruptor.start();
         this.executor = Executors.newCachedThreadPool(DaemonThreadFactory.INSTANCE);
         this.serviceStatus = serviceStatus;
         this.blockNodeContext = blockNodeContext;
+        this.metricsService = blockNodeContext.metricsService();
     }
 
     /**
@@ -117,7 +119,6 @@ class LiveStreamMediatorImpl
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
 
             // Increment the block item counter
-            @NonNull final MetricsService metricsService = blockNodeContext.metricsService();
             metricsService.liveBlockItems.increment();
 
             try {
