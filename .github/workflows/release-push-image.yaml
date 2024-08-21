@@ -62,7 +62,8 @@ jobs:
           java-version: 21
 
       - name: Build
-        run: ./gradlew clean build -x :stream:test # TODO: Remove -x :stream:test when PBJ bug is fixed
+        run: ./gradlew clean build
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
