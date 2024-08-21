@@ -75,7 +75,7 @@ jobs:
 
       - name: Style Check
         id: spotless-check
-        run: ${GRADLE_EXEC} spotlessCheck -x :stream:spotlessCheck # Do not run spotless on the generated PBJ files
+        run: ${GRADLE_EXEC} spotlessCheck
 
       - name: Unit Tests
         id: unit-tests
