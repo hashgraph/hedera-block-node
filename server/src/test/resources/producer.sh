@@ -24,11 +24,9 @@ fi
 generate_header() {
     local block_header_number=$1
 
-    # Read the JSON template from the file
-    local header_template=$(cat "header_template.json")
-
     # Interpolate the integer parameter into the JSON template
-    local result=$(echo "$header_template" | jq --argjson number "$block_header_number" ".block_item.block_header.number = $block_header_number")
+    local result
+    result=$(echo "$header_template" | jq --argjson number "$block_header_number" ".block_item.block_header.number = $block_header_number")
 
     echo "$result"
 }
@@ -36,11 +34,9 @@ generate_header() {
 generate_event() {
     local creator_node_id=$1
 
-    # Read the JSON template from the file
-    local event_template=$(cat "event_template.json")
-
     # Interpolate the integer parameter into the JSON template
-    local result=$(echo "$event_template" | jq --argjson creator_id "$creator_node_id" ".block_item.event_header.event_core.creator_node_id = $creator_node_id")
+    local result
+    result=$(echo "$event_template" | jq --argjson creator_id "$creator_node_id" ".block_item.event_header.event_core.creator_node_id = $creator_node_id")
 
     echo "$result"
 }
@@ -48,11 +44,9 @@ generate_event() {
 generate_block_proof() {
     local block_number=$1
 
-    # Read the JSON template from the file
-    local block_proof_template=$(cat "block_proof_template.json")
-
     # Interpolate the integer parameter into the JSON template
-    local result=$(echo "$block_proof_template" | jq --argjson block "$block_number" ".block_item.block_proof.block = $block_number")
+    local result
+    result=$(echo "$block_proof_template" | jq --argjson block "$block_number" ".block_item.block_proof.block = $block_number")
 
     echo "$result"
 }
@@ -73,6 +67,15 @@ function cleanup {
 # Trap SIGINT
 trap cleanup SIGINT
 
+# Read the JSON template from the file
+header_template=$(cat "templates/header_template.json")
+
+# Read the JSON template from the file
+block_proof_template=$(cat "templates/block_proof_template.json")
+
+# Read the JSON template from the file
+event_template=$(cat "templates/event_template.json")
+
 # Generate and push messages to the gRPC server as a producer.
 # Response messages from the gRPC server are printed to stdout.
 (
@@ -90,11 +93,11 @@ trap cleanup SIGINT
         result=$(generate_block_proof $iter)
         echo "$result"
       else
-        result=$(generate_event $iter)
+        result=$(generate_event $i)
         echo "$result"
       fi
 
-      sleep 1.0
+      sleep 0.01
     done
 
     if [ $iter -eq $2 ]; then
@@ -103,7 +106,7 @@ trap cleanup SIGINT
     ((iter++))
 
   done
-) | grpcurl -vv -plaintext -proto $PATH_TO_PROTO -d @ $GRPC_SERVER $GRPC_METHOD &
+) | grpcurl -plaintext -proto $PATH_TO_PROTO -d @ $GRPC_SERVER $GRPC_METHOD &
 
 GRPC_PID=$!
 
