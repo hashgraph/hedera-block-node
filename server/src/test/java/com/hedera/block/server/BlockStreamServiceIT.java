@@ -17,6 +17,7 @@
 package com.hedera.block.server;
 
 import static com.hedera.block.server.Translator.*;
+import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -33,14 +34,15 @@ import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
-import com.hedera.block.server.producer.AckBuilder;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.*;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.lmax.disruptor.BatchEventProcessor;
 import com.lmax.disruptor.EventHandler;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.WebServer;
 import java.io.IOException;
@@ -135,7 +137,6 @@ public class BlockStreamServiceIT {
 
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        new AckBuilder(),
                         streamMediator,
                         blockReader,
                         serviceStatus,
@@ -154,7 +155,7 @@ public class BlockStreamServiceIT {
         // Calling onNext() as Helidon will
         streamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
 
-        final Acknowledgement itemAck = new AckBuilder().buildAck(blockItem);
+        final Acknowledgement itemAck = buildAck(blockItem);
         final PublishStreamResponse publishStreamResponse =
                 PublishStreamResponse.newBuilder().acknowledgement(itemAck).build();
 
@@ -188,7 +189,6 @@ public class BlockStreamServiceIT {
         // Build the BlockStreamService
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        new AckBuilder(),
                         streamMediator,
                         blockReader,
                         serviceStatus,
@@ -650,6 +650,15 @@ public class BlockStreamServiceIT {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         return new BlockStreamService(
-                new AckBuilder(), streamMediator, blockReader, serviceStatus, blockNodeContext);
+                streamMediator, blockReader, serviceStatus, blockNodeContext);
+    }
+
+    public static Acknowledgement buildAck(@NonNull final BlockItem blockItem) throws NoSuchAlgorithmException {
+        ItemAcknowledgement itemAck =
+                ItemAcknowledgement.newBuilder()
+                        .itemHash(Bytes.wrap(getFakeHash(blockItem)))
+                        .build();
+
+        return Acknowledgement.newBuilder().itemAck(itemAck).build();
     }
 }

@@ -27,7 +27,6 @@ import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
-import com.hedera.block.server.producer.AckBuilder;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
 import com.hedera.hapi.block.*;
 import com.hedera.hapi.block.protoc.BlockService;
@@ -51,7 +50,6 @@ public class BlockStreamService implements GrpcService {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final AckBuilder ackBuilder;
     private final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
     private final ServiceStatus serviceStatus;
     private final BlockReader<Block> blockReader;
@@ -61,7 +59,6 @@ public class BlockStreamService implements GrpcService {
      * Constructor for the BlockStreamService class. It initializes the BlockStreamService with the
      * given parameters.
      *
-     * @param ackBuilder the acknowledgement builder to send responses back to the producer
      * @param streamMediator the stream mediator to proxy block items from the producer to the
      *     subscribers and manage the subscription lifecycle for subscribers
      * @param blockReader the block reader to fetch blocks from storage for unary singleBlock
@@ -70,14 +67,12 @@ public class BlockStreamService implements GrpcService {
      *     stop the service and web server in the event of an unrecoverable exception
      */
     BlockStreamService(
-            @NonNull final AckBuilder ackBuilder,
             @NonNull
                     final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
                             streamMediator,
             @NonNull final BlockReader<Block> blockReader,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
-        this.ackBuilder = ackBuilder;
         this.streamMediator = streamMediator;
         this.blockReader = blockReader;
         this.serviceStatus = serviceStatus;
@@ -131,7 +126,7 @@ public class BlockStreamService implements GrpcService {
                 "Executing bidirectional publishBlockStream gRPC method");
 
         return new ProducerBlockItemObserver(
-                streamMediator, publishStreamResponseObserver, ackBuilder, serviceStatus);
+                streamMediator, publishStreamResponseObserver, serviceStatus);
     }
 
     void protocSubscribeBlockStream(

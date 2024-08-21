@@ -18,11 +18,13 @@ package com.hedera.block.server.producer;
 
 import static com.hedera.block.server.Translator.toPbjBlockItem;
 import static com.hedera.block.server.Translator.toProtocPublishStreamResponse;
+import static com.hedera.block.server.producer.Util.getFakeHash;
 
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.hapi.block.*;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
@@ -42,7 +44,6 @@ public class ProducerBlockItemObserver
     private final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
             publishStreamResponseObserver;
     private final Publisher<BlockItem> publisher;
-    private final AckBuilder ackBuilder;
     private final ServiceStatus serviceStatus;
 
     /**
@@ -54,8 +55,6 @@ public class ProducerBlockItemObserver
      *     arrive from the upstream producer
      * @param publishStreamResponseObserver the response stream observer to send responses back to
      *     the upstream producer for each block item processed
-     * @param ackBuilder the item acknowledgement builder to use when sending responses back to the
-     *     upstream producer for each block item processed
      * @param serviceStatus the service status used to determine if the downstream service is
      *     accepting block items. In the event of an unrecoverable exception, it will be used to
      *     stop the web server.
@@ -65,12 +64,10 @@ public class ProducerBlockItemObserver
             @NonNull
                     final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
                             publishStreamResponseObserver,
-            @NonNull final AckBuilder ackBuilder,
             @NonNull final ServiceStatus serviceStatus) {
 
         this.publisher = publisher;
         this.publishStreamResponseObserver = publishStreamResponseObserver;
-        this.ackBuilder = ackBuilder;
         this.serviceStatus = serviceStatus;
     }
 
@@ -124,7 +121,8 @@ public class ProducerBlockItemObserver
     @NonNull
     private com.hedera.hapi.block.protoc.PublishStreamResponse buildSuccessStreamResponse(
             @NonNull final BlockItem blockItem) throws IOException, NoSuchAlgorithmException {
-        @NonNull final Acknowledgement ack = ackBuilder.buildAck(blockItem);
+
+        @NonNull final Acknowledgement ack = buildAck(blockItem);
 
         return toProtocPublishStreamResponse(
                 PublishStreamResponse.newBuilder().acknowledgement(ack).build());
@@ -140,6 +138,17 @@ public class ProducerBlockItemObserver
                         .build();
         return toProtocPublishStreamResponse(
                 PublishStreamResponse.newBuilder().status(endOfStream).build());
+    }
+
+    @NonNull
+    protected Acknowledgement buildAck(@NonNull final BlockItem blockItem) throws NoSuchAlgorithmException {
+        ItemAcknowledgement itemAck =
+                ItemAcknowledgement.newBuilder()
+                        // TODO: Replace this with a real hash generator
+                        .itemHash(Bytes.wrap(getFakeHash(blockItem)))
+                        .build();
+
+        return Acknowledgement.newBuilder().itemAck(itemAck).build();
     }
 
     /**

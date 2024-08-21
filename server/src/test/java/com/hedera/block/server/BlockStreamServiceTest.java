@@ -20,6 +20,7 @@ import static com.hedera.block.server.BlockStreamService.buildSingleBlockNotAvai
 import static com.hedera.block.server.BlockStreamService.buildSingleBlockNotFoundResponse;
 import static com.hedera.block.server.Constants.*;
 import static com.hedera.block.server.Translator.toProtocSingleBlockResponse;
+import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -35,12 +36,15 @@ import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
-import com.hedera.block.server.producer.AckBuilder;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
+import com.hedera.hapi.block.Acknowledgement;
+import com.hedera.hapi.block.ItemAcknowledgement;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCalls;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
@@ -62,8 +66,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class BlockStreamServiceTest {
 
     @Mock private StreamObserver<com.hedera.hapi.block.protoc.SingleBlockResponse> responseObserver;
-
-    @Mock private AckBuilder ackBuilder;
 
     @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
 
@@ -100,13 +102,12 @@ public class BlockStreamServiceTest {
 
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        ackBuilder, streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
 
         // Verify the service name
         assertEquals(Constants.SERVICE_NAME, blockStreamService.serviceName());
 
         // Verify other methods not invoked
-        verify(ackBuilder, never()).buildAck(any(BlockItem.class));
         verify(streamMediator, never()).publish(any(BlockItem.class));
     }
 
@@ -114,14 +115,13 @@ public class BlockStreamServiceTest {
     public void testProto() throws IOException, NoSuchAlgorithmException {
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        ackBuilder, streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
         Descriptors.FileDescriptor fileDescriptor = blockStreamService.proto();
 
         // Verify the current rpc methods
         assertEquals(5, fileDescriptor.getServices().getFirst().getMethods().size());
 
         // Verify other methods not invoked
-        verify(ackBuilder, never()).buildAck(any(BlockItem.class));
         verify(streamMediator, never()).publish(any(BlockItem.class));
     }
 
@@ -131,7 +131,7 @@ public class BlockStreamServiceTest {
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        ackBuilder, streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
 
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
@@ -185,7 +185,7 @@ public class BlockStreamServiceTest {
         // Call the service
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        ackBuilder, streamMediator, blockReader, serviceStatus, blockNodeContext);
+                       streamMediator, blockReader, serviceStatus, blockNodeContext);
 
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
@@ -199,7 +199,7 @@ public class BlockStreamServiceTest {
 
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        ackBuilder, streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
 
         // Set the service status to not running
         when(serviceStatus.isRunning()).thenReturn(false);
@@ -220,7 +220,7 @@ public class BlockStreamServiceTest {
     public void testSingleBlockIOExceptionPath() throws IOException {
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        ackBuilder, streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
 
         // Set the service status to not running
         when(serviceStatus.isRunning()).thenReturn(true);
@@ -243,7 +243,7 @@ public class BlockStreamServiceTest {
 
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        ackBuilder, streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
 
         GrpcService.Routing routing = mock(GrpcService.Routing.class);
         blockStreamService.update(routing);

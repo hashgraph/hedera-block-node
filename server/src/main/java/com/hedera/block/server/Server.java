@@ -28,7 +28,6 @@ import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
-import com.hedera.block.server.producer.AckBuilder;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -127,7 +126,6 @@ public class Server {
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
 
-        return new BlockStreamService(
-                new AckBuilder(), streamMediator, blockReader, serviceStatus, blockNodeContext);
+        return new BlockStreamService(streamMediator, blockReader, serviceStatus, blockNodeContext);
     }
 }

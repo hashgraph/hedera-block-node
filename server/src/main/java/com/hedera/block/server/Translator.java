@@ -25,9 +25,20 @@ import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
+/**
+ * TODO: Remove this class once the Helidon PBJ gRPC work is integrated. Translator class to convert
+ * between PBJ and google protoc objects.
+ */
 public final class Translator {
     private Translator() {}
 
+    /**
+     * TODO: Remove this method once the Helidon PBJ gRPC work is integrated. Converts a {@link
+     * SingleBlockResponse} to a {@link com.hedera.hapi.block.protoc.SingleBlockResponse}.
+     *
+     * @param singleBlockResponse the {@link SingleBlockResponse} to convert
+     * @return the converted {@link com.hedera.hapi.block.protoc.SingleBlockResponse}
+     */
     @NonNull
     public static com.hedera.hapi.block.protoc.SingleBlockResponse toProtocSingleBlockResponse(
             @NonNull final SingleBlockResponse singleBlockResponse) {
@@ -41,6 +52,13 @@ public final class Translator {
         }
     }
 
+    /**
+     * TODO: Remove this method once the Helidon PBJ gRPC work is integrated. Converts a {@link
+     * Block} to a {@link com.hedera.hapi.block.protoc.SingleBlockResponse}.
+     *
+     * @param block the {@link Block} to convert to a protoc single block response.
+     * @return an instance of {@link com.hedera.hapi.block.protoc.SingleBlockResponse}
+     */
     @NonNull
     public static com.hedera.hapi.block.protoc.SingleBlockResponse toProtocSingleBlockResponse(
             @NonNull final Block block) {
@@ -54,6 +72,15 @@ public final class Translator {
         return toProtocSingleBlockResponse(singleBlockResponse);
     }
 
+    /**
+     * TODO: Remove this method once the Helidon PBJ gRPC work is integrated. Converts a {@link
+     * com.hedera.hapi.block.PublishStreamResponse} to a {@link
+     * com.hedera.hapi.block.protoc.PublishStreamResponse}.
+     *
+     * @param publishStreamResponse the {@link com.hedera.hapi.block.PublishStreamResponse} to
+     *     convert
+     * @return the converted {@link com.hedera.hapi.block.protoc.PublishStreamResponse}
+     */
     @NonNull
     public static com.hedera.hapi.block.protoc.PublishStreamResponse toProtocPublishStreamResponse(
             @NonNull final com.hedera.hapi.block.PublishStreamResponse publishStreamResponse) {
@@ -69,6 +96,14 @@ public final class Translator {
         }
     }
 
+    /**
+     * TODO: Remove this method once the Helidon PBJ gRPC work is integrated. Converts a {@link
+     * com.hedera.hapi.block.stream.protoc.BlockItem} to a {@link
+     * com.hedera.hapi.block.stream.BlockItem}.
+     *
+     * @param blockItem the {@link com.hedera.hapi.block.stream.protoc.BlockItem} to convert
+     * @return the converted {@link com.hedera.hapi.block.stream.BlockItem}
+     */
     @NonNull
     public static BlockItem toPbjBlockItem(
             @NonNull final com.hedera.hapi.block.stream.protoc.BlockItem blockItem) {
@@ -81,6 +116,14 @@ public final class Translator {
         }
     }
 
+    /**
+     * TODO: Remove this method once the Helidon PBJ gRPC work is integrated. Converts a {@link
+     * com.hedera.hapi.block.PublishStreamRequest} to a {@link
+     * com.hedera.hapi.block.protoc.PublishStreamRequest}.
+     *
+     * @param publishStreamRequest the {@link com.hedera.hapi.block.PublishStreamRequest} to convert
+     * @return the converted {@link com.hedera.hapi.block.protoc.PublishStreamRequest}
+     */
     @NonNull
     public static com.hedera.hapi.block.protoc.PublishStreamRequest toProtocPublishStreamRequest(
             @NonNull final com.hedera.hapi.block.PublishStreamRequest publishStreamRequest) {
@@ -96,6 +139,15 @@ public final class Translator {
         }
     }
 
+    /**
+     * TODO: Remove this method once the Helidon PBJ gRPC work is integrated. Converts a {@link
+     * com.hedera.hapi.block.SubscribeStreamResponse} to a {@link
+     * com.hedera.hapi.block.protoc.SubscribeStreamResponse}.
+     *
+     * @param subscribeStreamResponse the {@link com.hedera.hapi.block.SubscribeStreamResponse} to
+     *     convert
+     * @return the converted {@link com.hedera.hapi.block.protoc.SubscribeStreamResponse}
+     */
     @NonNull
     public static com.hedera.hapi.block.protoc.SubscribeStreamResponse
             toProtocSubscribeStreamResponse(
@@ -113,6 +165,15 @@ public final class Translator {
         }
     }
 
+    /**
+     * TODO: Remove this method once the Helidon PBJ gRPC work is integrated. Converts a {@link
+     * com.hedera.hapi.block.SubscribeStreamRequest} to a {@link
+     * com.hedera.hapi.block.protoc.SubscribeStreamRequest}.
+     *
+     * @param subscribeStreamRequest the {@link com.hedera.hapi.block.SubscribeStreamRequest} to
+     *     convert
+     * @return the converted {@link com.hedera.hapi.block.protoc.SubscribeStreamRequest}
+     */
     @NonNull
     public static com.hedera.hapi.block.protoc.SubscribeStreamRequest
             toProtocSubscribeStreamRequest(
