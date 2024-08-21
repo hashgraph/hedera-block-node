@@ -59,8 +59,6 @@ jvmDependencyConflicts.patch {
     module("com.google.protobuf:protobuf-java-util") {
         annotationLibraries.forEach { removeDependency(it) }
     }
-    module("org.apache.tuweni:tuweni-bytes") { removeDependency("com.google.code.findbugs:jsr305") }
-    module("org.apache.tuweni:tuweni-units") { removeDependency("com.google.code.findbugs:jsr305") }
     module("io.prometheus:simpleclient") {
         removeDependency("io.prometheus:simpleclient_tracer_otel")
         removeDependency("io.prometheus:simpleclient_tracer_otel_agent")
@@ -125,8 +123,6 @@ extraJavaModuleInfo {
     module("com.esaulpaugh:headlong", "headlong")
 
     module("org.checkerframework:checker-qual", "org.checkerframework.checker.qual")
-    module("io.tmio:tuweni-units", "tuweni.units")
-    module("io.tmio:tuweni-bytes", "tuweni.bytes")
     module("net.i2p.crypto:eddsa", "net.i2p.crypto.eddsa")
     module("org.antlr:antlr4-runtime", "org.antlr.antlr4.runtime")
 
