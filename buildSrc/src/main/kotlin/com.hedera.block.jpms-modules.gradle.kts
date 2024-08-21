@@ -36,14 +36,9 @@ jvmDependencyConflicts.patch {
             "org.codehaus.mojo:animal-sniffer-annotations"
         )
 
-    module("io.netty:netty-transport-native-epoll") {
-        addFeature("linux-x86_64")
-        addFeature("linux-aarch_64")
-    }
     module("io.grpc:grpc-api") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-core") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-context") { annotationLibraries.forEach { removeDependency(it) } }
-    module("io.grpc:grpc-netty") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-protobuf") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-protobuf-lite") {
         annotationLibraries.forEach { removeDependency(it) }
@@ -91,11 +86,6 @@ extraJavaModuleInfo {
 
     module("io.grpc:grpc-core", "io.grpc.internal")
     module("io.grpc:grpc-context", "io.grpc.context")
-    module("io.grpc:grpc-netty", "io.grpc.netty") {
-        exportAllPackages()
-        requireAllDefinedDependencies()
-        requires("java.logging")
-    }
     module("io.grpc:grpc-stub", "io.grpc.stub") {
         exportAllPackages()
         requireAllDefinedDependencies()
@@ -138,24 +128,6 @@ extraJavaModuleInfo {
     module("io.tmio:tuweni-units", "tuweni.units")
     module("io.tmio:tuweni-bytes", "tuweni.bytes")
     module("net.i2p.crypto:eddsa", "net.i2p.crypto.eddsa")
-    module("io.netty:netty-codec-http", "io.netty.codec.http")
-    module("io.netty:netty-codec-http2", "io.netty.codec.http2")
-    module("io.netty:netty-codec-socks", "io.netty.codec.socks")
-    module("io.netty:netty-handler-proxy", "io.netty.handler.proxy")
-    module("io.netty:netty-transport-native-unix-common", "io.netty.transport.unix.common")
-    module("io.netty:netty-buffer", "io.netty.buffer")
-    module("io.netty:netty-codec", "io.netty.codec")
-    module("io.netty:netty-common", "io.netty.common") {
-        exportAllPackages()
-        requireAllDefinedDependencies()
-        requires("java.logging")
-        requires("jdk.unsupported")
-        ignoreServiceProvider("reactor.blockhound.integration.BlockHoundIntegration")
-    }
-    module("io.netty:netty-handler", "io.netty.handler")
-    module("io.netty:netty-resolver", "io.netty.resolver")
-    module("io.netty:netty-transport", "io.netty.transport")
-    module("io.netty:netty-transport-classes-epoll", "io.netty.transport.classes.epoll")
     module("org.antlr:antlr4-runtime", "org.antlr.antlr4.runtime")
 
     // needed for metrics and logging, but also several platform classes
