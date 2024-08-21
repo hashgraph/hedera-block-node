@@ -38,11 +38,14 @@ public final class PersistTestUtils {
     public static void writeBlockItemToPath(final Path path, final BlockItem blockItem)
             throws IOException {
 
+        Bytes bytes = BlockItem.PROTOBUF.toBytes(blockItem);
+        writeBytesToPath(path, bytes.toByteArray());
+    }
+
+    public static void writeBytesToPath(final Path path, final byte[] bytes) throws IOException {
         try (FileOutputStream fos = new FileOutputStream(path.toString())) {
-            Bytes bytes = BlockItem.PROTOBUF.toBytes(blockItem);
-            fos.write(bytes.toByteArray());
-            LOGGER.log(
-                    System.Logger.Level.INFO, "Successfully wrote the block item file: {0}", path);
+            fos.write(bytes);
+            LOGGER.log(System.Logger.Level.INFO, "Successfully wrote the bytes to file: {0}", path);
         }
     }
 

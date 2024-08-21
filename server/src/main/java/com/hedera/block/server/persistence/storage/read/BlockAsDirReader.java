@@ -119,19 +119,12 @@ class BlockAsDirReader implements BlockReader<Block> {
                 break;
             }
 
-            if (blockItems.isEmpty()) {
-                LOGGER.log(
-                        System.Logger.Level.ERROR, "No block items found in block: " + blockPath);
-                return Optional.empty();
-            }
-
             builder.items(blockItems);
 
             // Return the Block
             return Optional.of(builder.build());
         } catch (IOException io) {
             LOGGER.log(System.Logger.Level.ERROR, "Error reading block: " + blockPath, io);
-
             throw io;
         }
     }
@@ -159,7 +152,8 @@ class BlockAsDirReader implements BlockReader<Block> {
             // So re-throw here to make a different decision upstream.
             throw io;
         } catch (ParseException e) {
-            throw new RuntimeException(e);
+            LOGGER.log(System.Logger.Level.ERROR, "Error parsing block item: " + blockItemPath, e);
+            throw new IOException(e);
         }
     }
 

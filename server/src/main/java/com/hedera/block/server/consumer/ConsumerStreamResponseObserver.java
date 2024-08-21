@@ -23,6 +23,7 @@ import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.OneOf;
 import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -172,11 +173,14 @@ public class ConsumerStreamResponseObserver
     @NonNull
     private ResponseSender getResponseSender(
             @NonNull final SubscribeStreamResponse subscribeStreamResponse) {
-        if (subscribeStreamResponse.hasStatus()) {
-            return statusResponseSender;
-        }
 
-        return blockItemResponseSender;
+        final OneOf<SubscribeStreamResponse.ResponseOneOfType> oneOfTypeOneOf = subscribeStreamResponse.response();
+        return switch (oneOfTypeOneOf.kind()) {
+            case STATUS -> statusResponseSender;
+            case BLOCK_ITEM -> blockItemResponseSender;
+            default -> throw new IllegalArgumentException(
+                    "Unknown response type: " + oneOfTypeOneOf.kind());
+        };
     }
 
     private interface ResponseSender {
@@ -191,7 +195,13 @@ public class ConsumerStreamResponseObserver
             // Only start sending BlockItems after we've reached
             // the beginning of a block.
             @Nullable final BlockItem blockItem = subscribeStreamResponse.blockItem();
-            if (blockItem != null) {
+            if (blockItem == null) {
+                LOGGER.log(
+                        System.Logger.Level.ERROR,
+                        "SubscribeStreamResponse was of type BLOCK_ITEM but block_item is null. This is a protocol violation: {0}",
+                        subscribeStreamResponse.toString());
+                throw new IllegalArgumentException("SubscribeStreamResponse was of type BlockItem but block_item is null");
+            } else {
                 if (!streamStarted && blockItem.hasBlockHeader()) {
                     streamStarted = true;
                 }

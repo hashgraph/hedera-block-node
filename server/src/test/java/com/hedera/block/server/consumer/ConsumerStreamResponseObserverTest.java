@@ -18,6 +18,7 @@ package com.hedera.block.server.consumer;
 
 import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import com.hedera.block.server.config.BlockNodeContext;
@@ -218,6 +219,39 @@ public class ConsumerStreamResponseObserverTest {
         // since we never send a BlockItem with a Header to start the stream.
         verify(responseStreamObserver, timeout(50).times(0))
                 .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+    }
+
+    @Test
+    public void testSubscriberStreamResponseIsBlockItemWhenBlockItemIsNull() {
+
+        // The generated objects contain safeguards to prevent a SubscribeStreamResponse
+        // being created with a null BlockItem. Here, I have to used a spy() to even
+        // manufacture this scenario. This should not happen in production.
+        final BlockItem blockItem = BlockItem.newBuilder().build();
+        final SubscribeStreamResponse subscribeStreamResponse =
+                spy(SubscribeStreamResponse.newBuilder().blockItem(blockItem).build());
+
+        when(subscribeStreamResponse.blockItem()).thenReturn(null);
+        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+
+        final var consumerBlockItemObserver =
+                new ConsumerStreamResponseObserver(
+                        testContext, testClock, streamMediator, responseStreamObserver);
+        assertThrows(IllegalArgumentException.class, () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
+    }
+
+    @Test
+    public void testSubscribeStreamResponseTypeNotSupported() {
+
+            final SubscribeStreamResponse subscribeStreamResponse =
+                    SubscribeStreamResponse.newBuilder().build();
+            when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+
+            final var consumerBlockItemObserver =
+                    new ConsumerStreamResponseObserver(
+                            testContext, testClock, streamMediator, responseStreamObserver);
+
+            assertThrows(IllegalArgumentException.class, () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
     }
 
     private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
