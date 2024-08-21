@@ -58,7 +58,7 @@ dependencies {
 
     // requires transitive in the module-info.java
     api("com.google.protobuf:protobuf-java:3.24.0") { because("com.google.protobuf") }
-    api("com.hedera.pbj:pbj-runtime:0.8.9") { because("com.hedera.pbj.runtime") }
+    api("com.hedera.pbj:pbj-runtime:0.9.2") { because("com.hedera.pbj.runtime") }
     api("io.grpc:grpc-stub:1.64.0") { because("io.grpc.stub") }
     api("io.grpc:grpc-api:1.64.0") { because("io.grpc") }
     api("com.google.guava:guava:33.0.0-jre") { because("com.google.common") }

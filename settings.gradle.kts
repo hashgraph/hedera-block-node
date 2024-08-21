@@ -62,8 +62,8 @@ dependencyResolutionManagement {
             version("io.grpc.protobuf", "1.64.0")
             version("io.grpc.stub", "1.64.0")
 
-            plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.8.9")
-            version("com.hedera.pbj.runtime", "0.8.9")
+            plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.9.2")
+            version("com.hedera.pbj.runtime", "0.9.2")
             version("org.antlr.antlr4.runtime", "4.13.1")
 
             version("java.annotation", "1.3.2")
@@ -73,14 +73,12 @@ dependencyResolutionManagement {
 
             version("hapi-proto", hapiProtoVersion)
             version("com.google.common", "33.0.0-jre")
-//            version("com.google.common", "31.1-jre")
 
             version("org.apache.commons.codec", "1.15")
             version("org.apache.commons.collections4", "4.4")
             version("org.apache.commons.io", "2.15.1")
             version("org.apache.commons.lang3", "3.14.0")
             version("org.apache.commons.compress", "1.26.0")
-//            version("org.slf4j", "1.7.30")
             version("org.apache.logging.log4j.slf4j2.impl", "2.21.1")
 
             // Testing only versions
