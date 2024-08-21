@@ -16,9 +16,14 @@
 
 package com.hedera.block.server;
 
+import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.config.BlockNodeContextFactory;
 import dagger.Binds;
 import dagger.Module;
+import dagger.Provides;
+
 import javax.inject.Singleton;
+import java.io.IOException;
 
 /**
  * A Dagger Module for interfaces that are at the BlockNodeApp Level, should be temporary and
@@ -36,4 +41,18 @@ public interface BlockNodeAppInjectionModule {
     @Singleton
     @Binds
     ServiceStatus bindServiceStatus(ServiceStatusImpl serviceStatus);
+
+    /**
+     * Provides a block node context singleton using the factory.
+     * @return a block node context singleton
+     */
+    @Provides
+    @Singleton
+    static BlockNodeContext provideBlockNodeContext() {
+        try {
+            return BlockNodeContextFactory.create();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

@@ -17,7 +17,6 @@
 package com.hedera.block.server;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.health.HealthService;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
@@ -46,6 +45,7 @@ public class BlockNodeApp {
     private static final System.Logger LOGGER = System.getLogger(Server.class.getName());
     private final ServiceStatus serviceStatus;
     private final HealthService healthService;
+    private final BlockNodeContext blockNodeContext;
 
     /**
      * Has all needed dependencies to start the server and initialize the context.
@@ -55,9 +55,12 @@ public class BlockNodeApp {
      */
     @Inject
     public BlockNodeApp(
-            @NonNull ServiceStatus serviceStatus, @NonNull HealthService healthService) {
+            @NonNull ServiceStatus serviceStatus,
+            @NonNull HealthService healthService,
+            @NonNull BlockNodeContext blockNodeContext) {
         this.serviceStatus = serviceStatus;
         this.healthService = healthService;
+        this.blockNodeContext = blockNodeContext;
     }
 
     /**
@@ -66,8 +69,6 @@ public class BlockNodeApp {
      * @throws IOException if the server cannot be started
      */
     public void startServer() throws IOException {
-        // init context, metrics, and configuration.
-        @NonNull final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
 
         @NonNull
         final BlockWriter<com.hedera.block.protos.BlockStreamService.BlockItem> blockWriter =
