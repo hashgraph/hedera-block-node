@@ -96,4 +96,17 @@ public final class PersistTestUtils {
 
         return blockItems;
     }
+
+    public static byte[] reverseByteArray(byte[] input) {
+        if (input == null || input.length == 0) {
+            return input;
+        }
+
+        byte[] reversed = new byte[input.length];
+        for (int i = 0; i < input.length; i++) {
+            reversed[i] = input[input.length - 1 - i];
+        }
+
+        return reversed;
+    }
 }

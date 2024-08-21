@@ -137,10 +137,7 @@ public class BlockStreamServiceIT {
 
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        streamMediator,
-                        blockReader,
-                        serviceStatus,
-                        blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
 
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
@@ -189,10 +186,7 @@ public class BlockStreamServiceIT {
         // Build the BlockStreamService
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        streamMediator,
-                        blockReader,
-                        serviceStatus,
-                        blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
 
         // Subscribe the consumers
         blockStreamService.protocSubscribeBlockStream(
@@ -649,11 +643,11 @@ public class BlockStreamServiceIT {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
-        return new BlockStreamService(
-                streamMediator, blockReader, serviceStatus, blockNodeContext);
+        return new BlockStreamService(streamMediator, blockReader, serviceStatus, blockNodeContext);
     }
 
-    public static Acknowledgement buildAck(@NonNull final BlockItem blockItem) throws NoSuchAlgorithmException {
+    public static Acknowledgement buildAck(@NonNull final BlockItem blockItem)
+            throws NoSuchAlgorithmException {
         ItemAcknowledgement itemAck =
                 ItemAcknowledgement.newBuilder()
                         .itemHash(Bytes.wrap(getFakeHash(blockItem)))

@@ -19,11 +19,13 @@ package com.hedera.block.server.producer;
 import static com.hedera.block.server.Translator.*;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
+import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
 import static com.hedera.block.server.util.TestConfigUtil.CONSUMER_TIMEOUT_THRESHOLD_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
@@ -80,9 +82,7 @@ public class ProducerBlockItemObserverTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
         final ProducerBlockItemObserver producerBlockItemObserver =
                 new ProducerBlockItemObserver(
-                        streamMediator,
-                        publishStreamResponseObserver,
-                        serviceStatus);
+                        streamMediator, publishStreamResponseObserver, serviceStatus);
 
         when(serviceStatus.isRunning()).thenReturn(true);
 
@@ -163,9 +163,7 @@ public class ProducerBlockItemObserverTest {
 
         final ProducerBlockItemObserver producerBlockItemObserver =
                 new ProducerBlockItemObserver(
-                        streamMediator,
-                        publishStreamResponseObserver,
-                        serviceStatus);
+                        streamMediator, publishStreamResponseObserver, serviceStatus);
 
         final PublishStreamRequest publishStreamRequest =
                 PublishStreamRequest.newBuilder().blockItem(blockItem).build();
@@ -191,9 +189,7 @@ public class ProducerBlockItemObserverTest {
     public void testOnError() {
         final ProducerBlockItemObserver producerBlockItemObserver =
                 new ProducerBlockItemObserver(
-                        streamMediator,
-                        publishStreamResponseObserver,
-                        serviceStatus);
+                        streamMediator, publishStreamResponseObserver, serviceStatus);
 
         final Throwable t = new Throwable("Test error");
         producerBlockItemObserver.onError(t);
@@ -205,7 +201,7 @@ public class ProducerBlockItemObserverTest {
 
         when(serviceStatus.isRunning()).thenReturn(true);
 
-        ProducerBlockItemObserver testProducerBlockItemObserver =
+        final ProducerBlockItemObserver testProducerBlockItemObserver =
                 new TestProducerBlockItemObserver(
                         streamMediator, publishStreamResponseObserver, serviceStatus);
 
@@ -225,23 +221,72 @@ public class ProducerBlockItemObserverTest {
                 .onNext(toProtocPublishStreamResponse(errorResponse));
     }
 
+    @Test
+    public void testBlockItemThrowsParseException() throws InvalidProtocolBufferException {
+        final ProducerBlockItemObserver producerBlockItemObserver =
+                new ProducerBlockItemObserver(
+                        streamMediator, publishStreamResponseObserver, serviceStatus);
+
+        // Create a pbj block item
+        final List<BlockItem> blockItems = generateBlockItems(1);
+        final BlockItem blockHeader = blockItems.getFirst();
+
+        // Convert the block item to a protoc and add a spy to reverse the bytes to
+        // provoke a ParseException
+        final byte[] pbjBytes = BlockItem.PROTOBUF.toBytes(blockHeader).toByteArray();
+        final com.hedera.hapi.block.stream.protoc.BlockItem protocBlockItem =
+                spy(com.hedera.hapi.block.stream.protoc.BlockItem.parseFrom(pbjBytes));
+
+        // set up the spy to pass the reversed bytes when called
+        final byte[] reversedBytes = reverseByteArray(protocBlockItem.toByteArray());
+        when(protocBlockItem.toByteArray()).thenReturn(reversedBytes);
+
+        // create the PublishStreamRequest with the spy block item
+        final com.hedera.hapi.block.protoc.PublishStreamRequest protocPublishStreamRequest =
+                com.hedera.hapi.block.protoc.PublishStreamRequest.newBuilder()
+                        .setBlockItem(protocBlockItem)
+                        .build();
+
+        // call the producerBlockItemObserver
+        producerBlockItemObserver.onNext(protocPublishStreamRequest);
+
+        // TODO: Replace this with a real error enum.
+        final EndOfStream endOfStream =
+                EndOfStream.newBuilder()
+                        .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
+                        .build();
+        toProtocPublishStreamResponse(
+                PublishStreamResponse.newBuilder().status(endOfStream).build());
+
+        // verify the ProducerBlockItemObserver has sent an error response
+        verify(publishStreamResponseObserver, timeout(50).times(1))
+                .onNext(
+                        toProtocPublishStreamResponse(
+                                PublishStreamResponse.newBuilder().status(endOfStream).build()));
+
+        verify(serviceStatus, timeout(50).times(1)).stopWebServer();
+    }
+
     private static class TestProducerBlockItemObserver extends ProducerBlockItemObserver {
         public TestProducerBlockItemObserver(
                 StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator,
-                StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse> publishStreamResponseObserver,
+                StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
+                        publishStreamResponseObserver,
                 ServiceStatus serviceStatus) {
             super(streamMediator, publishStreamResponseObserver, serviceStatus);
         }
 
         @NonNull
         @Override
-        protected Acknowledgement buildAck(@NonNull final BlockItem blockItem) throws NoSuchAlgorithmException {
+        protected Acknowledgement buildAck(@NonNull final BlockItem blockItem)
+                throws NoSuchAlgorithmException {
             throw new NoSuchAlgorithmException("test no such algorithm exception");
         }
     }
 
     @NonNull
-    private static Acknowledgement buildAck(@NonNull final BlockItem blockItem) throws NoSuchAlgorithmException {
+    private static Acknowledgement buildAck(@NonNull final BlockItem blockItem)
+            throws NoSuchAlgorithmException {
         ItemAcknowledgement itemAck =
                 ItemAcknowledgement.newBuilder()
                         .itemHash(Bytes.wrap(getFakeHash(blockItem)))

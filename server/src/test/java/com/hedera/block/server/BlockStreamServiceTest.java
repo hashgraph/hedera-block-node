@@ -20,14 +20,15 @@ import static com.hedera.block.server.BlockStreamService.buildSingleBlockNotAvai
 import static com.hedera.block.server.BlockStreamService.buildSingleBlockNotFoundResponse;
 import static com.hedera.block.server.Constants.*;
 import static com.hedera.block.server.Translator.toProtocSingleBlockResponse;
-import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
+import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.google.protobuf.Descriptors;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
@@ -38,13 +39,11 @@ import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
-import com.hedera.hapi.block.Acknowledgement;
-import com.hedera.hapi.block.ItemAcknowledgement;
+import com.hedera.hapi.block.SingleBlockResponse;
+import com.hedera.hapi.block.SingleBlockResponseCode;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
-import com.hedera.pbj.runtime.io.buffer.Bytes;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCalls;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
@@ -185,7 +184,7 @@ public class BlockStreamServiceTest {
         // Call the service
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                       streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
 
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
@@ -195,7 +194,7 @@ public class BlockStreamServiceTest {
     }
 
     @Test
-    void testSingleBlockServiceNotAvailable() {
+    void testSingleBlockServiceNotAvailable() throws InvalidProtocolBufferException {
 
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
@@ -256,5 +255,34 @@ public class BlockStreamServiceTest {
                         any(ServerCalls.ServerStreamingMethod.class));
         verify(routing, timeout(50).times(1))
                 .unary(eq(SINGLE_BLOCK_METHOD_NAME), any(ServerCalls.UnaryMethod.class));
+    }
+
+    @Test
+    public void testProtocParseExceptionHandling() throws IOException {
+        // TODO: We might be able to remove this test once we can remove the Translator class
+
+        final BlockStreamService blockStreamService =
+                new BlockStreamService(
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+
+        // Build a request to invoke the service
+        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
+                spy(
+                        com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
+                                .setBlockNumber(1)
+                                .build());
+
+        // Create a corrupted set of bytes to provoke a parse exception
+        byte[] okBytes = singleBlockRequest.toByteArray();
+        when(singleBlockRequest.toByteArray()).thenReturn(reverseByteArray(okBytes));
+
+        final SingleBlockResponse expectedSingleBlockErrorResponse =
+                SingleBlockResponse.newBuilder()
+                        .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
+                        .build();
+        // Call the service
+        blockStreamService.protocSingleBlock(singleBlockRequest, responseObserver);
+        verify(responseObserver, times(1))
+                .onNext(toProtocSingleBlockResponse(expectedSingleBlockErrorResponse));
     }
 }

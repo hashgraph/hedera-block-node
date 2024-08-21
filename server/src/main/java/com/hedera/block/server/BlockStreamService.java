@@ -21,6 +21,7 @@ import static com.hedera.block.server.Translator.toProtocSingleBlockResponse;
 import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
 
 import com.google.protobuf.Descriptors;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
@@ -167,7 +168,18 @@ public class BlockStreamService implements GrpcService {
                             singleBlockResponseStreamObserver) {
         LOGGER.log(System.Logger.Level.DEBUG, "Executing Unary singleBlock gRPC method");
 
-        singleBlock(toPbjSingleBlockRequest(singleBlockRequest), singleBlockResponseStreamObserver);
+        try {
+            @NonNull
+            final SingleBlockRequest pbjSingleBlockRequest =
+                    toPbjSingleBlockRequest(singleBlockRequest);
+            singleBlock(pbjSingleBlockRequest, singleBlockResponseStreamObserver);
+        } catch (ParseException e) {
+            LOGGER.log(
+                    System.Logger.Level.ERROR,
+                    "Error parsing protoc SingleBlockRequest: {0}",
+                    singleBlockRequest);
+            singleBlockResponseStreamObserver.onNext(buildSingleBlockNotAvailableResponse());
+        }
     }
 
     private void singleBlock(
@@ -240,7 +252,8 @@ public class BlockStreamService implements GrpcService {
     }
 
     @NonNull
-    static com.hedera.hapi.block.protoc.SingleBlockResponse buildSingleBlockNotFoundResponse() {
+    static com.hedera.hapi.block.protoc.SingleBlockResponse buildSingleBlockNotFoundResponse()
+            throws InvalidProtocolBufferException {
         @NonNull
         final SingleBlockResponse response =
                 SingleBlockResponse.newBuilder()
@@ -252,13 +265,11 @@ public class BlockStreamService implements GrpcService {
 
     @NonNull
     private static com.hedera.hapi.block.SingleBlockRequest toPbjSingleBlockRequest(
-            @NonNull final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest) {
-        try {
-            @NonNull final byte[] protocBytes = singleBlockRequest.toByteArray();
-            @NonNull final Bytes bytes = Bytes.wrap(protocBytes);
-            return SingleBlockRequest.PROTOBUF.parse(bytes);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+            @NonNull final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest)
+            throws ParseException {
+
+        @NonNull final byte[] protocBytes = singleBlockRequest.toByteArray();
+        @NonNull final Bytes bytes = Bytes.wrap(protocBytes);
+        return SingleBlockRequest.PROTOBUF.parse(bytes);
     }
 }

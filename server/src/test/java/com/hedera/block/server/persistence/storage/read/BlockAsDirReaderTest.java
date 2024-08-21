@@ -18,6 +18,7 @@ package com.hedera.block.server.persistence.storage.read;
 
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
+import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -268,18 +269,5 @@ public class BlockAsDirReaderTest {
                 throws IOException {
             super.setPerm(path, perms);
         }
-    }
-
-    private static byte[] reverseByteArray(byte[] input) {
-        if (input == null || input.length == 0) {
-            return input;
-        }
-
-        byte[] reversed = new byte[input.length];
-        for (int i = 0; i < input.length; i++) {
-            reversed[i] = input[input.length - 1 - i];
-        }
-
-        return reversed;
     }
 }

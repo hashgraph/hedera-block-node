@@ -30,6 +30,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * between PBJ and google protoc objects.
  */
 public final class Translator {
+    private static final System.Logger LOGGER = System.getLogger(Translator.class.getName());
+
     private Translator() {}
 
     /**
@@ -48,6 +50,10 @@ public final class Translator {
                     SingleBlockResponse.PROTOBUF.toBytes(singleBlockResponse).toByteArray();
             return com.hedera.hapi.block.protoc.SingleBlockResponse.parseFrom(pbjBytes);
         } catch (InvalidProtocolBufferException e) {
+            LOGGER.log(
+                    System.Logger.Level.ERROR,
+                    "Error converting SingleBlockResponse to protoc SingleBlockResponse for: {0}",
+                    singleBlockResponse);
             throw new RuntimeException(e);
         }
     }
@@ -92,26 +98,11 @@ public final class Translator {
                             .toByteArray();
             return com.hedera.hapi.block.protoc.PublishStreamResponse.parseFrom(pbjBytes);
         } catch (InvalidProtocolBufferException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * TODO: Remove this method once the Helidon PBJ gRPC work is integrated. Converts a {@link
-     * com.hedera.hapi.block.stream.protoc.BlockItem} to a {@link
-     * com.hedera.hapi.block.stream.BlockItem}.
-     *
-     * @param blockItem the {@link com.hedera.hapi.block.stream.protoc.BlockItem} to convert
-     * @return the converted {@link com.hedera.hapi.block.stream.BlockItem}
-     */
-    @NonNull
-    public static BlockItem toPbjBlockItem(
-            @NonNull final com.hedera.hapi.block.stream.protoc.BlockItem blockItem) {
-        try {
-            @NonNull final byte[] protocBytes = blockItem.toByteArray();
-            @NonNull final Bytes bytes = Bytes.wrap(protocBytes);
-            return BlockItem.PROTOBUF.parse(bytes);
-        } catch (ParseException e) {
+            LOGGER.log(
+                    System.Logger.Level.ERROR,
+                    "Error converting PublishStreamResponse to protoc PublishStreamResponse for:"
+                            + " {0}",
+                    publishStreamResponse);
             throw new RuntimeException(e);
         }
     }
@@ -135,6 +126,10 @@ public final class Translator {
                             .toByteArray();
             return com.hedera.hapi.block.protoc.PublishStreamRequest.parseFrom(pbjBytes);
         } catch (InvalidProtocolBufferException e) {
+            LOGGER.log(
+                    System.Logger.Level.ERROR,
+                    "Error converting PublishStreamRequest to protoc PublishStreamRequest for: {0}",
+                    publishStreamRequest);
             throw new RuntimeException(e);
         }
     }
@@ -161,6 +156,11 @@ public final class Translator {
                             .toByteArray();
             return com.hedera.hapi.block.protoc.SubscribeStreamResponse.parseFrom(pbjBytes);
         } catch (InvalidProtocolBufferException e) {
+            LOGGER.log(
+                    System.Logger.Level.ERROR,
+                    "Error converting SubscribeStreamResponse to protoc SubscribeStreamResponse"
+                            + " for: {0}",
+                    subscribeStreamResponse);
             throw new RuntimeException(e);
         }
     }
@@ -187,7 +187,30 @@ public final class Translator {
                             .toByteArray();
             return com.hedera.hapi.block.protoc.SubscribeStreamRequest.parseFrom(pbjBytes);
         } catch (InvalidProtocolBufferException e) {
+            LOGGER.log(
+                    System.Logger.Level.ERROR,
+                    "Error converting SubscribeStreamRequest to protoc SubscribeStreamRequest for:"
+                            + " {0}",
+                    subscribeStreamRequest);
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * TODO: Remove this method once the Helidon PBJ gRPC work is integrated. Converts a {@link
+     * com.hedera.hapi.block.stream.protoc.BlockItem} to a {@link
+     * com.hedera.hapi.block.stream.BlockItem}.
+     *
+     * @param blockItem the {@link com.hedera.hapi.block.stream.protoc.BlockItem} to convert
+     * @return the converted {@link com.hedera.hapi.block.stream.BlockItem}
+     * @throws ParseException if the converstion between the protoc and PBJ objects fails
+     */
+    @NonNull
+    public static BlockItem toPbjBlockItem(
+            @NonNull final com.hedera.hapi.block.stream.protoc.BlockItem blockItem)
+            throws ParseException {
+        @NonNull final byte[] protocBytes = blockItem.toByteArray();
+        @NonNull final Bytes bytes = Bytes.wrap(protocBytes);
+        return BlockItem.PROTOBUF.parse(bytes);
     }
 }

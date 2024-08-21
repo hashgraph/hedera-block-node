@@ -24,6 +24,7 @@ import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.hapi.block.*;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.StreamObserver;
@@ -82,9 +83,11 @@ public class ProducerBlockItemObserver
     public void onNext(
             @NonNull final com.hedera.hapi.block.protoc.PublishStreamRequest publishStreamRequest) {
 
-        @NonNull final BlockItem blockItem = toPbjBlockItem(publishStreamRequest.getBlockItem());
-
         try {
+
+            @NonNull
+            final BlockItem blockItem = toPbjBlockItem(publishStreamRequest.getBlockItem());
+
             // Publish the block to all the subscribers unless
             // there's an issue with the StreamMediator.
             if (serviceStatus.isRunning()) {
@@ -112,8 +115,16 @@ public class ProducerBlockItemObserver
             @NonNull final var errorResponse = buildErrorStreamResponse();
             publishStreamResponseObserver.onNext(errorResponse);
             LOGGER.log(System.Logger.Level.ERROR, "Exception thrown publishing BlockItem: ", io);
-
             LOGGER.log(System.Logger.Level.ERROR, "Shutting down the web server");
+            serviceStatus.stopWebServer();
+        } catch (ParseException e) {
+            @NonNull final var errorResponse = buildErrorStreamResponse();
+            publishStreamResponseObserver.onNext(errorResponse);
+            LOGGER.log(
+                    System.Logger.Level.ERROR,
+                    "Error parsing inbound block item from a producer: "
+                            + publishStreamRequest.getBlockItem(),
+                    e);
             serviceStatus.stopWebServer();
         }
     }
@@ -140,8 +151,17 @@ public class ProducerBlockItemObserver
                 PublishStreamResponse.newBuilder().status(endOfStream).build());
     }
 
+    /**
+     * Protected method meant for testing.
+     * Builds an Acknowledgement for the block item.
+     *
+     * @param blockItem the block item to build the Acknowledgement for
+     * @return the Acknowledgement for the block item
+     * @throws NoSuchAlgorithmException if the hash algorithm is not supported
+     */
     @NonNull
-    protected Acknowledgement buildAck(@NonNull final BlockItem blockItem) throws NoSuchAlgorithmException {
+    protected Acknowledgement buildAck(@NonNull final BlockItem blockItem)
+            throws NoSuchAlgorithmException {
         ItemAcknowledgement itemAck =
                 ItemAcknowledgement.newBuilder()
                         // TODO: Replace this with a real hash generator
