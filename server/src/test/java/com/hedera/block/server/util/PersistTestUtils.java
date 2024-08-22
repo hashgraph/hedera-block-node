@@ -29,6 +29,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.System.Logger.Level.INFO;
+
 public final class PersistTestUtils {
 
     private static final System.Logger LOGGER = System.getLogger(PersistTestUtils.class.getName());
@@ -45,7 +47,7 @@ public final class PersistTestUtils {
     public static void writeBytesToPath(final Path path, final byte[] bytes) throws IOException {
         try (FileOutputStream fos = new FileOutputStream(path.toString())) {
             fos.write(bytes);
-            LOGGER.log(System.Logger.Level.INFO, "Successfully wrote the bytes to file: {0}", path);
+            LOGGER.log(INFO, "Successfully wrote the bytes to file: {0}", path);
         }
     }
 

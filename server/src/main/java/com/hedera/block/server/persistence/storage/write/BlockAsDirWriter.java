@@ -17,6 +17,9 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
@@ -67,20 +70,20 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
             @NonNull final BlockNodeContext blockNodeContext)
             throws IOException {
 
-        LOGGER.log(System.Logger.Level.INFO, "Initializing FileSystemBlockStorage");
+        LOGGER.log(INFO, "Initializing FileSystemBlockStorage");
 
         PersistenceStorageConfig config =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
         final Path blockNodeRootPath = Path.of(config.rootPath());
 
-        LOGGER.log(System.Logger.Level.INFO, "Block Node Root Path: " + blockNodeRootPath);
+        LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);
 
         this.blockNodeRootPath = blockNodeRootPath;
         this.blockRemover = blockRemover;
         this.filePerms = filePerms;
 
         // Initialize the block node root directory if it does not exist
-        FileUtils.createPathIfNotExists(blockNodeRootPath, System.Logger.Level.INFO, filePerms);
+        FileUtils.createPathIfNotExists(blockNodeRootPath, INFO, filePerms);
 
         this.blockNodeContext = blockNodeContext;
     }
@@ -106,7 +109,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
             } catch (IOException e) {
 
                 LOGGER.log(
-                        System.Logger.Level.ERROR,
+                        ERROR,
                         "Error writing the BlockItem protobuf to a file: ",
                         e);
 
@@ -121,7 +124,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                     repairPermissions(blockNodeRootPath);
                     repairPermissions(calculateBlockPath());
                     LOGGER.log(
-                            System.Logger.Level.INFO,
+                            INFO,
                             "Retrying to write the BlockItem protobuf to a file");
                 }
             }
@@ -141,12 +144,12 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
 
             BlockItem.PROTOBUF.toBytes(blockItem).writeTo(fos);
             LOGGER.log(
-                    System.Logger.Level.DEBUG,
+                    DEBUG,
                     "Successfully wrote the block item file: {0}",
                     blockItemFilePath);
         } catch (IOException e) {
             LOGGER.log(
-                    System.Logger.Level.ERROR,
+                    ERROR,
                     "Error writing the BlockItem protobuf to a file: ",
                     e);
             throw e;
@@ -163,7 +166,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
         repairPermissions(blockNodeRootPath);
 
         // Construct the path to the block directory
-        FileUtils.createPathIfNotExists(calculateBlockPath(), System.Logger.Level.DEBUG, filePerms);
+        FileUtils.createPathIfNotExists(calculateBlockPath(), DEBUG, filePerms);
 
         // Reset
         blockNodeFileNameIndex = 0;
@@ -177,7 +180,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
         final boolean isWritable = Files.isWritable(path);
         if (!isWritable) {
             LOGGER.log(
-                    System.Logger.Level.ERROR,
+                    ERROR,
                     "Block node root directory is not writable. Attempting to change the"
                             + " permissions.");
 
@@ -186,7 +189,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                 Files.setPosixFilePermissions(path, filePerms.value());
             } catch (IOException e) {
                 LOGGER.log(
-                        System.Logger.Level.ERROR,
+                        ERROR,
                         "Error setting permissions on the path: " + path,
                         e);
                 throw e;

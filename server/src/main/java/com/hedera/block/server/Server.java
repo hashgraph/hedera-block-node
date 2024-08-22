@@ -37,6 +37,8 @@ import io.helidon.webserver.grpc.GrpcRouting;
 import io.helidon.webserver.http.HttpRouting;
 import java.io.IOException;
 
+import static java.lang.System.Logger.Level.INFO;
+
 /** Main class for the block node server */
 public class Server {
 
@@ -51,7 +53,7 @@ public class Server {
      */
     public static void main(final String[] args) {
 
-        LOGGER.log(System.Logger.Level.INFO, "Starting BlockNode Server");
+        LOGGER.log(INFO, "Starting BlockNode Server");
 
         try {
             // init context, metrics, and configuration.
@@ -103,7 +105,7 @@ public class Server {
 
             // Log the server status
             LOGGER.log(
-                    System.Logger.Level.INFO,
+                    INFO,
                     "Block Node Server started at port: " + webServer.port());
         } catch (IOException e) {
             throw new RuntimeException(e);

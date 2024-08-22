@@ -17,6 +17,8 @@
 package com.hedera.block.server.consumer;
 
 import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
@@ -108,7 +110,7 @@ public class ConsumerStreamResponseObserver
                         isResponsePermitted.set(false);
                         subscriptionHandler.unsubscribe(this);
                         LOGGER.log(
-                                System.Logger.Level.DEBUG,
+                                DEBUG,
                                 "Consumer cancelled stream.  Observer unsubscribed.");
                     };
             serverCallStreamObserver.setOnCancelHandler(onCancel);
@@ -120,7 +122,7 @@ public class ConsumerStreamResponseObserver
                         isResponsePermitted.set(false);
                         subscriptionHandler.unsubscribe(this);
                         LOGGER.log(
-                                System.Logger.Level.DEBUG,
+                                DEBUG,
                                 "Consumer completed stream.  Observer unsubscribed.");
                     };
             serverCallStreamObserver.setOnCloseHandler(onClose);
@@ -155,7 +157,7 @@ public class ConsumerStreamResponseObserver
             if (currentMillis - producerLivenessMillis > timeoutThresholdMillis) {
                 subscriptionHandler.unsubscribe(this);
                 LOGGER.log(
-                        System.Logger.Level.DEBUG,
+                        DEBUG,
                         "Unsubscribed ConsumerBlockItemObserver due to producer timeout");
             } else {
                 // Refresh the producer liveness and pass the BlockItem to the downstream observer.
@@ -196,7 +198,7 @@ public class ConsumerStreamResponseObserver
             final BlockItem blockItem = subscribeStreamResponse.blockItem();
             if (blockItem == null) {
                 LOGGER.log(
-                        System.Logger.Level.ERROR,
+                        ERROR,
                         "SubscribeStreamResponse was of type BLOCK_ITEM but block_item is null."
                                 + " This is a protocol violation: {0}",
                         subscribeStreamResponse.toString());
@@ -209,7 +211,7 @@ public class ConsumerStreamResponseObserver
 
                 if (streamStarted) {
                     LOGGER.log(
-                            System.Logger.Level.DEBUG,
+                            DEBUG,
                             "Send BlockItem downstream: {0} ",
                             blockItem);
                     subscribeStreamResponseObserver.onNext(
@@ -222,7 +224,7 @@ public class ConsumerStreamResponseObserver
     private final class StatusResponseSender implements ResponseSender {
         public void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse) {
             LOGGER.log(
-                    System.Logger.Level.DEBUG,
+                    DEBUG,
                     "Send SubscribeStreamResponse downstream: {0} ",
                     subscribeStreamResponse);
             subscribeStreamResponseObserver.onNext(

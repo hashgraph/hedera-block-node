@@ -19,6 +19,7 @@ package com.hedera.block.server;
 import static com.hedera.block.server.Translator.*;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
+import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -118,7 +119,7 @@ public class BlockStreamServiceIntegrationTest {
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
+        LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
 
         blockNodeContext =
                 TestConfigUtil.getTestBlockNodeContext(

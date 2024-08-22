@@ -19,6 +19,8 @@ package com.hedera.block.server.producer;
 import static com.hedera.block.server.Translator.toPbjBlockItem;
 import static com.hedera.block.server.Translator.toProtocPublishStreamResponse;
 import static com.hedera.block.server.producer.Util.getFakeHash;
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.mediator.Publisher;
@@ -105,26 +107,26 @@ public class ProducerBlockItemObserver
                 } catch (IOException | NoSuchAlgorithmException e) {
                     final var errorResponse = buildErrorStreamResponse();
                     publishStreamResponseObserver.onNext(errorResponse);
-                    LOGGER.log(System.Logger.Level.ERROR, "Error calculating hash: ", e);
+                    LOGGER.log(ERROR, "Error calculating hash: ", e);
                 }
 
             } else {
                 // Close the upstream connection to the producer(s)
                 final var errorResponse = buildErrorStreamResponse();
                 publishStreamResponseObserver.onNext(errorResponse);
-                LOGGER.log(System.Logger.Level.DEBUG, "StreamMediator is not accepting BlockItems");
+                LOGGER.log(DEBUG, "StreamMediator is not accepting BlockItems");
             }
         } catch (IOException io) {
             final var errorResponse = buildErrorStreamResponse();
             publishStreamResponseObserver.onNext(errorResponse);
-            LOGGER.log(System.Logger.Level.ERROR, "Exception thrown publishing BlockItem: ", io);
-            LOGGER.log(System.Logger.Level.ERROR, "Shutting down the web server");
+            LOGGER.log(ERROR, "Exception thrown publishing BlockItem: ", io);
+            LOGGER.log(ERROR, "Shutting down the web server");
             serviceStatus.stopWebServer();
         } catch (ParseException e) {
             final var errorResponse = buildErrorStreamResponse();
             publishStreamResponseObserver.onNext(errorResponse);
             LOGGER.log(
-                    System.Logger.Level.ERROR,
+                    ERROR,
                     "Error parsing inbound block item from a producer: "
                             + publishStreamRequest.getBlockItem(),
                     e);
@@ -178,7 +180,7 @@ public class ProducerBlockItemObserver
      */
     @Override
     public void onError(@NonNull final Throwable t) {
-        LOGGER.log(System.Logger.Level.ERROR, "onError method invoked with an exception: ", t);
+        LOGGER.log(ERROR, "onError method invoked with an exception: ", t);
         publishStreamResponseObserver.onError(t);
     }
 
@@ -188,7 +190,7 @@ public class ProducerBlockItemObserver
      */
     @Override
     public void onCompleted() {
-        LOGGER.log(System.Logger.Level.DEBUG, "ProducerBlockStreamObserver completed");
+        LOGGER.log(DEBUG, "ProducerBlockStreamObserver completed");
         publishStreamResponseObserver.onCompleted();
     }
 }

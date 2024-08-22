@@ -25,6 +25,8 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Set;
 
+import static java.lang.System.Logger.Level.ERROR;
+
 /**
  * The BlockAsDirRemover class removes a block from the file system. The block is stored as a
  * directory containing block items. The block items are stored as files within the block directory.
@@ -62,7 +64,7 @@ public class BlockAsDirRemover implements BlockRemover {
         // for removal
         final Path blockPath = blockNodeRootPath.resolve(String.valueOf(id));
         if (Files.notExists(blockPath)) {
-            LOGGER.log(System.Logger.Level.ERROR, "Block does not exist: {0}", id);
+            LOGGER.log(ERROR, "Block does not exist: {0}", id);
             return;
         }
 
@@ -70,7 +72,7 @@ public class BlockAsDirRemover implements BlockRemover {
 
         // Best effort to delete the block
         if (!delete(blockPath.toFile())) {
-            LOGGER.log(System.Logger.Level.ERROR, "Failed to delete block: {0}", id);
+            LOGGER.log(ERROR, "Failed to delete block: {0}", id);
         }
     }
 

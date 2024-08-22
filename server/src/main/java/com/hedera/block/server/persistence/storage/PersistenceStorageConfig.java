@@ -23,6 +23,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static java.lang.System.Logger.Level.ERROR;
+
 /**
  * Use this configuration across the persistent storage package
  *
@@ -50,7 +52,7 @@ public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String
         if (Files.notExists(path)) {
             try {
                 FileUtils.createPathIfNotExists(
-                        path, System.Logger.Level.ERROR, FileUtils.defaultPerms);
+                        path, ERROR, FileUtils.defaultPerms);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

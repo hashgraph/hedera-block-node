@@ -37,6 +37,9 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
+
 /**
  * LiveStreamMediatorImpl is an implementation of the StreamMediator interface. It is responsible
  * for managing the subscribe and unsubscribe operations of downstream consumers. It also proxies
@@ -111,7 +114,7 @@ class LiveStreamMediatorImpl
         if (serviceStatus.isRunning()) {
 
             // Publish the block for all subscribers to receive
-            LOGGER.log(System.Logger.Level.DEBUG, "Publishing BlockItem: {0}", blockItem);
+            LOGGER.log(DEBUG, "Publishing BlockItem: {0}", blockItem);
             final var subscribeStreamResponse =
                     SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
@@ -126,12 +129,12 @@ class LiveStreamMediatorImpl
                 // Disable BlockItem publication for upstream producers
                 serviceStatus.setRunning(false);
                 LOGGER.log(
-                        System.Logger.Level.ERROR,
+                        ERROR,
                         "An exception occurred while attempting to persist the BlockItem: "
                                 + blockItem,
                         e);
 
-                LOGGER.log(System.Logger.Level.DEBUG, "Send a response to end the stream");
+                LOGGER.log(DEBUG, "Send a response to end the stream");
 
                 // Publish the block for all subscribers to receive
                 final SubscribeStreamResponse endStreamResponse = buildEndStreamResponse();
@@ -139,14 +142,14 @@ class LiveStreamMediatorImpl
 
                 // Unsubscribe all downstream consumers
                 for (final var subscriber : subscribers.keySet()) {
-                    LOGGER.log(System.Logger.Level.DEBUG, "Unsubscribing: {0}", subscriber);
+                    LOGGER.log(DEBUG, "Unsubscribing: {0}", subscriber);
                     unsubscribe(subscriber);
                 }
 
                 throw e;
             }
         } else {
-            LOGGER.log(System.Logger.Level.ERROR, "StreamMediator is not accepting BlockItems");
+            LOGGER.log(ERROR, "StreamMediator is not accepting BlockItems");
         }
     }
 
@@ -175,7 +178,7 @@ class LiveStreamMediatorImpl
         // Remove the subscriber
         final var batchEventProcessor = subscribers.remove(handler);
         if (batchEventProcessor == null) {
-            LOGGER.log(System.Logger.Level.ERROR, "Subscriber not found: {0}", handler);
+            LOGGER.log(ERROR, "Subscriber not found: {0}", handler);
 
         } else {
 

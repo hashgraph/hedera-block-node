@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.persistence.storage.remove;
 
+import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.hedera.block.server.config.BlockNodeContext;
@@ -52,7 +53,7 @@ public class BlockAsDirRemoverTest {
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
+        LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
 
         blockNodeContext =
                 TestConfigUtil.getTestBlockNodeContext(

@@ -22,6 +22,7 @@ import static com.hedera.block.server.Constants.*;
 import static com.hedera.block.server.Translator.toProtocSingleBlockResponse;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
+import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -83,7 +84,7 @@ public class BlockStreamServiceTest {
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
+        LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
 
         blockNodeContext =
                 TestConfigUtil.getTestBlockNodeContext(

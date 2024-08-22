@@ -17,6 +17,8 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.persistence.storage.read.BlockAsDirReaderTest.removeBlockReadPerms;
+import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -60,7 +62,7 @@ public class BlockAsDirWriterTest {
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
+        LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
 
         blockNodeContext =
                 TestConfigUtil.getTestBlockNodeContext(
@@ -72,7 +74,7 @@ public class BlockAsDirWriterTest {
     public void tearDown() {
         if (!TestUtils.deleteDirectory(testPath.toFile())) {
             LOGGER.log(
-                    System.Logger.Level.ERROR,
+                    ERROR,
                     "Failed to delete temp directory: " + testPath.toString());
         }
     }

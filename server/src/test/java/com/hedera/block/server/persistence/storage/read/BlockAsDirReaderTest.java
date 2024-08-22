@@ -19,6 +19,8 @@ package com.hedera.block.server.persistence.storage.read;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
+import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -63,7 +65,7 @@ public class BlockAsDirReaderTest {
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
+        LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
 
         blockNodeContext =
                 TestConfigUtil.getTestBlockNodeContext(
@@ -75,7 +77,7 @@ public class BlockAsDirReaderTest {
     public void tearDown() {
         if (!TestUtils.deleteDirectory(testPath.toFile())) {
             LOGGER.log(
-                    System.Logger.Level.ERROR,
+                    ERROR,
                     "Failed to delete temp directory: " + testPath.toString());
         }
     }
