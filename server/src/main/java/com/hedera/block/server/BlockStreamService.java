@@ -16,7 +16,10 @@
 
 package com.hedera.block.server;
 
-import static com.hedera.block.server.Constants.*;
+import static com.hedera.block.server.Constants.CLIENT_STREAMING_METHOD_NAME;
+import static com.hedera.block.server.Constants.SERVER_STREAMING_METHOD_NAME;
+import static com.hedera.block.server.Constants.SERVICE_NAME;
+import static com.hedera.block.server.Constants.SINGLE_BLOCK_METHOD_NAME;
 import static com.hedera.block.server.Translator.toProtocSingleBlockResponse;
 import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
 
@@ -29,7 +32,11 @@ import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
-import com.hedera.hapi.block.*;
+import com.hedera.hapi.block.SingleBlockRequest;
+import com.hedera.hapi.block.SingleBlockResponse;
+import com.hedera.hapi.block.SingleBlockResponseCode;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.protoc.BlockService;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
