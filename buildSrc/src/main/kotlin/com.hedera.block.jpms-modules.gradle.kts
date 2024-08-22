@@ -144,13 +144,7 @@ extraJavaModuleInfo {
     module("com.google.auto.service:auto-service", "com.google.auto.service.processor")
     module("com.google.auto:auto-common", "com.google.auto.common")
 
-    // JMH only
-    module("net.sf.jopt-simple:jopt-simple", "jopt.simple")
-    module("org.openjdk.jmh:jmh-core", "jmh.core")
-    module("org.openjdk.jmh:jmh-generator-asm", "jmh.generator.asm")
-    module("org.openjdk.jmh:jmh-generator-bytecode", "jmh.generator.bytecode")
-    module("org.openjdk.jmh:jmh-generator-reflection", "jmh.generator.reflection")
-
+    // Test clients only
     module("com.google.protobuf:protobuf-java-util", "com.google.protobuf.util")
     module("junit:junit", "junit")
     module("org.hamcrest:hamcrest", "org.hamcrest")

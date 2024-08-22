@@ -61,7 +61,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class BlockStreamServiceIT {
+public class BlockStreamServiceIntegrationTest {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
