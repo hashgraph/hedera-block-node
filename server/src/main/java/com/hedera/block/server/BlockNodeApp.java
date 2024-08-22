@@ -55,6 +55,7 @@ public class BlockNodeApp {
      *
      * @param serviceStatus the status of the service
      * @param healthService the health service
+     * @param blockNodeContext the context of the block node
      */
     @Inject
     public BlockNodeApp(
