@@ -16,6 +16,9 @@
 
 package com.hedera.block.server;
 
+import com.hedera.block.protos.BlockStreamService.Block;
+import com.hedera.block.protos.BlockStreamService.BlockItem;
+import com.hedera.block.protos.BlockStreamService.SubscribeStreamResponse;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.health.HealthService;
@@ -42,7 +45,7 @@ import javax.inject.Singleton;
 @Singleton
 public class BlockNodeApp {
 
-    private static final System.Logger LOGGER = System.getLogger(Server.class.getName());
+    private static final System.Logger LOGGER = System.getLogger(BlockNodeApp.class.getName());
     private final ServiceStatus serviceStatus;
     private final HealthService healthService;
     private final BlockNodeContext blockNodeContext;
@@ -69,43 +72,30 @@ public class BlockNodeApp {
      * @throws IOException if the server cannot be started
      */
     public void startServer() throws IOException {
-
-        @NonNull
-        final BlockWriter<com.hedera.block.protos.BlockStreamService.BlockItem> blockWriter =
+        final BlockWriter<BlockItem> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-        @NonNull
-        final StreamMediator<
-                        com.hedera.block.protos.BlockStreamService.BlockItem,
-                        ObjectEvent<
-                                com.hedera.block.protos.BlockStreamService.SubscribeStreamResponse>>
-                streamMediator =
-                        LiveStreamMediatorBuilder.newBuilder(
-                                        blockWriter, blockNodeContext, serviceStatus)
-                                .build();
+        final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator =
+                LiveStreamMediatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
+                        .build();
 
-        @NonNull
-        final BlockReader<com.hedera.block.protos.BlockStreamService.Block> blockReader =
+        final BlockReader<Block> blockReader =
                 BlockAsDirReaderBuilder.newBuilder(
                                 blockNodeContext
                                         .configuration()
                                         .getConfigData(PersistenceStorageConfig.class))
                         .build();
 
-        @NonNull
         final BlockStreamService blockStreamService =
                 buildBlockStreamService(
                         streamMediator, blockReader, serviceStatus, blockNodeContext);
 
-        @NonNull
         final GrpcRouting.Builder grpcRouting = GrpcRouting.builder().service(blockStreamService);
 
-        @NonNull
         final HttpRouting.Builder httpRouting =
                 HttpRouting.builder().register(healthService.getHealthRootPath(), healthService);
 
         // Build the web server
         // TODO: make port server a configurable value.
-        @NonNull
         final WebServer webServer =
                 WebServer.builder()
                         .port(8080)
@@ -121,20 +111,16 @@ public class BlockNodeApp {
 
         // Log the server status
         LOGGER.log(
-                System.Logger.Level.INFO, "Block Node Server started at port: " + webServer.port());
+                System.Logger.Level.INFO,
+                String.format("Block Node Server started at port: %d", webServer.port()));
     }
 
     @NonNull
     private static BlockStreamService buildBlockStreamService(
             @NonNull
-                    final StreamMediator<
-                                    com.hedera.block.protos.BlockStreamService.BlockItem,
-                                    ObjectEvent<
-                                            com.hedera.block.protos.BlockStreamService
-                                                    .SubscribeStreamResponse>>
+                    final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
                             streamMediator,
-            @NonNull
-                    final BlockReader<com.hedera.block.protos.BlockStreamService.Block> blockReader,
+            @NonNull final BlockReader<Block> blockReader,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
 
