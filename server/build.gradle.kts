@@ -27,10 +27,7 @@ application {
 mainModuleInfo {
     annotationProcessor("com.google.auto.service.processor")
     runtimeOnly("com.swirlds.config.impl")
-}
-
-dependencies {
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:2.21.1") { because("java.logging") }
+    runtimeOnly("org.apache.logging.log4j.slf4j2.impl")
 }
 
 testModuleInfo {
