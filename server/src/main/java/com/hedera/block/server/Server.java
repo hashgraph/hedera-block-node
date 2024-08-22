@@ -16,6 +16,9 @@
 
 package com.hedera.block.server;
 
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.INFO;
+
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.data.ObjectEvent;
@@ -37,12 +40,10 @@ import io.helidon.webserver.grpc.GrpcRouting;
 import io.helidon.webserver.http.HttpRouting;
 import java.io.IOException;
 
-import static java.lang.System.Logger.Level.INFO;
-
 /** Main class for the block node server */
 public class Server {
 
-    private static final System.Logger LOGGER = System.getLogger(Server.class.getName());
+    private static final Logger LOGGER = System.getLogger(Server.class.getName());
 
     private Server() {}
 
@@ -104,9 +105,7 @@ public class Server {
             webServer.start();
 
             // Log the server status
-            LOGGER.log(
-                    INFO,
-                    "Block Node Server started at port: " + webServer.port());
+            LOGGER.log(INFO, "Block Node Server started at port: " + webServer.port());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

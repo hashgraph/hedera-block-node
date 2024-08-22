@@ -16,6 +16,10 @@
 
 package com.hedera.block.server.mediator;
 
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
+
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
@@ -37,9 +41,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static java.lang.System.Logger.Level.DEBUG;
-import static java.lang.System.Logger.Level.ERROR;
-
 /**
  * LiveStreamMediatorImpl is an implementation of the StreamMediator interface. It is responsible
  * for managing the subscribe and unsubscribe operations of downstream consumers. It also proxies
@@ -49,7 +50,7 @@ import static java.lang.System.Logger.Level.ERROR;
 class LiveStreamMediatorImpl
         implements StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final RingBuffer<ObjectEvent<SubscribeStreamResponse>> ringBuffer;
     private final ExecutorService executor;

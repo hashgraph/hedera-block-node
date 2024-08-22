@@ -19,6 +19,7 @@ package com.hedera.block.server;
 import static com.hedera.block.server.Translator.*;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
+import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -64,7 +65,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class BlockStreamServiceIntegrationTest {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
 

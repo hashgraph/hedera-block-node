@@ -19,6 +19,7 @@ package com.hedera.block.server.persistence.storage.read;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
+import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,7 +54,7 @@ import org.junit.jupiter.api.Test;
 
 public class BlockAsDirReaderTest {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
 
@@ -76,9 +77,7 @@ public class BlockAsDirReaderTest {
     @AfterEach
     public void tearDown() {
         if (!TestUtils.deleteDirectory(testPath.toFile())) {
-            LOGGER.log(
-                    ERROR,
-                    "Failed to delete temp directory: " + testPath.toString());
+            LOGGER.log(ERROR, "Failed to delete temp directory: " + testPath.toString());
         }
     }
 

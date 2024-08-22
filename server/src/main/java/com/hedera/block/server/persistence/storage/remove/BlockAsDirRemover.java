@@ -16,6 +16,9 @@
 
 package com.hedera.block.server.persistence.storage.remove;
 
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.ERROR;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
 import java.io.IOException;
@@ -25,15 +28,13 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Set;
 
-import static java.lang.System.Logger.Level.ERROR;
-
 /**
  * The BlockAsDirRemover class removes a block from the file system. The block is stored as a
  * directory containing block items. The block items are stored as files within the block directory.
  */
 public class BlockAsDirRemover implements BlockRemover {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final Path blockNodeRootPath;
     private final FileAttribute<Set<PosixFilePermission>> filePerms;

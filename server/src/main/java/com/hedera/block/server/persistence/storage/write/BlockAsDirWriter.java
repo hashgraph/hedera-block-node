@@ -17,6 +17,7 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
+import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
@@ -47,7 +48,7 @@ import java.util.Set;
  */
 class BlockAsDirWriter implements BlockWriter<BlockItem> {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final Path blockNodeRootPath;
     private long blockNodeFileNameIndex;
@@ -108,10 +109,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                 break;
             } catch (IOException e) {
 
-                LOGGER.log(
-                        ERROR,
-                        "Error writing the BlockItem protobuf to a file: ",
-                        e);
+                LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
 
                 // Remove the block if repairing the permissions fails
                 if (retries > 0) {
@@ -123,9 +121,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                     // and the blockItem path
                     repairPermissions(blockNodeRootPath);
                     repairPermissions(calculateBlockPath());
-                    LOGGER.log(
-                            INFO,
-                            "Retrying to write the BlockItem protobuf to a file");
+                    LOGGER.log(INFO, "Retrying to write the BlockItem protobuf to a file");
                 }
             }
         }
@@ -143,15 +139,9 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
         try (final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
 
             BlockItem.PROTOBUF.toBytes(blockItem).writeTo(fos);
-            LOGGER.log(
-                    DEBUG,
-                    "Successfully wrote the block item file: {0}",
-                    blockItemFilePath);
+            LOGGER.log(DEBUG, "Successfully wrote the block item file: {0}", blockItemFilePath);
         } catch (IOException e) {
-            LOGGER.log(
-                    ERROR,
-                    "Error writing the BlockItem protobuf to a file: ",
-                    e);
+            LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
             throw e;
         }
     }
@@ -188,10 +178,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                 // Attempt to restore the permissions on the block node root directory
                 Files.setPosixFilePermissions(path, filePerms.value());
             } catch (IOException e) {
-                LOGGER.log(
-                        ERROR,
-                        "Error setting permissions on the path: " + path,
-                        e);
+                LOGGER.log(ERROR, "Error setting permissions on the path: " + path, e);
                 throw e;
             }
         }

@@ -17,6 +17,7 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.persistence.storage.read.BlockAsDirReaderTest.removeBlockReadPerms;
+import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.*;
@@ -50,7 +51,7 @@ import org.junit.jupiter.api.Test;
 
 public class BlockAsDirWriterTest {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
     private static final String PERSISTENCE_STORAGE_ROOT_PATH_KEY = "persistence.storage.rootPath";
@@ -73,9 +74,7 @@ public class BlockAsDirWriterTest {
     @AfterEach
     public void tearDown() {
         if (!TestUtils.deleteDirectory(testPath.toFile())) {
-            LOGGER.log(
-                    ERROR,
-                    "Failed to delete temp directory: " + testPath.toString());
+            LOGGER.log(ERROR, "Failed to delete temp directory: " + testPath.toString());
         }
     }
 

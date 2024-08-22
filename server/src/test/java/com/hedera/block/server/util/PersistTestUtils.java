@@ -16,6 +16,9 @@
 
 package com.hedera.block.server.util;
 
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.INFO;
+
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.hapi.block.stream.input.EventHeader;
@@ -29,11 +32,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.lang.System.Logger.Level.INFO;
-
 public final class PersistTestUtils {
 
-    private static final System.Logger LOGGER = System.getLogger(PersistTestUtils.class.getName());
+    private static final Logger LOGGER = System.getLogger(PersistTestUtils.class.getName());
 
     private PersistTestUtils() {}
 

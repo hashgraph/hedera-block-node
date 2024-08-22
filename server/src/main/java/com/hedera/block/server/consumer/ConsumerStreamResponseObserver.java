@@ -17,6 +17,7 @@
 package com.hedera.block.server.consumer;
 
 import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
+import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
@@ -42,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ConsumerStreamResponseObserver
         implements EventHandler<ObjectEvent<SubscribeStreamResponse>> {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
             subscribeStreamResponseObserver;
@@ -109,9 +110,7 @@ public class ConsumerStreamResponseObserver
                         // Do not allow additional responses to be sent.
                         isResponsePermitted.set(false);
                         subscriptionHandler.unsubscribe(this);
-                        LOGGER.log(
-                                DEBUG,
-                                "Consumer cancelled stream.  Observer unsubscribed.");
+                        LOGGER.log(DEBUG, "Consumer cancelled stream.  Observer unsubscribed.");
                     };
             serverCallStreamObserver.setOnCancelHandler(onCancel);
 
@@ -121,9 +120,7 @@ public class ConsumerStreamResponseObserver
                         // Do not allow additional responses to be sent.
                         isResponsePermitted.set(false);
                         subscriptionHandler.unsubscribe(this);
-                        LOGGER.log(
-                                DEBUG,
-                                "Consumer completed stream.  Observer unsubscribed.");
+                        LOGGER.log(DEBUG, "Consumer completed stream.  Observer unsubscribed.");
                     };
             serverCallStreamObserver.setOnCloseHandler(onClose);
         }
@@ -156,9 +153,7 @@ public class ConsumerStreamResponseObserver
             final long currentMillis = producerLivenessClock.millis();
             if (currentMillis - producerLivenessMillis > timeoutThresholdMillis) {
                 subscriptionHandler.unsubscribe(this);
-                LOGGER.log(
-                        DEBUG,
-                        "Unsubscribed ConsumerBlockItemObserver due to producer timeout");
+                LOGGER.log(DEBUG, "Unsubscribed ConsumerBlockItemObserver due to producer timeout");
             } else {
                 // Refresh the producer liveness and pass the BlockItem to the downstream observer.
                 producerLivenessMillis = currentMillis;
@@ -210,10 +205,7 @@ public class ConsumerStreamResponseObserver
                 }
 
                 if (streamStarted) {
-                    LOGGER.log(
-                            DEBUG,
-                            "Send BlockItem downstream: {0} ",
-                            blockItem);
+                    LOGGER.log(DEBUG, "Send BlockItem downstream: {0} ", blockItem);
                     subscribeStreamResponseObserver.onNext(
                             toProtocSubscribeStreamResponse(subscribeStreamResponse));
                 }

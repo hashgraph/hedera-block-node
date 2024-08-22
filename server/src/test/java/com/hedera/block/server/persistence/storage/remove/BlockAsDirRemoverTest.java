@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.persistence.storage.remove;
 
+import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -42,7 +43,7 @@ import org.junit.jupiter.api.Test;
 
 public class BlockAsDirRemoverTest {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
 

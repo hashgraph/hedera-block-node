@@ -17,6 +17,7 @@
 package com.hedera.block.server.persistence.storage.read;
 
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
+import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
@@ -46,7 +47,7 @@ import java.util.Set;
  */
 class BlockAsDirReader implements BlockReader<Block> {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final Path blockNodeRootPath;
     private final FileAttribute<Set<PosixFilePermission>> filePerms;
@@ -171,10 +172,7 @@ class BlockAsDirReader implements BlockReader<Block> {
 
         if (!path.toFile().canRead()) {
             LOGGER.log(ERROR, "Path not readable: {0}", path);
-            LOGGER.log(
-                    ERROR,
-                    "Attempting to repair the path permissions: {0}",
-                    path);
+            LOGGER.log(ERROR, "Attempting to repair the path permissions: {0}", path);
 
             try {
                 // If resetting the permissions fails or
@@ -184,8 +182,7 @@ class BlockAsDirReader implements BlockReader<Block> {
                     return true;
                 }
             } catch (IOException e) {
-                LOGGER.log(
-                        ERROR, "Error setting permissions on: {0}" + path, e);
+                LOGGER.log(ERROR, "Error setting permissions on: {0}" + path, e);
                 return true;
             }
         }

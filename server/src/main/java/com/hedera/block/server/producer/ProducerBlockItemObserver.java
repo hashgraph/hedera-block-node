@@ -19,6 +19,7 @@ package com.hedera.block.server.producer;
 import static com.hedera.block.server.Translator.toPbjBlockItem;
 import static com.hedera.block.server.Translator.toProtocPublishStreamResponse;
 import static com.hedera.block.server.producer.Util.getFakeHash;
+import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
@@ -46,7 +47,7 @@ import java.security.NoSuchAlgorithmException;
 public class ProducerBlockItemObserver
         implements StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest> {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
             publishStreamResponseObserver;

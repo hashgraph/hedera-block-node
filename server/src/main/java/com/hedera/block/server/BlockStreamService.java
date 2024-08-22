@@ -22,6 +22,7 @@ import static com.hedera.block.server.Constants.SERVICE_NAME;
 import static com.hedera.block.server.Constants.SINGLE_BLOCK_METHOD_NAME;
 import static com.hedera.block.server.Translator.toProtocSingleBlockResponse;
 import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
+import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
@@ -58,7 +59,7 @@ import java.util.Optional;
  */
 public class BlockStreamService implements GrpcService {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
     private final ServiceStatus serviceStatus;
@@ -131,9 +132,7 @@ public class BlockStreamService implements GrpcService {
             @NonNull
                     final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
                             publishStreamResponseObserver) {
-        LOGGER.log(
-                DEBUG,
-                "Executing bidirectional publishBlockStream gRPC method");
+        LOGGER.log(DEBUG, "Executing bidirectional publishBlockStream gRPC method");
 
         return new ProducerBlockItemObserver(
                 streamMediator, publishStreamResponseObserver, serviceStatus);
@@ -146,9 +145,7 @@ public class BlockStreamService implements GrpcService {
             @NonNull
                     final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
                             subscribeStreamResponseObserver) {
-        LOGGER.log(
-                DEBUG,
-                "Executing Server Streaming subscribeBlockStream gRPC method");
+        LOGGER.log(DEBUG, "Executing Server Streaming subscribeBlockStream gRPC method");
 
         // Return a custom StreamObserver to handle streaming blocks from the producer.
         if (serviceStatus.isRunning()) {
@@ -181,10 +178,7 @@ public class BlockStreamService implements GrpcService {
                     toPbjSingleBlockRequest(singleBlockRequest);
             singleBlock(pbjSingleBlockRequest, singleBlockResponseStreamObserver);
         } catch (ParseException e) {
-            LOGGER.log(
-                    ERROR,
-                    "Error parsing protoc SingleBlockRequest: {0}",
-                    singleBlockRequest);
+            LOGGER.log(ERROR, "Error parsing protoc SingleBlockRequest: {0}", singleBlockRequest);
             singleBlockResponseStreamObserver.onNext(buildSingleBlockNotAvailableResponse());
         }
     }
@@ -202,29 +196,22 @@ public class BlockStreamService implements GrpcService {
             try {
                 final Optional<Block> blockOpt = blockReader.read(blockNumber);
                 if (blockOpt.isPresent()) {
-                    LOGGER.log(
-                            DEBUG,
-                            "Successfully returning block number: {0}",
-                            blockNumber);
+                    LOGGER.log(DEBUG, "Successfully returning block number: {0}", blockNumber);
                     singleBlockResponseStreamObserver.onNext(
                             toProtocSingleBlockResponse(blockOpt.get()));
 
                     final MetricsService metricsService = blockNodeContext.metricsService();
                     metricsService.singleBlocksRetrieved.increment();
                 } else {
-                    LOGGER.log(
-                            DEBUG, "Block number {0} not found", blockNumber);
+                    LOGGER.log(DEBUG, "Block number {0} not found", blockNumber);
                     singleBlockResponseStreamObserver.onNext(buildSingleBlockNotFoundResponse());
                 }
             } catch (IOException e) {
-                LOGGER.log(
-                        ERROR, "Error reading block number: {0}", blockNumber);
+                LOGGER.log(ERROR, "Error reading block number: {0}", blockNumber);
                 singleBlockResponseStreamObserver.onNext(buildSingleBlockNotAvailableResponse());
             }
         } else {
-            LOGGER.log(
-                    ERROR,
-                    "Unary singleBlock gRPC method is not currently running");
+            LOGGER.log(ERROR, "Unary singleBlock gRPC method is not currently running");
             singleBlockResponseStreamObserver.onNext(buildSingleBlockNotAvailableResponse());
         }
 

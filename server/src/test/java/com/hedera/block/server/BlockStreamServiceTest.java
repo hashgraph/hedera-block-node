@@ -22,6 +22,7 @@ import static com.hedera.block.server.Constants.*;
 import static com.hedera.block.server.Translator.toProtocSingleBlockResponse;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
+import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -73,7 +74,7 @@ public class BlockStreamServiceTest {
 
     @Mock private ServiceStatus serviceStatus;
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
 
