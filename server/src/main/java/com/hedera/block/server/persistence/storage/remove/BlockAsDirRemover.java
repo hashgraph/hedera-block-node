@@ -17,7 +17,6 @@
 package com.hedera.block.server.persistence.storage.remove;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -61,7 +60,7 @@ public class BlockAsDirRemover implements BlockRemover {
 
         // Calculate the block path and proactively set the permissions
         // for removal
-        @NonNull final Path blockPath = blockNodeRootPath.resolve(String.valueOf(id));
+        final Path blockPath = blockNodeRootPath.resolve(String.valueOf(id));
         if (Files.notExists(blockPath)) {
             LOGGER.log(System.Logger.Level.ERROR, "Block does not exist: {0}", id);
             return;
@@ -80,9 +79,9 @@ public class BlockAsDirRemover implements BlockRemover {
         // Recursively delete the contents
         // of the directory
         if (file.isDirectory()) {
-            @Nullable final File[] files = file.listFiles();
+            final File[] files = file.listFiles();
             if (files != null) {
-                for (@NonNull final File f : files) {
+                for (final File f : files) {
                     delete(f);
                 }
             }

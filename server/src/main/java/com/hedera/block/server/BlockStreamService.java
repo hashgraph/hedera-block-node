@@ -146,11 +146,10 @@ public class BlockStreamService implements GrpcService {
                             subscribeStreamResponseObserver) {
         LOGGER.log(
                 System.Logger.Level.DEBUG,
-                "Executing Server Streaming subscribeBlockStream gRPC Service");
+                "Executing Server Streaming subscribeBlockStream gRPC method");
 
         // Return a custom StreamObserver to handle streaming blocks from the producer.
         if (serviceStatus.isRunning()) {
-            @NonNull
             final var streamObserver =
                     new ConsumerStreamResponseObserver(
                             blockNodeContext,
@@ -176,7 +175,6 @@ public class BlockStreamService implements GrpcService {
         LOGGER.log(System.Logger.Level.DEBUG, "Executing Unary singleBlock gRPC method");
 
         try {
-            @NonNull
             final SingleBlockRequest pbjSingleBlockRequest =
                     toPbjSingleBlockRequest(singleBlockRequest);
             singleBlock(pbjSingleBlockRequest, singleBlockResponseStreamObserver);
@@ -200,7 +198,7 @@ public class BlockStreamService implements GrpcService {
         if (serviceStatus.isRunning()) {
             final long blockNumber = singleBlockRequest.blockNumber();
             try {
-                @NonNull final Optional<Block> blockOpt = blockReader.read(blockNumber);
+                final Optional<Block> blockOpt = blockReader.read(blockNumber);
                 if (blockOpt.isPresent()) {
                     LOGGER.log(
                             System.Logger.Level.DEBUG,
@@ -209,7 +207,6 @@ public class BlockStreamService implements GrpcService {
                     singleBlockResponseStreamObserver.onNext(
                             toProtocSingleBlockResponse(blockOpt.get()));
 
-                    @NonNull
                     final MetricsService metricsService = blockNodeContext.metricsService();
                     metricsService.singleBlocksRetrieved.increment();
                 } else {
@@ -238,7 +235,6 @@ public class BlockStreamService implements GrpcService {
     @NonNull
     static com.hedera.hapi.block.protoc.SubscribeStreamResponse
             buildSubscribeStreamNotAvailableResponse() {
-        @NonNull
         final SubscribeStreamResponse response =
                 SubscribeStreamResponse.newBuilder()
                         .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
@@ -249,7 +245,6 @@ public class BlockStreamService implements GrpcService {
 
     @NonNull
     static com.hedera.hapi.block.protoc.SingleBlockResponse buildSingleBlockNotAvailableResponse() {
-        @NonNull
         final SingleBlockResponse response =
                 SingleBlockResponse.newBuilder()
                         .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
@@ -261,7 +256,6 @@ public class BlockStreamService implements GrpcService {
     @NonNull
     static com.hedera.hapi.block.protoc.SingleBlockResponse buildSingleBlockNotFoundResponse()
             throws InvalidProtocolBufferException {
-        @NonNull
         final SingleBlockResponse response =
                 SingleBlockResponse.newBuilder()
                         .status(SingleBlockResponseCode.READ_BLOCK_NOT_FOUND)
@@ -275,8 +269,6 @@ public class BlockStreamService implements GrpcService {
             @NonNull final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest)
             throws ParseException {
 
-        @NonNull final byte[] protocBytes = singleBlockRequest.toByteArray();
-        @NonNull final Bytes bytes = Bytes.wrap(protocBytes);
-        return SingleBlockRequest.PROTOBUF.parse(bytes);
+        return SingleBlockRequest.PROTOBUF.parse(Bytes.wrap(singleBlockRequest.toByteArray()));
     }
 }

@@ -55,20 +55,17 @@ public class Server {
 
         try {
             // init context, metrics, and configuration.
-            @NonNull final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+            final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+            final ServiceStatus serviceStatus = new ServiceStatusImpl();
 
-            @NonNull final ServiceStatus serviceStatus = new ServiceStatusImpl();
-
-            @NonNull
             final BlockWriter<BlockItem> blockWriter =
                     BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-            @NonNull
+
             final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator =
                     LiveStreamMediatorBuilder.newBuilder(
                                     blockWriter, blockNodeContext, serviceStatus)
                             .build();
 
-            @NonNull
             final BlockReader<Block> blockReader =
                     BlockAsDirReaderBuilder.newBuilder(
                                     blockNodeContext
@@ -76,25 +73,21 @@ public class Server {
                                             .getConfigData(PersistenceStorageConfig.class))
                             .build();
 
-            @NonNull
             final BlockStreamService blockStreamService =
                     buildBlockStreamService(
                             streamMediator, blockReader, serviceStatus, blockNodeContext);
 
-            @NonNull
             final GrpcRouting.Builder grpcRouting =
                     GrpcRouting.builder().service(blockStreamService);
 
-            @NonNull final HealthService healthService = new HealthServiceImpl(serviceStatus);
+            final HealthService healthService = new HealthServiceImpl(serviceStatus);
 
-            @NonNull
             final HttpRouting.Builder httpRouting =
                     HttpRouting.builder()
                             .register(healthService.getHealthRootPath(), healthService);
 
             // Build the web server
             // TODO: make port server a configurable value.
-            @NonNull
             final WebServer webServer =
                     WebServer.builder()
                             .port(8080)

@@ -55,7 +55,6 @@ public final class Translator {
     public static com.hedera.hapi.block.protoc.SingleBlockResponse toProtocSingleBlockResponse(
             @NonNull final SingleBlockResponse singleBlockResponse) {
         try {
-            @NonNull
             final byte[] pbjBytes = asBytes(SingleBlockResponse.PROTOBUF, singleBlockResponse);
             return com.hedera.hapi.block.protoc.SingleBlockResponse.parseFrom(pbjBytes);
         } catch (InvalidProtocolBufferException e) {
@@ -77,7 +76,6 @@ public final class Translator {
     @NonNull
     public static com.hedera.hapi.block.protoc.SingleBlockResponse toProtocSingleBlockResponse(
             @NonNull final Block block) {
-        @NonNull
         final SingleBlockResponse singleBlockResponse =
                 SingleBlockResponse.newBuilder()
                         .status(SingleBlockResponseCode.READ_BLOCK_SUCCESS)
@@ -100,7 +98,6 @@ public final class Translator {
     public static com.hedera.hapi.block.protoc.PublishStreamResponse toProtocPublishStreamResponse(
             @NonNull final com.hedera.hapi.block.PublishStreamResponse publishStreamResponse) {
         try {
-            @NonNull
             final byte[] pbjBytes = asBytes(PublishStreamResponse.PROTOBUF, publishStreamResponse);
             return com.hedera.hapi.block.protoc.PublishStreamResponse.parseFrom(pbjBytes);
         } catch (InvalidProtocolBufferException e) {
@@ -125,7 +122,6 @@ public final class Translator {
     public static com.hedera.hapi.block.protoc.PublishStreamRequest toProtocPublishStreamRequest(
             @NonNull final com.hedera.hapi.block.PublishStreamRequest publishStreamRequest) {
         try {
-            @NonNull
             final byte[] pbjBytes = asBytes(PublishStreamRequest.PROTOBUF, publishStreamRequest);
             return com.hedera.hapi.block.protoc.PublishStreamRequest.parseFrom(pbjBytes);
         } catch (InvalidProtocolBufferException e) {
@@ -153,7 +149,6 @@ public final class Translator {
                             final com.hedera.hapi.block.SubscribeStreamResponse
                                     subscribeStreamResponse) {
         try {
-            @NonNull
             final byte[] pbjBytes =
                     asBytes(SubscribeStreamResponse.PROTOBUF, subscribeStreamResponse);
             return com.hedera.hapi.block.protoc.SubscribeStreamResponse.parseFrom(pbjBytes);
@@ -183,7 +178,6 @@ public final class Translator {
                             final com.hedera.hapi.block.SubscribeStreamRequest
                                     subscribeStreamRequest) {
         try {
-            @NonNull
             final byte[] pbjBytes =
                     asBytes(SubscribeStreamRequest.PROTOBUF, subscribeStreamRequest);
             return com.hedera.hapi.block.protoc.SubscribeStreamRequest.parseFrom(pbjBytes);

@@ -89,7 +89,6 @@ public class ProducerBlockItemObserver
 
         try {
 
-            @NonNull
             final BlockItem blockItem = toPbjBlockItem(publishStreamRequest.getBlockItem());
 
             // Publish the block to all the subscribers unless
@@ -104,25 +103,25 @@ public class ProducerBlockItemObserver
                     publishStreamResponseObserver.onNext(buildSuccessStreamResponse(blockItem));
 
                 } catch (IOException | NoSuchAlgorithmException e) {
-                    @NonNull final var errorResponse = buildErrorStreamResponse();
+                    final var errorResponse = buildErrorStreamResponse();
                     publishStreamResponseObserver.onNext(errorResponse);
                     LOGGER.log(System.Logger.Level.ERROR, "Error calculating hash: ", e);
                 }
 
             } else {
                 // Close the upstream connection to the producer(s)
-                @NonNull final var errorResponse = buildErrorStreamResponse();
+                final var errorResponse = buildErrorStreamResponse();
                 publishStreamResponseObserver.onNext(errorResponse);
                 LOGGER.log(System.Logger.Level.DEBUG, "StreamMediator is not accepting BlockItems");
             }
         } catch (IOException io) {
-            @NonNull final var errorResponse = buildErrorStreamResponse();
+            final var errorResponse = buildErrorStreamResponse();
             publishStreamResponseObserver.onNext(errorResponse);
             LOGGER.log(System.Logger.Level.ERROR, "Exception thrown publishing BlockItem: ", io);
             LOGGER.log(System.Logger.Level.ERROR, "Shutting down the web server");
             serviceStatus.stopWebServer();
         } catch (ParseException e) {
-            @NonNull final var errorResponse = buildErrorStreamResponse();
+            final var errorResponse = buildErrorStreamResponse();
             publishStreamResponseObserver.onNext(errorResponse);
             LOGGER.log(
                     System.Logger.Level.ERROR,
@@ -136,9 +135,7 @@ public class ProducerBlockItemObserver
     @NonNull
     private com.hedera.hapi.block.protoc.PublishStreamResponse buildSuccessStreamResponse(
             @NonNull final BlockItem blockItem) throws IOException, NoSuchAlgorithmException {
-
-        @NonNull final Acknowledgement ack = buildAck(blockItem);
-
+        final Acknowledgement ack = buildAck(blockItem);
         return toProtocPublishStreamResponse(
                 PublishStreamResponse.newBuilder().acknowledgement(ack).build());
     }
@@ -146,7 +143,6 @@ public class ProducerBlockItemObserver
     @NonNull
     private static com.hedera.hapi.block.protoc.PublishStreamResponse buildErrorStreamResponse() {
         // TODO: Replace this with a real error enum.
-        @NonNull
         final EndOfStream endOfStream =
                 EndOfStream.newBuilder()
                         .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
@@ -165,7 +161,7 @@ public class ProducerBlockItemObserver
     @NonNull
     protected Acknowledgement buildAck(@NonNull final BlockItem blockItem)
             throws NoSuchAlgorithmException {
-        ItemAcknowledgement itemAck =
+        final ItemAcknowledgement itemAck =
                 ItemAcknowledgement.newBuilder()
                         // TODO: Replace this with a real hash generator
                         .itemHash(Bytes.wrap(getFakeHash(blockItem)))

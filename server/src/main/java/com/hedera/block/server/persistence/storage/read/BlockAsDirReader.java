@@ -61,7 +61,7 @@ class BlockAsDirReader implements BlockReader<Block> {
 
         LOGGER.log(System.Logger.Level.INFO, "Initializing FileSystemBlockReader");
 
-        @NonNull final Path blockNodeRootPath = Path.of(config.rootPath());
+        final Path blockNodeRootPath = Path.of(config.rootPath());
 
         LOGGER.log(System.Logger.Level.INFO, config.toString());
         LOGGER.log(System.Logger.Level.INFO, "Block Node Root Path: " + blockNodeRootPath);
@@ -89,7 +89,7 @@ class BlockAsDirReader implements BlockReader<Block> {
 
         // Verify path attributes of the block directory within the
         // block node root path
-        @NonNull final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
+        final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
         if (isPathDisqualified(blockPath)) {
             return Optional.empty();
         }
@@ -105,11 +105,10 @@ class BlockAsDirReader implements BlockReader<Block> {
             // 10.blk), the loop will directly fetch the BlockItems in order based on
             // their file names. The loop will exit when it attempts to read a
             // BlockItem file that does not exist (e.g., 11.blk).
-            @NonNull final Block.Builder builder = Block.newBuilder();
-            @NonNull final List<BlockItem> blockItems = new ArrayList<>();
+            final Block.Builder builder = Block.newBuilder();
+            final List<BlockItem> blockItems = new ArrayList<>();
             for (int i = 1; ; i++) {
-                @NonNull final Path blockItemPath = blockPath.resolve(i + BLOCK_FILE_EXTENSION);
-                @NonNull
+                final Path blockItemPath = blockPath.resolve(i + BLOCK_FILE_EXTENSION);
                 final Optional<BlockItem> blockItemOpt = readBlockItem(blockItemPath.toString());
                 if (blockItemOpt.isPresent()) {
                     blockItems.add(blockItemOpt.get());
@@ -133,7 +132,7 @@ class BlockAsDirReader implements BlockReader<Block> {
     private Optional<BlockItem> readBlockItem(@NonNull final String blockItemPath)
             throws IOException {
 
-        try (@NonNull final FileInputStream fis = new FileInputStream(blockItemPath)) {
+        try (final FileInputStream fis = new FileInputStream(blockItemPath)) {
 
             BlockItem blockItem = BlockItem.PROTOBUF.parse(Bytes.wrap(fis.readAllBytes()));
             return Optional.of(blockItem);

@@ -98,7 +98,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
             resetState(blockItem);
         }
 
-        @NonNull final Path blockItemFilePath = calculateBlockItemPath();
+        final Path blockItemFilePath = calculateBlockItemPath();
         for (int retries = 0; ; retries++) {
             try {
                 write(blockItemFilePath, blockItem);
@@ -137,8 +137,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
      */
     protected void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItem blockItem)
             throws IOException {
-        try (@NonNull
-                final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
+        try (final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
 
             BlockItem.PROTOBUF.toBytes(blockItem).writeTo(fos);
             LOGGER.log(
@@ -170,7 +169,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
         blockNodeFileNameIndex = 0;
 
         // Increment the block counter
-        @NonNull final MetricsService metricsService = blockNodeContext.metricsService();
+        final MetricsService metricsService = blockNodeContext.metricsService();
         metricsService.blocksPersisted.increment();
     }
 
@@ -198,7 +197,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
     @NonNull
     private Path calculateBlockItemPath() {
         // Build the path to a .blk file
-        @NonNull final Path blockPath = calculateBlockPath();
+        final Path blockPath = calculateBlockPath();
         blockNodeFileNameIndex++;
         return blockPath.resolve(blockNodeFileNameIndex + BLOCK_FILE_EXTENSION);
     }

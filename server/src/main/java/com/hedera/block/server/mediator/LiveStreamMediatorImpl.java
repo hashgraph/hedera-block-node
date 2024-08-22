@@ -87,7 +87,6 @@ class LiveStreamMediatorImpl
         this.blockWriter = blockWriter;
 
         // Initialize and start the disruptor
-        @NonNull
         final Disruptor<ObjectEvent<SubscribeStreamResponse>> disruptor =
                 // TODO: replace ring buffer size with a configurable value, create a MediatorConfig
                 new Disruptor<>(ObjectEvent::new, 2048, DaemonThreadFactory.INSTANCE);
@@ -113,7 +112,6 @@ class LiveStreamMediatorImpl
 
             // Publish the block for all subscribers to receive
             LOGGER.log(System.Logger.Level.DEBUG, "Publishing BlockItem: {0}", blockItem);
-            @NonNull
             final var subscribeStreamResponse =
                     SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
@@ -136,11 +134,11 @@ class LiveStreamMediatorImpl
                 LOGGER.log(System.Logger.Level.DEBUG, "Send a response to end the stream");
 
                 // Publish the block for all subscribers to receive
-                @NonNull final SubscribeStreamResponse endStreamResponse = buildEndStreamResponse();
+                final SubscribeStreamResponse endStreamResponse = buildEndStreamResponse();
                 ringBuffer.publishEvent((event, sequence) -> event.set(endStreamResponse));
 
                 // Unsubscribe all downstream consumers
-                for (@NonNull final var subscriber : subscribers.keySet()) {
+                for (final var subscriber : subscribers.keySet()) {
                     LOGGER.log(System.Logger.Level.DEBUG, "Unsubscribing: {0}", subscriber);
                     unsubscribe(subscriber);
                 }
@@ -157,7 +155,6 @@ class LiveStreamMediatorImpl
             @NonNull final EventHandler<ObjectEvent<SubscribeStreamResponse>> handler) {
 
         // Initialize the batch event processor and set it on the ring buffer
-        @NonNull
         final var batchEventProcessor =
                 new BatchEventProcessorBuilder()
                         .build(ringBuffer, ringBuffer.newBarrier(), handler);
@@ -176,7 +173,7 @@ class LiveStreamMediatorImpl
             @NonNull final EventHandler<ObjectEvent<SubscribeStreamResponse>> handler) {
 
         // Remove the subscriber
-        @NonNull final var batchEventProcessor = subscribers.remove(handler);
+        final var batchEventProcessor = subscribers.remove(handler);
         if (batchEventProcessor == null) {
             LOGGER.log(System.Logger.Level.ERROR, "Subscriber not found: {0}", handler);
 

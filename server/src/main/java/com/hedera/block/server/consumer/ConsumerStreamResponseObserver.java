@@ -26,7 +26,6 @@ import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.OneOf;
 import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import java.time.InstantSource;
@@ -162,8 +161,7 @@ public class ConsumerStreamResponseObserver
                 // Refresh the producer liveness and pass the BlockItem to the downstream observer.
                 producerLivenessMillis = currentMillis;
 
-                @NonNull final SubscribeStreamResponse subscribeStreamResponse = event.get();
-                @NonNull
+                final SubscribeStreamResponse subscribeStreamResponse = event.get();
                 final ResponseSender responseSender = getResponseSender(subscribeStreamResponse);
                 responseSender.send(subscribeStreamResponse);
             }
@@ -195,7 +193,7 @@ public class ConsumerStreamResponseObserver
 
             // Only start sending BlockItems after we've reached
             // the beginning of a block.
-            @Nullable final BlockItem blockItem = subscribeStreamResponse.blockItem();
+            final BlockItem blockItem = subscribeStreamResponse.blockItem();
             if (blockItem == null) {
                 LOGGER.log(
                         System.Logger.Level.ERROR,
