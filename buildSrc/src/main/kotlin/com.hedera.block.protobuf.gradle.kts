@@ -40,7 +40,7 @@ protobuf {
                 "io.grpc:protoc-gen-grpc-java:" + libs.findVersion("grpc.protobuf.grpc").get()
         }
     }
-    generateProtoTasks { ofSourceSet("main").forEach { it.plugins { id("grpc") } } }
+    generateProtoTasks { all().forEach { it.plugins { id("grpc") } } }
 }
 
 tasks.javadoc {
