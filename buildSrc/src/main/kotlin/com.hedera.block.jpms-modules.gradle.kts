@@ -63,9 +63,6 @@ jvmDependencyConflicts.patch {
         removeDependency("io.prometheus:simpleclient_tracer_otel")
         removeDependency("io.prometheus:simpleclient_tracer_otel_agent")
     }
-    module("org.jetbrains.kotlin:kotlin-stdlib") {
-        removeDependency("org.jetbrains.kotlin:kotlin-stdlib-common")
-    }
     module("junit:junit") { removeDependency("org.hamcrest:hamcrest-core") }
     module("org.hyperledger.besu:secp256k1") { addApiDependency("net.java.dev.jna:jna") }
 }
