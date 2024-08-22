@@ -162,3 +162,7 @@ extraJavaModuleInfo {
     module("org.testcontainers:testcontainers", "org.testcontainers")
     module("org.mockito:mockito-junit-jupiter", "org.mockito.junit.jupiter")
 }
+
+// Make 'javax.annotation:javax.annotation-api' discoverable for merging it into
+// 'com.google.code.findbugs:jsr305'
+dependencies { "javaModulesMergeJars"("javax.annotation:javax.annotation-api:1.3.2") }

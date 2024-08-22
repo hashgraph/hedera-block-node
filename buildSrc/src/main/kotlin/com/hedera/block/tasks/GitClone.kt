@@ -59,7 +59,7 @@ abstract class GitClone : DefaultTask() {
                     commandLine(
                         "git",
                         "clone",
-                        "https://github.com/hashgraph/hedera-protobufs.git",
+                        url.get(),
                         "-q"
                     )
                 } else {
