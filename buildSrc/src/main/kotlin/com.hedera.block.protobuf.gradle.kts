@@ -59,7 +59,4 @@ tasks.test {
     systemProperties["junit.jupiter.execution.parallel.mode.default"] = "concurrent"
     // limit amount of threads, so we do not use all CPU
     systemProperties["junit.jupiter.execution.parallel.config.dynamic.factor"] = "0.9"
-    // us parallel GC to keep up with high temporary garbage creation,
-    // and allow GC to use 40% of CPU if needed
-    jvmArgs("-XX:+UseParallelGC", "-XX:GCTimeRatio=90")
 }
