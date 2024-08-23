@@ -41,6 +41,7 @@ import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.*;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.lmax.disruptor.BatchEventProcessor;
 import com.lmax.disruptor.EventHandler;
@@ -429,7 +430,8 @@ public class BlockStreamServiceIntegrationTest {
     }
 
     @Test
-    public void testMediatorExceptionHandlingWhenPersistenceFailure() throws IOException {
+    public void testMediatorExceptionHandlingWhenPersistenceFailure()
+            throws IOException, ParseException {
         final ConcurrentHashMap<
                         EventHandler<ObjectEvent<SubscribeStreamResponse>>,
                         BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>

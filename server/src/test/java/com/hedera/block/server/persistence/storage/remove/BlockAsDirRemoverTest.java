@@ -32,6 +32,7 @@ import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,7 +64,7 @@ public class BlockAsDirRemoverTest {
     }
 
     @Test
-    public void testRemoveNonExistentBlock() throws IOException {
+    public void testRemoveNonExistentBlock() throws IOException, ParseException {
 
         // Write a block
         final var blockItems = PersistTestUtils.generateBlockItems(1);
@@ -96,7 +97,7 @@ public class BlockAsDirRemoverTest {
     }
 
     @Test
-    public void testRemoveBlockWithPermException() throws IOException {
+    public void testRemoveBlockWithPermException() throws IOException, ParseException {
 
         // Write a block
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);

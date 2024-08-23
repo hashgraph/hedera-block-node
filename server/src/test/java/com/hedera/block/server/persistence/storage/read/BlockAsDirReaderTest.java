@@ -37,6 +37,7 @@ import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -82,14 +83,14 @@ public class BlockAsDirReaderTest {
     }
 
     @Test
-    public void testReadBlockDoesNotExist() throws IOException {
+    public void testReadBlockDoesNotExist() throws IOException, ParseException {
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final Optional<Block> blockOpt = blockReader.read(10000);
         assertTrue(blockOpt.isEmpty());
     }
 
     @Test
-    public void testReadPermsRepairSucceeded() throws IOException {
+    public void testReadPermsRepairSucceeded() throws IOException, ParseException {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
@@ -109,7 +110,7 @@ public class BlockAsDirReaderTest {
     }
 
     @Test
-    public void testRemoveBlockReadPermsRepairFailed() throws IOException {
+    public void testRemoveBlockReadPermsRepairFailed() throws IOException, ParseException {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
@@ -148,7 +149,7 @@ public class BlockAsDirReaderTest {
     }
 
     @Test
-    public void testPathIsNotDirectory() throws IOException {
+    public void testPathIsNotDirectory() throws IOException, ParseException {
         final List<BlockItem> blockItems = generateBlockItems(1);
         final Path blockNodeRootPath = Path.of(config.rootPath());
 
@@ -163,7 +164,7 @@ public class BlockAsDirReaderTest {
     }
 
     @Test
-    public void testRepairReadPermsFails() throws IOException {
+    public void testRepairReadPermsFails() throws IOException, ParseException {
 
         final List<BlockItem> blockItems = generateBlockItems(1);
 
@@ -186,7 +187,7 @@ public class BlockAsDirReaderTest {
     }
 
     @Test
-    public void testBlockNodePathReadFails() throws IOException {
+    public void testBlockNodePathReadFails() throws IOException, ParseException {
 
         // Remove read perm on the root path
         removePathReadPerms(Path.of(config.rootPath()));
@@ -202,7 +203,7 @@ public class BlockAsDirReaderTest {
     }
 
     @Test
-    public void testParseExceptionHandling() throws IOException {
+    public void testParseExceptionHandling() throws IOException, ParseException {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
@@ -236,7 +237,7 @@ public class BlockAsDirReaderTest {
 
         // Read the block. The block item file is corrupted, so the read should fail with a
         // ParseException
-        assertThrows(IOException.class, () -> blockReader.read(1));
+        assertThrows(ParseException.class, () -> blockReader.read(1));
     }
 
     public static void removeBlockReadPerms(int blockNumber, final PersistenceStorageConfig config)

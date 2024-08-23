@@ -209,6 +209,9 @@ public class BlockStreamService implements GrpcService {
             } catch (IOException e) {
                 LOGGER.log(ERROR, "Error reading block number: {0}", blockNumber);
                 singleBlockResponseStreamObserver.onNext(buildSingleBlockNotAvailableResponse());
+            } catch (ParseException e) {
+                LOGGER.log(ERROR, "Error parsing block number: {0}", blockNumber);
+                singleBlockResponseStreamObserver.onNext(buildSingleBlockNotAvailableResponse());
             }
         } else {
             LOGGER.log(ERROR, "Unary singleBlock gRPC method is not currently running");

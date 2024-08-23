@@ -84,7 +84,7 @@ class BlockAsDirReader implements BlockReader<Block> {
      */
     @NonNull
     @Override
-    public Optional<Block> read(final long blockNumber) throws IOException {
+    public Optional<Block> read(final long blockNumber) throws IOException, ParseException {
 
         // Verify path attributes of the block node root path
         if (isPathDisqualified(blockNodeRootPath)) {
@@ -134,7 +134,7 @@ class BlockAsDirReader implements BlockReader<Block> {
 
     @NonNull
     private Optional<BlockItem> readBlockItem(@NonNull final String blockItemPath)
-            throws IOException {
+            throws IOException, ParseException {
 
         try (final FileInputStream fis = new FileInputStream(blockItemPath)) {
 
@@ -156,7 +156,7 @@ class BlockAsDirReader implements BlockReader<Block> {
             throw io;
         } catch (ParseException e) {
             LOGGER.log(ERROR, "Error parsing block item: " + blockItemPath, e);
-            throw new IOException(e);
+            throw e;
         }
     }
 

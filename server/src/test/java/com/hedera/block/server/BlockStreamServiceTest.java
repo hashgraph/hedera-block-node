@@ -46,6 +46,7 @@ import com.hedera.hapi.block.SingleBlockResponseCode;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
 import io.grpc.stub.ServerCalls;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
@@ -127,7 +128,7 @@ public class BlockStreamServiceTest {
     }
 
     @Test
-    void testSingleBlockHappyPath() throws IOException {
+    void testSingleBlockHappyPath() throws IOException, ParseException {
 
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final BlockStreamService blockStreamService =
@@ -168,7 +169,7 @@ public class BlockStreamServiceTest {
     }
 
     @Test
-    void testSingleBlockNotFoundPath() throws IOException {
+    void testSingleBlockNotFoundPath() throws IOException, ParseException {
 
         // Get the block so we can verify the response payload
         when(blockReader.read(1)).thenReturn(Optional.empty());
@@ -218,14 +219,34 @@ public class BlockStreamServiceTest {
     }
 
     @Test
-    public void testSingleBlockIOExceptionPath() throws IOException {
+    public void testSingleBlockIOExceptionPath() throws IOException, ParseException {
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator, blockReader, serviceStatus, blockNodeContext);
 
-        // Set the service status to not running
         when(serviceStatus.isRunning()).thenReturn(true);
         when(blockReader.read(1)).thenThrow(new IOException("Test exception"));
+
+        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedNotAvailable =
+                buildSingleBlockNotAvailableResponse();
+
+        // Build a request to invoke the service
+        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
+                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
+                        .setBlockNumber(1)
+                        .build();
+        blockStreamService.protocSingleBlock(singleBlockRequest, responseObserver);
+        verify(responseObserver, times(1)).onNext(expectedNotAvailable);
+    }
+
+    @Test
+    public void testSingleBlockParseExceptionPath() throws IOException, ParseException {
+        final BlockStreamService blockStreamService =
+                new BlockStreamService(
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+
+        when(serviceStatus.isRunning()).thenReturn(true);
+        when(blockReader.read(1)).thenThrow(new ParseException("Test exception"));
 
         final com.hedera.hapi.block.protoc.SingleBlockResponse expectedNotAvailable =
                 buildSingleBlockNotAvailableResponse();
@@ -260,7 +281,7 @@ public class BlockStreamServiceTest {
     }
 
     @Test
-    public void testProtocParseExceptionHandling() throws IOException {
+    public void testProtocParseExceptionHandling() {
         // TODO: We might be able to remove this test once we can remove the Translator class
 
         final BlockStreamService blockStreamService =

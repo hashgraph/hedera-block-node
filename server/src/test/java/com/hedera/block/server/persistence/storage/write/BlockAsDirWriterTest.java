@@ -35,6 +35,7 @@ import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -79,7 +80,7 @@ public class BlockAsDirWriterTest {
     }
 
     @Test
-    public void testWriterAndReaderHappyPath() throws IOException {
+    public void testWriterAndReaderHappyPath() throws IOException, ParseException {
 
         // Write a block
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
@@ -116,7 +117,7 @@ public class BlockAsDirWriterTest {
     }
 
     @Test
-    public void testRemoveBlockWritePerms() throws IOException {
+    public void testRemoveBlockWritePerms() throws IOException, ParseException {
 
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
@@ -177,7 +178,7 @@ public class BlockAsDirWriterTest {
     }
 
     @Test
-    public void testRemoveRootDirReadPerm() throws IOException {
+    public void testRemoveRootDirReadPerm() throws IOException, ParseException {
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
@@ -205,7 +206,7 @@ public class BlockAsDirWriterTest {
     }
 
     @Test
-    public void testPartialBlockRemoval() throws IOException {
+    public void testPartialBlockRemoval() throws IOException, ParseException {
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(3);
         final BlockRemover blockRemover =
                 new BlockAsDirRemover(Path.of(testConfig.rootPath()), FileUtils.defaultPerms);
