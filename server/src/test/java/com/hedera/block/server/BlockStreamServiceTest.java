@@ -18,8 +18,11 @@ package com.hedera.block.server;
 
 import static com.hedera.block.server.BlockStreamService.buildSingleBlockNotAvailableResponse;
 import static com.hedera.block.server.BlockStreamService.buildSingleBlockNotFoundResponse;
-import static com.hedera.block.server.Constants.*;
-import static com.hedera.block.server.Translator.toProtocSingleBlockResponse;
+import static com.hedera.block.server.BlockStreamService.fromPbjSingleBlockSuccessResponse;
+import static com.hedera.block.server.Constants.CLIENT_STREAMING_METHOD_NAME;
+import static com.hedera.block.server.Constants.SERVER_STREAMING_METHOD_NAME;
+import static com.hedera.block.server.Constants.SINGLE_BLOCK_METHOD_NAME;
+import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
 import static java.lang.System.Logger;
@@ -27,7 +30,14 @@ import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -155,7 +165,7 @@ public class BlockStreamServiceTest {
 
         // Build a response to verify what's passed to the response observer
         final com.hedera.hapi.block.protoc.SingleBlockResponse expectedSingleBlockResponse =
-                toProtocSingleBlockResponse(blockOpt.get());
+                fromPbjSingleBlockSuccessResponse(blockOpt.get());
 
         // Build a request to invoke the service
         final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
@@ -305,7 +315,6 @@ public class BlockStreamServiceTest {
                         .build();
         // Call the service
         blockStreamService.protocSingleBlock(singleBlockRequest, responseObserver);
-        verify(responseObserver, times(1))
-                .onNext(toProtocSingleBlockResponse(expectedSingleBlockErrorResponse));
+        verify(responseObserver, times(1)).onNext(fromPbj(expectedSingleBlockErrorResponse));
     }
 }

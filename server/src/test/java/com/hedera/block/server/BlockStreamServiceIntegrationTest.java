@@ -16,13 +16,21 @@
 
 package com.hedera.block.server;
 
-import static com.hedera.block.server.Translator.*;
+import static com.hedera.block.server.Translator.fromPbj;
+import static com.hedera.block.server.Translator.toProtocPublishStreamRequest;
+import static com.hedera.block.server.Translator.toProtocPublishStreamResponse;
+import static com.hedera.block.server.Translator.toProtocSubscribeStreamRequest;
+import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
@@ -38,7 +46,17 @@ import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
-import com.hedera.hapi.block.*;
+import com.hedera.hapi.block.Acknowledgement;
+import com.hedera.hapi.block.EndOfStream;
+import com.hedera.hapi.block.ItemAcknowledgement;
+import com.hedera.hapi.block.PublishStreamRequest;
+import com.hedera.hapi.block.PublishStreamResponse;
+import com.hedera.hapi.block.PublishStreamResponseCode;
+import com.hedera.hapi.block.SingleBlockResponse;
+import com.hedera.hapi.block.SingleBlockResponseCode;
+import com.hedera.hapi.block.SubscribeStreamRequest;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
@@ -54,7 +72,11 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -549,7 +571,7 @@ public class BlockStreamServiceIntegrationTest {
                         .build();
 
         verify(singleBlockResponseStreamObserver, timeout(testTimeout).times(1))
-                .onNext(toProtocSingleBlockResponse(expectedSingleBlockNotAvailable));
+                .onNext(fromPbj(expectedSingleBlockNotAvailable));
 
         // TODO: Fix the response code when it's available
         final SubscribeStreamResponse expectedSubscriberStreamNotAvailable =

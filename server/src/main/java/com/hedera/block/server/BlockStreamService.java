@@ -20,8 +20,8 @@ import static com.hedera.block.server.Constants.CLIENT_STREAMING_METHOD_NAME;
 import static com.hedera.block.server.Constants.SERVER_STREAMING_METHOD_NAME;
 import static com.hedera.block.server.Constants.SERVICE_NAME;
 import static com.hedera.block.server.Constants.SINGLE_BLOCK_METHOD_NAME;
+import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.Translator.toPbj;
-import static com.hedera.block.server.Translator.toProtocSingleBlockResponse;
 import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
@@ -198,7 +198,7 @@ public class BlockStreamService implements GrpcService {
                 if (blockOpt.isPresent()) {
                     LOGGER.log(DEBUG, "Successfully returning block number: {0}", blockNumber);
                     singleBlockResponseStreamObserver.onNext(
-                            toProtocSingleBlockResponse(blockOpt.get()));
+                            fromPbjSingleBlockSuccessResponse(blockOpt.get()));
 
                     final MetricsService metricsService = blockNodeContext.metricsService();
                     metricsService.singleBlocksRetrieved.increment();
@@ -242,7 +242,7 @@ public class BlockStreamService implements GrpcService {
                         .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
                         .build();
 
-        return toProtocSingleBlockResponse(response);
+        return fromPbj(response);
     }
 
     @NonNull
@@ -253,6 +253,18 @@ public class BlockStreamService implements GrpcService {
                         .status(SingleBlockResponseCode.READ_BLOCK_NOT_FOUND)
                         .build();
 
-        return toProtocSingleBlockResponse(response);
+        return fromPbj(response);
+    }
+
+    @NonNull
+    static com.hedera.hapi.block.protoc.SingleBlockResponse fromPbjSingleBlockSuccessResponse(
+            @NonNull final Block block) {
+        final SingleBlockResponse singleBlockResponse =
+                SingleBlockResponse.newBuilder()
+                        .status(SingleBlockResponseCode.READ_BLOCK_SUCCESS)
+                        .block(block)
+                        .build();
+
+        return fromPbj(singleBlockResponse);
     }
 }

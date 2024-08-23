@@ -24,10 +24,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hapi.block.PublishStreamRequest;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SingleBlockResponse;
-import com.hedera.hapi.block.SingleBlockResponseCode;
 import com.hedera.hapi.block.SubscribeStreamRequest;
 import com.hedera.hapi.block.SubscribeStreamResponse;
-import com.hedera.hapi.block.stream.Block;
 import com.hedera.pbj.runtime.Codec;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
@@ -57,7 +55,7 @@ public final class Translator {
      * @return the converted {@link com.hedera.hapi.block.protoc.SingleBlockResponse}
      */
     @NonNull
-    public static com.hedera.hapi.block.protoc.SingleBlockResponse toProtocSingleBlockResponse(
+    public static com.hedera.hapi.block.protoc.SingleBlockResponse fromPbj(
             @NonNull final SingleBlockResponse singleBlockResponse) {
         try {
             final byte[] pbjBytes = asBytes(SingleBlockResponse.PROTOBUF, singleBlockResponse);
@@ -68,25 +66,6 @@ public final class Translator {
             LOGGER.log(ERROR, message);
             throw new RuntimeException(message, e);
         }
-    }
-
-    /**
-     * Converts a {@link com.hedera.hapi.block.stream.Block} to a {@link
-     * com.hedera.hapi.block.protoc.SingleBlockResponse}.
-     *
-     * @param block the {@link Block} to convert to a protoc single block response.
-     * @return an instance of {@link com.hedera.hapi.block.protoc.SingleBlockResponse}
-     */
-    @NonNull
-    public static com.hedera.hapi.block.protoc.SingleBlockResponse toProtocSingleBlockResponse(
-            @NonNull final Block block) {
-        final SingleBlockResponse singleBlockResponse =
-                SingleBlockResponse.newBuilder()
-                        .status(SingleBlockResponseCode.READ_BLOCK_SUCCESS)
-                        .block(block)
-                        .build();
-
-        return toProtocSingleBlockResponse(singleBlockResponse);
     }
 
     /**
@@ -202,6 +181,7 @@ public final class Translator {
         return codec.parse(Bytes.wrap(bytes));
     }
 
+    @NonNull
     private static <T extends Record> byte[] asBytes(@NonNull Codec<T> codec, @NonNull T tx) {
         requireNonNull(codec);
         requireNonNull(tx);
