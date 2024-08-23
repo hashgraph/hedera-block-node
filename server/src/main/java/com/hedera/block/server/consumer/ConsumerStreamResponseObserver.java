@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.consumer;
 
-import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
+import static com.hedera.block.server.Translator.fromPbj;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -212,8 +212,7 @@ public class ConsumerStreamResponseObserver
 
                 if (streamStarted) {
                     LOGGER.log(DEBUG, "Sending BlockItem downstream: {0}", blockItem);
-                    subscribeStreamResponseObserver.onNext(
-                            toProtocSubscribeStreamResponse(subscribeStreamResponse));
+                    subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
                 }
             }
         }
@@ -225,8 +224,7 @@ public class ConsumerStreamResponseObserver
                     DEBUG,
                     "Sending SubscribeStreamResponse downstream: {0} ",
                     subscribeStreamResponse);
-            subscribeStreamResponseObserver.onNext(
-                    toProtocSubscribeStreamResponse(subscribeStreamResponse));
+            subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
         }
     }
 }

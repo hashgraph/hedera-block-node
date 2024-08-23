@@ -22,7 +22,6 @@ import static com.hedera.block.server.Constants.SERVICE_NAME;
 import static com.hedera.block.server.Constants.SINGLE_BLOCK_METHOD_NAME;
 import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.Translator.toPbj;
-import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -232,7 +231,7 @@ public class BlockStreamService implements GrpcService {
                         .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
                         .build();
 
-        return toProtocSubscribeStreamResponse(response);
+        return fromPbj(response);
     }
 
     @NonNull

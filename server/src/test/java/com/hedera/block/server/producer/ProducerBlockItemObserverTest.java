@@ -17,7 +17,6 @@
 package com.hedera.block.server.producer;
 
 import static com.hedera.block.server.Translator.fromPbj;
-import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
@@ -183,12 +182,9 @@ public class ProducerBlockItemObserverTest {
         assertEquals(1, blockNodeContext.metricsService().liveBlockItems.get());
 
         // Confirm each subscriber was notified of the new block
-        verify(streamObserver1, timeout(50).times(1))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
-        verify(streamObserver2, timeout(50).times(1))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
-        verify(streamObserver3, timeout(50).times(1))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+        verify(streamObserver1, timeout(50).times(1)).onNext(fromPbj(subscribeStreamResponse));
+        verify(streamObserver2, timeout(50).times(1)).onNext(fromPbj(subscribeStreamResponse));
+        verify(streamObserver3, timeout(50).times(1)).onNext(fromPbj(subscribeStreamResponse));
 
         // Confirm the BlockStorage write method was
         // called despite the absence of subscribers

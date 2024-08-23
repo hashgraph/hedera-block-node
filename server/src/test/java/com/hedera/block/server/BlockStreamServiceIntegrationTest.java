@@ -18,7 +18,6 @@ package com.hedera.block.server;
 
 import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.Translator.toProtocSubscribeStreamRequest;
-import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static java.lang.System.Logger;
@@ -240,11 +239,11 @@ public class BlockStreamServiceIntegrationTest {
                 SubscribeStreamResponse.newBuilder().blockItem(blockItems.getFirst()).build();
 
         verify(subscribeStreamObserver1, timeout(testTimeout).times(1))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+                .onNext(fromPbj(subscribeStreamResponse));
         verify(subscribeStreamObserver2, timeout(testTimeout).times(1))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+                .onNext(fromPbj(subscribeStreamResponse));
         verify(subscribeStreamObserver3, timeout(testTimeout).times(1))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+                .onNext(fromPbj(subscribeStreamResponse));
     }
 
     @Test
@@ -519,11 +518,11 @@ public class BlockStreamServiceIntegrationTest {
         final SubscribeStreamResponse subscribeStreamResponse =
                 SubscribeStreamResponse.newBuilder().blockItem(blockItems.getFirst()).build();
         verify(subscribeStreamObserver1, timeout(testTimeout).times(1))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+                .onNext(fromPbj(subscribeStreamResponse));
         verify(subscribeStreamObserver2, timeout(testTimeout).times(1))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+                .onNext(fromPbj(subscribeStreamResponse));
         verify(subscribeStreamObserver3, timeout(testTimeout).times(1))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+                .onNext(fromPbj(subscribeStreamResponse));
 
         // Verify all the consumers received the end of stream response
         // TODO: Fix the response code when it's available
@@ -532,11 +531,11 @@ public class BlockStreamServiceIntegrationTest {
                         .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
                         .build();
         verify(subscribeStreamObserver1, timeout(testTimeout).times(1))
-                .onNext(toProtocSubscribeStreamResponse(endStreamResponse));
+                .onNext(fromPbj(endStreamResponse));
         verify(subscribeStreamObserver2, timeout(testTimeout).times(1))
-                .onNext(toProtocSubscribeStreamResponse(endStreamResponse));
+                .onNext(fromPbj(endStreamResponse));
         verify(subscribeStreamObserver3, timeout(testTimeout).times(1))
-                .onNext(toProtocSubscribeStreamResponse(endStreamResponse));
+                .onNext(fromPbj(endStreamResponse));
 
         // Verify all the consumers were unsubscribed
         for (final var s : subscribers.keySet()) {
@@ -577,7 +576,7 @@ public class BlockStreamServiceIntegrationTest {
                         .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
                         .build();
         verify(subscribeStreamObserver4, timeout(testTimeout).times(1))
-                .onNext(toProtocSubscribeStreamResponse(expectedSubscriberStreamNotAvailable));
+                .onNext(fromPbj(expectedSubscriberStreamNotAvailable));
     }
 
     private void removeRootPathWritePerms(final PersistenceStorageConfig config)
@@ -614,11 +613,11 @@ public class BlockStreamServiceIntegrationTest {
                     buildSubscribeStreamResponse(stateProofBlockItem);
 
             verify(streamObserver, timeout(testTimeout).times(1))
-                    .onNext(toProtocSubscribeStreamResponse(headerSubStreamResponse));
+                    .onNext(fromPbj(headerSubStreamResponse));
             verify(streamObserver, timeout(testTimeout).times(8))
-                    .onNext(toProtocSubscribeStreamResponse(bodySubStreamResponse));
+                    .onNext(fromPbj(bodySubStreamResponse));
             verify(streamObserver, timeout(testTimeout).times(1))
-                    .onNext(toProtocSubscribeStreamResponse(stateProofStreamResponse));
+                    .onNext(fromPbj(stateProofStreamResponse));
         }
     }
 

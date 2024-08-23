@@ -16,10 +16,17 @@
 
 package com.hedera.block.server.mediator;
 
-import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
+import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
@@ -201,11 +208,11 @@ public class LiveStreamMediatorImplTest {
 
         // Confirm each subscriber was notified of the new block
         verify(streamObserver1, timeout(testTimeout).times(1))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+                .onNext(fromPbj(subscribeStreamResponse));
         verify(streamObserver2, timeout(testTimeout).times(1))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+                .onNext(fromPbj(subscribeStreamResponse));
         verify(streamObserver3, timeout(testTimeout).times(1))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+                .onNext(fromPbj(subscribeStreamResponse));
 
         // Confirm the BlockStorage write method was called
         verify(blockWriter).write(blockItem);

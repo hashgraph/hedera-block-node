@@ -16,10 +16,15 @@
 
 package com.hedera.block.server.consumer;
 
-import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
+import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
@@ -91,8 +96,7 @@ public class ConsumerStreamResponseObserverTest {
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         // verify the observer is called with the next BlockItem
-        verify(responseStreamObserver)
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+        verify(responseStreamObserver).onNext(fromPbj(subscribeStreamResponse));
 
         // verify the mediator is NOT called to unsubscribe the observer
         verify(streamMediator, never()).unsubscribe(consumerBlockItemObserver);
@@ -150,7 +154,7 @@ public class ConsumerStreamResponseObserverTest {
 
         // Confirm that canceling the observer allowed only 1 response to be sent.
         verify(serverCallStreamObserver, timeout(50).times(1))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+                .onNext(fromPbj(subscribeStreamResponse));
     }
 
     @Test
@@ -176,7 +180,7 @@ public class ConsumerStreamResponseObserverTest {
 
         // Confirm that canceling the observer allowed only 1 response to be sent.
         verify(serverCallStreamObserver, timeout(50).times(1))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+                .onNext(fromPbj(subscribeStreamResponse));
     }
 
     @Test
@@ -218,7 +222,7 @@ public class ConsumerStreamResponseObserverTest {
         // Confirm that the observer was called with the next BlockItem
         // since we never send a BlockItem with a Header to start the stream.
         verify(responseStreamObserver, timeout(50).times(0))
-                .onNext(toProtocSubscribeStreamResponse(subscribeStreamResponse));
+                .onNext(fromPbj(subscribeStreamResponse));
     }
 
     @Test
