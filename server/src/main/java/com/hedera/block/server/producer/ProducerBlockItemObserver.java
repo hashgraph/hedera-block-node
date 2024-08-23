@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.producer;
 
-import static com.hedera.block.server.Translator.toPbjBlockItem;
+import static com.hedera.block.server.Translator.toPbj;
 import static com.hedera.block.server.Translator.toProtocPublishStreamResponse;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static java.lang.System.Logger;
@@ -92,7 +92,8 @@ public class ProducerBlockItemObserver
 
         try {
 
-            final BlockItem blockItem = toPbjBlockItem(publishStreamRequest.getBlockItem());
+            final BlockItem blockItem =
+                    toPbj(BlockItem.PROTOBUF, publishStreamRequest.getBlockItem().toByteArray());
 
             // Publish the block to all the subscribers unless
             // there's an issue with the StreamMediator.

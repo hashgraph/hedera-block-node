@@ -20,6 +20,7 @@ import static com.hedera.block.server.Constants.CLIENT_STREAMING_METHOD_NAME;
 import static com.hedera.block.server.Constants.SERVER_STREAMING_METHOD_NAME;
 import static com.hedera.block.server.Constants.SERVICE_NAME;
 import static com.hedera.block.server.Constants.SINGLE_BLOCK_METHOD_NAME;
+import static com.hedera.block.server.Translator.toPbj;
 import static com.hedera.block.server.Translator.toProtocSingleBlockResponse;
 import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
 import static java.lang.System.Logger;
@@ -44,7 +45,6 @@ import com.hedera.hapi.block.protoc.BlockService;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
-import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
@@ -175,7 +175,7 @@ public class BlockStreamService implements GrpcService {
 
         try {
             final SingleBlockRequest pbjSingleBlockRequest =
-                    toPbjSingleBlockRequest(singleBlockRequest);
+                    toPbj(SingleBlockRequest.PROTOBUF, singleBlockRequest.toByteArray());
             singleBlock(pbjSingleBlockRequest, singleBlockResponseStreamObserver);
         } catch (ParseException e) {
             LOGGER.log(ERROR, "Error parsing protoc SingleBlockRequest: {0}", singleBlockRequest);
@@ -254,13 +254,5 @@ public class BlockStreamService implements GrpcService {
                         .build();
 
         return toProtocSingleBlockResponse(response);
-    }
-
-    @NonNull
-    private static com.hedera.hapi.block.SingleBlockRequest toPbjSingleBlockRequest(
-            @NonNull final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest)
-            throws ParseException {
-
-        return SingleBlockRequest.PROTOBUF.parse(Bytes.wrap(singleBlockRequest.toByteArray()));
     }
 }

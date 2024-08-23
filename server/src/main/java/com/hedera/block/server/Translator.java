@@ -28,7 +28,6 @@ import com.hedera.hapi.block.SingleBlockResponseCode;
 import com.hedera.hapi.block.SubscribeStreamRequest;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.Codec;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
@@ -38,8 +37,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
- * TODO: Remove this class once the Helidon PBJ gRPC work is integrated. Translator class to convert
- * between PBJ and google protoc objects.
+ * Translator class to convert between PBJ and google protoc objects.
+ *
+ * <p>TODO: Remove this class once the Helidon PBJ gRPC work is integrated.
  */
 public final class Translator {
     private static final Logger LOGGER = System.getLogger(Translator.class.getName());
@@ -188,18 +188,18 @@ public final class Translator {
     }
 
     /**
-     * Converts a {@link com.hedera.hapi.block.stream.protoc.BlockItem} to a {@link
-     * com.hedera.hapi.block.stream.BlockItem}.
+     * Converts protoc bytes to a PBJ record of the same type.
      *
-     * @param blockItem the {@link com.hedera.hapi.block.stream.protoc.BlockItem} to convert
-     * @return the converted {@link com.hedera.hapi.block.stream.BlockItem}
-     * @throws ParseException if the conversion between the protoc and PBJ objects fails
+     * @param <T> the type of PBJ record to convert to
+     * @param codec the record codec to convert the bytes to a PBJ record
+     * @param bytes the protoc bytes to convert to a PBJ record
+     * @return the converted PBJ record
+     * @throws ParseException if the conversion between the protoc bytes and PBJ objects fails
      */
     @NonNull
-    public static BlockItem toPbjBlockItem(
-            @NonNull final com.hedera.hapi.block.stream.protoc.BlockItem blockItem)
-            throws ParseException {
-        return BlockItem.PROTOBUF.parse(Bytes.wrap(blockItem.toByteArray()));
+    public static <T extends Record> T toPbj(
+            @NonNull final Codec<T> codec, @NonNull final byte[] bytes) throws ParseException {
+        return codec.parse(Bytes.wrap(bytes));
     }
 
     private static <T extends Record> byte[] asBytes(@NonNull Codec<T> codec, @NonNull T tx) {
