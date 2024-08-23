@@ -52,3 +52,7 @@ gradle-app.setting
 # .env files
 server/docker/.env
 /server/data/
+
+# manual test files
+server/src/test/resources/test_output/
+
