@@ -35,6 +35,8 @@ import io.helidon.webserver.WebServer;
 import io.helidon.webserver.grpc.GrpcRouting;
 import io.helidon.webserver.http.HttpRouting;
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -45,7 +47,7 @@ import javax.inject.Singleton;
 @Singleton
 public class BlockNodeApp {
 
-    private static final System.Logger LOGGER = System.getLogger(BlockNodeApp.class.getName());
+    private static final Logger LOGGER = System.getLogger(BlockNodeApp.class.getName());
     private final ServiceStatus serviceStatus;
     private final HealthService healthService;
     private final BlockNodeContext blockNodeContext;
@@ -112,7 +114,7 @@ public class BlockNodeApp {
 
         // Log the server status
         LOGGER.log(
-                System.Logger.Level.INFO,
+                Level.INFO,
                 String.format("Block Node Server started at port: %d", webServer.port()));
     }
 
