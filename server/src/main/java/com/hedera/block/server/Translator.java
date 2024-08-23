@@ -77,7 +77,7 @@ public final class Translator {
      * @return the converted {@link com.hedera.hapi.block.protoc.PublishStreamResponse}
      */
     @NonNull
-    public static com.hedera.hapi.block.protoc.PublishStreamResponse toProtocPublishStreamResponse(
+    public static com.hedera.hapi.block.protoc.PublishStreamResponse fromPbj(
             @NonNull final com.hedera.hapi.block.PublishStreamResponse publishStreamResponse) {
         try {
             final byte[] pbjBytes = asBytes(PublishStreamResponse.PROTOBUF, publishStreamResponse);
@@ -99,7 +99,7 @@ public final class Translator {
      * @return the converted {@link com.hedera.hapi.block.protoc.PublishStreamRequest}
      */
     @NonNull
-    public static com.hedera.hapi.block.protoc.PublishStreamRequest toProtocPublishStreamRequest(
+    public static com.hedera.hapi.block.protoc.PublishStreamRequest fromPbj(
             @NonNull final com.hedera.hapi.block.PublishStreamRequest publishStreamRequest) {
         try {
             final byte[] pbjBytes = asBytes(PublishStreamRequest.PROTOBUF, publishStreamRequest);

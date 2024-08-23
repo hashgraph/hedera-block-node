@@ -17,8 +17,6 @@
 package com.hedera.block.server;
 
 import static com.hedera.block.server.Translator.fromPbj;
-import static com.hedera.block.server.Translator.toProtocPublishStreamRequest;
-import static com.hedera.block.server.Translator.toProtocPublishStreamResponse;
 import static com.hedera.block.server.Translator.toProtocSubscribeStreamRequest;
 import static com.hedera.block.server.Translator.toProtocSubscribeStreamResponse;
 import static com.hedera.block.server.producer.Util.getFakeHash;
@@ -175,7 +173,7 @@ public class BlockStreamServiceIntegrationTest {
                 PublishStreamRequest.newBuilder().blockItem(blockItem).build();
 
         // Calling onNext() as Helidon will
-        streamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
+        streamObserver.onNext(fromPbj(publishStreamRequest));
 
         final Acknowledgement itemAck = buildAck(blockItem);
         final PublishStreamResponse publishStreamResponse =
@@ -187,7 +185,7 @@ public class BlockStreamServiceIntegrationTest {
         // Verify our custom StreamObserver implementation builds and sends
         // a response back to the producer
         verify(publishStreamResponseObserver, timeout(testTimeout).times(1))
-                .onNext(toProtocPublishStreamResponse(publishStreamResponse));
+                .onNext(fromPbj(publishStreamResponse));
 
         // Close the stream as Helidon does
         streamObserver.onCompleted();
@@ -231,7 +229,7 @@ public class BlockStreamServiceIntegrationTest {
                 PublishStreamRequest.newBuilder().blockItem(blockItems.getFirst()).build();
 
         // Calling onNext() with a BlockItem
-        streamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
+        streamObserver.onNext(fromPbj(publishStreamRequest));
 
         // Verify the counter was incremented
         assertEquals(1, blockNodeContext.metricsService().liveBlockItems.get());
@@ -274,7 +272,7 @@ public class BlockStreamServiceIntegrationTest {
         for (BlockItem blockItem : blockItems) {
             final PublishStreamRequest publishStreamRequest =
                     PublishStreamRequest.newBuilder().blockItem(blockItem).build();
-            streamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
+            streamObserver.onNext(fromPbj(publishStreamRequest));
         }
 
         verifySubscribeStreamResponse(
@@ -322,7 +320,7 @@ public class BlockStreamServiceIntegrationTest {
             }
 
             // Transmit the BlockItem
-            streamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
+            streamObserver.onNext(fromPbj(publishStreamRequest));
 
             // Add a new subscriber
             if (i == 76) {
@@ -411,7 +409,7 @@ public class BlockStreamServiceIntegrationTest {
             }
 
             // Transmit the BlockItem
-            streamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
+            streamObserver.onNext(fromPbj(publishStreamRequest));
 
             if (i == 70) {
                 final var k = subscribers.firstEntry().getKey();
@@ -491,14 +489,14 @@ public class BlockStreamServiceIntegrationTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
         final PublishStreamRequest publishStreamRequest =
                 PublishStreamRequest.newBuilder().blockItem(blockItems.getFirst()).build();
-        streamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
+        streamObserver.onNext(fromPbj(publishStreamRequest));
 
         // Simulate another producer attempting to connect to the Block Node after the exception.
         // Later, verify they received a response indicating the stream is closed.
         final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest>
                 expectedNoOpStreamObserver =
                         blockStreamService.protocPublishBlockStream(publishStreamResponseObserver);
-        expectedNoOpStreamObserver.onNext(toProtocPublishStreamRequest(publishStreamRequest));
+        expectedNoOpStreamObserver.onNext(fromPbj(publishStreamRequest));
 
         // Build a request to invoke the singleBlock service
         final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
@@ -554,7 +552,7 @@ public class BlockStreamServiceIntegrationTest {
         final var endOfStreamResponse =
                 PublishStreamResponse.newBuilder().status(endOfStream).build();
         verify(publishStreamResponseObserver, timeout(testTimeout).times(2))
-                .onNext(toProtocPublishStreamResponse(endOfStreamResponse));
+                .onNext(fromPbj(endOfStreamResponse));
         verify(webServer, timeout(testTimeout).times(1)).stop();
 
         // Now verify the block was removed from the file system.

@@ -16,8 +16,8 @@
 
 package com.hedera.block.server.producer;
 
+import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.Translator.toPbj;
-import static com.hedera.block.server.Translator.toProtocPublishStreamResponse;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
@@ -140,8 +140,7 @@ public class ProducerBlockItemObserver
     private com.hedera.hapi.block.protoc.PublishStreamResponse buildSuccessStreamResponse(
             @NonNull final BlockItem blockItem) throws IOException, NoSuchAlgorithmException {
         final Acknowledgement ack = buildAck(blockItem);
-        return toProtocPublishStreamResponse(
-                PublishStreamResponse.newBuilder().acknowledgement(ack).build());
+        return fromPbj(PublishStreamResponse.newBuilder().acknowledgement(ack).build());
     }
 
     @NonNull
@@ -151,8 +150,7 @@ public class ProducerBlockItemObserver
                 EndOfStream.newBuilder()
                         .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
                         .build();
-        return toProtocPublishStreamResponse(
-                PublishStreamResponse.newBuilder().status(endOfStream).build());
+        return fromPbj(PublishStreamResponse.newBuilder().status(endOfStream).build());
     }
 
     /**
