@@ -49,6 +49,13 @@ jvmDependencyConflicts.patch {
     module("io.grpc:grpc-stub") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-testing") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-util") { annotationLibraries.forEach { removeDependency(it) } }
+    module("com.google.dagger:dagger-compiler") {
+        annotationLibraries.forEach { removeDependency(it) }
+    }
+    module("com.google.dagger:dagger-producers") {
+        annotationLibraries.forEach { removeDependency(it) }
+    }
+    module("com.google.dagger:dagger-spi") { annotationLibraries.forEach { removeDependency(it) } }
     module("com.google.guava:guava") {
         (annotationLibraries -
                 "com.google.code.findbugs:jsr305" -
@@ -62,6 +69,9 @@ jvmDependencyConflicts.patch {
     module("io.prometheus:simpleclient") {
         removeDependency("io.prometheus:simpleclient_tracer_otel")
         removeDependency("io.prometheus:simpleclient_tracer_otel_agent")
+    }
+    module("org.jetbrains.kotlin:kotlin-stdlib") {
+        removeDependency("org.jetbrains.kotlin:kotlin-stdlib-common")
     }
     module("junit:junit") { removeDependency("org.hamcrest:hamcrest-core") }
     module("org.hyperledger.besu:secp256k1") { addApiDependency("net.java.dev.jna:jna") }
@@ -110,7 +120,7 @@ extraJavaModuleInfo {
     }
     module("com.google.guava:failureaccess", "com.google.common.util.concurrent.internal")
     module("com.google.api.grpc:proto-google-common-protos", "com.google.api.grpc.common")
-
+    module("com.google.dagger:dagger", "dagger")
     module("io.perfmark:perfmark-api", "io.perfmark")
     module("javax.inject:javax.inject", "javax.inject")
 
@@ -121,6 +131,7 @@ extraJavaModuleInfo {
 
     module("org.checkerframework:checker-qual", "org.checkerframework.checker.qual")
     module("net.i2p.crypto:eddsa", "net.i2p.crypto.eddsa")
+    module("org.jetbrains:annotations", "org.jetbrains.annotations")
     module("org.antlr:antlr4-runtime", "org.antlr.antlr4.runtime")
 
     // needed for metrics and logging, but also several platform classes
@@ -143,9 +154,24 @@ extraJavaModuleInfo {
     module("com.google.auto.service:auto-service-annotations", "com.google.auto.service")
     module("com.google.auto.service:auto-service", "com.google.auto.service.processor")
     module("com.google.auto:auto-common", "com.google.auto.common")
+    module("com.google.dagger:dagger-compiler", "dagger.compiler")
+    module("com.google.dagger:dagger-producers", "dagger.producers")
+    module("com.google.dagger:dagger-spi", "dagger.spi")
+    module(
+        "com.google.devtools.ksp:symbol-processing-api",
+        "com.google.devtools.ksp.symbolprocessingapi"
+    )
+    module("com.google.errorprone:javac-shaded", "com.google.errorprone.javac.shaded")
+    module("com.google.googlejavaformat:google-java-format", "com.google.googlejavaformat")
+    module("net.ltgt.gradle.incap:incap", "net.ltgt.gradle.incap")
+    module("org.jetbrains.kotlinx:kotlinx-metadata-jvm", "kotlinx.metadata.jvm")
 
     // Test clients only
     module("com.google.protobuf:protobuf-java-util", "com.google.protobuf.util")
+    module("com.squareup:javapoet", "com.squareup.javapoet") {
+        exportAllPackages()
+        requires("java.compiler")
+    }
     module("junit:junit", "junit")
     module("org.hamcrest:hamcrest", "org.hamcrest")
     module("org.json:json", "org.json")

@@ -16,9 +16,9 @@
 
 package com.hedera.block.server;
 
-import com.hedera.block.protos.BlockStreamService.Block;
-import com.hedera.block.protos.BlockStreamService.BlockItem;
-import com.hedera.block.protos.BlockStreamService.SubscribeStreamResponse;
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.INFO;
+
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.health.HealthService;
@@ -29,14 +29,14 @@ import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
-import com.hedera.block.server.producer.ItemAckBuilder;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.grpc.GrpcRouting;
 import io.helidon.webserver.http.HttpRouting;
 import java.io.IOException;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -48,6 +48,7 @@ import javax.inject.Singleton;
 public class BlockNodeApp {
 
     private static final Logger LOGGER = System.getLogger(BlockNodeApp.class.getName());
+
     private final ServiceStatus serviceStatus;
     private final HealthService healthService;
     private final BlockNodeContext blockNodeContext;
@@ -74,7 +75,8 @@ public class BlockNodeApp {
      *
      * @throws IOException if the server cannot be started
      */
-    public void startServer() throws IOException {
+    public void start() throws IOException {
+
         final BlockWriter<BlockItem> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator =
@@ -113,9 +115,7 @@ public class BlockNodeApp {
         webServer.start();
 
         // Log the server status
-        LOGGER.log(
-                Level.INFO,
-                String.format("Block Node Server started at port: %d", webServer.port()));
+        LOGGER.log(INFO, String.format("Block Node Server started at port: %d", webServer.port()));
     }
 
     @NonNull
@@ -127,7 +127,6 @@ public class BlockNodeApp {
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
 
-        return new BlockStreamService(
-                new ItemAckBuilder(), streamMediator, blockReader, serviceStatus, blockNodeContext);
+        return new BlockStreamService(streamMediator, blockReader, serviceStatus, blockNodeContext);
     }
 }
