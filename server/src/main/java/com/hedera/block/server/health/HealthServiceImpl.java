@@ -21,8 +21,11 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.http.HttpRules;
 import io.helidon.webserver.http.ServerRequest;
 import io.helidon.webserver.http.ServerResponse;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /** Provides implementation for the health endpoints of the server. */
+@Singleton
 public class HealthServiceImpl implements HealthService {
 
     private static final String LIVENESS_PATH = "/liveness";
@@ -35,6 +38,7 @@ public class HealthServiceImpl implements HealthService {
      *
      * @param serviceStatus is used to check the status of the service
      */
+    @Inject
     public HealthServiceImpl(@NonNull ServiceStatus serviceStatus) {
         this.serviceStatus = serviceStatus;
     }
