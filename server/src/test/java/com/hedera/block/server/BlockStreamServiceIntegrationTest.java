@@ -17,7 +17,6 @@
 package com.hedera.block.server;
 
 import static com.hedera.block.server.Translator.fromPbj;
-import static com.hedera.block.server.Translator.toProtocSubscribeStreamRequest;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static java.lang.System.Logger;
@@ -511,7 +510,7 @@ public class BlockStreamServiceIntegrationTest {
                 SubscribeStreamRequest.newBuilder().startBlockNumber(1).build();
         // Simulate a consumer attempting to connect to the Block Node after the exception.
         blockStreamService.protocSubscribeBlockStream(
-                toProtocSubscribeStreamRequest(subscribeStreamRequest), subscribeStreamObserver4);
+                fromPbj(subscribeStreamRequest), subscribeStreamObserver4);
 
         // The BlockItem passed through since it was published
         // before the IOException was thrown.

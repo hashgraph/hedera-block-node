@@ -145,11 +145,8 @@ public final class Translator {
      * @return the converted {@link com.hedera.hapi.block.protoc.SubscribeStreamRequest}
      */
     @NonNull
-    public static com.hedera.hapi.block.protoc.SubscribeStreamRequest
-            toProtocSubscribeStreamRequest(
-                    @NonNull
-                            final com.hedera.hapi.block.SubscribeStreamRequest
-                                    subscribeStreamRequest) {
+    public static com.hedera.hapi.block.protoc.SubscribeStreamRequest fromPbj(
+            @NonNull final com.hedera.hapi.block.SubscribeStreamRequest subscribeStreamRequest) {
         try {
             final byte[] pbjBytes =
                     asBytes(SubscribeStreamRequest.PROTOBUF, subscribeStreamRequest);
