@@ -32,9 +32,11 @@ tasks.withType<JavaCompile>().configureEach {
 // Add downloaded HAPI repo protobuf files into build directory and add to sources to build them
 tasks.cloneHederaProtobufs {
     // uncomment below to use a specific tag
-    // tag = "v0.53.0"
+    // tag = "v0.53.0" or a specific commit like "0047255"
+    tag = "0047255"
+
     // uncomment below to use a specific branch
-    branch = "main"
+    // branch = "main"
 }
 
 sourceSets {
