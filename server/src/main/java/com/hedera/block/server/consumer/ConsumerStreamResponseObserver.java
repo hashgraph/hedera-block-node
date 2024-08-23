@@ -16,12 +16,17 @@
 
 package com.hedera.block.server.consumer;
 
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
-import static com.hedera.block.protos.BlockStreamService.SubscribeStreamResponse;
+import static com.hedera.block.server.Translator.fromPbj;
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.OneOf;
 import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
@@ -38,17 +43,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ConsumerStreamResponseObserver
         implements EventHandler<ObjectEvent<SubscribeStreamResponse>> {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final StreamObserver<SubscribeStreamResponse> subscribeStreamResponseObserver;
+    private final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+            subscribeStreamResponseObserver;
     private final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>> subscriptionHandler;
 
     private final long timeoutThresholdMillis;
     private final InstantSource producerLivenessClock;
     private long producerLivenessMillis;
 
-    private boolean streamStarted;
     private final AtomicBoolean isResponsePermitted = new AtomicBoolean(true);
+    private final ResponseSender statusResponseSender = new StatusResponseSender();
+    private final ResponseSender blockItemResponseSender = new BlockItemResponseSender();
+
+    private static final String PROTOCOL_VIOLATION_MESSAGE =
+            "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
 
     /**
      * The onCancel handler to execute when the consumer cancels the stream. This handler is
@@ -80,7 +90,8 @@ public class ConsumerStreamResponseObserver
                     final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>>
                             subscriptionHandler,
             @NonNull
-                    final StreamObserver<SubscribeStreamResponse> subscribeStreamResponseObserver) {
+                    final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+                            subscribeStreamResponseObserver) {
 
         this.timeoutThresholdMillis =
                 context.configuration()
@@ -93,7 +104,7 @@ public class ConsumerStreamResponseObserver
         // unsubscribe this observer.
         if (subscribeStreamResponseObserver
                 instanceof
-                ServerCallStreamObserver<SubscribeStreamResponse>
+                ServerCallStreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
                 serverCallStreamObserver) {
 
             onCancel =
@@ -102,9 +113,7 @@ public class ConsumerStreamResponseObserver
                         // Do not allow additional responses to be sent.
                         isResponsePermitted.set(false);
                         subscriptionHandler.unsubscribe(this);
-                        LOGGER.log(
-                                System.Logger.Level.DEBUG,
-                                "Consumer cancelled stream.  Observer unsubscribed.");
+                        LOGGER.log(DEBUG, "Consumer cancelled stream.  Observer unsubscribed.");
                     };
             serverCallStreamObserver.setOnCancelHandler(onCancel);
 
@@ -114,9 +123,7 @@ public class ConsumerStreamResponseObserver
                         // Do not allow additional responses to be sent.
                         isResponsePermitted.set(false);
                         subscriptionHandler.unsubscribe(this);
-                        LOGGER.log(
-                                System.Logger.Level.DEBUG,
-                                "Consumer completed stream.  Observer unsubscribed.");
+                        LOGGER.log(DEBUG, "Consumer completed stream.  Observer unsubscribed.");
                     };
             serverCallStreamObserver.setOnCloseHandler(onClose);
         }
@@ -150,28 +157,74 @@ public class ConsumerStreamResponseObserver
             if (currentMillis - producerLivenessMillis > timeoutThresholdMillis) {
                 subscriptionHandler.unsubscribe(this);
                 LOGGER.log(
-                        System.Logger.Level.DEBUG,
-                        "Unsubscribed ConsumerBlockItemObserver due to producer timeout");
+                        DEBUG,
+                        "Producer liveness timeout. Unsubscribed ConsumerBlockItemObserver.");
             } else {
                 // Refresh the producer liveness and pass the BlockItem to the downstream observer.
                 producerLivenessMillis = currentMillis;
 
-                // Only start sending BlockItems after we've reached
-                // the beginning of a block.
-                @NonNull final SubscribeStreamResponse subscribeStreamResponse = event.get();
-                @NonNull final BlockItem blockItem = subscribeStreamResponse.getBlockItem();
-                if (!streamStarted && blockItem.hasHeader()) {
+                final SubscribeStreamResponse subscribeStreamResponse = event.get();
+                final ResponseSender responseSender = getResponseSender(subscribeStreamResponse);
+                responseSender.send(subscribeStreamResponse);
+            }
+        }
+    }
+
+    @NonNull
+    private ResponseSender getResponseSender(
+            @NonNull final SubscribeStreamResponse subscribeStreamResponse) {
+
+        final OneOf<SubscribeStreamResponse.ResponseOneOfType> oneOfTypeOneOf =
+                subscribeStreamResponse.response();
+        return switch (oneOfTypeOneOf.kind()) {
+            case STATUS -> statusResponseSender;
+            case BLOCK_ITEM -> blockItemResponseSender;
+            default -> throw new IllegalArgumentException(
+                    "Unknown response type: " + oneOfTypeOneOf.kind());
+        };
+    }
+
+    private interface ResponseSender {
+        void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse);
+    }
+
+    private final class BlockItemResponseSender implements ResponseSender {
+        private boolean streamStarted = false;
+
+        public void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse) {
+
+            // Only start sending BlockItems after we've reached
+            // the beginning of a block.
+            final BlockItem blockItem = subscribeStreamResponse.blockItem();
+            if (blockItem == null) {
+                final String message =
+                        PROTOCOL_VIOLATION_MESSAGE.formatted(
+                                "SubscribeStreamResponse",
+                                "BLOCK_ITEM",
+                                "block_item",
+                                subscribeStreamResponse);
+                LOGGER.log(ERROR, message);
+                throw new IllegalArgumentException(message);
+            } else {
+                if (!streamStarted && blockItem.hasBlockHeader()) {
                     streamStarted = true;
                 }
 
                 if (streamStarted) {
-                    LOGGER.log(
-                            System.Logger.Level.DEBUG,
-                            "Send BlockItem downstream: {0} ",
-                            blockItem);
-                    subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
+                    LOGGER.log(DEBUG, "Sending BlockItem downstream: {0}", blockItem);
+                    subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
                 }
             }
+        }
+    }
+
+    private final class StatusResponseSender implements ResponseSender {
+        public void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse) {
+            LOGGER.log(
+                    DEBUG,
+                    "Sending SubscribeStreamResponse downstream: {0} ",
+                    subscribeStreamResponse);
+            subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
         }
     }
 }

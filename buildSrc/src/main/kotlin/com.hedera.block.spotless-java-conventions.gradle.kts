@@ -18,7 +18,7 @@ plugins { id("com.diffplug.spotless") }
 
 spotless {
     java {
-        targetExclude("build/generated/sources/**/*.java")
+        targetExclude("build/generated/**/*.java", "build/generated/**/*.proto")
         // enable toggle comment support
         toggleOffOn()
         // don't need to set target, it is inferred from java

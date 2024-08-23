@@ -16,17 +16,31 @@
 
 package com.hedera.block.server;
 
-import static com.hedera.block.protos.BlockStreamService.*;
 import static com.hedera.block.server.BlockStreamService.buildSingleBlockNotAvailableResponse;
 import static com.hedera.block.server.BlockStreamService.buildSingleBlockNotFoundResponse;
-import static com.hedera.block.server.Constants.*;
+import static com.hedera.block.server.BlockStreamService.fromPbjSingleBlockSuccessResponse;
+import static com.hedera.block.server.Constants.CLIENT_STREAMING_METHOD_NAME;
+import static com.hedera.block.server.Constants.SERVER_STREAMING_METHOD_NAME;
+import static com.hedera.block.server.Constants.SINGLE_BLOCK_METHOD_NAME;
+import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
+import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.google.protobuf.Descriptors;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
@@ -35,9 +49,14 @@ import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
-import com.hedera.block.server.producer.ItemAckBuilder;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
+import com.hedera.hapi.block.SingleBlockResponse;
+import com.hedera.hapi.block.SingleBlockResponseCode;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
 import io.grpc.stub.ServerCalls;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
@@ -58,9 +77,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class BlockStreamServiceTest {
 
-    @Mock private StreamObserver<SingleBlockResponse> responseObserver;
-
-    @Mock private ItemAckBuilder itemAckBuilder;
+    @Mock private StreamObserver<com.hedera.hapi.block.protoc.SingleBlockResponse> responseObserver;
 
     @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
 
@@ -68,7 +85,7 @@ public class BlockStreamServiceTest {
 
     @Mock private ServiceStatus serviceStatus;
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
 
@@ -79,7 +96,7 @@ public class BlockStreamServiceTest {
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
+        LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
 
         blockNodeContext =
                 TestConfigUtil.getTestBlockNodeContext(
@@ -97,17 +114,12 @@ public class BlockStreamServiceTest {
 
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        itemAckBuilder,
-                        streamMediator,
-                        blockReader,
-                        serviceStatus,
-                        blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
 
         // Verify the service name
         assertEquals(Constants.SERVICE_NAME, blockStreamService.serviceName());
 
         // Verify other methods not invoked
-        verify(itemAckBuilder, never()).buildAck(any(BlockItem.class));
         verify(streamMediator, never()).publish(any(BlockItem.class));
     }
 
@@ -115,32 +127,23 @@ public class BlockStreamServiceTest {
     public void testProto() throws IOException, NoSuchAlgorithmException {
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        itemAckBuilder,
-                        streamMediator,
-                        blockReader,
-                        serviceStatus,
-                        blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
         Descriptors.FileDescriptor fileDescriptor = blockStreamService.proto();
 
         // Verify the current rpc methods
-        assertEquals(3, fileDescriptor.getServices().getFirst().getMethods().size());
+        assertEquals(5, fileDescriptor.getServices().getFirst().getMethods().size());
 
         // Verify other methods not invoked
-        verify(itemAckBuilder, never()).buildAck(any(BlockItem.class));
         verify(streamMediator, never()).publish(any(BlockItem.class));
     }
 
     @Test
-    void testSingleBlockHappyPath() throws IOException {
+    void testSingleBlockHappyPath() throws IOException, ParseException {
 
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        itemAckBuilder,
-                        streamMediator,
-                        blockReader,
-                        serviceStatus,
-                        blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
 
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
@@ -161,90 +164,109 @@ public class BlockStreamServiceTest {
         }
 
         // Build a response to verify what's passed to the response observer
-        final SingleBlockResponse expectedSingleBlockResponse =
-                SingleBlockResponse.newBuilder().setBlock(blockOpt.get()).build();
+        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedSingleBlockResponse =
+                fromPbjSingleBlockSuccessResponse(blockOpt.get());
 
         // Build a request to invoke the service
-        final SingleBlockRequest singleBlockRequest =
-                SingleBlockRequest.newBuilder().setBlockNumber(1).build();
+        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
+                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
+                        .setBlockNumber(1)
+                        .build();
 
         // Call the service
-        blockStreamService.singleBlock(singleBlockRequest, responseObserver);
+        blockStreamService.protocSingleBlock(singleBlockRequest, responseObserver);
         verify(responseObserver, times(1)).onNext(expectedSingleBlockResponse);
     }
 
     @Test
-    void testSingleBlockNotFoundPath() throws IOException {
+    void testSingleBlockNotFoundPath() throws IOException, ParseException {
 
         // Get the block so we can verify the response payload
         when(blockReader.read(1)).thenReturn(Optional.empty());
 
         // Build a response to verify what's passed to the response observer
-        final SingleBlockResponse expectedNotFound = buildSingleBlockNotFoundResponse();
+        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedNotFound =
+                buildSingleBlockNotFoundResponse();
 
         // Build a request to invoke the service
-        final SingleBlockRequest singleBlockRequest =
-                SingleBlockRequest.newBuilder().setBlockNumber(1).build();
+        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
+                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
+                        .setBlockNumber(1)
+                        .build();
 
         // Call the service
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        itemAckBuilder,
-                        streamMediator,
-                        blockReader,
-                        serviceStatus,
-                        blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
 
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
 
-        blockStreamService.singleBlock(singleBlockRequest, responseObserver);
+        blockStreamService.protocSingleBlock(singleBlockRequest, responseObserver);
         verify(responseObserver, times(1)).onNext(expectedNotFound);
     }
 
     @Test
-    void testSingleBlockServiceNotAvailable() {
+    void testSingleBlockServiceNotAvailable() throws InvalidProtocolBufferException {
 
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        itemAckBuilder,
-                        streamMediator,
-                        blockReader,
-                        serviceStatus,
-                        blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
 
         // Set the service status to not running
         when(serviceStatus.isRunning()).thenReturn(false);
 
-        final SingleBlockResponse expectedNotAvailable = buildSingleBlockNotAvailableResponse();
+        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedNotAvailable =
+                buildSingleBlockNotAvailableResponse();
 
         // Build a request to invoke the service
-        final SingleBlockRequest singleBlockRequest =
-                SingleBlockRequest.newBuilder().setBlockNumber(1).build();
-        blockStreamService.singleBlock(singleBlockRequest, responseObserver);
+        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
+                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
+                        .setBlockNumber(1)
+                        .build();
+        blockStreamService.protocSingleBlock(singleBlockRequest, responseObserver);
         verify(responseObserver, times(1)).onNext(expectedNotAvailable);
     }
 
     @Test
-    public void testSingleBlockIOExceptionPath() throws IOException {
+    public void testSingleBlockIOExceptionPath() throws IOException, ParseException {
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        itemAckBuilder,
-                        streamMediator,
-                        blockReader,
-                        serviceStatus,
-                        blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
 
-        // Set the service status to not running
         when(serviceStatus.isRunning()).thenReturn(true);
         when(blockReader.read(1)).thenThrow(new IOException("Test exception"));
 
-        final SingleBlockResponse expectedNotAvailable = buildSingleBlockNotAvailableResponse();
+        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedNotAvailable =
+                buildSingleBlockNotAvailableResponse();
 
         // Build a request to invoke the service
-        final SingleBlockRequest singleBlockRequest =
-                SingleBlockRequest.newBuilder().setBlockNumber(1).build();
-        blockStreamService.singleBlock(singleBlockRequest, responseObserver);
+        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
+                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
+                        .setBlockNumber(1)
+                        .build();
+        blockStreamService.protocSingleBlock(singleBlockRequest, responseObserver);
+        verify(responseObserver, times(1)).onNext(expectedNotAvailable);
+    }
+
+    @Test
+    public void testSingleBlockParseExceptionPath() throws IOException, ParseException {
+        final BlockStreamService blockStreamService =
+                new BlockStreamService(
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+
+        when(serviceStatus.isRunning()).thenReturn(true);
+        when(blockReader.read(1)).thenThrow(new ParseException("Test exception"));
+
+        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedNotAvailable =
+                buildSingleBlockNotAvailableResponse();
+
+        // Build a request to invoke the service
+        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
+                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
+                        .setBlockNumber(1)
+                        .build();
+        blockStreamService.protocSingleBlock(singleBlockRequest, responseObserver);
         verify(responseObserver, times(1)).onNext(expectedNotAvailable);
     }
 
@@ -253,11 +275,7 @@ public class BlockStreamServiceTest {
 
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        itemAckBuilder,
-                        streamMediator,
-                        blockReader,
-                        serviceStatus,
-                        blockNodeContext);
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
 
         GrpcService.Routing routing = mock(GrpcService.Routing.class);
         blockStreamService.update(routing);
@@ -270,5 +288,33 @@ public class BlockStreamServiceTest {
                         any(ServerCalls.ServerStreamingMethod.class));
         verify(routing, timeout(50).times(1))
                 .unary(eq(SINGLE_BLOCK_METHOD_NAME), any(ServerCalls.UnaryMethod.class));
+    }
+
+    @Test
+    public void testProtocParseExceptionHandling() {
+        // TODO: We might be able to remove this test once we can remove the Translator class
+
+        final BlockStreamService blockStreamService =
+                new BlockStreamService(
+                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+
+        // Build a request to invoke the service
+        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
+                spy(
+                        com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
+                                .setBlockNumber(1)
+                                .build());
+
+        // Create a corrupted set of bytes to provoke a parse exception
+        byte[] okBytes = singleBlockRequest.toByteArray();
+        when(singleBlockRequest.toByteArray()).thenReturn(reverseByteArray(okBytes));
+
+        final SingleBlockResponse expectedSingleBlockErrorResponse =
+                SingleBlockResponse.newBuilder()
+                        .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
+                        .build();
+        // Call the service
+        blockStreamService.protocSingleBlock(singleBlockRequest, responseObserver);
+        verify(responseObserver, times(1)).onNext(fromPbj(expectedSingleBlockErrorResponse));
     }
 }

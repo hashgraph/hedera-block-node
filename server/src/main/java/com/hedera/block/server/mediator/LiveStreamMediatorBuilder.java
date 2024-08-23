@@ -16,13 +16,12 @@
 
 package com.hedera.block.server.mediator;
 
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
-import static com.hedera.block.protos.BlockStreamService.SubscribeStreamResponse;
-
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.BatchEventProcessor;
 import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;

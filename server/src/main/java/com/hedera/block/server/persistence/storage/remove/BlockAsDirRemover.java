@@ -16,8 +16,10 @@
 
 package com.hedera.block.server.persistence.storage.remove;
 
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.ERROR;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,7 +34,7 @@ import java.util.Set;
  */
 public class BlockAsDirRemover implements BlockRemover {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final Path blockNodeRootPath;
     private final FileAttribute<Set<PosixFilePermission>> filePerms;
@@ -61,9 +63,9 @@ public class BlockAsDirRemover implements BlockRemover {
 
         // Calculate the block path and proactively set the permissions
         // for removal
-        @NonNull final Path blockPath = blockNodeRootPath.resolve(String.valueOf(id));
+        final Path blockPath = blockNodeRootPath.resolve(String.valueOf(id));
         if (Files.notExists(blockPath)) {
-            LOGGER.log(System.Logger.Level.ERROR, "Block does not exist: {0}", id);
+            LOGGER.log(ERROR, "Block does not exist: {0}", id);
             return;
         }
 
@@ -71,7 +73,7 @@ public class BlockAsDirRemover implements BlockRemover {
 
         // Best effort to delete the block
         if (!delete(blockPath.toFile())) {
-            LOGGER.log(System.Logger.Level.ERROR, "Failed to delete block: {0}", id);
+            LOGGER.log(ERROR, "Failed to delete block: {0}", id);
         }
     }
 
@@ -80,9 +82,9 @@ public class BlockAsDirRemover implements BlockRemover {
         // Recursively delete the contents
         // of the directory
         if (file.isDirectory()) {
-            @Nullable final File[] files = file.listFiles();
+            final File[] files = file.listFiles();
             if (files != null) {
-                for (@NonNull final File f : files) {
+                for (final File f : files) {
                     delete(f);
                 }
             }

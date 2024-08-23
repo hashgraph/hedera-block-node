@@ -16,14 +16,26 @@
 
 package com.hedera.block.server.consumer;
 
-import static com.hedera.block.protos.BlockStreamService.*;
+import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.BlockProof;
+import com.hedera.hapi.block.stream.input.EventHeader;
+import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.hapi.platform.event.EventCore;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
@@ -42,10 +54,17 @@ public class ConsumerStreamResponseObserverTest {
     private final long TEST_TIME = 1_719_427_664_950L;
 
     @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
-    @Mock private StreamObserver<SubscribeStreamResponse> responseStreamObserver;
+
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+            responseStreamObserver;
+
     @Mock private ObjectEvent<SubscribeStreamResponse> objectEvent;
 
-    @Mock private ServerCallStreamObserver<SubscribeStreamResponse> serverCallStreamObserver;
+    @Mock
+    private ServerCallStreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+            serverCallStreamObserver;
+
     @Mock private InstantSource testClock;
 
     final BlockNodeContext testContext;
@@ -67,17 +86,17 @@ public class ConsumerStreamResponseObserverTest {
                 new ConsumerStreamResponseObserver(
                         testContext, testClock, streamMediator, responseStreamObserver);
 
-        final BlockHeader blockHeader = BlockHeader.newBuilder().setBlockNumber(1).build();
-        final BlockItem blockItem = BlockItem.newBuilder().setHeader(blockHeader).build();
+        final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
+        final BlockItem blockItem = BlockItem.newBuilder().blockHeader(blockHeader).build();
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().setBlockItem(blockItem).build();
+                SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
 
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         // verify the observer is called with the next BlockItem
-        verify(responseStreamObserver).onNext(subscribeStreamResponse);
+        verify(responseStreamObserver).onNext(fromPbj(subscribeStreamResponse));
 
         // verify the mediator is NOT called to unsubscribe the observer
         verify(streamMediator, never()).unsubscribe(consumerBlockItemObserver);
@@ -121,7 +140,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().setBlockItem(blockItems.getFirst()).build();
+                SubscribeStreamResponse.newBuilder().blockItem(blockItems.getFirst()).build();
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
         // Confirm that the observer is called with the first BlockItem
@@ -134,7 +153,8 @@ public class ConsumerStreamResponseObserverTest {
         consumerStreamResponseObserver.onEvent(objectEvent, 0, true);
 
         // Confirm that canceling the observer allowed only 1 response to be sent.
-        verify(serverCallStreamObserver, timeout(50).times(1)).onNext(subscribeStreamResponse);
+        verify(serverCallStreamObserver, timeout(50).times(1))
+                .onNext(fromPbj(subscribeStreamResponse));
     }
 
     @Test
@@ -146,7 +166,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().setBlockItem(blockItems.getFirst()).build();
+                SubscribeStreamResponse.newBuilder().blockItem(blockItems.getFirst()).build();
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
         // Confirm that the observer is called with the first BlockItem
@@ -159,7 +179,8 @@ public class ConsumerStreamResponseObserverTest {
         consumerStreamResponseObserver.onEvent(objectEvent, 0, true);
 
         // Confirm that canceling the observer allowed only 1 response to be sent.
-        verify(serverCallStreamObserver, timeout(50).times(1)).onNext(subscribeStreamResponse);
+        verify(serverCallStreamObserver, timeout(50).times(1))
+                .onNext(fromPbj(subscribeStreamResponse));
     }
 
     @Test
@@ -177,19 +198,17 @@ public class ConsumerStreamResponseObserverTest {
         for (int i = 1; i <= 10; i++) {
 
             if (i % 2 == 0) {
-                final EventMetadata eventMetadata =
-                        EventMetadata.newBuilder().setCreatorId(i).build();
-                final BlockItem blockItem =
-                        BlockItem.newBuilder().setStartEvent(eventMetadata).build();
+                final EventHeader eventHeader =
+                        EventHeader.newBuilder().eventCore(EventCore.newBuilder().build()).build();
+                final BlockItem blockItem = BlockItem.newBuilder().eventHeader(eventHeader).build();
                 final SubscribeStreamResponse subscribeStreamResponse =
-                        SubscribeStreamResponse.newBuilder().setBlockItem(blockItem).build();
+                        SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
                 when(objectEvent.get()).thenReturn(subscribeStreamResponse);
             } else {
-                final BlockProof blockProof = BlockProof.newBuilder().setBlock(i).build();
-                final BlockItem blockItem =
-                        BlockItem.newBuilder().setStateProof(blockProof).build();
+                final BlockProof blockProof = BlockProof.newBuilder().block(i).build();
+                final BlockItem blockItem = BlockItem.newBuilder().blockProof(blockProof).build();
                 final SubscribeStreamResponse subscribeStreamResponse =
-                        SubscribeStreamResponse.newBuilder().setBlockItem(blockItem).build();
+                        SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
                 when(objectEvent.get()).thenReturn(subscribeStreamResponse);
             }
 
@@ -198,11 +217,49 @@ public class ConsumerStreamResponseObserverTest {
 
         final BlockItem blockItem = BlockItem.newBuilder().build();
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().setBlockItem(blockItem).build();
+                SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
 
         // Confirm that the observer was called with the next BlockItem
         // since we never send a BlockItem with a Header to start the stream.
-        verify(responseStreamObserver, timeout(50).times(0)).onNext(subscribeStreamResponse);
+        verify(responseStreamObserver, timeout(50).times(0))
+                .onNext(fromPbj(subscribeStreamResponse));
+    }
+
+    @Test
+    public void testSubscriberStreamResponseIsBlockItemWhenBlockItemIsNull() {
+
+        // The generated objects contain safeguards to prevent a SubscribeStreamResponse
+        // being created with a null BlockItem. Here, I have to used a spy() to even
+        // manufacture this scenario. This should not happen in production.
+        final BlockItem blockItem = BlockItem.newBuilder().build();
+        final SubscribeStreamResponse subscribeStreamResponse =
+                spy(SubscribeStreamResponse.newBuilder().blockItem(blockItem).build());
+
+        when(subscribeStreamResponse.blockItem()).thenReturn(null);
+        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+
+        final var consumerBlockItemObserver =
+                new ConsumerStreamResponseObserver(
+                        testContext, testClock, streamMediator, responseStreamObserver);
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
+    }
+
+    @Test
+    public void testSubscribeStreamResponseTypeNotSupported() {
+
+        final SubscribeStreamResponse subscribeStreamResponse =
+                SubscribeStreamResponse.newBuilder().build();
+        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+
+        final var consumerBlockItemObserver =
+                new ConsumerStreamResponseObserver(
+                        testContext, testClock, streamMediator, responseStreamObserver);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
     }
 
     private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
@@ -211,7 +268,8 @@ public class ConsumerStreamResponseObserverTest {
                 BlockNodeContext context,
                 InstantSource producerLivenessClock,
                 StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> subscriptionHandler,
-                StreamObserver<SubscribeStreamResponse> subscribeStreamResponseObserver) {
+                StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+                        subscribeStreamResponseObserver) {
             super(
                     context,
                     producerLivenessClock,

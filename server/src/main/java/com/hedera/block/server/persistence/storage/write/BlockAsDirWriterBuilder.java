@@ -16,13 +16,12 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
-
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
+import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Path;

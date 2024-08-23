@@ -16,9 +16,12 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
-import static com.hedera.block.protos.BlockStreamService.Block;
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
+import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
+import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -32,7 +35,11 @@ import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -48,7 +55,7 @@ import org.junit.jupiter.api.Test;
 
 public class BlockAsDirReaderTest {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
 
@@ -60,7 +67,7 @@ public class BlockAsDirReaderTest {
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
+        LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
 
         blockNodeContext =
                 TestConfigUtil.getTestBlockNodeContext(
@@ -71,22 +78,20 @@ public class BlockAsDirReaderTest {
     @AfterEach
     public void tearDown() {
         if (!TestUtils.deleteDirectory(testPath.toFile())) {
-            LOGGER.log(
-                    System.Logger.Level.ERROR,
-                    "Failed to delete temp directory: " + testPath.toString());
+            LOGGER.log(ERROR, "Failed to delete temp directory: " + testPath.toString());
         }
     }
 
     @Test
-    public void testReadBlockDoesNotExist() throws IOException {
+    public void testReadBlockDoesNotExist() throws IOException, ParseException {
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final Optional<Block> blockOpt = blockReader.read(10000);
         assertTrue(blockOpt.isEmpty());
     }
 
     @Test
-    public void testReadPermsRepairSucceeded() throws IOException {
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+    public void testReadPermsRepairSucceeded() throws IOException, ParseException {
+        final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
@@ -101,12 +106,12 @@ public class BlockAsDirReaderTest {
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final Optional<Block> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(10, blockOpt.get().getBlockItemsList().size());
+        assertEquals(10, blockOpt.get().items().size());
     }
 
     @Test
-    public void testRemoveBlockReadPermsRepairFailed() throws IOException {
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+    public void testRemoveBlockReadPermsRepairFailed() throws IOException, ParseException {
+        final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
@@ -129,7 +134,7 @@ public class BlockAsDirReaderTest {
 
     @Test
     public void testRemoveBlockItemReadPerms() throws IOException {
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+        final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
@@ -144,12 +149,13 @@ public class BlockAsDirReaderTest {
     }
 
     @Test
-    public void testPathIsNotDirectory() throws IOException {
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+    public void testPathIsNotDirectory() throws IOException, ParseException {
+        final List<BlockItem> blockItems = generateBlockItems(1);
         final Path blockNodeRootPath = Path.of(config.rootPath());
 
         // Write a file named "1" where a directory should be
-        writeFileToPath(blockNodeRootPath.resolve(Path.of("1")), blockItems.getFirst());
+        PersistTestUtils.writeBlockItemToPath(
+                blockNodeRootPath.resolve(Path.of("1")), blockItems.getFirst());
 
         // Should return empty because the path is not a directory
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
@@ -158,9 +164,9 @@ public class BlockAsDirReaderTest {
     }
 
     @Test
-    public void testRepairReadPermsFails() throws IOException {
+    public void testRepairReadPermsFails() throws IOException, ParseException {
 
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+        final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
@@ -181,7 +187,7 @@ public class BlockAsDirReaderTest {
     }
 
     @Test
-    public void testBlockNodePathReadFails() throws IOException {
+    public void testBlockNodePathReadFails() throws IOException, ParseException {
 
         // Remove read perm on the root path
         removePathReadPerms(Path.of(config.rootPath()));
@@ -196,12 +202,42 @@ public class BlockAsDirReaderTest {
         assertTrue(blockOpt.isEmpty());
     }
 
-    private void writeFileToPath(final Path path, final BlockItem blockItem) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(path.toString())) {
-            blockItem.writeTo(fos);
-            LOGGER.log(
-                    System.Logger.Level.INFO, "Successfully wrote the block item file: {0}", path);
+    @Test
+    public void testParseExceptionHandling() throws IOException, ParseException {
+        final List<BlockItem> blockItems = generateBlockItems(1);
+
+        final BlockWriter<BlockItem> blockWriter =
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
+        for (final BlockItem blockItem : blockItems) {
+            blockWriter.write(blockItem);
         }
+
+        // Read the block back and confirm it's read successfully
+        final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
+        final Optional<Block> blockOpt = blockReader.read(1);
+        assertFalse(blockOpt.isEmpty());
+
+        final PersistenceStorageConfig persistenceStorageConfig =
+                blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
+        final Path blockNodeRootPath = Path.of(persistenceStorageConfig.rootPath());
+        Path blockPath = blockNodeRootPath.resolve(String.valueOf(1));
+
+        byte[] bytes;
+        try (final FileInputStream fis =
+                new FileInputStream(blockPath.resolve("1" + BLOCK_FILE_EXTENSION).toFile())) {
+            bytes = fis.readAllBytes();
+        }
+
+        // Corrupt the block item file by reversing the bytes
+        try (final FileOutputStream fos =
+                new FileOutputStream(blockPath.resolve("1" + BLOCK_FILE_EXTENSION).toFile())) {
+            byte[] reversedBytes = reverseByteArray(bytes);
+            fos.write(reversedBytes);
+        }
+
+        // Read the block. The block item file is corrupted, so the read should fail with a
+        // ParseException
+        assertThrows(ParseException.class, () -> blockReader.read(1));
     }
 
     public static void removeBlockReadPerms(int blockNumber, final PersistenceStorageConfig config)

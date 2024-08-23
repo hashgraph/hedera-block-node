@@ -16,17 +16,41 @@
 
 package com.hedera.block.server.util;
 
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
-import static com.hedera.block.protos.BlockStreamService.BlockProof;
-import static com.hedera.block.protos.BlockStreamService.EventMetadata;
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.INFO;
 
-import com.hedera.block.protos.BlockStreamService;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.BlockProof;
+import com.hedera.hapi.block.stream.input.EventHeader;
+import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.hapi.node.base.SemanticVersion;
+import com.hedera.hapi.platform.event.EventCore;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class PersistTestUtils {
 
+    private static final Logger LOGGER = System.getLogger(PersistTestUtils.class.getName());
+
     private PersistTestUtils() {}
+
+    public static void writeBlockItemToPath(final Path path, final BlockItem blockItem)
+            throws IOException {
+
+        Bytes bytes = BlockItem.PROTOBUF.toBytes(blockItem);
+        writeBytesToPath(path, bytes.toByteArray());
+    }
+
+    public static void writeBytesToPath(final Path path, final byte[] bytes) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(path.toString())) {
+            fos.write(bytes);
+            LOGGER.log(INFO, "Successfully wrote the bytes to file: {0}", path);
+        }
+    }
 
     public static List<BlockItem> generateBlockItems(int numOfBlocks) {
 
@@ -38,26 +62,35 @@ public final class PersistTestUtils {
                         // First block is always the header
                         blockItems.add(
                                 BlockItem.newBuilder()
-                                        .setHeader(
-                                                BlockStreamService.BlockHeader.newBuilder()
-                                                        .setBlockNumber(i)
+                                        .blockHeader(
+                                                BlockHeader.newBuilder()
+                                                        .number(i)
+                                                        .softwareVersion(
+                                                                SemanticVersion.newBuilder()
+                                                                        .major(1)
+                                                                        .minor(0)
+                                                                        .build())
                                                         .build())
-                                        .setValue("block-item-" + (j))
                                         .build());
                         break;
                     case 10:
                         // Last block is always the state proof
                         blockItems.add(
                                 BlockItem.newBuilder()
-                                        .setStateProof(BlockProof.newBuilder().setBlock(i).build())
+                                        .blockProof(BlockProof.newBuilder().block(i).build())
                                         .build());
                         break;
                     default:
                         // Middle blocks are events
                         blockItems.add(
                                 BlockItem.newBuilder()
-                                        .setStartEvent(
-                                                EventMetadata.newBuilder().setCreatorId(i).build())
+                                        .eventHeader(
+                                                EventHeader.newBuilder()
+                                                        .eventCore(
+                                                                EventCore.newBuilder()
+                                                                        .creatorNodeId(i)
+                                                                        .build())
+                                                        .build())
                                         .build());
                         break;
                 }
@@ -65,5 +98,18 @@ public final class PersistTestUtils {
         }
 
         return blockItems;
+    }
+
+    public static byte[] reverseByteArray(byte[] input) {
+        if (input == null || input.length == 0) {
+            return input;
+        }
+
+        byte[] reversed = new byte[input.length];
+        for (int i = 0; i < input.length; i++) {
+            reversed[i] = input[input.length - 1 - i];
+        }
+
+        return reversed;
     }
 }

@@ -16,18 +16,34 @@
 
 package com.hedera.block.server;
 
-import static com.hedera.block.protos.BlockStreamService.*;
-import static com.hedera.block.server.Constants.*;
+import static com.hedera.block.server.Constants.CLIENT_STREAMING_METHOD_NAME;
+import static com.hedera.block.server.Constants.SERVER_STREAMING_METHOD_NAME;
+import static com.hedera.block.server.Constants.SERVICE_NAME;
+import static com.hedera.block.server.Constants.SINGLE_BLOCK_METHOD_NAME;
+import static com.hedera.block.server.Translator.fromPbj;
+import static com.hedera.block.server.Translator.toPbj;
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
 
 import com.google.protobuf.Descriptors;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
-import com.hedera.block.server.producer.ItemAckBuilder;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
+import com.hedera.hapi.block.SingleBlockRequest;
+import com.hedera.hapi.block.SingleBlockResponse;
+import com.hedera.hapi.block.SingleBlockResponseCode;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.SubscribeStreamResponseCode;
+import com.hedera.hapi.block.protoc.BlockService;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
@@ -42,9 +58,8 @@ import java.util.Optional;
  */
 public class BlockStreamService implements GrpcService {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final ItemAckBuilder itemAckBuilder;
     private final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
     private final ServiceStatus serviceStatus;
     private final BlockReader<Block> blockReader;
@@ -54,7 +69,6 @@ public class BlockStreamService implements GrpcService {
      * Constructor for the BlockStreamService class. It initializes the BlockStreamService with the
      * given parameters.
      *
-     * @param itemAckBuilder the item acknowledgement builder to send responses back to the producer
      * @param streamMediator the stream mediator to proxy block items from the producer to the
      *     subscribers and manage the subscription lifecycle for subscribers
      * @param blockReader the block reader to fetch blocks from storage for unary singleBlock
@@ -63,14 +77,12 @@ public class BlockStreamService implements GrpcService {
      *     stop the service and web server in the event of an unrecoverable exception
      */
     BlockStreamService(
-            @NonNull final ItemAckBuilder itemAckBuilder,
             @NonNull
                     final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
                             streamMediator,
             @NonNull final BlockReader<Block> blockReader,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
-        this.itemAckBuilder = itemAckBuilder;
         this.streamMediator = streamMediator;
         this.blockReader = blockReader;
         this.serviceStatus = serviceStatus;
@@ -86,7 +98,7 @@ public class BlockStreamService implements GrpcService {
     @NonNull
     @Override
     public Descriptors.FileDescriptor proto() {
-        return com.hedera.block.protos.BlockStreamService.getDescriptor();
+        return BlockService.getDescriptor();
     }
 
     /**
@@ -110,32 +122,32 @@ public class BlockStreamService implements GrpcService {
      */
     @Override
     public void update(@NonNull final Routing routing) {
-        routing.bidi(CLIENT_STREAMING_METHOD_NAME, this::publishBlockStream);
-        routing.serverStream(SERVER_STREAMING_METHOD_NAME, this::subscribeBlockStream);
-        routing.unary(SINGLE_BLOCK_METHOD_NAME, this::singleBlock);
+        routing.bidi(CLIENT_STREAMING_METHOD_NAME, this::protocPublishBlockStream);
+        routing.serverStream(SERVER_STREAMING_METHOD_NAME, this::protocSubscribeBlockStream);
+        routing.unary(SINGLE_BLOCK_METHOD_NAME, this::protocSingleBlock);
     }
 
-    StreamObserver<PublishStreamRequest> publishBlockStream(
-            @NonNull final StreamObserver<PublishStreamResponse> publishStreamResponseObserver) {
-        LOGGER.log(
-                System.Logger.Level.DEBUG,
-                "Executing bidirectional publishBlockStream gRPC method");
+    StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest> protocPublishBlockStream(
+            @NonNull
+                    final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
+                            publishStreamResponseObserver) {
+        LOGGER.log(DEBUG, "Executing bidirectional publishBlockStream gRPC method");
 
         return new ProducerBlockItemObserver(
-                streamMediator, publishStreamResponseObserver, itemAckBuilder, serviceStatus);
+                streamMediator, publishStreamResponseObserver, serviceStatus);
     }
 
-    void subscribeBlockStream(
-            @NonNull final SubscribeStreamRequest subscribeStreamRequest,
+    void protocSubscribeBlockStream(
             @NonNull
-                    final StreamObserver<SubscribeStreamResponse> subscribeStreamResponseObserver) {
-        LOGGER.log(
-                System.Logger.Level.DEBUG,
-                "Executing Server Streaming subscribeBlockStream gRPC Service");
+                    final com.hedera.hapi.block.protoc.SubscribeStreamRequest
+                            subscribeStreamRequest,
+            @NonNull
+                    final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+                            subscribeStreamResponseObserver) {
+        LOGGER.log(DEBUG, "Executing Server Streaming subscribeBlockStream gRPC method");
 
         // Return a custom StreamObserver to handle streaming blocks from the producer.
         if (serviceStatus.isRunning()) {
-            @NonNull
             final var streamObserver =
                     new ConsumerStreamResponseObserver(
                             blockNodeContext,
@@ -146,48 +158,62 @@ public class BlockStreamService implements GrpcService {
             streamMediator.subscribe(streamObserver);
         } else {
             LOGGER.log(
-                    System.Logger.Level.ERROR,
+                    ERROR,
                     "Server Streaming subscribeBlockStream gRPC Service is not currently running");
 
             subscribeStreamResponseObserver.onNext(buildSubscribeStreamNotAvailableResponse());
         }
     }
 
-    void singleBlock(
-            @NonNull final SingleBlockRequest singleBlockRequest,
-            @NonNull final StreamObserver<SingleBlockResponse> singleBlockResponseStreamObserver) {
+    void protocSingleBlock(
+            @NonNull final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest,
+            @NonNull
+                    final StreamObserver<com.hedera.hapi.block.protoc.SingleBlockResponse>
+                            singleBlockResponseStreamObserver) {
+        LOGGER.log(DEBUG, "Executing Unary singleBlock gRPC method");
 
-        LOGGER.log(System.Logger.Level.DEBUG, "Executing Unary singleBlock gRPC method");
+        try {
+            final SingleBlockRequest pbjSingleBlockRequest =
+                    toPbj(SingleBlockRequest.PROTOBUF, singleBlockRequest.toByteArray());
+            singleBlock(pbjSingleBlockRequest, singleBlockResponseStreamObserver);
+        } catch (ParseException e) {
+            LOGGER.log(ERROR, "Error parsing protoc SingleBlockRequest: {0}", singleBlockRequest);
+            singleBlockResponseStreamObserver.onNext(buildSingleBlockNotAvailableResponse());
+        }
+    }
+
+    private void singleBlock(
+            @NonNull final SingleBlockRequest singleBlockRequest,
+            @NonNull
+                    final StreamObserver<com.hedera.hapi.block.protoc.SingleBlockResponse>
+                            singleBlockResponseStreamObserver) {
+
+        LOGGER.log(DEBUG, "Executing Unary singleBlock gRPC method");
 
         if (serviceStatus.isRunning()) {
-            final long blockNumber = singleBlockRequest.getBlockNumber();
+            final long blockNumber = singleBlockRequest.blockNumber();
             try {
-                @NonNull final Optional<Block> blockOpt = blockReader.read(blockNumber);
+                final Optional<Block> blockOpt = blockReader.read(blockNumber);
                 if (blockOpt.isPresent()) {
-                    LOGGER.log(
-                            System.Logger.Level.DEBUG,
-                            "Successfully returning block number: {0}",
-                            blockNumber);
+                    LOGGER.log(DEBUG, "Successfully returning block number: {0}", blockNumber);
                     singleBlockResponseStreamObserver.onNext(
-                            buildSingleBlockResponse(blockOpt.get()));
+                            fromPbjSingleBlockSuccessResponse(blockOpt.get()));
 
-                    @NonNull
                     final MetricsService metricsService = blockNodeContext.metricsService();
                     metricsService.singleBlocksRetrieved.increment();
                 } else {
-                    LOGGER.log(
-                            System.Logger.Level.DEBUG, "Block number {0} not found", blockNumber);
+                    LOGGER.log(DEBUG, "Block number {0} not found", blockNumber);
                     singleBlockResponseStreamObserver.onNext(buildSingleBlockNotFoundResponse());
                 }
             } catch (IOException e) {
-                LOGGER.log(
-                        System.Logger.Level.ERROR, "Error reading block number: {0}", blockNumber);
+                LOGGER.log(ERROR, "Error reading block number: {0}", blockNumber);
+                singleBlockResponseStreamObserver.onNext(buildSingleBlockNotAvailableResponse());
+            } catch (ParseException e) {
+                LOGGER.log(ERROR, "Error parsing block number: {0}", blockNumber);
                 singleBlockResponseStreamObserver.onNext(buildSingleBlockNotAvailableResponse());
             }
         } else {
-            LOGGER.log(
-                    System.Logger.Level.ERROR,
-                    "Unary singleBlock gRPC method is not currently running");
+            LOGGER.log(ERROR, "Unary singleBlock gRPC method is not currently running");
             singleBlockResponseStreamObserver.onNext(buildSingleBlockNotAvailableResponse());
         }
 
@@ -198,28 +224,46 @@ public class BlockStreamService implements GrpcService {
     // TODO: Fix this error type once it's been standardized in `hedera-protobufs`
     //  this should not be success
     @NonNull
-    static SubscribeStreamResponse buildSubscribeStreamNotAvailableResponse() {
-        return SubscribeStreamResponse.newBuilder()
-                .setStatus(SubscribeStreamResponse.SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
-                .build();
+    static com.hedera.hapi.block.protoc.SubscribeStreamResponse
+            buildSubscribeStreamNotAvailableResponse() {
+        final SubscribeStreamResponse response =
+                SubscribeStreamResponse.newBuilder()
+                        .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
+                        .build();
+
+        return fromPbj(response);
     }
 
     @NonNull
-    static SingleBlockResponse buildSingleBlockNotAvailableResponse() {
-        return SingleBlockResponse.newBuilder()
-                .setStatus(SingleBlockResponse.SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
-                .build();
+    static com.hedera.hapi.block.protoc.SingleBlockResponse buildSingleBlockNotAvailableResponse() {
+        final SingleBlockResponse response =
+                SingleBlockResponse.newBuilder()
+                        .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
+                        .build();
+
+        return fromPbj(response);
     }
 
     @NonNull
-    static SingleBlockResponse buildSingleBlockNotFoundResponse() {
-        return SingleBlockResponse.newBuilder()
-                .setStatus(SingleBlockResponse.SingleBlockResponseCode.READ_BLOCK_NOT_FOUND)
-                .build();
+    static com.hedera.hapi.block.protoc.SingleBlockResponse buildSingleBlockNotFoundResponse()
+            throws InvalidProtocolBufferException {
+        final SingleBlockResponse response =
+                SingleBlockResponse.newBuilder()
+                        .status(SingleBlockResponseCode.READ_BLOCK_NOT_FOUND)
+                        .build();
+
+        return fromPbj(response);
     }
 
     @NonNull
-    private static SingleBlockResponse buildSingleBlockResponse(@NonNull final Block block) {
-        return SingleBlockResponse.newBuilder().setBlock(block).build();
+    static com.hedera.hapi.block.protoc.SingleBlockResponse fromPbjSingleBlockSuccessResponse(
+            @NonNull final Block block) {
+        final SingleBlockResponse singleBlockResponse =
+                SingleBlockResponse.newBuilder()
+                        .status(SingleBlockResponseCode.READ_BLOCK_SUCCESS)
+                        .block(block)
+                        .build();
+
+        return fromPbj(singleBlockResponse);
     }
 }

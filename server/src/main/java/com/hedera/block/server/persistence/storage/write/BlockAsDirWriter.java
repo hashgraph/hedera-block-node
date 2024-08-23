@@ -16,14 +16,18 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
+import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -44,7 +48,7 @@ import java.util.Set;
  */
 class BlockAsDirWriter implements BlockWriter<BlockItem> {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final Path blockNodeRootPath;
     private long blockNodeFileNameIndex;
@@ -67,20 +71,20 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
             @NonNull final BlockNodeContext blockNodeContext)
             throws IOException {
 
-        LOGGER.log(System.Logger.Level.INFO, "Initializing FileSystemBlockStorage");
+        LOGGER.log(INFO, "Initializing FileSystemBlockStorage");
 
         PersistenceStorageConfig config =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
         final Path blockNodeRootPath = Path.of(config.rootPath());
 
-        LOGGER.log(System.Logger.Level.INFO, "Block Node Root Path: " + blockNodeRootPath);
+        LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);
 
         this.blockNodeRootPath = blockNodeRootPath;
         this.blockRemover = blockRemover;
         this.filePerms = filePerms;
 
         // Initialize the block node root directory if it does not exist
-        FileUtils.createPathIfNotExists(blockNodeRootPath, System.Logger.Level.INFO, filePerms);
+        FileUtils.createPathIfNotExists(blockNodeRootPath, INFO, filePerms);
 
         this.blockNodeContext = blockNodeContext;
     }
@@ -94,21 +98,18 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
     @Override
     public void write(@NonNull final BlockItem blockItem) throws IOException {
 
-        if (blockItem.hasHeader()) {
+        if (blockItem.hasBlockHeader()) {
             resetState(blockItem);
         }
 
-        @NonNull final Path blockItemFilePath = calculateBlockItemPath();
+        final Path blockItemFilePath = calculateBlockItemPath();
         for (int retries = 0; ; retries++) {
             try {
                 write(blockItemFilePath, blockItem);
                 break;
             } catch (IOException e) {
 
-                LOGGER.log(
-                        System.Logger.Level.ERROR,
-                        "Error writing the BlockItem protobuf to a file: ",
-                        e);
+                LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
 
                 // Remove the block if repairing the permissions fails
                 if (retries > 0) {
@@ -120,9 +121,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                     // and the blockItem path
                     repairPermissions(blockNodeRootPath);
                     repairPermissions(calculateBlockPath());
-                    LOGGER.log(
-                            System.Logger.Level.INFO,
-                            "Retrying to write the BlockItem protobuf to a file");
+                    LOGGER.log(INFO, "Retrying to write the BlockItem protobuf to a file");
                 }
             }
         }
@@ -137,18 +136,12 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
      */
     protected void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItem blockItem)
             throws IOException {
-        try (@NonNull
-                final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
-            blockItem.writeTo(fos);
-            LOGGER.log(
-                    System.Logger.Level.DEBUG,
-                    "Successfully wrote the block item file: {0}",
-                    blockItemFilePath);
+        try (final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
+
+            BlockItem.PROTOBUF.toBytes(blockItem).writeTo(fos);
+            LOGGER.log(DEBUG, "Successfully wrote the block item file: {0}", blockItemFilePath);
         } catch (IOException e) {
-            LOGGER.log(
-                    System.Logger.Level.ERROR,
-                    "Error writing the BlockItem protobuf to a file: ",
-                    e);
+            LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
             throw e;
         }
     }
@@ -156,20 +149,20 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
     private void resetState(@NonNull final BlockItem blockItem) throws IOException {
         // Here a "block" is represented as a directory of BlockItems.
         // Create the "block" directory based on the block_number
-        currentBlockDir = Path.of(String.valueOf(blockItem.getHeader().getBlockNumber()));
+        currentBlockDir = Path.of(String.valueOf(blockItem.blockHeader().number()));
 
         // Check the blockNodeRootPath permissions and
         // attempt to repair them if possible
         repairPermissions(blockNodeRootPath);
 
         // Construct the path to the block directory
-        FileUtils.createPathIfNotExists(calculateBlockPath(), System.Logger.Level.DEBUG, filePerms);
+        FileUtils.createPathIfNotExists(calculateBlockPath(), DEBUG, filePerms);
 
         // Reset
         blockNodeFileNameIndex = 0;
 
         // Increment the block counter
-        @NonNull final MetricsService metricsService = blockNodeContext.metricsService();
+        final MetricsService metricsService = blockNodeContext.metricsService();
         metricsService.blocksPersisted.increment();
     }
 
@@ -177,7 +170,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
         final boolean isWritable = Files.isWritable(path);
         if (!isWritable) {
             LOGGER.log(
-                    System.Logger.Level.ERROR,
+                    ERROR,
                     "Block node root directory is not writable. Attempting to change the"
                             + " permissions.");
 
@@ -185,10 +178,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                 // Attempt to restore the permissions on the block node root directory
                 Files.setPosixFilePermissions(path, filePerms.value());
             } catch (IOException e) {
-                LOGGER.log(
-                        System.Logger.Level.ERROR,
-                        "Error setting permissions on the path: " + path,
-                        e);
+                LOGGER.log(ERROR, "Error setting permissions on the path: " + path, e);
                 throw e;
             }
         }
@@ -197,7 +187,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
     @NonNull
     private Path calculateBlockItemPath() {
         // Build the path to a .blk file
-        @NonNull final Path blockPath = calculateBlockPath();
+        final Path blockPath = calculateBlockPath();
         blockNodeFileNameIndex++;
         return blockPath.resolve(blockNodeFileNameIndex + BLOCK_FILE_EXTENSION);
     }

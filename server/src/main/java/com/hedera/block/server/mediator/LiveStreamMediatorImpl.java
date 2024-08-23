@@ -16,14 +16,18 @@
 
 package com.hedera.block.server.mediator;
 
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
-import static com.hedera.block.protos.BlockStreamService.SubscribeStreamResponse;
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.SubscribeStreamResponseCode;
+import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.BatchEventProcessor;
 import com.lmax.disruptor.BatchEventProcessorBuilder;
 import com.lmax.disruptor.EventHandler;
@@ -46,7 +50,7 @@ import java.util.concurrent.Executors;
 class LiveStreamMediatorImpl
         implements StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final RingBuffer<ObjectEvent<SubscribeStreamResponse>> ringBuffer;
     private final ExecutorService executor;
@@ -59,6 +63,7 @@ class LiveStreamMediatorImpl
     private final BlockWriter<BlockItem> blockWriter;
     private final ServiceStatus serviceStatus;
     private final BlockNodeContext blockNodeContext;
+    private final MetricsService metricsService;
 
     /**
      * Constructs a new LiveStreamMediatorImpl instance with the given subscribers, block writer,
@@ -86,14 +91,14 @@ class LiveStreamMediatorImpl
         this.blockWriter = blockWriter;
 
         // Initialize and start the disruptor
-        @NonNull
         final Disruptor<ObjectEvent<SubscribeStreamResponse>> disruptor =
                 // TODO: replace ring buffer size with a configurable value, create a MediatorConfig
-                new Disruptor<>(ObjectEvent::new, 1024, DaemonThreadFactory.INSTANCE);
+                new Disruptor<>(ObjectEvent::new, 2048, DaemonThreadFactory.INSTANCE);
         this.ringBuffer = disruptor.start();
         this.executor = Executors.newCachedThreadPool(DaemonThreadFactory.INSTANCE);
         this.serviceStatus = serviceStatus;
         this.blockNodeContext = blockNodeContext;
+        this.metricsService = blockNodeContext.metricsService();
     }
 
     /**
@@ -110,14 +115,12 @@ class LiveStreamMediatorImpl
         if (serviceStatus.isRunning()) {
 
             // Publish the block for all subscribers to receive
-            LOGGER.log(System.Logger.Level.DEBUG, "Publishing BlockItem: {0}", blockItem);
-            @NonNull
+            LOGGER.log(DEBUG, "Publishing BlockItem: {0}", blockItem);
             final var subscribeStreamResponse =
-                    SubscribeStreamResponse.newBuilder().setBlockItem(blockItem).build();
+                    SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
 
             // Increment the block item counter
-            @NonNull final MetricsService metricsService = blockNodeContext.metricsService();
             metricsService.liveBlockItems.increment();
 
             try {
@@ -127,27 +130,27 @@ class LiveStreamMediatorImpl
                 // Disable BlockItem publication for upstream producers
                 serviceStatus.setRunning(false);
                 LOGGER.log(
-                        System.Logger.Level.ERROR,
+                        ERROR,
                         "An exception occurred while attempting to persist the BlockItem: "
                                 + blockItem,
                         e);
 
-                LOGGER.log(System.Logger.Level.DEBUG, "Send a response to end the stream");
+                LOGGER.log(DEBUG, "Send a response to end the stream");
 
                 // Publish the block for all subscribers to receive
-                @NonNull final SubscribeStreamResponse endStreamResponse = buildEndStreamResponse();
+                final SubscribeStreamResponse endStreamResponse = buildEndStreamResponse();
                 ringBuffer.publishEvent((event, sequence) -> event.set(endStreamResponse));
 
                 // Unsubscribe all downstream consumers
-                for (@NonNull final var subscriber : subscribers.keySet()) {
-                    LOGGER.log(System.Logger.Level.DEBUG, "Unsubscribing: {0}", subscriber);
+                for (final var subscriber : subscribers.keySet()) {
+                    LOGGER.log(DEBUG, "Unsubscribing: {0}", subscriber);
                     unsubscribe(subscriber);
                 }
 
                 throw e;
             }
         } else {
-            LOGGER.log(System.Logger.Level.ERROR, "StreamMediator is not accepting BlockItems");
+            LOGGER.log(ERROR, "StreamMediator is not accepting BlockItems");
         }
     }
 
@@ -156,7 +159,6 @@ class LiveStreamMediatorImpl
             @NonNull final EventHandler<ObjectEvent<SubscribeStreamResponse>> handler) {
 
         // Initialize the batch event processor and set it on the ring buffer
-        @NonNull
         final var batchEventProcessor =
                 new BatchEventProcessorBuilder()
                         .build(ringBuffer, ringBuffer.newBarrier(), handler);
@@ -175,9 +177,9 @@ class LiveStreamMediatorImpl
             @NonNull final EventHandler<ObjectEvent<SubscribeStreamResponse>> handler) {
 
         // Remove the subscriber
-        @NonNull final var batchEventProcessor = subscribers.remove(handler);
+        final var batchEventProcessor = subscribers.remove(handler);
         if (batchEventProcessor == null) {
-            LOGGER.log(System.Logger.Level.ERROR, "Subscriber not found: {0}", handler);
+            LOGGER.log(ERROR, "Subscriber not found: {0}", handler);
 
         } else {
 
@@ -203,7 +205,7 @@ class LiveStreamMediatorImpl
         // SubscribeStreamResponseCode.
         // TODO: Replace READ_STREAM_SUCCESS (2) with a generic error code?
         return SubscribeStreamResponse.newBuilder()
-                .setStatus(SubscribeStreamResponse.SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
+                .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
                 .build();
     }
 

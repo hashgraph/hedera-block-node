@@ -16,10 +16,9 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
-import static com.hedera.block.protos.BlockStreamService.Block;
-
 import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.hapi.block.stream.Block;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;

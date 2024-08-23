@@ -16,10 +16,17 @@
 
 package com.hedera.block.server.mediator;
 
-import static com.hedera.block.protos.BlockStreamService.*;
+import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
@@ -29,6 +36,9 @@ import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
@@ -51,11 +61,19 @@ public class LiveStreamMediatorImplTest {
 
     @Mock private BlockWriter<BlockItem> blockWriter;
 
-    @Mock private StreamObserver<SubscribeStreamResponse> streamObserver1;
-    @Mock private StreamObserver<SubscribeStreamResponse> streamObserver2;
-    @Mock private StreamObserver<SubscribeStreamResponse> streamObserver3;
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse> streamObserver1;
 
-    @Mock private ServerCallStreamObserver<SubscribeStreamResponse> serverCallStreamObserver;
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse> streamObserver2;
+
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse> streamObserver3;
+
+    @Mock
+    private ServerCallStreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+            serverCallStreamObserver;
+
     @Mock private InstantSource testClock;
 
     private final long TIMEOUT_THRESHOLD_MILLIS = 100L;
@@ -178,10 +196,10 @@ public class LiveStreamMediatorImplTest {
                 streamMediator.isSubscribed(concreteObserver3),
                 "Expected the mediator to have observer3 subscribed");
 
-        final BlockHeader blockHeader = BlockHeader.newBuilder().setBlockNumber(1).build();
-        final BlockItem blockItem = BlockItem.newBuilder().setHeader(blockHeader).build();
+        final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
+        final BlockItem blockItem = BlockItem.newBuilder().blockHeader(blockHeader).build();
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().setBlockItem(blockItem).build();
+                SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
 
         // Acting as a producer, notify the mediator of a new block
         streamMediator.publish(blockItem);
@@ -189,9 +207,12 @@ public class LiveStreamMediatorImplTest {
         assertEquals(1, blockNodeContext.metricsService().liveBlockItems.get());
 
         // Confirm each subscriber was notified of the new block
-        verify(streamObserver1, timeout(testTimeout).times(1)).onNext(subscribeStreamResponse);
-        verify(streamObserver2, timeout(testTimeout).times(1)).onNext(subscribeStreamResponse);
-        verify(streamObserver3, timeout(testTimeout).times(1)).onNext(subscribeStreamResponse);
+        verify(streamObserver1, timeout(testTimeout).times(1))
+                .onNext(fromPbj(subscribeStreamResponse));
+        verify(streamObserver2, timeout(testTimeout).times(1))
+                .onNext(fromPbj(subscribeStreamResponse));
+        verify(streamObserver3, timeout(testTimeout).times(1))
+                .onNext(fromPbj(subscribeStreamResponse));
 
         // Confirm the BlockStorage write method was called
         verify(blockWriter).write(blockItem);
@@ -366,7 +387,8 @@ public class LiveStreamMediatorImplTest {
                 final InstantSource producerLivenessClock,
                 final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
                         streamMediator,
-                final StreamObserver<SubscribeStreamResponse> responseStreamObserver) {
+                final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+                        responseStreamObserver) {
             super(context, producerLivenessClock, streamMediator, responseStreamObserver);
         }
 

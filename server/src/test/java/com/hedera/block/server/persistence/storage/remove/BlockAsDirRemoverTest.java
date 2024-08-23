@@ -16,10 +16,10 @@
 
 package com.hedera.block.server.persistence.storage.remove;
 
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.hedera.block.protos.BlockStreamService.Block;
-import com.hedera.block.protos.BlockStreamService.BlockItem;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
@@ -30,6 +30,9 @@ import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,7 +44,7 @@ import org.junit.jupiter.api.Test;
 
 public class BlockAsDirRemoverTest {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
 
@@ -52,7 +55,7 @@ public class BlockAsDirRemoverTest {
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
+        LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
 
         blockNodeContext =
                 TestConfigUtil.getTestBlockNodeContext(
@@ -61,10 +64,10 @@ public class BlockAsDirRemoverTest {
     }
 
     @Test
-    public void testRemoveNonExistentBlock() throws IOException {
+    public void testRemoveNonExistentBlock() throws IOException, ParseException {
 
         // Write a block
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+        final var blockItems = PersistTestUtils.generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
@@ -82,7 +85,8 @@ public class BlockAsDirRemoverTest {
         Optional<Block> blockOpt = blockReader.read(1);
         assert (blockOpt.isPresent());
         assertEquals(
-                blockItems.getFirst().getHeader(), blockOpt.get().getBlockItems(0).getHeader());
+                blockItems.getFirst().blockHeader(),
+                blockOpt.get().items().getFirst().blockHeader());
 
         // Now remove the block
         blockRemover.remove(1);
@@ -93,7 +97,7 @@ public class BlockAsDirRemoverTest {
     }
 
     @Test
-    public void testRemoveBlockWithPermException() throws IOException {
+    public void testRemoveBlockWithPermException() throws IOException, ParseException {
 
         // Write a block
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
@@ -114,7 +118,8 @@ public class BlockAsDirRemoverTest {
         Optional<Block> blockOpt = blockReader.read(1);
         assert (blockOpt.isPresent());
         assertEquals(
-                blockItems.getFirst().getHeader(), blockOpt.get().getBlockItems(0).getHeader());
+                blockItems.getFirst().blockHeader(),
+                blockOpt.get().items().getFirst().blockHeader());
 
         // Now remove the block
         blockRemover = new BlockAsDirRemover(testPath, FileUtils.defaultPerms);

@@ -2,11 +2,19 @@ import com.hedera.block.server.config.BlockNodeConfigExtension;
 
 /** Runtime module of the server. */
 module com.hedera.block.server {
+    exports com.hedera.block.server;
     exports com.hedera.block.server.consumer;
     exports com.hedera.block.server.persistence.storage;
+    exports com.hedera.block.server.persistence.storage.write;
+    exports com.hedera.block.server.persistence.storage.read;
+    exports com.hedera.block.server.persistence.storage.remove;
+    exports com.hedera.block.server.config;
+    exports com.hedera.block.server.mediator;
+    exports com.hedera.block.server.data;
 
-    requires com.hedera.block.protos;
+    requires com.hedera.block.stream;
     requires com.google.protobuf;
+    requires com.hedera.pbj.runtime;
     requires com.lmax.disruptor;
     requires com.swirlds.common;
     requires com.swirlds.config.api;

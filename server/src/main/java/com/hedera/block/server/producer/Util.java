@@ -16,11 +16,8 @@
 
 package com.hedera.block.server.producer;
 
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import com.hedera.hapi.block.stream.BlockItem;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -34,23 +31,12 @@ public final class Util {
      *
      * @param blockItem the block item to get the fake hash for
      * @return the fake hash for the given block item
-     * @throws IOException thrown if an I/O error occurs while getting the fake hash
      * @throws NoSuchAlgorithmException thrown if the SHA-384 algorithm is not available
      */
-    public static byte[] getFakeHash(BlockItem blockItem)
-            throws IOException, NoSuchAlgorithmException {
-
-        try (final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                final ObjectOutputStream objectOutputStream =
-                        new ObjectOutputStream(byteArrayOutputStream)) {
-            objectOutputStream.writeObject(blockItem);
-
-            // Get the serialized bytes
-            byte[] serializedObject = byteArrayOutputStream.toByteArray();
-
-            // Calculate the SHA-384 hash
-            MessageDigest digest = MessageDigest.getInstance("SHA-384");
-            return digest.digest(serializedObject);
-        }
+    public static byte[] getFakeHash(@NonNull final BlockItem blockItem)
+            throws NoSuchAlgorithmException {
+        // Calculate the SHA-384 hash
+        MessageDigest digest = MessageDigest.getInstance("SHA-384");
+        return digest.digest(BlockItem.PROTOBUF.toBytes(blockItem).toByteArray());
     }
 }

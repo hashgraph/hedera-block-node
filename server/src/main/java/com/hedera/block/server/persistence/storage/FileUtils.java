@@ -16,6 +16,8 @@
 
 package com.hedera.block.server.persistence.storage;
 
+import static java.lang.System.Logger;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,7 +30,7 @@ import java.util.Set;
 /** FileUtils methods provide common functionality for the storage package. */
 public final class FileUtils {
 
-    private static final System.Logger LOGGER = System.getLogger(FileUtils.class.getName());
+    private static final Logger LOGGER = System.getLogger(FileUtils.class.getName());
 
     private FileUtils() {}
 

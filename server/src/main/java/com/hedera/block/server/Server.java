@@ -16,7 +16,8 @@
 
 package com.hedera.block.server;
 
-import static com.hedera.block.protos.BlockStreamService.*;
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
@@ -30,7 +31,9 @@ import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
-import com.hedera.block.server.producer.ItemAckBuilder;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.grpc.GrpcRouting;
@@ -40,7 +43,7 @@ import java.io.IOException;
 /** Main class for the block node server */
 public class Server {
 
-    private static final System.Logger LOGGER = System.getLogger(Server.class.getName());
+    private static final Logger LOGGER = System.getLogger(Server.class.getName());
 
     private Server() {}
 
@@ -51,24 +54,21 @@ public class Server {
      */
     public static void main(final String[] args) {
 
-        LOGGER.log(System.Logger.Level.INFO, "Starting BlockNode Server");
+        LOGGER.log(INFO, "Starting BlockNode Server");
 
         try {
             // init context, metrics, and configuration.
-            @NonNull final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+            final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+            final ServiceStatus serviceStatus = new ServiceStatusImpl();
 
-            @NonNull final ServiceStatus serviceStatus = new ServiceStatusImpl();
-
-            @NonNull
             final BlockWriter<BlockItem> blockWriter =
                     BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-            @NonNull
+
             final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator =
                     LiveStreamMediatorBuilder.newBuilder(
                                     blockWriter, blockNodeContext, serviceStatus)
                             .build();
 
-            @NonNull
             final BlockReader<Block> blockReader =
                     BlockAsDirReaderBuilder.newBuilder(
                                     blockNodeContext
@@ -76,25 +76,21 @@ public class Server {
                                             .getConfigData(PersistenceStorageConfig.class))
                             .build();
 
-            @NonNull
             final BlockStreamService blockStreamService =
                     buildBlockStreamService(
                             streamMediator, blockReader, serviceStatus, blockNodeContext);
 
-            @NonNull
             final GrpcRouting.Builder grpcRouting =
                     GrpcRouting.builder().service(blockStreamService);
 
-            @NonNull final HealthService healthService = new HealthServiceImpl(serviceStatus);
+            final HealthService healthService = new HealthServiceImpl(serviceStatus);
 
-            @NonNull
             final HttpRouting.Builder httpRouting =
                     HttpRouting.builder()
                             .register(healthService.getHealthRootPath(), healthService);
 
             // Build the web server
             // TODO: make port server a configurable value.
-            @NonNull
             final WebServer webServer =
                     WebServer.builder()
                             .port(8080)
@@ -109,9 +105,7 @@ public class Server {
             webServer.start();
 
             // Log the server status
-            LOGGER.log(
-                    System.Logger.Level.INFO,
-                    "Block Node Server started at port: " + webServer.port());
+            LOGGER.log(INFO, "Block Node Server started at port: " + webServer.port());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -126,7 +120,6 @@ public class Server {
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
 
-        return new BlockStreamService(
-                new ItemAckBuilder(), streamMediator, blockReader, serviceStatus, blockNodeContext);
+        return new BlockStreamService(streamMediator, blockReader, serviceStatus, blockNodeContext);
     }
 }

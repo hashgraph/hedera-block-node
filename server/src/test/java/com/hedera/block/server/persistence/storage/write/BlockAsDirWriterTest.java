@@ -16,9 +16,10 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import static com.hedera.block.protos.BlockStreamService.Block;
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
 import static com.hedera.block.server.persistence.storage.read.BlockAsDirReaderTest.removeBlockReadPerms;
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -32,6 +33,9 @@ import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -48,7 +52,7 @@ import org.junit.jupiter.api.Test;
 
 public class BlockAsDirWriterTest {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
     private static final String PERSISTENCE_STORAGE_ROOT_PATH_KEY = "persistence.storage.rootPath";
@@ -60,7 +64,7 @@ public class BlockAsDirWriterTest {
     @BeforeEach
     public void setUp() throws IOException {
         testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.log(System.Logger.Level.INFO, "Created temp directory: " + testPath.toString());
+        LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
 
         blockNodeContext =
                 TestConfigUtil.getTestBlockNodeContext(
@@ -71,14 +75,12 @@ public class BlockAsDirWriterTest {
     @AfterEach
     public void tearDown() {
         if (!TestUtils.deleteDirectory(testPath.toFile())) {
-            LOGGER.log(
-                    System.Logger.Level.ERROR,
-                    "Failed to delete temp directory: " + testPath.toString());
+            LOGGER.log(ERROR, "Failed to delete temp directory: " + testPath.toString());
         }
     }
 
     @Test
-    public void testWriterAndReaderHappyPath() throws IOException {
+    public void testWriterAndReaderHappyPath() throws IOException, ParseException {
 
         // Write a block
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
@@ -99,12 +101,12 @@ public class BlockAsDirWriterTest {
         boolean hasStartEvent = false;
 
         Block block = blockOpt.get();
-        for (BlockItem blockItem : block.getBlockItemsList()) {
-            if (blockItem.hasHeader()) {
+        for (BlockItem blockItem : block.items()) {
+            if (blockItem.hasBlockHeader()) {
                 hasHeader = true;
-            } else if (blockItem.hasStateProof()) {
+            } else if (blockItem.hasBlockProof()) {
                 hasBlockProof = true;
-            } else if (blockItem.hasStartEvent()) {
+            } else if (blockItem.hasEventHeader()) {
                 hasStartEvent = true;
             }
         }
@@ -115,7 +117,7 @@ public class BlockAsDirWriterTest {
     }
 
     @Test
-    public void testRemoveBlockWritePerms() throws IOException {
+    public void testRemoveBlockWritePerms() throws IOException, ParseException {
 
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
@@ -133,8 +135,8 @@ public class BlockAsDirWriterTest {
         BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(testConfig).build();
         Optional<Block> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(1, blockOpt.get().getBlockItemsList().size());
-        assertTrue(blockOpt.get().getBlockItems(0).hasHeader());
+        assertEquals(1, blockOpt.get().items().size());
+        assertTrue(blockOpt.get().items().get(0).hasBlockHeader());
 
         // Remove all permissions on the block directory and
         // attempt to write the next block item
@@ -144,8 +146,8 @@ public class BlockAsDirWriterTest {
         // There should now be 2 blockItems in the block
         blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(2, blockOpt.get().getBlockItemsList().size());
-        assertFalse(blockOpt.get().getBlockItems(1).hasHeader());
+        assertEquals(2, blockOpt.get().items().size());
+        assertFalse(blockOpt.get().items().get(1).hasBlockHeader());
 
         // Remove read permission on the block directory
         removeBlockReadPerms(1, testConfig);
@@ -154,8 +156,8 @@ public class BlockAsDirWriterTest {
         // There should now be 3 blockItems in the block
         blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(3, blockOpt.get().getBlockItemsList().size());
-        assertFalse(blockOpt.get().getBlockItems(1).hasHeader());
+        assertEquals(3, blockOpt.get().items().size());
+        assertFalse(blockOpt.get().items().get(1).hasBlockHeader());
     }
 
     @Test
@@ -176,7 +178,7 @@ public class BlockAsDirWriterTest {
     }
 
     @Test
-    public void testRemoveRootDirReadPerm() throws IOException {
+    public void testRemoveRootDirReadPerm() throws IOException, ParseException {
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
@@ -200,11 +202,11 @@ public class BlockAsDirWriterTest {
         BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(testConfig).build();
         Optional<Block> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(10, blockOpt.get().getBlockItemsList().size());
+        assertEquals(10, blockOpt.get().items().size());
     }
 
     @Test
-    public void testPartialBlockRemoval() throws IOException {
+    public void testPartialBlockRemoval() throws IOException, ParseException {
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(3);
         final BlockRemover blockRemover =
                 new BlockAsDirRemover(Path.of(testConfig.rootPath()), FileUtils.defaultPerms);
@@ -245,13 +247,13 @@ public class BlockAsDirWriterTest {
         // Confirm blocks 1 and 2 still exist
         blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(10, blockOpt.get().getBlockItemsList().size());
-        assertEquals(1, blockOpt.get().getBlockItems(0).getHeader().getBlockNumber());
+        assertEquals(10, blockOpt.get().items().size());
+        assertEquals(1, blockOpt.get().items().getFirst().blockHeader().number());
 
         blockOpt = blockReader.read(2);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(10, blockOpt.get().getBlockItemsList().size());
-        assertEquals(2, blockOpt.get().getBlockItems(0).getHeader().getBlockNumber());
+        assertEquals(10, blockOpt.get().items().size());
+        assertEquals(2, blockOpt.get().items().getFirst().blockHeader().number());
     }
 
     private void removeRootWritePerms(final PersistenceStorageConfig config) throws IOException {

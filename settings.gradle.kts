@@ -18,7 +18,8 @@ plugins {
     id("com.gradle.enterprise").version("3.15.1")
 }
 
-include(":protos")
+// Include the subprojects
+include(":stream")
 include(":server")
 
 includeBuild(".") // https://github.com/gradle/gradle/issues/21490#issuecomment-1458887481
@@ -29,6 +30,9 @@ gradleEnterprise {
         termsOfServiceAgree = "yes"
     }
 }
+
+// The HAPI API version to use for Protobuf sources.
+val hapiProtoVersion = "0.53.0"
 
 dependencyResolutionManagement {
     versionCatalogs {
@@ -52,14 +56,43 @@ dependencyResolutionManagement {
             version("com.google.auto.service.processor", "1.1.1")
             version("com.google.auto.service", "1.1.1")
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
+
+            // PBJ dependencies
+            version("io.grpc", "1.64.0")
+            version("io.grpc.protobuf", "1.64.0")
+            version("io.grpc.stub", "1.64.0")
+
+            plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.9.2")
+            version("com.hedera.pbj.runtime", "0.9.2")
+            version("org.antlr.antlr4.runtime", "4.13.1")
+
+            version("java.annotation", "1.3.2")
+            version("javax.inject", "1")
+            version("com.google.protobuf", "3.21.7")
+            version("com.google.protobuf.util", "3.21.7")
+
+            version("hapi-proto", hapiProtoVersion)
+            version("com.google.common", "33.0.0-jre")
+
+            version("org.apache.commons.codec", "1.15")
+            version("org.apache.commons.collections4", "4.4")
+            version("org.apache.commons.io", "2.15.1")
+            version("org.apache.commons.lang3", "3.14.0")
+            version("org.apache.commons.compress", "1.26.0")
+            version("org.apache.logging.log4j.slf4j2.impl", "2.21.1")
+
             // Testing only versions
             version("org.assertj.core", "3.23.1")
             version("org.junit.jupiter.api", "5.10.2")
             version("org.mockito", "5.8.0")
             version("org.mockito.junit.jupiter", "5.8.0")
+            version("google.proto", "3.21.10")
+            version("grpc.protobuf.grpc", "1.45.1")
+
         }
     }
 }
+
 
 // Build cache configuration
 val isCiServer = System.getenv().containsKey("CI")

@@ -16,12 +16,17 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
-import static com.hedera.block.protos.BlockStreamService.Block;
-import static com.hedera.block.protos.BlockStreamService.Block.Builder;
-import static com.hedera.block.protos.BlockStreamService.BlockItem;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
+import static java.lang.System.Logger;
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,6 +36,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -40,7 +47,7 @@ import java.util.Set;
  */
 class BlockAsDirReader implements BlockReader<Block> {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final Path blockNodeRootPath;
     private final FileAttribute<Set<PosixFilePermission>> filePerms;
@@ -56,12 +63,12 @@ class BlockAsDirReader implements BlockReader<Block> {
             @NonNull final PersistenceStorageConfig config,
             @NonNull final FileAttribute<Set<PosixFilePermission>> filePerms) {
 
-        LOGGER.log(System.Logger.Level.INFO, "Initializing FileSystemBlockReader");
+        LOGGER.log(INFO, "Initializing FileSystemBlockReader");
 
-        @NonNull final Path blockNodeRootPath = Path.of(config.rootPath());
+        final Path blockNodeRootPath = Path.of(config.rootPath());
 
-        LOGGER.log(System.Logger.Level.INFO, config.toString());
-        LOGGER.log(System.Logger.Level.INFO, "Block Node Root Path: " + blockNodeRootPath);
+        LOGGER.log(INFO, config.toString());
+        LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);
 
         this.blockNodeRootPath = blockNodeRootPath;
         this.filePerms = filePerms;
@@ -77,7 +84,7 @@ class BlockAsDirReader implements BlockReader<Block> {
      */
     @NonNull
     @Override
-    public Optional<Block> read(final long blockNumber) throws IOException {
+    public Optional<Block> read(final long blockNumber) throws IOException, ParseException {
 
         // Verify path attributes of the block node root path
         if (isPathDisqualified(blockNodeRootPath)) {
@@ -86,7 +93,7 @@ class BlockAsDirReader implements BlockReader<Block> {
 
         // Verify path attributes of the block directory within the
         // block node root path
-        @NonNull final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
+        final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
         if (isPathDisqualified(blockPath)) {
             return Optional.empty();
         }
@@ -102,34 +109,37 @@ class BlockAsDirReader implements BlockReader<Block> {
             // 10.blk), the loop will directly fetch the BlockItems in order based on
             // their file names. The loop will exit when it attempts to read a
             // BlockItem file that does not exist (e.g., 11.blk).
-            @NonNull final Builder builder = Block.newBuilder();
+            final Block.Builder builder = Block.newBuilder();
+            final List<BlockItem> blockItems = new ArrayList<>();
             for (int i = 1; ; i++) {
-                @NonNull final Path blockItemPath = blockPath.resolve(i + BLOCK_FILE_EXTENSION);
-                @NonNull
+                final Path blockItemPath = blockPath.resolve(i + BLOCK_FILE_EXTENSION);
                 final Optional<BlockItem> blockItemOpt = readBlockItem(blockItemPath.toString());
                 if (blockItemOpt.isPresent()) {
-                    builder.addBlockItems(blockItemOpt.get());
+                    blockItems.add(blockItemOpt.get());
                     continue;
                 }
 
                 break;
             }
 
+            builder.items(blockItems);
+
             // Return the Block
             return Optional.of(builder.build());
         } catch (IOException io) {
-            LOGGER.log(System.Logger.Level.ERROR, "Error reading block: " + blockPath, io);
-
+            LOGGER.log(ERROR, "Error reading block: " + blockPath, io);
             throw io;
         }
     }
 
     @NonNull
     private Optional<BlockItem> readBlockItem(@NonNull final String blockItemPath)
-            throws IOException {
+            throws IOException, ParseException {
 
-        try (FileInputStream fis = new FileInputStream(blockItemPath)) {
-            return Optional.of(BlockItem.parseFrom(fis));
+        try (final FileInputStream fis = new FileInputStream(blockItemPath)) {
+
+            BlockItem blockItem = BlockItem.PROTOBUF.parse(Bytes.wrap(fis.readAllBytes()));
+            return Optional.of(blockItem);
         } catch (FileNotFoundException io) {
             final File f = new File(blockItemPath);
             if (!f.exists()) {
@@ -144,6 +154,9 @@ class BlockAsDirReader implements BlockReader<Block> {
             // FileNotFound is also thrown when a file cannot be read.
             // So re-throw here to make a different decision upstream.
             throw io;
+        } catch (ParseException e) {
+            LOGGER.log(ERROR, "Error parsing block item: " + blockItemPath, e);
+            throw e;
         }
     }
 
@@ -153,16 +166,13 @@ class BlockAsDirReader implements BlockReader<Block> {
             // This code path gets hit if a consumer
             // requests a block that does not exist.
             // Only log this as a debug message.
-            LOGGER.log(System.Logger.Level.DEBUG, "Path not found: {0}", path);
+            LOGGER.log(DEBUG, "Path not found: {0}", path);
             return true;
         }
 
         if (!path.toFile().canRead()) {
-            LOGGER.log(System.Logger.Level.ERROR, "Path not readable: {0}", path);
-            LOGGER.log(
-                    System.Logger.Level.ERROR,
-                    "Attempting to repair the path permissions: {0}",
-                    path);
+            LOGGER.log(ERROR, "Path not readable: {0}", path);
+            LOGGER.log(ERROR, "Attempting to repair the path permissions: {0}", path);
 
             try {
                 // If resetting the permissions fails or
@@ -172,14 +182,13 @@ class BlockAsDirReader implements BlockReader<Block> {
                     return true;
                 }
             } catch (IOException e) {
-                LOGGER.log(
-                        System.Logger.Level.ERROR, "Error setting permissions on: {0}" + path, e);
+                LOGGER.log(ERROR, "Error setting permissions on: {0}" + path, e);
                 return true;
             }
         }
 
         if (!path.toFile().isDirectory()) {
-            LOGGER.log(System.Logger.Level.ERROR, "Path is not a directory: {0}", path);
+            LOGGER.log(ERROR, "Path is not a directory: {0}", path);
             return true;
         }
 

@@ -16,6 +16,8 @@
 
 package com.hedera.block.server.persistence.storage;
 
+import static java.lang.System.Logger.Level.ERROR;
+
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 import java.io.IOException;
@@ -49,8 +51,7 @@ public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String
         // Create Directory if it does not exist
         if (Files.notExists(path)) {
             try {
-                FileUtils.createPathIfNotExists(
-                        path, System.Logger.Level.ERROR, FileUtils.defaultPerms);
+                FileUtils.createPathIfNotExists(path, ERROR, FileUtils.defaultPerms);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
