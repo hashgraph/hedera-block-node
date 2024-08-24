@@ -27,7 +27,6 @@ import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
-import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.Block;
@@ -52,6 +51,7 @@ public class BlockNodeApp {
     private final ServiceStatus serviceStatus;
     private final HealthService healthService;
     private final BlockNodeContext blockNodeContext;
+    private final BlockWriter<BlockItem> blockWriter;
 
     /**
      * Has all needed dependencies to start the server and initialize the context.
@@ -59,15 +59,18 @@ public class BlockNodeApp {
      * @param serviceStatus the status of the service
      * @param healthService the health service
      * @param blockNodeContext the context of the block node
+     * @param blockWriter the block writer
      */
     @Inject
     public BlockNodeApp(
             @NonNull ServiceStatus serviceStatus,
             @NonNull HealthService healthService,
-            @NonNull BlockNodeContext blockNodeContext) {
+            @NonNull BlockNodeContext blockNodeContext,
+            BlockWriter<BlockItem> blockWriter) {
         this.serviceStatus = serviceStatus;
         this.healthService = healthService;
         this.blockNodeContext = blockNodeContext;
+        this.blockWriter = blockWriter;
     }
 
     /**
@@ -77,8 +80,9 @@ public class BlockNodeApp {
      */
     public void start() throws IOException {
 
-        final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
+        //        final BlockWriter<BlockItem> blockWriter =
+        //                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
+
         final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
                         .build();
