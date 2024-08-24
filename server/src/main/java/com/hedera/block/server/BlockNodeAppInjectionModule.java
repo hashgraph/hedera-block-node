@@ -20,16 +20,18 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.swirlds.config.api.Configuration;
+import com.swirlds.metrics.api.Metrics;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServerConfig;
-import java.io.IOException;
 import javax.inject.Singleton;
 
 /**
@@ -56,12 +58,9 @@ public interface BlockNodeAppInjectionModule {
      */
     @Singleton
     @Provides
-    static BlockNodeContext provideBlockNodeContext() {
-        try {
-            return BlockNodeContextFactory.create();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    static BlockNodeContext provideBlockNodeContext(
+            Configuration config, Metrics metrics, MetricsService metricsService) {
+        return BlockNodeContextFactory.create(config, metrics, metricsService);
     }
 
     /**

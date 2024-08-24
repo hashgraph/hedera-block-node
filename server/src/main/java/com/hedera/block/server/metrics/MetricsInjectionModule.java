@@ -14,21 +14,30 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.config;
+package com.hedera.block.server.metrics;
 
-import com.hedera.block.server.metrics.MetricsService;
+import com.swirlds.common.metrics.platform.DefaultMetricsProvider;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.metrics.api.Metrics;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import dagger.Module;
+import dagger.Provides;
+import javax.inject.Singleton;
 
-/** Deprecated. */
-public class BlockNodeContextFactory {
+@Module
+public interface MetricsInjectionModule {
 
-    private BlockNodeContextFactory() {}
+    @Singleton
+    @Provides
+    static MetricsService provideMetricsService(Metrics metrics) {
+        return new MetricsService(metrics);
+    }
 
-    @NonNull
-    public static BlockNodeContext create(
-            Configuration config, Metrics metrics, MetricsService metricsService) {
-        return new BlockNodeContext(metrics, metricsService, config);
+    @Singleton
+    @Provides
+    static Metrics provideMetrics(Configuration configuration) {
+        final DefaultMetricsProvider metricsProvider = new DefaultMetricsProvider(configuration);
+        final Metrics metrics = metricsProvider.createGlobalMetrics();
+        metricsProvider.start();
+        return metrics;
     }
 }

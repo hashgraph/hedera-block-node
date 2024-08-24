@@ -19,6 +19,7 @@ package com.hedera.block.server;
 import com.hedera.block.server.config.ConfigInjectionModule;
 import com.hedera.block.server.health.HealthInjectionModule;
 import com.hedera.block.server.mediator.MediatorInjectionModule;
+import com.hedera.block.server.metrics.MetricsInjectionModule;
 import com.hedera.block.server.persistence.storage.PersistenceInjectionModule;
 import dagger.Component;
 import javax.inject.Singleton;
@@ -31,7 +32,8 @@ import javax.inject.Singleton;
             HealthInjectionModule.class,
             PersistenceInjectionModule.class,
             MediatorInjectionModule.class,
-            ConfigInjectionModule.class
+            ConfigInjectionModule.class,
+            MetricsInjectionModule.class,
         })
 public interface BlockNodeAppInjectionComponent {
     /**
