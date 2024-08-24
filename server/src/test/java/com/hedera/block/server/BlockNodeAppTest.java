@@ -40,6 +40,8 @@ class BlockNodeAppTest {
 
     @Mock private HealthService healthService;
 
+    @Mock private BlockStreamService blockStreamService;
+
     @Mock private WebServerConfig.Builder webServerBuilder;
 
     @Mock private WebServer webServer;
