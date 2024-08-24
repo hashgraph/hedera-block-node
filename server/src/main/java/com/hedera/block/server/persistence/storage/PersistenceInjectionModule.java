@@ -17,8 +17,11 @@
 package com.hedera.block.server.persistence.storage;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
+import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import dagger.Module;
 import dagger.Provides;
@@ -44,5 +47,11 @@ public interface PersistenceInjectionModule {
         } catch (IOException e) {
             throw new RuntimeException("Failed to create block writer", e);
         }
+    }
+
+    @Provides
+    @Singleton
+    static BlockReader<Block> providesBlockReader(@NonNull PersistenceStorageConfig config) {
+        return BlockAsDirReaderBuilder.newBuilder(config).build();
     }
 }

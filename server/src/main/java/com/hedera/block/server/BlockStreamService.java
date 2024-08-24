@@ -50,6 +50,7 @@ import io.helidon.webserver.grpc.GrpcService;
 import java.io.IOException;
 import java.time.Clock;
 import java.util.Optional;
+import javax.inject.Inject;
 
 /**
  * The BlockStreamService class defines the gRPC service for the block stream service. It provides
@@ -76,6 +77,7 @@ public class BlockStreamService implements GrpcService {
      * @param serviceStatus the service status provides methods to check service availability and to
      *     stop the service and web server in the event of an unrecoverable exception
      */
+    @Inject
     BlockStreamService(
             @NonNull
                     final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>

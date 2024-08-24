@@ -19,20 +19,10 @@ package com.hedera.block.server;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 
-import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.health.HealthService;
-import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
-import com.hedera.block.server.mediator.StreamMediator;
-import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
-import com.hedera.block.server.persistence.storage.read.BlockReader;
-import com.hedera.block.server.persistence.storage.write.BlockWriter;
-import com.hedera.hapi.block.SubscribeStreamResponse;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
+import io.helidon.webserver.WebServerConfig;
 import io.helidon.webserver.grpc.GrpcRouting;
 import io.helidon.webserver.http.HttpRouting;
 import java.io.IOException;
@@ -50,27 +40,25 @@ public class BlockNodeApp {
 
     private final ServiceStatus serviceStatus;
     private final HealthService healthService;
-    private final BlockNodeContext blockNodeContext;
-    private final BlockWriter<BlockItem> blockWriter;
+    private final BlockStreamService blockStreamService;
+    private final WebServerConfig.Builder webServerBuilder;
 
     /**
      * Has all needed dependencies to start the server and initialize the context.
      *
      * @param serviceStatus the status of the service
      * @param healthService the health service
-     * @param blockNodeContext the context of the block node
-     * @param blockWriter the block writer
      */
     @Inject
     public BlockNodeApp(
             @NonNull ServiceStatus serviceStatus,
             @NonNull HealthService healthService,
-            @NonNull BlockNodeContext blockNodeContext,
-            BlockWriter<BlockItem> blockWriter) {
+            @NonNull BlockStreamService blockStreamService,
+            @NonNull WebServerConfig.Builder webServerBuilder) {
         this.serviceStatus = serviceStatus;
         this.healthService = healthService;
-        this.blockNodeContext = blockNodeContext;
-        this.blockWriter = blockWriter;
+        this.blockStreamService = blockStreamService;
+        this.webServerBuilder = webServerBuilder;
     }
 
     /**
@@ -80,24 +68,6 @@ public class BlockNodeApp {
      */
     public void start() throws IOException {
 
-        //        final BlockWriter<BlockItem> blockWriter =
-        //                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-
-        final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator =
-                LiveStreamMediatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
-                        .build();
-
-        final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(
-                                blockNodeContext
-                                        .configuration()
-                                        .getConfigData(PersistenceStorageConfig.class))
-                        .build();
-
-        final BlockStreamService blockStreamService =
-                buildBlockStreamService(
-                        streamMediator, blockReader, serviceStatus, blockNodeContext);
-
         final GrpcRouting.Builder grpcRouting = GrpcRouting.builder().service(blockStreamService);
 
         final HttpRouting.Builder httpRouting =
@@ -106,11 +76,7 @@ public class BlockNodeApp {
         // Build the web server
         // TODO: make port server a configurable value.
         final WebServer webServer =
-                WebServer.builder()
-                        .port(8080)
-                        .addRouting(grpcRouting)
-                        .addRouting(httpRouting)
-                        .build();
+                webServerBuilder.port(8080).addRouting(grpcRouting).addRouting(httpRouting).build();
 
         // Update the serviceStatus with the web server
         serviceStatus.setWebServer(webServer);
@@ -120,17 +86,5 @@ public class BlockNodeApp {
 
         // Log the server status
         LOGGER.log(INFO, String.format("Block Node Server started at port: %d", webServer.port()));
-    }
-
-    @NonNull
-    private static BlockStreamService buildBlockStreamService(
-            @NonNull
-                    final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
-                            streamMediator,
-            @NonNull final BlockReader<Block> blockReader,
-            @NonNull final ServiceStatus serviceStatus,
-            @NonNull final BlockNodeContext blockNodeContext) {
-
-        return new BlockStreamService(streamMediator, blockReader, serviceStatus, blockNodeContext);
     }
 }

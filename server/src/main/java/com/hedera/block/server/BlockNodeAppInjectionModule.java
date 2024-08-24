@@ -18,9 +18,17 @@ package com.hedera.block.server;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.BlockNodeContextFactory;
+import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.block.server.persistence.storage.read.BlockReader;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import io.helidon.webserver.WebServerConfig;
 import java.io.IOException;
 import javax.inject.Singleton;
 
@@ -46,13 +54,31 @@ public interface BlockNodeAppInjectionModule {
      *
      * @return a block node context singleton
      */
-    @Provides
     @Singleton
+    @Provides
     static BlockNodeContext provideBlockNodeContext() {
         try {
             return BlockNodeContextFactory.create();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Singleton
+    @Provides
+    static BlockStreamService provideBlockStreamService(
+            @NonNull
+                    final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
+                            streamMediator,
+            @NonNull final BlockReader<Block> blockReader,
+            @NonNull final ServiceStatus serviceStatus,
+            @NonNull final BlockNodeContext blockNodeContext) {
+        return new BlockStreamService(streamMediator, blockReader, serviceStatus, blockNodeContext);
+    }
+
+    @Singleton
+    @Provides
+    static WebServerConfig.Builder provideWebServerConfigBuilder() {
+        return WebServerConfig.builder();
     }
 }
