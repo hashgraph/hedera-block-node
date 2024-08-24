@@ -64,6 +64,15 @@ public interface BlockNodeAppInjectionModule {
         }
     }
 
+    /**
+     * Provides a block stream service singleton using DI.
+     *
+     * @param streamMediator should come from DI
+     * @param blockReader should come from DI
+     * @param serviceStatus should come from DI
+     * @param blockNodeContext should come from DI
+     * @return a block stream service singleton
+     */
     @Singleton
     @Provides
     static BlockStreamService provideBlockStreamService(
@@ -76,6 +85,11 @@ public interface BlockNodeAppInjectionModule {
         return new BlockStreamService(streamMediator, blockReader, serviceStatus, blockNodeContext);
     }
 
+    /**
+     * Provides a web server config builder singleton using DI.
+     *
+     * @return a web server config builder singleton
+     */
     @Singleton
     @Provides
     static WebServerConfig.Builder provideWebServerConfigBuilder() {

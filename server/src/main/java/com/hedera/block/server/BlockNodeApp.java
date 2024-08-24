@@ -44,10 +44,12 @@ public class BlockNodeApp {
     private final WebServerConfig.Builder webServerBuilder;
 
     /**
-     * Has all needed dependencies to start the server and initialize the context.
+     * Constructs a new BlockNodeApp with the specified dependencies.
      *
-     * @param serviceStatus the status of the service
-     * @param healthService the health service
+     * @param serviceStatus has the status of the service
+     * @param healthService handles the health API requests
+     * @param blockStreamService handles the GRPC API requests
+     * @param webServerBuilder used to build the web server and start it
      */
     @Inject
     public BlockNodeApp(

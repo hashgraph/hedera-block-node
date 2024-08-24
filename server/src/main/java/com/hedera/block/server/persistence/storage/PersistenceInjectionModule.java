@@ -49,6 +49,12 @@ public interface PersistenceInjectionModule {
         }
     }
 
+    /**
+     * Provides a block reader singleton using the persistence storage config.
+     *
+     * @param config the persistence storage configuration needed to build the block reader
+     * @return a block reader singleton
+     */
     @Provides
     @Singleton
     static BlockReader<Block> providesBlockReader(@NonNull PersistenceStorageConfig config) {

@@ -33,11 +33,22 @@ import java.io.IOException;
 import java.nio.file.Path;
 import javax.inject.Singleton;
 
+/**
+ * A Dagger module for providing configuration dependencies, any specific configuration should be
+ * part of this module.
+ */
 @Module
 public interface ConfigInjectionModule {
 
-    static final String APPLICATION_PROPERTIES = "app.properties";
+    /** The application properties file name within the resources package. */
+    String APPLICATION_PROPERTIES = "app.properties";
 
+    /**
+     * Provides a configuration singleton using the configuration builder. Injected by the DI
+     * Framework.
+     *
+     * @return a configuration singleton
+     */
     @Singleton
     @Provides
     static Configuration provideConfiguration() {
@@ -53,6 +64,12 @@ public interface ConfigInjectionModule {
         }
     }
 
+    /**
+     * Provides a persistence storage configuration singleton using the configuration.
+     *
+     * @param configuration is the configuration singleton
+     * @return a persistence storage configuration singleton
+     */
     @Singleton
     @Provides
     static PersistenceStorageConfig providePersistenceStorageConfig(
@@ -60,24 +77,48 @@ public interface ConfigInjectionModule {
         return configuration.getConfigData(PersistenceStorageConfig.class);
     }
 
+    /**
+     * Provides a metrics configuration singleton using the configuration.
+     *
+     * @param configuration is the configuration singleton
+     * @return a metrics configuration singleton
+     */
     @Singleton
     @Provides
     static MetricsConfig provideMetricsConfig(@NonNull Configuration configuration) {
         return configuration.getConfigData(MetricsConfig.class);
     }
 
+    /**
+     * Provides a Prometheus configuration singleton using the configuration.
+     *
+     * @param configuration is the configuration singleton
+     * @return a Prometheus configuration singleton
+     */
     @Singleton
     @Provides
     static PrometheusConfig providePrometheusConfig(@NonNull Configuration configuration) {
         return configuration.getConfigData(PrometheusConfig.class);
     }
 
+    /**
+     * Provides a consumer configuration singleton using the configuration.
+     *
+     * @param configuration is the configuration singleton
+     * @return a consumer configuration singleton
+     */
     @Singleton
     @Provides
     static ConsumerConfig provideConsumerConfig(@NonNull Configuration configuration) {
         return configuration.getConfigData(ConsumerConfig.class);
     }
 
+    /**
+     * Provides a basic common configuration singleton using the configuration.
+     *
+     * @param configuration is the configuration singleton
+     * @return a basic common configuration singleton
+     */
     @Singleton
     @Provides
     static BasicCommonConfig provideBasicCommonConfig(@NonNull Configuration configuration) {
