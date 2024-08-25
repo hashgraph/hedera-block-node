@@ -17,13 +17,15 @@
 package com.hedera.block.server;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.util.TestConfigUtil;
+import java.io.IOException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class BlockNodeAppInjectionModuleTest {
     @Test
-    void testProvideBlockNodeContext() {
-        BlockNodeContext blockNodeContext = BlockNodeAppInjectionModule.provideBlockNodeContext();
+    void testProvideBlockNodeContext() throws IOException {
+        BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         Assertions.assertNotNull(blockNodeContext);
         Assertions.assertNotNull(blockNodeContext.configuration());
