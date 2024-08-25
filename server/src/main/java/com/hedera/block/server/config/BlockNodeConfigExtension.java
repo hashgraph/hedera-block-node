@@ -19,7 +19,6 @@ package com.hedera.block.server.config;
 import com.google.auto.service.AutoService;
 import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.swirlds.common.config.BasicCommonConfig;
 import com.swirlds.common.metrics.config.MetricsConfig;
 import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.ConfigurationExtension;
@@ -44,7 +43,6 @@ public class BlockNodeConfigExtension implements ConfigurationExtension {
     @Override
     public Set<Class<? extends Record>> getConfigDataTypes() {
         return Set.of(
-                BasicCommonConfig.class,
                 MetricsConfig.class,
                 PrometheusConfig.class,
                 ConsumerConfig.class,

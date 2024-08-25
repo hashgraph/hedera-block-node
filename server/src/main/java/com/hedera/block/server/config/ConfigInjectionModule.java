@@ -18,7 +18,6 @@ package com.hedera.block.server.config;
 
 import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.swirlds.common.config.BasicCommonConfig;
 import com.swirlds.common.metrics.config.MetricsConfig;
 import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.Configuration;
@@ -81,17 +80,5 @@ public interface ConfigInjectionModule {
     @Provides
     static ConsumerConfig provideConsumerConfig(@NonNull Configuration configuration) {
         return configuration.getConfigData(ConsumerConfig.class);
-    }
-
-    /**
-     * Provides a basic common configuration singleton using the configuration.
-     *
-     * @param configuration is the configuration singleton
-     * @return a basic common configuration singleton
-     */
-    @Singleton
-    @Provides
-    static BasicCommonConfig provideBasicCommonConfig(@NonNull Configuration configuration) {
-        return configuration.getConfigData(BasicCommonConfig.class);
     }
 }
