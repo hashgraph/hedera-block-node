@@ -18,4 +18,50 @@ package com.hedera.block.server.persistence;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class PersistenceInjectionModuleTest {}
+import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.read.BlockReader;
+import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
+import java.io.IOException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class PersistenceInjectionModuleTest {
+
+    @Mock private BlockNodeContext blockNodeContext;
+
+    @Mock private PersistenceStorageConfig persistenceStorageConfig;
+
+    @BeforeEach
+    void setup() throws IOException {
+        // Setup any necessary mocks before each test
+        blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
+        persistenceStorageConfig =
+                blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
+    }
+
+    @Test
+    void testProvidesBlockWriter() {
+
+        BlockWriter<BlockItem> blockWriter =
+                PersistenceInjectionModule.providesBlockWriter(blockNodeContext);
+
+        assertNotNull(blockWriter);
+    }
+
+    @Test
+    void testProvidesBlockReader() {
+
+        BlockReader<Block> blockReader =
+                PersistenceInjectionModule.providesBlockReader(persistenceStorageConfig);
+
+        assertNotNull(blockReader);
+    }
+}
