@@ -29,7 +29,6 @@ class BlockNodeAppInjectionModuleTest {
 
         Assertions.assertNotNull(blockNodeContext);
         Assertions.assertNotNull(blockNodeContext.configuration());
-        Assertions.assertNotNull(blockNodeContext.metrics());
         Assertions.assertNotNull(blockNodeContext.metricsService());
     }
 }

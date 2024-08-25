@@ -62,7 +62,7 @@ public class TestConfigUtil {
 
         MetricsService metricsService = new MetricsService(metrics);
 
-        return new BlockNodeContext(metrics, metricsService, testConfiguration);
+        return new BlockNodeContext(metricsService, testConfiguration);
     }
 
     public static BlockNodeContext getTestBlockNodeContext() throws IOException {

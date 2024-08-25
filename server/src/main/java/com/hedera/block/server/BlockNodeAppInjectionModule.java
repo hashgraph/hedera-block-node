@@ -17,7 +17,6 @@
 package com.hedera.block.server;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
@@ -26,7 +25,6 @@ import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.swirlds.config.api.Configuration;
-import com.swirlds.metrics.api.Metrics;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
@@ -52,15 +50,15 @@ public interface BlockNodeAppInjectionModule {
     ServiceStatus bindServiceStatus(ServiceStatusImpl serviceStatus);
 
     /**
-     * Provides a block node context singleton using the factory.
+     * Provides a block node context singleton.
      *
      * @return a block node context singleton
      */
     @Singleton
     @Provides
     static BlockNodeContext provideBlockNodeContext(
-            Configuration config, Metrics metrics, MetricsService metricsService) {
-        return BlockNodeContextFactory.create(config, metrics, metricsService);
+            Configuration config, MetricsService metricsService) {
+        return new BlockNodeContext(metricsService, config);
     }
 
     /**
