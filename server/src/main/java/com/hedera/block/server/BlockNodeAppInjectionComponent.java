@@ -20,7 +20,7 @@ import com.hedera.block.server.config.ConfigInjectionModule;
 import com.hedera.block.server.health.HealthInjectionModule;
 import com.hedera.block.server.mediator.MediatorInjectionModule;
 import com.hedera.block.server.metrics.MetricsInjectionModule;
-import com.hedera.block.server.persistence.storage.PersistenceInjectionModule;
+import com.hedera.block.server.persistence.PersistenceInjectionModule;
 import com.swirlds.config.api.Configuration;
 import dagger.BindsInstance;
 import dagger.Component;

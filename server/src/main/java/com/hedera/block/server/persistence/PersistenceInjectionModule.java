@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage;
+package com.hedera.block.server.persistence;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
