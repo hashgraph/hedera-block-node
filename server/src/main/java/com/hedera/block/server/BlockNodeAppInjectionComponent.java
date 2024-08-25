@@ -21,6 +21,8 @@ import com.hedera.block.server.health.HealthInjectionModule;
 import com.hedera.block.server.mediator.MediatorInjectionModule;
 import com.hedera.block.server.metrics.MetricsInjectionModule;
 import com.hedera.block.server.persistence.storage.PersistenceInjectionModule;
+import com.swirlds.config.api.Configuration;
+import dagger.BindsInstance;
 import dagger.Component;
 import javax.inject.Singleton;
 
@@ -42,4 +44,30 @@ public interface BlockNodeAppInjectionComponent {
      * @return the block node app server
      */
     BlockNodeApp getBlockNodeApp();
+
+    //    @Component.Factory
+    //    interface Factory {
+    //        BlockNodeAppInjectionComponent create(@BindsInstance Configuration configuration);
+    //    }
+
+    /** Builder for the BlockNodeAppInjectionComponent. */
+    @Component.Builder
+    interface Builder {
+
+        /**
+         * Bind the configuration to the BlockNodeAppInjectionComponent.
+         *
+         * @param configuration the configuration
+         * @return the BlockNodeAppInjectionComponentBuilder
+         */
+        @BindsInstance
+        Builder configuration(Configuration configuration);
+
+        /**
+         * Build the BlockNodeAppInjectionComponent.
+         *
+         * @return the BlockNodeAppInjectionComponent
+         */
+        BlockNodeAppInjectionComponent build();
+    }
 }

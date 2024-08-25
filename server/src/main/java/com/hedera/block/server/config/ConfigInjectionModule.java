@@ -22,15 +22,9 @@ import com.swirlds.common.config.BasicCommonConfig;
 import com.swirlds.common.metrics.config.MetricsConfig;
 import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.Configuration;
-import com.swirlds.config.api.ConfigurationBuilder;
-import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
-import com.swirlds.config.extensions.sources.SystemEnvironmentConfigSource;
-import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import dagger.Module;
 import dagger.Provides;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.IOException;
-import java.nio.file.Path;
 import javax.inject.Singleton;
 
 /**
@@ -39,30 +33,6 @@ import javax.inject.Singleton;
  */
 @Module
 public interface ConfigInjectionModule {
-
-    /** The application properties file name within the resources package. */
-    String APPLICATION_PROPERTIES = "app.properties";
-
-    /**
-     * Provides a configuration singleton using the configuration builder. Injected by the DI
-     * Framework.
-     *
-     * @return a configuration singleton
-     */
-    @Singleton
-    @Provides
-    static Configuration provideConfiguration() {
-        try {
-            return ConfigurationBuilder.create()
-                    .withSource(SystemEnvironmentConfigSource.getInstance())
-                    .withSource(SystemPropertiesConfigSource.getInstance())
-                    .withSource(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES)))
-                    .autoDiscoverExtensions()
-                    .build();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create configuration", e);
-        }
-    }
 
     /**
      * Provides a persistence storage configuration singleton using the configuration.
