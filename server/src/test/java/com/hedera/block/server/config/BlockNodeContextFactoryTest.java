@@ -16,8 +16,6 @@
 
 package com.hedera.block.server.config;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.hedera.block.server.util.TestConfigUtil;
 import java.io.IOException;
 import org.junit.jupiter.api.Assertions;

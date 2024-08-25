@@ -30,7 +30,6 @@ import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
@@ -80,7 +79,6 @@ public class LiveStreamMediatorImplTest {
 
     private static final int testTimeout = 200;
 
-    private final ConsumerConfig consumerConfig = new ConsumerConfig(TIMEOUT_THRESHOLD_MILLIS);
     private final BlockNodeContext testContext;
 
     public LiveStreamMediatorImplTest() throws IOException {
@@ -158,7 +156,7 @@ public class LiveStreamMediatorImplTest {
     }
 
     @Test
-    public void testMediatorPublishEventToSubscribers() throws IOException, InterruptedException {
+    public void testMediatorPublishEventToSubscribers() throws IOException {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediator =
@@ -325,7 +323,7 @@ public class LiveStreamMediatorImplTest {
     }
 
     @Test
-    public void testMediatorBlocksPublishAfterException() throws IOException, InterruptedException {
+    public void testMediatorBlocksPublishAfterException() throws IOException {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(
