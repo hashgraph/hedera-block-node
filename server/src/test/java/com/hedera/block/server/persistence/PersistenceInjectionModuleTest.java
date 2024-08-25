@@ -17,6 +17,8 @@
 package com.hedera.block.server.persistence;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
@@ -25,6 +27,7 @@ import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.swirlds.config.api.Configuration;
 import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,6 +57,26 @@ class PersistenceInjectionModuleTest {
                 PersistenceInjectionModule.providesBlockWriter(blockNodeContext);
 
         assertNotNull(blockWriter);
+    }
+
+    @Test
+    void testProvidesBlockWriter_IOException() {
+        BlockNodeContext blockNodeContext = mock(BlockNodeContext.class);
+        PersistenceStorageConfig persistenceStorageConfig = mock(PersistenceStorageConfig.class);
+        when(persistenceStorageConfig.rootPath()).thenReturn("invalid-path*9/////+>");
+        Configuration configuration = mock(Configuration.class);
+        when(blockNodeContext.configuration()).thenReturn(configuration);
+        when(configuration.getConfigData(PersistenceStorageConfig.class))
+                .thenReturn(persistenceStorageConfig);
+
+        // Expect a RuntimeException due to the IOException
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> PersistenceInjectionModule.providesBlockWriter(blockNodeContext));
+
+        // Verify the exception message
+        assertTrue(exception.getMessage().contains("Failed to create block writer"));
     }
 
     @Test
