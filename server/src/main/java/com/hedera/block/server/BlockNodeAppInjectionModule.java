@@ -52,6 +52,8 @@ public interface BlockNodeAppInjectionModule {
     /**
      * Provides a block node context singleton.
      *
+     * @param config should come from DI
+     * @param metricsService should come from DI
      * @return a block node context singleton
      */
     @Singleton

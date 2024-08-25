@@ -23,15 +23,28 @@ import dagger.Module;
 import dagger.Provides;
 import javax.inject.Singleton;
 
+/** The module used to inject the metrics service and metrics into the application. */
 @Module
 public interface MetricsInjectionModule {
 
+    /**
+     * Provides the metrics service.
+     *
+     * @param metrics the metrics to be used by the service
+     * @return the metrics service
+     */
     @Singleton
     @Provides
     static MetricsService provideMetricsService(Metrics metrics) {
         return new MetricsService(metrics);
     }
 
+    /**
+     * Provides the metrics.
+     *
+     * @param configuration the configuration to be used by the metrics
+     * @return the metrics
+     */
     @Singleton
     @Provides
     static Metrics provideMetrics(Configuration configuration) {
