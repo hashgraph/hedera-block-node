@@ -55,10 +55,8 @@ public class Server {
 
         // Init Dagger DI Component, passing in the configuration.
         // this is where all the dependencies are wired up (magic happens)
-        //        final BlockNodeAppInjectionComponent daggerComponent =
-        //                DaggerBlockNodeAppInjectionComponent.factory().create(configuration);
         final BlockNodeAppInjectionComponent daggerComponent =
-                DaggerBlockNodeAppInjectionComponent.builder().configuration(configuration).build();
+                DaggerBlockNodeAppInjectionComponent.factory().create(configuration);
 
         // Use Dagger DI Component to start the BlockNodeApp with all wired dependencies
         final BlockNodeApp blockNodeApp = daggerComponent.getBlockNodeApp();

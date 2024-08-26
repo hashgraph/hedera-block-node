@@ -45,29 +45,18 @@ public interface BlockNodeAppInjectionComponent {
      */
     BlockNodeApp getBlockNodeApp();
 
-    //    @Component.Factory
-    //    interface Factory {
-    //        BlockNodeAppInjectionComponent create(@BindsInstance Configuration configuration);
-    //    }
-
-    /** Builder for the BlockNodeAppInjectionComponent. */
-    @Component.Builder
-    interface Builder {
-
+    /**
+     * Factory for the block node app injection component, needs a configuration to create the
+     * component and the block node app with all the wired dependencies.
+     */
+    @Component.Factory
+    interface Factory {
         /**
-         * Bind the configuration to the BlockNodeAppInjectionComponent.
+         * Create the block node app injection component.
          *
          * @param configuration the configuration
-         * @return the BlockNodeAppInjectionComponentBuilder
+         * @return the block node app injection component
          */
-        @BindsInstance
-        Builder configuration(Configuration configuration);
-
-        /**
-         * Build the BlockNodeAppInjectionComponent.
-         *
-         * @return the BlockNodeAppInjectionComponent
-         */
-        BlockNodeAppInjectionComponent build();
+        BlockNodeAppInjectionComponent create(@BindsInstance Configuration configuration);
     }
 }
