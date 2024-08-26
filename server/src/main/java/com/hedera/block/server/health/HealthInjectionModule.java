@@ -18,7 +18,6 @@ package com.hedera.block.server.health;
 
 import dagger.Binds;
 import dagger.Module;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.inject.Singleton;
 
 /**
@@ -36,5 +35,5 @@ public interface HealthInjectionModule {
      */
     @Singleton
     @Binds
-    HealthService bindHealthService(@NonNull HealthServiceImpl healthService);
+    HealthService bindHealthService(HealthServiceImpl healthService);
 }

@@ -24,6 +24,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.WebServerConfig;
 import io.helidon.webserver.grpc.GrpcRouting;
+import io.helidon.webserver.grpc.GrpcService;
 import io.helidon.webserver.http.HttpRouting;
 import java.io.IOException;
 import javax.inject.Inject;
@@ -40,7 +41,7 @@ public class BlockNodeApp {
 
     private final ServiceStatus serviceStatus;
     private final HealthService healthService;
-    private final BlockStreamService blockStreamService;
+    private final GrpcService blockStreamService;
     private final WebServerConfig.Builder webServerBuilder;
 
     /**
@@ -55,7 +56,7 @@ public class BlockNodeApp {
     public BlockNodeApp(
             @NonNull ServiceStatus serviceStatus,
             @NonNull HealthService healthService,
-            @NonNull BlockStreamService blockStreamService,
+            @NonNull GrpcService blockStreamService,
             @NonNull WebServerConfig.Builder webServerBuilder) {
         this.serviceStatus = serviceStatus;
         this.healthService = healthService;

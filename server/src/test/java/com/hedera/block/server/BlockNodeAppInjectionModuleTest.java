@@ -64,15 +64,6 @@ class BlockNodeAppInjectionModuleTest {
     }
 
     @Test
-    void testProvideBlockStreamService() {
-        BlockStreamService blockStreamService =
-                BlockNodeAppInjectionModule.provideBlockStreamService(
-                        streamMediator, blockReader, serviceStatus, blockNodeContext);
-
-        Assertions.assertNotNull(blockStreamService);
-    }
-
-    @Test
     void testProvideWebServerConfigBuilder() {
         WebServerConfig.Builder webServerConfigBuilder =
                 BlockNodeAppInjectionModule.provideWebServerConfigBuilder();

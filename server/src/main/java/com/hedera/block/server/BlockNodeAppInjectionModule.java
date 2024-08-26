@@ -17,19 +17,13 @@
 package com.hedera.block.server;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.data.ObjectEvent;
-import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.persistence.storage.read.BlockReader;
-import com.hedera.hapi.block.SubscribeStreamResponse;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
 import com.swirlds.config.api.Configuration;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServerConfig;
+import io.helidon.webserver.grpc.GrpcService;
 import javax.inject.Singleton;
 
 /**
@@ -66,23 +60,12 @@ public interface BlockNodeAppInjectionModule {
     /**
      * Provides a block stream service singleton using DI.
      *
-     * @param streamMediator should come from DI
-     * @param blockReader should come from DI
-     * @param serviceStatus should come from DI
-     * @param blockNodeContext should come from DI
+     * @param blockStreamService should come from DI
      * @return a block stream service singleton
      */
     @Singleton
-    @Provides
-    static BlockStreamService provideBlockStreamService(
-            @NonNull
-                    final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
-                            streamMediator,
-            @NonNull final BlockReader<Block> blockReader,
-            @NonNull final ServiceStatus serviceStatus,
-            @NonNull final BlockNodeContext blockNodeContext) {
-        return new BlockStreamService(streamMediator, blockReader, serviceStatus, blockNodeContext);
-    }
+    @Binds
+    GrpcService bindBlockStreamService(BlockStreamService blockStreamService);
 
     /**
      * Provides a web server config builder singleton using DI.

@@ -26,7 +26,6 @@ import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import dagger.Module;
 import dagger.Provides;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import javax.inject.Singleton;
 
@@ -42,7 +41,7 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static BlockWriter<BlockItem> providesBlockWriter(@NonNull BlockNodeContext blockNodeContext) {
+    static BlockWriter<BlockItem> providesBlockWriter(BlockNodeContext blockNodeContext) {
         try {
             return BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         } catch (IOException e) {
@@ -58,7 +57,7 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static BlockReader<Block> providesBlockReader(@NonNull PersistenceStorageConfig config) {
+    static BlockReader<Block> providesBlockReader(PersistenceStorageConfig config) {
         return BlockAsDirReaderBuilder.newBuilder(config).build();
     }
 }

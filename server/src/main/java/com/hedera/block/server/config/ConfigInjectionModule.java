@@ -23,7 +23,6 @@ import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.Configuration;
 import dagger.Module;
 import dagger.Provides;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.inject.Singleton;
 
 /**
@@ -41,8 +40,7 @@ public interface ConfigInjectionModule {
      */
     @Singleton
     @Provides
-    static PersistenceStorageConfig providePersistenceStorageConfig(
-            @NonNull Configuration configuration) {
+    static PersistenceStorageConfig providePersistenceStorageConfig(Configuration configuration) {
         return configuration.getConfigData(PersistenceStorageConfig.class);
     }
 
@@ -54,7 +52,7 @@ public interface ConfigInjectionModule {
      */
     @Singleton
     @Provides
-    static MetricsConfig provideMetricsConfig(@NonNull Configuration configuration) {
+    static MetricsConfig provideMetricsConfig(Configuration configuration) {
         return configuration.getConfigData(MetricsConfig.class);
     }
 
@@ -66,7 +64,7 @@ public interface ConfigInjectionModule {
      */
     @Singleton
     @Provides
-    static PrometheusConfig providePrometheusConfig(@NonNull Configuration configuration) {
+    static PrometheusConfig providePrometheusConfig(Configuration configuration) {
         return configuration.getConfigData(PrometheusConfig.class);
     }
 
@@ -78,7 +76,7 @@ public interface ConfigInjectionModule {
      */
     @Singleton
     @Provides
-    static ConsumerConfig provideConsumerConfig(@NonNull Configuration configuration) {
+    static ConsumerConfig provideConsumerConfig(Configuration configuration) {
         return configuration.getConfigData(ConsumerConfig.class);
     }
 }
