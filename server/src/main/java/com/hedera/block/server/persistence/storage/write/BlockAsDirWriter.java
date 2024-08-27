@@ -163,7 +163,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
 
         // Increment the block counter
         final MetricsService metricsService = blockNodeContext.metricsService();
-        metricsService.blocksPersisted.increment();
+        metricsService.blocksPersisted().increment();
     }
 
     private void repairPermissions(@NonNull final Path path) throws IOException {

@@ -32,11 +32,11 @@ class MetricsServiceTest {
         Counter liveBlockItems = mock(Counter.class);
         when(metrics.getOrCreate(any(Counter.Config.class))).thenReturn(liveBlockItems);
 
-        MetricsService service = new MetricsService(metrics);
+        MetricsService service = new MetricsServiceImpl(metrics);
 
-        assertEquals(liveBlockItems, service.liveBlockItems);
+        assertEquals(liveBlockItems, service.liveBlockItems());
 
-        service.liveBlockItems.increment();
+        service.liveBlockItems().increment();
         verify(liveBlockItems, times(1)).increment();
     }
 
@@ -46,11 +46,11 @@ class MetricsServiceTest {
         Counter blocksPersisted = mock(Counter.class);
         when(metrics.getOrCreate(any(Counter.Config.class))).thenReturn(blocksPersisted);
 
-        MetricsService service = new MetricsService(metrics);
+        MetricsService service = new MetricsServiceImpl(metrics);
 
-        assertEquals(blocksPersisted, service.blocksPersisted);
+        assertEquals(blocksPersisted, service.blocksPersisted());
 
-        service.blocksPersisted.increment();
+        service.blocksPersisted().increment();
         verify(blocksPersisted, times(1)).increment();
     }
 
@@ -60,11 +60,11 @@ class MetricsServiceTest {
         Counter singleBlocksRetrieved = mock(Counter.class);
         when(metrics.getOrCreate(any(Counter.Config.class))).thenReturn(singleBlocksRetrieved);
 
-        MetricsService service = new MetricsService(metrics);
+        MetricsService service = new MetricsServiceImpl(metrics);
 
-        assertEquals(singleBlocksRetrieved, service.singleBlocksRetrieved);
+        assertEquals(singleBlocksRetrieved, service.singleBlocksRetrieved());
 
-        service.singleBlocksRetrieved.increment();
+        service.singleBlocksRetrieved().increment();
         verify(singleBlocksRetrieved, times(1)).increment();
     }
 
@@ -74,11 +74,11 @@ class MetricsServiceTest {
         LongGauge subscribers = mock(LongGauge.class);
         when(metrics.getOrCreate(any(LongGauge.Config.class))).thenReturn(subscribers);
 
-        MetricsService service = new MetricsService(metrics);
+        MetricsService service = new MetricsServiceImpl(metrics);
 
-        assertEquals(subscribers, service.subscribers);
+        assertEquals(subscribers, service.subscribers());
 
-        service.subscribers.set(5);
+        service.subscribers().set(5);
         verify(subscribers, times(1)).set(5);
     }
 }

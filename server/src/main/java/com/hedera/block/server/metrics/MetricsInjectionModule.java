@@ -19,6 +19,7 @@ package com.hedera.block.server.metrics;
 import com.swirlds.common.metrics.platform.DefaultMetricsProvider;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.metrics.api.Metrics;
+import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import javax.inject.Singleton;
@@ -30,14 +31,12 @@ public interface MetricsInjectionModule {
     /**
      * Provides the metrics service.
      *
-     * @param metrics the metrics to be used by the service
+     * @param metricsService the metrics service to be used
      * @return the metrics service
      */
     @Singleton
-    @Provides
-    static MetricsService provideMetricsService(Metrics metrics) {
-        return new MetricsService(metrics);
-    }
+    @Binds
+    MetricsService bindMetricsService(MetricsServiceImpl metricsService);
 
     /**
      * Provides the metrics.
