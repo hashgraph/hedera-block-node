@@ -30,8 +30,6 @@ import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.config.BlockNodeContextFactory;
-import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
@@ -81,7 +79,6 @@ public class LiveStreamMediatorImplTest {
 
     private static final int testTimeout = 200;
 
-    private final ConsumerConfig consumerConfig = new ConsumerConfig(TIMEOUT_THRESHOLD_MILLIS);
     private final BlockNodeContext testContext;
 
     public LiveStreamMediatorImplTest() throws IOException {
@@ -95,7 +92,7 @@ public class LiveStreamMediatorImplTest {
     @Test
     public void testUnsubscribeEach() throws InterruptedException, IOException {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediatorBuilder =
                 LiveStreamMediatorBuilder.newBuilder(
                         blockWriter, blockNodeContext, new ServiceStatusImpl());
@@ -140,7 +137,7 @@ public class LiveStreamMediatorImplTest {
     @Test
     public void testMediatorPersistenceWithoutSubscribers() throws IOException {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(
                                 blockWriter, blockNodeContext, new ServiceStatusImpl())
@@ -159,9 +156,9 @@ public class LiveStreamMediatorImplTest {
     }
 
     @Test
-    public void testMediatorPublishEventToSubscribers() throws IOException, InterruptedException {
+    public void testMediatorPublishEventToSubscribers() throws IOException {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(
                                 blockWriter, blockNodeContext, new ServiceStatusImpl())
@@ -221,7 +218,7 @@ public class LiveStreamMediatorImplTest {
     @Test
     public void testSubAndUnsubHandling() throws IOException {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(
                                 blockWriter, blockNodeContext, new ServiceStatusImpl())
@@ -257,7 +254,7 @@ public class LiveStreamMediatorImplTest {
     @Test
     public void testOnCancelSubscriptionHandling() throws IOException {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(
                                 blockWriter, blockNodeContext, new ServiceStatusImpl())
@@ -292,7 +289,7 @@ public class LiveStreamMediatorImplTest {
     @Test
     public void testOnCloseSubscriptionHandling() throws IOException {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(
                                 blockWriter, blockNodeContext, new ServiceStatusImpl())
@@ -326,8 +323,8 @@ public class LiveStreamMediatorImplTest {
     }
 
     @Test
-    public void testMediatorBlocksPublishAfterException() throws IOException, InterruptedException {
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+    public void testMediatorBlocksPublishAfterException() throws IOException {
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(
                                 blockWriter, blockNodeContext, new ServiceStatusImpl())
@@ -362,7 +359,7 @@ public class LiveStreamMediatorImplTest {
     @Test
     public void testUnsubscribeWhenNotSubscribed() throws IOException {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(
                                 blockWriter, blockNodeContext, new ServiceStatusImpl())

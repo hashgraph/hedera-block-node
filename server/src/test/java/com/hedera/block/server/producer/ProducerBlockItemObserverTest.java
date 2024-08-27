@@ -32,7 +32,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
@@ -118,7 +117,7 @@ public class ProducerBlockItemObserverTest {
     @Test
     public void testProducerWithManyConsumers() throws IOException {
 
-        final BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(
                                 blockWriter, blockNodeContext, new ServiceStatusImpl())

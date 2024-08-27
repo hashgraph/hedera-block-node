@@ -17,11 +17,13 @@
 package com.hedera.block.server.util;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.config.BlockNodeContextFactory;
 import com.hedera.block.server.config.TestConfigBuilder;
 import com.hedera.block.server.consumer.ConsumerConfig;
+import com.hedera.block.server.metrics.MetricsService;
+import com.swirlds.common.metrics.platform.DefaultMetricsProvider;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
+import com.swirlds.metrics.api.Metrics;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -40,11 +42,6 @@ public class TestConfigUtil {
     public static BlockNodeContext getTestBlockNodeContext(
             @NonNull Map<String, String> customProperties) throws IOException {
 
-        // we still use the BlockNodeContextFactory to create the BlockNodeContext temporally,
-        // but we will replace the configuration with a test configuration
-        // sooner we will need to create a metrics mock, and never use the BlockNodeContextFactory.
-        BlockNodeContext blockNodeContext = BlockNodeContextFactory.create();
-
         // create test configuration
         TestConfigBuilder testConfigBuilder =
                 new TestConfigBuilder(true)
@@ -61,11 +58,22 @@ public class TestConfigUtil {
 
         Configuration testConfiguration = testConfigBuilder.getOrCreateConfig();
 
-        return new BlockNodeContext(
-                blockNodeContext.metrics(), blockNodeContext.metricsService(), testConfiguration);
+        Metrics metrics = getTestMetrics(testConfiguration);
+
+        MetricsService metricsService = new MetricsService(metrics);
+
+        return new BlockNodeContext(metricsService, testConfiguration);
     }
 
     public static BlockNodeContext getTestBlockNodeContext() throws IOException {
         return getTestBlockNodeContext(Collections.emptyMap());
+    }
+
+    // TODO: we need to create a Mock metrics, and avoid using the real metrics for tests
+    public static Metrics getTestMetrics(@NonNull Configuration configuration) {
+        final DefaultMetricsProvider metricsProvider = new DefaultMetricsProvider(configuration);
+        final Metrics metrics = metricsProvider.createGlobalMetrics();
+        metricsProvider.start();
+        return metrics;
     }
 }

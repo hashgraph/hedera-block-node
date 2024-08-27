@@ -10,8 +10,10 @@ module com.hedera.block.server {
     exports com.hedera.block.server.persistence.storage.remove;
     exports com.hedera.block.server.config;
     exports com.hedera.block.server.mediator;
+    exports com.hedera.block.server.metrics;
     exports com.hedera.block.server.data;
     exports com.hedera.block.server.health;
+    exports com.hedera.block.server.persistence;
 
     requires com.hedera.block.stream;
     requires com.google.protobuf;

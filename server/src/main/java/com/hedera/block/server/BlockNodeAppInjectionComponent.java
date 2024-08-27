@@ -16,7 +16,13 @@
 
 package com.hedera.block.server;
 
+import com.hedera.block.server.config.ConfigInjectionModule;
 import com.hedera.block.server.health.HealthInjectionModule;
+import com.hedera.block.server.mediator.MediatorInjectionModule;
+import com.hedera.block.server.metrics.MetricsInjectionModule;
+import com.hedera.block.server.persistence.PersistenceInjectionModule;
+import com.swirlds.config.api.Configuration;
+import dagger.BindsInstance;
 import dagger.Component;
 import javax.inject.Singleton;
 
@@ -26,6 +32,10 @@ import javax.inject.Singleton;
         modules = {
             BlockNodeAppInjectionModule.class,
             HealthInjectionModule.class,
+            PersistenceInjectionModule.class,
+            MediatorInjectionModule.class,
+            ConfigInjectionModule.class,
+            MetricsInjectionModule.class,
         })
 public interface BlockNodeAppInjectionComponent {
     /**
@@ -34,4 +44,19 @@ public interface BlockNodeAppInjectionComponent {
      * @return the block node app server
      */
     BlockNodeApp getBlockNodeApp();
+
+    /**
+     * Factory for the block node app injection component, needs a configuration to create the
+     * component and the block node app with all the wired dependencies.
+     */
+    @Component.Factory
+    interface Factory {
+        /**
+         * Create the block node app injection component.
+         *
+         * @param configuration the configuration
+         * @return the block node app injection component
+         */
+        BlockNodeAppInjectionComponent create(@BindsInstance Configuration configuration);
+    }
 }

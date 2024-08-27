@@ -17,11 +17,13 @@
 package com.hedera.block.server;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.config.BlockNodeContextFactory;
+import com.hedera.block.server.metrics.MetricsService;
+import com.swirlds.config.api.Configuration;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
-import java.io.IOException;
+import io.helidon.webserver.WebServerConfig;
+import io.helidon.webserver.grpc.GrpcService;
 import javax.inject.Singleton;
 
 /**
@@ -42,17 +44,37 @@ public interface BlockNodeAppInjectionModule {
     ServiceStatus bindServiceStatus(ServiceStatusImpl serviceStatus);
 
     /**
-     * Provides a block node context singleton using the factory.
+     * Provides a block node context singleton.
      *
+     * @param config should come from DI
+     * @param metricsService should come from DI
      * @return a block node context singleton
      */
-    @Provides
     @Singleton
-    static BlockNodeContext provideBlockNodeContext() {
-        try {
-            return BlockNodeContextFactory.create();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    @Provides
+    static BlockNodeContext provideBlockNodeContext(
+            Configuration config, MetricsService metricsService) {
+        return new BlockNodeContext(metricsService, config);
+    }
+
+    /**
+     * Provides a block stream service singleton using DI.
+     *
+     * @param blockStreamService should come from DI
+     * @return a block stream service singleton
+     */
+    @Singleton
+    @Binds
+    GrpcService bindBlockStreamService(BlockStreamService blockStreamService);
+
+    /**
+     * Provides a web server config builder singleton using DI.
+     *
+     * @return a web server config builder singleton
+     */
+    @Singleton
+    @Provides
+    static WebServerConfig.Builder provideWebServerConfigBuilder() {
+        return WebServerConfig.builder();
     }
 }
