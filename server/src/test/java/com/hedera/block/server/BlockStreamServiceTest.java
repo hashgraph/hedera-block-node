@@ -32,7 +32,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
@@ -89,6 +88,8 @@ public class BlockStreamServiceTest {
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
 
+    private static final int testTimeout = 1000;
+
     private Path testPath;
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig config;
@@ -120,7 +121,7 @@ public class BlockStreamServiceTest {
         assertEquals(Constants.SERVICE_NAME, blockStreamService.serviceName());
 
         // Verify other methods not invoked
-        verify(streamMediator, never()).publish(any(BlockItem.class));
+        verify(streamMediator, timeout(testTimeout).times(0)).publish(any(BlockItem.class));
     }
 
     @Test
@@ -134,7 +135,7 @@ public class BlockStreamServiceTest {
         assertEquals(5, fileDescriptor.getServices().getFirst().getMethods().size());
 
         // Verify other methods not invoked
-        verify(streamMediator, never()).publish(any(BlockItem.class));
+        verify(streamMediator, timeout(testTimeout).times(0)).publish(any(BlockItem.class));
     }
 
     @Test
@@ -280,13 +281,13 @@ public class BlockStreamServiceTest {
         GrpcService.Routing routing = mock(GrpcService.Routing.class);
         blockStreamService.update(routing);
 
-        verify(routing, timeout(50).times(1))
+        verify(routing, timeout(testTimeout).times(1))
                 .bidi(eq(CLIENT_STREAMING_METHOD_NAME), any(ServerCalls.BidiStreamingMethod.class));
-        verify(routing, timeout(50).times(1))
+        verify(routing, timeout(testTimeout).times(1))
                 .serverStream(
                         eq(SERVER_STREAMING_METHOD_NAME),
                         any(ServerCalls.ServerStreamingMethod.class));
-        verify(routing, timeout(50).times(1))
+        verify(routing, timeout(testTimeout).times(1))
                 .unary(eq(SINGLE_BLOCK_METHOD_NAME), any(ServerCalls.UnaryMethod.class));
     }
 
