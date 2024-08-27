@@ -31,9 +31,6 @@ gradleEnterprise {
     }
 }
 
-// The HAPI API version to use for Protobuf sources.
-val hapiProtoVersion = "0.53.0"
-
 dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
@@ -45,9 +42,8 @@ dependencyResolutionManagement {
             val daggerVersion = "2.42"
 
             // Compile time dependencies
-            version("com.google.protobuf", "3.24.0")
-            version("io.helidon.webserver.http2", "4.0.11")
-            version("io.helidon.webserver.grpc", "4.0.11")
+            version("io.helidon.webserver.http2", "4.1.0")
+            version("io.helidon.webserver.grpc", "4.1.0")
             version("com.lmax.disruptor", "4.0.0")
             version("com.github.spotbugs.annotations", "4.7.3")
             version("com.swirlds.metrics.api", swirldsVersion)
@@ -60,21 +56,26 @@ dependencyResolutionManagement {
             version("com.google.auto.service", "1.1.1")
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
 
-            // PBJ dependencies
-            version("io.grpc", "1.64.0")
-            version("io.grpc.protobuf", "1.64.0")
-            version("io.grpc.stub", "1.64.0")
+            // gRPC dependencies
+            version("io.grpc", "1.65.1")
+            version("io.grpc.protobuf", "1.65.1")
+            version("io.grpc.stub", "1.65.1")
 
+            // Reference from the protobuf plugin
+            version("google.proto", "4.27.3")
+            version("grpc.protobuf.grpc", "1.65.1")
+
+            // Google protobuf dependencies
+            version("com.google.protobuf", "4.27.3")
+            version("com.google.protobuf.util", "4.27.3")
+
+            // PBJ dependencies
             plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.9.2")
             version("com.hedera.pbj.runtime", "0.9.2")
             version("org.antlr.antlr4.runtime", "4.13.1")
 
             version("java.annotation", "1.3.2")
             version("javax.inject", "1")
-            version("com.google.protobuf", "3.21.7")
-            version("com.google.protobuf.util", "3.21.7")
-
-            version("hapi-proto", hapiProtoVersion)
             version("com.google.common", "33.0.0-jre")
 
             version("org.apache.commons.codec", "1.15")
@@ -94,8 +95,6 @@ dependencyResolutionManagement {
             version("org.junit.jupiter.api", "5.10.2")
             version("org.mockito", "5.8.0")
             version("org.mockito.junit.jupiter", "5.8.0")
-            version("google.proto", "3.21.10")
-            version("grpc.protobuf.grpc", "1.45.1")
 
         }
     }
