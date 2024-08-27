@@ -166,6 +166,7 @@ public class TestConfigBuilder {
      * @return the created configuration
      */
     @NonNull
+    @SuppressWarnings({"removal"})
     public Configuration getOrCreateConfig() {
         try (final Locked ignore = configLock.lock()) {
             if (configuration == null) {

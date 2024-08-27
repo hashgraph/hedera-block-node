@@ -59,24 +59,28 @@ public class MetricsServiceImpl implements MetricsService {
 
     /** Update the counter of live block items transiting via the live stream. */
     @Override
+    @NonNull
     public final Counter liveBlockItems() {
         return liveBlockItems;
     }
 
     /** Update the counter of blocks persisted to storage. */
     @Override
+    @NonNull
     public final Counter blocksPersisted() {
         return blocksPersisted;
     }
 
     /** Update the counter of single blocks retrieved from storage. */
     @Override
+    @NonNull
     public final Counter singleBlocksRetrieved() {
         return singleBlocksRetrieved;
     }
 
     /** Update the gauge of subscribers currently consuming to the live stream. */
     @Override
+    @NonNull
     public final LongGauge subscribers() {
         return subscribers;
     }

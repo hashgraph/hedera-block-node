@@ -31,6 +31,7 @@ public interface MetricsInjectionModule {
     /**
      * Provides the metrics service.
      *
+     * @param metricsService the metrics service to be used
      * @return the metrics service
      */
     @Singleton

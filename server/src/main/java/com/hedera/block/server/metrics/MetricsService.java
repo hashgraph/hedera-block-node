@@ -19,16 +19,33 @@ package com.hedera.block.server.metrics;
 import com.swirlds.metrics.api.Counter;
 import com.swirlds.metrics.api.LongGauge;
 
+/** Use member variables of this class to update metric data for the Hedera Block Node. */
 public interface MetricsService {
-    /** Update the counter of live block items transiting via the live stream. */
+    /**
+     * Update the counter of live block items transiting via the live stream.
+     *
+     * @return use this metric to increase the counter of block items received
+     */
     Counter liveBlockItems();
 
-    /** Update the counter of blocks persisted to storage. */
+    /**
+     * Update the counter of blocks persisted to storage.
+     *
+     * @return use this counter to increase the amount of blocks persisted to disk
+     */
     Counter blocksPersisted();
 
-    /** Update the counter of single blocks retrieved from storage. */
+    /**
+     * Update the counter of single blocks retrieved from storage.
+     *
+     * @return use this metric to increase the counter of single blocks retrieved
+     */
     Counter singleBlocksRetrieved();
 
-    /** Update the gauge of subscribers currently consuming to the live stream. */
+    /**
+     * Update the gauge of subscribers currently consuming to the live stream.
+     *
+     * @return Use this to increase or decrease the amount of current subscribers to the live stream
+     */
     LongGauge subscribers();
 }
