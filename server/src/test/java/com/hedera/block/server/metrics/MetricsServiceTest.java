@@ -34,9 +34,9 @@ class MetricsServiceTest {
 
         MetricsService service = new MetricsService(metrics);
 
-        assertEquals(liveBlockItems, service.liveBlockItems);
+        assertEquals(liveBlockItems, service.liveBlockItems());
 
-        service.liveBlockItems.increment();
+        service.liveBlockItems().increment();
         verify(liveBlockItems, times(1)).increment();
     }
 
@@ -48,9 +48,9 @@ class MetricsServiceTest {
 
         MetricsService service = new MetricsService(metrics);
 
-        assertEquals(blocksPersisted, service.blocksPersisted);
+        assertEquals(blocksPersisted, service.blocksPersisted());
 
-        service.blocksPersisted.increment();
+        service.blocksPersisted().increment();
         verify(blocksPersisted, times(1)).increment();
     }
 
@@ -62,9 +62,9 @@ class MetricsServiceTest {
 
         MetricsService service = new MetricsService(metrics);
 
-        assertEquals(singleBlocksRetrieved, service.singleBlocksRetrieved);
+        assertEquals(singleBlocksRetrieved, service.singleBlocksRetrieved());
 
-        service.singleBlocksRetrieved.increment();
+        service.singleBlocksRetrieved().increment();
         verify(singleBlocksRetrieved, times(1)).increment();
     }
 
@@ -76,9 +76,9 @@ class MetricsServiceTest {
 
         MetricsService service = new MetricsService(metrics);
 
-        assertEquals(subscribers, service.subscribers);
+        assertEquals(subscribers, service.subscribers());
 
-        service.subscribers.set(5);
+        service.subscribers().set(5);
         verify(subscribers, times(1)).set(5);
     }
 }

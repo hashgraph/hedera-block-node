@@ -48,17 +48,33 @@ public class MetricsService {
             new Counter.Config(CATEGORY, "single_blocks_retrieved")
                     .withDescription("Single Blocks Retrieved");
 
+    private final Counter liveBlockItems;
+
+    private final Counter blocksPersisted;
+
+    private final Counter singleBlocksRetrieved;
+
+    private final LongGauge subscribers;
+
     /** Update the counter of live block items transiting via the live stream. */
-    public final Counter liveBlockItems;
+    public final Counter liveBlockItems() {
+        return liveBlockItems;
+    }
 
     /** Update the counter of blocks persisted to storage. */
-    public final Counter blocksPersisted;
+    public final Counter blocksPersisted() {
+        return blocksPersisted;
+    }
 
     /** Update the counter of single blocks retrieved from storage. */
-    public final Counter singleBlocksRetrieved;
+    public final Counter singleBlocksRetrieved() {
+        return singleBlocksRetrieved;
+    }
 
     /** Update the gauge of subscribers currently consuming to the live stream. */
-    public final LongGauge subscribers;
+    public final LongGauge subscribers() {
+        return subscribers;
+    }
 
     /**
      * Create singleton instance of metrics service to be used throughout the application.
