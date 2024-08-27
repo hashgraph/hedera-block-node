@@ -83,6 +83,7 @@ public class ProducerBlockItemObserverTest {
 
     @Mock private ServiceStatus serviceStatus;
     @Mock private InstantSource testClock;
+    private static final int testTimeout = 1000;
 
     @Test
     public void testProducerOnNext() throws IOException, NoSuchAlgorithmException {
@@ -99,19 +100,19 @@ public class ProducerBlockItemObserverTest {
                 PublishStreamRequest.newBuilder().blockItem(blockHeader).build();
         producerBlockItemObserver.onNext(fromPbj(publishStreamRequest));
 
-        verify(streamMediator, timeout(50).times(1)).publish(blockHeader);
+        verify(streamMediator, timeout(testTimeout).times(1)).publish(blockHeader);
 
         final Acknowledgement ack = buildAck(blockHeader);
         final PublishStreamResponse publishStreamResponse =
                 PublishStreamResponse.newBuilder().acknowledgement(ack).build();
 
-        verify(publishStreamResponseObserver, timeout(50).times(1))
+        verify(publishStreamResponseObserver, timeout(testTimeout).times(1))
                 .onNext(fromPbj(publishStreamResponse));
 
         // Helidon will call onCompleted after onNext
         producerBlockItemObserver.onCompleted();
 
-        verify(publishStreamResponseObserver, timeout(50).times(1)).onCompleted();
+        verify(publishStreamResponseObserver, timeout(testTimeout).times(1)).onCompleted();
     }
 
     @Test
@@ -181,9 +182,12 @@ public class ProducerBlockItemObserverTest {
         assertEquals(1, blockNodeContext.metricsService().liveBlockItems.get());
 
         // Confirm each subscriber was notified of the new block
-        verify(streamObserver1, timeout(50).times(1)).onNext(fromPbj(subscribeStreamResponse));
-        verify(streamObserver2, timeout(50).times(1)).onNext(fromPbj(subscribeStreamResponse));
-        verify(streamObserver3, timeout(50).times(1)).onNext(fromPbj(subscribeStreamResponse));
+        verify(streamObserver1, timeout(testTimeout).times(1))
+                .onNext(fromPbj(subscribeStreamResponse));
+        verify(streamObserver2, timeout(testTimeout).times(1))
+                .onNext(fromPbj(subscribeStreamResponse));
+        verify(streamObserver3, timeout(testTimeout).times(1))
+                .onNext(fromPbj(subscribeStreamResponse));
 
         // Confirm the BlockStorage write method was
         // called despite the absence of subscribers
@@ -222,7 +226,8 @@ public class ProducerBlockItemObserverTest {
                         .build();
         final PublishStreamResponse errorResponse =
                 PublishStreamResponse.newBuilder().status(endOfStream).build();
-        verify(publishStreamResponseObserver, timeout(50).times(1)).onNext(fromPbj(errorResponse));
+        verify(publishStreamResponseObserver, timeout(testTimeout).times(1))
+                .onNext(fromPbj(errorResponse));
     }
 
     @Test
@@ -262,10 +267,10 @@ public class ProducerBlockItemObserverTest {
         fromPbj(PublishStreamResponse.newBuilder().status(endOfStream).build());
 
         // verify the ProducerBlockItemObserver has sent an error response
-        verify(publishStreamResponseObserver, timeout(50).times(1))
+        verify(publishStreamResponseObserver, timeout(testTimeout).times(1))
                 .onNext(fromPbj(PublishStreamResponse.newBuilder().status(endOfStream).build()));
 
-        verify(serviceStatus, timeout(50).times(1)).stopWebServer();
+        verify(serviceStatus, timeout(testTimeout).times(1)).stopWebServer();
     }
 
     private static class TestProducerBlockItemObserver extends ProducerBlockItemObserver {

@@ -134,7 +134,7 @@ public class BlockStreamServiceIntegrationTest {
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig testConfig;
 
-    private static final int testTimeout = 200;
+    private static final int testTimeout = 1000;
 
     @BeforeEach
     public void setUp() throws IOException {

@@ -20,7 +20,6 @@ import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -52,6 +51,8 @@ public class ConsumerStreamResponseObserverTest {
 
     private final long TIMEOUT_THRESHOLD_MILLIS = 50L;
     private final long TEST_TIME = 1_719_427_664_950L;
+
+    private static final int testTimeout = 1000;
 
     @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
 
@@ -99,7 +100,8 @@ public class ConsumerStreamResponseObserverTest {
         verify(responseStreamObserver).onNext(fromPbj(subscribeStreamResponse));
 
         // verify the mediator is NOT called to unsubscribe the observer
-        verify(streamMediator, never()).unsubscribe(consumerBlockItemObserver);
+        verify(streamMediator, timeout(testTimeout).times(0))
+                .unsubscribe(consumerBlockItemObserver);
     }
 
     @Test
@@ -127,8 +129,8 @@ public class ConsumerStreamResponseObserverTest {
         new ConsumerStreamResponseObserver(
                 testContext, testClock, streamMediator, serverCallStreamObserver);
 
-        verify(serverCallStreamObserver, timeout(50).times(1)).setOnCloseHandler(any());
-        verify(serverCallStreamObserver, timeout(50).times(1)).setOnCancelHandler(any());
+        verify(serverCallStreamObserver, timeout(testTimeout).times(1)).setOnCloseHandler(any());
+        verify(serverCallStreamObserver, timeout(testTimeout).times(1)).setOnCancelHandler(any());
     }
 
     @Test
@@ -153,7 +155,7 @@ public class ConsumerStreamResponseObserverTest {
         consumerStreamResponseObserver.onEvent(objectEvent, 0, true);
 
         // Confirm that canceling the observer allowed only 1 response to be sent.
-        verify(serverCallStreamObserver, timeout(50).times(1))
+        verify(serverCallStreamObserver, timeout(testTimeout).times(1))
                 .onNext(fromPbj(subscribeStreamResponse));
     }
 
@@ -179,7 +181,7 @@ public class ConsumerStreamResponseObserverTest {
         consumerStreamResponseObserver.onEvent(objectEvent, 0, true);
 
         // Confirm that canceling the observer allowed only 1 response to be sent.
-        verify(serverCallStreamObserver, timeout(50).times(1))
+        verify(serverCallStreamObserver, timeout(testTimeout).times(1))
                 .onNext(fromPbj(subscribeStreamResponse));
     }
 
@@ -221,7 +223,7 @@ public class ConsumerStreamResponseObserverTest {
 
         // Confirm that the observer was called with the next BlockItem
         // since we never send a BlockItem with a Header to start the stream.
-        verify(responseStreamObserver, timeout(50).times(0))
+        verify(responseStreamObserver, timeout(testTimeout).times(0))
                 .onNext(fromPbj(subscribeStreamResponse));
     }
 

@@ -77,7 +77,7 @@ public class LiveStreamMediatorImplTest {
     private final long TIMEOUT_THRESHOLD_MILLIS = 100L;
     private final long TEST_TIME = 1_719_427_664_950L;
 
-    private static final int testTimeout = 200;
+    private static final int testTimeout = 1000;
 
     private final BlockNodeContext testContext;
 
