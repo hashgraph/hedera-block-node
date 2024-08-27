@@ -25,22 +25,10 @@ import com.swirlds.metrics.api.Metrics;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class MetricsInjectionModuleTest {
-
-    @Mock private Metrics metrics;
-
-    @Test
-    void testProvideMetricsService() {
-        // Call the method under test
-        MetricsService metricsService = MetricsInjectionModule.provideMetricsService(metrics);
-
-        // Verify that the metricsService is correctly instantiated
-        assertNotNull(metricsService);
-    }
 
     @Test
     void testProvideMetrics() throws IOException {

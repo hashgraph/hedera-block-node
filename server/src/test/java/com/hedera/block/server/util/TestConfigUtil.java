@@ -20,6 +20,7 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.config.TestConfigBuilder;
 import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.metrics.MetricsServiceImpl;
 import com.swirlds.common.metrics.platform.DefaultMetricsProvider;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
@@ -60,7 +61,7 @@ public class TestConfigUtil {
 
         Metrics metrics = getTestMetrics(testConfiguration);
 
-        MetricsService metricsService = new MetricsService(metrics);
+        MetricsService metricsService = new MetricsServiceImpl(metrics);
 
         return new BlockNodeContext(metricsService, testConfiguration);
     }

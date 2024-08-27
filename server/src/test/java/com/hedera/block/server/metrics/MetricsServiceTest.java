@@ -32,7 +32,7 @@ class MetricsServiceTest {
         Counter liveBlockItems = mock(Counter.class);
         when(metrics.getOrCreate(any(Counter.Config.class))).thenReturn(liveBlockItems);
 
-        MetricsService service = new MetricsService(metrics);
+        MetricsService service = new MetricsServiceImpl(metrics);
 
         assertEquals(liveBlockItems, service.liveBlockItems());
 
@@ -46,7 +46,7 @@ class MetricsServiceTest {
         Counter blocksPersisted = mock(Counter.class);
         when(metrics.getOrCreate(any(Counter.Config.class))).thenReturn(blocksPersisted);
 
-        MetricsService service = new MetricsService(metrics);
+        MetricsService service = new MetricsServiceImpl(metrics);
 
         assertEquals(blocksPersisted, service.blocksPersisted());
 
@@ -60,7 +60,7 @@ class MetricsServiceTest {
         Counter singleBlocksRetrieved = mock(Counter.class);
         when(metrics.getOrCreate(any(Counter.Config.class))).thenReturn(singleBlocksRetrieved);
 
-        MetricsService service = new MetricsService(metrics);
+        MetricsService service = new MetricsServiceImpl(metrics);
 
         assertEquals(singleBlocksRetrieved, service.singleBlocksRetrieved());
 
@@ -74,7 +74,7 @@ class MetricsServiceTest {
         LongGauge subscribers = mock(LongGauge.class);
         when(metrics.getOrCreate(any(LongGauge.Config.class))).thenReturn(subscribers);
 
-        MetricsService service = new MetricsService(metrics);
+        MetricsService service = new MetricsServiceImpl(metrics);
 
         assertEquals(subscribers, service.subscribers());
 
