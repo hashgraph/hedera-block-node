@@ -37,7 +37,7 @@ public interface HealthService extends HttpService {
      * @param req the server request
      * @param res the server response
      */
-    void handleLiveness(@NonNull final ServerRequest req, @NonNull final ServerResponse res);
+    void handleLivez(@NonNull final ServerRequest req, @NonNull final ServerResponse res);
 
     /**
      * Handles the request for readiness endpoint, that it most be defined on routing
@@ -46,5 +46,5 @@ public interface HealthService extends HttpService {
      * @param req the server request
      * @param res the server response
      */
-    void handleReadiness(@NonNull final ServerRequest req, @NonNull final ServerResponse res);
+    void handleReadyz(@NonNull final ServerRequest req, @NonNull final ServerResponse res);
 }
