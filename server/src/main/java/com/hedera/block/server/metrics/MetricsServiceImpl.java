@@ -20,6 +20,7 @@ import com.swirlds.metrics.api.Counter;
 import com.swirlds.metrics.api.LongGauge;
 import com.swirlds.metrics.api.Metrics;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.EnumMap;
 import javax.inject.Inject;
 
 /**
@@ -33,8 +34,14 @@ public class MetricsServiceImpl implements MetricsService {
     private static final String CATEGORY = "hedera_block_node";
 
     // Live BlockItem Counter
-    private static final Counter.Config LIVE_BLOCK_ITEM_COUNTER =
-            new Counter.Config(CATEGORY, "live_block_items").withDescription("Live BlockItems");
+    private static final Counter.Config liveBlockItemCounter =
+            new Counter.Config(CATEGORY, CounterMetrics.LIVE_BLOCK_ITEMS.toString())
+                    .withDescription("Live BlockItems");
+
+    // Live BlockItem Consumed Counter
+    private static final Counter.Config liveBlockItemsConsumed =
+            new Counter.Config(CATEGORY, CounterMetrics.LIVE_BLOCK_ITEMS_CONSUMED.toString())
+                    .withDescription("Live Block Items Consumed");
 
     // Block Persistence Counter
     private static final Counter.Config BLOCK_PERSISTENCE_COUNTER =
@@ -64,6 +71,12 @@ public class MetricsServiceImpl implements MetricsService {
         return liveBlockItems;
     }
 
+    @Override
+    @NonNull
+    public final Counter getCounter(CounterMetrics key) {
+        return counters.get(key);
+    }
+
     /** Update the counter of blocks persisted to storage. */
     @Override
     @NonNull
@@ -85,6 +98,8 @@ public class MetricsServiceImpl implements MetricsService {
         return subscribers;
     }
 
+    private final EnumMap<CounterMetrics, Counter> counters = new EnumMap<>(CounterMetrics.class);
+
     /**
      * Create singleton instance of metrics service to be used throughout the application.
      *
@@ -92,7 +107,10 @@ public class MetricsServiceImpl implements MetricsService {
      */
     @Inject
     public MetricsServiceImpl(@NonNull final Metrics metrics) {
-        this.liveBlockItems = metrics.getOrCreate(LIVE_BLOCK_ITEM_COUNTER);
+        this.counters.put(
+                CounterMetrics.LIVE_BLOCK_ITEMS, metrics.getOrCreate(liveBlockItemsConsumed));
+
+        this.liveBlockItems = metrics.getOrCreate(liveBlockItemCounter);
         this.blocksPersisted = metrics.getOrCreate(BLOCK_PERSISTENCE_COUNTER);
         this.singleBlocksRetrieved = metrics.getOrCreate(SINGLE_BLOCK_RETRIEVED_COUNTER);
         this.subscribers = metrics.getOrCreate(SUBSCRIBER_GAUGE);

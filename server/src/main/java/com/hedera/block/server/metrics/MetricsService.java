@@ -22,6 +22,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** Use member variables of this class to update metric data for the Hedera Block Node. */
 public interface MetricsService {
+
+    Counter getCounter(CounterMetrics key);
+
     /**
      * Update the counter of live block items transiting via the live stream.
      *

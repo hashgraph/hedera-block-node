@@ -24,6 +24,8 @@ import static java.lang.System.Logger.Level.ERROR;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
+import com.hedera.block.server.metrics.CounterMetrics;
+import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.OneOf;
@@ -45,6 +47,7 @@ public class ConsumerStreamResponseObserver
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
+    private final MetricsService metricsService;
     private final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
             subscribeStreamResponseObserver;
     private final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>> subscriptionHandler;
@@ -98,6 +101,7 @@ public class ConsumerStreamResponseObserver
                         .getConfigData(ConsumerConfig.class)
                         .timeoutThresholdMillis();
         this.subscriptionHandler = subscriptionHandler;
+        this.metricsService = context.metricsService();
 
         // The ServerCallStreamObserver can be configured with Runnable handlers to
         // be executed when a downstream consumer closes the connection. The handlers
@@ -162,6 +166,8 @@ public class ConsumerStreamResponseObserver
             } else {
                 // Refresh the producer liveness and pass the BlockItem to the downstream observer.
                 producerLivenessMillis = currentMillis;
+
+                metricsService.getCounter(CounterMetrics.LIVE_BLOCK_ITEMS_CONSUMED).increment();
 
                 final SubscribeStreamResponse subscribeStreamResponse = event.get();
                 final ResponseSender responseSender = getResponseSender(subscribeStreamResponse);
