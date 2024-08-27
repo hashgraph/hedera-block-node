@@ -18,6 +18,7 @@ package com.hedera.block.server.metrics;
 
 import com.swirlds.metrics.api.Counter;
 import com.swirlds.metrics.api.LongGauge;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** Use member variables of this class to update metric data for the Hedera Block Node. */
 public interface MetricsService {
@@ -26,6 +27,7 @@ public interface MetricsService {
      *
      * @return use this metric to increase the counter of block items received
      */
+    @NonNull
     Counter liveBlockItems();
 
     /**
@@ -33,6 +35,7 @@ public interface MetricsService {
      *
      * @return use this counter to increase the amount of blocks persisted to disk
      */
+    @NonNull
     Counter blocksPersisted();
 
     /**
@@ -40,6 +43,7 @@ public interface MetricsService {
      *
      * @return use this metric to increase the counter of single blocks retrieved
      */
+    @NonNull
     Counter singleBlocksRetrieved();
 
     /**
@@ -47,5 +51,6 @@ public interface MetricsService {
      *
      * @return Use this to increase or decrease the amount of current subscribers to the live stream
      */
+    @NonNull
     LongGauge subscribers();
 }
