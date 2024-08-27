@@ -31,7 +31,6 @@ import java.nio.file.Path;
 public class Server {
 
     private static final Logger LOGGER = System.getLogger(Server.class.getName());
-    private static final String APPLICATION_PROPERTIES = "app.properties";
 
     private Server() {}
 
@@ -49,7 +48,9 @@ public class Server {
                 ConfigurationBuilder.create()
                         .withSource(SystemEnvironmentConfigSource.getInstance())
                         .withSource(SystemPropertiesConfigSource.getInstance())
-                        .withSource(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES)))
+                        .withSource(
+                                new ClasspathFileConfigSource(
+                                        Path.of(Constants.APPLICATION_PROPERTIES)))
                         .autoDiscoverExtensions()
                         .build();
 
