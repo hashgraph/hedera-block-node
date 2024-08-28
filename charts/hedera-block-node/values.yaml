@@ -84,6 +84,6 @@ blockNode:
     PRIVATE_KEY: "fake_private_key"
   health:
     readiness:
-      endpoint: "/healthz/readiness"
+      endpoint: "/healthz/readyz"
     liveness:
-      endpoint: "/healthz/liveness"
+      endpoint: "/healthz/livez"

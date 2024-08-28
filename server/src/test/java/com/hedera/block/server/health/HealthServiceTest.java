@@ -31,8 +31,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class HealthServiceTest {
 
-    private static final String READINESS_PATH = "/readiness";
-    private static final String LIVENESS_PATH = "/liveness";
+    private static final String READINESS_PATH = "/readyz";
+    private static final String LIVENESS_PATH = "/livez";
     private static final String HEALTH_PATH = "/healthz";
 
     @Mock private ServiceStatus serviceStatus;
@@ -42,7 +42,7 @@ class HealthServiceTest {
     @Mock ServerResponse serverResponse;
 
     @Test
-    public void testHandleLiveness() {
+    public void testHandleLivez() {
         // given
         when(serviceStatus.isRunning()).thenReturn(true);
         when(serverResponse.status(200)).thenReturn(serverResponse);
@@ -50,7 +50,7 @@ class HealthServiceTest {
         HealthService healthService = new HealthServiceImpl(serviceStatus);
 
         // when
-        healthService.handleLiveness(serverRequest, serverResponse);
+        healthService.handleLivez(serverRequest, serverResponse);
 
         // then
         verify(serverResponse, times(1)).status(200);
@@ -58,7 +58,7 @@ class HealthServiceTest {
     }
 
     @Test
-    public void testHandleLiveness_notRunning() {
+    public void testHandleLivez_notRunning() {
         // given
         when(serviceStatus.isRunning()).thenReturn(false);
         when(serverResponse.status(503)).thenReturn(serverResponse);
@@ -66,7 +66,7 @@ class HealthServiceTest {
         HealthService healthService = new HealthServiceImpl(serviceStatus);
 
         // when
-        healthService.handleLiveness(serverRequest, serverResponse);
+        healthService.handleLivez(serverRequest, serverResponse);
 
         // then
         verify(serverResponse, times(1)).status(503);
@@ -74,7 +74,7 @@ class HealthServiceTest {
     }
 
     @Test
-    public void testHandleReadiness() {
+    public void testHandleReadyz() {
         // given
         when(serviceStatus.isRunning()).thenReturn(true);
         when(serverResponse.status(200)).thenReturn(serverResponse);
@@ -82,7 +82,7 @@ class HealthServiceTest {
         HealthService healthService = new HealthServiceImpl(serviceStatus);
 
         // when
-        healthService.handleReadiness(serverRequest, serverResponse);
+        healthService.handleReadyz(serverRequest, serverResponse);
 
         // then
         verify(serverResponse, times(1)).status(200);
@@ -90,7 +90,7 @@ class HealthServiceTest {
     }
 
     @Test
-    public void testHandleReadiness_notRunning() {
+    public void testHandleReadyz_notRunning() {
         // given
         when(serviceStatus.isRunning()).thenReturn(false);
         when(serverResponse.status(503)).thenReturn(serverResponse);
@@ -98,7 +98,7 @@ class HealthServiceTest {
         HealthService healthService = new HealthServiceImpl(serviceStatus);
 
         // when
-        healthService.handleReadiness(serverRequest, serverResponse);
+        healthService.handleReadyz(serverRequest, serverResponse);
 
         // then
         verify(serverResponse, times(1)).status(503);

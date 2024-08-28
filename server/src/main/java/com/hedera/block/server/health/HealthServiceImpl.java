@@ -28,8 +28,8 @@ import javax.inject.Singleton;
 @Singleton
 public class HealthServiceImpl implements HealthService {
 
-    private static final String LIVENESS_PATH = "/liveness";
-    private static final String READINESS_PATH = "/readiness";
+    private static final String LIVEZ_PATH = "/livez";
+    private static final String READYZ_PATH = "/readyz";
 
     private final ServiceStatus serviceStatus;
 
@@ -56,9 +56,7 @@ public class HealthServiceImpl implements HealthService {
      */
     @Override
     public void routing(@NonNull final HttpRules httpRules) {
-        httpRules
-                .get(LIVENESS_PATH, this::handleLiveness)
-                .get(READINESS_PATH, this::handleReadiness);
+        httpRules.get(LIVEZ_PATH, this::handleLivez).get(READYZ_PATH, this::handleReadyz);
     }
 
     /**
@@ -68,7 +66,7 @@ public class HealthServiceImpl implements HealthService {
      * @param res the server response
      */
     @Override
-    public final void handleLiveness(
+    public final void handleLivez(
             @NonNull final ServerRequest req, @NonNull final ServerResponse res) {
         if (serviceStatus.isRunning()) {
             res.status(200).send("OK");
@@ -85,7 +83,7 @@ public class HealthServiceImpl implements HealthService {
      * @param res the server response
      */
     @Override
-    public final void handleReadiness(
+    public final void handleReadyz(
             @NonNull final ServerRequest req, @NonNull final ServerResponse res) {
         if (serviceStatus.isRunning()) {
             res.status(200).send("OK");

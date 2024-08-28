@@ -80,10 +80,10 @@ if ! ./get-block.sh 1 > get-block.log 2>&1; then
 fi
 echo "get-block.sh executed successfully."
 
-# 5. Call the endpoints /health/liveness and /health/readiness
+# 5. Call the endpoints /health/livez and /health/readyz
 SERVER_URL="http://localhost:8080"
-LIVENESS_ENDPOINT="/healthz/liveness"
-READINESS_ENDPOINT="/healthz/readiness"
+LIVENESS_ENDPOINT="/healthz/livez"
+READINESS_ENDPOINT="/healthz/readyz"
 
 if ! curl -f $SERVER_URL$LIVENESS_ENDPOINT; then
     echo "$LIVENESS_ENDPOINT failed."
