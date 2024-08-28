@@ -17,6 +17,7 @@
 package com.hedera.block.server.consumer;
 
 import static com.hedera.block.server.Translator.fromPbj;
+import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockItemsConsumed;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -24,7 +25,6 @@ import static java.lang.System.Logger.Level.ERROR;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
-import com.hedera.block.server.metrics.CounterMetrics;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -167,7 +167,7 @@ public class ConsumerStreamResponseObserver
                 // Refresh the producer liveness and pass the BlockItem to the downstream observer.
                 producerLivenessMillis = currentMillis;
 
-                metricsService.getCounter(CounterMetrics.LIVE_BLOCK_ITEMS_CONSUMED).increment();
+                metricsService.increment(LiveBlockItemsConsumed);
 
                 final SubscribeStreamResponse subscribeStreamResponse = event.get();
                 final ResponseSender responseSender = getResponseSender(subscribeStreamResponse);

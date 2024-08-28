@@ -16,6 +16,8 @@
 
 package com.hedera.block.server.mediator;
 
+import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockItems;
+import static com.hedera.block.server.metrics.BlockNodeMetricNames.Gauge.Subscribers;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -34,7 +36,6 @@ import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.util.DaemonThreadFactory;
-import com.swirlds.metrics.api.LongGauge;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Map;
@@ -62,7 +63,6 @@ class LiveStreamMediatorImpl
 
     private final BlockWriter<BlockItem> blockWriter;
     private final ServiceStatus serviceStatus;
-    private final BlockNodeContext blockNodeContext;
     private final MetricsService metricsService;
 
     /**
@@ -97,7 +97,6 @@ class LiveStreamMediatorImpl
         this.ringBuffer = disruptor.start();
         this.executor = Executors.newCachedThreadPool(DaemonThreadFactory.INSTANCE);
         this.serviceStatus = serviceStatus;
-        this.blockNodeContext = blockNodeContext;
         this.metricsService = blockNodeContext.metricsService();
     }
 
@@ -121,7 +120,7 @@ class LiveStreamMediatorImpl
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
 
             // Increment the block item counter
-            metricsService.liveBlockItems().increment();
+            metricsService.increment(LiveBlockItems);
 
             try {
                 // Persist the BlockItem
@@ -169,7 +168,8 @@ class LiveStreamMediatorImpl
         // Keep track of the subscriber
         subscribers.put(handler, batchEventProcessor);
 
-        updateSubscriberMetrics();
+        // update the subscriber metrics
+        metricsService.set(Subscribers, subscribers.size());
     }
 
     @Override
@@ -190,7 +190,8 @@ class LiveStreamMediatorImpl
             ringBuffer.removeGatingSequence(batchEventProcessor.getSequence());
         }
 
-        updateSubscriberMetrics();
+        // update the subscriber metrics
+        metricsService.set(Subscribers, subscribers.size());
     }
 
     @Override
@@ -207,11 +208,5 @@ class LiveStreamMediatorImpl
         return SubscribeStreamResponse.newBuilder()
                 .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
                 .build();
-    }
-
-    private void updateSubscriberMetrics() {
-        @NonNull final MetricsService metricsService = blockNodeContext.metricsService();
-        @NonNull final LongGauge longGauge = metricsService.subscribers();
-        longGauge.set(subscribers.size());
     }
 }

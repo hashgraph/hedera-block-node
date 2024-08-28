@@ -33,72 +33,10 @@ public class MetricsServiceImpl implements MetricsService {
 
     private static final String CATEGORY = "hedera_block_node";
 
-    // Live BlockItem Counter
-    private static final Counter.Config liveBlockItemCounter =
-            new Counter.Config(CATEGORY, CounterMetrics.LIVE_BLOCK_ITEMS.toString())
-                    .withDescription("Live BlockItems");
-
-    // Live BlockItem Consumed Counter
-    private static final Counter.Config liveBlockItemsConsumed =
-            new Counter.Config(CATEGORY, CounterMetrics.LIVE_BLOCK_ITEMS_CONSUMED.toString())
-                    .withDescription("Live Block Items Consumed");
-
-    // Block Persistence Counter
-    private static final Counter.Config BLOCK_PERSISTENCE_COUNTER =
-            new Counter.Config(CATEGORY, "blocks_persisted").withDescription("Blocks Persisted");
-
-    // Subscriber Gauge
-    private static final LongGauge.Config SUBSCRIBER_GAUGE =
-            new LongGauge.Config(CATEGORY, "subscribers").withDescription("Subscribers");
-
-    // Single Block Retrieved Counter
-    private static final Counter.Config SINGLE_BLOCK_RETRIEVED_COUNTER =
-            new Counter.Config(CATEGORY, "single_blocks_retrieved")
-                    .withDescription("Single Blocks Retrieved");
-
-    private final Counter liveBlockItems;
-
-    private final Counter blocksPersisted;
-
-    private final Counter singleBlocksRetrieved;
-
-    private final LongGauge subscribers;
-
-    /** Update the counter of live block items transiting via the live stream. */
-    @Override
-    @NonNull
-    public final Counter liveBlockItems() {
-        return liveBlockItems;
-    }
-
-    @Override
-    @NonNull
-    public final Counter getCounter(CounterMetrics key) {
-        return counters.get(key);
-    }
-
-    /** Update the counter of blocks persisted to storage. */
-    @Override
-    @NonNull
-    public final Counter blocksPersisted() {
-        return blocksPersisted;
-    }
-
-    /** Update the counter of single blocks retrieved from storage. */
-    @Override
-    @NonNull
-    public final Counter singleBlocksRetrieved() {
-        return singleBlocksRetrieved;
-    }
-
-    /** Update the gauge of subscribers currently consuming to the live stream. */
-    @Override
-    @NonNull
-    public final LongGauge subscribers() {
-        return subscribers;
-    }
-
-    private final EnumMap<CounterMetrics, Counter> counters = new EnumMap<>(CounterMetrics.class);
+    private final EnumMap<BlockNodeMetricNames.Counter, Counter> counters =
+            new EnumMap<>(BlockNodeMetricNames.Counter.class);
+    private final EnumMap<BlockNodeMetricNames.Gauge, LongGauge> gauges =
+            new EnumMap<>(BlockNodeMetricNames.Gauge.class);
 
     /**
      * Create singleton instance of metrics service to be used throughout the application.
@@ -107,12 +45,60 @@ public class MetricsServiceImpl implements MetricsService {
      */
     @Inject
     public MetricsServiceImpl(@NonNull final Metrics metrics) {
-        this.counters.put(
-                CounterMetrics.LIVE_BLOCK_ITEMS, metrics.getOrCreate(liveBlockItemsConsumed));
+        // Initialize the counters
+        for (BlockNodeMetricNames.Counter counter : BlockNodeMetricNames.Counter.values()) {
+            counters.put(
+                    counter,
+                    metrics.getOrCreate(
+                            new Counter.Config(CATEGORY, counter.grafanaLabel())
+                                    .withDescription(counter.description())));
+        }
 
-        this.liveBlockItems = metrics.getOrCreate(liveBlockItemCounter);
-        this.blocksPersisted = metrics.getOrCreate(BLOCK_PERSISTENCE_COUNTER);
-        this.singleBlocksRetrieved = metrics.getOrCreate(SINGLE_BLOCK_RETRIEVED_COUNTER);
-        this.subscribers = metrics.getOrCreate(SUBSCRIBER_GAUGE);
+        // Initialize the gauges
+        for (BlockNodeMetricNames.Gauge gauge : BlockNodeMetricNames.Gauge.values()) {
+            gauges.put(
+                    gauge,
+                    metrics.getOrCreate(
+                            new LongGauge.Config(CATEGORY, gauge.grafanaLabel())
+                                    .withDescription(gauge.description())));
+        }
+    }
+
+    @Override
+    public void increment(@NonNull BlockNodeMetricNames.Counter key) {
+        counters.get(key).increment();
+    }
+
+    @Override
+    public long count(@NonNull BlockNodeMetricNames.Counter key) {
+        return counters.get(key).get();
+    }
+
+    @Override
+    @NonNull
+    public String name(@NonNull BlockNodeMetricNames.Counter key) {
+        return counters.get(key).getName();
+    }
+
+    @Override
+    @NonNull
+    public String description(@NonNull BlockNodeMetricNames.Counter key) {
+        return counters.get(key).getDescription();
+    }
+
+    @Override
+    public void set(@NonNull BlockNodeMetricNames.Gauge key, long value) {
+        gauges.get(key).set(value);
+    }
+
+    @Override
+    public long count(@NonNull BlockNodeMetricNames.Gauge key) {
+        return gauges.get(key).get();
+    }
+
+    @Override
+    @NonNull
+    public String name(@NonNull BlockNodeMetricNames.Gauge key) {
+        return gauges.get(key).getName();
     }
 }

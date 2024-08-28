@@ -80,7 +80,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.1.3",
+      "pluginVersion": "11.1.4",
       "targets": [
         {
           "datasource": {
@@ -223,10 +223,170 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 6,
         "w": 6,
         "x": 0,
         "y": 8
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "hedera_block_node_live_block_items_consumed_total",
+          "instant": false,
+          "legendFormat": "BlockItems Consumed",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Live Block Items Consumed Counter",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 18,
+        "x": 6,
+        "y": 8
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "rate( hedera_block_node_live_block_items_consumed_total [$__rate_interval])",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Live Block Items Consumed",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 14
       },
       "id": 6,
       "options": {
@@ -246,7 +406,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.1.3",
+      "pluginVersion": "11.1.4",
       "targets": [
         {
           "datasource": {
@@ -332,7 +492,7 @@
         "h": 7,
         "w": 18,
         "x": 6,
-        "y": 8
+        "y": 14
       },
       "id": 8,
       "options": {
@@ -403,7 +563,7 @@
         "h": 9,
         "w": 9,
         "x": 0,
-        "y": 15
+        "y": 21
       },
       "id": 4,
       "options": {
@@ -421,7 +581,7 @@
         "showThresholdMarkers": true,
         "sizing": "auto"
       },
-      "pluginVersion": "11.1.3",
+      "pluginVersion": "11.1.4",
       "targets": [
         {
           "datasource": {
@@ -503,7 +663,7 @@
         "h": 9,
         "w": 15,
         "x": 9,
-        "y": 15
+        "y": 21
       },
       "id": 5,
       "options": {

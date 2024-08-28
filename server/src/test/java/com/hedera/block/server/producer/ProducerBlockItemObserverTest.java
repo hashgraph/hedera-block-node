@@ -17,6 +17,7 @@
 package com.hedera.block.server.producer;
 
 import static com.hedera.block.server.Translator.fromPbj;
+import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockItems;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
@@ -179,7 +180,7 @@ public class ProducerBlockItemObserverTest {
         producerBlockItemObserver.onNext(fromPbj(publishStreamRequest));
 
         // Confirm the block item counter was incremented
-        assertEquals(1, blockNodeContext.metricsService().liveBlockItems().get());
+        assertEquals(1, blockNodeContext.metricsService().count(LiveBlockItems));
 
         // Confirm each subscriber was notified of the new block
         verify(streamObserver1, timeout(testTimeout).times(1))

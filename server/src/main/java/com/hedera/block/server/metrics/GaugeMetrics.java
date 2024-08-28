@@ -18,14 +18,11 @@ package com.hedera.block.server.metrics;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
-public interface CounterMetrics {
-    void increment(@NonNull BlockNodeMetricNames.Counter key);
+public interface GaugeMetrics {
+    void set(@NonNull BlockNodeMetricNames.Gauge key, long value);
 
-    long count(@NonNull BlockNodeMetricNames.Counter key);
-
-    @NonNull
-    String name(@NonNull BlockNodeMetricNames.Counter key);
+    long count(@NonNull BlockNodeMetricNames.Gauge key);
 
     @NonNull
-    String description(@NonNull BlockNodeMetricNames.Counter key);
+    String name(@NonNull BlockNodeMetricNames.Gauge key);
 }
