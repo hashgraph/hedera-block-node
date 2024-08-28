@@ -22,26 +22,43 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.swirlds.config.api.Configuration;
-import com.swirlds.metrics.api.Metrics;
+import dagger.BindsInstance;
+import dagger.Component;
 import java.io.IOException;
-import javax.inject.Inject;
+import javax.inject.Singleton;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class MetricsServiceTest {
 
-    @Inject private MetricsService metricsService;
+    @Singleton
+    @Component(modules = {MetricsInjectionModule.class})
+    public interface TestComponent {
+
+        MetricsService getMetricsService();
+
+        @Component.Factory
+        interface Factory {
+            TestComponent create(@BindsInstance Configuration configuration);
+        }
+    }
+
+    MetricsService metricsService;
+
+    @BeforeEach
+    public void setUp() throws IOException {
+
+        final BlockNodeContext context = TestConfigUtil.getTestBlockNodeContext();
+        final Configuration configuration = context.configuration();
+        final TestComponent testComponent =
+                DaggerMetricsServiceTest_TestComponent.factory().create(configuration);
+        this.metricsService = testComponent.getMetricsService();
+    }
 
     @Test
     void MetricsService_initializesLiveBlockItemsCounter() throws IOException {
 
-        final BlockNodeContext context = TestConfigUtil.getTestBlockNodeContext();
-        final Configuration configuration = context.configuration();
-        final Metrics providedMetrics = MetricsInjectionModule.provideMetrics(configuration);
-
-        //        final MetricsService service =
-        //                MetricsInjectionModule.bindMetricsService(new
-        // MetricsServiceImpl(providedMetrics));
-
+        // increment the counter
         for (int i = 0; i < 10; i++) {
             metricsService.increment(LiveBlockItems);
         }
@@ -49,11 +66,6 @@ public class MetricsServiceTest {
         assertEquals(LiveBlockItems.grafanaLabel(), metricsService.name(LiveBlockItems));
         assertEquals(LiveBlockItems.description(), metricsService.description(LiveBlockItems));
         assertEquals(10, metricsService.count(LiveBlockItems));
-        //
-        //        assertEquals(liveBlockItems, service.liveBlockItems());
-
-        //        service.liveBlockItems().increment();
-        //        verify(liveBlockItems, times(1)).increment();
     }
 
     //    @Test
