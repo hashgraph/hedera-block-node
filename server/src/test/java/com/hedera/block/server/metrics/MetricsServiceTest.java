@@ -24,14 +24,12 @@ import com.hedera.block.server.util.TestConfigUtil;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.metrics.api.Metrics;
 import java.io.IOException;
-import org.junit.jupiter.api.Test;
-
 import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
 
 public class MetricsServiceTest {
 
-    @Inject
-    private MetricsService metricsService;
+    @Inject private MetricsService metricsService;
 
     @Test
     void MetricsService_initializesLiveBlockItemsCounter() throws IOException {
@@ -40,9 +38,9 @@ public class MetricsServiceTest {
         final Configuration configuration = context.configuration();
         final Metrics providedMetrics = MetricsInjectionModule.provideMetrics(configuration);
 
-//        final MetricsService service =
-//                MetricsInjectionModule.bindMetricsService(new MetricsServiceImpl(providedMetrics));
-
+        //        final MetricsService service =
+        //                MetricsInjectionModule.bindMetricsService(new
+        // MetricsServiceImpl(providedMetrics));
 
         for (int i = 0; i < 10; i++) {
             metricsService.increment(LiveBlockItems);
