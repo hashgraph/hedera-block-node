@@ -14,7 +14,7 @@ echo "REGISTRY_PREFIX=" >> .env
 echo "BLOCKNODE_STORAGE_ROOT_PATH=/app/storage" >> .env
 
 if [ $# -eq 2 ]; then
-  echo "SERVER_OPTS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005'" >> .env
+  echo "SERVER_OPTS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005'" >> .env
 fi
 
 echo "DEBUG $2"
