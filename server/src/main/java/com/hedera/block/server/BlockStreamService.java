@@ -204,7 +204,7 @@ public class BlockStreamService implements GrpcService {
                     singleBlockResponseStreamObserver.onNext(
                             fromPbjSingleBlockSuccessResponse(blockOpt.get()));
 
-                    metricsService.increment(SingleBlocksRetrieved);
+                    metricsService.get(SingleBlocksRetrieved).increment();
                 } else {
                     LOGGER.log(DEBUG, "Block number {0} not found", blockNumber);
                     singleBlockResponseStreamObserver.onNext(buildSingleBlockNotFoundResponse());

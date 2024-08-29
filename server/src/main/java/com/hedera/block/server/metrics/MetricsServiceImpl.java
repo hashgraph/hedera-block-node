@@ -64,41 +64,15 @@ public class MetricsServiceImpl implements MetricsService {
         }
     }
 
-    @Override
-    public void increment(@NonNull BlockNodeMetricNames.Counter key) {
-        counters.get(key).increment();
-    }
-
-    @Override
-    public long count(@NonNull BlockNodeMetricNames.Counter key) {
-        return counters.get(key).get();
-    }
-
-    @Override
     @NonNull
-    public String name(@NonNull BlockNodeMetricNames.Counter key) {
-        return counters.get(key).getName();
+    @Override
+    public Counter get(@NonNull BlockNodeMetricNames.Counter key) {
+        return counters.get(key);
     }
 
-    @Override
     @NonNull
-    public String description(@NonNull BlockNodeMetricNames.Counter key) {
-        return counters.get(key).getDescription();
-    }
-
     @Override
-    public void set(@NonNull BlockNodeMetricNames.Gauge key, long value) {
-        gauges.get(key).set(value);
-    }
-
-    @Override
-    public long count(@NonNull BlockNodeMetricNames.Gauge key) {
-        return gauges.get(key).get();
-    }
-
-    @Override
-    @NonNull
-    public String name(@NonNull BlockNodeMetricNames.Gauge key) {
-        return gauges.get(key).getName();
+    public LongGauge get(@NonNull BlockNodeMetricNames.Gauge key) {
+        return gauges.get(key);
     }
 }

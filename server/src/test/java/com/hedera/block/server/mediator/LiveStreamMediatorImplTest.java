@@ -132,7 +132,7 @@ public class LiveStreamMediatorImplTest {
                 "Expected the mediator to have unsubscribed observer3");
 
         // Confirm the counter was never incremented
-        assertEquals(0, blockNodeContext.metricsService().count(LiveBlockItems));
+        assertEquals(0, blockNodeContext.metricsService().get(LiveBlockItems).get());
     }
 
     @Test
@@ -149,7 +149,7 @@ public class LiveStreamMediatorImplTest {
         streamMediator.publish(blockItem);
 
         // Verify the counter was incremented
-        assertEquals(1, blockNodeContext.metricsService().count(LiveBlockItems));
+        assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
 
         // Confirm the BlockStorage write method was
         // called despite the absence of subscribers
@@ -202,7 +202,7 @@ public class LiveStreamMediatorImplTest {
         // Acting as a producer, notify the mediator of a new block
         streamMediator.publish(blockItem);
 
-        assertEquals(1, blockNodeContext.metricsService().count(LiveBlockItems));
+        assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
 
         // Confirm each subscriber was notified of the new block
         verify(streamObserver1, timeout(testTimeout).times(1))
@@ -249,7 +249,7 @@ public class LiveStreamMediatorImplTest {
         streamMediator.unsubscribe(concreteObserver3);
 
         // Confirm the counter was never incremented
-        assertEquals(0, blockNodeContext.metricsService().count(LiveBlockItems));
+        assertEquals(0, blockNodeContext.metricsService().get(LiveBlockItems).get());
     }
 
     @Test
@@ -278,7 +278,7 @@ public class LiveStreamMediatorImplTest {
         testConsumerBlockItemObserver.getOnCancel().run();
 
         // Verify the block item incremented the counter
-        assertEquals(1, blockNodeContext.metricsService().count(LiveBlockItems));
+        assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
 
         // Verify the event made it to the consumer
         verify(serverCallStreamObserver, timeout(testTimeout).times(1)).setOnCancelHandler(any());
@@ -314,7 +314,7 @@ public class LiveStreamMediatorImplTest {
         testConsumerBlockItemObserver.getOnClose().run();
 
         // Verify the block item incremented the counter
-        assertEquals(1, blockNodeContext.metricsService().count(LiveBlockItems));
+        assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
 
         // Verify the event made it to the consumer
         verify(serverCallStreamObserver, timeout(testTimeout).times(1)).setOnCancelHandler(any());
@@ -349,7 +349,7 @@ public class LiveStreamMediatorImplTest {
             streamMediator.publish(secondBlockItem);
 
             // Confirm the counter was incremented only once
-            assertEquals(1, blockNodeContext.metricsService().count(LiveBlockItems));
+            assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
 
             // Confirm the BlockPersistenceHandler write method was only called
             // once despite the second block being published.

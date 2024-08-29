@@ -180,7 +180,7 @@ public class ProducerBlockItemObserverTest {
         producerBlockItemObserver.onNext(fromPbj(publishStreamRequest));
 
         // Confirm the block item counter was incremented
-        assertEquals(1, blockNodeContext.metricsService().count(LiveBlockItems));
+        assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
 
         // Confirm each subscriber was notified of the new block
         verify(streamObserver1, timeout(testTimeout).times(1))

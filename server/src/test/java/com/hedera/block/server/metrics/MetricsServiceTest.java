@@ -16,7 +16,11 @@
 
 package com.hedera.block.server.metrics;
 
+import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.BlocksPersisted;
 import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockItems;
+import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockItemsConsumed;
+import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.SingleBlocksRetrieved;
+import static com.hedera.block.server.metrics.BlockNodeMetricNames.Gauge.Subscribers;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.hedera.block.server.config.BlockNodeContext;
@@ -33,81 +37,101 @@ public class MetricsServiceTest {
 
     @Singleton
     @Component(modules = {MetricsInjectionModule.class})
-    public interface TestComponent {
+    public interface MetricsServiceTestComponent {
 
         MetricsService getMetricsService();
 
         @Component.Factory
         interface Factory {
-            TestComponent create(@BindsInstance Configuration configuration);
+            MetricsServiceTestComponent create(@BindsInstance Configuration configuration);
         }
     }
 
-    MetricsService metricsService;
+    private MetricsService metricsService;
 
     @BeforeEach
     public void setUp() throws IOException {
-
         final BlockNodeContext context = TestConfigUtil.getTestBlockNodeContext();
         final Configuration configuration = context.configuration();
-        final TestComponent testComponent =
-                DaggerMetricsServiceTest_TestComponent.factory().create(configuration);
+        final MetricsServiceTestComponent testComponent =
+                DaggerMetricsServiceTest_MetricsServiceTestComponent.factory()
+                        .create(configuration);
         this.metricsService = testComponent.getMetricsService();
     }
 
     @Test
-    void MetricsService_initializesLiveBlockItemsCounter() throws IOException {
+    void MetricsService_verifyLiveBlockItemsCounter() {
 
-        // increment the counter
         for (int i = 0; i < 10; i++) {
-            metricsService.increment(LiveBlockItems);
+            metricsService.get(LiveBlockItems).increment();
         }
 
-        assertEquals(LiveBlockItems.grafanaLabel(), metricsService.name(LiveBlockItems));
-        assertEquals(LiveBlockItems.description(), metricsService.description(LiveBlockItems));
-        assertEquals(10, metricsService.count(LiveBlockItems));
+        assertEquals(LiveBlockItems.grafanaLabel(), metricsService.get(LiveBlockItems).getName());
+        assertEquals(
+                LiveBlockItems.description(), metricsService.get(LiveBlockItems).getDescription());
+        assertEquals(10, metricsService.get(LiveBlockItems).get());
     }
 
-    //    @Test
-    //    void MetricsService_initializesBlocksPersistedCounter() {
-    //        Metrics metrics = mock(Metrics.class);
-    //        Counter blocksPersisted = mock(Counter.class);
-    //        when(metrics.getOrCreate(any(Counter.Config.class))).thenReturn(blocksPersisted);
-    //
-    //        MetricsService service = new MetricsServiceImpl(metrics);
-    //
-    //        assertEquals(blocksPersisted, service.blocksPersisted());
-    //
-    //        service.blocksPersisted().increment();
-    //        verify(blocksPersisted, times(1)).increment();
-    //    }
-    //
-    //    @Test
-    //    void MetricsService_initializesSingleBlocksRetrievedCounter() {
-    //        Metrics metrics = mock(Metrics.class);
-    //        Counter singleBlocksRetrieved = mock(Counter.class);
-    //
-    // when(metrics.getOrCreate(any(Counter.Config.class))).thenReturn(singleBlocksRetrieved);
-    //
-    //        MetricsService service = new MetricsServiceImpl(metrics);
-    //
-    //        assertEquals(singleBlocksRetrieved, service.singleBlocksRetrieved());
-    //
-    //        service.singleBlocksRetrieved().increment();
-    //        verify(singleBlocksRetrieved, times(1)).increment();
-    //    }
-    //
-    //    @Test
-    //    void MetricsService_initializesSubscribersGauge() {
-    //        Metrics metrics = mock(Metrics.class);
-    //        LongGauge subscribers = mock(LongGauge.class);
-    //        when(metrics.getOrCreate(any(LongGauge.Config.class))).thenReturn(subscribers);
-    //
-    //        MetricsService service = new MetricsServiceImpl(metrics);
-    //
-    //        assertEquals(subscribers, service.subscribers());
-    //
-    //        service.subscribers().set(5);
-    //        verify(subscribers, times(1)).set(5);
-    //    }
+    @Test
+    void MetricsService_verifyBlocksPersistedCounter() {
+
+        for (int i = 0; i < 10; i++) {
+            metricsService.get(BlocksPersisted).increment();
+        }
+
+        assertEquals(BlocksPersisted.grafanaLabel(), metricsService.get(BlocksPersisted).getName());
+        assertEquals(
+                BlocksPersisted.description(),
+                metricsService.get(BlocksPersisted).getDescription());
+        assertEquals(10, metricsService.get(BlocksPersisted).get());
+    }
+
+    @Test
+    void MetricsService_verifySingleBlocksRetrievedCounter() {
+
+        for (int i = 0; i < 10; i++) {
+            metricsService.get(SingleBlocksRetrieved).increment();
+        }
+
+        assertEquals(
+                SingleBlocksRetrieved.grafanaLabel(),
+                metricsService.get(SingleBlocksRetrieved).getName());
+        assertEquals(
+                SingleBlocksRetrieved.description(),
+                metricsService.get(SingleBlocksRetrieved).getDescription());
+        assertEquals(10, metricsService.get(SingleBlocksRetrieved).get());
+    }
+
+    @Test
+    void MetricsService_verifyLiveBlockItemsConsumedCounter() {
+
+        for (int i = 0; i < 10; i++) {
+            metricsService.get(LiveBlockItemsConsumed).increment();
+        }
+
+        assertEquals(
+                LiveBlockItemsConsumed.grafanaLabel(),
+                metricsService.get(LiveBlockItemsConsumed).getName());
+        assertEquals(
+                LiveBlockItemsConsumed.description(),
+                metricsService.get(LiveBlockItemsConsumed).getDescription());
+        assertEquals(10, metricsService.get(LiveBlockItemsConsumed).get());
+    }
+
+    @Test
+    void MetricsService_verifySubscribersGauge() {
+
+        assertEquals(Subscribers.grafanaLabel(), metricsService.get(Subscribers).getName());
+        assertEquals(Subscribers.description(), metricsService.get(Subscribers).getDescription());
+
+        // Set the subscribers to various values and verify
+        metricsService.get(Subscribers).set(10);
+        assertEquals(10, metricsService.get(Subscribers).get());
+
+        metricsService.get(Subscribers).set(3);
+        assertEquals(3, metricsService.get(Subscribers).get());
+
+        metricsService.get(Subscribers).set(0);
+        assertEquals(0, metricsService.get(Subscribers).get());
+    }
 }

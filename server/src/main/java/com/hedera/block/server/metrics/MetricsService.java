@@ -16,5 +16,13 @@
 
 package com.hedera.block.server.metrics;
 
+import com.swirlds.metrics.api.Counter;
+import com.swirlds.metrics.api.LongGauge;
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /** Use member variables of this class to update metric data for the Hedera Block Node. */
-public interface MetricsService extends CounterMetrics, GaugeMetrics {}
+public interface MetricsService {
+    Counter get(@NonNull BlockNodeMetricNames.Counter key);
+
+    LongGauge get(@NonNull BlockNodeMetricNames.Gauge key);
+}

@@ -120,7 +120,7 @@ class LiveStreamMediatorImpl
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
 
             // Increment the block item counter
-            metricsService.increment(LiveBlockItems);
+            metricsService.get(LiveBlockItems).increment();
 
             try {
                 // Persist the BlockItem
@@ -169,7 +169,7 @@ class LiveStreamMediatorImpl
         subscribers.put(handler, batchEventProcessor);
 
         // update the subscriber metrics
-        metricsService.set(Subscribers, subscribers.size());
+        metricsService.get(Subscribers).set(subscribers.size());
     }
 
     @Override
@@ -191,7 +191,7 @@ class LiveStreamMediatorImpl
         }
 
         // update the subscriber metrics
-        metricsService.set(Subscribers, subscribers.size());
+        metricsService.get(Subscribers).set(subscribers.size());
     }
 
     @Override

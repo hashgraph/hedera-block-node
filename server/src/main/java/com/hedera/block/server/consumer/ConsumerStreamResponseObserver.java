@@ -167,7 +167,8 @@ public class ConsumerStreamResponseObserver
                 // Refresh the producer liveness and pass the BlockItem to the downstream observer.
                 producerLivenessMillis = currentMillis;
 
-                metricsService.increment(LiveBlockItemsConsumed);
+                // Increment counter
+                metricsService.get(LiveBlockItemsConsumed).increment();
 
                 final SubscribeStreamResponse subscribeStreamResponse = event.get();
                 final ResponseSender responseSender = getResponseSender(subscribeStreamResponse);

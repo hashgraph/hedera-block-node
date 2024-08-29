@@ -231,7 +231,7 @@ public class BlockStreamServiceIntegrationTest {
         streamObserver.onNext(fromPbj(publishStreamRequest));
 
         // Verify the counter was incremented
-        assertEquals(1, blockNodeContext.metricsService().count(LiveBlockItems));
+        assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
 
         verify(blockWriter, timeout(testTimeout).times(1)).write(blockItems.getFirst());
 

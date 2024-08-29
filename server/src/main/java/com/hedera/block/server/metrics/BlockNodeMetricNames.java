@@ -18,7 +18,9 @@ package com.hedera.block.server.metrics;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
-public class BlockNodeMetricNames {
+public final class BlockNodeMetricNames {
+    private BlockNodeMetricNames() {}
+
     public enum Counter implements MetricMetadata {
         LiveBlockItems("live_block_items", "Live BlockItems"),
         BlocksPersisted("blocks_persisted", "Blocks Persisted"),
@@ -70,7 +72,7 @@ public class BlockNodeMetricNames {
         }
     }
 
-    public interface MetricMetadata {
+    private interface MetricMetadata {
         String grafanaLabel();
 
         String description();
