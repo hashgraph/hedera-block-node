@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Hedera Hashgraph, LLC
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-plugins {
-    id("application")
-    id("com.hedera.block.simulator")
-}
+package com.hedera.block.simulator.generator;
 
-description = "Hedera Block Stream Simulator"
+import com.hedera.hapi.block.stream.Block;
+import javax.inject.Inject;
 
-application {
-    mainModule = "com.hedera.block.simulator"
-    mainClass = "com.hedera.block.simulator.BlockStreamSimulator"
-}
+public class MockBlockStreamManagerImpl implements BlockStreamManager {
 
-mainModuleInfo {
-    annotationProcessor("dagger.compiler")
-    annotationProcessor("com.google.auto.service.processor")
-    runtimeOnly("com.swirlds.config.impl")
+    @Inject
+    public MockBlockStreamManagerImpl() {}
+
+    @Override
+    public Block getNextBlock() {
+        return Block.newBuilder().build();
+    }
 }

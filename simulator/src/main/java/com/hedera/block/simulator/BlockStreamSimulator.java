@@ -18,26 +18,46 @@ package com.hedera.block.simulator;
 
 import com.hedera.block.simulator.config.ConfigProvider;
 import com.hedera.block.simulator.config.ConfigProviderImpl;
-import com.hedera.block.simulator.config.data.GrpcConfig;
+import com.hedera.block.simulator.generator.BlockStreamManager;
+import com.swirlds.config.api.Configuration;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.System.Logger;
+import javax.inject.Inject;
 
 public class BlockStreamSimulator {
-    private static final Logger LOGGER =
-            System.getLogger(BlockStreamSimulator.class.getName());
+    private static final Logger LOGGER = System.getLogger(BlockStreamSimulator.class.getName());
 
-    public BlockStreamSimulator() {}
+    Configuration configuration;
+    BlockStreamManager blockStreamManager;
+
+    @Inject
+    public BlockStreamSimulator(
+            @NonNull Configuration configuration, @NonNull BlockStreamManager blockStreamManager) {
+        this.configuration = configuration;
+        this.blockStreamManager = blockStreamManager;
+    }
 
     public static void main(String[] args) {
-        BlockStreamSimulator blockStreamSimulator = new BlockStreamSimulator();
+
+        LOGGER.log(Logger.Level.INFO, "Starting Block Stream Simulator");
+
+        ConfigProvider configProvider = new ConfigProviderImpl();
+        Configuration configuration = configProvider.getConfiguration();
+        BlockStreamSimulatorInjectionComponent DIComponent =
+                DaggerBlockStreamSimulatorInjectionComponent.factory().create(configuration);
+
+        BlockStreamSimulator blockStreamSimulator = DIComponent.getBlockStreamSimulator();
         blockStreamSimulator.start();
     }
 
     public void start() {
-        ConfigProvider configProvider = new ConfigProviderImpl();
-        LOGGER.log(Logger.Level.INFO, "Starting Block Stream Simulator");
+
+        // use blockStreamManager to get block stream
+
+        // use PublishStreamGrpcClient to stream it to the block-node.
+
+        LOGGER.log(Logger.Level.INFO, "Block Stream Simulator has started");
     }
 
-    public void stop() {
-
-    }
+    public void stop() {}
 }

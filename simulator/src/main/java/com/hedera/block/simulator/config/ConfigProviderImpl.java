@@ -18,9 +18,12 @@ package com.hedera.block.simulator.config;
 
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
+import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
 import com.swirlds.config.extensions.sources.SystemEnvironmentConfigSource;
 import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.IOException;
+import java.nio.file.Path;
 
 public class ConfigProviderImpl implements ConfigProvider {
     private static final System.Logger LOGGER =
@@ -43,14 +46,15 @@ public class ConfigProviderImpl implements ConfigProvider {
     }
 
     private ConfigurationBuilder createConfigurationBuilder() {
-        final ConfigurationBuilder builder = ConfigurationBuilder.create();
+        try {
+            return ConfigurationBuilder.create()
+                    .withSource(SystemEnvironmentConfigSource.getInstance())
+                    .withSource(SystemPropertiesConfigSource.getInstance())
+                    .withSource(new ClasspathFileConfigSource(Path.of("app.properties")))
+                    .autoDiscoverExtensions();
 
-        builder
-                .withSource(SystemEnvironmentConfigSource.getInstance())
-                .withSource(SystemPropertiesConfigSource.getInstance())
-                //                .withSource(new
-                // ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES)))
-                .autoDiscoverExtensions();
-        return builder;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

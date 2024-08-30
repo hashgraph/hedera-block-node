@@ -16,5 +16,9 @@
 
 package com.hedera.block.simulator.generator;
 
+import com.hedera.hapi.block.stream.Block;
+
 public interface BlockStreamManager {
+
+    Block getNextBlock();
 }
