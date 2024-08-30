@@ -24,6 +24,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.System.Logger;
 import javax.inject.Inject;
 
+/** The BlockStreamSimulator class defines the simulator for the block stream. */
 public class BlockStreamSimulator {
     private static final Logger LOGGER = System.getLogger(BlockStreamSimulator.class.getName());
 
@@ -31,6 +32,12 @@ public class BlockStreamSimulator {
     BlockStreamManager blockStreamManager;
     boolean isRunning = false;
 
+    /**
+     * Creates a new BlockStreamSimulator instance.
+     *
+     * @param configuration the configuration to be used by the block stream simulator
+     * @param blockStreamManager the block stream manager to be used by the block stream simulator
+     */
     @Inject
     public BlockStreamSimulator(
             @NonNull Configuration configuration, @NonNull BlockStreamManager blockStreamManager) {
@@ -38,6 +45,11 @@ public class BlockStreamSimulator {
         this.blockStreamManager = blockStreamManager;
     }
 
+    /**
+     * The main entry point for the block stream simulator.
+     *
+     * @param args the arguments to be passed to the block stream simulator
+     */
     public static void main(String[] args) {
 
         LOGGER.log(Logger.Level.INFO, "Starting Block Stream Simulator");
@@ -51,6 +63,7 @@ public class BlockStreamSimulator {
         blockStreamSimulator.start();
     }
 
+    /** Starts the block stream simulator. */
     public void start() {
 
         // use blockStreamManager to get block stream
@@ -60,9 +73,18 @@ public class BlockStreamSimulator {
         LOGGER.log(Logger.Level.INFO, "Block Stream Simulator has started");
     }
 
+    /**
+     * Returns whether the block stream simulator is running.
+     *
+     * @return true if the block stream simulator is running, false otherwise
+     */
     public boolean isRunning() {
         return isRunning;
     }
 
-    public void stop() {}
+    /** Stops the block stream simulator. */
+    public void stop() {
+        isRunning = false;
+        LOGGER.log(Logger.Level.INFO, "Block Stream Simulator has stopped");
+    }
 }

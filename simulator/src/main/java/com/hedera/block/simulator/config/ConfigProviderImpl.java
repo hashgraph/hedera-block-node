@@ -25,20 +25,23 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Path;
 
+/** The ConfigProviderImpl class provides the implementation for the configuration provider. */
 public class ConfigProviderImpl implements ConfigProvider {
     private static final System.Logger LOGGER =
             System.getLogger(ConfigProviderImpl.class.getName());
     private final Configuration configuration;
 
+    /** Creates a new ConfigProviderImpl instance. */
     public ConfigProviderImpl() {
         final var builder = createConfigurationBuilder();
-        //        addFileSources(builder, useGenesisSource);
-        //        if (overrideValues != null) {
-        //            overrideValues.forEach(builder::withValue);
-        //        }
         configuration = builder.build();
     }
 
+    /**
+     * Returns the configuration.
+     *
+     * @return the configuration
+     */
     @NonNull
     @Override
     public Configuration getConfiguration() {
@@ -54,6 +57,7 @@ public class ConfigProviderImpl implements ConfigProvider {
                     .autoDiscoverExtensions();
 
         } catch (IOException e) {
+            LOGGER.log(System.Logger.Level.ERROR, "Failed to create configuration builder", e);
             throw new RuntimeException(e);
         }
     }

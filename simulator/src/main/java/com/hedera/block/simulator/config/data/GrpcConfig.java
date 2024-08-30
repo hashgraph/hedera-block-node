@@ -21,6 +21,12 @@ import com.swirlds.config.api.ConfigProperty;
 import com.swirlds.config.api.validation.annotation.Max;
 import com.swirlds.config.api.validation.annotation.Min;
 
+/**
+ * The GrpcConfig class defines the configuration data for the gRPC client.
+ *
+ * @param serverAddress the address of the gRPC server
+ * @param port the port of the gRPC server
+ */
 @ConfigData("grpc")
 public record GrpcConfig(
         @ConfigProperty(defaultValue = "localhost") @Min(0) @Max(65535) String serverAddress,

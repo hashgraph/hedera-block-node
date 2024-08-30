@@ -20,9 +20,16 @@ import dagger.Binds;
 import dagger.Module;
 import javax.inject.Singleton;
 
+/** The module used to inject the block stream manager. */
 @Module
 public interface GeneratorInjectionModule {
 
+    /**
+     * Provides the block stream manager.
+     *
+     * @param blockStreamManager the block stream manager to be used
+     * @return the block stream manager
+     */
     @Singleton
     @Binds
     BlockStreamManager bindBlockStreamManager(MockBlockStreamManagerImpl blockStreamManager);

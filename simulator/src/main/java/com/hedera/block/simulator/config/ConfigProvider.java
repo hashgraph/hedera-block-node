@@ -19,7 +19,15 @@ package com.hedera.block.simulator.config;
 import com.swirlds.config.api.Configuration;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
+/** The provider used to get the configuration for the simulator. */
 public interface ConfigProvider {
+
+    /**
+     * Gets the configuration for the simulator, specifies the mode of generation, the mode of
+     * simulator and every configurable detail.
+     *
+     * @return the configuration
+     */
     @NonNull
     Configuration getConfiguration();
 }

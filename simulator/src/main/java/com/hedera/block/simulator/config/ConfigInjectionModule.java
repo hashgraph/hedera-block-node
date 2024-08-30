@@ -23,15 +23,28 @@ import dagger.Module;
 import dagger.Provides;
 import javax.inject.Singleton;
 
+/** The module used to inject the configuration data into the application. */
 @Module
 public interface ConfigInjectionModule {
 
+    /**
+     * Provides the block stream configuration.
+     *
+     * @param configuration the configuration to be used by the block stream
+     * @return the block stream configuration
+     */
     @Singleton
     @Provides
     static BlockStreamConfig provideBlockStreamConfig(Configuration configuration) {
         return configuration.getConfigData(BlockStreamConfig.class);
     }
 
+    /**
+     * Provides the gRPC configuration.
+     *
+     * @param configuration the configuration to be used by the gRPC
+     * @return the gRPC configuration
+     */
     @Singleton
     @Provides
     static GrpcConfig provideGrpcConfig(Configuration configuration) {

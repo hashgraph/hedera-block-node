@@ -19,11 +19,18 @@ package com.hedera.block.simulator.generator;
 import com.hedera.hapi.block.stream.Block;
 import javax.inject.Inject;
 
+/** A mock implementation of the BlockStreamManager interface. */
 public class MockBlockStreamManagerImpl implements BlockStreamManager {
 
+    /** Constructs a new MockBlockStreamManagerImpl. */
     @Inject
     public MockBlockStreamManagerImpl() {}
 
+    /**
+     * Gets the next block in the block stream.
+     *
+     * @return the next block in the block stream
+     */
     @Override
     public Block getNextBlock() {
         return Block.newBuilder().build();

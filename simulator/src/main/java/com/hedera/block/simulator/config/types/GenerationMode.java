@@ -16,7 +16,10 @@
 
 package com.hedera.block.simulator.config.types;
 
+/** The GenerationMode enum defines the modes of generation for the block stream. */
 public enum GenerationMode {
+    /** Reads Blocks from a Folder. */
     FOLDER,
+    /** Generates Blocks from rules */
     SELF
 }

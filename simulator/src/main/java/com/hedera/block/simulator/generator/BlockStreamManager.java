@@ -18,7 +18,13 @@ package com.hedera.block.simulator.generator;
 
 import com.hedera.hapi.block.stream.Block;
 
+/** this interface defines the contract for managing the block stream. */
 public interface BlockStreamManager {
 
+    /**
+     * Gets the next block in the block stream.
+     *
+     * @return the next block in the block stream
+     */
     Block getNextBlock();
 }

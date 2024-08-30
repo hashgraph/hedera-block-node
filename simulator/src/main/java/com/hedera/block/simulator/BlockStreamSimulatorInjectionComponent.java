@@ -23,6 +23,7 @@ import dagger.BindsInstance;
 import dagger.Component;
 import javax.inject.Singleton;
 
+/** The component used to inject the block stream simulator into the application. */
 @Singleton
 @Component(
         modules = {
@@ -31,10 +32,22 @@ import javax.inject.Singleton;
         })
 public interface BlockStreamSimulatorInjectionComponent {
 
+    /**
+     * Gets the block stream simulator.
+     *
+     * @return the block stream simulator
+     */
     BlockStreamSimulator getBlockStreamSimulator();
 
+    /** The factory used to create the block stream simulator injection component. */
     @Component.Factory
     interface Factory {
+        /**
+         * Creates the block stream simulator injection component.
+         *
+         * @param configuration the configuration to be used by the block stream simulator
+         * @return the block stream simulator injection component
+         */
         BlockStreamSimulatorInjectionComponent create(@BindsInstance Configuration configuration);
     }
 }

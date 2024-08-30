@@ -1,9 +1,8 @@
 import com.hedera.block.simulator.config.SimulatorConfigExtension;
 
+/** Runtime module of the simulator. */
 module com.hedera.block.simulator {
-    exports com.hedera.block.simulator.config.data to
-            com.swirlds.config.impl,
-            com.swirlds.config.extensions;
+    exports com.hedera.block.simulator.config.data;
 
     requires static com.github.spotbugs.annotations;
     requires static com.google.auto.service;
