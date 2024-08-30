@@ -29,6 +29,7 @@ public class BlockStreamSimulator {
 
     Configuration configuration;
     BlockStreamManager blockStreamManager;
+    boolean isRunning = false;
 
     @Inject
     public BlockStreamSimulator(
@@ -55,8 +56,12 @@ public class BlockStreamSimulator {
         // use blockStreamManager to get block stream
 
         // use PublishStreamGrpcClient to stream it to the block-node.
-
+        isRunning = true;
         LOGGER.log(Logger.Level.INFO, "Block Stream Simulator has started");
+    }
+
+    public boolean isRunning() {
+        return isRunning;
     }
 
     public void stop() {}
