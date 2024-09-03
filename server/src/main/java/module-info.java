@@ -26,6 +26,7 @@ module com.hedera.block.server {
     requires dagger;
     requires io.grpc.stub;
     requires io.helidon.common;
+    requires io.helidon.config;
     requires io.helidon.webserver.grpc;
     requires io.helidon.webserver;
     requires javax.inject;

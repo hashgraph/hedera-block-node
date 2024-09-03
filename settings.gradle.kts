@@ -44,6 +44,7 @@ dependencyResolutionManagement {
             // Compile time dependencies
             version("io.helidon.webserver.http2", "4.1.0")
             version("io.helidon.webserver.grpc", "4.1.0")
+            version("io.helidon.logging", "4.1.0")
             version("com.lmax.disruptor", "4.0.0")
             version("com.github.spotbugs.annotations", "4.7.3")
             version("com.swirlds.metrics.api", swirldsVersion)

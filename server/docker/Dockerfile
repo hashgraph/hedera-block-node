@@ -24,5 +24,8 @@ COPY --from=distributions server-${VERSION}.tar .
 # Extract the TAR file
 RUN tar -xvf server-${VERSION}.tar
 
+# Copy the logging properties file
+COPY logging.properties logging.properties
+
 # RUN the bin script for starting the server
 ENTRYPOINT ["/bin/bash", "-c", "/app/server-${VERSION}/bin/server"]

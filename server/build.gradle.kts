@@ -29,6 +29,7 @@ mainModuleInfo {
     annotationProcessor("com.google.auto.service.processor")
     runtimeOnly("com.swirlds.config.impl")
     runtimeOnly("org.apache.logging.log4j.slf4j2.impl")
+    runtimeOnly("io.helidon.logging")
 }
 
 testModuleInfo {
