@@ -35,9 +35,9 @@ public interface ServiceStatus {
     /**
      * Sets the running status of the service.
      *
-     * @param running true if the service is running, false otherwise
+     * @param className the name of the class stopping the service
      */
-    void setRunning(final boolean running);
+    void stopRunning(final String className);
 
     /**
      * Sets the web server instance.

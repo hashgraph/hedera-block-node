@@ -16,6 +16,8 @@
 
 package com.hedera.block.server;
 
+import static java.lang.System.Logger.Level.DEBUG;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,6 +30,8 @@ import javax.inject.Singleton;
  */
 @Singleton
 public class ServiceStatusImpl implements ServiceStatus {
+
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final AtomicBoolean isRunning = new AtomicBoolean(true);
     private WebServer webServer;
@@ -48,10 +52,11 @@ public class ServiceStatusImpl implements ServiceStatus {
     /**
      * Sets the running status of the service.
      *
-     * @param running true if the service is running, false otherwise
+     * @param className the name of the class stopping the service
      */
-    public void setRunning(final boolean running) {
-        isRunning.set(running);
+    public void stopRunning(final String className) {
+        LOGGER.log(DEBUG, String.format("%s set the status to stopped", className));
+        isRunning.set(false);
     }
 
     /**
