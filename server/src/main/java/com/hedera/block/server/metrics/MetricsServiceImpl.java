@@ -20,6 +20,7 @@ import com.swirlds.metrics.api.Counter;
 import com.swirlds.metrics.api.LongGauge;
 import com.swirlds.metrics.api.Metrics;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.EnumMap;
 import javax.inject.Inject;
 
 /**
@@ -32,58 +33,10 @@ public class MetricsServiceImpl implements MetricsService {
 
     private static final String CATEGORY = "hedera_block_node";
 
-    // Live BlockItem Counter
-    private static final Counter.Config LIVE_BLOCK_ITEM_COUNTER =
-            new Counter.Config(CATEGORY, "live_block_items").withDescription("Live BlockItems");
-
-    // Block Persistence Counter
-    private static final Counter.Config BLOCK_PERSISTENCE_COUNTER =
-            new Counter.Config(CATEGORY, "blocks_persisted").withDescription("Blocks Persisted");
-
-    // Subscriber Gauge
-    private static final LongGauge.Config SUBSCRIBER_GAUGE =
-            new LongGauge.Config(CATEGORY, "subscribers").withDescription("Subscribers");
-
-    // Single Block Retrieved Counter
-    private static final Counter.Config SINGLE_BLOCK_RETRIEVED_COUNTER =
-            new Counter.Config(CATEGORY, "single_blocks_retrieved")
-                    .withDescription("Single Blocks Retrieved");
-
-    private final Counter liveBlockItems;
-
-    private final Counter blocksPersisted;
-
-    private final Counter singleBlocksRetrieved;
-
-    private final LongGauge subscribers;
-
-    /** Update the counter of live block items transiting via the live stream. */
-    @Override
-    @NonNull
-    public final Counter liveBlockItems() {
-        return liveBlockItems;
-    }
-
-    /** Update the counter of blocks persisted to storage. */
-    @Override
-    @NonNull
-    public final Counter blocksPersisted() {
-        return blocksPersisted;
-    }
-
-    /** Update the counter of single blocks retrieved from storage. */
-    @Override
-    @NonNull
-    public final Counter singleBlocksRetrieved() {
-        return singleBlocksRetrieved;
-    }
-
-    /** Update the gauge of subscribers currently consuming to the live stream. */
-    @Override
-    @NonNull
-    public final LongGauge subscribers() {
-        return subscribers;
-    }
+    private final EnumMap<BlockNodeMetricTypes.Counter, Counter> counters =
+            new EnumMap<>(BlockNodeMetricTypes.Counter.class);
+    private final EnumMap<BlockNodeMetricTypes.Gauge, LongGauge> gauges =
+            new EnumMap<>(BlockNodeMetricTypes.Gauge.class);
 
     /**
      * Create singleton instance of metrics service to be used throughout the application.
@@ -92,9 +45,46 @@ public class MetricsServiceImpl implements MetricsService {
      */
     @Inject
     public MetricsServiceImpl(@NonNull final Metrics metrics) {
-        this.liveBlockItems = metrics.getOrCreate(LIVE_BLOCK_ITEM_COUNTER);
-        this.blocksPersisted = metrics.getOrCreate(BLOCK_PERSISTENCE_COUNTER);
-        this.singleBlocksRetrieved = metrics.getOrCreate(SINGLE_BLOCK_RETRIEVED_COUNTER);
-        this.subscribers = metrics.getOrCreate(SUBSCRIBER_GAUGE);
+        // Initialize the counters
+        for (BlockNodeMetricTypes.Counter counter : BlockNodeMetricTypes.Counter.values()) {
+            counters.put(
+                    counter,
+                    metrics.getOrCreate(
+                            new Counter.Config(CATEGORY, counter.grafanaLabel())
+                                    .withDescription(counter.description())));
+        }
+
+        // Initialize the gauges
+        for (BlockNodeMetricTypes.Gauge gauge : BlockNodeMetricTypes.Gauge.values()) {
+            gauges.put(
+                    gauge,
+                    metrics.getOrCreate(
+                            new LongGauge.Config(CATEGORY, gauge.grafanaLabel())
+                                    .withDescription(gauge.description())));
+        }
+    }
+
+    /**
+     * Use this method to get a specific counter for the given metric type.
+     *
+     * @param key to get a specific counter
+     * @return the counter
+     */
+    @NonNull
+    @Override
+    public Counter get(@NonNull BlockNodeMetricTypes.Counter key) {
+        return counters.get(key);
+    }
+
+    /**
+     * Use this method to get a specific gauge for the given metric type.
+     *
+     * @param key to get a specific gauge
+     * @return the gauge
+     */
+    @NonNull
+    @Override
+    public LongGauge get(@NonNull BlockNodeMetricTypes.Gauge key) {
+        return gauges.get(key);
     }
 }

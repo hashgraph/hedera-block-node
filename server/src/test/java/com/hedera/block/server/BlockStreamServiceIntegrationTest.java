@@ -17,6 +17,7 @@
 package com.hedera.block.server;
 
 import static com.hedera.block.server.Translator.fromPbj;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItems;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static java.lang.System.Logger;
@@ -230,7 +231,7 @@ public class BlockStreamServiceIntegrationTest {
         streamObserver.onNext(fromPbj(publishStreamRequest));
 
         // Verify the counter was incremented
-        assertEquals(1, blockNodeContext.metricsService().liveBlockItems().get());
+        assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
 
         verify(blockWriter, timeout(testTimeout).times(1)).write(blockItems.getFirst());
 

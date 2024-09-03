@@ -22,6 +22,8 @@ import static com.hedera.block.server.Constants.SERVICE_NAME;
 import static com.hedera.block.server.Constants.SINGLE_BLOCK_METHOD_NAME;
 import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.Translator.toPbj;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.SingleBlocksNotFound;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.SingleBlocksRetrieved;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -65,6 +67,7 @@ public class BlockStreamService implements GrpcService {
     private final ServiceStatus serviceStatus;
     private final BlockReader<Block> blockReader;
     private final BlockNodeContext blockNodeContext;
+    private final MetricsService metricsService;
 
     /**
      * Constructor for the BlockStreamService class. It initializes the BlockStreamService with the
@@ -89,6 +92,7 @@ public class BlockStreamService implements GrpcService {
         this.blockReader = blockReader;
         this.serviceStatus = serviceStatus;
         this.blockNodeContext = blockNodeContext;
+        this.metricsService = blockNodeContext.metricsService();
     }
 
     /**
@@ -136,7 +140,7 @@ public class BlockStreamService implements GrpcService {
         LOGGER.log(DEBUG, "Executing bidirectional publishBlockStream gRPC method");
 
         return new ProducerBlockItemObserver(
-                streamMediator, publishStreamResponseObserver, serviceStatus);
+                streamMediator, publishStreamResponseObserver, blockNodeContext, serviceStatus);
     }
 
     void protocSubscribeBlockStream(
@@ -201,11 +205,11 @@ public class BlockStreamService implements GrpcService {
                     singleBlockResponseStreamObserver.onNext(
                             fromPbjSingleBlockSuccessResponse(blockOpt.get()));
 
-                    final MetricsService metricsService = blockNodeContext.metricsService();
-                    metricsService.singleBlocksRetrieved().increment();
+                    metricsService.get(SingleBlocksRetrieved).increment();
                 } else {
                     LOGGER.log(DEBUG, "Block number {0} not found", blockNumber);
                     singleBlockResponseStreamObserver.onNext(buildSingleBlockNotFoundResponse());
+                    metricsService.get(SingleBlocksNotFound).increment();
                 }
             } catch (IOException e) {
                 LOGGER.log(ERROR, "Error reading block number: {0}", blockNumber);

@@ -29,9 +29,11 @@ mainModuleInfo {
     annotationProcessor("com.google.auto.service.processor")
     runtimeOnly("com.swirlds.config.impl")
     runtimeOnly("org.apache.logging.log4j.slf4j2.impl")
+    runtimeOnly("io.helidon.logging")
 }
 
 testModuleInfo {
+    annotationProcessor("dagger.compiler")
     requires("org.junit.jupiter.api")
     requires("org.mockito")
     requires("org.mockito.junit.jupiter")

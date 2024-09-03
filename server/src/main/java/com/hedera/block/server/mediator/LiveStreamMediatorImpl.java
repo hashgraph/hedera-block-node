@@ -16,6 +16,9 @@
 
 package com.hedera.block.server.mediator;
 
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItems;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockStreamMediatorError;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Subscribers;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -34,7 +37,6 @@ import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.util.DaemonThreadFactory;
-import com.swirlds.metrics.api.LongGauge;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Map;
@@ -62,7 +64,6 @@ class LiveStreamMediatorImpl
 
     private final BlockWriter<BlockItem> blockWriter;
     private final ServiceStatus serviceStatus;
-    private final BlockNodeContext blockNodeContext;
     private final MetricsService metricsService;
 
     /**
@@ -97,7 +98,6 @@ class LiveStreamMediatorImpl
         this.ringBuffer = disruptor.start();
         this.executor = Executors.newCachedThreadPool(DaemonThreadFactory.INSTANCE);
         this.serviceStatus = serviceStatus;
-        this.blockNodeContext = blockNodeContext;
         this.metricsService = blockNodeContext.metricsService();
     }
 
@@ -121,21 +121,25 @@ class LiveStreamMediatorImpl
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
 
             // Increment the block item counter
-            metricsService.liveBlockItems().increment();
+            metricsService.get(LiveBlockItems).increment();
 
             try {
                 // Persist the BlockItem
                 blockWriter.write(blockItem);
             } catch (IOException e) {
+
+                // Increment the error counter
+                metricsService.get(LiveBlockStreamMediatorError).increment();
+
                 // Disable BlockItem publication for upstream producers
-                serviceStatus.setRunning(false);
+                serviceStatus.stopRunning(this.getClass().getName());
                 LOGGER.log(
                         ERROR,
                         "An exception occurred while attempting to persist the BlockItem: "
                                 + blockItem,
                         e);
 
-                LOGGER.log(DEBUG, "Send a response to end the stream");
+                LOGGER.log(ERROR, "Send a response to end the stream");
 
                 // Publish the block for all subscribers to receive
                 final SubscribeStreamResponse endStreamResponse = buildEndStreamResponse();
@@ -143,7 +147,7 @@ class LiveStreamMediatorImpl
 
                 // Unsubscribe all downstream consumers
                 for (final var subscriber : subscribers.keySet()) {
-                    LOGGER.log(DEBUG, "Unsubscribing: {0}", subscriber);
+                    LOGGER.log(ERROR, String.format("Unsubscribing: %s", subscriber));
                     unsubscribe(subscriber);
                 }
 
@@ -169,7 +173,8 @@ class LiveStreamMediatorImpl
         // Keep track of the subscriber
         subscribers.put(handler, batchEventProcessor);
 
-        updateSubscriberMetrics();
+        // update the subscriber metrics
+        metricsService.get(Subscribers).set(subscribers.size());
     }
 
     @Override
@@ -190,7 +195,8 @@ class LiveStreamMediatorImpl
             ringBuffer.removeGatingSequence(batchEventProcessor.getSequence());
         }
 
-        updateSubscriberMetrics();
+        // update the subscriber metrics
+        metricsService.get(Subscribers).set(subscribers.size());
     }
 
     @Override
@@ -207,11 +213,5 @@ class LiveStreamMediatorImpl
         return SubscribeStreamResponse.newBuilder()
                 .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
                 .build();
-    }
-
-    private void updateSubscriberMetrics() {
-        @NonNull final MetricsService metricsService = blockNodeContext.metricsService();
-        @NonNull final LongGauge longGauge = metricsService.subscribers();
-        longGauge.set(subscribers.size());
     }
 }

@@ -17,6 +17,7 @@
 package com.hedera.block.server.consumer;
 
 import static com.hedera.block.server.Translator.fromPbj;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItemsConsumed;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -24,6 +25,7 @@ import static java.lang.System.Logger.Level.ERROR;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
+import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.OneOf;
@@ -45,6 +47,7 @@ public class ConsumerStreamResponseObserver
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
+    private final MetricsService metricsService;
     private final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
             subscribeStreamResponseObserver;
     private final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>> subscriptionHandler;
@@ -98,6 +101,7 @@ public class ConsumerStreamResponseObserver
                         .getConfigData(ConsumerConfig.class)
                         .timeoutThresholdMillis();
         this.subscriptionHandler = subscriptionHandler;
+        this.metricsService = context.metricsService();
 
         // The ServerCallStreamObserver can be configured with Runnable handlers to
         // be executed when a downstream consumer closes the connection. The handlers
@@ -212,6 +216,9 @@ public class ConsumerStreamResponseObserver
 
                 if (streamStarted) {
                     LOGGER.log(DEBUG, "Sending BlockItem downstream: {0}", blockItem);
+
+                    // Increment counter
+                    metricsService.get(LiveBlockItemsConsumed).increment();
                     subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
                 }
             }

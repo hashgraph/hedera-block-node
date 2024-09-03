@@ -23,34 +23,18 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 /** Use member variables of this class to update metric data for the Hedera Block Node. */
 public interface MetricsService {
     /**
-     * Update the counter of live block items transiting via the live stream.
+     * Use this method to get a specific counter for the given metric type.
      *
-     * @return use this metric to increase the counter of block items received
+     * @param key to get a specific counter
+     * @return the counter
      */
-    @NonNull
-    Counter liveBlockItems();
+    Counter get(@NonNull BlockNodeMetricTypes.Counter key);
 
     /**
-     * Update the counter of blocks persisted to storage.
+     * Use this method to get a specific gauge for the given metric type.
      *
-     * @return use this counter to increase the amount of blocks persisted to disk
+     * @param key to get a specific gauge
+     * @return the gauge
      */
-    @NonNull
-    Counter blocksPersisted();
-
-    /**
-     * Update the counter of single blocks retrieved from storage.
-     *
-     * @return use this metric to increase the counter of single blocks retrieved
-     */
-    @NonNull
-    Counter singleBlocksRetrieved();
-
-    /**
-     * Update the gauge of subscribers currently consuming to the live stream.
-     *
-     * @return Use this to increase or decrease the amount of current subscribers to the live stream
-     */
-    @NonNull
-    LongGauge subscribers();
+    LongGauge get(@NonNull BlockNodeMetricTypes.Gauge key);
 }

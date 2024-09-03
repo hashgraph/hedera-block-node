@@ -25,6 +25,12 @@ public final class Constants {
     /** Constant mapped to the application.properties file in resources with default values */
     @NonNull public static final String APPLICATION_PROPERTIES = "app.properties";
 
+    /**
+     * Constant mapped to the Helidon logging.properties file in the docker directory with default
+     * values.
+     */
+    @NonNull public static final String LOGGING_PROPERTIES = "logging.properties";
+
     /** Constant mapped to the name of the service in the .proto file */
     @NonNull public static final String SERVICE_NAME = "BlockStreamService";
 

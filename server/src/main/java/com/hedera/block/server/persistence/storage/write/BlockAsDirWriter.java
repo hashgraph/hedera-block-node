@@ -17,6 +17,7 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -55,7 +56,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
     private Path currentBlockDir;
     private final FileAttribute<Set<PosixFilePermission>> filePerms;
     private final BlockRemover blockRemover;
-    private final BlockNodeContext blockNodeContext;
+    private final MetricsService metricsService;
 
     /**
      * Use the corresponding builder to construct a new BlockAsDirWriter with the given parameters.
@@ -86,7 +87,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
         // Initialize the block node root directory if it does not exist
         FileUtils.createPathIfNotExists(blockNodeRootPath, INFO, filePerms);
 
-        this.blockNodeContext = blockNodeContext;
+        this.metricsService = blockNodeContext.metricsService();
     }
 
     /**
@@ -162,8 +163,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
         blockNodeFileNameIndex = 0;
 
         // Increment the block counter
-        final MetricsService metricsService = blockNodeContext.metricsService();
-        metricsService.blocksPersisted().increment();
+        metricsService.get(BlocksPersisted).increment();
     }
 
     private void repairPermissions(@NonNull final Path path) throws IOException {
