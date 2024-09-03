@@ -22,7 +22,19 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** Use member variables of this class to update metric data for the Hedera Block Node. */
 public interface MetricsService {
-    Counter get(@NonNull BlockNodeMetricNames.Counter key);
+    /**
+     * Use this method to get a specific counter for the given metric type.
+     *
+     * @param key to get a specific counter
+     * @return the counter
+     */
+    Counter get(@NonNull BlockNodeMetricTypes.Counter key);
 
-    LongGauge get(@NonNull BlockNodeMetricNames.Gauge key);
+    /**
+     * Use this method to get a specific gauge for the given metric type.
+     *
+     * @param key to get a specific gauge
+     * @return the gauge
+     */
+    LongGauge get(@NonNull BlockNodeMetricTypes.Gauge key);
 }

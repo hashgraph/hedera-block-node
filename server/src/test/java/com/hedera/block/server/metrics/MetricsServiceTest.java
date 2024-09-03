@@ -16,11 +16,11 @@
 
 package com.hedera.block.server.metrics;
 
-import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.BlocksPersisted;
-import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockItems;
-import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockItemsConsumed;
-import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.SingleBlocksRetrieved;
-import static com.hedera.block.server.metrics.BlockNodeMetricNames.Gauge.Subscribers;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItems;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItemsConsumed;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.SingleBlocksRetrieved;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Subscribers;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.hedera.block.server.config.BlockNodeContext;

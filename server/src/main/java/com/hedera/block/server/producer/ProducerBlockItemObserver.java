@@ -18,7 +18,7 @@ package com.hedera.block.server.producer;
 
 import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.Translator.toPbj;
-import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockItemsReceived;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItemsReceived;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
@@ -64,9 +64,11 @@ public class ProducerBlockItemObserver
      * to the upstream producer via the responseStreamObserver.
      *
      * @param publisher the block item publisher to used to pass block items to consumers as they
-     *     arrive from the upstream producer
+     *     arrive from the upstream producer.
      * @param publishStreamResponseObserver the response stream observer to send responses back to
-     *     the upstream producer for each block item processed
+     *     the upstream producer for each block item processed.
+     * @param blockNodeContext the block node context used to access context objects for the Block
+     *     Node (e.g. - the metrics service).
      * @param serviceStatus the service status used to determine if the downstream service is
      *     accepting block items. In the event of an unrecoverable exception, it will be used to
      *     stop the web server.

@@ -16,9 +16,9 @@
 
 package com.hedera.block.server.mediator;
 
-import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockItems;
-import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockStreamMediatorError;
-import static com.hedera.block.server.metrics.BlockNodeMetricNames.Gauge.Subscribers;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItems;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockStreamMediatorError;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Subscribers;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;

@@ -33,10 +33,10 @@ public class MetricsServiceImpl implements MetricsService {
 
     private static final String CATEGORY = "hedera_block_node";
 
-    private final EnumMap<BlockNodeMetricNames.Counter, Counter> counters =
-            new EnumMap<>(BlockNodeMetricNames.Counter.class);
-    private final EnumMap<BlockNodeMetricNames.Gauge, LongGauge> gauges =
-            new EnumMap<>(BlockNodeMetricNames.Gauge.class);
+    private final EnumMap<BlockNodeMetricTypes.Counter, Counter> counters =
+            new EnumMap<>(BlockNodeMetricTypes.Counter.class);
+    private final EnumMap<BlockNodeMetricTypes.Gauge, LongGauge> gauges =
+            new EnumMap<>(BlockNodeMetricTypes.Gauge.class);
 
     /**
      * Create singleton instance of metrics service to be used throughout the application.
@@ -46,7 +46,7 @@ public class MetricsServiceImpl implements MetricsService {
     @Inject
     public MetricsServiceImpl(@NonNull final Metrics metrics) {
         // Initialize the counters
-        for (BlockNodeMetricNames.Counter counter : BlockNodeMetricNames.Counter.values()) {
+        for (BlockNodeMetricTypes.Counter counter : BlockNodeMetricTypes.Counter.values()) {
             counters.put(
                     counter,
                     metrics.getOrCreate(
@@ -55,7 +55,7 @@ public class MetricsServiceImpl implements MetricsService {
         }
 
         // Initialize the gauges
-        for (BlockNodeMetricNames.Gauge gauge : BlockNodeMetricNames.Gauge.values()) {
+        for (BlockNodeMetricTypes.Gauge gauge : BlockNodeMetricTypes.Gauge.values()) {
             gauges.put(
                     gauge,
                     metrics.getOrCreate(
@@ -64,15 +64,27 @@ public class MetricsServiceImpl implements MetricsService {
         }
     }
 
+    /**
+     * Use this method to get a specific counter for the given metric type.
+     *
+     * @param key to get a specific counter
+     * @return the counter
+     */
     @NonNull
     @Override
-    public Counter get(@NonNull BlockNodeMetricNames.Counter key) {
+    public Counter get(@NonNull BlockNodeMetricTypes.Counter key) {
         return counters.get(key);
     }
 
+    /**
+     * Use this method to get a specific gauge for the given metric type.
+     *
+     * @param key to get a specific gauge
+     * @return the gauge
+     */
     @NonNull
     @Override
-    public LongGauge get(@NonNull BlockNodeMetricNames.Gauge key) {
+    public LongGauge get(@NonNull BlockNodeMetricTypes.Gauge key) {
         return gauges.get(key);
     }
 }

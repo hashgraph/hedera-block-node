@@ -17,7 +17,7 @@
 package com.hedera.block.server.consumer;
 
 import static com.hedera.block.server.Translator.fromPbj;
-import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockItemsConsumed;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItemsConsumed;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;

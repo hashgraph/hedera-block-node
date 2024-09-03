@@ -17,7 +17,7 @@
 package com.hedera.block.server.mediator;
 
 import static com.hedera.block.server.Translator.fromPbj;
-import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockItems;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItems;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

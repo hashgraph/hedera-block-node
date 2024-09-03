@@ -17,7 +17,7 @@
 package com.hedera.block.server.producer;
 
 import static com.hedera.block.server.Translator.fromPbj;
-import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockItems;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItems;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
