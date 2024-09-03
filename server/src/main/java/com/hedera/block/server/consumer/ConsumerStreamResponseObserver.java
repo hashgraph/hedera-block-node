@@ -167,9 +167,6 @@ public class ConsumerStreamResponseObserver
                 // Refresh the producer liveness and pass the BlockItem to the downstream observer.
                 producerLivenessMillis = currentMillis;
 
-                // Increment counter
-                metricsService.get(LiveBlockItemsConsumed).increment();
-
                 final SubscribeStreamResponse subscribeStreamResponse = event.get();
                 final ResponseSender responseSender = getResponseSender(subscribeStreamResponse);
                 responseSender.send(subscribeStreamResponse);
@@ -219,6 +216,9 @@ public class ConsumerStreamResponseObserver
 
                 if (streamStarted) {
                     LOGGER.log(DEBUG, "Sending BlockItem downstream: {0}", blockItem);
+
+                    // Increment counter
+                    metricsService.get(LiveBlockItemsConsumed).increment();
                     subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
                 }
             }

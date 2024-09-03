@@ -22,6 +22,7 @@ import static com.hedera.block.server.Constants.SERVICE_NAME;
 import static com.hedera.block.server.Constants.SINGLE_BLOCK_METHOD_NAME;
 import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.Translator.toPbj;
+import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.SingleBlocksNotFound;
 import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.SingleBlocksRetrieved;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
@@ -139,7 +140,7 @@ public class BlockStreamService implements GrpcService {
         LOGGER.log(DEBUG, "Executing bidirectional publishBlockStream gRPC method");
 
         return new ProducerBlockItemObserver(
-                streamMediator, publishStreamResponseObserver, serviceStatus);
+                streamMediator, publishStreamResponseObserver, blockNodeContext, serviceStatus);
     }
 
     void protocSubscribeBlockStream(
@@ -208,6 +209,7 @@ public class BlockStreamService implements GrpcService {
                 } else {
                     LOGGER.log(DEBUG, "Block number {0} not found", blockNumber);
                     singleBlockResponseStreamObserver.onNext(buildSingleBlockNotFoundResponse());
+                    metricsService.get(SingleBlocksNotFound).increment();
                 }
             } catch (IOException e) {
                 LOGGER.log(ERROR, "Error reading block number: {0}", blockNumber);

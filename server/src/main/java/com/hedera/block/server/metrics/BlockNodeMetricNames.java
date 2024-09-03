@@ -22,10 +22,17 @@ public final class BlockNodeMetricNames {
     private BlockNodeMetricNames() {}
 
     public enum Counter implements MetricMetadata {
+        // Standard counters
+        LiveBlockItemsReceived("live_block_items_received", "Live Block Items Received"),
         LiveBlockItems("live_block_items", "Live BlockItems"),
         BlocksPersisted("blocks_persisted", "Blocks Persisted"),
         LiveBlockItemsConsumed("live_block_items_consumed", "Live Block Items Consumed"),
-        SingleBlocksRetrieved("single_blocks_retrieved", "Single Blocks Retrieved");
+        SingleBlocksRetrieved("single_blocks_retrieved", "Single Blocks Retrieved"),
+        SingleBlocksNotFound("single_blocks_not_found", "Single Blocks Not Found"),
+
+        // Error counters
+        LiveBlockStreamMediatorError(
+                "live_block_stream_mediator_error", "Live Block Stream Mediator Error");
 
         private final String grafanaLabel;
         private final String description;

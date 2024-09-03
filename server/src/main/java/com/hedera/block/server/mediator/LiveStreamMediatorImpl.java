@@ -17,6 +17,7 @@
 package com.hedera.block.server.mediator;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockItems;
+import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockStreamMediatorError;
 import static com.hedera.block.server.metrics.BlockNodeMetricNames.Gauge.Subscribers;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
@@ -126,15 +127,19 @@ class LiveStreamMediatorImpl
                 // Persist the BlockItem
                 blockWriter.write(blockItem);
             } catch (IOException e) {
+
+                // Increment the error counter
+                metricsService.get(LiveBlockStreamMediatorError).increment();
+
                 // Disable BlockItem publication for upstream producers
-                serviceStatus.setRunning(false);
+                serviceStatus.stopRunning(this.getClass().getName());
                 LOGGER.log(
                         ERROR,
                         "An exception occurred while attempting to persist the BlockItem: "
                                 + blockItem,
                         e);
 
-                LOGGER.log(DEBUG, "Send a response to end the stream");
+                LOGGER.log(ERROR, "Send a response to end the stream");
 
                 // Publish the block for all subscribers to receive
                 final SubscribeStreamResponse endStreamResponse = buildEndStreamResponse();
@@ -142,7 +147,7 @@ class LiveStreamMediatorImpl
 
                 // Unsubscribe all downstream consumers
                 for (final var subscriber : subscribers.keySet()) {
-                    LOGGER.log(DEBUG, "Unsubscribing: {0}", subscriber);
+                    LOGGER.log(ERROR, String.format("Unsubscribing: %s", subscriber));
                     unsubscribe(subscriber);
                 }
 

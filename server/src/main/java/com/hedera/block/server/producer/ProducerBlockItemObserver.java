@@ -18,13 +18,16 @@ package com.hedera.block.server.producer;
 
 import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.Translator.toPbj;
+import static com.hedera.block.server.metrics.BlockNodeMetricNames.Counter.LiveBlockItemsReceived;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.ServiceStatus;
+import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.mediator.Publisher;
+import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.ItemAcknowledgement;
@@ -53,6 +56,7 @@ public class ProducerBlockItemObserver
             publishStreamResponseObserver;
     private final Publisher<BlockItem> publisher;
     private final ServiceStatus serviceStatus;
+    private final MetricsService metricsService;
 
     /**
      * Constructor for the ProducerBlockStreamObserver class. It is responsible for calling the
@@ -72,10 +76,12 @@ public class ProducerBlockItemObserver
             @NonNull
                     final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
                             publishStreamResponseObserver,
+            @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
 
         this.publisher = publisher;
         this.publishStreamResponseObserver = publishStreamResponseObserver;
+        this.metricsService = blockNodeContext.metricsService();
         this.serviceStatus = serviceStatus;
     }
 
@@ -92,8 +98,12 @@ public class ProducerBlockItemObserver
 
         try {
 
+            LOGGER.log(DEBUG, "Received PublishStreamRequest from producer");
             final BlockItem blockItem =
                     toPbj(BlockItem.PROTOBUF, publishStreamRequest.getBlockItem().toByteArray());
+            LOGGER.log(DEBUG, "Received block item: " + blockItem);
+
+            metricsService.get(LiveBlockItemsReceived).increment();
 
             // Publish the block to all the subscribers unless
             // there's an issue with the StreamMediator.
@@ -113,10 +123,12 @@ public class ProducerBlockItemObserver
                 }
 
             } else {
+                LOGGER.log(ERROR, "StreamMediator is not accepting BlockItems");
+
                 // Close the upstream connection to the producer(s)
                 final var errorResponse = buildErrorStreamResponse();
                 publishStreamResponseObserver.onNext(errorResponse);
-                LOGGER.log(DEBUG, "StreamMediator is not accepting BlockItems");
+                LOGGER.log(ERROR, "Error PublishStreamResponse sent to upstream producer");
             }
         } catch (IOException io) {
             final var errorResponse = buildErrorStreamResponse();

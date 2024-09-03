@@ -89,10 +89,14 @@ public class ProducerBlockItemObserverTest {
     @Test
     public void testProducerOnNext() throws IOException, NoSuchAlgorithmException {
 
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final List<BlockItem> blockItems = generateBlockItems(1);
         final ProducerBlockItemObserver producerBlockItemObserver =
                 new ProducerBlockItemObserver(
-                        streamMediator, publishStreamResponseObserver, serviceStatus);
+                        streamMediator,
+                        publishStreamResponseObserver,
+                        blockNodeContext,
+                        serviceStatus);
 
         when(serviceStatus.isRunning()).thenReturn(true);
 
@@ -173,7 +177,10 @@ public class ProducerBlockItemObserverTest {
 
         final ProducerBlockItemObserver producerBlockItemObserver =
                 new ProducerBlockItemObserver(
-                        streamMediator, publishStreamResponseObserver, serviceStatus);
+                        streamMediator,
+                        publishStreamResponseObserver,
+                        blockNodeContext,
+                        serviceStatus);
 
         final PublishStreamRequest publishStreamRequest =
                 PublishStreamRequest.newBuilder().blockItem(blockItem).build();
@@ -196,10 +203,15 @@ public class ProducerBlockItemObserverTest {
     }
 
     @Test
-    public void testOnError() {
+    public void testOnError() throws IOException {
+
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ProducerBlockItemObserver producerBlockItemObserver =
                 new ProducerBlockItemObserver(
-                        streamMediator, publishStreamResponseObserver, serviceStatus);
+                        streamMediator,
+                        publishStreamResponseObserver,
+                        blockNodeContext,
+                        serviceStatus);
 
         final Throwable t = new Throwable("Test error");
         producerBlockItemObserver.onError(t);
@@ -207,13 +219,17 @@ public class ProducerBlockItemObserverTest {
     }
 
     @Test
-    public void testItemAckBuilderExceptionTest() {
+    public void testItemAckBuilderExceptionTest() throws IOException {
 
         when(serviceStatus.isRunning()).thenReturn(true);
 
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ProducerBlockItemObserver testProducerBlockItemObserver =
                 new TestProducerBlockItemObserver(
-                        streamMediator, publishStreamResponseObserver, serviceStatus);
+                        streamMediator,
+                        publishStreamResponseObserver,
+                        blockNodeContext,
+                        serviceStatus);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final BlockItem blockHeader = blockItems.getFirst();
@@ -232,10 +248,16 @@ public class ProducerBlockItemObserverTest {
     }
 
     @Test
-    public void testBlockItemThrowsParseException() throws InvalidProtocolBufferException {
+    public void testBlockItemThrowsParseException()
+            throws IOException, InvalidProtocolBufferException {
+
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ProducerBlockItemObserver producerBlockItemObserver =
                 new ProducerBlockItemObserver(
-                        streamMediator, publishStreamResponseObserver, serviceStatus);
+                        streamMediator,
+                        publishStreamResponseObserver,
+                        blockNodeContext,
+                        serviceStatus);
 
         // Create a pbj block item
         final List<BlockItem> blockItems = generateBlockItems(1);
@@ -276,11 +298,13 @@ public class ProducerBlockItemObserverTest {
 
     private static class TestProducerBlockItemObserver extends ProducerBlockItemObserver {
         public TestProducerBlockItemObserver(
-                StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator,
-                StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
+                final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
+                        streamMediator,
+                final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
                         publishStreamResponseObserver,
-                ServiceStatus serviceStatus) {
-            super(streamMediator, publishStreamResponseObserver, serviceStatus);
+                final BlockNodeContext blockNodeContext,
+                final ServiceStatus serviceStatus) {
+            super(streamMediator, publishStreamResponseObserver, blockNodeContext, serviceStatus);
         }
 
         @NonNull
