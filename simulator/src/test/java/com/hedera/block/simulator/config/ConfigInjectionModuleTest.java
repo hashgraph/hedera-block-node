@@ -14,47 +14,53 @@
  * limitations under the License.
  */
 
-package com.hedera.block.simulator;
+package com.hedera.block.simulator.config;
 
+import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.GrpcConfig;
+import com.hedera.block.simulator.config.types.GenerationMode;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
 import com.swirlds.config.extensions.sources.SystemEnvironmentConfigSource;
 import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import java.io.IOException;
-import java.lang.System.Logger;
 import java.nio.file.Path;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-/** The BlockStreamSimulator class defines the simulator for the block stream. */
-public class BlockStreamSimulator {
-    private static final Logger LOGGER = System.getLogger(BlockStreamSimulator.class.getName());
+class ConfigInjectionModuleTest {
 
-    /** This constructor should not be instantiated. */
-    private BlockStreamSimulator() {}
+    static Configuration configuration;
 
-    /**
-     * The main entry point for the block stream simulator.
-     *
-     * @param args the arguments to be passed to the block stream simulator
-     * @throws IOException if an I/O error occurs
-     */
-    public static void main(String[] args) throws IOException {
-
-        LOGGER.log(Logger.Level.INFO, "Starting Block Stream Simulator");
-
-        ConfigurationBuilder configurationBuilder =
+    @BeforeAll
+    static void setUpAll() throws IOException {
+        configuration =
                 ConfigurationBuilder.create()
                         .withSource(SystemEnvironmentConfigSource.getInstance())
                         .withSource(SystemPropertiesConfigSource.getInstance())
                         .withSource(new ClasspathFileConfigSource(Path.of("app.properties")))
-                        .autoDiscoverExtensions();
+                        .autoDiscoverExtensions()
+                        .build();
+    }
 
-        Configuration configuration = configurationBuilder.build();
+    @Test
+    void provideBlockStreamConfig() {
 
-        BlockStreamSimulatorInjectionComponent DIComponent =
-                DaggerBlockStreamSimulatorInjectionComponent.factory().create(configuration);
+        BlockStreamConfig blockStreamConfig =
+                ConfigInjectionModule.provideBlockStreamConfig(configuration);
 
-        BlockStreamSimulatorApp blockStreamSimulatorApp = DIComponent.getBlockStreamSimulatorApp();
-        blockStreamSimulatorApp.start();
+        Assertions.assertNotNull(blockStreamConfig);
+        Assertions.assertEquals(GenerationMode.SELF, blockStreamConfig.generationMode());
+    }
+
+    @Test
+    void provideGrpcConfig() {
+        GrpcConfig grpcConfig = ConfigInjectionModule.provideGrpcConfig(configuration);
+
+        Assertions.assertNotNull(grpcConfig);
+        Assertions.assertEquals("localhost", grpcConfig.serverAddress());
+        Assertions.assertEquals(8080, grpcConfig.port());
     }
 }

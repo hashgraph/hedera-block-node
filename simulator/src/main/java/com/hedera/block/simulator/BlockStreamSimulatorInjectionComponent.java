@@ -37,7 +37,7 @@ public interface BlockStreamSimulatorInjectionComponent {
      *
      * @return the block stream simulator
      */
-    BlockStreamSimulator getBlockStreamSimulator();
+    BlockStreamSimulatorApp getBlockStreamSimulatorApp();
 
     /** The factory used to create the block stream simulator injection component. */
     @Component.Factory

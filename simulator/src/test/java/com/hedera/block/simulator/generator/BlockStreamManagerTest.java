@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package com.hedera.block.simulator.config;
+package com.hedera.block.simulator.generator;
 
-import com.swirlds.config.api.Configuration;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import static org.junit.jupiter.api.Assertions.*;
 
-/** The provider used to get the configuration for the simulator. */
-public interface ConfigProvider {
+import org.junit.jupiter.api.Test;
 
-    /**
-     * Gets the configuration for the simulator, specifies the mode of generation, the mode of
-     * simulator and every configurable detail.
-     *
-     * @return the configuration
-     */
-    @NonNull
-    Configuration getConfiguration();
+class BlockStreamManagerTest {
+
+    @Test
+    void getNextBlock() {
+        BlockStreamManager blockStreamManager = new MockBlockStreamManagerImpl();
+        assertNotNull(blockStreamManager.getNextBlock());
+    }
 }

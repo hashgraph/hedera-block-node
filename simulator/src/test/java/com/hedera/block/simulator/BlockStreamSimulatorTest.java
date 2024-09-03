@@ -29,17 +29,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class BlockStreamSimulatorTest {
+class BlockStreamSimulatorAppTest {
 
     @Mock private Configuration configuration;
 
     @Mock private BlockStreamManager blockStreamManager;
 
-    @InjectMocks private BlockStreamSimulator blockStreamSimulator;
+    @InjectMocks private BlockStreamSimulatorApp blockStreamSimulator;
 
     @BeforeEach
     void setUp() {
-        blockStreamSimulator = new BlockStreamSimulator(configuration, blockStreamManager);
+        blockStreamSimulator = new BlockStreamSimulatorApp(configuration, blockStreamManager);
     }
 
     @AfterEach
