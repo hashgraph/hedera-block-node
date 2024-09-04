@@ -27,7 +27,7 @@ import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.notifier.Notifiable;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -50,7 +50,7 @@ import java.util.concurrent.Executors;
  * store.
  */
 class LiveStreamMediatorImpl
-        implements StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> {
+        implements StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>, Notifiable {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -62,7 +62,6 @@ class LiveStreamMediatorImpl
                     BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
             subscribers;
 
-    private final BlockWriter<BlockItem> blockWriter;
     private final ServiceStatus serviceStatus;
     private final MetricsService metricsService;
 
@@ -84,12 +83,10 @@ class LiveStreamMediatorImpl
                                     EventHandler<ObjectEvent<SubscribeStreamResponse>>,
                                     BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
                             subscribers,
-            @NonNull final BlockWriter<BlockItem> blockWriter,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
 
         this.subscribers = subscribers;
-        this.blockWriter = blockWriter;
 
         // Initialize and start the disruptor
         final Disruptor<ObjectEvent<SubscribeStreamResponse>> disruptor =
@@ -123,38 +120,35 @@ class LiveStreamMediatorImpl
             // Increment the block item counter
             metricsService.get(LiveBlockItems).increment();
 
-            try {
-                // Persist the BlockItem
-                blockWriter.write(blockItem);
-            } catch (IOException e) {
-
-                // Increment the error counter
-                metricsService.get(LiveBlockStreamMediatorError).increment();
-
-                // Disable BlockItem publication for upstream producers
-                serviceStatus.stopRunning(this.getClass().getName());
-                LOGGER.log(
-                        ERROR,
-                        "An exception occurred while attempting to persist the BlockItem: "
-                                + blockItem,
-                        e);
-
-                LOGGER.log(ERROR, "Send a response to end the stream");
-
-                // Publish the block for all subscribers to receive
-                final SubscribeStreamResponse endStreamResponse = buildEndStreamResponse();
-                ringBuffer.publishEvent((event, sequence) -> event.set(endStreamResponse));
-
-                // Unsubscribe all downstream consumers
-                for (final var subscriber : subscribers.keySet()) {
-                    LOGGER.log(ERROR, String.format("Unsubscribing: %s", subscriber));
-                    unsubscribe(subscriber);
-                }
-
-                throw e;
-            }
         } else {
             LOGGER.log(ERROR, "StreamMediator is not accepting BlockItems");
+        }
+    }
+
+    @Override
+    public void notifyUnrecoverableError() {
+
+        // Increment the error counter
+        metricsService.get(LiveBlockStreamMediatorError).increment();
+
+        // Disable BlockItem publication for upstream producers
+        serviceStatus.stopRunning(this.getClass().getName());
+        //        LOGGER.log(
+        //                ERROR,
+        //                "An exception occurred while attempting to persist the BlockItem: "
+        //                        + blockItem,
+        //                e);
+
+        LOGGER.log(ERROR, "Send a response to end the stream");
+
+        // Publish the block for all subscribers to receive
+        final SubscribeStreamResponse endStreamResponse = buildEndStreamResponse();
+        ringBuffer.publishEvent((event, sequence) -> event.set(endStreamResponse));
+
+        // Unsubscribe all downstream consumers
+        for (final var subscriber : subscribers.keySet()) {
+            LOGGER.log(ERROR, String.format("Unsubscribing: %s", subscriber));
+            unsubscribe(subscriber);
         }
     }
 

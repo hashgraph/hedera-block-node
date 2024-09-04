@@ -28,6 +28,7 @@ import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.notifier.Notifiable;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.ItemAcknowledgement;
@@ -48,7 +49,7 @@ import java.security.NoSuchAlgorithmException;
  * server).
  */
 public class ProducerBlockItemObserver
-        implements StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest> {
+        implements StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest>, Notifiable {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -206,5 +207,11 @@ public class ProducerBlockItemObserver
     public void onCompleted() {
         LOGGER.log(DEBUG, "ProducerBlockStreamObserver completed");
         publishStreamResponseObserver.onCompleted();
+    }
+
+    @Override
+    public void notifyUnrecoverableError() {
+        // Prevent additional block items from being published.
+        // Send the producer an error message.
     }
 }

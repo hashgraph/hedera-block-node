@@ -38,7 +38,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class LiveStreamMediatorBuilder {
 
-    private final BlockWriter<BlockItem> blockWriter;
     private final BlockNodeContext blockNodeContext;
     private final ServiceStatus serviceStatus;
 
@@ -51,11 +50,9 @@ public class LiveStreamMediatorBuilder {
     private static final int SUBSCRIBER_INIT_CAPACITY = 32;
 
     private LiveStreamMediatorBuilder(
-            @NonNull final BlockWriter<BlockItem> blockWriter,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
         this.subscribers = new ConcurrentHashMap<>(SUBSCRIBER_INIT_CAPACITY);
-        this.blockWriter = blockWriter;
         this.blockNodeContext = blockNodeContext;
         this.serviceStatus = serviceStatus;
     }
@@ -63,7 +60,6 @@ public class LiveStreamMediatorBuilder {
     /**
      * Create a new instance of the builder using the minimum required parameters.
      *
-     * @param blockWriter is required for the stream mediator to persist block items to storage.
      * @param blockNodeContext is required to provide metrics reporting mechanisms to the stream
      *     mediator.
      * @param serviceStatus is required to provide the stream mediator with access to check the
@@ -72,10 +68,9 @@ public class LiveStreamMediatorBuilder {
      */
     @NonNull
     public static LiveStreamMediatorBuilder newBuilder(
-            @NonNull final BlockWriter<BlockItem> blockWriter,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
-        return new LiveStreamMediatorBuilder(blockWriter, blockNodeContext, serviceStatus);
+        return new LiveStreamMediatorBuilder(blockNodeContext, serviceStatus);
     }
 
     /**
@@ -106,7 +101,6 @@ public class LiveStreamMediatorBuilder {
      */
     @NonNull
     public StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> build() {
-        return new LiveStreamMediatorImpl(
-                subscribers, blockWriter, serviceStatus, blockNodeContext);
+        return new LiveStreamMediatorImpl(subscribers, serviceStatus, blockNodeContext);
     }
 }

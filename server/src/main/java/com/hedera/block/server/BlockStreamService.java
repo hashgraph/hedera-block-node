@@ -35,6 +35,7 @@ import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.notifier.Notifiable;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
 import com.hedera.hapi.block.SingleBlockRequest;
@@ -59,7 +60,7 @@ import javax.inject.Inject;
  * the implementation for the bidirectional streaming, server streaming, and unary methods defined
  * in the proto file.
  */
-public class BlockStreamService implements GrpcService {
+public class BlockStreamService implements GrpcService, Notifiable {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -225,6 +226,11 @@ public class BlockStreamService implements GrpcService {
 
         // Send the response
         singleBlockResponseStreamObserver.onCompleted();
+    }
+
+    @Override
+    public void notifyUnrecoverableError() {
+        // prevent additional subscriptions and prepare for shutdown.
     }
 
     // TODO: Fix this error type once it's been standardized in `hedera-protobufs`
