@@ -27,4 +27,4 @@ import com.swirlds.config.api.ConfigProperty;
  */
 @ConfigData("blockStream")
 public record BlockStreamConfig(
-        @ConfigProperty(defaultValue = "SELF") GenerationMode generationMode) {}
+        @ConfigProperty(defaultValue = "DIR") GenerationMode generationMode) {}
