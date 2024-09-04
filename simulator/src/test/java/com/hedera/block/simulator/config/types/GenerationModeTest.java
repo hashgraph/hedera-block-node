@@ -24,9 +24,9 @@ class GenerationModeTest {
 
     @Test
     void testGenerationMode() {
-        GenerationMode mode = GenerationMode.FOLDER;
-        assertEquals(GenerationMode.FOLDER, mode);
-        mode = GenerationMode.SELF;
-        assertEquals(GenerationMode.SELF, mode);
+        GenerationMode mode = GenerationMode.DIR;
+        assertEquals(GenerationMode.DIR, mode);
+        mode = GenerationMode.ADHOC;
+        assertEquals(GenerationMode.ADHOC, mode);
     }
 }

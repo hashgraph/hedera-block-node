@@ -16,6 +16,8 @@
 
 package com.hedera.block.simulator;
 
+import static java.lang.System.Logger.Level.INFO;
+
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
@@ -40,7 +42,7 @@ public class BlockStreamSimulator {
      */
     public static void main(String[] args) throws IOException {
 
-        LOGGER.log(Logger.Level.INFO, "Starting Block Stream Simulator");
+        LOGGER.log(INFO, "Starting Block Stream Simulator");
 
         ConfigurationBuilder configurationBuilder =
                 ConfigurationBuilder.create()
