@@ -52,7 +52,7 @@ class ConfigInjectionModuleTest {
                 ConfigInjectionModule.provideBlockStreamConfig(configuration);
 
         Assertions.assertNotNull(blockStreamConfig);
-        Assertions.assertEquals(GenerationMode.ADHOC, blockStreamConfig.generationMode());
+        Assertions.assertEquals(GenerationMode.DIR, blockStreamConfig.generationMode());
     }
 
     @Test
