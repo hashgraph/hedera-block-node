@@ -20,7 +20,6 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.hapi.block.PublishStreamResponse;
-import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.BatchEventProcessor;
 import com.lmax.disruptor.EventHandler;
@@ -30,8 +29,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class NotifierBuilder {
 
-    private final Notifiable blockStreamService;
-    private final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> mediator;
+    private Notifiable blockStreamService;
+    private final Notifiable mediator;
     private final BlockNodeContext blockNodeContext;
 
     private Map<
@@ -43,22 +42,22 @@ public class NotifierBuilder {
     private static final int SUBSCRIBER_INIT_CAPACITY = 5;
 
     private NotifierBuilder(
-            @NonNull final Notifiable blockStreamService,
-            @NonNull final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> mediator,
-            @NonNull final BlockNodeContext blockNodeContext) {
+            @NonNull final Notifiable mediator, @NonNull final BlockNodeContext blockNodeContext) {
 
         this.subscribers = new ConcurrentHashMap<>(SUBSCRIBER_INIT_CAPACITY);
-        this.blockStreamService = blockStreamService;
         this.mediator = mediator;
         this.blockNodeContext = blockNodeContext;
     }
 
     @NonNull
     public static NotifierBuilder newBuilder(
-            @NonNull final Notifiable blockStreamService,
-            @NonNull final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> mediator,
-            @NonNull final BlockNodeContext blockNodeContext) {
-        return new NotifierBuilder(blockStreamService, mediator, blockNodeContext);
+            @NonNull final Notifiable mediator, @NonNull final BlockNodeContext blockNodeContext) {
+        return new NotifierBuilder(mediator, blockNodeContext);
+    }
+
+    public NotifierBuilder blockStreamService(Notifiable blockStreamService) {
+        this.blockStreamService = blockStreamService;
+        return this;
     }
 
     @NonNull

@@ -21,7 +21,6 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.hapi.block.SubscribeStreamResponse;
-import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.BatchEventProcessor;
 import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -100,7 +99,7 @@ public class LiveStreamMediatorBuilder {
      * @return the stream mediator to handle live stream events between a producer and N consumers.
      */
     @NonNull
-    public StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> build() {
+    public LiveStreamMediator build() {
         return new LiveStreamMediatorImpl(subscribers, serviceStatus, blockNodeContext);
     }
 }

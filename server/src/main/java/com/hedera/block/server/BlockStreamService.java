@@ -33,11 +33,14 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifiable;
+import com.hedera.block.server.notifier.NotifierBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
+import com.hedera.block.server.validator.StreamValidatorBuilder;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SingleBlockRequest;
 import com.hedera.hapi.block.SingleBlockResponse;
@@ -65,12 +68,15 @@ public class BlockStreamService implements GrpcService, Notifiable {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
-    private final StreamMediator<BlockItem, ObjectEvent<PublishStreamResponse>> notifier;
+    private final LiveStreamMediator streamMediator;
     private final ServiceStatus serviceStatus;
     private final BlockReader<Block> blockReader;
     private final BlockNodeContext blockNodeContext;
     private final MetricsService metricsService;
+
+    private final NotifierBuilder notifierBuilder;
+    private StreamMediator<BlockItem, ObjectEvent<PublishStreamResponse>> notifier;
+    private final StreamValidatorBuilder streamValidatorBuilder;
 
     /**
      * Constructor for the BlockStreamService class. It initializes the BlockStreamService with the
@@ -85,19 +91,19 @@ public class BlockStreamService implements GrpcService, Notifiable {
      */
     @Inject
     BlockStreamService(
-            @NonNull
-                    final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
-                            streamMediator,
-            @NonNull final StreamMediator<BlockItem, ObjectEvent<PublishStreamResponse>> notifier,
+            @NonNull final LiveStreamMediator streamMediator,
             @NonNull final BlockReader<Block> blockReader,
             @NonNull final ServiceStatus serviceStatus,
+            @NonNull final StreamValidatorBuilder streamValidatorBuilder,
             @NonNull final BlockNodeContext blockNodeContext) {
         this.streamMediator = streamMediator;
-        this.notifier = notifier;
         this.blockReader = blockReader;
         this.serviceStatus = serviceStatus;
         this.blockNodeContext = blockNodeContext;
         this.metricsService = blockNodeContext.metricsService();
+
+        this.notifierBuilder = NotifierBuilder.newBuilder(streamMediator, blockNodeContext);
+        this.streamValidatorBuilder = streamValidatorBuilder;
     }
 
     /**
@@ -150,6 +156,17 @@ public class BlockStreamService implements GrpcService, Notifiable {
                         publishStreamResponseObserver,
                         blockNodeContext,
                         serviceStatus);
+
+        if (notifier == null) {
+            notifier = notifierBuilder.blockStreamService(this).build();
+
+            final var streamValidator =
+                    streamValidatorBuilder
+                            .subscriptionHandler(streamMediator)
+                            .notifier(notifier)
+                            .build();
+            streamMediator.subscribe(streamValidator);
+        }
 
         // Register the observer with the notifier to transmit responses back to the producer
         notifier.subscribe(producerBlockItemObserver);

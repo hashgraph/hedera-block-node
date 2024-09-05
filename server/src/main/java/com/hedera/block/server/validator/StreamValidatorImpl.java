@@ -29,15 +29,13 @@ import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 
-public class StreamValidatorImpl
-        implements StreamValidator, EventHandler<ObjectEvent<SubscribeStreamResponse>> {
+public class StreamValidatorImpl implements EventHandler<ObjectEvent<SubscribeStreamResponse>> {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>> subscriptionHandler;
     private final BlockWriter<BlockItem> blockWriter;
-    private final StreamMediator<BlockItem, EventHandler<ObjectEvent<PublishStreamResponse>>>
-            notifier;
+    private final StreamMediator<BlockItem, ObjectEvent<PublishStreamResponse>> notifier;
     private final MetricsService metricsService;
 
     public StreamValidatorImpl(
@@ -45,10 +43,7 @@ public class StreamValidatorImpl
                     final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>>
                             subscriptionHandler,
             @NonNull final BlockWriter<BlockItem> blockWriter,
-            @NonNull
-                    final StreamMediator<
-                                    BlockItem, EventHandler<ObjectEvent<PublishStreamResponse>>>
-                            notifier,
+            @NonNull final StreamMediator<BlockItem, ObjectEvent<PublishStreamResponse>> notifier,
             @NonNull final BlockNodeContext blockNodeContext) {
         this.subscriptionHandler = subscriptionHandler;
         this.blockWriter = blockWriter;

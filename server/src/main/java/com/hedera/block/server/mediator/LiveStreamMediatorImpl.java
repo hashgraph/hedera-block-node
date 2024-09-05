@@ -27,7 +27,6 @@ import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.notifier.Notifiable;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -49,8 +48,7 @@ import java.util.concurrent.Executors;
  * block items to the subscribers as they arrive via a RingBuffer and persists the block items to a
  * store.
  */
-class LiveStreamMediatorImpl
-        implements StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>, Notifiable {
+class LiveStreamMediatorImpl implements LiveStreamMediator {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 

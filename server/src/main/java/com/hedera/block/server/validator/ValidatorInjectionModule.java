@@ -14,30 +14,24 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.mediator;
+package com.hedera.block.server.validator;
 
-import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.hapi.block.stream.BlockItem;
 import dagger.Module;
 import dagger.Provides;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.inject.Singleton;
 
-/** A Dagger module for providing dependencies for Mediator Module.` */
 @Module
-public interface MediatorInjectionModule {
+public interface ValidatorInjectionModule {
 
-    /**
-     * Provides the stream mediator.
-     *
-     * @param blockNodeContext the block node context
-     * @param serviceStatus the service status
-     * @return the stream mediator
-     */
     @Provides
     @Singleton
-    static LiveStreamMediator providesLiveStreamMediator(
-            @NonNull BlockNodeContext blockNodeContext, @NonNull ServiceStatus serviceStatus) {
-        return LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
+    static StreamValidatorBuilder providesStreamValidatorBuilder(
+            @NonNull final BlockWriter<BlockItem> blockWriter,
+            @NonNull final BlockNodeContext blockNodeContext) {
+        return StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
     }
 }
