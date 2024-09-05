@@ -720,7 +720,7 @@
           "color": {
             "mode": "thresholds"
           },
-          "displayName": "Subscribers",
+          "displayName": "Consumers",
           "mappings": [],
           "max": 20,
           "min": 0,
