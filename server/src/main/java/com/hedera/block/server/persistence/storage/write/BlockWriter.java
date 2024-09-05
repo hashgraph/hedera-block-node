@@ -18,6 +18,7 @@ package com.hedera.block.server.persistence.storage.write;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * BlockWriter defines the contract for writing block items to storage.
@@ -32,5 +33,5 @@ public interface BlockWriter<V> {
      * @param blockItem the block item to write to storage.
      * @throws IOException when failing to write the block item to storage.
      */
-    void write(@NonNull final V blockItem) throws IOException;
+    Optional<V> write(@NonNull final V blockItem) throws IOException;
 }

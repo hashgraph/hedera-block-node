@@ -21,6 +21,7 @@
   "links": [],
   "panels": [
     {
+      "collapsed": true,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -28,173 +29,173 @@
         "y": 0
       },
       "id": 16,
-      "title": "Errors",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 0,
-        "y": 1
-      },
-      "id": 15,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "11.1.4",
-      "targets": [
+      "panels": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "editorMode": "code",
-          "expr": "hedera_block_node_live_block_stream_mediator_error_total",
-          "instant": false,
-          "legendFormat": "Block Item Errors",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Mediator Errors",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
           },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
+          "gridPos": {
+            "h": 8,
+            "w": 6,
+            "x": 0,
+            "y": 9
+          },
+          "id": 15,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "percentChangeColorMode": "standard",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
             },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "pluginVersion": "11.1.4",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "editorMode": "code",
+              "expr": "hedera_block_node_live_block_stream_mediator_error_total",
+              "instant": false,
+              "legendFormat": "Block Item Errors",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Mediator Errors",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              }
             },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 18,
+            "x": 6,
+            "y": 9
+          },
+          "id": 14,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
             },
-            "thresholdsStyle": {
-              "mode": "off"
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
             }
           },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
               },
-              {
-                "color": "red",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 18,
-        "x": 6,
-        "y": 1
-      },
-      "id": 14,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "editorMode": "code",
-          "expr": "rate( hedera_block_node_live_block_stream_mediator_error_total [$__rate_interval])",
-          "instant": false,
-          "legendFormat": "Mediator Errors",
-          "range": true,
-          "refId": "A"
+              "editorMode": "code",
+              "expr": "rate( hedera_block_node_live_block_stream_mediator_error_total [$__rate_interval])",
+              "instant": false,
+              "legendFormat": "Mediator Errors",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Rate of Mediator Errors",
+          "type": "timeseries"
         }
       ],
-      "title": "Rate of Mediator Errors",
-      "type": "timeseries"
+      "title": "Errors",
+      "type": "row"
     },
     {
       "collapsed": false,
@@ -202,7 +203,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 1
       },
       "id": 9,
       "panels": [],
@@ -237,7 +238,7 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 10
+        "y": 2
       },
       "id": 13,
       "options": {
@@ -344,7 +345,7 @@
         "h": 8,
         "w": 18,
         "x": 6,
-        "y": 10
+        "y": 2
       },
       "id": 12,
       "options": {
@@ -404,7 +405,7 @@
         "h": 7,
         "w": 6,
         "x": 0,
-        "y": 18
+        "y": 10
       },
       "id": 3,
       "options": {
@@ -510,7 +511,7 @@
         "h": 7,
         "w": 18,
         "x": 6,
-        "y": 18
+        "y": 10
       },
       "id": 7,
       "options": {
@@ -571,7 +572,7 @@
         "h": 7,
         "w": 6,
         "x": 0,
-        "y": 25
+        "y": 17
       },
       "id": 11,
       "options": {
@@ -677,7 +678,7 @@
         "h": 7,
         "w": 18,
         "x": 6,
-        "y": 25
+        "y": 17
       },
       "id": 10,
       "options": {
@@ -747,7 +748,7 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 32
+        "y": 24
       },
       "id": 4,
       "options": {
@@ -773,14 +774,87 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "hedera_block_node_subscribers",
+          "expr": "hedera_block_node_consumers",
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "Consumers",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Subscribers",
+      "title": "Consumers",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "displayName": "Producers",
+          "mappings": [],
+          "max": 20,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 24
+      },
+      "id": 25,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "11.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "hedera_block_node_producers",
+          "instant": false,
+          "legendFormat": "Producers",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Producers",
       "type": "gauge"
     },
     {
@@ -789,7 +863,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 32
       },
       "id": 18,
       "panels": [],
@@ -824,7 +898,7 @@
         "h": 7,
         "w": 6,
         "x": 0,
-        "y": 41
+        "y": 33
       },
       "id": 6,
       "options": {
@@ -930,7 +1004,7 @@
         "h": 7,
         "w": 18,
         "x": 6,
-        "y": 41
+        "y": 33
       },
       "id": 8,
       "options": {
@@ -969,11 +1043,11 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 48
+        "y": 40
       },
-      "id": 17,
+      "id": 23,
       "panels": [],
-      "title": "Single Block",
+      "title": "Live Stream Responses",
       "type": "row"
     },
     {
@@ -993,10 +1067,6 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
@@ -1008,9 +1078,9 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 49
+        "y": 41
       },
-      "id": 19,
+      "id": 24,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -1036,14 +1106,14 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "hedera_block_node_single_blocks_retrieved_total",
+          "expr": "hedera_block_node_successful_pub_stream_resp_total",
           "instant": false,
-          "legendFormat": "Single Blocks Retrieved",
+          "legendFormat": "PublishStreamResponses",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Single Blocks Retrieved",
+      "title": "PublishStreamResponses Generated",
       "type": "stat"
     },
     {
@@ -1110,9 +1180,9 @@
         "h": 8,
         "w": 18,
         "x": 6,
-        "y": 49
+        "y": 41
       },
-      "id": 5,
+      "id": 22,
       "options": {
         "legend": {
           "calcs": [],
@@ -1132,14 +1202,14 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "rate(hedera_block_node_single_blocks_retrieved_total[$__rate_interval])",
+          "expr": "rate( hedera_block_node_successful_pub_stream_resp_total [$__rate_interval])",
           "instant": false,
-          "legendFormat": "RPS of Single Blocks Retrieval",
+          "legendFormat": "PublishStreamResponses",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Rate of Single Blocks Retrieved",
+      "title": "Rate of PublishStreamResponses Generated",
       "type": "timeseries"
     },
     {
@@ -1165,8 +1235,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "short"
+          }
         },
         "overrides": []
       },
@@ -1174,9 +1243,9 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 57
+        "y": 49
       },
-      "id": 21,
+      "id": 27,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -1202,14 +1271,14 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "hedera_block_node_single_blocks_not_found_total",
+          "expr": "hedera_block_node_successful_pub_stream_resp_sent_total",
           "instant": false,
-          "legendFormat": "Single Blocks Not Found",
+          "legendFormat": "PublishStreamResponses",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Single Blocks Not Found",
+      "title": "PublishStreamResponses Sent",
       "type": "stat"
     },
     {
@@ -1261,10 +1330,6 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
@@ -1276,9 +1341,9 @@
         "h": 8,
         "w": 18,
         "x": 6,
-        "y": 57
+        "y": 49
       },
-      "id": 20,
+      "id": 26,
       "options": {
         "legend": {
           "calcs": [],
@@ -1298,15 +1363,361 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "rate( hedera_block_node_single_blocks_not_found_total [$__rate_interval])",
+          "expr": "rate(hedera_block_node_successful_pub_stream_resp_sent_total[$__rate_interval])",
           "instant": false,
-          "legendFormat": "Single Blocks Not Found",
+          "legendFormat": "PublishStreamResponses",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Rate of Single Blocks Not Found",
+      "title": "Rate of PublishStreamResponses Sent to Producers",
       "type": "timeseries"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 57
+      },
+      "id": 17,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 6,
+            "x": 0,
+            "y": 58
+          },
+          "id": 19,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "percentChangeColorMode": "standard",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "pluginVersion": "11.1.4",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "editorMode": "code",
+              "expr": "hedera_block_node_single_blocks_retrieved_total",
+              "instant": false,
+              "legendFormat": "Single Blocks Retrieved",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Single Blocks Retrieved",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "reqps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 18,
+            "x": 6,
+            "y": 58
+          },
+          "id": 5,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "editorMode": "code",
+              "expr": "rate(hedera_block_node_single_blocks_retrieved_total[$__rate_interval])",
+              "instant": false,
+              "legendFormat": "RPS of Single Blocks Retrieval",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Rate of Single Blocks Retrieved",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 6,
+            "x": 0,
+            "y": 66
+          },
+          "id": 21,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "percentChangeColorMode": "standard",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "pluginVersion": "11.1.4",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "editorMode": "code",
+              "expr": "hedera_block_node_single_blocks_not_found_total",
+              "instant": false,
+              "legendFormat": "Single Blocks Not Found",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Single Blocks Not Found",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "reqps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 18,
+            "x": 6,
+            "y": 66
+          },
+          "id": 20,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "editorMode": "code",
+              "expr": "rate( hedera_block_node_single_blocks_not_found_total [$__rate_interval])",
+              "instant": false,
+              "legendFormat": "Single Blocks Not Found",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Rate of Single Blocks Not Found",
+          "type": "timeseries"
+        }
+      ],
+      "title": "Single Block",
+      "type": "row"
     }
   ],
   "refresh": "5s",

@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -97,7 +98,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
      * @throws IOException if an error occurs while writing the block item
      */
     @Override
-    public void write(@NonNull final BlockItem blockItem) throws IOException {
+    public Optional<BlockItem> write(@NonNull final BlockItem blockItem) throws IOException {
 
         if (blockItem.hasBlockHeader()) {
             resetState(blockItem);
@@ -127,6 +128,8 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                 }
             }
         }
+
+        return (blockItem.hasBlockHeader()) ? Optional.of(blockItem) : Optional.empty();
     }
 
     /**

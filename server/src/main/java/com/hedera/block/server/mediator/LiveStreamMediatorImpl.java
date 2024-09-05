@@ -18,7 +18,7 @@ package com.hedera.block.server.mediator;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItems;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockStreamMediatorError;
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Subscribers;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Consumers;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -165,7 +165,7 @@ class LiveStreamMediatorImpl implements LiveStreamMediator {
         subscribers.put(handler, batchEventProcessor);
 
         // update the subscriber metrics
-        metricsService.get(Subscribers).set(subscribers.size());
+        metricsService.get(Consumers).set(subscribers.size());
     }
 
     @Override
@@ -187,7 +187,7 @@ class LiveStreamMediatorImpl implements LiveStreamMediator {
         }
 
         // update the subscriber metrics
-        metricsService.get(Subscribers).set(subscribers.size());
+        metricsService.get(Consumers).set(subscribers.size());
     }
 
     @Override

@@ -28,6 +28,7 @@ import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
+import java.util.Optional;
 
 public class StreamValidatorImpl implements EventHandler<ObjectEvent<SubscribeStreamResponse>> {
 
@@ -59,7 +60,11 @@ public class StreamValidatorImpl implements EventHandler<ObjectEvent<SubscribeSt
             // Persist the BlockItem
             final SubscribeStreamResponse subscribeStreamResponse = event.get();
             final BlockItem blockItem = subscribeStreamResponse.blockItem();
-            blockWriter.write(blockItem);
+            Optional<BlockItem> result = blockWriter.write(blockItem);
+            if (result.isPresent()) {
+                //
+                notifier.publish(blockItem);
+            }
 
         } catch (IOException e) {
 

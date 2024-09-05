@@ -19,6 +19,7 @@ package com.hedera.block.server.producer;
 import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.Translator.toPbj;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItemsReceived;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.SuccessfulPubStreamRespSent;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -142,24 +143,9 @@ public class ProducerBlockItemObserver
     public void onEvent(
             ObjectEvent<PublishStreamResponse> event, long sequence, boolean endOfBatch) {
 
-        //        try {
-        // Send a successful response
-        final var publishStreamResponse = event.get();
-        publishStreamResponseObserver.onNext(fromPbj(publishStreamResponse));
-
-        //        } catch (IOException | NoSuchAlgorithmException e) {
-        //            final var errorResponse = buildErrorStreamResponse();
-        //            publishStreamResponseObserver.onNext(errorResponse);
-        //            LOGGER.log(ERROR, "Error calculating hash: ", e);
-        //        }
+        publishStreamResponseObserver.onNext(fromPbj(event.get()));
+        metricsService.get(SuccessfulPubStreamRespSent).increment();
     }
-
-    //    @NonNull
-    //    private com.hedera.hapi.block.protoc.PublishStreamResponse buildSuccessStreamResponse(
-    //            @NonNull final BlockItem blockItem) throws IOException, NoSuchAlgorithmException {
-    //        final Acknowledgement ack = buildAck(blockItem);
-    //        return fromPbj(PublishStreamResponse.newBuilder().acknowledgement(ack).build());
-    //    }
 
     @NonNull
     private static com.hedera.hapi.block.protoc.PublishStreamResponse buildErrorStreamResponse() {
@@ -170,25 +156,6 @@ public class ProducerBlockItemObserver
                         .build();
         return fromPbj(PublishStreamResponse.newBuilder().status(endOfStream).build());
     }
-
-    /**
-     * Protected method meant for testing. Builds an Acknowledgement for the block item.
-     *
-     * @param blockItem the block item to build the Acknowledgement for
-     * @return the Acknowledgement for the block item
-     * @throws NoSuchAlgorithmException if the hash algorithm is not supported
-     */
-    //    @NonNull
-    //    protected Acknowledgement buildAck(@NonNull final BlockItem blockItem)
-    //            throws NoSuchAlgorithmException {
-    //        final ItemAcknowledgement itemAck =
-    //                ItemAcknowledgement.newBuilder()
-    //                        // TODO: Replace this with a real hash generator
-    //                        .itemHash(Bytes.wrap(getFakeHash(blockItem)))
-    //                        .build();
-    //
-    //        return Acknowledgement.newBuilder().itemAck(itemAck).build();
-    //    }
 
     /**
      * Helidon triggers this method when an error occurs on the bidirectional stream to the upstream

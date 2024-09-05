@@ -20,7 +20,7 @@ import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.Block
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItems;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItemsConsumed;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.SingleBlocksRetrieved;
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Subscribers;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Consumers;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.hedera.block.server.config.BlockNodeContext;
@@ -121,17 +121,17 @@ public class MetricsServiceTest {
     @Test
     void MetricsService_verifySubscribersGauge() {
 
-        assertEquals(Subscribers.grafanaLabel(), metricsService.get(Subscribers).getName());
-        assertEquals(Subscribers.description(), metricsService.get(Subscribers).getDescription());
+        assertEquals(Consumers.grafanaLabel(), metricsService.get(Consumers).getName());
+        assertEquals(Consumers.description(), metricsService.get(Consumers).getDescription());
 
         // Set the subscribers to various values and verify
-        metricsService.get(Subscribers).set(10);
-        assertEquals(10, metricsService.get(Subscribers).get());
+        metricsService.get(Consumers).set(10);
+        assertEquals(10, metricsService.get(Consumers).get());
 
-        metricsService.get(Subscribers).set(3);
-        assertEquals(3, metricsService.get(Subscribers).get());
+        metricsService.get(Consumers).set(3);
+        assertEquals(3, metricsService.get(Consumers).get());
 
-        metricsService.get(Subscribers).set(0);
-        assertEquals(0, metricsService.get(Subscribers).get());
+        metricsService.get(Consumers).set(0);
+        assertEquals(0, metricsService.get(Consumers).get());
     }
 }

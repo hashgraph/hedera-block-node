@@ -41,6 +41,11 @@ public final class BlockNodeMetricTypes {
         /** The number of live block items received before publishing to the RingBuffer. */
         LiveBlockItems("live_block_items", "Live BlockItems"),
 
+        SuccessfulPubStreamResp(
+                "successful_pub_stream_resp", "Successful Publish Stream Responses"),
+        SuccessfulPubStreamRespSent(
+                "successful_pub_stream_resp_sent", "Successful Publish Stream Responses Sent"),
+
         /**
          * The number of blocks persisted to storage.
          *
@@ -93,7 +98,7 @@ public final class BlockNodeMetricTypes {
     public enum Gauge implements MetricMetadata {
 
         /** The number of subscribers receiving the live block stream. */
-        Subscribers("subscribers", "Subscribers"),
+        Consumers("consumers", "Consumers"),
 
         /** The number of producers publishing block items. */
         Producers("producers", "Producers");
