@@ -48,7 +48,7 @@ class MediatorInjectionModuleTest {
     void testProvidesStreamMediator() {
         // Call the method under test
         StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator =
-                MediatorInjectionModule.providesStreamMediator(blockNodeContext, serviceStatus);
+                MediatorInjectionModule.providesLiveStreamMediator(blockNodeContext, serviceStatus);
 
         // Verify that the streamMediator is correctly instantiated
         assertNotNull(streamMediator);

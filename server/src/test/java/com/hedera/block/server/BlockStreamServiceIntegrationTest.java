@@ -31,18 +31,15 @@ import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
-import com.hedera.block.server.mediator.StreamMediator;
-import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
-import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
-import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
+import com.hedera.block.server.validator.StreamValidatorBuilder;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.ItemAcknowledgement;
@@ -66,14 +63,11 @@ import io.helidon.webserver.WebServer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.PosixFilePermission;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -87,7 +81,7 @@ public class BlockStreamServiceIntegrationTest {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
-    @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
+    @Mock private LiveStreamMediator streamMediator;
 
     @Mock
     private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
@@ -157,9 +151,15 @@ public class BlockStreamServiceIntegrationTest {
     public void testPublishBlockStreamRegistrationAndExecution()
             throws IOException, NoSuchAlgorithmException {
 
+        final var streamValidatorBuilder =
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator,
+                        blockReader,
+                        serviceStatus,
+                        streamValidatorBuilder,
+                        blockNodeContext);
 
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
@@ -202,13 +202,18 @@ public class BlockStreamServiceIntegrationTest {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         final var streamMediator =
-                LiveStreamMediatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
-                        .build();
+                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
 
         // Build the BlockStreamService
+        final var streamValidatorBuilder =
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator,
+                        blockReader,
+                        serviceStatus,
+                        streamValidatorBuilder,
+                        blockNodeContext);
 
         // Subscribe the consumers
         blockStreamService.protocSubscribeBlockStream(
@@ -366,7 +371,7 @@ public class BlockStreamServiceIntegrationTest {
                         EventHandler<ObjectEvent<SubscribeStreamResponse>>,
                         BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
                 subscribers = new LinkedHashMap<>();
-        final var streamMediator = buildStreamMediator(subscribers, FileUtils.defaultPerms);
+        final var streamMediator = buildStreamMediator(subscribers);
         final var blockStreamService =
                 buildBlockStreamService(streamMediator, blockReader, serviceStatus);
 
@@ -463,7 +468,7 @@ public class BlockStreamServiceIntegrationTest {
         final ServiceStatus serviceStatus = new ServiceStatusImpl();
         serviceStatus.setWebServer(webServer);
 
-        final var streamMediator = buildStreamMediator(subscribers, TestUtils.getNoPerms());
+        final var streamMediator = buildStreamMediator(subscribers);
         final var blockStreamService =
                 buildBlockStreamService(streamMediator, blockReader, serviceStatus);
 
@@ -626,47 +631,41 @@ public class BlockStreamServiceIntegrationTest {
     }
 
     private BlockStreamService buildBlockStreamService() throws IOException {
-        final var streamMediator =
-                buildStreamMediator(new ConcurrentHashMap<>(32), FileUtils.defaultPerms);
+        final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32));
 
         return buildBlockStreamService(streamMediator, blockReader, serviceStatus);
     }
 
-    private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> buildStreamMediator(
+    private LiveStreamMediator buildStreamMediator(
             final Map<
                             EventHandler<ObjectEvent<SubscribeStreamResponse>>,
                             BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
-                    subscribers,
-            final FileAttribute<Set<PosixFilePermission>> filePerms)
-            throws IOException {
-
-        // Initialize with concrete a concrete BlockReader, BlockWriter and Mediator
-        final BlockRemover blockRemover =
-                new BlockAsDirRemover(Path.of(testConfig.rootPath()), FileUtils.defaultPerms);
-
-        final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(blockNodeContext)
-                        .blockRemover(blockRemover)
-                        .filePerms(filePerms)
-                        .build();
+                    subscribers) {
 
         final ServiceStatus serviceStatus = new ServiceStatusImpl();
         serviceStatus.setWebServer(webServer);
 
-        return LiveStreamMediatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
+        return LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
                 .subscribers(subscribers)
                 .build();
     }
 
     private BlockStreamService buildBlockStreamService(
-            final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator,
+            final LiveStreamMediator streamMediator,
             final BlockReader<Block> blockReader,
             final ServiceStatus serviceStatus)
             throws IOException {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
-        return new BlockStreamService(streamMediator, blockReader, serviceStatus, blockNodeContext);
+        final var streamValidatorBuilder =
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
+        return new BlockStreamService(
+                streamMediator,
+                blockReader,
+                serviceStatus,
+                streamValidatorBuilder,
+                blockNodeContext);
     }
 
     public static Acknowledgement buildAck(@NonNull final BlockItem blockItem)

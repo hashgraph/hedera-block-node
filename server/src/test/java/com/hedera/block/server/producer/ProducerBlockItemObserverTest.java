@@ -125,8 +125,7 @@ public class ProducerBlockItemObserverTest {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediator =
-                LiveStreamMediatorBuilder.newBuilder(
-                                blockWriter, blockNodeContext, new ServiceStatusImpl())
+                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, new ServiceStatusImpl())
                         .build();
 
         // Mock a clock with 2 different return values in response to anticipated
@@ -305,13 +304,6 @@ public class ProducerBlockItemObserverTest {
                 final BlockNodeContext blockNodeContext,
                 final ServiceStatus serviceStatus) {
             super(streamMediator, publishStreamResponseObserver, blockNodeContext, serviceStatus);
-        }
-
-        @NonNull
-        @Override
-        protected Acknowledgement buildAck(@NonNull final BlockItem blockItem)
-                throws NoSuchAlgorithmException {
-            throw new NoSuchAlgorithmException("test no such algorithm exception");
         }
     }
 
