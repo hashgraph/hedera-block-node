@@ -85,7 +85,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final var consumerBlockItemObserver =
                 new ConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, responseStreamObserver);
+                        testClock, streamMediator, responseStreamObserver, testContext);
 
         final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
         final BlockItem blockItem = BlockItem.newBuilder().blockHeader(blockHeader).build();
@@ -113,7 +113,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final var consumerBlockItemObserver =
                 new ConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, responseStreamObserver);
+                        testClock, streamMediator, responseStreamObserver, testContext);
 
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
         verify(streamMediator).unsubscribe(consumerBlockItemObserver);
@@ -127,7 +127,7 @@ public class ConsumerStreamResponseObserverTest {
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
         new ConsumerStreamResponseObserver(
-                testContext, testClock, streamMediator, serverCallStreamObserver);
+                testClock, streamMediator, serverCallStreamObserver, testContext);
 
         verify(serverCallStreamObserver, timeout(testTimeout).times(1)).setOnCloseHandler(any());
         verify(serverCallStreamObserver, timeout(testTimeout).times(1)).setOnCancelHandler(any());
@@ -138,7 +138,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final TestConsumerStreamResponseObserver consumerStreamResponseObserver =
                 new TestConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, serverCallStreamObserver);
+                        testClock, streamMediator, serverCallStreamObserver, testContext);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final SubscribeStreamResponse subscribeStreamResponse =
@@ -164,7 +164,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final TestConsumerStreamResponseObserver consumerStreamResponseObserver =
                 new TestConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, serverCallStreamObserver);
+                        testClock, streamMediator, serverCallStreamObserver, testContext);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final SubscribeStreamResponse subscribeStreamResponse =
@@ -194,7 +194,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final var consumerBlockItemObserver =
                 new ConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, responseStreamObserver);
+                        testClock, streamMediator, responseStreamObserver, testContext);
 
         // Send non-header BlockItems to validate that the observer does not send them
         for (int i = 1; i <= 10; i++) {
@@ -242,7 +242,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final var consumerBlockItemObserver =
                 new ConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, responseStreamObserver);
+                        testClock, streamMediator, responseStreamObserver, testContext);
         assertThrows(
                 IllegalArgumentException.class,
                 () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
@@ -257,7 +257,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final var consumerBlockItemObserver =
                 new ConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, responseStreamObserver);
+                        testClock, streamMediator, responseStreamObserver, testContext);
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -267,16 +267,16 @@ public class ConsumerStreamResponseObserverTest {
     private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
 
         public TestConsumerStreamResponseObserver(
-                BlockNodeContext context,
                 InstantSource producerLivenessClock,
                 StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> subscriptionHandler,
                 StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
-                        subscribeStreamResponseObserver) {
+                        subscribeStreamResponseObserver,
+                BlockNodeContext blockNodeContext) {
             super(
-                    context,
                     producerLivenessClock,
                     subscriptionHandler,
-                    subscribeStreamResponseObserver);
+                    subscribeStreamResponseObserver,
+                    blockNodeContext);
         }
 
         public void cancel() {

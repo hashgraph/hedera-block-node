@@ -166,15 +166,15 @@ public class LiveStreamMediatorImplTest {
 
         final var concreteObserver1 =
                 new ConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, streamObserver1);
+                        testClock, streamMediator, streamObserver1, testContext);
 
         final var concreteObserver2 =
                 new ConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, streamObserver2);
+                        testClock, streamMediator, streamObserver2, testContext);
 
         final var concreteObserver3 =
                 new ConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, streamObserver3);
+                        testClock, streamMediator, streamObserver3, testContext);
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -225,15 +225,15 @@ public class LiveStreamMediatorImplTest {
 
         final var concreteObserver1 =
                 new ConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, streamObserver1);
+                        testClock, streamMediator, streamObserver1, testContext);
 
         final var concreteObserver2 =
                 new ConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, streamObserver2);
+                        testClock, streamMediator, streamObserver2, testContext);
 
         final var concreteObserver3 =
                 new ConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, streamObserver3);
+                        testClock, streamMediator, streamObserver3, testContext);
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -260,7 +260,7 @@ public class LiveStreamMediatorImplTest {
 
         final var testConsumerBlockItemObserver =
                 new TestConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, serverCallStreamObserver);
+                        testClock, streamMediator, serverCallStreamObserver, testContext);
 
         streamMediator.subscribe(testConsumerBlockItemObserver);
         assertTrue(streamMediator.isSubscribed(testConsumerBlockItemObserver));
@@ -295,7 +295,7 @@ public class LiveStreamMediatorImplTest {
 
         final var testConsumerBlockItemObserver =
                 new TestConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, serverCallStreamObserver);
+                        testClock, streamMediator, serverCallStreamObserver, testContext);
 
         streamMediator.subscribe(testConsumerBlockItemObserver);
         assertTrue(streamMediator.isSubscribed(testConsumerBlockItemObserver));
@@ -359,7 +359,7 @@ public class LiveStreamMediatorImplTest {
                         .build();
         final var testConsumerBlockItemObserver =
                 new TestConsumerStreamResponseObserver(
-                        testContext, testClock, streamMediator, serverCallStreamObserver);
+                        testClock, streamMediator, serverCallStreamObserver, testContext);
 
         // Confirm the observer is not subscribed
         assertFalse(streamMediator.isSubscribed(testConsumerBlockItemObserver));
@@ -373,13 +373,13 @@ public class LiveStreamMediatorImplTest {
 
     private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
         public TestConsumerStreamResponseObserver(
-                BlockNodeContext context,
                 final InstantSource producerLivenessClock,
                 final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
                         streamMediator,
                 final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
-                        responseStreamObserver) {
-            super(context, producerLivenessClock, streamMediator, responseStreamObserver);
+                        responseStreamObserver,
+                final BlockNodeContext blockNodeContext) {
+            super(producerLivenessClock, streamMediator, responseStreamObserver, blockNodeContext);
         }
 
         @NonNull

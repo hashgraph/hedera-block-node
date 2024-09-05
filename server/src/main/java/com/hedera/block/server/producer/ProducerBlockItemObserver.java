@@ -28,6 +28,7 @@ import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.Publisher;
+import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.PublishStreamResponse;
@@ -36,6 +37,7 @@ import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
 import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 
@@ -58,6 +60,18 @@ public class ProducerBlockItemObserver
     private final MetricsService metricsService;
 
     /**
+     * The onCancel handler to execute when the producer cancels the stream. This handler is
+     * protected to facilitate testing.
+     */
+    protected Runnable onCancel;
+
+    /**
+     * The onClose handler to execute when the producer closes the stream. This handler is protected
+     * to facilitate testing.
+     */
+    protected Runnable onClose;
+
+    /**
      * Constructor for the ProducerBlockStreamObserver class. It is responsible for calling the
      * mediator with blocks as they arrive from the upstream producer. It also sends responses back
      * to the upstream producer via the responseStreamObserver.
@@ -68,12 +82,12 @@ public class ProducerBlockItemObserver
      *     the upstream producer for each block item processed.
      * @param blockNodeContext the block node context used to access context objects for the Block
      *     Node (e.g. - the metrics service).
-     * @param serviceStatus the service status used to determine if the downstream service is
-     *     accepting block items. In the event of an unrecoverable exception, it will be used to
-     *     stop the web server.
      */
     public ProducerBlockItemObserver(
             @NonNull final Publisher<BlockItem> publisher,
+            @NonNull
+                    final SubscriptionHandler<ObjectEvent<PublishStreamResponse>>
+                            subscriptionHandler,
             @NonNull
                     final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
                             publishStreamResponseObserver,
@@ -84,6 +98,26 @@ public class ProducerBlockItemObserver
         this.publishStreamResponseObserver = publishStreamResponseObserver;
         this.metricsService = blockNodeContext.metricsService();
         this.serviceStatus = serviceStatus;
+
+        if (publishStreamResponseObserver
+                instanceof
+                ServerCallStreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
+                serverCallStreamObserver) {
+
+            onCancel =
+                    () -> {
+                        subscriptionHandler.unsubscribe(this);
+                        LOGGER.log(DEBUG, "Producer cancelled the stream. Observer unsubscribed.");
+                    };
+            serverCallStreamObserver.setOnCancelHandler(onCancel);
+
+            onClose =
+                    () -> {
+                        subscriptionHandler.unsubscribe(this);
+                        LOGGER.log(DEBUG, "Producer completed the stream. Observer unsubscribed.");
+                    };
+            serverCallStreamObserver.setOnCloseHandler(onClose);
+        }
     }
 
     /**

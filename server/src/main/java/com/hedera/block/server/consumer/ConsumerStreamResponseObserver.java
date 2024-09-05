@@ -80,28 +80,30 @@ public class ConsumerStreamResponseObserver
      * SubscribeStreamResponse events from the Disruptor and passing them to the downstream consumer
      * via the subscribeStreamResponseObserver.
      *
-     * @param context contains the context with metrics and configuration for the application
+     * @param blockNodeContext contains the context with metrics and configuration for the
+     *     application
      * @param producerLivenessClock the clock to use to determine the producer liveness
      * @param subscriptionHandler the subscription handler to use to manage the subscription
      *     lifecycle
      * @param subscribeStreamResponseObserver the observer to use to send responses to the consumer
      */
     public ConsumerStreamResponseObserver(
-            @NonNull final BlockNodeContext context,
             @NonNull final InstantSource producerLivenessClock,
             @NonNull
                     final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>>
                             subscriptionHandler,
             @NonNull
                     final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
-                            subscribeStreamResponseObserver) {
+                            subscribeStreamResponseObserver,
+            @NonNull final BlockNodeContext blockNodeContext) {
 
         this.timeoutThresholdMillis =
-                context.configuration()
+                blockNodeContext
+                        .configuration()
                         .getConfigData(ConsumerConfig.class)
                         .timeoutThresholdMillis();
         this.subscriptionHandler = subscriptionHandler;
-        this.metricsService = context.metricsService();
+        this.metricsService = blockNodeContext.metricsService();
 
         // The ServerCallStreamObserver can be configured with Runnable handlers to
         // be executed when a downstream consumer closes the connection. The handlers
@@ -117,7 +119,7 @@ public class ConsumerStreamResponseObserver
                         // Do not allow additional responses to be sent.
                         isResponsePermitted.set(false);
                         subscriptionHandler.unsubscribe(this);
-                        LOGGER.log(DEBUG, "Consumer cancelled stream.  Observer unsubscribed.");
+                        LOGGER.log(DEBUG, "Consumer cancelled the stream. Observer unsubscribed.");
                     };
             serverCallStreamObserver.setOnCancelHandler(onCancel);
 
@@ -127,7 +129,7 @@ public class ConsumerStreamResponseObserver
                         // Do not allow additional responses to be sent.
                         isResponsePermitted.set(false);
                         subscriptionHandler.unsubscribe(this);
-                        LOGGER.log(DEBUG, "Consumer completed stream.  Observer unsubscribed.");
+                        LOGGER.log(DEBUG, "Consumer completed stream. Observer unsubscribed.");
                     };
             serverCallStreamObserver.setOnCloseHandler(onClose);
         }

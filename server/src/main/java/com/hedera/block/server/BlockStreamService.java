@@ -150,13 +150,6 @@ public class BlockStreamService implements GrpcService, Notifiable {
                             publishStreamResponseObserver) {
         LOGGER.log(DEBUG, "Executing bidirectional publishBlockStream gRPC method");
 
-        final var producerBlockItemObserver =
-                new ProducerBlockItemObserver(
-                        streamMediator,
-                        publishStreamResponseObserver,
-                        blockNodeContext,
-                        serviceStatus);
-
         if (notifier == null) {
             notifier = notifierBuilder.blockStreamService(this).build();
 
@@ -168,7 +161,16 @@ public class BlockStreamService implements GrpcService, Notifiable {
             streamMediator.subscribe(streamValidator);
         }
 
-        // Register the observer with the notifier to transmit responses back to the producer
+        final var producerBlockItemObserver =
+                new ProducerBlockItemObserver(
+                        streamMediator,
+                        notifier,
+                        publishStreamResponseObserver,
+                        blockNodeContext,
+                        serviceStatus);
+
+        // Register the producer observer with the notifier to publish responses back to the
+        // producer
         notifier.subscribe(producerBlockItemObserver);
 
         return producerBlockItemObserver;
@@ -187,10 +189,10 @@ public class BlockStreamService implements GrpcService, Notifiable {
         if (serviceStatus.isRunning()) {
             final var streamObserver =
                     new ConsumerStreamResponseObserver(
-                            blockNodeContext,
                             Clock.systemDefaultZone(),
                             streamMediator,
-                            subscribeStreamResponseObserver);
+                            subscribeStreamResponseObserver,
+                            blockNodeContext);
 
             streamMediator.subscribe(streamObserver);
         } else {

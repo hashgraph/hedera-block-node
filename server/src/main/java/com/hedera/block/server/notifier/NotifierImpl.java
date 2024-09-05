@@ -168,7 +168,7 @@ class NotifierImpl implements StreamMediator<BlockItem, ObjectEvent<PublishStrea
         // Remove the subscriber
         final var batchEventProcessor = subscribers.remove(handler);
         if (batchEventProcessor == null) {
-            LOGGER.log(ERROR, "Subscriber not found: {0}", handler);
+            LOGGER.log(ERROR, "Producer not found: {0}", handler);
 
         } else {
 
