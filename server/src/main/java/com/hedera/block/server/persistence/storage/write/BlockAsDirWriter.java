@@ -101,6 +101,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
 
         if (blockItem.hasBlockHeader()) {
             resetState(blockItem);
+            metricsService.get(BlocksPersisted).increment();
         }
 
         final Path blockItemFilePath = calculateBlockItemPath();
@@ -161,9 +162,6 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
 
         // Reset
         blockNodeFileNameIndex = 0;
-
-        // Increment the block counter
-        metricsService.get(BlocksPersisted).increment();
     }
 
     private void repairPermissions(@NonNull final Path path) throws IOException {
