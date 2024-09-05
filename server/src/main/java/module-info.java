@@ -14,6 +14,7 @@ module com.hedera.block.server {
     exports com.hedera.block.server.data;
     exports com.hedera.block.server.health;
     exports com.hedera.block.server.persistence;
+    exports com.hedera.block.server.notifier;
 
     requires com.hedera.block.stream;
     requires com.google.protobuf;

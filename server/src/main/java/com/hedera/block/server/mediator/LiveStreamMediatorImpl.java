@@ -73,7 +73,6 @@ class LiveStreamMediatorImpl
      *
      * @param subscribers the map of subscribers to batch event processors. It's recommended the map
      *     implementation is thread-safe
-     * @param blockWriter the block writer to persist block items
      * @param serviceStatus the service status to stop the service and web server if an exception
      *     occurs while persisting a block item, stop the web server for maintenance, etc
      */
@@ -87,15 +86,15 @@ class LiveStreamMediatorImpl
             @NonNull final BlockNodeContext blockNodeContext) {
 
         this.subscribers = subscribers;
+        this.serviceStatus = serviceStatus;
+        this.metricsService = blockNodeContext.metricsService();
 
         // Initialize and start the disruptor
         final Disruptor<ObjectEvent<SubscribeStreamResponse>> disruptor =
                 // TODO: replace ring buffer size with a configurable value, create a MediatorConfig
-                new Disruptor<>(ObjectEvent::new, 2048, DaemonThreadFactory.INSTANCE);
+                new Disruptor<>(ObjectEvent::new, 67108864, DaemonThreadFactory.INSTANCE);
         this.ringBuffer = disruptor.start();
         this.executor = Executors.newCachedThreadPool(DaemonThreadFactory.INSTANCE);
-        this.serviceStatus = serviceStatus;
-        this.metricsService = blockNodeContext.metricsService();
     }
 
     /**

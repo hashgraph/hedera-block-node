@@ -18,10 +18,11 @@ package com.hedera.block.server.validator;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.EventHandler;
@@ -30,11 +31,13 @@ import java.io.IOException;
 
 public class StreamValidatorImpl
         implements StreamValidator, EventHandler<ObjectEvent<SubscribeStreamResponse>> {
+
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>> subscriptionHandler;
     private final BlockWriter<BlockItem> blockWriter;
-    private final Notifier notifier;
+    private final StreamMediator<BlockItem, EventHandler<ObjectEvent<PublishStreamResponse>>>
+            notifier;
     private final MetricsService metricsService;
 
     public StreamValidatorImpl(
@@ -42,7 +45,10 @@ public class StreamValidatorImpl
                     final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>>
                             subscriptionHandler,
             @NonNull final BlockWriter<BlockItem> blockWriter,
-            @NonNull final Notifier notifier,
+            @NonNull
+                    final StreamMediator<
+                                    BlockItem, EventHandler<ObjectEvent<PublishStreamResponse>>>
+                            notifier,
             @NonNull final BlockNodeContext blockNodeContext) {
         this.subscriptionHandler = subscriptionHandler;
         this.blockWriter = blockWriter;
@@ -66,7 +72,7 @@ public class StreamValidatorImpl
             subscriptionHandler.unsubscribe(this);
 
             // Broadcast the problem to the notifier
-            notifier.notifyUnrecoverableError();
+            notifier.publish(null);
         }
     }
 }

@@ -18,6 +18,7 @@ package com.hedera.block.server;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.notifier.Notifiable;
 import com.swirlds.config.api.Configuration;
 import dagger.Binds;
 import dagger.Module;
@@ -66,6 +67,10 @@ public interface BlockNodeAppInjectionModule {
     @Singleton
     @Binds
     GrpcService bindBlockStreamService(BlockStreamService blockStreamService);
+
+    @Singleton
+    @Binds
+    Notifiable bindNotifiable(BlockStreamService blockStreamService);
 
     /**
      * Provides a web server config builder singleton using DI.

@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.mediator;
+package com.hedera.block.server.notifier;
 
-import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import dagger.Module;
@@ -26,21 +27,19 @@ import dagger.Provides;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.inject.Singleton;
 
-/** A Dagger module for providing dependencies for Mediator Module.` */
+/** A Dagger module for providing dependencies for the Notifier Module.` */
 @Module
-public interface MediatorInjectionModule {
+public interface NotifierInjectionModule {
 
-    /**
-     * Provides the stream mediator.
-     *
-     * @param blockNodeContext the block node context
-     * @param serviceStatus the service status
-     * @return the stream mediator
-     */
     @Provides
     @Singleton
-    static StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> providesStreamMediator(
-            @NonNull BlockNodeContext blockNodeContext, @NonNull ServiceStatus serviceStatus) {
-        return LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
+    static StreamMediator<BlockItem, ObjectEvent<PublishStreamResponse>>
+            providesNotifierStreamMediator(
+                    @NonNull final Notifiable blockStreamService,
+                    @NonNull
+                            final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
+                                    mediator,
+                    @NonNull final BlockNodeContext blockNodeContext) {
+        return NotifierBuilder.newBuilder(blockStreamService, mediator, blockNodeContext).build();
     }
 }

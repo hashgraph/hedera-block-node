@@ -93,7 +93,10 @@ public final class BlockNodeMetricTypes {
     public enum Gauge implements MetricMetadata {
 
         /** The number of subscribers receiving the live block stream. */
-        Subscribers("subscribers", "Subscribers");
+        Subscribers("subscribers", "Subscribers"),
+
+        /** The number of producers publishing block items. */
+        Producers("producers", "Producers");
 
         private final String grafanaLabel;
         private final String description;

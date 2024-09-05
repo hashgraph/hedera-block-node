@@ -19,28 +19,24 @@ package com.hedera.block.server.producer;
 import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.Translator.toPbj;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItemsReceived;
-import static com.hedera.block.server.producer.Util.getFakeHash;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.notifier.Notifiable;
-import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.EndOfStream;
-import com.hedera.hapi.block.ItemAcknowledgement;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
-import com.hedera.pbj.runtime.io.buffer.Bytes;
+import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * The ProducerBlockStreamObserver class plugs into Helidon's server-initiated bidirectional gRPC
@@ -49,7 +45,8 @@ import java.security.NoSuchAlgorithmException;
  * server).
  */
 public class ProducerBlockItemObserver
-        implements StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest>, Notifiable {
+        implements StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest>,
+                EventHandler<ObjectEvent<PublishStreamResponse>> {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -115,16 +112,6 @@ public class ProducerBlockItemObserver
                 // Publish the block to the mediator
                 publisher.publish(blockItem);
 
-                try {
-                    // Send a successful response
-                    publishStreamResponseObserver.onNext(buildSuccessStreamResponse(blockItem));
-
-                } catch (IOException | NoSuchAlgorithmException e) {
-                    final var errorResponse = buildErrorStreamResponse();
-                    publishStreamResponseObserver.onNext(errorResponse);
-                    LOGGER.log(ERROR, "Error calculating hash: ", e);
-                }
-
             } else {
                 LOGGER.log(ERROR, "StreamMediator is not accepting BlockItems");
 
@@ -151,12 +138,28 @@ public class ProducerBlockItemObserver
         }
     }
 
-    @NonNull
-    private com.hedera.hapi.block.protoc.PublishStreamResponse buildSuccessStreamResponse(
-            @NonNull final BlockItem blockItem) throws IOException, NoSuchAlgorithmException {
-        final Acknowledgement ack = buildAck(blockItem);
-        return fromPbj(PublishStreamResponse.newBuilder().acknowledgement(ack).build());
+    @Override
+    public void onEvent(
+            ObjectEvent<PublishStreamResponse> event, long sequence, boolean endOfBatch) {
+
+        //        try {
+        // Send a successful response
+        final var publishStreamResponse = event.get();
+        publishStreamResponseObserver.onNext(fromPbj(publishStreamResponse));
+
+        //        } catch (IOException | NoSuchAlgorithmException e) {
+        //            final var errorResponse = buildErrorStreamResponse();
+        //            publishStreamResponseObserver.onNext(errorResponse);
+        //            LOGGER.log(ERROR, "Error calculating hash: ", e);
+        //        }
     }
+
+    //    @NonNull
+    //    private com.hedera.hapi.block.protoc.PublishStreamResponse buildSuccessStreamResponse(
+    //            @NonNull final BlockItem blockItem) throws IOException, NoSuchAlgorithmException {
+    //        final Acknowledgement ack = buildAck(blockItem);
+    //        return fromPbj(PublishStreamResponse.newBuilder().acknowledgement(ack).build());
+    //    }
 
     @NonNull
     private static com.hedera.hapi.block.protoc.PublishStreamResponse buildErrorStreamResponse() {
@@ -175,17 +178,17 @@ public class ProducerBlockItemObserver
      * @return the Acknowledgement for the block item
      * @throws NoSuchAlgorithmException if the hash algorithm is not supported
      */
-    @NonNull
-    protected Acknowledgement buildAck(@NonNull final BlockItem blockItem)
-            throws NoSuchAlgorithmException {
-        final ItemAcknowledgement itemAck =
-                ItemAcknowledgement.newBuilder()
-                        // TODO: Replace this with a real hash generator
-                        .itemHash(Bytes.wrap(getFakeHash(blockItem)))
-                        .build();
-
-        return Acknowledgement.newBuilder().itemAck(itemAck).build();
-    }
+    //    @NonNull
+    //    protected Acknowledgement buildAck(@NonNull final BlockItem blockItem)
+    //            throws NoSuchAlgorithmException {
+    //        final ItemAcknowledgement itemAck =
+    //                ItemAcknowledgement.newBuilder()
+    //                        // TODO: Replace this with a real hash generator
+    //                        .itemHash(Bytes.wrap(getFakeHash(blockItem)))
+    //                        .build();
+    //
+    //        return Acknowledgement.newBuilder().itemAck(itemAck).build();
+    //    }
 
     /**
      * Helidon triggers this method when an error occurs on the bidirectional stream to the upstream
@@ -207,11 +210,5 @@ public class ProducerBlockItemObserver
     public void onCompleted() {
         LOGGER.log(DEBUG, "ProducerBlockStreamObserver completed");
         publishStreamResponseObserver.onCompleted();
-    }
-
-    @Override
-    public void notifyUnrecoverableError() {
-        // Prevent additional block items from being published.
-        // Send the producer an error message.
     }
 }
