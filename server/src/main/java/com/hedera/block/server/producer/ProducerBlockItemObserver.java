@@ -26,6 +26,7 @@ import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
@@ -40,6 +41,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.time.InstantSource;
 
 /**
  * The ProducerBlockStreamObserver class plugs into Helidon's server-initiated bidirectional gRPC
@@ -55,9 +57,14 @@ public class ProducerBlockItemObserver
 
     private final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
             publishStreamResponseObserver;
+    private final SubscriptionHandler<ObjectEvent<PublishStreamResponse>> subscriptionHandler;
     private final Publisher<BlockItem> publisher;
     private final ServiceStatus serviceStatus;
     private final MetricsService metricsService;
+
+    private final long timeoutThresholdMillis;
+    private final InstantSource producerLivenessClock;
+    private long producerLivenessMillis;
 
     /**
      * The onCancel handler to execute when the producer cancels the stream. This handler is
@@ -84,6 +91,7 @@ public class ProducerBlockItemObserver
      *     Node (e.g. - the metrics service).
      */
     public ProducerBlockItemObserver(
+            @NonNull final InstantSource producerLivenessClock,
             @NonNull final Publisher<BlockItem> publisher,
             @NonNull
                     final SubscriptionHandler<ObjectEvent<PublishStreamResponse>>
@@ -94,8 +102,15 @@ public class ProducerBlockItemObserver
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
 
+        this.timeoutThresholdMillis =
+                blockNodeContext
+                        .configuration()
+                        .getConfigData(ConsumerConfig.class)
+                        .timeoutThresholdMillis();
+
         this.publisher = publisher;
         this.publishStreamResponseObserver = publishStreamResponseObserver;
+        this.subscriptionHandler = subscriptionHandler;
         this.metricsService = blockNodeContext.metricsService();
         this.serviceStatus = serviceStatus;
 
@@ -118,6 +133,9 @@ public class ProducerBlockItemObserver
                     };
             serverCallStreamObserver.setOnCloseHandler(onClose);
         }
+
+        this.producerLivenessClock = producerLivenessClock;
+        this.producerLivenessMillis = producerLivenessClock.millis();
     }
 
     /**
@@ -143,6 +161,8 @@ public class ProducerBlockItemObserver
             // Publish the block to all the subscribers unless
             // there's an issue with the StreamMediator.
             if (serviceStatus.isRunning()) {
+                // Refresh the producer liveness
+                producerLivenessMillis = producerLivenessClock.millis();
 
                 // Publish the block to the mediator
                 publisher.publish(blockItem);
@@ -177,8 +197,15 @@ public class ProducerBlockItemObserver
     public void onEvent(
             ObjectEvent<PublishStreamResponse> event, long sequence, boolean endOfBatch) {
 
-        publishStreamResponseObserver.onNext(fromPbj(event.get()));
-        metricsService.get(SuccessfulPubStreamRespSent).increment();
+        final long currentMillis = producerLivenessClock.millis();
+        if (currentMillis - producerLivenessMillis > timeoutThresholdMillis) {
+            subscriptionHandler.unsubscribe(this);
+            LOGGER.log(DEBUG, "Producer liveness timeout. Unsubscribed ProducerBlockItemObserver.");
+        } else {
+
+            publishStreamResponseObserver.onNext(fromPbj(event.get()));
+            metricsService.get(SuccessfulPubStreamRespSent).increment();
+        }
     }
 
     @NonNull

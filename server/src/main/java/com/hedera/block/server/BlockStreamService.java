@@ -163,6 +163,7 @@ public class BlockStreamService implements GrpcService, Notifiable {
 
         final var producerBlockItemObserver =
                 new ProducerBlockItemObserver(
+                        Clock.systemDefaultZone(),
                         streamMediator,
                         notifier,
                         publishStreamResponseObserver,
@@ -187,14 +188,14 @@ public class BlockStreamService implements GrpcService, Notifiable {
 
         // Return a custom StreamObserver to handle streaming blocks from the producer.
         if (serviceStatus.isRunning()) {
-            final var streamObserver =
+            final var consumerStreamResponseObserver =
                     new ConsumerStreamResponseObserver(
                             Clock.systemDefaultZone(),
                             streamMediator,
                             subscribeStreamResponseObserver,
                             blockNodeContext);
 
-            streamMediator.subscribe(streamObserver);
+            streamMediator.subscribe(consumerStreamResponseObserver);
         } else {
             LOGGER.log(
                     ERROR,

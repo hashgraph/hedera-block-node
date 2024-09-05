@@ -96,6 +96,7 @@ public class ProducerBlockItemObserverTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
         final ProducerBlockItemObserver producerBlockItemObserver =
                 new ProducerBlockItemObserver(
+                        testClock,
                         streamMediator,
                         subscriptionHandler,
                         publishStreamResponseObserver,
@@ -180,6 +181,7 @@ public class ProducerBlockItemObserverTest {
 
         final ProducerBlockItemObserver producerBlockItemObserver =
                 new ProducerBlockItemObserver(
+                        testClock,
                         streamMediator,
                         subscriptionHandler,
                         publishStreamResponseObserver,
@@ -212,6 +214,7 @@ public class ProducerBlockItemObserverTest {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ProducerBlockItemObserver producerBlockItemObserver =
                 new ProducerBlockItemObserver(
+                        testClock,
                         streamMediator,
                         subscriptionHandler,
                         publishStreamResponseObserver,
@@ -259,6 +262,7 @@ public class ProducerBlockItemObserverTest {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ProducerBlockItemObserver producerBlockItemObserver =
                 new ProducerBlockItemObserver(
+                        testClock,
                         streamMediator,
                         subscriptionHandler,
                         publishStreamResponseObserver,
