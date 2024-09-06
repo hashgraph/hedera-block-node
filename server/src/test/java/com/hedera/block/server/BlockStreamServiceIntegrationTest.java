@@ -64,6 +64,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,11 +83,21 @@ public class BlockStreamServiceIntegrationTest {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
-    @Mock private LiveStreamMediator streamMediator;
-
     @Mock
     private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
             publishStreamResponseObserver;
+
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
+            publishStreamResponseObserver1;
+
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
+            publishStreamResponseObserver2;
+
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
+            publishStreamResponseObserver3;
 
     @Mock
     private StreamObserver<com.hedera.hapi.block.protoc.SingleBlockResponse>
@@ -137,9 +148,11 @@ public class BlockStreamServiceIntegrationTest {
         testPath = Files.createTempDirectory(TEMP_DIR);
         LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
 
-        blockNodeContext =
-                TestConfigUtil.getTestBlockNodeContext(
-                        Map.of("persistence.storage.rootPath", testPath.toString()));
+        Map<String, String> properties = new HashMap<>();
+        properties.put("persistence.storage.rootPath", testPath.toString());
+        properties.put("persistence.storage.blockItemSize", "1024");
+
+        blockNodeContext = TestConfigUtil.getTestBlockNodeContext(properties);
         testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
     }
 
@@ -149,10 +162,12 @@ public class BlockStreamServiceIntegrationTest {
     }
 
     @Test
-    @Disabled
     public void testPublishBlockStreamRegistrationAndExecution()
             throws IOException, NoSuchAlgorithmException {
 
+        final ServiceStatus serviceStatus = new ServiceStatusImpl();
+        final var streamMediator =
+                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
         final var streamValidatorBuilder =
                 StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
         final BlockStreamService blockStreamService =
@@ -163,45 +178,82 @@ public class BlockStreamServiceIntegrationTest {
                         streamValidatorBuilder,
                         blockNodeContext);
 
-        // Enable the serviceStatus
-        when(serviceStatus.isRunning()).thenReturn(true);
+        // Register 3 producers
+        final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest>
+                publishStreamObserver1 =
+                        blockStreamService.protocPublishBlockStream(publishStreamResponseObserver1);
+        blockStreamService.protocPublishBlockStream(publishStreamResponseObserver2);
+        blockStreamService.protocPublishBlockStream(publishStreamResponseObserver3);
 
-        final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest> streamObserver =
-                blockStreamService.protocPublishBlockStream(publishStreamResponseObserver);
+        // Register 3 consumers
+        blockStreamService.protocSubscribeBlockStream(
+                subscribeStreamRequest, subscribeStreamObserver1);
+        blockStreamService.protocSubscribeBlockStream(
+                subscribeStreamRequest, subscribeStreamObserver2);
+        blockStreamService.protocSubscribeBlockStream(
+                subscribeStreamRequest, subscribeStreamObserver3);
 
         List<BlockItem> blockItems = generateBlockItems(1);
-        //        for (int i = 0; i < blockItems.size(); i++) {
-        //            when(blockWriter.write(blockItems.get())).thenReturn(blockItem);
-        //        }
+        for (int i = 0; i < blockItems.size(); i++) {
+            if (i == 9) {
+                when(blockWriter.write(blockItems.get(i)))
+                        .thenReturn(Optional.of(blockItems.get(i)));
+            } else {
+                when(blockWriter.write(blockItems.get(i))).thenReturn(Optional.empty());
+            }
+        }
 
         for (BlockItem blockItem : blockItems) {
             final PublishStreamRequest publishStreamRequest =
                     PublishStreamRequest.newBuilder().blockItem(blockItem).build();
 
-            // Calling onNext() as Helidon does with each block item
-            streamObserver.onNext(fromPbj(publishStreamRequest));
+            // Calling onNext() as Helidon does with each block item for
+            // the first producer.
+            publishStreamObserver1.onNext(fromPbj(publishStreamRequest));
         }
 
-        // Verify all 10 BlockItems pass through the mediator
-        verify(streamMediator, timeout(testTimeout).times(1)).publish(blockItems.getFirst());
-        verify(streamMediator, timeout(testTimeout).times(8)).publish(blockItems.get(1));
-        verify(streamMediator, timeout(testTimeout).times(1)).publish(blockItems.get(9));
+        // Verify all 10 BlockItems were sent to each of the 3 consumers
+        verify(subscribeStreamObserver1, timeout(testTimeout).times(1))
+                .onNext(fromPbj(buildSubscribeStreamResponse(blockItems.getFirst())));
+        verify(subscribeStreamObserver1, timeout(testTimeout).times(8))
+                .onNext(fromPbj(buildSubscribeStreamResponse(blockItems.get(1))));
+        verify(subscribeStreamObserver1, timeout(testTimeout).times(1))
+                .onNext(fromPbj(buildSubscribeStreamResponse(blockItems.get(9))));
+
+        verify(subscribeStreamObserver2, timeout(testTimeout).times(1))
+                .onNext(fromPbj(buildSubscribeStreamResponse(blockItems.getFirst())));
+        verify(subscribeStreamObserver2, timeout(testTimeout).times(8))
+                .onNext(fromPbj(buildSubscribeStreamResponse(blockItems.get(1))));
+        verify(subscribeStreamObserver2, timeout(testTimeout).times(1))
+                .onNext(fromPbj(buildSubscribeStreamResponse(blockItems.get(9))));
+
+        verify(subscribeStreamObserver3, timeout(testTimeout).times(1))
+                .onNext(fromPbj(buildSubscribeStreamResponse(blockItems.getFirst())));
+        verify(subscribeStreamObserver3, timeout(testTimeout).times(8))
+                .onNext(fromPbj(buildSubscribeStreamResponse(blockItems.get(1))));
+        verify(subscribeStreamObserver3, timeout(testTimeout).times(1))
+                .onNext(fromPbj(buildSubscribeStreamResponse(blockItems.get(9))));
 
         // Only 1 response is expected per block sent
         final Acknowledgement itemAck = buildAck(blockItems.get(9));
         final PublishStreamResponse publishStreamResponse =
                 PublishStreamResponse.newBuilder().acknowledgement(itemAck).build();
 
-        // Verify our custom StreamObserver implementation builds and sends
-        // a response back to the producer
-        verify(publishStreamResponseObserver, timeout(testTimeout).times(1))
+        // Verify all 3 producers received the response
+        verify(publishStreamResponseObserver1, timeout(testTimeout).times(1))
+                .onNext(fromPbj(publishStreamResponse));
+
+        verify(publishStreamResponseObserver2, timeout(testTimeout).times(1))
+                .onNext(fromPbj(publishStreamResponse));
+
+        verify(publishStreamResponseObserver3, timeout(testTimeout).times(1))
                 .onNext(fromPbj(publishStreamResponse));
 
         // Close the stream as Helidon does
         //        streamObserver.onCompleted();
 
         // verify the onCompleted() method is invoked on the wrapped StreamObserver
-        //        verify(publishStreamResponseObserver,
+        //        verify(publishStreamResponseObserver1,
         // timeout(testTimeout).times(1)).onCompleted();
     }
 

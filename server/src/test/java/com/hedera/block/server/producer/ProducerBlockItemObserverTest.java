@@ -67,7 +67,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class ProducerBlockItemObserverTest {
 
-    @Mock private SubscriptionHandler<ObjectEvent<PublishStreamResponse>> subscriptionHandler;
+    @Mock private SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
 
     @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
 

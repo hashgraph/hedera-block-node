@@ -27,7 +27,6 @@ import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
@@ -53,7 +52,7 @@ public class NotifierImplTest {
     @Mock private Notifiable blockStreamService;
     @Mock private Publisher<BlockItem> publisher;
     @Mock private ServiceStatus serviceStatus;
-    @Mock private SubscriptionHandler<ObjectEvent<PublishStreamResponse>> subscriptionHandler;
+    @Mock private SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
 
     //    @Mock private EventHandler<ObjectEvent<PublishStreamResponse>> observer1;
     //    @Mock private EventHandler<ObjectEvent<PublishStreamResponse>> observer2;

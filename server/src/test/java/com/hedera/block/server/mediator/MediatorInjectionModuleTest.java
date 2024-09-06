@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -47,7 +46,7 @@ class MediatorInjectionModuleTest {
         BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         // Call the method under test
-        StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator =
+        StreamMediator<BlockItem, SubscribeStreamResponse> streamMediator =
                 MediatorInjectionModule.providesLiveStreamMediator(blockNodeContext, serviceStatus);
 
         // Verify that the streamMediator is correctly instantiated

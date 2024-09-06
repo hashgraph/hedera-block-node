@@ -64,7 +64,7 @@ public class LiveStreamMediatorImplTest {
     @Mock private EventHandler<ObjectEvent<SubscribeStreamResponse>> observer3;
 
     @Mock private BlockWriter<BlockItem> blockWriter;
-    @Mock private StreamMediator<BlockItem, ObjectEvent<PublishStreamResponse>> notifier;
+    @Mock private StreamMediator<BlockItem, PublishStreamResponse> notifier;
 
     @Mock
     private StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse> streamObserver1;
@@ -430,8 +430,7 @@ public class LiveStreamMediatorImplTest {
     private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
         public TestConsumerStreamResponseObserver(
                 final InstantSource producerLivenessClock,
-                final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
-                        streamMediator,
+                final StreamMediator<BlockItem, SubscribeStreamResponse> streamMediator,
                 final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
                         responseStreamObserver,
                 final BlockNodeContext blockNodeContext) {

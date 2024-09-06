@@ -32,7 +32,6 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
-import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
@@ -71,11 +70,12 @@ public class BlockStreamService implements GrpcService, Notifiable {
     private final LiveStreamMediator streamMediator;
     private final ServiceStatus serviceStatus;
     private final BlockReader<Block> blockReader;
+
     private final BlockNodeContext blockNodeContext;
     private final MetricsService metricsService;
 
     private final NotifierBuilder notifierBuilder;
-    private StreamMediator<BlockItem, ObjectEvent<PublishStreamResponse>> notifier;
+    private StreamMediator<BlockItem, PublishStreamResponse> notifier;
     private final StreamValidatorBuilder streamValidatorBuilder;
 
     /**

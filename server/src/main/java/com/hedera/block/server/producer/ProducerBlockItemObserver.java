@@ -57,7 +57,7 @@ public class ProducerBlockItemObserver
 
     private final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
             publishStreamResponseObserver;
-    private final SubscriptionHandler<ObjectEvent<PublishStreamResponse>> subscriptionHandler;
+    private final SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
     private final Publisher<BlockItem> publisher;
     private final ServiceStatus serviceStatus;
     private final MetricsService metricsService;
@@ -93,9 +93,7 @@ public class ProducerBlockItemObserver
     public ProducerBlockItemObserver(
             @NonNull final InstantSource producerLivenessClock,
             @NonNull final Publisher<BlockItem> publisher,
-            @NonNull
-                    final SubscriptionHandler<ObjectEvent<PublishStreamResponse>>
-                            subscriptionHandler,
+            @NonNull final SubscriptionHandler<PublishStreamResponse> subscriptionHandler,
             @NonNull
                     final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
                             publishStreamResponseObserver,

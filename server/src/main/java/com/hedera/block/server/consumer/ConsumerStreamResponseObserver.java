@@ -50,7 +50,7 @@ public class ConsumerStreamResponseObserver
     private final MetricsService metricsService;
     private final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
             subscribeStreamResponseObserver;
-    private final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>> subscriptionHandler;
+    private final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
 
     private final long timeoutThresholdMillis;
     private final InstantSource producerLivenessClock;
@@ -89,9 +89,7 @@ public class ConsumerStreamResponseObserver
      */
     public ConsumerStreamResponseObserver(
             @NonNull final InstantSource producerLivenessClock,
-            @NonNull
-                    final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>>
-                            subscriptionHandler,
+            @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler,
             @NonNull
                     final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
                             subscribeStreamResponseObserver,

@@ -17,13 +17,13 @@
 package com.hedera.block.server.notifier;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.SuccessfulPubStreamResp;
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Producers;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.block.server.mediator.SubscriptionHandlerBase;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.EndOfStream;
@@ -33,32 +33,19 @@ import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.lmax.disruptor.BatchEventProcessor;
-import com.lmax.disruptor.BatchEventProcessorBuilder;
 import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.RingBuffer;
-import com.lmax.disruptor.dsl.Disruptor;
-import com.lmax.disruptor.util.DaemonThreadFactory;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-class NotifierImpl implements StreamMediator<BlockItem, ObjectEvent<PublishStreamResponse>> {
+class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
+        implements StreamMediator<BlockItem, PublishStreamResponse> {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final Notifiable blockStreamService;
     private final Notifiable mediator;
-
-    private final RingBuffer<ObjectEvent<PublishStreamResponse>> ringBuffer;
-    private final ExecutorService executor;
-
-    private final Map<
-                    EventHandler<ObjectEvent<PublishStreamResponse>>,
-                    BatchEventProcessor<ObjectEvent<PublishStreamResponse>>>
-            subscribers;
 
     private final MetricsService metricsService;
 
@@ -72,17 +59,11 @@ class NotifierImpl implements StreamMediator<BlockItem, ObjectEvent<PublishStrea
             @NonNull final Notifiable mediator,
             @NonNull final BlockNodeContext blockNodeContext) {
 
-        this.subscribers = subscribers;
+        super(subscribers, blockNodeContext);
+
         this.blockStreamService = blockStreamService;
         this.mediator = mediator;
         this.metricsService = blockNodeContext.metricsService();
-
-        // Initialize and start the disruptor
-        final Disruptor<ObjectEvent<PublishStreamResponse>> disruptor =
-                // TODO: replace ring buffer size with a configurable value, create a MediatorConfig
-                new Disruptor<>(ObjectEvent::new, 2048, DaemonThreadFactory.INSTANCE);
-        this.ringBuffer = disruptor.start();
-        this.executor = Executors.newCachedThreadPool(DaemonThreadFactory.INSTANCE);
     }
 
     //    @Override
@@ -140,51 +121,5 @@ class NotifierImpl implements StreamMediator<BlockItem, ObjectEvent<PublishStrea
                         .build();
 
         return Acknowledgement.newBuilder().itemAck(itemAck).build();
-    }
-
-    @Override
-    public void subscribe(@NonNull final EventHandler<ObjectEvent<PublishStreamResponse>> handler) {
-
-        // Initialize the batch event processor and set it on the ring buffer
-        final var batchEventProcessor =
-                new BatchEventProcessorBuilder()
-                        .build(ringBuffer, ringBuffer.newBarrier(), handler);
-
-        ringBuffer.addGatingSequences(batchEventProcessor.getSequence());
-        executor.execute(batchEventProcessor);
-
-        // Keep track of the subscriber
-        subscribers.put(handler, batchEventProcessor);
-
-        // update the producer metrics
-        metricsService.get(Producers).set(subscribers.size());
-    }
-
-    @Override
-    public void unsubscribe(
-            @NonNull final EventHandler<ObjectEvent<PublishStreamResponse>> handler) {
-
-        // Remove the subscriber
-        final var batchEventProcessor = subscribers.remove(handler);
-        if (batchEventProcessor == null) {
-            LOGGER.log(ERROR, "Producer not found: {0}", handler);
-
-        } else {
-
-            // Stop the processor
-            batchEventProcessor.halt();
-
-            // Remove the gating sequence from the ring buffer
-            ringBuffer.removeGatingSequence(batchEventProcessor.getSequence());
-        }
-
-        // update the subscriber metrics
-        metricsService.get(Producers).set(subscribers.size());
-    }
-
-    @Override
-    public boolean isSubscribed(
-            @NonNull final EventHandler<ObjectEvent<PublishStreamResponse>> handler) {
-        return subscribers.containsKey(handler);
     }
 }

@@ -18,7 +18,6 @@ package com.hedera.block.server.mediator;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItems;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockStreamMediatorError;
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Consumers;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -31,16 +30,10 @@ import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.BatchEventProcessor;
-import com.lmax.disruptor.BatchEventProcessorBuilder;
 import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.RingBuffer;
-import com.lmax.disruptor.dsl.Disruptor;
-import com.lmax.disruptor.util.DaemonThreadFactory;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * LiveStreamMediatorImpl is an implementation of the StreamMediator interface. It is responsible
@@ -48,17 +41,10 @@ import java.util.concurrent.Executors;
  * block items to the subscribers as they arrive via a RingBuffer and persists the block items to a
  * store.
  */
-class LiveStreamMediatorImpl implements LiveStreamMediator {
+class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResponse>
+        implements LiveStreamMediator {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
-
-    private final RingBuffer<ObjectEvent<SubscribeStreamResponse>> ringBuffer;
-    private final ExecutorService executor;
-
-    private final Map<
-                    EventHandler<ObjectEvent<SubscribeStreamResponse>>,
-                    BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
-            subscribers;
 
     private final ServiceStatus serviceStatus;
     private final MetricsService metricsService;
@@ -83,21 +69,11 @@ class LiveStreamMediatorImpl implements LiveStreamMediator {
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
 
-        this.subscribers = subscribers;
+        super(subscribers, blockNodeContext);
+
+        //        this.subscribers = subscribers;
         this.serviceStatus = serviceStatus;
         this.metricsService = blockNodeContext.metricsService();
-
-        final int ringBufferSize =
-                blockNodeContext
-                        .configuration()
-                        .getConfigData(MediatorConfig.class)
-                        .ringBufferSize();
-
-        // Initialize and start the disruptor
-        final Disruptor<ObjectEvent<SubscribeStreamResponse>> disruptor =
-                new Disruptor<>(ObjectEvent::new, ringBufferSize, DaemonThreadFactory.INSTANCE);
-        this.ringBuffer = disruptor.start();
-        this.executor = Executors.newCachedThreadPool(DaemonThreadFactory.INSTANCE);
     }
 
     /**
@@ -148,57 +124,10 @@ class LiveStreamMediatorImpl implements LiveStreamMediator {
         ringBuffer.publishEvent((event, sequence) -> event.set(endStreamResponse));
 
         // Unsubscribe all downstream consumers
-        for (final var subscriber : subscribers.keySet()) {
-            LOGGER.log(ERROR, String.format("Unsubscribing: %s", subscriber));
-            unsubscribe(subscriber);
-        }
-    }
-
-    @Override
-    public void subscribe(
-            @NonNull final EventHandler<ObjectEvent<SubscribeStreamResponse>> handler) {
-
-        // Initialize the batch event processor and set it on the ring buffer
-        final var batchEventProcessor =
-                new BatchEventProcessorBuilder()
-                        .build(ringBuffer, ringBuffer.newBarrier(), handler);
-
-        ringBuffer.addGatingSequences(batchEventProcessor.getSequence());
-        executor.execute(batchEventProcessor);
-
-        // Keep track of the subscriber
-        subscribers.put(handler, batchEventProcessor);
-
-        // update the subscriber metrics
-        metricsService.get(Consumers).set(subscribers.size());
-    }
-
-    @Override
-    public void unsubscribe(
-            @NonNull final EventHandler<ObjectEvent<SubscribeStreamResponse>> handler) {
-
-        // Remove the subscriber
-        final var batchEventProcessor = subscribers.remove(handler);
-        if (batchEventProcessor == null) {
-            LOGGER.log(ERROR, "Subscriber not found: {0}", handler);
-
-        } else {
-
-            // Stop the processor
-            batchEventProcessor.halt();
-
-            // Remove the gating sequence from the ring buffer
-            ringBuffer.removeGatingSequence(batchEventProcessor.getSequence());
-        }
-
-        // update the subscriber metrics
-        metricsService.get(Consumers).set(subscribers.size());
-    }
-
-    @Override
-    public boolean isSubscribed(
-            @NonNull EventHandler<ObjectEvent<SubscribeStreamResponse>> handler) {
-        return subscribers.containsKey(handler);
+        //        for (final var subscriber : subscribers.keySet()) {
+        //            LOGGER.log(ERROR, String.format("Unsubscribing: %s", subscriber));
+        //            unsubscribe(subscriber);
+        //        }
     }
 
     @NonNull

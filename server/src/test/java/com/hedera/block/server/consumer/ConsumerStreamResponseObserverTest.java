@@ -54,7 +54,7 @@ public class ConsumerStreamResponseObserverTest {
 
     private static final int testTimeout = 1000;
 
-    @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
+    @Mock private StreamMediator<BlockItem, SubscribeStreamResponse> streamMediator;
 
     @Mock
     private StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
@@ -268,7 +268,7 @@ public class ConsumerStreamResponseObserverTest {
 
         public TestConsumerStreamResponseObserver(
                 InstantSource producerLivenessClock,
-                StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> subscriptionHandler,
+                StreamMediator<BlockItem, SubscribeStreamResponse> subscriptionHandler,
                 StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
                         subscribeStreamResponseObserver,
                 BlockNodeContext blockNodeContext) {

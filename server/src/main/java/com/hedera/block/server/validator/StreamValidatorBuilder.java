@@ -30,8 +30,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class StreamValidatorBuilder {
     private final BlockWriter<BlockItem> blockWriter;
     private final BlockNodeContext blockNodeContext;
-    private SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>> subscriptionHandler;
-    private StreamMediator<BlockItem, ObjectEvent<PublishStreamResponse>> notifier;
+    private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
+    private StreamMediator<BlockItem, PublishStreamResponse> notifier;
 
     private StreamValidatorBuilder(
             @NonNull final BlockWriter<BlockItem> blockWriter,
@@ -47,15 +47,13 @@ public class StreamValidatorBuilder {
     }
 
     public StreamValidatorBuilder subscriptionHandler(
-            @NonNull
-                    final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>>
-                            subscriptionHandler) {
+            @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler) {
         this.subscriptionHandler = subscriptionHandler;
         return this;
     }
 
     public StreamValidatorBuilder notifier(
-            @NonNull final StreamMediator<BlockItem, ObjectEvent<PublishStreamResponse>> notifier) {
+            @NonNull final StreamMediator<BlockItem, PublishStreamResponse> notifier) {
         this.notifier = notifier;
         return this;
     }

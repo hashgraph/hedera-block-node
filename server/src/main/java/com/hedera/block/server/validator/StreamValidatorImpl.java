@@ -34,17 +34,15 @@ public class StreamValidatorImpl implements EventHandler<ObjectEvent<SubscribeSt
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>> subscriptionHandler;
+    private final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
     private final BlockWriter<BlockItem> blockWriter;
-    private final StreamMediator<BlockItem, ObjectEvent<PublishStreamResponse>> notifier;
+    private final StreamMediator<BlockItem, PublishStreamResponse> notifier;
     private final MetricsService metricsService;
 
     public StreamValidatorImpl(
-            @NonNull
-                    final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>>
-                            subscriptionHandler,
+            @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler,
             @NonNull final BlockWriter<BlockItem> blockWriter,
-            @NonNull final StreamMediator<BlockItem, ObjectEvent<PublishStreamResponse>> notifier,
+            @NonNull final StreamMediator<BlockItem, PublishStreamResponse> notifier,
             @NonNull final BlockNodeContext blockNodeContext) {
         this.subscriptionHandler = subscriptionHandler;
         this.blockWriter = blockWriter;
@@ -62,7 +60,6 @@ public class StreamValidatorImpl implements EventHandler<ObjectEvent<SubscribeSt
             final BlockItem blockItem = subscribeStreamResponse.blockItem();
             Optional<BlockItem> result = blockWriter.write(blockItem);
             if (result.isPresent()) {
-                //
                 notifier.publish(blockItem);
             }
 

@@ -16,10 +16,9 @@
 
 package com.hedera.block.server.mediator;
 
-import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.notifier.Notifiable;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 
 public interface LiveStreamMediator
-        extends StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>, Notifiable {}
+        extends StreamMediator<BlockItem, SubscribeStreamResponse>, Notifiable {}

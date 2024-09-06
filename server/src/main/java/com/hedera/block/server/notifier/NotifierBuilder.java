@@ -72,7 +72,7 @@ public class NotifierBuilder {
     }
 
     @NonNull
-    public StreamMediator<BlockItem, ObjectEvent<PublishStreamResponse>> build() {
+    public StreamMediator<BlockItem, PublishStreamResponse> build() {
         return new NotifierImpl(subscribers, blockStreamService, mediator, blockNodeContext);
     }
 }
