@@ -21,9 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
-import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
+import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,10 +34,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class MediatorInjectionModuleTest {
 
-    @Mock private BlockWriter<BlockItem> blockWriter;
-
-    @Mock private BlockNodeContext blockNodeContext;
-
     @Mock private ServiceStatus serviceStatus;
 
     @BeforeEach
@@ -45,7 +42,10 @@ class MediatorInjectionModuleTest {
     }
 
     @Test
-    void testProvidesStreamMediator() {
+    void testProvidesStreamMediator() throws IOException {
+
+        BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
+
         // Call the method under test
         StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator =
                 MediatorInjectionModule.providesLiveStreamMediator(blockNodeContext, serviceStatus);

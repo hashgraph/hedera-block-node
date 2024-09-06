@@ -87,10 +87,15 @@ class LiveStreamMediatorImpl implements LiveStreamMediator {
         this.serviceStatus = serviceStatus;
         this.metricsService = blockNodeContext.metricsService();
 
+        final int ringBufferSize =
+                blockNodeContext
+                        .configuration()
+                        .getConfigData(MediatorConfig.class)
+                        .ringBufferSize();
+
         // Initialize and start the disruptor
         final Disruptor<ObjectEvent<SubscribeStreamResponse>> disruptor =
-                // TODO: replace ring buffer size with a configurable value, create a MediatorConfig
-                new Disruptor<>(ObjectEvent::new, 67108864, DaemonThreadFactory.INSTANCE);
+                new Disruptor<>(ObjectEvent::new, ringBufferSize, DaemonThreadFactory.INSTANCE);
         this.ringBuffer = disruptor.start();
         this.executor = Executors.newCachedThreadPool(DaemonThreadFactory.INSTANCE);
     }
@@ -109,7 +114,7 @@ class LiveStreamMediatorImpl implements LiveStreamMediator {
         if (serviceStatus.isRunning()) {
 
             // Publish the block for all subscribers to receive
-            LOGGER.log(DEBUG, "Publishing BlockItem: {0}", blockItem);
+            LOGGER.log(DEBUG, "Publishing BlockItem: " + blockItem);
             final var subscribeStreamResponse =
                     SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));

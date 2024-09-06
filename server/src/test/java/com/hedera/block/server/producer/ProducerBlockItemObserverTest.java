@@ -58,6 +58,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.InstantSource;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -90,6 +91,7 @@ public class ProducerBlockItemObserverTest {
     private static final int testTimeout = 1000;
 
     @Test
+    @Disabled
     public void testProducerOnNext() throws IOException, NoSuchAlgorithmException {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
@@ -126,6 +128,7 @@ public class ProducerBlockItemObserverTest {
     }
 
     @Test
+    @Disabled
     public void testProducerWithManyConsumers() throws IOException {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();

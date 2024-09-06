@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.validator;
+package com.hedera.block.server.mediator;
 
-public interface StreamValidator {}
+import com.swirlds.config.api.ConfigData;
+import com.swirlds.config.api.ConfigProperty;
+
+@ConfigData("mediator")
+public record MediatorConfig(@ConfigProperty(defaultValue = "67108864") int ringBufferSize) {
+    public MediatorConfig {
+        if (ringBufferSize <= 0) {
+            throw new IllegalArgumentException("Ring buffer size must be greater than 0");
+        }
+    }
+}

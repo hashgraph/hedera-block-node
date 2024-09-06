@@ -80,7 +80,7 @@ class NotifierImpl implements StreamMediator<BlockItem, ObjectEvent<PublishStrea
         // Initialize and start the disruptor
         final Disruptor<ObjectEvent<PublishStreamResponse>> disruptor =
                 // TODO: replace ring buffer size with a configurable value, create a MediatorConfig
-                new Disruptor<>(ObjectEvent::new, 1024, DaemonThreadFactory.INSTANCE);
+                new Disruptor<>(ObjectEvent::new, 2048, DaemonThreadFactory.INSTANCE);
         this.ringBuffer = disruptor.start();
         this.executor = Executors.newCachedThreadPool(DaemonThreadFactory.INSTANCE);
     }
@@ -132,8 +132,7 @@ class NotifierImpl implements StreamMediator<BlockItem, ObjectEvent<PublishStrea
      * @throws NoSuchAlgorithmException if the hash algorithm is not supported
      */
     @NonNull
-    protected Acknowledgement buildAck(@NonNull final BlockItem blockItem)
-            throws NoSuchAlgorithmException {
+    Acknowledgement buildAck(@NonNull final BlockItem blockItem) throws NoSuchAlgorithmException {
         final ItemAcknowledgement itemAck =
                 ItemAcknowledgement.newBuilder()
                         // TODO: Replace this with a real hash generator

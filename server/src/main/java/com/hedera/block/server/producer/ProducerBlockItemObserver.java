@@ -151,10 +151,10 @@ public class ProducerBlockItemObserver
 
         try {
 
-            LOGGER.log(DEBUG, "Received PublishStreamRequest from producer");
+            //            LOGGER.log(DEBUG, "Received PublishStreamRequest from producer");
             final BlockItem blockItem =
                     toPbj(BlockItem.PROTOBUF, publishStreamRequest.getBlockItem().toByteArray());
-            LOGGER.log(DEBUG, "Received block item: " + blockItem);
+            //            LOGGER.log(DEBUG, "Received block item: " + blockItem);
 
             metricsService.get(LiveBlockItemsReceived).increment();
 
@@ -202,7 +202,7 @@ public class ProducerBlockItemObserver
             subscriptionHandler.unsubscribe(this);
             LOGGER.log(DEBUG, "Producer liveness timeout. Unsubscribed ProducerBlockItemObserver.");
         } else {
-
+            LOGGER.log(DEBUG, "Publishing response to upstream producer: " + this);
             publishStreamResponseObserver.onNext(fromPbj(event.get()));
             metricsService.get(SuccessfulPubStreamRespSent).increment();
         }

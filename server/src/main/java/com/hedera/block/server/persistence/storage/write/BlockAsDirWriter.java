@@ -102,7 +102,6 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
 
         if (blockItem.hasBlockHeader()) {
             resetState(blockItem);
-            metricsService.get(BlocksPersisted).increment();
         }
 
         final Path blockItemFilePath = calculateBlockItemPath();
@@ -129,7 +128,12 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
             }
         }
 
-        return (blockItem.hasBlockHeader()) ? Optional.of(blockItem) : Optional.empty();
+        if (blockItem.hasBlockProof()) {
+            metricsService.get(BlocksPersisted).increment();
+            return Optional.of(blockItem);
+        }
+
+        return Optional.empty();
     }
 
     /**
