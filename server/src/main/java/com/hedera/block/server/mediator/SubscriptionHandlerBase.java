@@ -33,20 +33,20 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public abstract class SubscriptionHandlerBase<T> implements SubscriptionHandler<T> {
+public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<V> {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final Map<EventHandler<ObjectEvent<T>>, BatchEventProcessor<ObjectEvent<T>>>
+    private final Map<EventHandler<ObjectEvent<V>>, BatchEventProcessor<ObjectEvent<V>>>
             subscribers;
 
-    protected final RingBuffer<ObjectEvent<T>> ringBuffer;
+    protected final RingBuffer<ObjectEvent<V>> ringBuffer;
     private final ExecutorService executor;
     private final MetricsService metricsService;
 
     public SubscriptionHandlerBase(
             @NonNull
-                    final Map<EventHandler<ObjectEvent<T>>, BatchEventProcessor<ObjectEvent<T>>>
+                    final Map<EventHandler<ObjectEvent<V>>, BatchEventProcessor<ObjectEvent<V>>>
                             subscribers,
             @NonNull final BlockNodeContext blockNodeContext) {
 
@@ -60,14 +60,14 @@ public abstract class SubscriptionHandlerBase<T> implements SubscriptionHandler<
                         .ringBufferSize();
 
         // Initialize and start the disruptor
-        final Disruptor<ObjectEvent<T>> disruptor =
+        final Disruptor<ObjectEvent<V>> disruptor =
                 new Disruptor<>(ObjectEvent::new, ringBufferSize, DaemonThreadFactory.INSTANCE);
         this.ringBuffer = disruptor.start();
         this.executor = Executors.newCachedThreadPool(DaemonThreadFactory.INSTANCE);
     }
 
     @Override
-    public void subscribe(@NonNull final EventHandler<ObjectEvent<T>> handler) {
+    public void subscribe(@NonNull final EventHandler<ObjectEvent<V>> handler) {
 
         // Initialize the batch event processor and set it on the ring buffer
         final var batchEventProcessor =
@@ -85,7 +85,7 @@ public abstract class SubscriptionHandlerBase<T> implements SubscriptionHandler<
     }
 
     @Override
-    public void unsubscribe(@NonNull final EventHandler<ObjectEvent<T>> handler) {
+    public void unsubscribe(@NonNull final EventHandler<ObjectEvent<V>> handler) {
 
         // Remove the subscriber
         final var batchEventProcessor = subscribers.remove(handler);
@@ -106,7 +106,7 @@ public abstract class SubscriptionHandlerBase<T> implements SubscriptionHandler<
     }
 
     @Override
-    public boolean isSubscribed(@NonNull EventHandler<ObjectEvent<T>> handler) {
+    public boolean isSubscribed(@NonNull EventHandler<ObjectEvent<V>> handler) {
         return subscribers.containsKey(handler);
     }
 }
