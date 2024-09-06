@@ -18,6 +18,7 @@ package com.hedera.block.server.validator;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.mediator.BlockNodeEventHandler;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
@@ -25,12 +26,12 @@ import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
-import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Optional;
 
-public class StreamValidatorImpl implements EventHandler<ObjectEvent<SubscribeStreamResponse>> {
+public class StreamValidatorImpl
+        implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -71,5 +72,10 @@ public class StreamValidatorImpl implements EventHandler<ObjectEvent<SubscribeSt
             // Broadcast the problem to the notifier
             notifier.publish(null);
         }
+    }
+
+    @Override
+    public boolean isTimeoutExpired() {
+        return false;
     }
 }

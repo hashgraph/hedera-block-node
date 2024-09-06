@@ -18,13 +18,13 @@ package com.hedera.block.server.validator;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.mediator.BlockNodeEventHandler;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
-import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 public class StreamValidatorBuilder {
@@ -58,7 +58,7 @@ public class StreamValidatorBuilder {
         return this;
     }
 
-    public EventHandler<ObjectEvent<SubscribeStreamResponse>> build() {
+    public BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> build() {
         return new StreamValidatorImpl(
                 subscriptionHandler, blockWriter, notifier, blockNodeContext);
     }

@@ -40,7 +40,6 @@ import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.output.BlockHeader;
-import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -59,9 +58,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class LiveStreamMediatorImplTest {
 
-    @Mock private EventHandler<ObjectEvent<SubscribeStreamResponse>> observer1;
-    @Mock private EventHandler<ObjectEvent<SubscribeStreamResponse>> observer2;
-    @Mock private EventHandler<ObjectEvent<SubscribeStreamResponse>> observer3;
+    @Mock private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> observer1;
+    @Mock private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> observer2;
+    @Mock private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> observer3;
 
     @Mock private BlockWriter<BlockItem> blockWriter;
     @Mock private StreamMediator<BlockItem, PublishStreamResponse> notifier;

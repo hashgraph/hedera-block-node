@@ -17,11 +17,13 @@
 package com.hedera.block.server.notifier;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.SuccessfulPubStreamResp;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Producers;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.mediator.BlockNodeEventHandler;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.mediator.SubscriptionHandlerBase;
 import com.hedera.block.server.metrics.MetricsService;
@@ -33,7 +35,7 @@ import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.lmax.disruptor.BatchEventProcessor;
-import com.lmax.disruptor.EventHandler;
+import com.swirlds.metrics.api.LongGauge;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -52,7 +54,7 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
     NotifierImpl(
             @NonNull
                     final Map<
-                                    EventHandler<ObjectEvent<PublishStreamResponse>>,
+                                    BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>>,
                                     BatchEventProcessor<ObjectEvent<PublishStreamResponse>>>
                             subscribers,
             @NonNull final Notifiable blockStreamService,
@@ -121,5 +123,10 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
                         .build();
 
         return Acknowledgement.newBuilder().itemAck(itemAck).build();
+    }
+
+    @Override
+    protected LongGauge getLongGauge() {
+        return metricsService.get(Producers);
     }
 }

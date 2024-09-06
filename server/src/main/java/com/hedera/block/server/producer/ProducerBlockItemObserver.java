@@ -28,6 +28,7 @@ import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.mediator.BlockNodeEventHandler;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
@@ -36,7 +37,6 @@ import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
-import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -51,7 +51,7 @@ import java.time.InstantSource;
  */
 public class ProducerBlockItemObserver
         implements StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest>,
-                EventHandler<ObjectEvent<PublishStreamResponse>> {
+                BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>> {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -195,8 +195,7 @@ public class ProducerBlockItemObserver
     public void onEvent(
             ObjectEvent<PublishStreamResponse> event, long sequence, boolean endOfBatch) {
 
-        final long currentMillis = producerLivenessClock.millis();
-        if (currentMillis - producerLivenessMillis > timeoutThresholdMillis) {
+        if (isTimeoutExpired()) {
             subscriptionHandler.unsubscribe(this);
             LOGGER.log(DEBUG, "Producer liveness timeout. Unsubscribed ProducerBlockItemObserver.");
         } else {
@@ -236,5 +235,14 @@ public class ProducerBlockItemObserver
     public void onCompleted() {
         LOGGER.log(DEBUG, "ProducerBlockStreamObserver completed");
         publishStreamResponseObserver.onCompleted();
+    }
+
+    @Override
+    public boolean isTimeoutExpired() {
+        return isTimeoutExpired(producerLivenessClock.millis());
+    }
+
+    private boolean isTimeoutExpired(final long currentMillis) {
+        return currentMillis - producerLivenessMillis > timeoutThresholdMillis;
     }
 }

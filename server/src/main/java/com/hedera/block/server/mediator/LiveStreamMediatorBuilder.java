@@ -22,7 +22,6 @@ import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.lmax.disruptor.BatchEventProcessor;
-import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,7 +40,7 @@ public class LiveStreamMediatorBuilder {
     private final ServiceStatus serviceStatus;
 
     private Map<
-                    EventHandler<ObjectEvent<SubscribeStreamResponse>>,
+                    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>,
                     BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
             subscribers;
 
@@ -85,7 +84,7 @@ public class LiveStreamMediatorBuilder {
     public LiveStreamMediatorBuilder subscribers(
             @NonNull
                     final Map<
-                                    EventHandler<ObjectEvent<SubscribeStreamResponse>>,
+                                    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>,
                                     BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
                             subscribers) {
         this.subscribers = subscribers;

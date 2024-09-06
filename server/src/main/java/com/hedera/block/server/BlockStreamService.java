@@ -161,6 +161,9 @@ public class BlockStreamService implements GrpcService, Notifiable {
             streamMediator.subscribe(streamValidator);
         }
 
+        // Unsubscribe any expired notifiers
+        notifier.unsubscribeAllExpired();
+
         final var producerBlockItemObserver =
                 new ProducerBlockItemObserver(
                         Clock.systemDefaultZone(),
@@ -188,6 +191,9 @@ public class BlockStreamService implements GrpcService, Notifiable {
 
         // Return a custom StreamObserver to handle streaming blocks from the producer.
         if (serviceStatus.isRunning()) {
+            // Unsubscribe any expired notifiers
+            streamMediator.unsubscribeAllExpired();
+
             final var consumerStreamResponseObserver =
                     new ConsumerStreamResponseObserver(
                             Clock.systemDefaultZone(),

@@ -16,18 +16,16 @@
 
 package com.hedera.block.server.mediator;
 
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Consumers;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
-import com.hedera.block.server.metrics.MetricsService;
 import com.lmax.disruptor.BatchEventProcessor;
 import com.lmax.disruptor.BatchEventProcessorBuilder;
-import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.util.DaemonThreadFactory;
+import com.swirlds.metrics.api.LongGauge;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -37,21 +35,21 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final Map<EventHandler<ObjectEvent<V>>, BatchEventProcessor<ObjectEvent<V>>>
+    private final Map<BlockNodeEventHandler<ObjectEvent<V>>, BatchEventProcessor<ObjectEvent<V>>>
             subscribers;
 
     protected final RingBuffer<ObjectEvent<V>> ringBuffer;
     private final ExecutorService executor;
-    private final MetricsService metricsService;
 
     public SubscriptionHandlerBase(
             @NonNull
-                    final Map<EventHandler<ObjectEvent<V>>, BatchEventProcessor<ObjectEvent<V>>>
+                    final Map<
+                                    BlockNodeEventHandler<ObjectEvent<V>>,
+                                    BatchEventProcessor<ObjectEvent<V>>>
                             subscribers,
             @NonNull final BlockNodeContext blockNodeContext) {
 
         this.subscribers = subscribers;
-        this.metricsService = blockNodeContext.metricsService();
 
         final int ringBufferSize =
                 blockNodeContext
@@ -67,7 +65,7 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
     }
 
     @Override
-    public void subscribe(@NonNull final EventHandler<ObjectEvent<V>> handler) {
+    public void subscribe(@NonNull final BlockNodeEventHandler<ObjectEvent<V>> handler) {
 
         // Initialize the batch event processor and set it on the ring buffer
         final var batchEventProcessor =
@@ -81,11 +79,11 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
         subscribers.put(handler, batchEventProcessor);
 
         // update the subscriber metrics
-        metricsService.get(Consumers).set(subscribers.size());
+        getLongGauge().set(subscribers.size());
     }
 
     @Override
-    public void unsubscribe(@NonNull final EventHandler<ObjectEvent<V>> handler) {
+    public void unsubscribe(@NonNull final BlockNodeEventHandler<ObjectEvent<V>> handler) {
 
         // Remove the subscriber
         final var batchEventProcessor = subscribers.remove(handler);
@@ -102,11 +100,20 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
         }
 
         // update the subscriber metrics
-        metricsService.get(Consumers).set(subscribers.size());
+        getLongGauge().set(subscribers.size());
     }
 
     @Override
-    public boolean isSubscribed(@NonNull EventHandler<ObjectEvent<V>> handler) {
+    public boolean isSubscribed(@NonNull BlockNodeEventHandler<ObjectEvent<V>> handler) {
         return subscribers.containsKey(handler);
     }
+
+    @Override
+    public void unsubscribeAllExpired() {
+        subscribers.keySet().stream()
+                .filter(BlockNodeEventHandler::isTimeoutExpired)
+                .forEach(this::unsubscribe);
+    }
+
+    protected abstract LongGauge getLongGauge();
 }

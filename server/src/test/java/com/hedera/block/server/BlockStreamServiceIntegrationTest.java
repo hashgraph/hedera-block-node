@@ -31,6 +31,7 @@ import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.mediator.BlockNodeEventHandler;
 import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
@@ -56,7 +57,6 @@ import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.lmax.disruptor.BatchEventProcessor;
-import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.WebServer;
@@ -436,7 +436,7 @@ public class BlockStreamServiceIntegrationTest {
         int numberOfBlocks = 100;
 
         final LinkedHashMap<
-                        EventHandler<ObjectEvent<SubscribeStreamResponse>>,
+                        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>,
                         BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
                 subscribers = new LinkedHashMap<>();
         final var streamMediator = buildStreamMediator(subscribers);
@@ -526,7 +526,7 @@ public class BlockStreamServiceIntegrationTest {
     public void testMediatorExceptionHandlingWhenPersistenceFailure()
             throws IOException, ParseException {
         final ConcurrentHashMap<
-                        EventHandler<ObjectEvent<SubscribeStreamResponse>>,
+                        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>,
                         BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
                 subscribers = new ConcurrentHashMap<>();
 
@@ -707,7 +707,7 @@ public class BlockStreamServiceIntegrationTest {
 
     private LiveStreamMediator buildStreamMediator(
             final Map<
-                            EventHandler<ObjectEvent<SubscribeStreamResponse>>,
+                            BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>,
                             BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
                     subscribers) {
 

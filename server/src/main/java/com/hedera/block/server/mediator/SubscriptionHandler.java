@@ -17,7 +17,6 @@
 package com.hedera.block.server.mediator;
 
 import com.hedera.block.server.data.ObjectEvent;
-import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
@@ -33,14 +32,14 @@ public interface SubscriptionHandler<V> {
      *
      * @param handler the handler to subscribe
      */
-    void subscribe(@NonNull final EventHandler<ObjectEvent<V>> handler);
+    void subscribe(@NonNull final BlockNodeEventHandler<ObjectEvent<V>> handler);
 
     /**
      * Unsubscribes the given handler from the stream of events.
      *
      * @param handler the handler to unsubscribe
      */
-    void unsubscribe(@NonNull final EventHandler<ObjectEvent<V>> handler);
+    void unsubscribe(@NonNull final BlockNodeEventHandler<ObjectEvent<V>> handler);
 
     /**
      * Checks if the given handler is subscribed to the stream of events.
@@ -48,5 +47,7 @@ public interface SubscriptionHandler<V> {
      * @param handler the handler to check
      * @return true if the handler is subscribed, false otherwise
      */
-    boolean isSubscribed(@NonNull final EventHandler<ObjectEvent<V>> handler);
+    boolean isSubscribed(@NonNull final BlockNodeEventHandler<ObjectEvent<V>> handler);
+
+    void unsubscribeAllExpired();
 }

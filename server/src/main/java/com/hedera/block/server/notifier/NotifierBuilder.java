@@ -18,11 +18,11 @@ package com.hedera.block.server.notifier;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.mediator.BlockNodeEventHandler;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.BatchEventProcessor;
-import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,7 +34,7 @@ public class NotifierBuilder {
     private final BlockNodeContext blockNodeContext;
 
     private Map<
-                    EventHandler<ObjectEvent<PublishStreamResponse>>,
+                    BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>>,
                     BatchEventProcessor<ObjectEvent<PublishStreamResponse>>>
             subscribers;
 
@@ -64,7 +64,7 @@ public class NotifierBuilder {
     public NotifierBuilder subscribers(
             @NonNull
                     final Map<
-                                    EventHandler<ObjectEvent<PublishStreamResponse>>,
+                                    BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>>,
                                     BatchEventProcessor<ObjectEvent<PublishStreamResponse>>>
                             subscribers) {
         this.subscribers = subscribers;

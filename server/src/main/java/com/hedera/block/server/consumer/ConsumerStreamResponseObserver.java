@@ -24,12 +24,12 @@ import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.mediator.BlockNodeEventHandler;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.OneOf;
-import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * can invoke the onEvent() method when a new SubscribeStreamResponse is available.
  */
 public class ConsumerStreamResponseObserver
-        implements EventHandler<ObjectEvent<SubscribeStreamResponse>> {
+        implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -158,7 +158,7 @@ public class ConsumerStreamResponseObserver
         // or closed the stream.
         if (isResponsePermitted.get()) {
             final long currentMillis = producerLivenessClock.millis();
-            if (currentMillis - producerLivenessMillis > timeoutThresholdMillis) {
+            if (isTimeoutExpired(currentMillis)) {
                 subscriptionHandler.unsubscribe(this);
                 LOGGER.log(
                         DEBUG,
@@ -172,6 +172,15 @@ public class ConsumerStreamResponseObserver
                 responseSender.send(subscribeStreamResponse);
             }
         }
+    }
+
+    @Override
+    public boolean isTimeoutExpired() {
+        return isTimeoutExpired(producerLivenessClock.millis());
+    }
+
+    private boolean isTimeoutExpired(final long currentMillis) {
+        return currentMillis - producerLivenessMillis > timeoutThresholdMillis;
     }
 
     @NonNull
