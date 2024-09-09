@@ -26,11 +26,15 @@ import org.junit.jupiter.api.Test;
 
 class BlockStreamConfigTest {
 
+    private String getAbsoluteFolder(String relativePath) {
+        return Paths.get(relativePath).toAbsolutePath().toString();
+    }
+
     @Test
     void testValidAbsolutePath() {
         // Setup valid folder path and generation mode
-        String folderRootPath =
-                "/Users/user/Projects/hedera-block-node/simulator/src/main/resources/block-0.0.3";
+        String gzRootFolder = "src/main/resources/block-0.0.3/";
+        String folderRootPath = getAbsoluteFolder(gzRootFolder);
         GenerationMode generationMode = GenerationMode.DIR;
 
         // Assume the folder exists

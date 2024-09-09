@@ -20,16 +20,21 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
+import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
 
 class BlockAsFileBlockStreamManagerTest {
 
-    private final String gzRootFolder =
-            "/Users/user/Projects/hedera-block-node/simulator/src/main/resources/block-0.0.3/";
+    private final String gzRootFolder = "src/main/resources/block-0.0.3/";
+
+    private String getAbsoluteFolder(String relativePath) {
+        return Paths.get(relativePath).toAbsolutePath().toString();
+    }
 
     @Test
     void getGenerationMode() {
-        BlockStreamManager blockStreamManager = getBlockAsFileBlockStreamManager(gzRootFolder);
+        BlockStreamManager blockStreamManager =
+                getBlockAsFileBlockStreamManager(getAbsoluteFolder(gzRootFolder));
         assertEquals(GenerationMode.DIR, blockStreamManager.getGenerationMode());
     }
 
@@ -40,7 +45,8 @@ class BlockAsFileBlockStreamManagerTest {
 
     @Test
     void getNextBlock() {
-        BlockStreamManager blockStreamManager = getBlockAsFileBlockStreamManager(gzRootFolder);
+        BlockStreamManager blockStreamManager =
+                getBlockAsFileBlockStreamManager(getAbsoluteFolder(gzRootFolder));
         for (int i = 0; i < 3000; i++) {
             assertNotNull(blockStreamManager.getNextBlock());
         }
@@ -48,7 +54,8 @@ class BlockAsFileBlockStreamManagerTest {
 
     @Test
     void getNextBlockItem() {
-        BlockStreamManager blockStreamManager = getBlockAsFileBlockStreamManager(gzRootFolder);
+        BlockStreamManager blockStreamManager =
+                getBlockAsFileBlockStreamManager(getAbsoluteFolder(gzRootFolder));
         for (int i = 0; i < 1000; i++) {
             assertNotNull(blockStreamManager.getNextBlockItem());
         }
@@ -56,9 +63,9 @@ class BlockAsFileBlockStreamManagerTest {
 
     @Test
     void loadBlockBlk() {
-        String blkRootFolder =
-                "/Users/user/Projects/hedera-block-node/simulator/src/main/resources/block-0.0.3-blk/";
-        BlockStreamManager blockStreamManager = getBlockAsFileBlockStreamManager(blkRootFolder);
+        String blkRootFolder = "src/main/resources/block-0.0.3-blk/";
+        BlockStreamManager blockStreamManager =
+                getBlockAsFileBlockStreamManager(getAbsoluteFolder(blkRootFolder));
         assertNotNull(blockStreamManager.getNextBlock());
     }
 
