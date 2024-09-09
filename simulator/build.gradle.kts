@@ -40,16 +40,21 @@ testModuleInfo {
 }
 
 tasks.register<Copy>("untarTestBlockStream") {
+    description = "Untar the test block stream data"
+    group = "build"
+
     val targetDir = file("src/main/resources")
 
     from(tarTree(resources.gzip(file("src/main/resources/block-0.0.3.tar.gz"))))
     into(targetDir)
 
+    // Mark task as not up-to-date if the directory is empty
+    outputs.upToDateWhen { targetDir.listFiles()?.isNotEmpty() ?: false }
+
     // Adding a simple logging to verify
     doLast { println("Untar task completed. Files should be in: ${targetDir.absolutePath}") }
 }
 
-tasks.named("build") {
-    // Run untar before the build
-    dependsOn(tasks.named("untarTestBlockStream"))
-}
+tasks.named("processResources") { dependsOn(tasks.named("untarTestBlockStream")) }
+
+tasks.named("sourcesJar") { dependsOn(tasks.named("untarTestBlockStream")) }
