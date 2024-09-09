@@ -24,7 +24,6 @@ import static java.lang.System.Logger.Level.ERROR;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.BlockNodeEventHandler;
-import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.mediator.SubscriptionHandlerBase;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.Acknowledgement;
@@ -36,12 +35,10 @@ import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.lmax.disruptor.BatchEventProcessor;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
-class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
-        implements StreamMediator<BlockItem, PublishStreamResponse> {
+class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implements Notifier {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -73,18 +70,18 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
         this.metricsService = blockNodeContext.metricsService();
     }
 
-    //    @Override
-    //    public void notifyUnrecoverableError() {
-    //        blockStreamService.notifyUnrecoverableError();
-    //        mediator.notifyUnrecoverableError();
-    //
-    //        // Publish a response to the subscribers
-    //        ringBuffer.publishEvent((event, sequence) -> event.set(new
-    // PublishStreamResponse(null)));
-    //    }
+    @Override
+    public void notifyUnrecoverableError() {
+        blockStreamService.notifyUnrecoverableError();
+        mediator.notifyUnrecoverableError();
+
+        // Publish an end of stream response to the producers.
+        final PublishStreamResponse errorStreamResponse = buildErrorStreamResponse();
+        ringBuffer.publishEvent((event, sequence) -> event.set(errorStreamResponse));
+    }
 
     @Override
-    public void publish(@NonNull BlockItem blockItem) throws IOException {
+    public void publish(@NonNull BlockItem blockItem) {
 
         try {
             // Publish the block item to the subscribers

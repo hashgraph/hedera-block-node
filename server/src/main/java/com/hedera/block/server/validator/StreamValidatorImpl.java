@@ -19,11 +19,10 @@ package com.hedera.block.server.validator;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.BlockNodeEventHandler;
-import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
-import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -37,13 +36,13 @@ public class StreamValidatorImpl
 
     private final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
     private final BlockWriter<BlockItem> blockWriter;
-    private final StreamMediator<BlockItem, PublishStreamResponse> notifier;
+    private final Notifier notifier;
     private final MetricsService metricsService;
 
     public StreamValidatorImpl(
             @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler,
             @NonNull final BlockWriter<BlockItem> blockWriter,
-            @NonNull final StreamMediator<BlockItem, PublishStreamResponse> notifier,
+            @NonNull final Notifier notifier,
             @NonNull final BlockNodeContext blockNodeContext) {
         this.subscriptionHandler = subscriptionHandler;
         this.blockWriter = blockWriter;
@@ -70,12 +69,7 @@ public class StreamValidatorImpl
             subscriptionHandler.unsubscribe(this);
 
             // Broadcast the problem to the notifier
-            notifier.publish(null);
+            notifier.notifyUnrecoverableError();
         }
-    }
-
-    @Override
-    public boolean isTimeoutExpired() {
-        return false;
     }
 }

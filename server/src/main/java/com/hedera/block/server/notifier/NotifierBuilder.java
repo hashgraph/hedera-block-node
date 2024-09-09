@@ -19,9 +19,7 @@ package com.hedera.block.server.notifier;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.BlockNodeEventHandler;
-import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.hapi.block.PublishStreamResponse;
-import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.BatchEventProcessor;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
@@ -72,7 +70,7 @@ public class NotifierBuilder {
     }
 
     @NonNull
-    public StreamMediator<BlockItem, PublishStreamResponse> build() {
+    public Notifier build() {
         return new NotifierImpl(subscribers, blockStreamService, mediator, blockNodeContext);
     }
 }

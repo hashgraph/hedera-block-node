@@ -14,22 +14,10 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.mediator;
+package com.hedera.block.server.notifier;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.hapi.block.PublishStreamResponse;
+import com.hedera.hapi.block.stream.BlockItem;
 
-/**
- * The Publisher interface defines the contract for publishing data emitted by the producer to
- * downstream subscribers.
- *
- * @param <U> the type of data to publish
- */
-public interface Publisher<U> {
-
-    /**
-     * Publishes the given data to the downstream subscribers.
-     *
-     * @param data the data emitted by an upstream producer to publish to downstream subscribers.
-     */
-    void publish(@NonNull final U data);
-}
+public interface Notifier extends StreamMediator<BlockItem, PublishStreamResponse>, Notifiable {}

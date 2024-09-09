@@ -18,26 +18,31 @@ package com.hedera.block.server.mediator;
 
 import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItems;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockStreamMediatorError;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.notifier.Notifiable;
+import com.hedera.block.server.notifier.Notifier;
+import com.hedera.block.server.notifier.NotifierBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.validator.StreamValidatorImpl;
-import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -49,7 +54,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -63,7 +67,7 @@ public class LiveStreamMediatorImplTest {
     @Mock private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> observer3;
 
     @Mock private BlockWriter<BlockItem> blockWriter;
-    @Mock private StreamMediator<BlockItem, PublishStreamResponse> notifier;
+    @Mock private Notifier notifier;
 
     @Mock
     private StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse> streamObserver1;
@@ -77,6 +81,8 @@ public class LiveStreamMediatorImplTest {
     @Mock
     private ServerCallStreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
             serverCallStreamObserver;
+
+    @Mock private Notifiable blockStreamService;
 
     @Mock private InstantSource testClock;
 
@@ -363,15 +369,44 @@ public class LiveStreamMediatorImplTest {
     }
 
     @Test
-    @Disabled
     public void testMediatorBlocksPublishAfterException() throws IOException {
+
+        final ServiceStatus serviceStatus = mock(ServiceStatus.class);
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediator =
-                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, new ServiceStatusImpl())
+                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
+
+        final var concreteObserver1 =
+                new ConsumerStreamResponseObserver(
+                        testClock, streamMediator, streamObserver1, testContext);
+
+        final var concreteObserver2 =
+                new ConsumerStreamResponseObserver(
+                        testClock, streamMediator, streamObserver2, testContext);
+
+        final var concreteObserver3 =
+                new ConsumerStreamResponseObserver(
+                        testClock, streamMediator, streamObserver3, testContext);
+
+        // Set up the subscribers
+        streamMediator.subscribe(concreteObserver1);
+        streamMediator.subscribe(concreteObserver2);
+        streamMediator.subscribe(concreteObserver3);
+
+        final Notifier notifier =
+                NotifierBuilder.newBuilder(streamMediator, blockNodeContext)
+                        .blockStreamService(blockStreamService)
                         .build();
+        final var streamValidator =
+                new StreamValidatorImpl(streamMediator, blockWriter, notifier, blockNodeContext);
+
+        // Set up the stream verifier
+        streamMediator.subscribe(streamValidator);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final BlockItem firstBlockItem = blockItems.getFirst();
+
+        when(serviceStatus.isRunning()).thenReturn(true);
 
         // Right now, only a single producer calls publishEvent. In
         // that case, they will get an IOException bubbled up to them.
@@ -379,21 +414,39 @@ public class LiveStreamMediatorImplTest {
         // future. In that case, we need to make sure a second producer
         // is not able to publish a block after the first producer fails.
         doThrow(new IOException()).when(blockWriter).write(firstBlockItem);
-        try {
-            streamMediator.publish(firstBlockItem);
-            fail("Expected an IOException to be thrown");
-        } catch (IOException e) {
 
-            final BlockItem secondBlockItem = blockItems.get(1);
-            streamMediator.publish(secondBlockItem);
+        streamMediator.publish(firstBlockItem);
 
-            // Confirm the counter was incremented only once
-            assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
+        verify(blockStreamService, timeout(testTimeout).times(1)).notifyUnrecoverableError();
+        verify(serviceStatus, timeout(testTimeout).times(1)).isRunning();
+        verify(serviceStatus, timeout(testTimeout).times(1)).stopRunning(any());
 
-            // Confirm the BlockPersistenceHandler write method was only called
-            // once despite the second block being published.
-            verify(blockWriter, timeout(testTimeout).times(1)).write(firstBlockItem);
-        }
+        // Confirm the counter was incremented only once
+        assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
+
+        // Confirm the error counter was incremented
+        assertEquals(1, blockNodeContext.metricsService().get(LiveBlockStreamMediatorError).get());
+
+        final var subscribeStreamResponse =
+                SubscribeStreamResponse.newBuilder().blockItem(firstBlockItem).build();
+        verify(streamObserver1, timeout(testTimeout).times(1))
+                .onNext(fromPbj(subscribeStreamResponse));
+        verify(streamObserver2, timeout(testTimeout).times(1))
+                .onNext(fromPbj(subscribeStreamResponse));
+        verify(streamObserver3, timeout(testTimeout).times(1))
+                .onNext(fromPbj(subscribeStreamResponse));
+
+        // TODO: Replace READ_STREAM_SUCCESS (2) with a generic error code?
+        final SubscribeStreamResponse endOfStreamResponse =
+                SubscribeStreamResponse.newBuilder()
+                        .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
+                        .build();
+        verify(streamObserver1, timeout(testTimeout).times(1)).onNext(fromPbj(endOfStreamResponse));
+        verify(streamObserver2, timeout(testTimeout).times(1)).onNext(fromPbj(endOfStreamResponse));
+        verify(streamObserver3, timeout(testTimeout).times(1)).onNext(fromPbj(endOfStreamResponse));
+
+        // once despite the second block being published.
+        verify(blockWriter, timeout(testTimeout).times(1)).write(firstBlockItem);
     }
 
     @Test

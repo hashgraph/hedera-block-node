@@ -19,5 +19,7 @@ package com.hedera.block.server.mediator;
 import com.lmax.disruptor.EventHandler;
 
 public interface BlockNodeEventHandler<V> extends EventHandler<V> {
-    boolean isTimeoutExpired();
+    default boolean isTimeoutExpired() {
+        return false;
+    }
 }

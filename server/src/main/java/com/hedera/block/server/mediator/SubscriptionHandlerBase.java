@@ -48,7 +48,7 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
                                     BatchEventProcessor<ObjectEvent<V>>>
                             subscribers,
             @NonNull final LongGauge longGauge,
-            @NonNull final int ringBufferSize) {
+            final int ringBufferSize) {
 
         this.subscribers = subscribers;
         this.longGauge = longGauge;

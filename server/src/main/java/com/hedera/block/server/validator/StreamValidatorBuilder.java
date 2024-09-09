@@ -19,10 +19,9 @@ package com.hedera.block.server.validator;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.BlockNodeEventHandler;
-import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.mediator.SubscriptionHandler;
+import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
-import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -31,7 +30,7 @@ public class StreamValidatorBuilder {
     private final BlockWriter<BlockItem> blockWriter;
     private final BlockNodeContext blockNodeContext;
     private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
-    private StreamMediator<BlockItem, PublishStreamResponse> notifier;
+    private Notifier notifier;
 
     private StreamValidatorBuilder(
             @NonNull final BlockWriter<BlockItem> blockWriter,
@@ -52,8 +51,7 @@ public class StreamValidatorBuilder {
         return this;
     }
 
-    public StreamValidatorBuilder notifier(
-            @NonNull final StreamMediator<BlockItem, PublishStreamResponse> notifier) {
+    public StreamValidatorBuilder notifier(@NonNull final Notifier notifier) {
         this.notifier = notifier;
         return this;
     }

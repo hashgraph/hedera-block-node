@@ -238,8 +238,7 @@ public class ConsumerStreamResponseObserver
         public void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse) {
             LOGGER.log(
                     DEBUG,
-                    "Sending SubscribeStreamResponse downstream: {0} ",
-                    subscribeStreamResponse);
+                    "Sending SubscribeStreamResponse downstream: " + subscribeStreamResponse);
             subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
         }
     }

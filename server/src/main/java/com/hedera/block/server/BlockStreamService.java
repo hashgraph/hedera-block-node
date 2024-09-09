@@ -33,14 +33,13 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.mediator.LiveStreamMediator;
-import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifiable;
+import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.notifier.NotifierBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
 import com.hedera.block.server.validator.StreamValidatorBuilder;
-import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SingleBlockRequest;
 import com.hedera.hapi.block.SingleBlockResponse;
 import com.hedera.hapi.block.SingleBlockResponseCode;
@@ -48,7 +47,6 @@ import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.protoc.BlockService;
 import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.StreamObserver;
@@ -75,7 +73,7 @@ public class BlockStreamService implements GrpcService, Notifiable {
     private final MetricsService metricsService;
 
     private final NotifierBuilder notifierBuilder;
-    private StreamMediator<BlockItem, PublishStreamResponse> notifier;
+    private Notifier notifier;
     private final StreamValidatorBuilder streamValidatorBuilder;
 
     /**
@@ -269,7 +267,10 @@ public class BlockStreamService implements GrpcService, Notifiable {
 
     @Override
     public void notifyUnrecoverableError() {
-        // prevent additional subscriptions and prepare for shutdown.
+        // prevent additional producer/consumer subscriptions
+        // and single block queries. Prepare for shutdown.
+        serviceStatus.stopRunning(this.getClass().getName());
+        LOGGER.log(ERROR, "An unrecoverable error occurred. Preparing to stop the service.");
     }
 
     // TODO: Fix this error type once it's been standardized in `hedera-protobufs`

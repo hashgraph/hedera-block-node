@@ -40,7 +40,6 @@ import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
 import java.time.InstantSource;
 
 /**
@@ -148,11 +147,10 @@ public class ProducerBlockItemObserver
             @NonNull final com.hedera.hapi.block.protoc.PublishStreamRequest publishStreamRequest) {
 
         try {
-
-            //            LOGGER.log(DEBUG, "Received PublishStreamRequest from producer");
+            LOGGER.log(DEBUG, "Received PublishStreamRequest from producer");
             final BlockItem blockItem =
                     toPbj(BlockItem.PROTOBUF, publishStreamRequest.getBlockItem().toByteArray());
-            //            LOGGER.log(DEBUG, "Received block item: " + blockItem);
+            LOGGER.log(DEBUG, "Received block item: " + blockItem);
 
             metricsService.get(LiveBlockItemsReceived).increment();
 
@@ -173,12 +171,6 @@ public class ProducerBlockItemObserver
                 publishStreamResponseObserver.onNext(errorResponse);
                 LOGGER.log(ERROR, "Error PublishStreamResponse sent to upstream producer");
             }
-        } catch (IOException io) {
-            final var errorResponse = buildErrorStreamResponse();
-            publishStreamResponseObserver.onNext(errorResponse);
-            LOGGER.log(ERROR, "Exception thrown publishing BlockItem: ", io);
-            LOGGER.log(ERROR, "Shutting down the web server");
-            serviceStatus.stopWebServer();
         } catch (ParseException e) {
             final var errorResponse = buildErrorStreamResponse();
             publishStreamResponseObserver.onNext(errorResponse);

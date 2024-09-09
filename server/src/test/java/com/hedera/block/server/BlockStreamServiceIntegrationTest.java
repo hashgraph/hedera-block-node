@@ -258,7 +258,6 @@ public class BlockStreamServiceIntegrationTest {
     }
 
     @Test
-    @Disabled
     public void testSubscribeBlockStream() throws IOException {
 
         final ServiceStatus serviceStatus = new ServiceStatusImpl();
@@ -317,7 +316,6 @@ public class BlockStreamServiceIntegrationTest {
     }
 
     @Test
-    @Disabled
     public void testFullHappyPath() throws IOException {
         int numberOfBlocks = 100;
 
@@ -356,7 +354,6 @@ public class BlockStreamServiceIntegrationTest {
     }
 
     @Test
-    @Disabled
     public void testFullWithSubscribersAddedDynamically() throws IOException {
 
         int numberOfBlocks = 100;
@@ -430,7 +427,6 @@ public class BlockStreamServiceIntegrationTest {
     }
 
     @Test
-    @Disabled
     public void testSubAndUnsubWhileStreaming() throws IOException {
 
         int numberOfBlocks = 100;

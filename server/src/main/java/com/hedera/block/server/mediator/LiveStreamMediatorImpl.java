@@ -32,7 +32,6 @@ import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.BatchEventProcessor;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -87,10 +86,9 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
      * unsubscribed.
      *
      * @param blockItem the block item from the upstream producer to publish to downstream consumers
-     * @throws IOException is thrown if an exception occurs while persisting the block item
      */
     @Override
-    public void publish(@NonNull final BlockItem blockItem) throws IOException {
+    public void publish(@NonNull final BlockItem blockItem) {
 
         if (serviceStatus.isRunning()) {
 
@@ -111,28 +109,21 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
     @Override
     public void notifyUnrecoverableError() {
 
+        // Disable BlockItem publication for upstream producers
+        serviceStatus.stopRunning(this.getClass().getName());
+        LOGGER.log(ERROR, "An exception occurred. Stopping the service.");
+
         // Increment the error counter
         metricsService.get(LiveBlockStreamMediatorError).increment();
 
-        // Disable BlockItem publication for upstream producers
-        serviceStatus.stopRunning(this.getClass().getName());
-        //        LOGGER.log(
-        //                ERROR,
-        //                "An exception occurred while attempting to persist the BlockItem: "
-        //                        + blockItem,
-        //                e);
+        LOGGER.log(ERROR, "Sending an error response to end the stream for all consumers.");
 
-        LOGGER.log(ERROR, "Send a response to end the stream");
-
-        // Publish the block for all subscribers to receive
+        // Publish an end of stream response to all downstream consumers
         final SubscribeStreamResponse endStreamResponse = buildEndStreamResponse();
         ringBuffer.publishEvent((event, sequence) -> event.set(endStreamResponse));
 
         // Unsubscribe all downstream consumers
-        //        for (final var subscriber : subscribers.keySet()) {
-        //            LOGGER.log(ERROR, String.format("Unsubscribing: %s", subscriber));
-        //            unsubscribe(subscriber);
-        //        }
+        unsubscribeAllExpired();
     }
 
     @NonNull
