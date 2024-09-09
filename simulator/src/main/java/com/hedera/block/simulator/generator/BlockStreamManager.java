@@ -16,15 +16,31 @@
 
 package com.hedera.block.simulator.generator;
 
+import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.stream.BlockItem;
 
-/** this interface defines the contract for managing the block stream. */
+/** The block stream manager interface. */
 public interface BlockStreamManager {
 
     /**
-     * Gets the next block in the block stream.
+     * Get the generation mode.
      *
-     * @return the next block in the block stream
+     * @return the generation mode
+     */
+    GenerationMode getGenerationMode();
+
+    /**
+     * Get the next block item.
+     *
+     * @return the next block item
+     */
+    BlockItem getNextBlockItem();
+
+    /**
+     * Get the next block.
+     *
+     * @return the next block
      */
     Block getNextBlock();
 }

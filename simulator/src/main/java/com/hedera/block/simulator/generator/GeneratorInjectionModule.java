@@ -27,10 +27,11 @@ public interface GeneratorInjectionModule {
     /**
      * Provides the block stream manager.
      *
-     * @param blockStreamManager the block stream manager to be used
+     * @param blockAsFileBlockStreamManager the block as file block stream manager
      * @return the block stream manager
      */
     @Singleton
     @Binds
-    BlockStreamManager bindBlockStreamManager(MockBlockStreamManagerImpl blockStreamManager);
+    BlockStreamManager provideBlockStreamManager(
+            BlockAsFileBlockStreamManager blockAsFileBlockStreamManager);
 }

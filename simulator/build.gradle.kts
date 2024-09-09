@@ -38,3 +38,18 @@ testModuleInfo {
     requires("org.mockito.junit.jupiter")
     requiresStatic("com.github.spotbugs.annotations")
 }
+
+tasks.register<Copy>("untarTestBlockStream") {
+    val targetDir = file("src/main/resources")
+
+    from(tarTree(resources.gzip(file("src/main/resources/block-0.0.3.tar.gz"))))
+    into(targetDir)
+
+    // Adding a simple logging to verify
+    doLast { println("Untar task completed. Files should be in: ${targetDir.absolutePath}") }
+}
+
+tasks.named("build") {
+    // Run untar before the build
+    dependsOn(tasks.named("untarTestBlockStream"))
+}

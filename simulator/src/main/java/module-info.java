@@ -7,7 +7,7 @@ module com.hedera.block.simulator {
     requires static com.github.spotbugs.annotations;
     requires static com.google.auto.service;
     requires com.hedera.block.stream;
-    // requires com.hedera.pbj.runtime; // leaving it here since it will be needed soon.
+    requires com.hedera.pbj.runtime;
     requires com.swirlds.config.api;
     requires com.swirlds.config.extensions;
     requires dagger;
