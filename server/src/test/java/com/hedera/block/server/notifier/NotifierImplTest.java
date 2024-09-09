@@ -27,12 +27,17 @@ import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.mediator.BlockNodeEventHandler;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.lmax.disruptor.BatchEventProcessor;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -83,7 +88,7 @@ public class NotifierImplTest {
     }
 
     @Test
-    public void testRegistration() throws IOException, NoSuchAlgorithmException {
+    public void testRegistration() throws NoSuchAlgorithmException {
 
         final var notifier =
                 NotifierBuilder.newBuilder(mediator, testContext)
@@ -161,5 +166,80 @@ public class NotifierImplTest {
                 .onNext(fromPbj(publishStreamResponse));
         verify(streamObserver3, timeout(testTimeout).times(1))
                 .onNext(fromPbj(publishStreamResponse));
+    }
+
+    @Test
+    public void testPublishThrowsNoSuchAlgorithmException() {
+        final var notifier =
+                new TestNotifier(new HashMap<>(), blockStreamService, mediator, testContext);
+        final var concreteObserver1 =
+                new ProducerBlockItemObserver(
+                        testClock,
+                        publisher,
+                        subscriptionHandler,
+                        streamObserver1,
+                        testContext,
+                        serviceStatus);
+
+        final var concreteObserver2 =
+                new ProducerBlockItemObserver(
+                        testClock,
+                        publisher,
+                        subscriptionHandler,
+                        streamObserver2,
+                        testContext,
+                        serviceStatus);
+
+        final var concreteObserver3 =
+                new ProducerBlockItemObserver(
+                        testClock,
+                        publisher,
+                        subscriptionHandler,
+                        streamObserver3,
+                        testContext,
+                        serviceStatus);
+
+        notifier.subscribe(concreteObserver1);
+        notifier.subscribe(concreteObserver2);
+        notifier.subscribe(concreteObserver3);
+
+        assertTrue(
+                notifier.isSubscribed(concreteObserver1),
+                "Expected the notifier to have observer1 subscribed");
+        assertTrue(
+                notifier.isSubscribed(concreteObserver2),
+                "Expected the notifier to have observer2 subscribed");
+        assertTrue(
+                notifier.isSubscribed(concreteObserver3),
+                "Expected the notifier to have observer3 subscribed");
+
+        List<BlockItem> blockItems = generateBlockItems(1);
+        notifier.publish(blockItems.getFirst());
+
+        final PublishStreamResponse errorResponse = TestNotifier.buildErrorStreamResponse();
+        verify(streamObserver1, timeout(testTimeout).times(1)).onNext(fromPbj(errorResponse));
+        verify(streamObserver2, timeout(testTimeout).times(1)).onNext(fromPbj(errorResponse));
+        verify(streamObserver3, timeout(testTimeout).times(1)).onNext(fromPbj(errorResponse));
+    }
+
+    private static final class TestNotifier extends NotifierImpl {
+        public TestNotifier(
+                @NonNull
+                        final Map<
+                                        BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>>,
+                                        BatchEventProcessor<ObjectEvent<PublishStreamResponse>>>
+                                subscribers,
+                Notifiable blockStreamService,
+                Notifiable mediator,
+                BlockNodeContext blockNodeContext) {
+            super(subscribers, blockStreamService, mediator, blockNodeContext);
+        }
+
+        @Override
+        @NonNull
+        Acknowledgement buildAck(@NonNull final BlockItem blockItem)
+                throws NoSuchAlgorithmException {
+            throw new NoSuchAlgorithmException("Test exception");
+        }
     }
 }

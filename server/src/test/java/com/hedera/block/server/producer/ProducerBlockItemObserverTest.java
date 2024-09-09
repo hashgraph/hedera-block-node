@@ -24,7 +24,6 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
@@ -91,8 +90,7 @@ public class ProducerBlockItemObserverTest {
     }
 
     @Test
-    public void testBlockItemThrowsParseException()
-            throws IOException, InvalidProtocolBufferException {
+    public void testBlockItemThrowsParseException() throws IOException {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ProducerBlockItemObserver producerBlockItemObserver =
