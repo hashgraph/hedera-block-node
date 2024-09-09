@@ -18,7 +18,6 @@ package com.hedera.block.server.mediator;
 
 import static java.lang.System.Logger.Level.ERROR;
 
-import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.lmax.disruptor.BatchEventProcessor;
 import com.lmax.disruptor.BatchEventProcessorBuilder;
@@ -38,6 +37,7 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
     private final Map<BlockNodeEventHandler<ObjectEvent<V>>, BatchEventProcessor<ObjectEvent<V>>>
             subscribers;
 
+    private final LongGauge longGauge;
     protected final RingBuffer<ObjectEvent<V>> ringBuffer;
     private final ExecutorService executor;
 
@@ -47,15 +47,11 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
                                     BlockNodeEventHandler<ObjectEvent<V>>,
                                     BatchEventProcessor<ObjectEvent<V>>>
                             subscribers,
-            @NonNull final BlockNodeContext blockNodeContext) {
+            @NonNull final LongGauge longGauge,
+            @NonNull final int ringBufferSize) {
 
         this.subscribers = subscribers;
-
-        final int ringBufferSize =
-                blockNodeContext
-                        .configuration()
-                        .getConfigData(MediatorConfig.class)
-                        .ringBufferSize();
+        this.longGauge = longGauge;
 
         // Initialize and start the disruptor
         final Disruptor<ObjectEvent<V>> disruptor =
@@ -79,7 +75,7 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
         subscribers.put(handler, batchEventProcessor);
 
         // update the subscriber metrics
-        getLongGauge().set(subscribers.size());
+        longGauge.set(subscribers.size());
     }
 
     @Override
@@ -100,7 +96,7 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
         }
 
         // update the subscriber metrics
-        getLongGauge().set(subscribers.size());
+        longGauge.set(subscribers.size());
     }
 
     @Override
@@ -114,6 +110,4 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
                 .filter(BlockNodeEventHandler::isTimeoutExpired)
                 .forEach(this::unsubscribe);
     }
-
-    protected abstract LongGauge getLongGauge();
 }

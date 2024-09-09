@@ -35,7 +35,6 @@ import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.lmax.disruptor.BatchEventProcessor;
-import com.swirlds.metrics.api.LongGauge;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -61,7 +60,13 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
             @NonNull final Notifiable mediator,
             @NonNull final BlockNodeContext blockNodeContext) {
 
-        super(subscribers, blockNodeContext);
+        super(
+                subscribers,
+                blockNodeContext.metricsService().get(Producers),
+                blockNodeContext
+                        .configuration()
+                        .getConfigData(NotifierConfig.class)
+                        .ringBufferSize());
 
         this.blockStreamService = blockStreamService;
         this.mediator = mediator;
@@ -123,10 +128,5 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
                         .build();
 
         return Acknowledgement.newBuilder().itemAck(itemAck).build();
-    }
-
-    @Override
-    protected LongGauge getLongGauge() {
-        return metricsService.get(Producers);
     }
 }

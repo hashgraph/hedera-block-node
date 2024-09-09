@@ -31,7 +31,6 @@ import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.BatchEventProcessor;
-import com.swirlds.metrics.api.LongGauge;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Map;
@@ -70,9 +69,14 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
 
-        super(subscribers, blockNodeContext);
+        super(
+                subscribers,
+                blockNodeContext.metricsService().get(Consumers),
+                blockNodeContext
+                        .configuration()
+                        .getConfigData(MediatorConfig.class)
+                        .ringBufferSize());
 
-        //        this.subscribers = subscribers;
         this.serviceStatus = serviceStatus;
         this.metricsService = blockNodeContext.metricsService();
     }
@@ -139,10 +143,5 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
         return SubscribeStreamResponse.newBuilder()
                 .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
                 .build();
-    }
-
-    @Override
-    protected LongGauge getLongGauge() {
-        return metricsService.get(Consumers);
     }
 }
