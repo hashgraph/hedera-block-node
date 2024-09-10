@@ -19,12 +19,45 @@ package com.hedera.block.simulator.config.data;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * The BlockStreamConfig class defines the configuration data for the block stream.
  *
  * @param generationMode the mode of generation for the block stream
+ * @param folderRootPath the root path of the folder containing the block stream
  */
 @ConfigData("blockStream")
 public record BlockStreamConfig(
-        @ConfigProperty(defaultValue = "DIR") GenerationMode generationMode) {}
+        @ConfigProperty(defaultValue = "DIR") GenerationMode generationMode,
+        @ConfigProperty(defaultValue = "") String folderRootPath) {
+
+    /**
+     * Constructor to set the default root path if not provided, it will be set to the data
+     * directory in the current working directory
+     */
+    public BlockStreamConfig {
+        // verify rootPath prop
+        Path path = Path.of(folderRootPath);
+
+        // if rootPath is empty, set it to the default data directory
+        if (folderRootPath.isEmpty()) {
+            path =
+                    Paths.get(folderRootPath)
+                            .toAbsolutePath()
+                            .resolve("src/main/resources/block-0.0.3");
+        }
+        // Check if absolute
+        if (!path.isAbsolute()) {
+            throw new IllegalArgumentException(folderRootPath + " Root path must be absolute");
+        }
+        // Check if the folder exists
+        if (Files.notExists(path) && generationMode == GenerationMode.DIR) {
+            throw new IllegalArgumentException("Folder does not exist: " + path);
+        }
+
+        folderRootPath = path.toString();
+    }
+}
