@@ -21,6 +21,7 @@ import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Produce
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static java.lang.System.Logger.Level.ERROR;
 
+import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.BlockNodeEventHandler;
@@ -45,6 +46,7 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implem
     private final Notifiable blockStreamService;
     private final Notifiable mediator;
 
+    private final ServiceStatus serviceStatus;
     private final MetricsService metricsService;
 
     NotifierImpl(
@@ -55,7 +57,8 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implem
                             subscribers,
             @NonNull final Notifiable blockStreamService,
             @NonNull final Notifiable mediator,
-            @NonNull final BlockNodeContext blockNodeContext) {
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final ServiceStatus serviceStatus) {
 
         super(
                 subscribers,
@@ -68,6 +71,7 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implem
         this.blockStreamService = blockStreamService;
         this.mediator = mediator;
         this.metricsService = blockNodeContext.metricsService();
+        this.serviceStatus = serviceStatus;
     }
 
     @Override

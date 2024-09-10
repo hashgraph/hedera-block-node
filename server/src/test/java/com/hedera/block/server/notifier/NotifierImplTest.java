@@ -21,6 +21,7 @@ import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -166,6 +167,80 @@ public class NotifierImplTest {
                 .onNext(fromPbj(publishStreamResponse));
         verify(streamObserver3, timeout(testTimeout).times(1))
                 .onNext(fromPbj(publishStreamResponse));
+    }
+
+    @Test
+    public void testTimeoutExpiredHandling() throws InterruptedException {
+        final var notifier =
+                NotifierBuilder.newBuilder(mediator, testContext)
+                        .blockStreamService(blockStreamService)
+                        .build();
+
+        // Set the clocks to be expired
+        final InstantSource testClock1 = mock(InstantSource.class);
+        when(testClock1.millis()).thenReturn(TEST_TIME, TEST_TIME + 1501L);
+
+        final InstantSource testClock2 = mock(InstantSource.class);
+        when(testClock2.millis()).thenReturn(TEST_TIME, TEST_TIME + 1501L);
+
+        final InstantSource testClock3 = mock(InstantSource.class);
+        when(testClock3.millis()).thenReturn(TEST_TIME, TEST_TIME + 1501L);
+
+        final var concreteObserver1 =
+                new ProducerBlockItemObserver(
+                        testClock1,
+                        publisher,
+                        notifier,
+                        streamObserver1,
+                        testContext,
+                        serviceStatus);
+
+        final var concreteObserver2 =
+                new ProducerBlockItemObserver(
+                        testClock2,
+                        publisher,
+                        notifier,
+                        streamObserver2,
+                        testContext,
+                        serviceStatus);
+
+        final var concreteObserver3 =
+                new ProducerBlockItemObserver(
+                        testClock3,
+                        publisher,
+                        notifier,
+                        streamObserver3,
+                        testContext,
+                        serviceStatus);
+
+        notifier.subscribe(concreteObserver1);
+        notifier.subscribe(concreteObserver2);
+        notifier.subscribe(concreteObserver3);
+
+        assertTrue(
+                notifier.isSubscribed(concreteObserver1),
+                "Expected the notifier to have observer1 subscribed");
+        assertTrue(
+                notifier.isSubscribed(concreteObserver2),
+                "Expected the notifier to have observer2 subscribed");
+        assertTrue(
+                notifier.isSubscribed(concreteObserver3),
+                "Expected the notifier to have observer3 subscribed");
+
+        List<BlockItem> blockItems = generateBlockItems(1);
+        notifier.publish(blockItems.getFirst());
+
+        Thread.sleep(testTimeout);
+
+        assertFalse(
+                notifier.isSubscribed(concreteObserver1),
+                "Expected the notifier to have observer1 unsubscribed");
+        assertFalse(
+                notifier.isSubscribed(concreteObserver2),
+                "Expected the notifier to have observer2 unsubscribed");
+        assertFalse(
+                notifier.isSubscribed(concreteObserver3),
+                "Expected the notifier to have observer3 unsubscribed");
     }
 
     @Test
