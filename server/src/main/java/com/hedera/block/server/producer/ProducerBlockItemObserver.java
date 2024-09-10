@@ -27,8 +27,9 @@ import static java.lang.System.Logger.Level.ERROR;
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerConfig;
-import com.hedera.block.server.data.ObjectEvent;
-import com.hedera.block.server.mediator.BlockNodeEventHandler;
+import com.hedera.block.server.events.BlockNodeEventHandler;
+import com.hedera.block.server.events.LivenessCalculator;
+import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
@@ -41,6 +42,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import java.time.InstantSource;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The ProducerBlockStreamObserver class plugs into Helidon's server-initiated bidirectional gRPC
@@ -61,9 +63,9 @@ public class ProducerBlockItemObserver
     private final ServiceStatus serviceStatus;
     private final MetricsService metricsService;
 
-    private final long timeoutThresholdMillis;
-    private final InstantSource producerLivenessClock;
-    private long producerLivenessMillis;
+    private final AtomicBoolean isResponsePermitted = new AtomicBoolean(true);
+
+    private final LivenessCalculator livenessCalculator;
 
     /**
      * The onCancel handler to execute when the producer cancels the stream. This handler is
@@ -99,11 +101,13 @@ public class ProducerBlockItemObserver
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
 
-        this.timeoutThresholdMillis =
-                blockNodeContext
-                        .configuration()
-                        .getConfigData(ConsumerConfig.class)
-                        .timeoutThresholdMillis();
+        this.livenessCalculator =
+                new LivenessCalculator(
+                        producerLivenessClock,
+                        blockNodeContext
+                                .configuration()
+                                .getConfigData(ConsumerConfig.class)
+                                .timeoutThresholdMillis());
 
         this.publisher = publisher;
         this.publishStreamResponseObserver = publishStreamResponseObserver;
@@ -118,6 +122,9 @@ public class ProducerBlockItemObserver
 
             onCancel =
                     () -> {
+                        // The producer has cancelled the stream.
+                        // Do not allow additional responses to be sent.
+                        isResponsePermitted.set(false);
                         subscriptionHandler.unsubscribe(this);
                         LOGGER.log(DEBUG, "Producer cancelled the stream. Observer unsubscribed.");
                     };
@@ -125,14 +132,14 @@ public class ProducerBlockItemObserver
 
             onClose =
                     () -> {
+                        // The producer has closed the stream.
+                        // Do not allow additional responses to be sent.
+                        isResponsePermitted.set(false);
                         subscriptionHandler.unsubscribe(this);
                         LOGGER.log(DEBUG, "Producer completed the stream. Observer unsubscribed.");
                     };
             serverCallStreamObserver.setOnCloseHandler(onClose);
         }
-
-        this.producerLivenessClock = producerLivenessClock;
-        this.producerLivenessMillis = producerLivenessClock.millis();
     }
 
     /**
@@ -158,7 +165,7 @@ public class ProducerBlockItemObserver
             // there's an issue with the StreamMediator.
             if (serviceStatus.isRunning()) {
                 // Refresh the producer liveness
-                producerLivenessMillis = producerLivenessClock.millis();
+                livenessCalculator.refresh();
 
                 // Publish the block to the mediator
                 publisher.publish(blockItem);
@@ -187,13 +194,17 @@ public class ProducerBlockItemObserver
     public void onEvent(
             ObjectEvent<PublishStreamResponse> event, long sequence, boolean endOfBatch) {
 
-        if (isTimeoutExpired()) {
-            subscriptionHandler.unsubscribe(this);
-            LOGGER.log(DEBUG, "Producer liveness timeout. Unsubscribed ProducerBlockItemObserver.");
-        } else {
-            LOGGER.log(DEBUG, "Publishing response to upstream producer: " + this);
-            publishStreamResponseObserver.onNext(fromPbj(event.get()));
-            metricsService.get(SuccessfulPubStreamRespSent).increment();
+        if (isResponsePermitted.get()) {
+            if (isTimeoutExpired()) {
+                subscriptionHandler.unsubscribe(this);
+                LOGGER.log(
+                        DEBUG,
+                        "Producer liveness timeout. Unsubscribed ProducerBlockItemObserver.");
+            } else {
+                LOGGER.log(DEBUG, "Publishing response to upstream producer: " + this);
+                publishStreamResponseObserver.onNext(fromPbj(event.get()));
+                metricsService.get(SuccessfulPubStreamRespSent).increment();
+            }
         }
     }
 
@@ -231,10 +242,6 @@ public class ProducerBlockItemObserver
 
     @Override
     public boolean isTimeoutExpired() {
-        return isTimeoutExpired(producerLivenessClock.millis());
-    }
-
-    private boolean isTimeoutExpired(final long currentMillis) {
-        return currentMillis - producerLivenessMillis > timeoutThresholdMillis;
+        return livenessCalculator.isTimeoutExpired();
     }
 }

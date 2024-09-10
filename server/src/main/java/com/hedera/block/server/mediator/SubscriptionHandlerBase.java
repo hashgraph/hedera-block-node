@@ -18,7 +18,8 @@ package com.hedera.block.server.mediator;
 
 import static java.lang.System.Logger.Level.ERROR;
 
-import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.events.BlockNodeEventHandler;
+import com.hedera.block.server.events.ObjectEvent;
 import com.lmax.disruptor.BatchEventProcessor;
 import com.lmax.disruptor.BatchEventProcessorBuilder;
 import com.lmax.disruptor.RingBuffer;

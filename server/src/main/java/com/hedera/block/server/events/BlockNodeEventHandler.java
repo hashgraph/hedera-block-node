@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.mediator;
+package com.hedera.block.server.events;
 
 import com.lmax.disruptor.EventHandler;
 

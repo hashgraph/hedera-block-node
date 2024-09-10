@@ -17,8 +17,8 @@
 package com.hedera.block.server.validator;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.data.ObjectEvent;
-import com.hedera.block.server.mediator.BlockNodeEventHandler;
+import com.hedera.block.server.events.BlockNodeEventHandler;
+import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
@@ -52,8 +52,7 @@ public class StreamValidatorImpl
 
     @Override
     public void onEvent(
-            ObjectEvent<SubscribeStreamResponse> event, long sequence, boolean endOfBatch)
-            throws Exception {
+            ObjectEvent<SubscribeStreamResponse> event, long sequence, boolean endOfBatch) {
         try {
             // Persist the BlockItem
             final SubscribeStreamResponse subscribeStreamResponse = event.get();

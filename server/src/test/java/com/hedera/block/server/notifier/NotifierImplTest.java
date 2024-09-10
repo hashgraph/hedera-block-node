@@ -28,8 +28,8 @@ import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.data.ObjectEvent;
-import com.hedera.block.server.mediator.BlockNodeEventHandler;
+import com.hedera.block.server.events.BlockNodeEventHandler;
+import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
@@ -90,6 +90,8 @@ public class NotifierImplTest {
 
     @Test
     public void testRegistration() throws NoSuchAlgorithmException {
+
+        when(serviceStatus.isRunning()).thenReturn(true);
 
         final var notifier =
                 NotifierBuilder.newBuilder(mediator, testContext, serviceStatus)
@@ -171,6 +173,9 @@ public class NotifierImplTest {
 
     @Test
     public void testTimeoutExpiredHandling() throws InterruptedException {
+
+        when(serviceStatus.isRunning()).thenReturn(true);
+
         final var notifier =
                 NotifierBuilder.newBuilder(mediator, testContext, serviceStatus)
                         .blockStreamService(blockStreamService)
@@ -245,8 +250,11 @@ public class NotifierImplTest {
 
     @Test
     public void testPublishThrowsNoSuchAlgorithmException() {
+
+        when(serviceStatus.isRunning()).thenReturn(true);
         final var notifier =
-                new TestNotifier(new HashMap<>(), blockStreamService, mediator, testContext);
+                new TestNotifier(
+                        new HashMap<>(), blockStreamService, mediator, testContext, serviceStatus);
         final var concreteObserver1 =
                 new ProducerBlockItemObserver(
                         testClock,
@@ -295,6 +303,71 @@ public class NotifierImplTest {
         verify(streamObserver1, timeout(testTimeout).times(1)).onNext(fromPbj(errorResponse));
         verify(streamObserver2, timeout(testTimeout).times(1)).onNext(fromPbj(errorResponse));
         verify(streamObserver3, timeout(testTimeout).times(1)).onNext(fromPbj(errorResponse));
+    }
+
+    @Test
+    public void testServiceStatusNotRunning() throws NoSuchAlgorithmException {
+
+        // Set the serviceStatus to not running
+        when(serviceStatus.isRunning()).thenReturn(false);
+        final var notifier =
+                new TestNotifier(
+                        new HashMap<>(), blockStreamService, mediator, testContext, serviceStatus);
+        final var concreteObserver1 =
+                new ProducerBlockItemObserver(
+                        testClock,
+                        publisher,
+                        subscriptionHandler,
+                        streamObserver1,
+                        testContext,
+                        serviceStatus);
+
+        final var concreteObserver2 =
+                new ProducerBlockItemObserver(
+                        testClock,
+                        publisher,
+                        subscriptionHandler,
+                        streamObserver2,
+                        testContext,
+                        serviceStatus);
+
+        final var concreteObserver3 =
+                new ProducerBlockItemObserver(
+                        testClock,
+                        publisher,
+                        subscriptionHandler,
+                        streamObserver3,
+                        testContext,
+                        serviceStatus);
+
+        notifier.subscribe(concreteObserver1);
+        notifier.subscribe(concreteObserver2);
+        notifier.subscribe(concreteObserver3);
+
+        assertTrue(
+                notifier.isSubscribed(concreteObserver1),
+                "Expected the notifier to have observer1 subscribed");
+        assertTrue(
+                notifier.isSubscribed(concreteObserver2),
+                "Expected the notifier to have observer2 subscribed");
+        assertTrue(
+                notifier.isSubscribed(concreteObserver3),
+                "Expected the notifier to have observer3 subscribed");
+
+        final List<BlockItem> blockItems = generateBlockItems(1);
+        notifier.publish(blockItems.getFirst());
+
+        // Verify once the serviceStatus is not running that we do not publish the responses
+        final var publishStreamResponse =
+                PublishStreamResponse.newBuilder()
+                        .acknowledgement(buildAck(blockItems.getFirst()))
+                        .build();
+        verify(streamObserver1, timeout(testTimeout).times(0))
+                .onNext(fromPbj(publishStreamResponse));
+        verify(streamObserver2, timeout(testTimeout).times(0))
+                .onNext(fromPbj(publishStreamResponse));
+        verify(streamObserver3, timeout(testTimeout).times(0))
+                .onNext(fromPbj(publishStreamResponse));
     }
 
     private static final class TestNotifier extends NotifierImpl {

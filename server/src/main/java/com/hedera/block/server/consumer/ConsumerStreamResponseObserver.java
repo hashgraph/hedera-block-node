@@ -23,8 +23,9 @@ import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.data.ObjectEvent;
-import com.hedera.block.server.mediator.BlockNodeEventHandler;
+import com.hedera.block.server.events.BlockNodeEventHandler;
+import com.hedera.block.server.events.LivenessCalculator;
+import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.SubscribeStreamResponse;
@@ -52,16 +53,14 @@ public class ConsumerStreamResponseObserver
             subscribeStreamResponseObserver;
     private final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
 
-    private final long timeoutThresholdMillis;
-    private final InstantSource producerLivenessClock;
-    private long producerLivenessMillis;
-
     private final AtomicBoolean isResponsePermitted = new AtomicBoolean(true);
     private final ResponseSender statusResponseSender = new StatusResponseSender();
     private final ResponseSender blockItemResponseSender = new BlockItemResponseSender();
 
     private static final String PROTOCOL_VIOLATION_MESSAGE =
             "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
+
+    private final LivenessCalculator livenessCalculator;
 
     /**
      * The onCancel handler to execute when the consumer cancels the stream. This handler is
@@ -95,11 +94,14 @@ public class ConsumerStreamResponseObserver
                             subscribeStreamResponseObserver,
             @NonNull final BlockNodeContext blockNodeContext) {
 
-        this.timeoutThresholdMillis =
-                blockNodeContext
-                        .configuration()
-                        .getConfigData(ConsumerConfig.class)
-                        .timeoutThresholdMillis();
+        this.livenessCalculator =
+                new LivenessCalculator(
+                        producerLivenessClock,
+                        blockNodeContext
+                                .configuration()
+                                .getConfigData(ConsumerConfig.class)
+                                .timeoutThresholdMillis());
+
         this.subscriptionHandler = subscriptionHandler;
         this.metricsService = blockNodeContext.metricsService();
 
@@ -133,8 +135,6 @@ public class ConsumerStreamResponseObserver
         }
 
         this.subscribeStreamResponseObserver = subscribeStreamResponseObserver;
-        this.producerLivenessClock = producerLivenessClock;
-        this.producerLivenessMillis = producerLivenessClock.millis();
     }
 
     /**
@@ -157,30 +157,20 @@ public class ConsumerStreamResponseObserver
         // Only send the response if the consumer has not cancelled
         // or closed the stream.
         if (isResponsePermitted.get()) {
-            final long currentMillis = producerLivenessClock.millis();
-            if (isTimeoutExpired(currentMillis)) {
+            if (isTimeoutExpired()) {
                 subscriptionHandler.unsubscribe(this);
                 LOGGER.log(
                         DEBUG,
                         "Producer liveness timeout. Unsubscribed ConsumerBlockItemObserver.");
             } else {
                 // Refresh the producer liveness and pass the BlockItem to the downstream observer.
-                producerLivenessMillis = currentMillis;
+                livenessCalculator.refresh();
 
                 final SubscribeStreamResponse subscribeStreamResponse = event.get();
                 final ResponseSender responseSender = getResponseSender(subscribeStreamResponse);
                 responseSender.send(subscribeStreamResponse);
             }
         }
-    }
-
-    @Override
-    public boolean isTimeoutExpired() {
-        return isTimeoutExpired(producerLivenessClock.millis());
-    }
-
-    private boolean isTimeoutExpired(final long currentMillis) {
-        return currentMillis - producerLivenessMillis > timeoutThresholdMillis;
     }
 
     @NonNull
@@ -241,5 +231,10 @@ public class ConsumerStreamResponseObserver
                     "Sending SubscribeStreamResponse downstream: " + subscribeStreamResponse);
             subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
         }
+    }
+
+    @Override
+    public boolean isTimeoutExpired() {
+        return livenessCalculator.isTimeoutExpired();
     }
 }

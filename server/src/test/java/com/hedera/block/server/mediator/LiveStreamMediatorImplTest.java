@@ -34,7 +34,8 @@ import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
-import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.events.BlockNodeEventHandler;
+import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.notifier.Notifiable;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.notifier.NotifierBuilder;
@@ -394,7 +395,7 @@ public class LiveStreamMediatorImplTest {
         streamMediator.subscribe(concreteObserver3);
 
         final Notifier notifier =
-                NotifierBuilder.newBuilder(streamMediator, blockNodeContext)
+                NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus)
                         .blockStreamService(blockStreamService)
                         .build();
         final var streamValidator =
@@ -481,11 +482,12 @@ public class LiveStreamMediatorImplTest {
 
     private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
         public TestConsumerStreamResponseObserver(
-                final InstantSource producerLivenessClock,
-                final StreamMediator<BlockItem, SubscribeStreamResponse> streamMediator,
-                final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
-                        responseStreamObserver,
-                final BlockNodeContext blockNodeContext) {
+                @NonNull final InstantSource producerLivenessClock,
+                @NonNull final StreamMediator<BlockItem, SubscribeStreamResponse> streamMediator,
+                @NonNull
+                        final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+                                responseStreamObserver,
+                @NonNull final BlockNodeContext blockNodeContext) {
             super(producerLivenessClock, streamMediator, responseStreamObserver, blockNodeContext);
         }
 

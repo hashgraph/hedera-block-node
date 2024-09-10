@@ -26,7 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.SubscribeStreamResponse;
@@ -35,6 +35,7 @@ import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.hapi.block.stream.input.EventHeader;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.hapi.platform.event.EventCore;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
@@ -267,11 +268,14 @@ public class ConsumerStreamResponseObserverTest {
     private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
 
         public TestConsumerStreamResponseObserver(
-                InstantSource producerLivenessClock,
-                StreamMediator<BlockItem, SubscribeStreamResponse> subscriptionHandler,
-                StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
-                        subscribeStreamResponseObserver,
-                BlockNodeContext blockNodeContext) {
+                @NonNull final InstantSource producerLivenessClock,
+                @NonNull
+                        final StreamMediator<BlockItem, SubscribeStreamResponse>
+                                subscriptionHandler,
+                @NonNull
+                        final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+                                subscribeStreamResponseObserver,
+                @NonNull final BlockNodeContext blockNodeContext) {
             super(
                     producerLivenessClock,
                     subscriptionHandler,

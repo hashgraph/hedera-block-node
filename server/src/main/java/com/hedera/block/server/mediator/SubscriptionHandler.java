@@ -16,7 +16,8 @@
 
 package com.hedera.block.server.mediator;
 
-import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.events.BlockNodeEventHandler;
+import com.hedera.block.server.events.ObjectEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**

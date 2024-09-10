@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
