@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.notifier;
 
+import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.data.ObjectEvent;
 import com.hedera.block.server.mediator.BlockNodeEventHandler;
@@ -30,6 +31,7 @@ public class NotifierBuilder {
     private Notifiable blockStreamService;
     private final Notifiable mediator;
     private final BlockNodeContext blockNodeContext;
+    private final ServiceStatus serviceStatus;
 
     private Map<
                     BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>>,
@@ -40,17 +42,22 @@ public class NotifierBuilder {
     private static final int SUBSCRIBER_INIT_CAPACITY = 5;
 
     private NotifierBuilder(
-            @NonNull final Notifiable mediator, @NonNull final BlockNodeContext blockNodeContext) {
+            @NonNull final Notifiable mediator,
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final ServiceStatus serviceStatus) {
 
         this.subscribers = new ConcurrentHashMap<>(SUBSCRIBER_INIT_CAPACITY);
         this.mediator = mediator;
         this.blockNodeContext = blockNodeContext;
+        this.serviceStatus = serviceStatus;
     }
 
     @NonNull
     public static NotifierBuilder newBuilder(
-            @NonNull final Notifiable mediator, @NonNull final BlockNodeContext blockNodeContext) {
-        return new NotifierBuilder(mediator, blockNodeContext);
+            @NonNull final Notifiable mediator,
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final ServiceStatus serviceStatus) {
+        return new NotifierBuilder(mediator, blockNodeContext, serviceStatus);
     }
 
     public NotifierBuilder blockStreamService(Notifiable blockStreamService) {
@@ -71,6 +78,7 @@ public class NotifierBuilder {
 
     @NonNull
     public Notifier build() {
-        return new NotifierImpl(subscribers, blockStreamService, mediator, blockNodeContext);
+        return new NotifierImpl(
+                subscribers, blockStreamService, mediator, blockNodeContext, serviceStatus);
     }
 }

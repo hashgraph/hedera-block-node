@@ -92,7 +92,7 @@ public class NotifierImplTest {
     public void testRegistration() throws NoSuchAlgorithmException {
 
         final var notifier =
-                NotifierBuilder.newBuilder(mediator, testContext)
+                NotifierBuilder.newBuilder(mediator, testContext, serviceStatus)
                         .blockStreamService(blockStreamService)
                         .build();
 
@@ -172,7 +172,7 @@ public class NotifierImplTest {
     @Test
     public void testTimeoutExpiredHandling() throws InterruptedException {
         final var notifier =
-                NotifierBuilder.newBuilder(mediator, testContext)
+                NotifierBuilder.newBuilder(mediator, testContext, serviceStatus)
                         .blockStreamService(blockStreamService)
                         .build();
 
@@ -304,10 +304,11 @@ public class NotifierImplTest {
                                         BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>>,
                                         BatchEventProcessor<ObjectEvent<PublishStreamResponse>>>
                                 subscribers,
-                Notifiable blockStreamService,
-                Notifiable mediator,
-                BlockNodeContext blockNodeContext) {
-            super(subscribers, blockStreamService, mediator, blockNodeContext);
+                @NonNull final Notifiable blockStreamService,
+                @NonNull final Notifiable mediator,
+                @NonNull final BlockNodeContext blockNodeContext,
+                @NonNull final ServiceStatus serviceStatus) {
+            super(subscribers, blockStreamService, mediator, blockNodeContext, serviceStatus);
         }
 
         @Override

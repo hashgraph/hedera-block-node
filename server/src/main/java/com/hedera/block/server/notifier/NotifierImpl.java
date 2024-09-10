@@ -88,17 +88,28 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implem
     public void publish(@NonNull BlockItem blockItem) {
 
         try {
-            // Publish the block item to the subscribers
-            final var publishStreamResponse =
-                    PublishStreamResponse.newBuilder().acknowledgement(buildAck(blockItem)).build();
-            ringBuffer.publishEvent((event, sequence) -> event.set(publishStreamResponse));
+            if (serviceStatus.isRunning()) {
+                // Publish the block item to the subscribers
+                final var publishStreamResponse =
+                        PublishStreamResponse.newBuilder()
+                                .acknowledgement(buildAck(blockItem))
+                                .build();
+                ringBuffer.publishEvent((event, sequence) -> event.set(publishStreamResponse));
 
-            metricsService.get(SuccessfulPubStreamResp).increment();
+                metricsService.get(SuccessfulPubStreamResp).increment();
+            } else {
+                LOGGER.log(ERROR, "Notifier is not running.");
+            }
 
         } catch (NoSuchAlgorithmException e) {
+
+            // Stop the server
+            serviceStatus.stopRunning(getClass().getName());
+
             final var errorResponse = buildErrorStreamResponse();
             LOGGER.log(ERROR, "Error calculating hash: ", e);
 
+            // Send an error response to all the producers.
             ringBuffer.publishEvent((event, sequence) -> event.set(errorResponse));
         }
     }

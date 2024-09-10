@@ -100,7 +100,8 @@ public class BlockStreamService implements GrpcService, Notifiable {
         this.blockNodeContext = blockNodeContext;
         this.metricsService = blockNodeContext.metricsService();
 
-        this.notifierBuilder = NotifierBuilder.newBuilder(streamMediator, blockNodeContext);
+        this.notifierBuilder =
+                NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus);
         this.streamValidatorBuilder = streamValidatorBuilder;
     }
 
