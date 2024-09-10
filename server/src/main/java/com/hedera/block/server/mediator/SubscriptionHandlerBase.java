@@ -38,7 +38,7 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
     private final Map<BlockNodeEventHandler<ObjectEvent<V>>, BatchEventProcessor<ObjectEvent<V>>>
             subscribers;
 
-    private final LongGauge longGauge;
+    private final LongGauge subscriptionGauge;
     protected final RingBuffer<ObjectEvent<V>> ringBuffer;
     private final ExecutorService executor;
 
@@ -48,11 +48,11 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
                                     BlockNodeEventHandler<ObjectEvent<V>>,
                                     BatchEventProcessor<ObjectEvent<V>>>
                             subscribers,
-            @NonNull final LongGauge longGauge,
+            @NonNull final LongGauge subscriptionGauge,
             final int ringBufferSize) {
 
         this.subscribers = subscribers;
-        this.longGauge = longGauge;
+        this.subscriptionGauge = subscriptionGauge;
 
         // Initialize and start the disruptor
         final Disruptor<ObjectEvent<V>> disruptor =
@@ -75,8 +75,10 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
         // Keep track of the subscriber
         subscribers.put(handler, batchEventProcessor);
 
-        // update the subscriber metrics
-        longGauge.set(subscribers.size());
+        // Update the subscriber metrics.
+        // Subtract 1 to remove the StreamValidator from
+        // the count.
+        subscriptionGauge.set(subscribers.size() - 1);
     }
 
     @Override
@@ -96,8 +98,10 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
             ringBuffer.removeGatingSequence(batchEventProcessor.getSequence());
         }
 
-        // update the subscriber metrics
-        longGauge.set(subscribers.size());
+        // Update the subscriber metrics.
+        // Subtract 1 to remove the StreamValidator from
+        // the count.
+        subscriptionGauge.set(subscribers.size() - 1);
     }
 
     @Override

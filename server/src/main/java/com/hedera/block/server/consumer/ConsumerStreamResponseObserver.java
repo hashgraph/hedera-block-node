@@ -173,6 +173,11 @@ public class ConsumerStreamResponseObserver
         }
     }
 
+    @Override
+    public boolean isTimeoutExpired() {
+        return livenessCalculator.isTimeoutExpired();
+    }
+
     @NonNull
     private ResponseSender getResponseSender(
             @NonNull final SubscribeStreamResponse subscribeStreamResponse) {
@@ -231,10 +236,5 @@ public class ConsumerStreamResponseObserver
                     "Sending SubscribeStreamResponse downstream: " + subscribeStreamResponse);
             subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
         }
-    }
-
-    @Override
-    public boolean isTimeoutExpired() {
-        return livenessCalculator.isTimeoutExpired();
     }
 }
