@@ -169,7 +169,7 @@ public class BlockStreamServiceIntegrationTest {
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -270,7 +270,7 @@ public class BlockStreamServiceIntegrationTest {
 
         // Build the BlockStreamService
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -724,7 +724,7 @@ public class BlockStreamServiceIntegrationTest {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         return new BlockStreamService(
                 streamMediator,
                 blockReader,

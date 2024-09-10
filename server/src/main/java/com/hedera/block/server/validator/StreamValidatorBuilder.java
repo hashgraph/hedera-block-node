@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.validator;
 
+import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
@@ -29,20 +30,25 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class StreamValidatorBuilder {
     private final BlockWriter<BlockItem> blockWriter;
     private final BlockNodeContext blockNodeContext;
+    private final ServiceStatus serviceStatus;
+
     private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
     private Notifier notifier;
 
     private StreamValidatorBuilder(
             @NonNull final BlockWriter<BlockItem> blockWriter,
-            @NonNull final BlockNodeContext blockNodeContext) {
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final ServiceStatus serviceStatus) {
         this.blockWriter = blockWriter;
         this.blockNodeContext = blockNodeContext;
+        this.serviceStatus = serviceStatus;
     }
 
     public static StreamValidatorBuilder newBuilder(
             @NonNull final BlockWriter<BlockItem> blockWriter,
-            @NonNull final BlockNodeContext blockNodeContext) {
-        return new StreamValidatorBuilder(blockWriter, blockNodeContext);
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final ServiceStatus serviceStatus) {
+        return new StreamValidatorBuilder(blockWriter, blockNodeContext, serviceStatus);
     }
 
     public StreamValidatorBuilder subscriptionHandler(
@@ -58,6 +64,6 @@ public class StreamValidatorBuilder {
 
     public BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> build() {
         return new StreamValidatorImpl(
-                subscriptionHandler, blockWriter, notifier, blockNodeContext);
+                subscriptionHandler, blockWriter, notifier, blockNodeContext, serviceStatus);
     }
 }

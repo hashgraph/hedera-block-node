@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.validator;
 
+import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
@@ -38,16 +39,19 @@ public class StreamValidatorImpl
     private final BlockWriter<BlockItem> blockWriter;
     private final Notifier notifier;
     private final MetricsService metricsService;
+    private final ServiceStatus serviceStatus;
 
     public StreamValidatorImpl(
             @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler,
             @NonNull final BlockWriter<BlockItem> blockWriter,
             @NonNull final Notifier notifier,
-            @NonNull final BlockNodeContext blockNodeContext) {
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final ServiceStatus serviceStatus) {
         this.subscriptionHandler = subscriptionHandler;
         this.blockWriter = blockWriter;
         this.notifier = notifier;
         this.metricsService = blockNodeContext.metricsService();
+        this.serviceStatus = serviceStatus;
     }
 
     @Override
@@ -63,6 +67,9 @@ public class StreamValidatorImpl
             }
 
         } catch (IOException e) {
+
+            // Trigger the server to stop accepting new requests
+            serviceStatus.stopRunning(getClass().getName());
 
             // Unsubscribe from the mediator to avoid additional onEvent calls.
             subscriptionHandler.unsubscribe(this);

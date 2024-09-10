@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.validator;
 
+import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -31,7 +32,8 @@ public interface ValidatorInjectionModule {
     @Singleton
     static StreamValidatorBuilder providesStreamValidatorBuilder(
             @NonNull final BlockWriter<BlockItem> blockWriter,
-            @NonNull final BlockNodeContext blockNodeContext) {
-        return StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final ServiceStatus serviceStatus) {
+        return StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
     }
 }

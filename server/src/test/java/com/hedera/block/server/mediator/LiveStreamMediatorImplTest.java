@@ -25,7 +25,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -159,7 +158,12 @@ public class LiveStreamMediatorImplTest {
         // register the stream validator
         when(blockWriter.write(blockItem)).thenReturn(Optional.empty());
         final var streamValidator =
-                new StreamValidatorImpl(streamMediator, blockWriter, notifier, blockNodeContext);
+                new StreamValidatorImpl(
+                        streamMediator,
+                        blockWriter,
+                        notifier,
+                        blockNodeContext,
+                        new ServiceStatusImpl());
         streamMediator.subscribe(streamValidator);
 
         // Acting as a producer, notify the mediator of a new block
@@ -218,7 +222,12 @@ public class LiveStreamMediatorImplTest {
         // register the stream validator
         when(blockWriter.write(blockItem)).thenReturn(Optional.empty());
         final var streamValidator =
-                new StreamValidatorImpl(streamMediator, blockWriter, notifier, blockNodeContext);
+                new StreamValidatorImpl(
+                        streamMediator,
+                        blockWriter,
+                        notifier,
+                        blockNodeContext,
+                        new ServiceStatusImpl());
         streamMediator.subscribe(streamValidator);
 
         // Acting as a producer, notify the mediator of a new block
@@ -288,7 +297,12 @@ public class LiveStreamMediatorImplTest {
         // register the stream validator
         when(blockWriter.write(blockItems.getFirst())).thenReturn(Optional.empty());
         final var streamValidator =
-                new StreamValidatorImpl(streamMediator, blockWriter, notifier, blockNodeContext);
+                new StreamValidatorImpl(
+                        streamMediator,
+                        blockWriter,
+                        notifier,
+                        blockNodeContext,
+                        new ServiceStatusImpl());
         streamMediator.subscribe(streamValidator);
 
         // register the test observer
@@ -337,7 +351,12 @@ public class LiveStreamMediatorImplTest {
         // register the stream validator
         when(blockWriter.write(blockItems.getFirst())).thenReturn(Optional.empty());
         final var streamValidator =
-                new StreamValidatorImpl(streamMediator, blockWriter, notifier, blockNodeContext);
+                new StreamValidatorImpl(
+                        streamMediator,
+                        blockWriter,
+                        notifier,
+                        blockNodeContext,
+                        new ServiceStatusImpl());
         streamMediator.subscribe(streamValidator);
 
         final var testConsumerBlockItemObserver =
@@ -372,7 +391,7 @@ public class LiveStreamMediatorImplTest {
     @Test
     public void testMediatorBlocksPublishAfterException() throws IOException {
 
-        final ServiceStatus serviceStatus = mock(ServiceStatus.class);
+        final ServiceStatus serviceStatus = new ServiceStatusImpl();
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
@@ -399,15 +418,14 @@ public class LiveStreamMediatorImplTest {
                         .blockStreamService(blockStreamService)
                         .build();
         final var streamValidator =
-                new StreamValidatorImpl(streamMediator, blockWriter, notifier, blockNodeContext);
+                new StreamValidatorImpl(
+                        streamMediator, blockWriter, notifier, blockNodeContext, serviceStatus);
 
         // Set up the stream verifier
         streamMediator.subscribe(streamValidator);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final BlockItem firstBlockItem = blockItems.getFirst();
-
-        when(serviceStatus.isRunning()).thenReturn(true);
 
         // Right now, only a single producer calls publishEvent. In
         // that case, they will get an IOException bubbled up to them.
@@ -419,8 +437,6 @@ public class LiveStreamMediatorImplTest {
         streamMediator.publish(firstBlockItem);
 
         verify(blockStreamService, timeout(testTimeout).times(1)).notifyUnrecoverableError();
-        verify(serviceStatus, timeout(testTimeout).times(1)).isRunning();
-        verify(serviceStatus, timeout(testTimeout).times(1)).stopRunning(any());
 
         // Confirm the counter was incremented only once
         assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
@@ -446,7 +462,7 @@ public class LiveStreamMediatorImplTest {
         verify(streamObserver2, timeout(testTimeout).times(1)).onNext(fromPbj(endOfStreamResponse));
         verify(streamObserver3, timeout(testTimeout).times(1)).onNext(fromPbj(endOfStreamResponse));
 
-        // once despite the second block being published.
+        // verify write method only called once despite the second block being published.
         verify(blockWriter, timeout(testTimeout).times(1)).write(firstBlockItem);
     }
 
@@ -460,7 +476,12 @@ public class LiveStreamMediatorImplTest {
 
         // register the stream validator
         final var streamValidator =
-                new StreamValidatorImpl(streamMediator, blockWriter, notifier, blockNodeContext);
+                new StreamValidatorImpl(
+                        streamMediator,
+                        blockWriter,
+                        notifier,
+                        blockNodeContext,
+                        new ServiceStatusImpl());
         streamMediator.subscribe(streamValidator);
 
         final var testConsumerBlockItemObserver =

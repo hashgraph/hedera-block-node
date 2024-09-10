@@ -113,7 +113,7 @@ public class BlockStreamServiceTest {
     public void testServiceName() throws IOException {
 
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -130,10 +130,10 @@ public class BlockStreamServiceTest {
     }
 
     @Test
-    public void testProto() throws IOException {
+    public void testProto() {
 
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -154,7 +154,7 @@ public class BlockStreamServiceTest {
     void testSingleBlockHappyPath() throws IOException, ParseException {
 
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
@@ -215,7 +215,7 @@ public class BlockStreamServiceTest {
 
         // Call the service
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -235,7 +235,7 @@ public class BlockStreamServiceTest {
     void testSingleBlockServiceNotAvailable() {
 
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -262,7 +262,7 @@ public class BlockStreamServiceTest {
     @Test
     public void testSingleBlockIOExceptionPath() throws IOException, ParseException {
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -289,7 +289,7 @@ public class BlockStreamServiceTest {
     @Test
     public void testSingleBlockParseExceptionPath() throws IOException, ParseException {
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -317,7 +317,7 @@ public class BlockStreamServiceTest {
     public void testUpdateInvokesRoutingWithLambdas() {
 
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -344,7 +344,7 @@ public class BlockStreamServiceTest {
         // TODO: We might be able to remove this test once we can remove the Translator class
 
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext);
+                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
