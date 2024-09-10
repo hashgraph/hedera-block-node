@@ -16,6 +16,10 @@
 
 package com.hedera.block.simulator.generator;
 
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.INFO;
+
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.hapi.block.stream.Block;
@@ -35,12 +39,11 @@ import javax.inject.Inject;
 /** The block as file block stream manager. */
 public class BlockAsFileBlockStreamManager implements BlockStreamManager {
 
-    private static final System.Logger LOGGER =
-            System.getLogger(BlockAsFileBlockStreamManager.class.getName());
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     final String rootFolder;
 
-    final List<Block> blockList = new ArrayList<>();
+    final List<Block> blocks = new ArrayList<>();
 
     int currentBlockIndex = 0;
     int currentBlockItemIndex = 0;
@@ -57,11 +60,11 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
         try {
             this.loadBlocks();
         } catch (IOException | ParseException | IllegalArgumentException e) {
-            LOGGER.log(System.Logger.Level.ERROR, "Error loading blocks", e);
+            LOGGER.log(ERROR, "Error loading blocks", e);
             throw new RuntimeException(e);
         }
 
-        LOGGER.log(System.Logger.Level.INFO, "Loaded " + blockList.size() + " blocks into memory");
+        LOGGER.log(INFO, "Loaded " + blocks.size() + " blocks into memory");
     }
 
     @Override
@@ -71,10 +74,9 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
 
     @Override
     public BlockItem getNextBlockItem() {
-        BlockItem nextBlockItem =
-                blockList.get(currentBlockIndex).items().get(currentBlockItemIndex);
+        BlockItem nextBlockItem = blocks.get(currentBlockIndex).items().get(currentBlockItemIndex);
         currentBlockItemIndex++;
-        if (currentBlockItemIndex >= blockList.get(currentBlockIndex).items().size()) {
+        if (currentBlockItemIndex >= blocks.get(currentBlockIndex).items().size()) {
             currentBlockItemIndex = 0;
             currentBlockIndex++;
         }
@@ -83,10 +85,10 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
 
     @Override
     public Block getNextBlock() {
-        Block nextBlock = blockList.get(currentBlockIndex);
+        Block nextBlock = blocks.get(currentBlockIndex);
         currentBlockIndex++;
         lastGivenBlockNumber++;
-        if (currentBlockIndex >= blockList.size()) {
+        if (currentBlockIndex >= blocks.size()) {
             currentBlockIndex = 0;
         }
         return nextBlock;
@@ -113,8 +115,8 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
                 }
 
                 Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
-                blockList.add(block);
-                LOGGER.log(System.Logger.Level.DEBUG, "Loaded block: " + blockPath);
+                blocks.add(block);
+                LOGGER.log(DEBUG, "Loaded block: " + blockPath);
             }
         }
     }

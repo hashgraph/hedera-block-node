@@ -23,7 +23,7 @@ import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
 
 /** Utility class for the simulator. */
-public class Utils {
+public final class Utils {
 
     private Utils() {}
 

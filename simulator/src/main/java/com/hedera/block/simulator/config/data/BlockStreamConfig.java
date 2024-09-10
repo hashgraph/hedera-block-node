@@ -43,7 +43,6 @@ public record BlockStreamConfig(
         Path path = Path.of(folderRootPath);
 
         // if rootPath is empty, set it to the default data directory
-        // default data directory is the "src/main/resources/blocks" directory
         if (folderRootPath.isEmpty()) {
             path =
                     Paths.get(folderRootPath)

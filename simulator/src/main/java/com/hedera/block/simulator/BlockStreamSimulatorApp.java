@@ -29,6 +29,7 @@ public class BlockStreamSimulatorApp {
 
     Configuration configuration;
     BlockStreamManager blockStreamManager;
+
     boolean isRunning = false;
 
     /**
@@ -52,6 +53,17 @@ public class BlockStreamSimulatorApp {
         // use PublishStreamGrpcClient to stream it to the block-node.
         isRunning = true;
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has started");
+
+        // while
+
+        // get block item
+        // send block item
+
+        // verify if ack is needed
+        // wait for ack async...
+
+        // verify exit condition
+
     }
 
     /**
