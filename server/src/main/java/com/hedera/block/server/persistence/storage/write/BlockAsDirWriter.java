@@ -179,13 +179,8 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                     "Block node root directory is not writable. Attempting to change the"
                             + " permissions.");
 
-            try {
-                // Attempt to restore the permissions on the block node root directory
-                Files.setPosixFilePermissions(path, filePerms.value());
-            } catch (IOException e) {
-                LOGGER.log(ERROR, "Error setting permissions on the path: " + path, e);
-                throw e;
-            }
+            // Attempt to restore the permissions on the block node root directory
+            Files.setPosixFilePermissions(path, filePerms.value());
         }
     }
 

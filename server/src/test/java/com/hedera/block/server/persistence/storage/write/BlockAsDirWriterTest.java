@@ -17,11 +17,20 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.persistence.storage.read.BlockAsDirReaderTest.removeBlockReadPerms;
+import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.same;
+import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.FileUtils;
@@ -30,7 +39,6 @@ import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.stream.Block;
@@ -83,10 +91,12 @@ public class BlockAsDirWriterTest {
     public void testWriterAndReaderHappyPath() throws IOException, ParseException {
 
         // Write a block
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+        final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext)
+                        .filePerms(FileUtils.defaultPerms)
+                        .build();
         for (int i = 0; i < 10; i++) {
             if (i == 9) {
                 Optional<BlockItem> result = blockWriter.write(blockItems.get(i));
@@ -131,7 +141,7 @@ public class BlockAsDirWriterTest {
     @Test
     public void testRemoveBlockWritePerms() throws IOException, ParseException {
 
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+        final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
@@ -178,7 +188,7 @@ public class BlockAsDirWriterTest {
     @Test
     public void testUnrecoverableIOExceptionOnWrite() throws IOException {
 
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+        final List<BlockItem> blockItems = generateBlockItems(1);
         final BlockRemover blockRemover =
                 new BlockAsDirRemover(Path.of(testConfig.rootPath()), FileUtils.defaultPerms);
 
@@ -194,7 +204,7 @@ public class BlockAsDirWriterTest {
 
     @Test
     public void testRemoveRootDirReadPerm() throws IOException, ParseException {
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+        final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
@@ -233,13 +243,13 @@ public class BlockAsDirWriterTest {
 
     @Test
     public void testPartialBlockRemoval() throws IOException, ParseException {
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(3);
+        final List<BlockItem> blockItems = generateBlockItems(3);
         final BlockRemover blockRemover =
                 new BlockAsDirRemover(Path.of(testConfig.rootPath()), FileUtils.defaultPerms);
 
         // Use a spy of TestBlockAsDirWriter to proxy block items to the real writer
         // for the first 22 block items.  Then simulate an IOException on the 23rd block item
-        // thrown from a protected write method in the real class.  This should trigger the
+        // thrown from a protected write method in the real class. This should trigger the
         // blockRemover instance to remove the partially written block.
         final TestBlockAsDirWriter blockWriter =
                 spy(
