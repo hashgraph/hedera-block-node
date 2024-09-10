@@ -444,6 +444,9 @@ public class LiveStreamMediatorImplTest {
         // Confirm the error counter was incremented
         assertEquals(1, blockNodeContext.metricsService().get(LiveBlockStreamMediatorError).get());
 
+        // Send another block item after the exception
+        streamMediator.publish(blockItems.get(1));
+
         final var subscribeStreamResponse =
                 SubscribeStreamResponse.newBuilder().blockItem(firstBlockItem).build();
         verify(streamObserver1, timeout(testTimeout).times(1))
