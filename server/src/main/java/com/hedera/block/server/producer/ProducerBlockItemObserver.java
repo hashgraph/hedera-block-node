@@ -171,7 +171,7 @@ public class ProducerBlockItemObserver
                 publisher.publish(blockItem);
 
             } else {
-                LOGGER.log(ERROR, "StreamMediator is not accepting BlockItems");
+                LOGGER.log(ERROR, getClass().getName() + " is not accepting BlockItems");
 
                 // Close the upstream connection to the producer(s)
                 final var errorResponse = buildErrorStreamResponse();

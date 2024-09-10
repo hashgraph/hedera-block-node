@@ -181,7 +181,7 @@ public class ConsumerStreamResponseObserverTest {
         // Attempt to send another BlockItem
         consumerStreamResponseObserver.onEvent(objectEvent, 0, true);
 
-        // Confirm that canceling the observer allowed only 1 response to be sent.
+        // Confirm that closing the observer allowed only 1 response to be sent.
         verify(serverCallStreamObserver, timeout(testTimeout).times(1))
                 .onNext(fromPbj(subscribeStreamResponse));
     }
