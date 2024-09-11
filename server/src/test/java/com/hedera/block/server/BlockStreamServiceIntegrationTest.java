@@ -167,7 +167,7 @@ public class BlockStreamServiceIntegrationTest {
     public void testPublishBlockStreamRegistrationAndExecution()
             throws IOException, NoSuchAlgorithmException {
 
-        final ServiceStatus serviceStatus = new ServiceStatusImpl();
+        final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
         final var streamValidatorBuilder =
@@ -262,7 +262,7 @@ public class BlockStreamServiceIntegrationTest {
     @Test
     public void testSubscribeBlockStream() throws IOException {
 
-        final ServiceStatus serviceStatus = new ServiceStatusImpl();
+        final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         serviceStatus.setWebServer(webServer);
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
@@ -532,7 +532,7 @@ public class BlockStreamServiceIntegrationTest {
         // permissions to repair the file system.  The BlockWriter will not be able
         // to write the BlockItem or fix the permissions causing the BlockReader to
         // throw an IOException.
-        final ServiceStatus serviceStatus = new ServiceStatusImpl();
+        final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         serviceStatus.setWebServer(webServer);
 
         final var streamMediator = buildStreamMediator(subscribers);
@@ -709,7 +709,7 @@ public class BlockStreamServiceIntegrationTest {
                             BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
                     subscribers) {
 
-        final ServiceStatus serviceStatus = new ServiceStatusImpl();
+        final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         serviceStatus.setWebServer(webServer);
 
         return LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)

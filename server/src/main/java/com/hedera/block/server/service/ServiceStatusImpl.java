@@ -19,6 +19,7 @@ package com.hedera.block.server.service;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
+import com.hedera.block.server.config.BlockNodeContext;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -37,9 +38,14 @@ public class ServiceStatusImpl implements ServiceStatus {
     private final AtomicBoolean isRunning = new AtomicBoolean(true);
     private WebServer webServer;
 
+    private final int delayMillis;
+
     /** Constructor for the ServiceStatusImpl class. */
     @Inject
-    public ServiceStatusImpl() {}
+    public ServiceStatusImpl(@NonNull final BlockNodeContext blockNodeContext) {
+        this.delayMillis =
+                blockNodeContext.configuration().getConfigData(ServiceConfig.class).delayMillis();
+    }
 
     /**
      * Checks if the service is running.
@@ -86,7 +92,7 @@ public class ServiceStatusImpl implements ServiceStatus {
         try {
             // Delay briefly while outbound termination messages
             // are sent to the consumers and producers, etc.
-            Thread.sleep(1000);
+            Thread.sleep(delayMillis);
         } catch (InterruptedException e) {
             LOGGER.log(ERROR, "Error sleeping: ", e);
         }

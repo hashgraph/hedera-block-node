@@ -18,8 +18,6 @@ package com.hedera.block.server;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.service.ServiceStatus;
-import com.hedera.block.server.service.ServiceStatusImpl;
 import com.swirlds.config.api.Configuration;
 import dagger.Binds;
 import dagger.Module;
@@ -34,16 +32,6 @@ import javax.inject.Singleton;
  */
 @Module
 public interface BlockNodeAppInjectionModule {
-
-    /**
-     * Binds the service status to the service status implementation.
-     *
-     * @param serviceStatus needs a service status implementation
-     * @return the service status implementation
-     */
-    @Singleton
-    @Binds
-    ServiceStatus bindServiceStatus(ServiceStatusImpl serviceStatus);
 
     /**
      * Provides a block node context singleton.

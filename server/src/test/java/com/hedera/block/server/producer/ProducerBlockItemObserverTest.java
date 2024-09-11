@@ -230,10 +230,9 @@ public class ProducerBlockItemObserverTest {
     }
 
     @Test
-    public void testOnlyErrorStreamResponseAllowedAfterStatusChange()
-            throws NoSuchAlgorithmException {
+    public void testOnlyErrorStreamResponseAllowedAfterStatusChange() {
 
-        final ServiceStatus serviceStatus = new ServiceStatusImpl();
+        final ServiceStatus serviceStatus = new ServiceStatusImpl(testContext);
 
         final ProducerBlockItemObserver producerBlockItemObserver =
                 new ProducerBlockItemObserver(

@@ -21,6 +21,7 @@ import com.hedera.block.server.health.HealthInjectionModule;
 import com.hedera.block.server.mediator.MediatorInjectionModule;
 import com.hedera.block.server.metrics.MetricsInjectionModule;
 import com.hedera.block.server.persistence.PersistenceInjectionModule;
+import com.hedera.block.server.service.ServiceInjectionModule;
 import com.hedera.block.server.validator.ValidatorInjectionModule;
 import com.swirlds.config.api.Configuration;
 import dagger.BindsInstance;
@@ -31,6 +32,7 @@ import javax.inject.Singleton;
 @Singleton
 @Component(
         modules = {
+            ServiceInjectionModule.class,
             BlockNodeAppInjectionModule.class,
             HealthInjectionModule.class,
             PersistenceInjectionModule.class,
