@@ -96,10 +96,6 @@ public class BlockStreamServiceIntegrationTest {
     private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
             publishStreamResponseObserver3;
 
-    //    @Mock
-    //    private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
-    //            publishStreamResponseObserver3;
-
     @Mock
     private StreamObserver<com.hedera.hapi.block.protoc.SingleBlockResponse>
             singleBlockResponseStreamObserver;
@@ -131,7 +127,6 @@ public class BlockStreamServiceIntegrationTest {
             subscribeStreamObserver6;
 
     @Mock private WebServer webServer;
-    @Mock private ServiceStatus serviceStatus;
 
     @Mock private BlockReader<Block> blockReader;
     @Mock private BlockWriter<BlockItem> blockWriter;
@@ -529,10 +524,7 @@ public class BlockStreamServiceIntegrationTest {
                         BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
                 consumers = new ConcurrentHashMap<>();
 
-        // Initialize the underlying BlockReader and BlockWriter with ineffective
-        // permissions to repair the file system.  The BlockWriter will not be able
-        // to write the BlockItem or fix the permissions causing the BlockReader to
-        // throw an IOException.
+        // Use a spy to use the real object but also verify the behavior.
         final ServiceStatus serviceStatus = spy(new ServiceStatusImpl(blockNodeContext));
         doCallRealMethod().when(serviceStatus).setWebServer(webServer);
         doCallRealMethod().when(serviceStatus).isRunning();
@@ -599,10 +591,10 @@ public class BlockStreamServiceIntegrationTest {
 
         // Build a request to invoke the subscribeBlockStream service
         final SubscribeStreamRequest subscribeStreamRequest =
-            SubscribeStreamRequest.newBuilder().startBlockNumber(1).build();
+                SubscribeStreamRequest.newBuilder().startBlockNumber(1).build();
         // Simulate a consumer attempting to connect to the Block Node after the exception.
         blockStreamService.protocSubscribeBlockStream(
-        fromPbj(subscribeStreamRequest), subscribeStreamObserver4);
+                fromPbj(subscribeStreamRequest), subscribeStreamObserver4);
 
         // The BlockItem expected to pass through since it was published
         // before the IOException was thrown.
@@ -639,12 +631,6 @@ public class BlockStreamServiceIntegrationTest {
         // the built-in delay.
         verify(webServer, timeout(2000).times(1)).stop();
 
-        // Now verify the block was removed from the file system.
-        //        final BlockReader<Block> blockReader =
-        //                BlockAsDirReaderBuilder.newBuilder(persistenceStorageConfig).build();
-        //        final Optional<Block> blockOpt = blockReader.read(1);
-        //        assertTrue(blockOpt.isEmpty());
-
         // Verify the singleBlock service returned the expected
         // error code indicating the service is not available.
         final SingleBlockResponse expectedSingleBlockNotAvailable =
@@ -657,10 +643,11 @@ public class BlockStreamServiceIntegrationTest {
 
         // TODO: Fix the response code when it's available
         final SubscribeStreamResponse expectedSubscriberStreamNotAvailable =
-        SubscribeStreamResponse.newBuilder().status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
-        .build();
+                SubscribeStreamResponse.newBuilder()
+                        .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
+                        .build();
         verify(subscribeStreamObserver4, timeout(testTimeout).times(1))
-        .onNext(fromPbj(expectedSubscriberStreamNotAvailable));
+                .onNext(fromPbj(expectedSubscriberStreamNotAvailable));
     }
 
     private static void verifySubscribeStreamResponse(
