@@ -33,6 +33,7 @@ import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.PublishStreamResponse;
@@ -59,10 +60,6 @@ public class NotifierImplTest {
     @Mock private Publisher<BlockItem> publisher;
     @Mock private ServiceStatus serviceStatus;
     @Mock private SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
-
-    //    @Mock private EventHandler<ObjectEvent<PublishStreamResponse>> observer1;
-    //    @Mock private EventHandler<ObjectEvent<PublishStreamResponse>> observer2;
-    //    @Mock private EventHandler<ObjectEvent<PublishStreamResponse>> observer3;
 
     @Mock
     private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse> streamObserver1;
@@ -91,8 +88,7 @@ public class NotifierImplTest {
     @Test
     public void testRegistration() throws NoSuchAlgorithmException {
 
-        when(serviceStatus.isRunning()).thenReturn(true);
-
+        final ServiceStatus serviceStatus = new ServiceStatusImpl(testContext);
         final var notifier =
                 NotifierBuilder.newBuilder(mediator, testContext, serviceStatus)
                         .blockStreamService(blockStreamService)
