@@ -20,4 +20,10 @@ import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 
 @ConfigData("service")
-public record ServiceConfig(@ConfigProperty(defaultValue = "1000") int delayMillis) {}
+public record ServiceConfig(@ConfigProperty(defaultValue = "1000") int delayMillis) {
+    public ServiceConfig {
+        if (delayMillis <= 0) {
+            throw new IllegalArgumentException("Delay milliseconds must be greater than 0");
+        }
+    }
+}
