@@ -24,6 +24,7 @@ import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
@@ -50,11 +51,13 @@ import com.hedera.hapi.block.ItemAcknowledgement;
 import com.hedera.hapi.block.PublishStreamRequest;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
+import com.hedera.hapi.block.SingleBlockResponse;
+import com.hedera.hapi.block.SingleBlockResponseCode;
+import com.hedera.hapi.block.SubscribeStreamRequest;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
-import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.lmax.disruptor.BatchEventProcessor;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -520,8 +523,7 @@ public class BlockStreamServiceIntegrationTest {
     //    }
 
     @Test
-    public void testMediatorExceptionHandlingWhenPersistenceFailure()
-            throws IOException, ParseException {
+    public void testMediatorExceptionHandlingWhenPersistenceFailure() throws IOException {
         final ConcurrentHashMap<
                         BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>,
                         BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
@@ -531,7 +533,10 @@ public class BlockStreamServiceIntegrationTest {
         // permissions to repair the file system.  The BlockWriter will not be able
         // to write the BlockItem or fix the permissions causing the BlockReader to
         // throw an IOException.
-        final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
+        final ServiceStatus serviceStatus = spy(new ServiceStatusImpl(blockNodeContext));
+        doCallRealMethod().when(serviceStatus).setWebServer(webServer);
+        doCallRealMethod().when(serviceStatus).isRunning();
+        doCallRealMethod().when(serviceStatus).stopWebServer(any());
         serviceStatus.setWebServer(webServer);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
@@ -555,10 +560,10 @@ public class BlockStreamServiceIntegrationTest {
         // Subscribe the consumers
         blockStreamService.protocSubscribeBlockStream(
                 subscribeStreamRequest, subscribeStreamObserver1);
-        //        blockStreamService.protocSubscribeBlockStream(
-        //                subscribeStreamRequest, subscribeStreamObserver2);
-        //        blockStreamService.protocSubscribeBlockStream(
-        //                subscribeStreamRequest, subscribeStreamObserver3);
+        blockStreamService.protocSubscribeBlockStream(
+                subscribeStreamRequest, subscribeStreamObserver2);
+        blockStreamService.protocSubscribeBlockStream(
+                subscribeStreamRequest, subscribeStreamObserver3);
 
         // Initialize the producer
         final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest> streamObserver =
@@ -569,41 +574,46 @@ public class BlockStreamServiceIntegrationTest {
                 PublishStreamRequest.newBuilder().blockItem(blockItems.getFirst()).build();
         streamObserver.onNext(fromPbj(publishStreamRequest));
 
+        // Use verify to make sure the serviceStatus.stopRunning() method is called
+        // before the next block is transmitted.
+        verify(serviceStatus, timeout(testTimeout).times(3)).stopRunning(any());
+
         // Simulate another producer attempting to connect to the Block Node after the exception.
         // Later, verify they received a response indicating the stream is closed.
-        //        final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest>
-        //                expectedNoOpStreamObserver =
-        //
-        // blockStreamService.protocPublishBlockStream(publishStreamResponseObserver2);
-        //        expectedNoOpStreamObserver.onNext(fromPbj(publishStreamRequest));
+        final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest>
+                expectedNoOpStreamObserver =
+                        blockStreamService.protocPublishBlockStream(publishStreamResponseObserver2);
+        expectedNoOpStreamObserver.onNext(fromPbj(publishStreamRequest));
+
+        verify(publishStreamResponseObserver2, timeout(testTimeout).times(1))
+                .onNext(fromPbj(buildEndOfStreamResponse()));
 
         // Build a request to invoke the singleBlock service
-        //        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
-        //                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
-        //                        .setBlockNumber(1)
-        //                        .build();
+        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
+                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
+                        .setBlockNumber(1)
+                        .build();
 
         // Simulate a consumer attempting to connect to the Block Node after the exception.
-        //        blockStreamService.protocSingleBlock(singleBlockRequest,
-        // singleBlockResponseStreamObserver);
+        blockStreamService.protocSingleBlock(singleBlockRequest, singleBlockResponseStreamObserver);
 
         // Build a request to invoke the subscribeBlockStream service
-        //        final SubscribeStreamRequest subscribeStreamRequest =
-        //                SubscribeStreamRequest.newBuilder().startBlockNumber(1).build();
+        final SubscribeStreamRequest subscribeStreamRequest =
+            SubscribeStreamRequest.newBuilder().startBlockNumber(1).build();
         // Simulate a consumer attempting to connect to the Block Node after the exception.
-        //        blockStreamService.protocSubscribeBlockStream(
-        //                fromPbj(subscribeStreamRequest), subscribeStreamObserver4);
+        blockStreamService.protocSubscribeBlockStream(
+        fromPbj(subscribeStreamRequest), subscribeStreamObserver4);
 
-        // The BlockItem passed through since it was published
+        // The BlockItem expected to pass through since it was published
         // before the IOException was thrown.
         final SubscribeStreamResponse subscribeStreamResponse =
                 SubscribeStreamResponse.newBuilder().blockItem(blockItems.getFirst()).build();
         verify(subscribeStreamObserver1, timeout(testTimeout).times(1))
                 .onNext(fromPbj(subscribeStreamResponse));
-        //        verify(subscribeStreamObserver2, timeout(testTimeout).times(1))
-        //                .onNext(fromPbj(subscribeStreamResponse));
-        //        verify(subscribeStreamObserver3, timeout(testTimeout).times(1))
-        //                .onNext(fromPbj(subscribeStreamResponse));
+        verify(subscribeStreamObserver2, timeout(testTimeout).times(1))
+                .onNext(fromPbj(subscribeStreamResponse));
+        verify(subscribeStreamObserver3, timeout(testTimeout).times(1))
+                .onNext(fromPbj(subscribeStreamResponse));
 
         // Verify all the consumers received the end of stream response
         // TODO: Fix the response code when it's available
@@ -613,24 +623,21 @@ public class BlockStreamServiceIntegrationTest {
                         .build();
         verify(subscribeStreamObserver1, timeout(testTimeout).times(1))
                 .onNext(fromPbj(endStreamResponse));
-        //        verify(subscribeStreamObserver2, timeout(testTimeout).times(1))
-        //                .onNext(fromPbj(endStreamResponse));
-        //        verify(subscribeStreamObserver3, timeout(testTimeout).times(1))
-        //                .onNext(fromPbj(endStreamResponse));
+        verify(subscribeStreamObserver2, timeout(testTimeout).times(1))
+                .onNext(fromPbj(endStreamResponse));
+        verify(subscribeStreamObserver3, timeout(testTimeout).times(1))
+                .onNext(fromPbj(endStreamResponse));
 
-        assertEquals(1, consumers.size());
+        assertEquals(3, consumers.size());
 
         // Verify the publishBlockStream service returned the expected
         // error code indicating the service is not available.
-        final EndOfStream endOfStream =
-                EndOfStream.newBuilder()
-                        .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
-                        .build();
-        final var endOfStreamResponse =
-                PublishStreamResponse.newBuilder().status(endOfStream).build();
         verify(publishStreamResponseObserver1, timeout(testTimeout).times(1))
-                .onNext(fromPbj(endOfStreamResponse));
-        verify(webServer, timeout(testTimeout).times(1)).stop();
+                .onNext(fromPbj(buildEndOfStreamResponse()));
+
+        // Adding extra time to allow the service to stop given
+        // the built-in delay.
+        verify(webServer, timeout(2000).times(1)).stop();
 
         // Now verify the block was removed from the file system.
         //        final BlockReader<Block> blockReader =
@@ -640,26 +647,20 @@ public class BlockStreamServiceIntegrationTest {
 
         // Verify the singleBlock service returned the expected
         // error code indicating the service is not available.
-        //        final SingleBlockResponse expectedSingleBlockNotAvailable =
-        //                SingleBlockResponse.newBuilder()
-        //                        .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
-        //                        .build();
-        //
-        //        verify(singleBlockResponseStreamObserver, timeout(testTimeout).times(1))
-        //                .onNext(fromPbj(expectedSingleBlockNotAvailable));
+        final SingleBlockResponse expectedSingleBlockNotAvailable =
+                SingleBlockResponse.newBuilder()
+                        .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
+                        .build();
+
+        verify(singleBlockResponseStreamObserver, timeout(testTimeout).times(1))
+                .onNext(fromPbj(expectedSingleBlockNotAvailable));
 
         // TODO: Fix the response code when it's available
-        //        final SubscribeStreamResponse expectedSubscriberStreamNotAvailable =
-        //                SubscribeStreamResponse.newBuilder()
-        //                        .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
-        //                        .build();
-        //        verify(subscribeStreamObserver4, timeout(testTimeout).times(1))
-        //                .onNext(fromPbj(expectedSubscriberStreamNotAvailable));
-    }
-
-    private void removeAllRootPathPerms(final PersistenceStorageConfig config) throws IOException {
-        final Path blockNodeRootPath = Path.of(config.rootPath());
-        Files.setPosixFilePermissions(blockNodeRootPath, TestUtils.getNoPerms().value());
+        final SubscribeStreamResponse expectedSubscriberStreamNotAvailable =
+        SubscribeStreamResponse.newBuilder().status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
+        .build();
+        verify(subscribeStreamObserver4, timeout(testTimeout).times(1))
+        .onNext(fromPbj(expectedSubscriberStreamNotAvailable));
     }
 
     private static void verifySubscribeStreamResponse(
@@ -700,6 +701,14 @@ public class BlockStreamServiceIntegrationTest {
 
     private static SubscribeStreamResponse buildSubscribeStreamResponse(BlockItem blockItem) {
         return SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
+    }
+
+    private static PublishStreamResponse buildEndOfStreamResponse() {
+        final EndOfStream endOfStream =
+                EndOfStream.newBuilder()
+                        .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
+                        .build();
+        return PublishStreamResponse.newBuilder().status(endOfStream).build();
     }
 
     private BlockStreamService buildBlockStreamService(final BlockWriter<BlockItem> blockWriter) {

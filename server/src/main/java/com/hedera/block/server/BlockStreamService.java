@@ -194,7 +194,6 @@ public class BlockStreamService implements GrpcService, Notifiable {
                             subscribeStreamResponseObserver) {
         LOGGER.log(DEBUG, "Executing Server Streaming subscribeBlockStream gRPC method");
 
-        // Return a custom StreamObserver to handle streaming blocks from the producer.
         if (serviceStatus.isRunning()) {
             // Unsubscribe any expired notifiers
             streamMediator.unsubscribeAllExpired();
