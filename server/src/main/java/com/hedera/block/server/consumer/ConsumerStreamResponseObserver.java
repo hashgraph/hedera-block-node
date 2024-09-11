@@ -219,7 +219,7 @@ public class ConsumerStreamResponseObserver
                 }
 
                 if (streamStarted) {
-                    LOGGER.log(DEBUG, "Sending BlockItem downstream: {0}", blockItem);
+                    LOGGER.log(DEBUG, "Sending BlockItem downstream: " + blockItem);
 
                     // Increment counter
                     metricsService.get(LiveBlockItemsConsumed).increment();
@@ -229,6 +229,8 @@ public class ConsumerStreamResponseObserver
         }
     }
 
+    // TODO: Implement another StatusResponseSender that will unsubscribe the observer once the
+    // status code is fixed.
     private final class StatusResponseSender implements ResponseSender {
         public void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse) {
             LOGGER.log(

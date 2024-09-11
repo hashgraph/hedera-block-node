@@ -122,9 +122,6 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
         // Publish an end of stream response to all downstream consumers
         final SubscribeStreamResponse endStreamResponse = buildEndStreamResponse();
         ringBuffer.publishEvent((event, sequence) -> event.set(endStreamResponse));
-
-        // Unsubscribe all downstream consumers
-        unsubscribeAllExpired();
     }
 
     @NonNull

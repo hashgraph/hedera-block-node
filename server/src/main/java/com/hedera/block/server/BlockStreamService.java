@@ -55,6 +55,7 @@ import io.helidon.webserver.grpc.GrpcService;
 import java.io.IOException;
 import java.time.Clock;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
 /**
@@ -76,6 +77,8 @@ public class BlockStreamService implements GrpcService, Notifiable {
     private final NotifierBuilder notifierBuilder;
     private Notifier notifier;
     private final StreamValidatorBuilder streamValidatorBuilder;
+
+    private AtomicBoolean isInitPhase = new AtomicBoolean(true);
 
     /**
      * Constructor for the BlockStreamService class. It initializes the BlockStreamService with the
@@ -150,7 +153,7 @@ public class BlockStreamService implements GrpcService, Notifiable {
                             publishStreamResponseObserver) {
         LOGGER.log(DEBUG, "Executing bidirectional publishBlockStream gRPC method");
 
-        if (notifier == null) {
+        if (isInitPhase.get()) {
             notifier = notifierBuilder.blockStreamService(this).build();
 
             final var streamValidator =
@@ -159,6 +162,8 @@ public class BlockStreamService implements GrpcService, Notifiable {
                             .notifier(notifier)
                             .build();
             streamMediator.subscribe(streamValidator);
+
+            isInitPhase.set(false);
         }
 
         // Unsubscribe any expired notifiers
