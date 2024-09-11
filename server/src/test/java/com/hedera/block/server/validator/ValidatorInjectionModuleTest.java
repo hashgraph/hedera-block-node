@@ -18,9 +18,9 @@ package com.hedera.block.server.validator;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.stream.BlockItem;
 import java.io.IOException;

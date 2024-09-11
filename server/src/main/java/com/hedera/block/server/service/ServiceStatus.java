@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server;
+package com.hedera.block.server.service;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
@@ -49,6 +49,8 @@ public interface ServiceStatus {
     /**
      * Stops the service and web server. This method is called to shut down the service and the web
      * server in the event of an error or when the service needs to restart.
+     *
+     * @param className the name of the class stopping the service
      */
-    void stopWebServer();
+    void stopWebServer(final String className);
 }

@@ -29,8 +29,6 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.hedera.block.server.ServiceStatus;
-import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.events.BlockNodeEventHandler;
@@ -39,6 +37,8 @@ import com.hedera.block.server.notifier.Notifiable;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.notifier.NotifierBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.validator.StreamValidatorImpl;
 import com.hedera.hapi.block.SubscribeStreamResponse;

@@ -21,12 +21,12 @@ import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Produce
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static java.lang.System.Logger.Level.ERROR;
 
-import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandlerBase;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.ItemAcknowledgement;
@@ -76,12 +76,16 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implem
 
     @Override
     public void notifyUnrecoverableError() {
+
         blockStreamService.notifyUnrecoverableError();
         mediator.notifyUnrecoverableError();
 
         // Publish an end of stream response to the producers.
         final PublishStreamResponse errorStreamResponse = buildErrorStreamResponse();
         ringBuffer.publishEvent((event, sequence) -> event.set(errorStreamResponse));
+
+        // Stop the server
+        serviceStatus.stopWebServer(getClass().getName());
     }
 
     @Override

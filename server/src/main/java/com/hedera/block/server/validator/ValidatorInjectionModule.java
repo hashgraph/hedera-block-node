@@ -16,9 +16,9 @@
 
 package com.hedera.block.server.validator;
 
-import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.stream.BlockItem;
 import dagger.Module;
 import dagger.Provides;

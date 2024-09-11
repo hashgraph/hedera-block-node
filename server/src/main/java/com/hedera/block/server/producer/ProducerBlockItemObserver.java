@@ -24,7 +24,6 @@ import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
-import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.events.BlockNodeEventHandler;
@@ -33,6 +32,7 @@ import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
@@ -186,7 +186,9 @@ public class ProducerBlockItemObserver
                     "Error parsing inbound block item from a producer: "
                             + publishStreamRequest.getBlockItem(),
                     e);
-            serviceStatus.stopWebServer();
+
+            // Stop the server
+            serviceStatus.stopWebServer(getClass().getName());
         }
     }
 

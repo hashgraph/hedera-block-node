@@ -16,8 +16,8 @@
 
 package com.hedera.block.server.mediator;
 
-import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.service.ServiceStatus;
 import dagger.Module;
 import dagger.Provides;
 import edu.umd.cs.findbugs.annotations.NonNull;

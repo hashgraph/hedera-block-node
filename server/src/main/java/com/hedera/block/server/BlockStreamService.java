@@ -39,6 +39,7 @@ import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.notifier.NotifierBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.validator.StreamValidatorBuilder;
 import com.hedera.hapi.block.SingleBlockRequest;
 import com.hedera.hapi.block.SingleBlockResponse;
@@ -270,7 +271,7 @@ public class BlockStreamService implements GrpcService, Notifiable {
     public void notifyUnrecoverableError() {
         // prevent additional producer/consumer subscriptions
         // and single block queries. Prepare for shutdown.
-        serviceStatus.stopRunning(this.getClass().getName());
+        serviceStatus.stopRunning(getClass().getName());
         LOGGER.log(ERROR, "An unrecoverable error occurred. Preparing to stop the service.");
     }
 

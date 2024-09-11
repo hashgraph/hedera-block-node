@@ -26,12 +26,12 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.hedera.block.server.ServiceStatus;
-import com.hedera.block.server.ServiceStatusImpl;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
+import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.EndOfStream;
@@ -152,7 +152,7 @@ public class ProducerBlockItemObserverTest {
         verify(publishStreamResponseObserver, timeout(testTimeout).times(1))
                 .onNext(fromPbj(PublishStreamResponse.newBuilder().status(endOfStream).build()));
 
-        verify(serviceStatus, timeout(testTimeout).times(1)).stopWebServer();
+        verify(serviceStatus, timeout(testTimeout).times(1)).stopWebServer(any());
     }
 
     @Test

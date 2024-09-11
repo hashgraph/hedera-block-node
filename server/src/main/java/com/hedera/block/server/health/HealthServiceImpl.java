@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.health;
 
-import com.hedera.block.server.ServiceStatus;
+import com.hedera.block.server.service.ServiceStatus;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.http.HttpRules;
 import io.helidon.webserver.http.ServerRequest;

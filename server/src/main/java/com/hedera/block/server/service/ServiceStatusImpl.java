@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server;
+package com.hedera.block.server.service;
 
 import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
@@ -71,12 +72,24 @@ public class ServiceStatusImpl implements ServiceStatus {
     /**
      * Stops the service and web server. This method is called to shut down the service and the web
      * server in the event of an unrecoverable exception or during expected maintenance.
+     *
+     * @param className the name of the class stopping the service
      */
-    public void stopWebServer() {
+    public void stopWebServer(@NonNull final String className) {
+
+        LOGGER.log(DEBUG, String.format("%s is stopping the server", className));
 
         // Flag the service to stop
         // accepting new connections
         isRunning.set(false);
+
+        try {
+            // Delay briefly while outbound termination messages
+            // are sent to the consumers and producers, etc.
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            LOGGER.log(ERROR, "Error sleeping: ", e);
+        }
 
         // Stop the web server
         webServer.stop();

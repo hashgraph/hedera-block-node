@@ -16,7 +16,8 @@
 
 package com.hedera.block.server.validator;
 
-import com.hedera.block.server.ServiceStatus;
+import static java.lang.System.Logger.Level.ERROR;
+
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
@@ -24,6 +25,7 @@ import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -58,12 +60,19 @@ public class StreamValidatorImpl
     public void onEvent(
             ObjectEvent<SubscribeStreamResponse> event, long sequence, boolean endOfBatch) {
         try {
-            // Persist the BlockItem
-            final SubscribeStreamResponse subscribeStreamResponse = event.get();
-            final BlockItem blockItem = subscribeStreamResponse.blockItem();
-            Optional<BlockItem> result = blockWriter.write(blockItem);
-            if (result.isPresent()) {
-                notifier.publish(blockItem);
+            if (serviceStatus.isRunning()) {
+                // Persist the BlockItem
+                final SubscribeStreamResponse subscribeStreamResponse = event.get();
+                final BlockItem blockItem = subscribeStreamResponse.blockItem();
+                Optional<BlockItem> result = blockWriter.write(blockItem);
+                if (result.isPresent()) {
+                    // Publish the block item back upstream to the notifier
+                    // to send responses to producers.
+                    notifier.publish(blockItem);
+                }
+            } else {
+                LOGGER.log(
+                        ERROR, "Service is not running. Block item will not be processed further.");
             }
 
         } catch (IOException e) {

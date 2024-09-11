@@ -26,13 +26,13 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.PublishStreamResponse;

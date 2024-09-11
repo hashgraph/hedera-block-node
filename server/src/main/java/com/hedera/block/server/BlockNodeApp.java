@@ -20,6 +20,7 @@ import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.health.HealthService;
+import com.hedera.block.server.service.ServiceStatus;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.WebServerConfig;
