@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.verifier;
 
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlocksVerified;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
@@ -69,7 +70,7 @@ public class StreamVerifierImpl
                     // Publish the block item back upstream to the notifier
                     // to send responses to producers.
                     notifier.publish(blockItem);
-                    metricsService.get().increment();
+                    metricsService.get(LiveBlocksVerified).increment();
                 }
             } else {
                 LOGGER.log(

@@ -41,16 +41,18 @@ public final class BlockNodeMetricTypes {
         /** The number of live block items received before publishing to the RingBuffer. */
         LiveBlockItems("live_block_items", "Live BlockItems"),
 
+        /** The number of PublishStreamResponses generated and published to the subscribers. */
         SuccessfulPubStreamResp(
                 "successful_pub_stream_resp", "Successful Publish Stream Responses"),
+
+        /** The number of PublishStreamResponses sent to the producers. */
         SuccessfulPubStreamRespSent(
                 "successful_pub_stream_resp_sent", "Successful Publish Stream Responses Sent"),
 
-        /**
-         * The number of blocks persisted to storage.
-         *
-         * <p>Block items are not counted here, only the blocks.
-         */
+        /** The number of live block items verified before persisting them. */
+        LiveBlocksVerified("live_blocks_verified", "Live Blocks Verified"),
+
+        /** The number of blocks persisted to storage. */
         BlocksPersisted("blocks_persisted", "Blocks Persisted"),
 
         /** The number of live block items consumed from the by each consumer observer. */
