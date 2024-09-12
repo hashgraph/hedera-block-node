@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.validator;
+package com.hedera.block.server.verifier;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -30,7 +30,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class ValidatorInjectionModuleTest {
+public class VerifierInjectionModuleTest {
 
     @Mock private BlockWriter<BlockItem> blockWriter;
 
@@ -42,10 +42,10 @@ public class ValidatorInjectionModuleTest {
         BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         // Call the method under test
-        StreamValidatorBuilder providedStreamValidatorBuilder =
+        StreamVerifierBuilder providedStreamVerifierBuilder =
                 ValidatorInjectionModule.providesStreamValidatorBuilder(
                         blockWriter, blockNodeContext, serviceStatus);
 
-        assertNotNull(providedStreamValidatorBuilder);
+        assertNotNull(providedStreamVerifierBuilder);
     }
 }

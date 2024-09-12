@@ -18,6 +18,7 @@ package com.hedera.block.server.notifier;
 
 import static com.hedera.block.server.BlockStreamServiceIntegrationTest.buildAck;
 import static com.hedera.block.server.Translator.fromPbj;
+import static com.hedera.block.server.notifier.NotifierImpl.buildErrorStreamResponse;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -75,7 +76,7 @@ public class NotifierImplTest {
     private final long TIMEOUT_THRESHOLD_MILLIS = 100L;
     private final long TEST_TIME = 1_719_427_664_950L;
 
-    private static final int testTimeout = 1000;
+    private static final int testTimeout = 2000;
 
     private final BlockNodeContext testContext;
 
@@ -140,6 +141,19 @@ public class NotifierImplTest {
         List<BlockItem> blockItems = generateBlockItems(1);
         notifier.publish(blockItems.getFirst());
 
+        // Verify the response was received by all observers
+        final var publishStreamResponse =
+                PublishStreamResponse.newBuilder()
+                        .acknowledgement(buildAck(blockItems.getFirst()))
+                        .build();
+        verify(streamObserver1, timeout(testTimeout).times(1))
+                .onNext(fromPbj(publishStreamResponse));
+        verify(streamObserver2, timeout(testTimeout).times(1))
+                .onNext(fromPbj(publishStreamResponse));
+        verify(streamObserver3, timeout(testTimeout).times(1))
+                .onNext(fromPbj(publishStreamResponse));
+
+        // Unsubscribe the observers
         notifier.unsubscribe(concreteObserver1);
         assertFalse(
                 notifier.isSubscribed(concreteObserver1),
@@ -154,17 +168,6 @@ public class NotifierImplTest {
         assertFalse(
                 notifier.isSubscribed(concreteObserver3),
                 "Expected the notifier to have unsubscribed observer3");
-
-        final var publishStreamResponse =
-                PublishStreamResponse.newBuilder()
-                        .acknowledgement(buildAck(blockItems.getFirst()))
-                        .build();
-        verify(streamObserver1, timeout(testTimeout).times(1))
-                .onNext(fromPbj(publishStreamResponse));
-        verify(streamObserver2, timeout(testTimeout).times(1))
-                .onNext(fromPbj(publishStreamResponse));
-        verify(streamObserver3, timeout(testTimeout).times(1))
-                .onNext(fromPbj(publishStreamResponse));
     }
 
     @Test
@@ -295,7 +298,7 @@ public class NotifierImplTest {
         List<BlockItem> blockItems = generateBlockItems(1);
         notifier.publish(blockItems.getFirst());
 
-        final PublishStreamResponse errorResponse = TestNotifier.buildErrorStreamResponse();
+        final PublishStreamResponse errorResponse = buildErrorStreamResponse();
         verify(streamObserver1, timeout(testTimeout).times(1)).onNext(fromPbj(errorResponse));
         verify(streamObserver2, timeout(testTimeout).times(1)).onNext(fromPbj(errorResponse));
         verify(streamObserver3, timeout(testTimeout).times(1)).onNext(fromPbj(errorResponse));

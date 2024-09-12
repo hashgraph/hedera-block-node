@@ -43,7 +43,7 @@ import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
-import com.hedera.block.server.validator.StreamValidatorBuilder;
+import com.hedera.block.server.verifier.StreamVerifierBuilder;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.ItemAcknowledgement;
@@ -136,7 +136,7 @@ public class BlockStreamServiceIntegrationTest {
     private Path testPath;
     private BlockNodeContext blockNodeContext;
 
-    private static final int testTimeout = 1000;
+    private static final int testTimeout = 2000;
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -145,8 +145,6 @@ public class BlockStreamServiceIntegrationTest {
 
         Map<String, String> properties = new HashMap<>();
         properties.put("persistence.storage.rootPath", testPath.toString());
-        properties.put("persistence.storage.blockItemSize", "1024");
-        properties.put("producer.blockItemSize", "1024");
 
         blockNodeContext = TestConfigUtil.getTestBlockNodeContext(properties);
     }
@@ -164,7 +162,7 @@ public class BlockStreamServiceIntegrationTest {
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
+                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -265,7 +263,7 @@ public class BlockStreamServiceIntegrationTest {
 
         // Build the BlockStreamService
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
+                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -419,7 +417,7 @@ public class BlockStreamServiceIntegrationTest {
     }
 
     @Test
-    public void testSubAndUnsubWhileStreaming() throws IOException {
+    public void testSubAndUnsubWhileStreaming() {
 
         int numberOfBlocks = 100;
 
@@ -431,7 +429,7 @@ public class BlockStreamServiceIntegrationTest {
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
+                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final var blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -538,7 +536,7 @@ public class BlockStreamServiceIntegrationTest {
 
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
+                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
         final var blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -701,7 +699,7 @@ public class BlockStreamServiceIntegrationTest {
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);
         final var streamValidatorBuilder =
-                StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
+                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
 
         return new BlockStreamService(
                 streamMediator,

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.validator;
+package com.hedera.block.server.verifier;
 
 import static java.lang.System.Logger.Level.ERROR;
 
@@ -32,7 +32,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Optional;
 
-public class StreamValidatorImpl
+public class StreamVerifierImpl
         implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
@@ -43,7 +43,7 @@ public class StreamValidatorImpl
     private final MetricsService metricsService;
     private final ServiceStatus serviceStatus;
 
-    public StreamValidatorImpl(
+    public StreamVerifierImpl(
             @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler,
             @NonNull final BlockWriter<BlockItem> blockWriter,
             @NonNull final Notifier notifier,
@@ -69,6 +69,7 @@ public class StreamValidatorImpl
                     // Publish the block item back upstream to the notifier
                     // to send responses to producers.
                     notifier.publish(blockItem);
+                    metricsService.get().increment();
                 }
             } else {
                 LOGGER.log(

@@ -40,7 +40,7 @@ import com.hedera.block.server.notifier.NotifierBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
 import com.hedera.block.server.service.ServiceStatus;
-import com.hedera.block.server.validator.StreamValidatorBuilder;
+import com.hedera.block.server.verifier.StreamVerifierBuilder;
 import com.hedera.hapi.block.SingleBlockRequest;
 import com.hedera.hapi.block.SingleBlockResponse;
 import com.hedera.hapi.block.SingleBlockResponseCode;
@@ -76,7 +76,7 @@ public class BlockStreamService implements GrpcService, Notifiable {
 
     private final NotifierBuilder notifierBuilder;
     private Notifier notifier;
-    private final StreamValidatorBuilder streamValidatorBuilder;
+    private final StreamVerifierBuilder streamVerifierBuilder;
 
     private AtomicBoolean isInitPhase = new AtomicBoolean(true);
 
@@ -96,7 +96,7 @@ public class BlockStreamService implements GrpcService, Notifiable {
             @NonNull final LiveStreamMediator streamMediator,
             @NonNull final BlockReader<Block> blockReader,
             @NonNull final ServiceStatus serviceStatus,
-            @NonNull final StreamValidatorBuilder streamValidatorBuilder,
+            @NonNull final StreamVerifierBuilder streamVerifierBuilder,
             @NonNull final BlockNodeContext blockNodeContext) {
         this.streamMediator = streamMediator;
         this.blockReader = blockReader;
@@ -106,7 +106,7 @@ public class BlockStreamService implements GrpcService, Notifiable {
 
         this.notifierBuilder =
                 NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus);
-        this.streamValidatorBuilder = streamValidatorBuilder;
+        this.streamVerifierBuilder = streamVerifierBuilder;
     }
 
     /**
@@ -157,7 +157,7 @@ public class BlockStreamService implements GrpcService, Notifiable {
             notifier = notifierBuilder.blockStreamService(this).build();
 
             final var streamValidator =
-                    streamValidatorBuilder
+                    streamVerifierBuilder
                             .subscriptionHandler(streamMediator)
                             .notifier(notifier)
                             .build();

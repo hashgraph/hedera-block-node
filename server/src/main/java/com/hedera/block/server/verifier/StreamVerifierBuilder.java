@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.validator;
+package com.hedera.block.server.verifier;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
@@ -27,7 +27,14 @@ import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
-public class StreamValidatorBuilder {
+/**
+ * use builder methods to create a {@link BlockNodeEventHandler} to validate and persist block
+ * items.
+ *
+ * <p>When a stream validator is created, it will provide access to validate and persist block
+ * items.
+ */
+public class StreamVerifierBuilder {
     private final BlockWriter<BlockItem> blockWriter;
     private final BlockNodeContext blockNodeContext;
     private final ServiceStatus serviceStatus;
@@ -35,7 +42,7 @@ public class StreamValidatorBuilder {
     private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
     private Notifier notifier;
 
-    private StreamValidatorBuilder(
+    private StreamVerifierBuilder(
             @NonNull final BlockWriter<BlockItem> blockWriter,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
@@ -44,26 +51,45 @@ public class StreamValidatorBuilder {
         this.serviceStatus = serviceStatus;
     }
 
-    public static StreamValidatorBuilder newBuilder(
+    /**
+     * Creates a new stream validator builder using the minimum required parameters.
+     *
+     * @param blockWriter is required to persist block items.
+     * @param blockNodeContext is required to provide configuration and metric reporting mechanisms.
+     * @param serviceStatus is required to determine the service status and to stop the service if
+     *     necessary.
+     * @return a stream validator builder configured with required parameters.
+     */
+    @NonNull
+    public static StreamVerifierBuilder newBuilder(
             @NonNull final BlockWriter<BlockItem> blockWriter,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
-        return new StreamValidatorBuilder(blockWriter, blockNodeContext, serviceStatus);
+        return new StreamVerifierBuilder(blockWriter, blockNodeContext, serviceStatus);
     }
 
-    public StreamValidatorBuilder subscriptionHandler(
+    /**
+     * Optionally, provide a subscription handler to handle the response from the stream.
+     *
+     * @param subscriptionHandler is required to handle the response from the stream.
+     * @return the stream validator builder configured with the subscription handler.
+     */
+    @NonNull
+    public StreamVerifierBuilder subscriptionHandler(
             @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler) {
         this.subscriptionHandler = subscriptionHandler;
         return this;
     }
 
-    public StreamValidatorBuilder notifier(@NonNull final Notifier notifier) {
+    @NonNull
+    public StreamVerifierBuilder notifier(@NonNull final Notifier notifier) {
         this.notifier = notifier;
         return this;
     }
 
+    @NonNull
     public BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> build() {
-        return new StreamValidatorImpl(
+        return new StreamVerifierImpl(
                 subscriptionHandler, blockWriter, notifier, blockNodeContext, serviceStatus);
     }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.validator;
+package com.hedera.block.server.verifier;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
@@ -25,15 +25,25 @@ import dagger.Provides;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.inject.Singleton;
 
+/** A Dagger module for providing dependencies for Validator Module. */
 @Module
 public interface ValidatorInjectionModule {
 
+    /**
+     * Provides a stream validator builder singleton using the block writer, block node context, and
+     * service status.
+     *
+     * @param blockWriter the block writer
+     * @param blockNodeContext the application context
+     * @param serviceStatus the service status
+     * @return a stream validator builder singleton
+     */
     @Provides
     @Singleton
-    static StreamValidatorBuilder providesStreamValidatorBuilder(
+    static StreamVerifierBuilder providesStreamValidatorBuilder(
             @NonNull final BlockWriter<BlockItem> blockWriter,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
-        return StreamValidatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
+        return StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
     }
 }

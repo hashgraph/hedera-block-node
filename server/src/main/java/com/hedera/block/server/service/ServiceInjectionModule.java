@@ -20,6 +20,7 @@ import dagger.Binds;
 import dagger.Module;
 import javax.inject.Singleton;
 
+/** A Dagger module for providing dependencies for Service Module. */
 @Module
 public interface ServiceInjectionModule {
 
