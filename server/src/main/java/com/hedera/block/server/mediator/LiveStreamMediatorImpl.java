@@ -50,15 +50,17 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
     private final MetricsService metricsService;
 
     /**
-     * Constructs a new LiveStreamMediatorImpl instance with the given subscribers, block writer,
-     * and service status. This constructor is primarily used for testing purposes. Users of this
-     * constructor should take care to supply a thread-safe map implementation for the subscribers
-     * to handle the dynamic addition and removal of subscribers at runtime.
+     * Constructs a new LiveStreamMediatorImpl instance with the given subscribers, and service
+     * status. This constructor is primarily used for testing purposes. Users of this constructor
+     * should take care to supply a thread-safe map implementation for the subscribers to handle the
+     * dynamic addition and removal of subscribers at runtime.
      *
      * @param subscribers the map of subscribers to batch event processors. It's recommended the map
      *     implementation is thread-safe
      * @param serviceStatus the service status to stop the service and web server if an exception
      *     occurs while persisting a block item, stop the web server for maintenance, etc
+     * @param blockNodeContext contains the context with metrics and configuration for the
+     *     application
      */
     LiveStreamMediatorImpl(
             @NonNull

@@ -50,7 +50,7 @@ public class StreamVerifierImpl
     private static final String PROTOCOL_VIOLATION_MESSAGE =
             "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
 
-    public StreamVerifierImpl(
+    StreamVerifierImpl(
             @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler,
             @NonNull final BlockWriter<BlockItem> blockWriter,
             @NonNull final Notifier notifier,

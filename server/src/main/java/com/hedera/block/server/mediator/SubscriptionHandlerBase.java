@@ -31,6 +31,13 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Inherit from this class to leverage RingBuffer subscription handling.
+ *
+ * <p>Subclasses may use the ringBuffer to publish events to the subscribers.
+ *
+ * @param <V> the type of the subscription events
+ */
 public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<V> {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
@@ -42,7 +49,18 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
     protected final RingBuffer<ObjectEvent<V>> ringBuffer;
     private final ExecutorService executor;
 
-    public SubscriptionHandlerBase(
+    /**
+     * Constructs an abstract SubscriptionHandler instance with the given subscribers, block writer,
+     * and service status. Users of this constructor should take care to supply a thread-safe map
+     * implementation for the subscribers to handle the dynamic addition and removal of subscribers
+     * at runtime.
+     *
+     * @param subscribers the map of subscribers to batch event processors. It's recommended the map
+     *     implementation is thread-safe
+     * @param subscriptionGauge the gauge to keep track of the number of subscribers
+     * @param ringBufferSize the size of the ring buffer
+     */
+    protected SubscriptionHandlerBase(
             @NonNull
                     final Map<
                                     BlockNodeEventHandler<ObjectEvent<V>>,
@@ -61,6 +79,11 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
         this.executor = Executors.newCachedThreadPool(DaemonThreadFactory.INSTANCE);
     }
 
+    /**
+     * Subscribes the given handler to the stream of events.
+     *
+     * @param handler the handler to subscribe
+     */
     @Override
     public void subscribe(@NonNull final BlockNodeEventHandler<ObjectEvent<V>> handler) {
 
@@ -81,6 +104,11 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
         subscriptionGauge.set(subscribers.size() - 1);
     }
 
+    /**
+     * Unsubscribes the given handler from the stream of events.
+     *
+     * @param handler the handler to unsubscribe
+     */
     @Override
     public void unsubscribe(@NonNull final BlockNodeEventHandler<ObjectEvent<V>> handler) {
 
@@ -104,11 +132,18 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
         subscriptionGauge.set(subscribers.size() - 1);
     }
 
+    /**
+     * Checks if the given handler is subscribed to the stream of events.
+     *
+     * @param handler the handler to check
+     * @return true if the handler is subscribed, false otherwise
+     */
     @Override
     public boolean isSubscribed(@NonNull BlockNodeEventHandler<ObjectEvent<V>> handler) {
         return subscribers.containsKey(handler);
     }
 
+    /** Unsubscribes all the expired handlers from the stream of events. */
     @Override
     public void unsubscribeAllExpired() {
         subscribers.keySet().stream()

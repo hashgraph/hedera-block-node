@@ -50,5 +50,6 @@ public interface SubscriptionHandler<V> {
      */
     boolean isSubscribed(@NonNull final BlockNodeEventHandler<ObjectEvent<V>> handler);
 
+    /** Unsubscribes all the expired handlers from the stream of events. */
     void unsubscribeAllExpired();
 }

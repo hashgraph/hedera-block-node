@@ -79,12 +79,12 @@ public class ConsumerStreamResponseObserver
      * SubscribeStreamResponse events from the Disruptor and passing them to the downstream consumer
      * via the subscribeStreamResponseObserver.
      *
-     * @param blockNodeContext contains the context with metrics and configuration for the
-     *     application
      * @param producerLivenessClock the clock to use to determine the producer liveness
      * @param subscriptionHandler the subscription handler to use to manage the subscription
      *     lifecycle
      * @param subscribeStreamResponseObserver the observer to use to send responses to the consumer
+     * @param blockNodeContext contains the context with metrics and configuration for the
+     *     application
      */
     public ConsumerStreamResponseObserver(
             @NonNull final InstantSource producerLivenessClock,
