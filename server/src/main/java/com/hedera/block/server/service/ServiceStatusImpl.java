@@ -94,7 +94,7 @@ public class ServiceStatusImpl implements ServiceStatus {
             // are sent to the consumers and producers, etc.
             Thread.sleep(delayMillis);
         } catch (InterruptedException e) {
-            LOGGER.log(ERROR, "Error sleeping: ", e);
+            LOGGER.log(ERROR, "An exception was thrown waiting to shut down the server: ", e);
         }
 
         // Stop the web server
