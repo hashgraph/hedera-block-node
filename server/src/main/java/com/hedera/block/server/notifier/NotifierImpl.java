@@ -44,9 +44,8 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implem
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final Notifiable mediator;
-
-    private final ServiceStatus serviceStatus;
     private final MetricsService metricsService;
+    private final ServiceStatus serviceStatus;
 
     NotifierImpl(
             @NonNull

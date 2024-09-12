@@ -18,6 +18,11 @@ package com.hedera.block.server.events;
 
 import com.lmax.disruptor.EventHandler;
 
+/**
+ * Use this interface to combine the contract for handling block node events
+ *
+ * @param <V> the type of the event value
+ */
 public interface BlockNodeEventHandler<V> extends EventHandler<V> {
     default boolean isTimeoutExpired() {
         return false;

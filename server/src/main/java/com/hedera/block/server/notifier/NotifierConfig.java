@@ -19,6 +19,11 @@ package com.hedera.block.server.notifier;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 
+/**
+ * Use this configuration across the notifier package.
+ *
+ * @param ringBufferSize the size of the ring buffer used by the notifier
+ */
 @ConfigData("notifier")
 public record NotifierConfig(@ConfigProperty(defaultValue = "2048") int ringBufferSize) {
     public NotifierConfig {

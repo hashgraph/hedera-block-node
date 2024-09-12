@@ -19,6 +19,11 @@ package com.hedera.block.server.mediator;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 
+/**
+ * Use this configuration across the mediator package.
+ *
+ * @param ringBufferSize the size of the ring buffer used by the mediator
+ */
 @ConfigData("mediator")
 public record MediatorConfig(@ConfigProperty(defaultValue = "67108864") int ringBufferSize) {
     public MediatorConfig {

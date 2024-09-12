@@ -32,7 +32,7 @@ public class NotifierBuilder {
     private final BlockNodeContext blockNodeContext;
     private final ServiceStatus serviceStatus;
 
-    private Map<
+    private final Map<
                     BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>>,
                     BatchEventProcessor<ObjectEvent<PublishStreamResponse>>>
             subscribers;
