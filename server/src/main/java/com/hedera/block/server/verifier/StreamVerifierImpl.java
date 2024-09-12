@@ -17,11 +17,13 @@
 package com.hedera.block.server.verifier;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlocksVerified;
+import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
+import com.hedera.block.server.exception.BlockStreamProtocolException;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
@@ -29,6 +31,7 @@ import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.OneOf;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Optional;
@@ -43,6 +46,9 @@ public class StreamVerifierImpl
     private final Notifier notifier;
     private final MetricsService metricsService;
     private final ServiceStatus serviceStatus;
+
+    private static final String PROTOCOL_VIOLATION_MESSAGE =
+            "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
 
     public StreamVerifierImpl(
             @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler,
@@ -62,22 +68,47 @@ public class StreamVerifierImpl
             ObjectEvent<SubscribeStreamResponse> event, long sequence, boolean endOfBatch) {
         try {
             if (serviceStatus.isRunning()) {
-                // Persist the BlockItem
+
                 final SubscribeStreamResponse subscribeStreamResponse = event.get();
-                final BlockItem blockItem = subscribeStreamResponse.blockItem();
-                Optional<BlockItem> result = blockWriter.write(blockItem);
-                if (result.isPresent()) {
-                    // Publish the block item back upstream to the notifier
-                    // to send responses to producers.
-                    notifier.publish(blockItem);
-                    metricsService.get(LiveBlocksVerified).increment();
+                final OneOf<SubscribeStreamResponse.ResponseOneOfType> oneOfTypeOneOf =
+                        subscribeStreamResponse.response();
+                switch (oneOfTypeOneOf.kind()) {
+                    case BLOCK_ITEM -> {
+                        final BlockItem blockItem = subscribeStreamResponse.blockItem();
+                        if (blockItem == null) {
+                            final String message =
+                                    PROTOCOL_VIOLATION_MESSAGE.formatted(
+                                            "SubscribeStreamResponse",
+                                            "BLOCK_ITEM",
+                                            "block_item",
+                                            subscribeStreamResponse);
+                            LOGGER.log(ERROR, message);
+                            throw new BlockStreamProtocolException(message);
+                        } else {
+                            // Persist the BlockItem
+                            Optional<BlockItem> result = blockWriter.write(blockItem);
+                            if (result.isPresent()) {
+                                // Publish the block item back upstream to the notifier
+                                // to send responses to producers.
+                                notifier.publish(blockItem);
+                                metricsService.get(LiveBlocksVerified).increment();
+                            }
+                        }
+                    }
+                    case STATUS -> LOGGER.log(
+                            DEBUG, "Unexpected received a status message rather than a block item");
+                    default -> {
+                        final String message = "Unknown response type: " + oneOfTypeOneOf.kind();
+                        LOGGER.log(ERROR, message);
+                        throw new BlockStreamProtocolException(message);
+                    }
                 }
             } else {
                 LOGGER.log(
                         ERROR, "Service is not running. Block item will not be processed further.");
             }
 
-        } catch (IOException e) {
+        } catch (BlockStreamProtocolException | IOException e) {
 
             // Trigger the server to stop accepting new requests
             serviceStatus.stopRunning(getClass().getName());

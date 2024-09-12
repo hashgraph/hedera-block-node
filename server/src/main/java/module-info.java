@@ -4,6 +4,7 @@ import com.hedera.block.server.config.BlockNodeConfigExtension;
 module com.hedera.block.server {
     exports com.hedera.block.server;
     exports com.hedera.block.server.consumer;
+    exports com.hedera.block.server.exception;
     exports com.hedera.block.server.persistence.storage;
     exports com.hedera.block.server.persistence.storage.write;
     exports com.hedera.block.server.persistence.storage.read;
