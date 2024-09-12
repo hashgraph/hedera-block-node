@@ -28,7 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class NotifierBuilder {
 
-    private Notifiable blockStreamService;
     private final Notifiable mediator;
     private final BlockNodeContext blockNodeContext;
     private final ServiceStatus serviceStatus;
@@ -38,7 +37,7 @@ public class NotifierBuilder {
                     BatchEventProcessor<ObjectEvent<PublishStreamResponse>>>
             subscribers;
 
-    /** The initial capacity of the subscriber map. */
+    /** The initial capacity of producers in the subscriber map. */
     private static final int SUBSCRIBER_INIT_CAPACITY = 5;
 
     private NotifierBuilder(
@@ -60,25 +59,8 @@ public class NotifierBuilder {
         return new NotifierBuilder(mediator, blockNodeContext, serviceStatus);
     }
 
-    public NotifierBuilder blockStreamService(Notifiable blockStreamService) {
-        this.blockStreamService = blockStreamService;
-        return this;
-    }
-
-    @NonNull
-    public NotifierBuilder subscribers(
-            @NonNull
-                    final Map<
-                                    BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>>,
-                                    BatchEventProcessor<ObjectEvent<PublishStreamResponse>>>
-                            subscribers) {
-        this.subscribers = subscribers;
-        return this;
-    }
-
     @NonNull
     public Notifier build() {
-        return new NotifierImpl(
-                subscribers, blockStreamService, mediator, blockNodeContext, serviceStatus);
+        return new NotifierImpl(subscribers, mediator, blockNodeContext, serviceStatus);
     }
 }

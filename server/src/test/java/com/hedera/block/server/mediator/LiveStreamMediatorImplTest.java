@@ -33,7 +33,6 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
-import com.hedera.block.server.notifier.Notifiable;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.notifier.NotifierBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
@@ -82,8 +81,6 @@ public class LiveStreamMediatorImplTest {
     private ServerCallStreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
             serverCallStreamObserver;
 
-    @Mock private Notifiable blockStreamService;
-
     @Mock private InstantSource testClock;
 
     private final long TIMEOUT_THRESHOLD_MILLIS = 100L;
@@ -99,6 +96,7 @@ public class LiveStreamMediatorImplTest {
                 TestConfigUtil.CONSUMER_TIMEOUT_THRESHOLD_KEY,
                 String.valueOf(TIMEOUT_THRESHOLD_MILLIS));
         properties.put(TestConfigUtil.MEDIATOR_RING_BUFFER_SIZE_KEY, String.valueOf(1024));
+
         this.testContext = TestConfigUtil.getTestBlockNodeContext(properties);
     }
 
@@ -126,7 +124,7 @@ public class LiveStreamMediatorImplTest {
                 streamMediator.isSubscribed(observer3),
                 "Expected the mediator to have observer3 subscribed");
 
-        Thread.sleep(testTimeout);
+        Thread.sleep(100);
 
         streamMediator.unsubscribe(observer1);
         assertFalse(
@@ -374,7 +372,7 @@ public class LiveStreamMediatorImplTest {
     }
 
     @Test
-    public void testMediatorBlocksPublishAfterException() throws IOException {
+    public void testMediatorBlocksPublishAfterException() throws IOException, InterruptedException {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
@@ -399,9 +397,7 @@ public class LiveStreamMediatorImplTest {
         streamMediator.subscribe(concreteObserver3);
 
         final Notifier notifier =
-                NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus)
-                        .blockStreamService(blockStreamService)
-                        .build();
+                NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
         final var streamValidator =
                 new StreamVerifierImpl(
                         streamMediator, blockWriter, notifier, blockNodeContext, serviceStatus);
@@ -421,7 +417,7 @@ public class LiveStreamMediatorImplTest {
 
         streamMediator.publish(firstBlockItem);
 
-        verify(blockStreamService, timeout(testTimeout).times(1)).notifyUnrecoverableError();
+        Thread.sleep(testTimeout);
 
         // Confirm the counter was incremented only once
         assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());

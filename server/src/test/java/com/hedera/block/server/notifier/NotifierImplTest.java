@@ -57,7 +57,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class NotifierImplTest {
 
     @Mock private Notifiable mediator;
-    @Mock private Notifiable blockStreamService;
     @Mock private Publisher<BlockItem> publisher;
     @Mock private ServiceStatus serviceStatus;
     @Mock private SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
@@ -76,7 +75,7 @@ public class NotifierImplTest {
     private final long TIMEOUT_THRESHOLD_MILLIS = 100L;
     private final long TEST_TIME = 1_719_427_664_950L;
 
-    private static final int testTimeout = 2000;
+    private static final int testTimeout = 1000;
 
     private final BlockNodeContext testContext;
 
@@ -91,9 +90,7 @@ public class NotifierImplTest {
 
         final ServiceStatus serviceStatus = new ServiceStatusImpl(testContext);
         final var notifier =
-                NotifierBuilder.newBuilder(mediator, testContext, serviceStatus)
-                        .blockStreamService(blockStreamService)
-                        .build();
+                NotifierBuilder.newBuilder(mediator, testContext, serviceStatus).build();
 
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
@@ -176,9 +173,7 @@ public class NotifierImplTest {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         final var notifier =
-                NotifierBuilder.newBuilder(mediator, testContext, serviceStatus)
-                        .blockStreamService(blockStreamService)
-                        .build();
+                NotifierBuilder.newBuilder(mediator, testContext, serviceStatus).build();
 
         // Set the clocks to be expired
         final InstantSource testClock1 = mock(InstantSource.class);
@@ -252,8 +247,7 @@ public class NotifierImplTest {
 
         when(serviceStatus.isRunning()).thenReturn(true);
         final var notifier =
-                new TestNotifier(
-                        new HashMap<>(), blockStreamService, mediator, testContext, serviceStatus);
+                new TestNotifier(new HashMap<>(), mediator, testContext, serviceStatus);
         final var concreteObserver1 =
                 new ProducerBlockItemObserver(
                         testClock,
@@ -310,8 +304,7 @@ public class NotifierImplTest {
         // Set the serviceStatus to not running
         when(serviceStatus.isRunning()).thenReturn(false);
         final var notifier =
-                new TestNotifier(
-                        new HashMap<>(), blockStreamService, mediator, testContext, serviceStatus);
+                new TestNotifier(new HashMap<>(), mediator, testContext, serviceStatus);
         final var concreteObserver1 =
                 new ProducerBlockItemObserver(
                         testClock,
@@ -376,11 +369,10 @@ public class NotifierImplTest {
                                         BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>>,
                                         BatchEventProcessor<ObjectEvent<PublishStreamResponse>>>
                                 subscribers,
-                @NonNull final Notifiable blockStreamService,
                 @NonNull final Notifiable mediator,
                 @NonNull final BlockNodeContext blockNodeContext,
                 @NonNull final ServiceStatus serviceStatus) {
-            super(subscribers, blockStreamService, mediator, blockNodeContext, serviceStatus);
+            super(subscribers, mediator, blockNodeContext, serviceStatus);
         }
 
         @Override

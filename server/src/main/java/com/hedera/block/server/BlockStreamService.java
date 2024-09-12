@@ -34,7 +34,6 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.notifier.Notifiable;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.notifier.NotifierBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
@@ -55,7 +54,6 @@ import io.helidon.webserver.grpc.GrpcService;
 import java.io.IOException;
 import java.time.Clock;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
 /**
@@ -63,7 +61,7 @@ import javax.inject.Inject;
  * the implementation for the bidirectional streaming, server streaming, and unary methods defined
  * in the proto file.
  */
-public class BlockStreamService implements GrpcService, Notifiable {
+public class BlockStreamService implements GrpcService {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -74,11 +72,7 @@ public class BlockStreamService implements GrpcService, Notifiable {
     private final BlockNodeContext blockNodeContext;
     private final MetricsService metricsService;
 
-    private final NotifierBuilder notifierBuilder;
-    private Notifier notifier;
-    private final StreamVerifierBuilder streamVerifierBuilder;
-
-    private AtomicBoolean isInitPhase = new AtomicBoolean(true);
+    private final Notifier notifier;
 
     /**
      * Constructor for the BlockStreamService class. It initializes the BlockStreamService with the
@@ -98,15 +92,22 @@ public class BlockStreamService implements GrpcService, Notifiable {
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final StreamVerifierBuilder streamVerifierBuilder,
             @NonNull final BlockNodeContext blockNodeContext) {
-        this.streamMediator = streamMediator;
         this.blockReader = blockReader;
         this.serviceStatus = serviceStatus;
         this.blockNodeContext = blockNodeContext;
         this.metricsService = blockNodeContext.metricsService();
 
-        this.notifierBuilder =
-                NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus);
-        this.streamVerifierBuilder = streamVerifierBuilder;
+        notifier =
+                NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
+
+        final var streamValidator =
+                streamVerifierBuilder
+                        .subscriptionHandler(streamMediator)
+                        .notifier(notifier)
+                        .build();
+
+        streamMediator.subscribe(streamValidator);
+        this.streamMediator = streamMediator;
     }
 
     /**
@@ -152,19 +153,6 @@ public class BlockStreamService implements GrpcService, Notifiable {
                     final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
                             publishStreamResponseObserver) {
         LOGGER.log(DEBUG, "Executing bidirectional publishBlockStream gRPC method");
-
-        if (isInitPhase.get()) {
-            notifier = notifierBuilder.blockStreamService(this).build();
-
-            final var streamValidator =
-                    streamVerifierBuilder
-                            .subscriptionHandler(streamMediator)
-                            .notifier(notifier)
-                            .build();
-            streamMediator.subscribe(streamValidator);
-
-            isInitPhase.set(false);
-        }
 
         // Unsubscribe any expired notifiers
         notifier.unsubscribeAllExpired();
@@ -269,14 +257,6 @@ public class BlockStreamService implements GrpcService, Notifiable {
 
         // Send the response
         singleBlockResponseStreamObserver.onCompleted();
-    }
-
-    @Override
-    public void notifyUnrecoverableError() {
-        // prevent additional producer/consumer subscriptions
-        // and single block queries. Prepare for shutdown.
-        serviceStatus.stopRunning(getClass().getName());
-        LOGGER.log(ERROR, "An unrecoverable error occurred. Preparing to stop the service.");
     }
 
     // TODO: Fix this error type once it's been standardized in `hedera-protobufs`

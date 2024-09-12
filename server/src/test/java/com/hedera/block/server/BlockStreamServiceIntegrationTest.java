@@ -564,7 +564,7 @@ public class BlockStreamServiceIntegrationTest {
 
         // Use verify to make sure the serviceStatus.stopRunning() method is called
         // before the next block is transmitted.
-        verify(serviceStatus, timeout(testTimeout).times(3)).stopRunning(any());
+        verify(serviceStatus, timeout(testTimeout).times(2)).stopRunning(any());
 
         // Simulate another producer attempting to connect to the Block Node after the exception.
         // Later, verify they received a response indicating the stream is closed.

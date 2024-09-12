@@ -43,7 +43,6 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implem
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final Notifiable blockStreamService;
     private final Notifiable mediator;
 
     private final ServiceStatus serviceStatus;
@@ -55,7 +54,6 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implem
                                     BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>>,
                                     BatchEventProcessor<ObjectEvent<PublishStreamResponse>>>
                             subscribers,
-            @NonNull final Notifiable blockStreamService,
             @NonNull final Notifiable mediator,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
@@ -68,7 +66,6 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implem
                         .getConfigData(NotifierConfig.class)
                         .ringBufferSize());
 
-        this.blockStreamService = blockStreamService;
         this.mediator = mediator;
         this.metricsService = blockNodeContext.metricsService();
         this.serviceStatus = serviceStatus;
@@ -77,7 +74,6 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implem
     @Override
     public void notifyUnrecoverableError() {
 
-        blockStreamService.notifyUnrecoverableError();
         mediator.notifyUnrecoverableError();
 
         // Publish an end of stream response to the producers.
