@@ -173,7 +173,7 @@ public class BlockStreamServiceIntegrationTest {
 
         // Register 3 producers
         final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest>
-                publishStreamObserver1 =
+                publishStreamObserver =
                         blockStreamService.protocPublishBlockStream(publishStreamResponseObserver1);
         blockStreamService.protocPublishBlockStream(publishStreamResponseObserver2);
         blockStreamService.protocPublishBlockStream(publishStreamResponseObserver3);
@@ -202,7 +202,7 @@ public class BlockStreamServiceIntegrationTest {
 
             // Calling onNext() as Helidon does with each block item for
             // the first producer.
-            publishStreamObserver1.onNext(fromPbj(publishStreamRequest));
+            publishStreamObserver.onNext(fromPbj(publishStreamRequest));
         }
 
         // Verify all 10 BlockItems were sent to each of the 3 consumers
@@ -243,11 +243,10 @@ public class BlockStreamServiceIntegrationTest {
                 .onNext(fromPbj(publishStreamResponse));
 
         // Close the stream as Helidon does
-        //        streamObserver.onCompleted();
+        publishStreamObserver.onCompleted();
 
         // verify the onCompleted() method is invoked on the wrapped StreamObserver
-        //        verify(publishStreamResponseObserver1,
-        // timeout(testTimeout).times(1)).onCompleted();
+        verify(publishStreamResponseObserver1, timeout(testTimeout).times(1)).onCompleted();
     }
 
     @Test
@@ -417,7 +416,7 @@ public class BlockStreamServiceIntegrationTest {
     }
 
     @Test
-    public void testSubAndUnsubWhileStreaming() {
+    public void testSubAndUnsubWhileStreaming() throws InterruptedException {
 
         int numberOfBlocks = 100;
 
@@ -452,16 +451,28 @@ public class BlockStreamServiceIntegrationTest {
                 subscribeStreamRequest, subscribeStreamObserver3);
 
         for (int i = 0; i < blockItems.size(); i++) {
-            final PublishStreamRequest publishStreamRequest =
-                    PublishStreamRequest.newBuilder().blockItem(blockItems.get(i)).build();
 
-            // Remove a subscriber
+            // Transmit the BlockItem
+            streamObserver.onNext(
+                    fromPbj(
+                            PublishStreamRequest.newBuilder()
+                                    .blockItem(blockItems.get(i))
+                                    .build()));
+
+            // Remove 1st subscriber
             if (i == 10) {
+                // Pause here to ensure the last sent block item is received.
+                // This makes the test deterministic.
+                Thread.sleep(50);
                 final var k = consumers.firstEntry().getKey();
                 streamMediator.unsubscribe(k);
             }
 
+            // Remove 2nd subscriber
             if (i == 60) {
+                // Pause here to ensure the last sent block item is received.
+                // This makes the test deterministic.
+                Thread.sleep(50);
                 final var k = consumers.firstEntry().getKey();
                 streamMediator.unsubscribe(k);
             }
@@ -472,10 +483,11 @@ public class BlockStreamServiceIntegrationTest {
                         subscribeStreamRequest, subscribeStreamObserver4);
             }
 
-            // Transmit the BlockItem
-            streamObserver.onNext(fromPbj(publishStreamRequest));
-
+            // Remove 3rd subscriber
             if (i == 70) {
+                // Pause here to ensure the last sent block item is received.
+                // This makes the test deterministic.
+                Thread.sleep(50);
                 final var k = consumers.firstEntry().getKey();
                 streamMediator.unsubscribe(k);
             }
