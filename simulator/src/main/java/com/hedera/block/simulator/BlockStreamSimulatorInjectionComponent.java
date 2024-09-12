@@ -18,6 +18,7 @@ package com.hedera.block.simulator;
 
 import com.hedera.block.simulator.config.ConfigInjectionModule;
 import com.hedera.block.simulator.generator.GeneratorInjectionModule;
+import com.hedera.block.simulator.grpc.GrpcInjectionModule;
 import com.swirlds.config.api.Configuration;
 import dagger.BindsInstance;
 import dagger.Component;
@@ -29,6 +30,7 @@ import javax.inject.Singleton;
         modules = {
             ConfigInjectionModule.class,
             GeneratorInjectionModule.class,
+            GrpcInjectionModule.class,
         })
 public interface BlockStreamSimulatorInjectionComponent {
 

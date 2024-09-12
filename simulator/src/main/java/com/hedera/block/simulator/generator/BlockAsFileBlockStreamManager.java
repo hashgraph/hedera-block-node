@@ -79,6 +79,9 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
         if (currentBlockItemIndex >= blocks.get(currentBlockIndex).items().size()) {
             currentBlockItemIndex = 0;
             currentBlockIndex++;
+            if (currentBlockIndex >= blocks.size()) {
+                currentBlockIndex = 0;
+            }
         }
         return nextBlockItem;
     }

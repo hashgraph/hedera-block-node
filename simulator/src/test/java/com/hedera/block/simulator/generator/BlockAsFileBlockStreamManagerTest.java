@@ -70,7 +70,8 @@ class BlockAsFileBlockStreamManagerTest {
     }
 
     private BlockAsFileBlockStreamManager getBlockAsFileBlockStreamManager(String rootFolder) {
-        BlockStreamConfig blockStreamConfig = new BlockStreamConfig(GenerationMode.DIR, rootFolder);
+        BlockStreamConfig blockStreamConfig =
+                new BlockStreamConfig(GenerationMode.DIR, rootFolder, 1_500_000);
         return new BlockAsFileBlockStreamManager(blockStreamConfig);
     }
 }

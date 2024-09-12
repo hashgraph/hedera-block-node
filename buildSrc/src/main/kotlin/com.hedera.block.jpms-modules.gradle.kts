@@ -36,6 +36,8 @@ jvmDependencyConflicts.patch {
             "org.codehaus.mojo:animal-sniffer-annotations"
         )
 
+    module("io.grpc:grpc-netty-shaded") { annotationLibraries.forEach { removeDependency(it) } }
+
     module("io.grpc:grpc-api") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-core") { annotationLibraries.forEach { removeDependency(it) } }
     module("io.grpc:grpc-context") { annotationLibraries.forEach { removeDependency(it) } }
@@ -87,9 +89,16 @@ extraJavaModuleInfo {
         exportAllPackages()
         requireAllDefinedDependencies()
         requires("java.logging")
+        uses("io.grpc.ManagedChannelProvider")
+        uses("io.grpc.NameResolverProvider")
+        uses("io.grpc.LoadBalancerProvider")
     }
 
-    module("io.grpc:grpc-core", "io.grpc.internal")
+    module("io.grpc:grpc-core", "io.grpc.internal") {
+        exportAllPackages()
+        requireAllDefinedDependencies()
+        requires("java.logging")
+    }
     module("io.grpc:grpc-context", "io.grpc.context")
     module("io.grpc:grpc-stub", "io.grpc.stub") {
         exportAllPackages()
@@ -101,6 +110,15 @@ extraJavaModuleInfo {
     module("io.grpc:grpc-util", "io.grpc.util")
     module("io.grpc:grpc-protobuf", "io.grpc.protobuf")
     module("io.grpc:grpc-protobuf-lite", "io.grpc.protobuf.lite")
+
+    module("io.grpc:grpc-netty-shaded", "io.grpc.netty.shaded") {
+        exportAllPackages()
+        requireAllDefinedDependencies()
+        requires("java.logging")
+        requires("jdk.unsupported")
+        ignoreServiceProvider("reactor.blockhound.integration.BlockHoundIntegration")
+    }
+
     module("com.github.spotbugs:spotbugs-annotations", "com.github.spotbugs.annotations")
     module("com.google.code.findbugs:jsr305", "java.annotation") {
         exportAllPackages()

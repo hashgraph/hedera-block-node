@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Test;
 
 class BlockStreamConfigTest {
 
+    private final int delayBetweenBlockItems = 1_500_000;
+
     private String getAbsoluteFolder(String relativePath) {
         return Paths.get(relativePath).toAbsolutePath().toString();
     }
@@ -42,7 +44,8 @@ class BlockStreamConfigTest {
         assertTrue(Files.exists(path), "The folder must exist for this test.");
 
         // No exception should be thrown
-        BlockStreamConfig config = new BlockStreamConfig(generationMode, folderRootPath);
+        BlockStreamConfig config =
+                new BlockStreamConfig(generationMode, folderRootPath, delayBetweenBlockItems);
 
         assertEquals(folderRootPath, config.folderRootPath());
         assertEquals(GenerationMode.DIR, config.generationMode());
@@ -55,7 +58,8 @@ class BlockStreamConfigTest {
         GenerationMode generationMode = GenerationMode.DIR;
 
         // No exception should be thrown, and the default folder should be used
-        BlockStreamConfig config = new BlockStreamConfig(generationMode, folderRootPath);
+        BlockStreamConfig config =
+                new BlockStreamConfig(generationMode, folderRootPath, delayBetweenBlockItems);
 
         // Verify that the path is set to the default
         Path expectedPath = Paths.get("src/main/resources/block-0.0.3/").toAbsolutePath();
@@ -73,7 +77,11 @@ class BlockStreamConfigTest {
         IllegalArgumentException exception =
                 assertThrows(
                         IllegalArgumentException.class,
-                        () -> new BlockStreamConfig(generationMode, relativeFolderPath));
+                        () ->
+                                new BlockStreamConfig(
+                                        generationMode,
+                                        relativeFolderPath,
+                                        delayBetweenBlockItems));
 
         // Verify the exception message
         assertEquals(relativeFolderPath + " Root path must be absolute", exception.getMessage());
@@ -93,7 +101,9 @@ class BlockStreamConfigTest {
         IllegalArgumentException exception =
                 assertThrows(
                         IllegalArgumentException.class,
-                        () -> new BlockStreamConfig(generationMode, folderRootPath));
+                        () ->
+                                new BlockStreamConfig(
+                                        generationMode, folderRootPath, delayBetweenBlockItems));
 
         // Verify the exception message
         assertEquals("Folder does not exist: " + path, exception.getMessage());
@@ -106,7 +116,8 @@ class BlockStreamConfigTest {
         GenerationMode generationMode = GenerationMode.ADHOC;
 
         // No exception should be thrown because generation mode is not DIR
-        BlockStreamConfig config = new BlockStreamConfig(generationMode, folderRootPath);
+        BlockStreamConfig config =
+                new BlockStreamConfig(generationMode, folderRootPath, delayBetweenBlockItems);
 
         // Verify that the configuration was created successfully
         assertEquals(folderRootPath, config.folderRootPath());

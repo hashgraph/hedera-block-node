@@ -32,7 +32,8 @@ import java.nio.file.Paths;
 @ConfigData("blockStream")
 public record BlockStreamConfig(
         @ConfigProperty(defaultValue = "DIR") GenerationMode generationMode,
-        @ConfigProperty(defaultValue = "") String folderRootPath) {
+        @ConfigProperty(defaultValue = "") String folderRootPath,
+        @ConfigProperty(defaultValue = "1_500_000") int delayBetweenBlockItems) {
 
     /**
      * Constructor to set the default root path if not provided, it will be set to the data

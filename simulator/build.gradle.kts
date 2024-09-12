@@ -30,6 +30,7 @@ mainModuleInfo {
     annotationProcessor("dagger.compiler")
     annotationProcessor("com.google.auto.service.processor")
     runtimeOnly("com.swirlds.config.impl")
+    runtimeOnly("io.grpc.netty.shaded")
 }
 
 testModuleInfo {

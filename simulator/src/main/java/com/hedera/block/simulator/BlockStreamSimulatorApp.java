@@ -16,7 +16,10 @@
 
 package com.hedera.block.simulator;
 
+import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.generator.BlockStreamManager;
+import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
+import com.hedera.hapi.block.stream.BlockItem;
 import com.swirlds.config.api.Configuration;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.inject.Inject;
@@ -29,6 +32,11 @@ public class BlockStreamSimulatorApp {
 
     Configuration configuration;
     BlockStreamManager blockStreamManager;
+    PublishStreamGrpcClient publishStreamGrpcClient;
+
+    int delayBetweenBlockItems;
+    int delayMSBetweenBlockItems;
+    int delayNSBetweenBlockItems;
 
     boolean isRunning = false;
 
@@ -40,30 +48,42 @@ public class BlockStreamSimulatorApp {
      */
     @Inject
     public BlockStreamSimulatorApp(
-            @NonNull Configuration configuration, @NonNull BlockStreamManager blockStreamManager) {
+            @NonNull Configuration configuration,
+            @NonNull BlockStreamManager blockStreamManager,
+            @NonNull PublishStreamGrpcClient publishStreamGrpcClient) {
         this.configuration = configuration;
         this.blockStreamManager = blockStreamManager;
+        this.publishStreamGrpcClient = publishStreamGrpcClient;
+
+        delayBetweenBlockItems =
+                configuration.getConfigData(BlockStreamConfig.class).delayBetweenBlockItems();
+        delayMSBetweenBlockItems = delayBetweenBlockItems / 1_000_000;
+        delayNSBetweenBlockItems = delayBetweenBlockItems % 1_000_000;
     }
 
     /** Starts the block stream simulator. */
     public void start() {
 
-        // use blockStreamManager to get block stream
-
-        // use PublishStreamGrpcClient to stream it to the block-node.
         isRunning = true;
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has started");
 
-        // while
+        boolean streamBlockItem = true;
+        int blockItemsStreamed = 0;
 
-        // get block item
-        // send block item
+        while (streamBlockItem) {
+            // get block item
+            BlockItem blockItem = blockStreamManager.getNextBlockItem();
+            publishStreamGrpcClient.streamBlockItem(blockItem);
+            blockItemsStreamed++;
 
-        // verify if ack is needed
-        // wait for ack async...
+            try {
+                Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
-        // verify exit condition
-
+        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
     }
 
     /**
