@@ -38,6 +38,14 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+/**
+ * Use the StreamPersistenceHandlerImpl to persist live block items passed asynchronously through
+ * the LMAX Disruptor
+ *
+ * <p>This implementation is the primary integration point between the LMAX Disruptor and the file
+ * system. The stream persistence handler implements the EventHandler interface so the Disruptor can
+ * invoke the onEvent() method when a new SubscribeStreamResponse is available.
+ */
 @Singleton
 public class StreamPersistenceHandlerImpl
         implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> {
@@ -53,6 +61,19 @@ public class StreamPersistenceHandlerImpl
     private static final String PROTOCOL_VIOLATION_MESSAGE =
             "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
 
+    /**
+     * Constructs a new StreamPersistenceHandlerImpl instance with the given subscription handler,
+     * notifier, block writer,
+     *
+     * @param subscriptionHandler is used to unsubscribe from the mediator if an error occurs.
+     * @param notifier is used to pass successful response messages back to producers and to trigger
+     *     error handling in the event of unrecoverable errors.
+     * @param blockWriter is used to persist the block items.
+     * @param blockNodeContext contains the context with metrics and configuration for the
+     *     application.
+     * @param serviceStatus is used to stop the service and web server if an exception occurs while
+     *     persisting a block item, stop the web server for maintenance, etc.
+     */
     @Inject
     public StreamPersistenceHandlerImpl(
             @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler,
@@ -67,9 +88,16 @@ public class StreamPersistenceHandlerImpl
         this.serviceStatus = serviceStatus;
     }
 
+    /**
+     * The onEvent method is invoked by the Disruptor when a new SubscribeStreamResponse is
+     * available. The method processes the response and persists the block item to the file system.
+     *
+     * @param event the ObjectEvent containing the SubscribeStreamResponse
+     * @param l the sequence number of the event
+     * @param b true if the event is the last in the sequence
+     */
     @Override
-    public void onEvent(
-            ObjectEvent<SubscribeStreamResponse> event, long sequence, boolean endOfBatch) {
+    public void onEvent(ObjectEvent<SubscribeStreamResponse> event, long l, boolean b) {
         try {
             if (serviceStatus.isRunning()) {
 

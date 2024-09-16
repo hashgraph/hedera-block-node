@@ -40,8 +40,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * The ConsumerBlockItemObserver class is the primary integration point between the LMAX Disruptor
  * and an instance of a downstream consumer (represented by subscribeStreamResponseObserver provided
- * by Helidon). The ConsumerBlockItemObserver implements the EventHandler interface so the Disruptor
- * can invoke the onEvent() method when a new SubscribeStreamResponse is available.
+ * by Helidon). The ConsumerBlockItemObserver implements the BlockNodeEventHandler interface so the
+ * Disruptor can invoke the onEvent() method when a new SubscribeStreamResponse is available.
  */
 public class ConsumerStreamResponseObserver
         implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> {
