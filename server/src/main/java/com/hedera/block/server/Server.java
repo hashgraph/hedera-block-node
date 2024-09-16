@@ -52,6 +52,7 @@ public class Server {
         final Config config =
                 Config.builder()
                         .sources(file(Paths.get("/app", LOGGING_PROPERTIES)).optional())
+                        .sources(file(Paths.get(".", APPLICATION_PROPERTIES)).optional())
                         .build();
 
         Config.global(config);
