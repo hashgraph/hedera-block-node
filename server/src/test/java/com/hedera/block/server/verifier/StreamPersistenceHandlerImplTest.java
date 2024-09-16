@@ -43,7 +43,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class StreamVerifierImplTest {
+public class StreamPersistenceHandlerImplTest {
 
     @Mock private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
 
@@ -66,7 +66,7 @@ public class StreamVerifierImplTest {
         when(serviceStatus.isRunning()).thenReturn(false);
 
         final var streamVerifier =
-                new StreamVerifierImpl(
+                new StreamPersistenceHandlerImpl(
                         subscriptionHandler,
                         notifier,
                         blockWriter,
@@ -93,7 +93,7 @@ public class StreamVerifierImplTest {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         final var streamVerifier =
-                new StreamVerifierImpl(
+                new StreamPersistenceHandlerImpl(
                         subscriptionHandler,
                         notifier,
                         blockWriter,
@@ -122,7 +122,7 @@ public class StreamVerifierImplTest {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         final var streamVerifier =
-                new StreamVerifierImpl(
+                new StreamPersistenceHandlerImpl(
                         subscriptionHandler,
                         notifier,
                         blockWriter,
@@ -154,7 +154,7 @@ public class StreamVerifierImplTest {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         final var streamVerifier =
-                new StreamVerifierImpl(
+                new StreamPersistenceHandlerImpl(
                         subscriptionHandler,
                         notifier,
                         blockWriter,

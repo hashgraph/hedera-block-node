@@ -50,7 +50,7 @@ import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
-import com.hedera.block.server.verifier.StreamVerifierImpl;
+import com.hedera.block.server.verifier.StreamPersistenceHandlerImpl;
 import com.hedera.hapi.block.SingleBlockResponse;
 import com.hedera.hapi.block.SingleBlockResponseCode;
 import com.hedera.hapi.block.stream.Block;
@@ -117,7 +117,7 @@ public class BlockStreamServiceTest {
     public void testServiceName() {
 
         final var blockNodeEventHandler =
-                new StreamVerifierImpl(
+                new StreamPersistenceHandlerImpl(
                         streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
@@ -139,7 +139,7 @@ public class BlockStreamServiceTest {
     public void testProto() {
 
         final var blockNodeEventHandler =
-                new StreamVerifierImpl(
+                new StreamPersistenceHandlerImpl(
                         streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
@@ -162,7 +162,7 @@ public class BlockStreamServiceTest {
     void testSingleBlockHappyPath() throws IOException, ParseException {
 
         final var blockNodeEventHandler =
-                new StreamVerifierImpl(
+                new StreamPersistenceHandlerImpl(
                         streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final BlockStreamService blockStreamService =
@@ -225,7 +225,7 @@ public class BlockStreamServiceTest {
 
         // Call the service
         final var blockNodeEventHandler =
-                new StreamVerifierImpl(
+                new StreamPersistenceHandlerImpl(
                         streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
@@ -247,7 +247,7 @@ public class BlockStreamServiceTest {
     void testSingleBlockServiceNotAvailable() {
 
         final var blockNodeEventHandler =
-                new StreamVerifierImpl(
+                new StreamPersistenceHandlerImpl(
                         streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
@@ -276,7 +276,7 @@ public class BlockStreamServiceTest {
     @Test
     public void testSingleBlockIOExceptionPath() throws IOException, ParseException {
         final var blockNodeEventHandler =
-                new StreamVerifierImpl(
+                new StreamPersistenceHandlerImpl(
                         streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
@@ -305,7 +305,7 @@ public class BlockStreamServiceTest {
     @Test
     public void testSingleBlockParseExceptionPath() throws IOException, ParseException {
         final var blockNodeEventHandler =
-                new StreamVerifierImpl(
+                new StreamPersistenceHandlerImpl(
                         streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
@@ -351,7 +351,7 @@ public class BlockStreamServiceTest {
 
     private BlockStreamService getBlockStreamService() {
         final var blockNodeEventHandler =
-                new StreamVerifierImpl(
+                new StreamPersistenceHandlerImpl(
                         streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
@@ -369,7 +369,7 @@ public class BlockStreamServiceTest {
         // TODO: We might be able to remove this test once we can remove the Translator class
 
         final var blockNodeEventHandler =
-                new StreamVerifierImpl(
+                new StreamPersistenceHandlerImpl(
                         streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(

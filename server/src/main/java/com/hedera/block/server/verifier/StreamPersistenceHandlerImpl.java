@@ -39,7 +39,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class StreamVerifierImpl
+public class StreamPersistenceHandlerImpl
         implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
@@ -54,7 +54,7 @@ public class StreamVerifierImpl
             "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
 
     @Inject
-    public StreamVerifierImpl(
+    public StreamPersistenceHandlerImpl(
             @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler,
             @NonNull final Notifier notifier,
             @NonNull final BlockWriter<BlockItem> blockWriter,

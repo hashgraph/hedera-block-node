@@ -50,7 +50,7 @@ public class VerifierInjectionModuleTest {
 
         // Call the method under test
         BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> streamVerifier =
-                new StreamVerifierImpl(
+                new StreamPersistenceHandlerImpl(
                         subscriptionHandler,
                         notifier,
                         blockWriter,

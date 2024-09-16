@@ -30,5 +30,5 @@ public interface VerifierInjectionModule {
     @Binds
     @Singleton
     BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> bindBlockNodeEventHandler(
-            StreamVerifierImpl streamVerifier);
+            StreamPersistenceHandlerImpl streamPersistenceHandler);
 }
