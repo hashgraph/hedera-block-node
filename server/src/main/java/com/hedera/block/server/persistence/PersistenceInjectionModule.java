@@ -17,13 +17,17 @@
 package com.hedera.block.server.persistence;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.events.BlockNodeEventHandler;
+import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import java.io.IOException;
@@ -60,4 +64,9 @@ public interface PersistenceInjectionModule {
     static BlockReader<Block> providesBlockReader(PersistenceStorageConfig config) {
         return BlockAsDirReaderBuilder.newBuilder(config).build();
     }
+
+    @Binds
+    @Singleton
+    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> bindBlockNodeEventHandler(
+            StreamPersistenceHandlerImpl streamPersistenceHandler);
 }

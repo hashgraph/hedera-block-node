@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.verifier;
+package com.hedera.block.server.persistence;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlocksVerified;
 import static java.lang.System.Logger.Level.DEBUG;

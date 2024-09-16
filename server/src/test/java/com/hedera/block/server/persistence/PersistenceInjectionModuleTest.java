@@ -21,10 +21,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.events.BlockNodeEventHandler;
+import com.hedera.block.server.events.ObjectEvent;
+import com.hedera.block.server.mediator.SubscriptionHandler;
+import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.swirlds.config.api.Configuration;
@@ -39,8 +45,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class PersistenceInjectionModuleTest {
 
     @Mock private BlockNodeContext blockNodeContext;
-
     @Mock private PersistenceStorageConfig persistenceStorageConfig;
+    @Mock private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
+    @Mock private Notifier notifier;
+    @Mock private BlockWriter<BlockItem> blockWriter;
+    @Mock private ServiceStatus serviceStatus;
 
     @BeforeEach
     void setup() throws IOException {
@@ -86,5 +95,22 @@ class PersistenceInjectionModuleTest {
                 PersistenceInjectionModule.providesBlockReader(persistenceStorageConfig);
 
         assertNotNull(blockReader);
+    }
+
+    @Test
+    void testProvidesStreamValidatorBuilder() throws IOException {
+
+        BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
+
+        // Call the method under test
+        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> streamVerifier =
+                new StreamPersistenceHandlerImpl(
+                        subscriptionHandler,
+                        notifier,
+                        blockWriter,
+                        blockNodeContext,
+                        serviceStatus);
+
+        assertNotNull(streamVerifier);
     }
 }
