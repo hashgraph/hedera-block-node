@@ -25,12 +25,15 @@ import static java.lang.System.Logger.Level.INFO;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
+import com.swirlds.config.extensions.sources.SimpleConfigSource;
 import com.swirlds.config.extensions.sources.SystemEnvironmentConfigSource;
 import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import io.helidon.config.Config;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 /** Main class for the block node server */
 public class Server {
@@ -52,19 +55,24 @@ public class Server {
         final Config config =
                 Config.builder()
                         .sources(file(Paths.get("/app", LOGGING_PROPERTIES)).optional())
-                        .sources(file(Paths.get(".", APPLICATION_PROPERTIES)).optional())
                         .build();
 
         Config.global(config);
 
         // Init BlockNode Configuration
-        Configuration configuration =
+        ConfigurationBuilder builder =
                 ConfigurationBuilder.create()
                         .withSource(SystemEnvironmentConfigSource.getInstance())
                         .withSource(SystemPropertiesConfigSource.getInstance())
                         .withSources(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES)))
-                        .autoDiscoverExtensions()
-                        .build();
+                        .autoDiscoverExtensions();
+
+        Map<String, String> configArgs = parseArgs(args);
+        if (!configArgs.isEmpty()) {
+            builder.withSource(new SimpleConfigSource(configArgs));
+        }
+
+        final Configuration configuration = builder.build();
 
         // Init Dagger DI Component, passing in the configuration.
         // this is where all the dependencies are wired up (magic happens)
@@ -74,5 +82,17 @@ public class Server {
         // Use Dagger DI Component to start the BlockNodeApp with all wired dependencies
         final BlockNodeApp blockNodeApp = daggerComponent.getBlockNodeApp();
         blockNodeApp.start();
+    }
+
+    private static Map<String, String> parseArgs(final String[] args) {
+        final Map<String, String> configArgs = new HashMap<>();
+        for (final String arg : args) {
+            final String[] split = arg.split("=");
+            if (split.length == 2) {
+                configArgs.put(split[0], split[1]);
+            }
+        }
+
+        return configArgs;
     }
 }
