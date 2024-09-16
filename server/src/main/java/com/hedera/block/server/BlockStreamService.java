@@ -32,14 +32,14 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
+import com.hedera.block.server.events.BlockNodeEventHandler;
+import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
-import com.hedera.block.server.notifier.NotifierBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
 import com.hedera.block.server.service.ServiceStatus;
-import com.hedera.block.server.verifier.StreamVerifierBuilder;
 import com.hedera.hapi.block.SingleBlockRequest;
 import com.hedera.hapi.block.SingleBlockResponse;
 import com.hedera.hapi.block.SingleBlockResponseCode;
@@ -90,23 +90,18 @@ public class BlockStreamService implements GrpcService {
             @NonNull final LiveStreamMediator streamMediator,
             @NonNull final BlockReader<Block> blockReader,
             @NonNull final ServiceStatus serviceStatus,
-            @NonNull final StreamVerifierBuilder streamVerifierBuilder,
+            @NonNull
+                    final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>
+                            streamVerifier,
+            @NonNull final Notifier notifier,
             @NonNull final BlockNodeContext blockNodeContext) {
         this.blockReader = blockReader;
         this.serviceStatus = serviceStatus;
+        this.notifier = notifier;
         this.blockNodeContext = blockNodeContext;
         this.metricsService = blockNodeContext.metricsService();
 
-        notifier =
-                NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
-
-        final var streamValidator =
-                streamVerifierBuilder
-                        .subscriptionHandler(streamMediator)
-                        .notifier(notifier)
-                        .build();
-
-        streamMediator.subscribe(streamValidator);
+        streamMediator.subscribe(streamVerifier);
         this.streamMediator = streamMediator;
     }
 

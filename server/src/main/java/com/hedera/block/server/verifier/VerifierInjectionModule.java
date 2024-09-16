@@ -17,8 +17,12 @@
 package com.hedera.block.server.verifier;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.events.BlockNodeEventHandler;
+import com.hedera.block.server.events.ObjectEvent;
+import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import dagger.Module;
 import dagger.Provides;
@@ -27,23 +31,18 @@ import javax.inject.Singleton;
 
 /** A Dagger module for providing dependencies for Validator Module. */
 @Module
-public interface ValidatorInjectionModule {
+public interface VerifierInjectionModule {
 
-    /**
-     * Provides a stream validator builder singleton using the block writer, block node context, and
-     * service status.
-     *
-     * @param blockWriter the block writer
-     * @param blockNodeContext the application context
-     * @param serviceStatus the service status
-     * @return a stream validator builder singleton
-     */
     @Provides
     @Singleton
-    static StreamVerifierBuilder providesStreamValidatorBuilder(
-            @NonNull final BlockWriter<BlockItem> blockWriter,
-            @NonNull final BlockNodeContext blockNodeContext,
-            @NonNull final ServiceStatus serviceStatus) {
-        return StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
+    static BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>
+            providesBlockNodeEventHandler(
+                    @NonNull final Notifier notifier,
+                    @NonNull final BlockWriter<BlockItem> blockWriter,
+                    @NonNull final BlockNodeContext blockNodeContext,
+                    @NonNull final ServiceStatus serviceStatus) {
+        return StreamVerifierBuilder.newBuilder(
+                        notifier, blockWriter, blockNodeContext, serviceStatus)
+                .build();
     }
 }

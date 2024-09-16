@@ -157,8 +157,8 @@ public class LiveStreamMediatorImplTest {
         // register the stream validator
         when(blockWriter.write(blockItem)).thenReturn(Optional.empty());
         final var streamValidator =
-                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
-                        .notifier(notifier)
+                StreamVerifierBuilder.newBuilder(
+                                notifier, blockWriter, blockNodeContext, serviceStatus)
                         .subscriptionHandler(streamMediator)
                         .build();
         streamMediator.subscribe(streamValidator);
@@ -219,8 +219,8 @@ public class LiveStreamMediatorImplTest {
         // register the stream validator
         when(blockWriter.write(blockItem)).thenReturn(Optional.empty());
         final var streamValidator =
-                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
-                        .notifier(notifier)
+                StreamVerifierBuilder.newBuilder(
+                                notifier, blockWriter, blockNodeContext, serviceStatus)
                         .subscriptionHandler(streamMediator)
                         .build();
         streamMediator.subscribe(streamValidator);
@@ -292,8 +292,8 @@ public class LiveStreamMediatorImplTest {
         // register the stream validator
         when(blockWriter.write(blockItems.getFirst())).thenReturn(Optional.empty());
         final var streamValidator =
-                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
-                        .notifier(notifier)
+                StreamVerifierBuilder.newBuilder(
+                                notifier, blockWriter, blockNodeContext, serviceStatus)
                         .subscriptionHandler(streamMediator)
                         .build();
         streamMediator.subscribe(streamValidator);
@@ -344,8 +344,8 @@ public class LiveStreamMediatorImplTest {
         // register the stream validator
         when(blockWriter.write(blockItems.getFirst())).thenReturn(Optional.empty());
         final var streamValidator =
-                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
-                        .notifier(notifier)
+                StreamVerifierBuilder.newBuilder(
+                                notifier, blockWriter, blockNodeContext, serviceStatus)
                         .subscriptionHandler(streamMediator)
                         .build();
         streamMediator.subscribe(streamValidator);
@@ -407,8 +407,8 @@ public class LiveStreamMediatorImplTest {
         final Notifier notifier =
                 NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
         final var streamValidator =
-                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
-                        .notifier(notifier)
+                StreamVerifierBuilder.newBuilder(
+                                notifier, blockWriter, blockNodeContext, serviceStatus)
                         .subscriptionHandler(streamMediator)
                         .build();
 
@@ -470,8 +470,8 @@ public class LiveStreamMediatorImplTest {
 
         // register the stream validator
         final var streamValidator =
-                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
-                        .notifier(notifier)
+                StreamVerifierBuilder.newBuilder(
+                                notifier, blockWriter, blockNodeContext, serviceStatus)
                         .subscriptionHandler(streamMediator)
                         .build();
         streamMediator.subscribe(streamValidator);

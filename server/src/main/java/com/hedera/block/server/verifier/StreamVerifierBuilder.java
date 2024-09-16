@@ -38,14 +38,16 @@ public class StreamVerifierBuilder {
     private final BlockWriter<BlockItem> blockWriter;
     private final BlockNodeContext blockNodeContext;
     private final ServiceStatus serviceStatus;
+    private final Notifier notifier;
 
     private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
-    private Notifier notifier;
 
     private StreamVerifierBuilder(
+            @NonNull final Notifier notifier,
             @NonNull final BlockWriter<BlockItem> blockWriter,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
+        this.notifier = notifier;
         this.blockWriter = blockWriter;
         this.blockNodeContext = blockNodeContext;
         this.serviceStatus = serviceStatus;
@@ -62,10 +64,11 @@ public class StreamVerifierBuilder {
      */
     @NonNull
     public static StreamVerifierBuilder newBuilder(
+            @NonNull final Notifier notifier,
             @NonNull final BlockWriter<BlockItem> blockWriter,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
-        return new StreamVerifierBuilder(blockWriter, blockNodeContext, serviceStatus);
+        return new StreamVerifierBuilder(notifier, blockWriter, blockNodeContext, serviceStatus);
     }
 
     /**
@@ -78,12 +81,6 @@ public class StreamVerifierBuilder {
     public StreamVerifierBuilder subscriptionHandler(
             @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler) {
         this.subscriptionHandler = subscriptionHandler;
-        return this;
-    }
-
-    @NonNull
-    public StreamVerifierBuilder notifier(@NonNull final Notifier notifier) {
-        this.notifier = notifier;
         return this;
     }
 

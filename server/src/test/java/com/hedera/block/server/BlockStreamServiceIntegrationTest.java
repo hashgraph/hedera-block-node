@@ -36,6 +36,8 @@ import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
+import com.hedera.block.server.notifier.Notifier;
+import com.hedera.block.server.notifier.NotifierBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
@@ -83,6 +85,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class BlockStreamServiceIntegrationTest {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
+
+    @Mock private Notifier notifier;
 
     @Mock
     private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
@@ -161,14 +165,19 @@ public class BlockStreamServiceIntegrationTest {
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
-        final var streamValidatorBuilder =
-                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
+        final var notifier =
+                NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
+        final var blockNodeEventHandler =
+                StreamVerifierBuilder.newBuilder(
+                                notifier, blockWriter, blockNodeContext, serviceStatus)
+                        .build();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
                         blockReader,
                         serviceStatus,
-                        streamValidatorBuilder,
+                        blockNodeEventHandler,
+                        notifier,
                         blockNodeContext);
 
         // Register 3 producers
@@ -261,14 +270,17 @@ public class BlockStreamServiceIntegrationTest {
                 LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
 
         // Build the BlockStreamService
-        final var streamValidatorBuilder =
-                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
+        final var blockNodeEventHandler =
+                StreamVerifierBuilder.newBuilder(
+                                notifier, blockWriter, blockNodeContext, serviceStatus)
+                        .build();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
                         blockReader,
                         serviceStatus,
-                        streamValidatorBuilder,
+                        blockNodeEventHandler,
+                        notifier,
                         blockNodeContext);
 
         // Subscribe the consumers
@@ -427,14 +439,17 @@ public class BlockStreamServiceIntegrationTest {
 
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);
-        final var streamValidatorBuilder =
-                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
+        final var blockNodeEventHandler =
+                StreamVerifierBuilder.newBuilder(
+                                notifier, blockWriter, blockNodeContext, serviceStatus)
+                        .build();
         final var blockStreamService =
                 new BlockStreamService(
                         streamMediator,
                         blockReader,
                         serviceStatus,
-                        streamValidatorBuilder,
+                        blockNodeEventHandler,
+                        notifier,
                         blockNodeContext);
 
         // Pass a StreamObserver to the producer as Helidon does
@@ -547,14 +562,20 @@ public class BlockStreamServiceIntegrationTest {
         doThrow(IOException.class).when(blockWriter).write(blockItems.getFirst());
 
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);
-        final var streamValidatorBuilder =
-                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
+        final var notifier =
+                NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
+        final var blockNodeEventHandler =
+                StreamVerifierBuilder.newBuilder(
+                                notifier, blockWriter, blockNodeContext, serviceStatus)
+                        .subscriptionHandler(streamMediator)
+                        .build();
         final var blockStreamService =
                 new BlockStreamService(
                         streamMediator,
                         blockReader,
                         serviceStatus,
-                        streamValidatorBuilder,
+                        blockNodeEventHandler,
+                        notifier,
                         blockNodeContext);
 
         // Subscribe the consumers
@@ -710,14 +731,19 @@ public class BlockStreamServiceIntegrationTest {
 
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);
-        final var streamValidatorBuilder =
-                StreamVerifierBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus);
+        final var notifier =
+                NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
+        final var blockNodeEventHandler =
+                StreamVerifierBuilder.newBuilder(
+                                notifier, blockWriter, blockNodeContext, serviceStatus)
+                        .build();
 
         return new BlockStreamService(
                 streamMediator,
                 blockReader,
                 serviceStatus,
-                streamValidatorBuilder,
+                blockNodeEventHandler,
+                notifier,
                 blockNodeContext);
     }
 
