@@ -68,8 +68,8 @@ public class StreamVerifierImplTest {
         final var streamVerifier =
                 new StreamVerifierImpl(
                         subscriptionHandler,
-                        blockWriter,
                         notifier,
+                        blockWriter,
                         blockNodeContext,
                         serviceStatus);
 
@@ -95,8 +95,8 @@ public class StreamVerifierImplTest {
         final var streamVerifier =
                 new StreamVerifierImpl(
                         subscriptionHandler,
-                        blockWriter,
                         notifier,
+                        blockWriter,
                         blockNodeContext,
                         serviceStatus);
 
@@ -124,8 +124,8 @@ public class StreamVerifierImplTest {
         final var streamVerifier =
                 new StreamVerifierImpl(
                         subscriptionHandler,
-                        blockWriter,
                         notifier,
+                        blockWriter,
                         blockNodeContext,
                         serviceStatus);
 
@@ -156,8 +156,8 @@ public class StreamVerifierImplTest {
         final var streamVerifier =
                 new StreamVerifierImpl(
                         subscriptionHandler,
-                        blockWriter,
                         notifier,
+                        blockWriter,
                         blockNodeContext,
                         serviceStatus);
 

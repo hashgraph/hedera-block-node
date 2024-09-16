@@ -16,33 +16,19 @@
 
 package com.hedera.block.server.verifier;
 
-import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
-import com.hedera.block.server.notifier.Notifier;
-import com.hedera.block.server.persistence.storage.write.BlockWriter;
-import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.SubscribeStreamResponse;
-import com.hedera.hapi.block.stream.BlockItem;
+import dagger.Binds;
 import dagger.Module;
-import dagger.Provides;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.inject.Singleton;
 
 /** A Dagger module for providing dependencies for Validator Module. */
 @Module
 public interface VerifierInjectionModule {
 
-    @Provides
+    @Binds
     @Singleton
-    static BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>
-            providesBlockNodeEventHandler(
-                    @NonNull final Notifier notifier,
-                    @NonNull final BlockWriter<BlockItem> blockWriter,
-                    @NonNull final BlockNodeContext blockNodeContext,
-                    @NonNull final ServiceStatus serviceStatus) {
-        return StreamVerifierBuilder.newBuilder(
-                        notifier, blockWriter, blockNodeContext, serviceStatus)
-                .build();
-    }
+    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> bindBlockNodeEventHandler(
+            StreamVerifierImpl streamVerifier);
 }

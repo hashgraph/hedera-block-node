@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
+import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
@@ -36,6 +37,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class VerifierInjectionModuleTest {
 
+    @Mock private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
     @Mock private Notifier notifier;
     @Mock private BlockWriter<BlockItem> blockWriter;
 
@@ -47,10 +49,14 @@ public class VerifierInjectionModuleTest {
         BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         // Call the method under test
-        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> providedStreamVerifierBuilder =
-                VerifierInjectionModule.providesBlockNodeEventHandler(
-                        notifier, blockWriter, blockNodeContext, serviceStatus);
+        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> streamVerifier =
+                new StreamVerifierImpl(
+                        subscriptionHandler,
+                        notifier,
+                        blockWriter,
+                        blockNodeContext,
+                        serviceStatus);
 
-        assertNotNull(providedStreamVerifierBuilder);
+        assertNotNull(streamVerifier);
     }
 }

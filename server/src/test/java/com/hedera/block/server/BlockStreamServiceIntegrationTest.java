@@ -45,7 +45,7 @@ import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
-import com.hedera.block.server.verifier.StreamVerifierBuilder;
+import com.hedera.block.server.verifier.StreamVerifierImpl;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.ItemAcknowledgement;
@@ -168,9 +168,8 @@ public class BlockStreamServiceIntegrationTest {
         final var notifier =
                 NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
         final var blockNodeEventHandler =
-                StreamVerifierBuilder.newBuilder(
-                                notifier, blockWriter, blockNodeContext, serviceStatus)
-                        .build();
+                new StreamVerifierImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -271,9 +270,8 @@ public class BlockStreamServiceIntegrationTest {
 
         // Build the BlockStreamService
         final var blockNodeEventHandler =
-                StreamVerifierBuilder.newBuilder(
-                                notifier, blockWriter, blockNodeContext, serviceStatus)
-                        .build();
+                new StreamVerifierImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -440,9 +438,8 @@ public class BlockStreamServiceIntegrationTest {
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);
         final var blockNodeEventHandler =
-                StreamVerifierBuilder.newBuilder(
-                                notifier, blockWriter, blockNodeContext, serviceStatus)
-                        .build();
+                new StreamVerifierImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final var blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -565,10 +562,8 @@ public class BlockStreamServiceIntegrationTest {
         final var notifier =
                 NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
         final var blockNodeEventHandler =
-                StreamVerifierBuilder.newBuilder(
-                                notifier, blockWriter, blockNodeContext, serviceStatus)
-                        .subscriptionHandler(streamMediator)
-                        .build();
+                new StreamVerifierImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final var blockStreamService =
                 new BlockStreamService(
                         streamMediator,
@@ -734,9 +729,8 @@ public class BlockStreamServiceIntegrationTest {
         final var notifier =
                 NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
         final var blockNodeEventHandler =
-                StreamVerifierBuilder.newBuilder(
-                                notifier, blockWriter, blockNodeContext, serviceStatus)
-                        .build();
+                new StreamVerifierImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
 
         return new BlockStreamService(
                 streamMediator,

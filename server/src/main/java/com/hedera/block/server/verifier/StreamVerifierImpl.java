@@ -35,7 +35,10 @@ import com.hedera.pbj.runtime.OneOf;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class StreamVerifierImpl
         implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> {
 
@@ -50,10 +53,11 @@ public class StreamVerifierImpl
     private static final String PROTOCOL_VIOLATION_MESSAGE =
             "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
 
-    StreamVerifierImpl(
+    @Inject
+    public StreamVerifierImpl(
             @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler,
-            @NonNull final BlockWriter<BlockItem> blockWriter,
             @NonNull final Notifier notifier,
+            @NonNull final BlockWriter<BlockItem> blockWriter,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
         this.subscriptionHandler = subscriptionHandler;

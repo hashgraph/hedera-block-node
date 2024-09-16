@@ -52,4 +52,17 @@ class MediatorInjectionModuleTest {
         // Verify that the streamMediator is correctly instantiated
         assertNotNull(streamMediator);
     }
+
+    @Test
+    void testProvidesSubscriptionHandler() throws IOException {
+
+        BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
+
+        // Call the method under test
+        SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler =
+                MediatorInjectionModule.provideSubscriptionHandler(blockNodeContext, serviceStatus);
+
+        // Verify that the subscriptionHandler is correctly instantiated
+        assertNotNull(subscriptionHandler);
+    }
 }

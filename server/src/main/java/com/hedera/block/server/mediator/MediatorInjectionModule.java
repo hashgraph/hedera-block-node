@@ -18,6 +18,7 @@ package com.hedera.block.server.mediator;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.hapi.block.SubscribeStreamResponse;
 import dagger.Module;
 import dagger.Provides;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -38,6 +39,14 @@ public interface MediatorInjectionModule {
     @Singleton
     static LiveStreamMediator providesLiveStreamMediator(
             @NonNull BlockNodeContext blockNodeContext, @NonNull ServiceStatus serviceStatus) {
+        return LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
+    }
+
+    @Provides
+    @Singleton
+    static SubscriptionHandler<SubscribeStreamResponse> provideSubscriptionHandler(
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final ServiceStatus serviceStatus) {
         return LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
     }
 }
