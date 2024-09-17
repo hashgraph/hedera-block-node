@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.persistence;
 
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlocksVerified;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.StreamPersistenceHandlerError;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
@@ -115,6 +115,7 @@ public class StreamPersistenceHandlerImpl
                                             "block_item",
                                             subscribeStreamResponse);
                             LOGGER.log(ERROR, message);
+                            metricsService.get(StreamPersistenceHandlerError).increment();
                             throw new BlockStreamProtocolException(message);
                         } else {
                             // Persist the BlockItem
@@ -123,7 +124,6 @@ public class StreamPersistenceHandlerImpl
                                 // Publish the block item back upstream to the notifier
                                 // to send responses to producers.
                                 notifier.publish(blockItem);
-                                metricsService.get(LiveBlocksVerified).increment();
                             }
                         }
                     }
@@ -132,6 +132,7 @@ public class StreamPersistenceHandlerImpl
                     default -> {
                         final String message = "Unknown response type: " + oneOfTypeOneOf.kind();
                         LOGGER.log(ERROR, message);
+                        metricsService.get(StreamPersistenceHandlerError).increment();
                         throw new BlockStreamProtocolException(message);
                     }
                 }
@@ -141,6 +142,8 @@ public class StreamPersistenceHandlerImpl
             }
 
         } catch (BlockStreamProtocolException | IOException e) {
+
+            metricsService.get(StreamPersistenceHandlerError).increment();
 
             // Trigger the server to stop accepting new requests
             serviceStatus.stopRunning(getClass().getName());

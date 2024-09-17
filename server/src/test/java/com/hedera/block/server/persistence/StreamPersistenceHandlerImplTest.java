@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.persistence;
 
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlocksVerified;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.StreamPersistenceHandlerError;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.hapi.block.SubscribeStreamResponseCode.READ_STREAM_SUCCESS;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,9 +33,11 @@ import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.OneOf;
+import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,7 +67,7 @@ public class StreamPersistenceHandlerImplTest {
         when(blockNodeContext.metricsService()).thenReturn(metricsService);
         when(serviceStatus.isRunning()).thenReturn(false);
 
-        final var streamVerifier =
+        final var streamPersistenceHandler =
                 new StreamPersistenceHandlerImpl(
                         subscriptionHandler,
                         notifier,
@@ -79,20 +81,21 @@ public class StreamPersistenceHandlerImplTest {
         final ObjectEvent<SubscribeStreamResponse> event = new ObjectEvent<>();
         event.set(subscribeStreamResponse);
 
-        streamVerifier.onEvent(event, 0, false);
+        streamPersistenceHandler.onEvent(event, 0, false);
 
         // Indirectly confirm the branch we're in by verifying
         // these methods were not called.
         verify(notifier, never()).publish(blockItems.getFirst());
-        verify(metricsService, never()).get(LiveBlocksVerified);
+        verify(metricsService, never()).get(StreamPersistenceHandlerError);
     }
 
     @Test
-    public void testBlockItemIsNull() {
-        when(blockNodeContext.metricsService()).thenReturn(metricsService);
+    public void testBlockItemIsNull() throws IOException {
+
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         when(serviceStatus.isRunning()).thenReturn(true);
 
-        final var streamVerifier =
+        final var streamPersistenceHandler =
                 new StreamPersistenceHandlerImpl(
                         subscriptionHandler,
                         notifier,
@@ -109,7 +112,7 @@ public class StreamPersistenceHandlerImplTest {
         final ObjectEvent<SubscribeStreamResponse> event = new ObjectEvent<>();
         event.set(subscribeStreamResponse);
 
-        streamVerifier.onEvent(event, 0, false);
+        streamPersistenceHandler.onEvent(event, 0, false);
 
         verify(serviceStatus, timeout(testTimeout).times(1)).stopRunning(any());
         verify(subscriptionHandler, timeout(testTimeout).times(1)).unsubscribe(any());
@@ -117,11 +120,11 @@ public class StreamPersistenceHandlerImplTest {
     }
 
     @Test
-    public void testSubscribeStreamResponseTypeUnknown() {
-        when(blockNodeContext.metricsService()).thenReturn(metricsService);
+    public void testSubscribeStreamResponseTypeUnknown() throws IOException {
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         when(serviceStatus.isRunning()).thenReturn(true);
 
-        final var streamVerifier =
+        final var streamPersistenceHandler =
                 new StreamPersistenceHandlerImpl(
                         subscriptionHandler,
                         notifier,
@@ -141,7 +144,7 @@ public class StreamPersistenceHandlerImplTest {
         final ObjectEvent<SubscribeStreamResponse> event = new ObjectEvent<>();
         event.set(subscribeStreamResponse);
 
-        streamVerifier.onEvent(event, 0, false);
+        streamPersistenceHandler.onEvent(event, 0, false);
 
         verify(serviceStatus, timeout(testTimeout).times(1)).stopRunning(any());
         verify(subscriptionHandler, timeout(testTimeout).times(1)).unsubscribe(any());
@@ -153,7 +156,7 @@ public class StreamPersistenceHandlerImplTest {
         when(blockNodeContext.metricsService()).thenReturn(metricsService);
         when(serviceStatus.isRunning()).thenReturn(true);
 
-        final var streamVerifier =
+        final var streamPersistenceHandler =
                 new StreamPersistenceHandlerImpl(
                         subscriptionHandler,
                         notifier,
@@ -166,7 +169,7 @@ public class StreamPersistenceHandlerImplTest {
         final ObjectEvent<SubscribeStreamResponse> event = new ObjectEvent<>();
         event.set(subscribeStreamResponse);
 
-        streamVerifier.onEvent(event, 0, false);
+        streamPersistenceHandler.onEvent(event, 0, false);
 
         verify(serviceStatus, never()).stopRunning(any());
         verify(subscriptionHandler, never()).unsubscribe(any());

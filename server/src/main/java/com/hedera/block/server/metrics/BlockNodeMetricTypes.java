@@ -49,9 +49,6 @@ public final class BlockNodeMetricTypes {
         SuccessfulPubStreamRespSent(
                 "successful_pub_stream_resp_sent", "Successful Publish Stream Responses Sent"),
 
-        /** The number of live block items verified before persisting them. */
-        LiveBlocksVerified("live_blocks_verified", "Live Blocks Verified"),
-
         /** The number of blocks persisted to storage. */
         BlocksPersisted("blocks_persisted", "Blocks Persisted"),
 
@@ -68,7 +65,11 @@ public final class BlockNodeMetricTypes {
 
         /** The number of errors encountered by the live block stream mediator. */
         LiveBlockStreamMediatorError(
-                "live_block_stream_mediator_error", "Live Block Stream Mediator Error");
+                "live_block_stream_mediator_error", "Live Block Stream Mediator Error"),
+
+        /** The number of errors encountered by the stream persistence handler. */
+        StreamPersistenceHandlerError(
+                "stream_persistence_handler_error", "Stream Persistence Handler Error");
 
         private final String grafanaLabel;
         private final String description;

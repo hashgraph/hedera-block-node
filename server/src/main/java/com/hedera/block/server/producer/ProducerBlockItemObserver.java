@@ -84,8 +84,10 @@ public class ProducerBlockItemObserver
      * mediator with blocks as they arrive from the upstream producer. It also sends responses back
      * to the upstream producer via the responseStreamObserver.
      *
+     * @param producerLivenessClock the clock used to calculate the producer liveness.
      * @param publisher the block item publisher to used to pass block items to consumers as they
      *     arrive from the upstream producer.
+     * @param subscriptionHandler the subscription handler used to
      * @param publishStreamResponseObserver the response stream observer to send responses back to
      *     the upstream producer for each block item processed.
      * @param blockNodeContext the block node context used to access context objects for the Block

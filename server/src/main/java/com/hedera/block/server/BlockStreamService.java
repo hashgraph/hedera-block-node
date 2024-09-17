@@ -92,7 +92,7 @@ public class BlockStreamService implements GrpcService {
             @NonNull final ServiceStatus serviceStatus,
             @NonNull
                     final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>
-                            streamVerifier,
+                            streamPersistenceHandler,
             @NonNull final Notifier notifier,
             @NonNull final BlockNodeContext blockNodeContext) {
         this.blockReader = blockReader;
@@ -101,7 +101,7 @@ public class BlockStreamService implements GrpcService {
         this.blockNodeContext = blockNodeContext;
         this.metricsService = blockNodeContext.metricsService();
 
-        streamMediator.subscribe(streamVerifier);
+        streamMediator.subscribe(streamPersistenceHandler);
         this.streamMediator = streamMediator;
     }
 

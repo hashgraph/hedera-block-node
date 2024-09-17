@@ -16,8 +16,6 @@
 
 package com.hedera.block.server.mediator;
 
-import static java.lang.System.Logger.Level.ERROR;
-
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.lmax.disruptor.BatchEventProcessor;
@@ -87,21 +85,21 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
     @Override
     public void subscribe(@NonNull final BlockNodeEventHandler<ObjectEvent<V>> handler) {
 
-        // Initialize the batch event processor and set it on the ring buffer
-        final var batchEventProcessor =
-                new BatchEventProcessorBuilder()
-                        .build(ringBuffer, ringBuffer.newBarrier(), handler);
+        if (!subscribers.containsKey(handler)) {
+            // Initialize the batch event processor and set it on the ring buffer
+            final var batchEventProcessor =
+                    new BatchEventProcessorBuilder()
+                            .build(ringBuffer, ringBuffer.newBarrier(), handler);
 
-        ringBuffer.addGatingSequences(batchEventProcessor.getSequence());
-        executor.execute(batchEventProcessor);
+            ringBuffer.addGatingSequences(batchEventProcessor.getSequence());
+            executor.execute(batchEventProcessor);
 
-        // Keep track of the subscriber
-        subscribers.put(handler, batchEventProcessor);
+            // Keep track of the subscriber
+            subscribers.put(handler, batchEventProcessor);
 
-        // Update the subscriber metrics.
-        // Subtract 1 to remove the StreamValidator from
-        // the count.
-        subscriptionGauge.set(subscribers.size() - 1);
+            // Update the subscriber metrics.
+            subscriptionGauge.set(subscribers.size());
+        }
     }
 
     /**
@@ -114,11 +112,7 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
 
         // Remove the subscriber
         final var batchEventProcessor = subscribers.remove(handler);
-        if (batchEventProcessor == null) {
-            LOGGER.log(ERROR, "Subscriber not found: {0}", handler);
-
-        } else {
-
+        if (batchEventProcessor != null) {
             // Stop the processor
             batchEventProcessor.halt();
 
@@ -127,9 +121,7 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
         }
 
         // Update the subscriber metrics.
-        // Subtract 1 to remove the StreamValidator from
-        // the count.
-        subscriptionGauge.set(subscribers.size() - 1);
+        subscriptionGauge.set(subscribers.size());
     }
 
     /**
