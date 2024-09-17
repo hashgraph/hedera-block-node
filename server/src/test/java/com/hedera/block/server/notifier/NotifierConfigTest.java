@@ -19,6 +19,7 @@ package com.hedera.block.server.notifier;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 
 public class NotifierConfigTest {
@@ -34,5 +35,25 @@ public class NotifierConfigTest {
         IllegalArgumentException exception =
                 assertThrows(IllegalArgumentException.class, () -> new NotifierConfig(-1));
         assertEquals("Ring buffer size must be greater than 0", exception.getMessage());
+    }
+
+    @Test
+    public void testMediatorConfig_powerOf2Values() {
+
+        int[] powerOf2Values = IntStream.iterate(2, n -> n * 2).limit(30).toArray();
+
+        for (int powerOf2Value : powerOf2Values) {
+            NotifierConfig notifierConfig = new NotifierConfig(powerOf2Value);
+            assertEquals(powerOf2Value, notifierConfig.ringBufferSize());
+        }
+
+        // Test the non-power of 2 values
+        for (int powerOf2Value : powerOf2Values) {
+            IllegalArgumentException exception =
+                    assertThrows(
+                            IllegalArgumentException.class,
+                            () -> new NotifierConfig(powerOf2Value + 1));
+            assertEquals("Ring buffer size must be a power of 2", exception.getMessage());
+        }
     }
 }
