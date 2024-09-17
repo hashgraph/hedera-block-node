@@ -43,6 +43,6 @@ public record NotifierConfig(@ConfigProperty(defaultValue = "1024") int ringBuff
             throw new IllegalArgumentException("Ring buffer size must be greater than 0");
         }
 
-        LOGGER.log(INFO, "Notifier configuration ringBufferSize: " + ringBufferSize);
+        LOGGER.log(INFO, "Notifier configuration notifier.ringBufferSize: " + ringBufferSize);
     }
 }

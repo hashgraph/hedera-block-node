@@ -43,6 +43,6 @@ public record MediatorConfig(@ConfigProperty(defaultValue = "1024") int ringBuff
             throw new IllegalArgumentException("Ring buffer size must be greater than 0");
         }
 
-        LOGGER.log(INFO, "Mediator configuration ringBufferSize: " + ringBufferSize);
+        LOGGER.log(INFO, "Mediator configuration mediator.ringBufferSize: " + ringBufferSize);
     }
 }
