@@ -21,8 +21,30 @@ import com.hedera.block.suites.stream.positive.PositiveBlockStreamTests;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 
+/**
+ * StreamTestSuites is a test suite that aggregates and runs a set of test classes related to the
+ * stream processing functionality of the Block Node.
+ *
+ * <p>This suite includes both positive and negative test cases.
+ *
+ * <p>The suite uses the {@link org.junit.platform.suite.api.Suite} annotation to indicate that this
+ * class is an entry point for running multiple test classes together. It selects the following test
+ * classes:
+ *
+ * <ul>
+ *   <li>{@link com.hedera.block.suites.stream.positive.PositiveBlockStreamTests}
+ *   <li>{@link com.hedera.block.suites.stream.negative.NegativeBlockStreamTests}
+ * </ul>
+ */
 @Suite
 @SelectClasses({PositiveBlockStreamTests.class, NegativeBlockStreamTests.class})
 public class StreamTestSuites {
-    // This class only serves as a suite entry point; no need to add any logic here.
+    /**
+     * Default constructor for the StreamTestSuites class.
+     *
+     * <p>This constructor is required by the JUnit framework to run the suite.
+     */
+    public StreamTestSuites() {
+        // No additional setup required
+    }
 }

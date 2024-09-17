@@ -99,7 +99,10 @@ dependencyResolutionManagement {
             version("org.junit.platform", "1.11.0")
             version("org.mockito", "5.8.0")
             version("org.mockito.junit.jupiter", "5.8.0")
-
+            version("org.testcontainers", "1.20.1")
+            version("org.testcontainers.junit-jupiter", "1.20.1")
+            version("com.github.docker-java", "3.4.0")
+            version("io.github.cdimascio", "5.2.2")
         }
     }
 }

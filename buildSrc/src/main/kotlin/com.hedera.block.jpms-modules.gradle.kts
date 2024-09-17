@@ -167,6 +167,14 @@ extraJavaModuleInfo {
     module("org.jetbrains.kotlinx:kotlinx-metadata-jvm", "kotlinx.metadata.jvm")
 
     // Test clients only
+    module("com.github.docker-java:docker-java-api", "com.github.dockerjava.api")
+    module("com.github.docker-java:docker-java-transport", "com.github.dockerjava.transport")
+    module(
+        "com.github.docker-java:docker-java-transport-zerodep",
+        "com.github.dockerjava.transport.zerodep"
+    )
+    module("org.slf4j:slf4j-api", "org.slf4j") { patchRealModule() }
+    module("io.github.cdimascio:java-dotenv", "io.github.cdimascio")
     module("com.google.protobuf:protobuf-java-util", "com.google.protobuf.util")
     module("com.squareup:javapoet", "com.squareup.javapoet") {
         exportAllPackages()

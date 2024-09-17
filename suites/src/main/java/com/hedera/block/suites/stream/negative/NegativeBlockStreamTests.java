@@ -16,22 +16,29 @@
 
 package com.hedera.block.suites.stream.negative;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.hedera.block.suites.BaseSuite;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+/** TBD */
 @DisplayName("Negative Block Stream Tests")
 public class NegativeBlockStreamTests extends BaseSuite {
-    @BeforeEach
-    public void prepare() {
-        System.out.println("NegativeBlockStreamTests Prepare");
+
+    /**
+     * Default constructor for the NegativeBlockStreamTests class.
+     *
+     * <p>This constructor is required by the testing framework (JUnit) to create instances of the
+     * test class. It does not perform any additional setup.
+     */
+    public NegativeBlockStreamTests() {
+        // No additional setup required
     }
 
+    /** TBD */
     @Test
     public void testInvalidBlockStreamProcessing() {
-        assertFalse(false);
+        assertTrue(blockNodeContainer.isRunning());
     }
 }

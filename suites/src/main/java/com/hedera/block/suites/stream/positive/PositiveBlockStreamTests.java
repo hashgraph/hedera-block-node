@@ -22,10 +22,23 @@ import com.hedera.block.suites.BaseSuite;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+/** TBD */
 @DisplayName("Positive Block Stream Tests")
 public class PositiveBlockStreamTests extends BaseSuite {
+
+    /**
+     * Default constructor for the PositiveBlockStreamTests class.
+     *
+     * <p>This constructor is required by the testing framework (JUnit) to create instances of the
+     * test class. It does not perform any additional setup.
+     */
+    public PositiveBlockStreamTests() {
+        // No additional setup required
+    }
+
+    /** TBD */
     @Test
     public void testValidBlockStreamProcessing() {
-        assertTrue(true);
+        assertTrue(blockNodeContainer.isRunning());
     }
 }

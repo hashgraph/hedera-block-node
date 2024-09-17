@@ -29,14 +29,39 @@ application {
 mainModuleInfo {
     requires("org.junit.jupiter.api")
     requires("org.junit.platform.suite.api")
+    requires("org.testcontainers")
+    requires("io.github.cdimascio")
+    runtimeOnly("org.testcontainers.junit-jupiter")
     runtimeOnly("org.junit.jupiter.engine")
+}
+
+val updateDockerEnv =
+    tasks.register<Exec>("updateDockerEnv") {
+        description =
+            "Creates the .env file in the docker folder that contains environment variables for Docker"
+        group = "docker"
+
+        workingDir(layout.projectDirectory.dir("../server/docker"))
+        commandLine("./update-env.sh", project.version)
+    }
+
+// Task to build the Docker image
+tasks.register<Exec>("createDockerImage") {
+    description = "Creates the Docker image of the Block Node Server based on the current version"
+    group = "docker"
+
+    dependsOn(updateDockerEnv, tasks.assemble)
+    workingDir(layout.projectDirectory.dir("../server/docker"))
+    commandLine("./docker-build.sh", project.version, layout.projectDirectory.dir("..").asFile)
 }
 
 tasks.register<Test>("runSuites") {
     description = "Runs E2E Test Suites"
     group = "suites"
+    dependsOn("createDockerImage")
 
     useJUnitPlatform()
+    testLogging { events("passed", "skipped", "failed") }
     testClassesDirs = sourceSets["main"].output.classesDirs
     classpath = sourceSets["main"].runtimeClasspath
 }
