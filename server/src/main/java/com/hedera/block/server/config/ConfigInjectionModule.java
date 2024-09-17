@@ -82,12 +82,24 @@ public interface ConfigInjectionModule {
         return configuration.getConfigData(ConsumerConfig.class);
     }
 
+    /**
+     * Provides a mediator configuration singleton using the configuration.
+     *
+     * @param configuration is the configuration singleton
+     * @return a mediator configuration singleton
+     */
     @Singleton
     @Provides
     static MediatorConfig provideMediatorConfig(Configuration configuration) {
         return configuration.getConfigData(MediatorConfig.class);
     }
 
+    /**
+     * Provides a notifier configuration singleton using the configuration.
+     *
+     * @param configuration is the configuration singleton
+     * @return a notifier configuration singleton
+     */
     @Singleton
     @Provides
     static NotifierConfig provideNotifierConfig(Configuration configuration) {

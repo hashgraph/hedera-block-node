@@ -36,10 +36,12 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
 /**
- * LiveStreamMediatorImpl is an implementation of the StreamMediator interface. It is responsible
- * for managing the subscribe and unsubscribe operations of downstream consumers. It also proxies
- * block items to the subscribers as they arrive via a RingBuffer and persists the block items to a
- * store.
+ * Use LiveStreamMediatorImpl to mediate the live stream of blocks from a producer to multiple
+ * consumers.
+ *
+ * <p>As an implementation of the StreamMediator interface, it proxies block items to the
+ * subscribers as they arrive via a RingBuffer maintained in the base class and persists the block
+ * items to a store.
  */
 class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResponse>
         implements LiveStreamMediator {

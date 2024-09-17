@@ -24,6 +24,12 @@ import com.lmax.disruptor.EventHandler;
  * @param <V> the type of the event value
  */
 public interface BlockNodeEventHandler<V> extends EventHandler<V> {
+
+    /**
+     * Use this method to check if the underlying event handler is timed out.
+     *
+     * @return true if the timeout has expired, false otherwise
+     */
     default boolean isTimeoutExpired() {
         return false;
     }

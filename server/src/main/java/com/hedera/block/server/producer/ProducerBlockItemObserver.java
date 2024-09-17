@@ -92,6 +92,8 @@ public class ProducerBlockItemObserver
      *     the upstream producer for each block item processed.
      * @param blockNodeContext the block node context used to access context objects for the Block
      *     Node (e.g. - the metrics service).
+     * @param serviceStatus the service status used to stop the server in the event of an
+     *     unrecoverable error.
      */
     public ProducerBlockItemObserver(
             @NonNull final InstantSource producerLivenessClock,

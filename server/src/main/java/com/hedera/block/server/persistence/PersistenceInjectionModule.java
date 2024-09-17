@@ -65,6 +65,12 @@ public interface PersistenceInjectionModule {
         return BlockAsDirReaderBuilder.newBuilder(config).build();
     }
 
+    /**
+     * Binds the block node event handler to the stream persistence handler.
+     *
+     * @param streamPersistenceHandler the stream persistence handler
+     * @return the block node event handler
+     */
     @Binds
     @Singleton
     BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> bindBlockNodeEventHandler(

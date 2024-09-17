@@ -26,6 +26,13 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Use builder methods to create a {@link Notifier} to handle live stream response events from the
+ * persistence layer to N producers.
+ *
+ * <p>When a stream mediator is created, it will accept block item responses from the persistence
+ * layer and publish them to all producers subscribed to the stream
+ */
 public class NotifierBuilder {
 
     private final Notifiable mediator;
@@ -51,6 +58,16 @@ public class NotifierBuilder {
         this.serviceStatus = serviceStatus;
     }
 
+    /**
+     * Create a new instance of the builder using the minimum required parameters.
+     *
+     * @param mediator is required to provide notification of critical system events.
+     * @param blockNodeContext is required to provide metrics reporting mechanisms to the stream
+     *     mediator.
+     * @param serviceStatus is required to provide the stream mediator with access to check the
+     *     status of the server and to stop the web server if necessary.
+     * @return a new stream mediator builder configured with required parameters.
+     */
     @NonNull
     public static NotifierBuilder newBuilder(
             @NonNull final Notifiable mediator,
@@ -59,6 +76,13 @@ public class NotifierBuilder {
         return new NotifierBuilder(mediator, blockNodeContext, serviceStatus);
     }
 
+    /**
+     * Use the build method to construct a notifier to handle live stream response events from the
+     * persistence layer to N producers.
+     *
+     * @return the notifier to handle live stream response events between they persistence layer
+     *     producer and N producers.
+     */
     @NonNull
     public Notifier build() {
         return new NotifierImpl(subscribers, mediator, blockNodeContext, serviceStatus);

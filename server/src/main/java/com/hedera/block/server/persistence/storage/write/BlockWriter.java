@@ -31,6 +31,8 @@ public interface BlockWriter<V> {
      * Write the block item to storage.
      *
      * @param blockItem the block item to write to storage.
+     * @return an optional containing the block item written to storage if the block item was a
+     *     block proof signaling the end of the block, an empty optional otherwise.
      * @throws IOException when failing to write the block item to storage.
      */
     Optional<V> write(@NonNull final V blockItem) throws IOException;

@@ -39,6 +39,15 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
+/**
+ * Use NotifierImpl to mediate the stream of responses from the persistence layer back to multiple
+ * producers.
+ *
+ * <p>As an implementation of the StreamMediator interface, it proxies block item persistence
+ * responses back to the producers as they arrive via a RingBuffer maintained in the base class and
+ * persists the block items to a store. It also notifies the mediator of critical system events and
+ * will stop the server in the event of an unrecoverable error.
+ */
 class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implements Notifier {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
@@ -83,6 +92,12 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implem
         serviceStatus.stopWebServer(getClass().getName());
     }
 
+    /**
+     * Publishes the given block item to all subscribed producers.
+     *
+     * @param blockItem the block item from the persistence layer to publish a response to upstream
+     *     producers
+     */
     @Override
     public void publish(@NonNull BlockItem blockItem) {
 

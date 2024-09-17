@@ -28,6 +28,14 @@ import javax.inject.Singleton;
 @Module
 public interface NotifierInjectionModule {
 
+    /**
+     * Provides the notifier.
+     *
+     * @param streamMediator the stream mediator
+     * @param blockNodeContext the block node context
+     * @param serviceStatus the service status
+     * @return the notifier
+     */
     @Provides
     @Singleton
     static Notifier providesNotifier(

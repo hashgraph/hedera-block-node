@@ -40,7 +40,12 @@ public class ServiceStatusImpl implements ServiceStatus {
 
     private final int delayMillis;
 
-    /** Constructor for the ServiceStatusImpl class. */
+    /**
+     * Use the ServiceStatusImpl to check the status of the block node server and to shut it down if
+     * necessary.
+     *
+     * @param blockNodeContext the block node context
+     */
     @Inject
     public ServiceStatusImpl(@NonNull final BlockNodeContext blockNodeContext) {
         this.delayMillis =

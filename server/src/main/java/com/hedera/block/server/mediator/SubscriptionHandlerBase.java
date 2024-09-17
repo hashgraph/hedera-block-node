@@ -32,19 +32,20 @@ import java.util.concurrent.Executors;
 /**
  * Inherit from this class to leverage RingBuffer subscription handling.
  *
- * <p>Subclasses may use the ringBuffer to publish events to the subscribers.
+ * <p>Subclasses may use the ringBuffer to publish events to the subscribers. This base class
+ * contains the logic to manage subscriptions to the ring buffer.
  *
  * @param <V> the type of the subscription events
  */
 public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<V> {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
-
     private final Map<BlockNodeEventHandler<ObjectEvent<V>>, BatchEventProcessor<ObjectEvent<V>>>
             subscribers;
 
-    private final LongGauge subscriptionGauge;
+    /** The ring buffer to publish events to the subscribers. */
     protected final RingBuffer<ObjectEvent<V>> ringBuffer;
+
+    private final LongGauge subscriptionGauge;
     private final ExecutorService executor;
 
     /**

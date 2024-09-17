@@ -42,6 +42,13 @@ public interface MediatorInjectionModule {
         return LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
     }
 
+    /**
+     * Provides the subscription handler.
+     *
+     * @param blockNodeContext the block node context
+     * @param serviceStatus the service status
+     * @return the subscription handler
+     */
     @Provides
     @Singleton
     static SubscriptionHandler<SubscribeStreamResponse> provideSubscriptionHandler(
