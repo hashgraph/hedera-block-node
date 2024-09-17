@@ -16,19 +16,33 @@
 
 package com.hedera.block.server.mediator;
 
+import static java.lang.System.Logger.Level.INFO;
+
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 
 /**
- * Use this configuration across the mediator package.
+ * Constructor to initialize the Mediator configuration.
+ *
+ * <p>MediatorConfig will set the ring buffer size for the mediator.
  *
  * @param ringBufferSize the size of the ring buffer used by the mediator
  */
+// TODO: defaultValue here should be 67108864
 @ConfigData("mediator")
-public record MediatorConfig(@ConfigProperty(defaultValue = "67108864") int ringBufferSize) {
+public record MediatorConfig(@ConfigProperty(defaultValue = "1024") int ringBufferSize) {
+    private static final System.Logger LOGGER = System.getLogger(MediatorConfig.class.getName());
+
+    /**
+     * Validate the configuration.
+     *
+     * @throws IllegalArgumentException if the configuration is invalid
+     */
     public MediatorConfig {
         if (ringBufferSize <= 0) {
             throw new IllegalArgumentException("Ring buffer size must be greater than 0");
         }
+
+        LOGGER.log(INFO, "Mediator configuration ringBufferSize: " + ringBufferSize);
     }
 }
