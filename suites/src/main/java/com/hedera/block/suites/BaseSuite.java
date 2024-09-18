@@ -30,16 +30,19 @@ import org.testcontainers.utility.DockerImageName;
  * <p>This class is responsible for:
  *
  * <ul>
- *   <li>Starting a Docker container running the Block Node server with a specified version.
+ *   <li>Starting a Docker container running the Block Node Application with a specified version.
  *   <li>Stopping the container after tests have been executed.
  * </ul>
  *
- * <p>The Block Node server version is retrieved dynamically from an environment file (.env).
+ * <p>The Block Node Application version is retrieved dynamically from an environment file (.env).
  */
 public abstract class BaseSuite {
 
-    /** Container running the Block Node server */
+    /** Container running the Block Node Application */
     protected static GenericContainer<?> blockNodeContainer;
+
+    /** Port that is used by the Block Node Application */
+    protected static int blockNodePort;
 
     /**
      * Default constructor for the BaseSuite class.
@@ -59,12 +62,14 @@ public abstract class BaseSuite {
     @BeforeAll
     public static void setup() {
         String blockNodeVersion = BaseSuite.getBlockNodeVersion();
+        blockNodePort = 8080;
         blockNodeContainer =
                 new GenericContainer<>(
                                 DockerImageName.parse("block-node-server:" + blockNodeVersion))
-                        .withExposedPorts(8080)
+                        .withExposedPorts(blockNodePort)
                         .withEnv("VERSION", blockNodeVersion)
-                        .waitingFor(Wait.forListeningPort());
+                        .waitingFor(Wait.forListeningPort())
+                        .waitingFor(Wait.forHealthcheck());
         blockNodeContainer.start();
     }
 
