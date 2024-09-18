@@ -16,12 +16,8 @@
 
 package com.hedera.block.server.notifier;
 
-import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.mediator.LiveStreamMediator;
-import com.hedera.block.server.service.ServiceStatus;
+import dagger.Binds;
 import dagger.Module;
-import dagger.Provides;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.inject.Singleton;
 
 /** A Dagger module for providing dependencies for Notifier Module. */
@@ -31,17 +27,10 @@ public interface NotifierInjectionModule {
     /**
      * Provides the notifier.
      *
-     * @param streamMediator the stream mediator
-     * @param blockNodeContext the block node context
-     * @param serviceStatus the service status
+     * @param notifier requires a notifier implementation
      * @return the notifier
      */
-    @Provides
+    @Binds
     @Singleton
-    static Notifier providesNotifier(
-            @NonNull final LiveStreamMediator streamMediator,
-            @NonNull final BlockNodeContext blockNodeContext,
-            @NonNull final ServiceStatus serviceStatus) {
-        return NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
-    }
+    Notifier bindNotifier(NotifierImpl notifier);
 }

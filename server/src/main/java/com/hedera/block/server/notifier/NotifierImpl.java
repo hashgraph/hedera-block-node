@@ -22,8 +22,6 @@ import static com.hedera.block.server.producer.Util.getFakeHash;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.events.BlockNodeEventHandler;
-import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandlerBase;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.service.ServiceStatus;
@@ -34,10 +32,11 @@ import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
-import com.lmax.disruptor.BatchEventProcessor;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Use NotifierImpl to mediate the stream of responses from the persistence layer back to multiple
@@ -48,26 +47,36 @@ import java.util.Map;
  * persists the block items to a store. It also notifies the mediator of critical system events and
  * will stop the server in the event of an unrecoverable error.
  */
-class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implements Notifier {
+@Singleton
+public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
+        implements Notifier {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
+
+    /** The initial capacity of producers in the subscriber map. */
+    private static final int SUBSCRIBER_INIT_CAPACITY = 5;
 
     private final Notifiable mediator;
     private final MetricsService metricsService;
     private final ServiceStatus serviceStatus;
 
-    NotifierImpl(
-            @NonNull
-                    final Map<
-                                    BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>>,
-                                    BatchEventProcessor<ObjectEvent<PublishStreamResponse>>>
-                            subscribers,
+    /**
+     * Constructs a new NotifierImpl instance with the given mediator, block node context, and
+     * service status.
+     *
+     * @param mediator the mediator to notify of critical system events
+     * @param blockNodeContext the block node context
+     * @param serviceStatus the service status to stop the service and web server if an exception
+     *     occurs
+     */
+    @Inject
+    public NotifierImpl(
             @NonNull final Notifiable mediator,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
 
         super(
-                subscribers,
+                new ConcurrentHashMap<>(SUBSCRIBER_INIT_CAPACITY),
                 blockNodeContext.metricsService().get(Producers),
                 blockNodeContext
                         .configuration()
@@ -129,7 +138,7 @@ class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implem
     }
 
     @NonNull
-    public static PublishStreamResponse buildErrorStreamResponse() {
+    static PublishStreamResponse buildErrorStreamResponse() {
         // TODO: Replace this with a real error enum.
         final EndOfStream endOfStream =
                 EndOfStream.newBuilder()

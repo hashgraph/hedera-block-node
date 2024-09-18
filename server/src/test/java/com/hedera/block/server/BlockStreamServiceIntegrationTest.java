@@ -37,7 +37,7 @@ import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.notifier.Notifier;
-import com.hedera.block.server.notifier.NotifierBuilder;
+import com.hedera.block.server.notifier.NotifierImpl;
 import com.hedera.block.server.persistence.StreamPersistenceHandlerImpl;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
@@ -165,8 +165,7 @@ public class BlockStreamServiceIntegrationTest {
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator =
                 LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
-        final var notifier =
-                NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
+        final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
         final var blockNodeEventHandler =
                 new StreamPersistenceHandlerImpl(
                         streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
@@ -559,8 +558,7 @@ public class BlockStreamServiceIntegrationTest {
         doThrow(IOException.class).when(blockWriter).write(blockItems.getFirst());
 
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);
-        final var notifier =
-                NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
+        final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
         final var blockNodeEventHandler =
                 new StreamPersistenceHandlerImpl(
                         streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
@@ -726,8 +724,7 @@ public class BlockStreamServiceIntegrationTest {
 
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);
-        final var notifier =
-                NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
+        final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
         final var blockNodeEventHandler =
                 new StreamPersistenceHandlerImpl(
                         streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);

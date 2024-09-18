@@ -17,6 +17,7 @@
 package com.hedera.block.server.mediator;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.notifier.Notifiable;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import dagger.Module;
@@ -52,6 +53,21 @@ public interface MediatorInjectionModule {
     @Provides
     @Singleton
     static SubscriptionHandler<SubscribeStreamResponse> provideSubscriptionHandler(
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final ServiceStatus serviceStatus) {
+        return LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
+    }
+
+    /**
+     * Provides the mediator as a Notifiable instance.
+     *
+     * @param blockNodeContext the block node context
+     * @param serviceStatus the service status
+     * @return the mediator as a Notifiable instance
+     */
+    @Provides
+    @Singleton
+    static Notifiable provideMediator(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
         return LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();

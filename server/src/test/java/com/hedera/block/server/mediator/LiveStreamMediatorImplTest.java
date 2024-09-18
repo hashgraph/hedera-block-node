@@ -35,7 +35,7 @@ import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.notifier.Notifier;
-import com.hedera.block.server.notifier.NotifierBuilder;
+import com.hedera.block.server.notifier.NotifierImpl;
 import com.hedera.block.server.persistence.StreamPersistenceHandlerImpl;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
@@ -428,8 +428,7 @@ public class LiveStreamMediatorImplTest {
         streamMediator.subscribe(concreteObserver2);
         streamMediator.subscribe(concreteObserver3);
 
-        final Notifier notifier =
-                NotifierBuilder.newBuilder(streamMediator, blockNodeContext, serviceStatus).build();
+        final Notifier notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
         final var streamValidator =
                 new StreamPersistenceHandlerImpl(
                         streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
