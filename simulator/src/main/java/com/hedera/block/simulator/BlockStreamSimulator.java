@@ -39,6 +39,7 @@ public class BlockStreamSimulator {
      *
      * @param args the arguments to be passed to the block stream simulator
      * @throws IOException if an I/O error occurs
+     * @throws InterruptedException if the thread is interrupted
      */
     public static void main(String[] args) throws IOException, InterruptedException {
 

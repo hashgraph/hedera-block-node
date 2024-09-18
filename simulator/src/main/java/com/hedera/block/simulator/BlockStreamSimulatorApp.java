@@ -60,7 +60,11 @@ public class BlockStreamSimulatorApp {
         delayBetweenBlockItems = blockStreamConfig.delayBetweenBlockItems();
     }
 
-    /** Starts the block stream simulator. */
+    /**
+     * Starts the block stream simulator.
+     *
+     * @throws InterruptedException if the thread is interrupted
+     */
     public void start() throws InterruptedException {
         int delayMSBetweenBlockItems = delayBetweenBlockItems / 1_000_000;
         int delayNSBetweenBlockItems = delayBetweenBlockItems % 1_000_000;
