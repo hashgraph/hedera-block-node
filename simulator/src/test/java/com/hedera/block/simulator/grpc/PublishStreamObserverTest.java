@@ -16,8 +16,6 @@
 
 package com.hedera.block.simulator.grpc;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.hedera.hapi.block.protoc.PublishStreamResponse;
 import org.junit.jupiter.api.Test;
 
