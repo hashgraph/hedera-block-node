@@ -28,7 +28,7 @@ RUN tar -xvf server-${VERSION}.tar
 COPY logging.properties logging.properties
 
 # HEALTHCHECK for liveness and readiness
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=3s --retries=3 \
   CMD curl -f http://localhost:8080/healthz/livez || exit 1 && \
       curl -f http://localhost:8080/healthz/readyz || exit 1
 

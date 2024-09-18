@@ -61,15 +61,7 @@ public abstract class BaseSuite {
      */
     @BeforeAll
     public static void setup() {
-        String blockNodeVersion = BaseSuite.getBlockNodeVersion();
-        blockNodePort = 8080;
-        blockNodeContainer =
-                new GenericContainer<>(
-                                DockerImageName.parse("block-node-server:" + blockNodeVersion))
-                        .withExposedPorts(blockNodePort)
-                        .withEnv("VERSION", blockNodeVersion)
-                        .waitingFor(Wait.forListeningPort())
-                        .waitingFor(Wait.forHealthcheck());
+        blockNodeContainer = getConfiguration();
         blockNodeContainer.start();
     }
 
@@ -84,6 +76,34 @@ public abstract class BaseSuite {
         if (blockNodeContainer != null) {
             blockNodeContainer.stop();
         }
+    }
+
+    /**
+     * Retrieves the configuration for the Block Node server container.
+     *
+     * <p>This method initializes the Block Node container with the version retrieved from the .env
+     * file. It configures the container and returns it.
+     *
+     * <p>Specific configuration steps include:
+     * <ul>
+     *   <li>Setting the environment variable "VERSION" from the .env file.
+     *   <li>Exposing the default gRPC port (8080).
+     *   <li>Using the Testcontainers health check mechanism to ensure the container is ready.
+     * </ul>
+     *
+     * @return a configured {@link GenericContainer} instance for the Block Node server
+     */
+    public static GenericContainer<?> getConfiguration() {
+        String blockNodeVersion = BaseSuite.getBlockNodeVersion();
+        blockNodePort = 8080;
+        blockNodeContainer =
+                new GenericContainer<>(
+                        DockerImageName.parse("block-node-server:" + blockNodeVersion))
+                        .withExposedPorts(blockNodePort)
+                        .withEnv("VERSION", blockNodeVersion)
+                        .waitingFor(Wait.forListeningPort())
+                        .waitingFor(Wait.forHealthcheck());
+        return blockNodeContainer;
     }
 
     /**
