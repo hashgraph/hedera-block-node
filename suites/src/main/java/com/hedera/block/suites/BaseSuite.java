@@ -85,6 +85,7 @@ public abstract class BaseSuite {
      * file. It configures the container and returns it.
      *
      * <p>Specific configuration steps include:
+     *
      * <ul>
      *   <li>Setting the environment variable "VERSION" from the .env file.
      *   <li>Exposing the default gRPC port (8080).
@@ -98,7 +99,7 @@ public abstract class BaseSuite {
         blockNodePort = 8080;
         blockNodeContainer =
                 new GenericContainer<>(
-                        DockerImageName.parse("block-node-server:" + blockNodeVersion))
+                                DockerImageName.parse("block-node-server:" + blockNodeVersion))
                         .withExposedPorts(blockNodePort)
                         .withEnv("VERSION", blockNodeVersion)
                         .waitingFor(Wait.forListeningPort())
