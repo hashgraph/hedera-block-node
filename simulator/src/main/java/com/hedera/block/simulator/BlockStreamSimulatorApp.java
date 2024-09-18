@@ -35,9 +35,7 @@ public class BlockStreamSimulatorApp {
     PublishStreamGrpcClient publishStreamGrpcClient;
     BlockStreamConfig blockStreamConfig;
 
-    int delayBetweenBlockItems;
-    int delayMSBetweenBlockItems;
-    int delayNSBetweenBlockItems;
+    private final int delayBetweenBlockItems;
 
     boolean isRunning = false;
 
@@ -60,12 +58,12 @@ public class BlockStreamSimulatorApp {
         blockStreamConfig = configuration.getConfigData(BlockStreamConfig.class);
 
         delayBetweenBlockItems = blockStreamConfig.delayBetweenBlockItems();
-        delayMSBetweenBlockItems = delayBetweenBlockItems / 1_000_000;
-        delayNSBetweenBlockItems = delayBetweenBlockItems % 1_000_000;
     }
 
     /** Starts the block stream simulator. */
-    public void start() {
+    public void start() throws InterruptedException {
+        int delayMSBetweenBlockItems = delayBetweenBlockItems / 1_000_000;
+        int delayNSBetweenBlockItems = delayBetweenBlockItems % 1_000_000;
 
         isRunning = true;
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has started");
@@ -79,11 +77,7 @@ public class BlockStreamSimulatorApp {
             publishStreamGrpcClient.streamBlockItem(blockItem);
             blockItemsStreamed++;
 
-            try {
-                Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);
 
             if (blockItemsStreamed >= blockStreamConfig.maxBlockItemsToStream()) {
                 streamBlockItem = false;

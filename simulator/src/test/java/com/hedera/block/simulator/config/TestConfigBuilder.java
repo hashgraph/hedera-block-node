@@ -39,7 +39,7 @@ public class TestConfigBuilder {
 
     private final AutoClosableLock configLock = Locks.createAutoLock();
 
-    private Configuration configuration = null;
+    private Configuration configuration;
 
     private final ConfigurationBuilder builder;
 

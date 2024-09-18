@@ -31,7 +31,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class BlockStreamSimulatorAppTest {
+class BlockStreamSimulatorTest {
 
     private Configuration configuration;
 
@@ -58,7 +58,7 @@ class BlockStreamSimulatorAppTest {
     }
 
     @Test
-    void start_logsStartedMessage() {
+    void start_logsStartedMessage() throws InterruptedException {
         blockStreamSimulator.start();
         assertTrue(blockStreamSimulator.isRunning());
     }

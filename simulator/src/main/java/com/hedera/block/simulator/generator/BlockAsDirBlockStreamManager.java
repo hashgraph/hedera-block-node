@@ -146,9 +146,8 @@ public class BlockAsDirBlockStreamManager implements BlockStreamManager {
             return Utils.readGzFile(pathBlockItem);
         } else if (pathBlockItem.toString().endsWith(".blk")) {
             return Files.readAllBytes(pathBlockItem);
-        } else {
-            return null;
         }
+        return null;
     }
 
     // Method to extract the numeric part of the filename from a Path object
