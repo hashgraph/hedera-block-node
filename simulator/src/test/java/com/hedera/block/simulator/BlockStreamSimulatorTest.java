@@ -19,27 +19,37 @@ package com.hedera.block.simulator;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.simulator.generator.BlockStreamManager;
+import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.swirlds.config.api.Configuration;
+import java.io.IOException;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class BlockStreamSimulatorAppTest {
 
-    @Mock private Configuration configuration;
+    private Configuration configuration;
 
     @Mock private BlockStreamManager blockStreamManager;
 
-    @InjectMocks private BlockStreamSimulatorApp blockStreamSimulator;
+    @Mock private PublishStreamGrpcClient publishStreamGrpcClient;
+
+    private BlockStreamSimulatorApp blockStreamSimulator;
 
     @BeforeEach
-    void setUp() {
-        blockStreamSimulator = new BlockStreamSimulatorApp(configuration, blockStreamManager);
+    void setUp() throws IOException {
+
+        configuration =
+                TestUtils.getTestConfiguration(Map.of("blockStream.maxBlockItemsToStream", "100"));
+
+        blockStreamSimulator =
+                new BlockStreamSimulatorApp(
+                        configuration, blockStreamManager, publishStreamGrpcClient);
     }
 
     @AfterEach

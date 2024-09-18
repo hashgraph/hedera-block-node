@@ -39,11 +39,6 @@ class BlockAsFileBlockStreamManagerTest {
     }
 
     @Test
-    void BlockAsFileBlockStreamManagerInvalidRootPath() {
-        assertThrows(RuntimeException.class, () -> getBlockAsFileBlockStreamManager("/etc"));
-    }
-
-    @Test
     void getNextBlock() {
         BlockStreamManager blockStreamManager =
                 getBlockAsFileBlockStreamManager(getAbsoluteFolder(gzRootFolder));
@@ -56,7 +51,7 @@ class BlockAsFileBlockStreamManagerTest {
     void getNextBlockItem() {
         BlockStreamManager blockStreamManager =
                 getBlockAsFileBlockStreamManager(getAbsoluteFolder(gzRootFolder));
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 35000; i++) {
             assertNotNull(blockStreamManager.getNextBlockItem());
         }
     }
@@ -69,8 +64,19 @@ class BlockAsFileBlockStreamManagerTest {
         assertNotNull(blockStreamManager.getNextBlock());
     }
 
+    @Test
+    void BlockAsFileBlockStreamManagerInvalidRootPath() {
+        assertThrows(RuntimeException.class, () -> getBlockAsFileBlockStreamManager("/etc"));
+    }
+
     private BlockAsFileBlockStreamManager getBlockAsFileBlockStreamManager(String rootFolder) {
-        BlockStreamConfig blockStreamConfig = new BlockStreamConfig(GenerationMode.DIR, rootFolder);
+        BlockStreamConfig blockStreamConfig =
+                new BlockStreamConfig(
+                        GenerationMode.DIR,
+                        rootFolder,
+                        1_500_000,
+                        "BlockAsFileBlockStreamManager",
+                        10_000);
         return new BlockAsFileBlockStreamManager(blockStreamConfig);
     }
 }

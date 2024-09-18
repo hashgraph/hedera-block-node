@@ -16,8 +16,9 @@
 
 package com.hedera.block.simulator.generator;
 
-import dagger.Binds;
+import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import dagger.Module;
+import dagger.Provides;
 import javax.inject.Singleton;
 
 /** The module used to inject the block stream manager. */
@@ -25,13 +26,24 @@ import javax.inject.Singleton;
 public interface GeneratorInjectionModule {
 
     /**
-     * Provides the block stream manager.
+     * Provides the block stream manager based on the configuration, either
+     * BlockAsFileBlockStreamManager or BlockAsDirBlockStreamManager. by default, it will be
+     * BlockAsFileBlockStreamManager.
      *
-     * @param blockAsFileBlockStreamManager the block as file block stream manager
+     * @param config the block stream configuration
      * @return the block stream manager
      */
     @Singleton
-    @Binds
-    BlockStreamManager provideBlockStreamManager(
-            BlockAsFileBlockStreamManager blockAsFileBlockStreamManager);
+    @Provides
+    static BlockStreamManager providesBlockStreamManager(BlockStreamConfig config) {
+
+        if ("BlockAsFileBlockStreamManager".equalsIgnoreCase(config.managerImplementation())) {
+            return new BlockAsFileBlockStreamManager(config);
+        } else if ("BlockAsDirBlockStreamManager"
+                .equalsIgnoreCase(config.managerImplementation())) {
+            return new BlockAsDirBlockStreamManager(config);
+        }
+
+        return new BlockAsFileBlockStreamManager(config);
+    }
 }

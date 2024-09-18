@@ -22,3 +22,4 @@ ignore:
   - "server/src/main/java/com/hedera/block/server/Server.java"
   - "server/src/main/java/com/hedera/block/server/Translator.java"
   - "simulator/src/main/java/com/hedera/block/simulator/BlockStreamSimulator.java"
+  - "simulator/src/main/java/com/hedera/block/simulator/Translator.java"

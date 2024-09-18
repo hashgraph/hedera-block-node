@@ -28,11 +28,18 @@ import java.nio.file.Paths;
  *
  * @param generationMode the mode of generation for the block stream
  * @param folderRootPath the root path of the folder containing the block stream
+ * @param delayBetweenBlockItems the delay between block items
+ * @param managerImplementation the implementation of the block stream manager
+ * @param maxBlockItemsToStream the maximum number of block items to stream
  */
 @ConfigData("blockStream")
 public record BlockStreamConfig(
         @ConfigProperty(defaultValue = "DIR") GenerationMode generationMode,
-        @ConfigProperty(defaultValue = "") String folderRootPath) {
+        @ConfigProperty(defaultValue = "") String folderRootPath,
+        @ConfigProperty(defaultValue = "1_500_000") int delayBetweenBlockItems,
+        @ConfigProperty(defaultValue = "BlockAsFileBlockStreamManager")
+                String managerImplementation,
+        @ConfigProperty(defaultValue = "10_000") int maxBlockItemsToStream) {
 
     /**
      * Constructor to set the default root path if not provided, it will be set to the data
