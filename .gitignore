@@ -57,4 +57,4 @@ server/docker/.env
 server/src/test/resources/test_output/
 
 # simulator files, this files are un-tarred before build
-/simulator/src/test/resources/block-0.0.3/
+/simulator/src/main/resources/block-0.0.3/
