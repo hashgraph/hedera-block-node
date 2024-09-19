@@ -58,7 +58,7 @@ class BlockAsFileBlockStreamManagerTest {
 
     @Test
     void loadBlockBlk() {
-        String blkRootFolder = "src/main/resources/block-0.0.3-blk/";
+        String blkRootFolder = "src/test/resources/block-0.0.3-blk/";
         BlockStreamManager blockStreamManager =
                 getBlockAsFileBlockStreamManager(getAbsoluteFolder(blkRootFolder));
         assertNotNull(blockStreamManager.getNextBlock());

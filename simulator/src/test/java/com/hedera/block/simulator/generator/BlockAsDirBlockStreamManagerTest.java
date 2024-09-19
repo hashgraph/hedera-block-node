@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 
 class BlockAsDirBlockStreamManagerTest {
 
-    private final String rootFolder = "src/main/resources/blockAsDirExample/";
+    private final String rootFolder = "src/test/resources/blockAsDirExample/";
 
     private String getAbsoluteFolder(String relativePath) {
         return Paths.get(relativePath).toAbsolutePath().toString();
@@ -68,7 +68,7 @@ class BlockAsDirBlockStreamManagerTest {
                 RuntimeException.class,
                 () ->
                         getBlockAsDirBlockStreamManager(
-                                getAbsoluteFolder("src/main/resources/BlockAsDirException/")));
+                                getAbsoluteFolder("src/test/resources/BlockAsDirException/")));
     }
 
     private BlockStreamManager getBlockAsDirBlockStreamManager(String rootFolder) {
