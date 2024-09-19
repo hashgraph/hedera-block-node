@@ -21,6 +21,7 @@
   "links": [],
   "panels": [
     {
+      "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -28,6 +29,7 @@
         "y": 0
       },
       "id": 16,
+      "panels": [],
       "title": "Errors",
       "type": "row"
     },
@@ -60,7 +62,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 6,
         "w": 6,
         "x": 0,
         "y": 1
@@ -156,12 +158,13 @@
                 "value": 1
               }
             ]
-          }
+          },
+          "unit": "reqps"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 6,
         "w": 18,
         "x": 6,
         "y": 1
@@ -197,12 +200,174 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 7
+      },
+      "id": 28,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "hedera_block_node_stream_persistence_handler_error_total",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Stream Persistence Errors",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 18,
+        "x": 6,
+        "y": 7
+      },
+      "id": 29,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "rate(hedera_block_node_stream_persistence_handler_error_total [$__rate_interval])",
+          "instant": false,
+          "legendFormat": "Stream Persistence Errors",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Rate of Stream Persistence Errors",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 14
       },
       "id": 9,
       "panels": [],
@@ -234,10 +399,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 5,
         "w": 6,
         "x": 0,
-        "y": 10
+        "y": 15
       },
       "id": 13,
       "options": {
@@ -341,10 +506,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 5,
         "w": 18,
         "x": 6,
-        "y": 10
+        "y": 15
       },
       "id": 12,
       "options": {
@@ -401,10 +566,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 5,
         "w": 6,
         "x": 0,
-        "y": 18
+        "y": 20
       },
       "id": 3,
       "options": {
@@ -507,10 +672,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 5,
         "w": 18,
         "x": 6,
-        "y": 18
+        "y": 20
       },
       "id": 7,
       "options": {
@@ -568,7 +733,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 5,
         "w": 6,
         "x": 0,
         "y": 25
@@ -674,7 +839,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 5,
         "w": 18,
         "x": 6,
         "y": 25
@@ -719,7 +884,80 @@
           "color": {
             "mode": "thresholds"
           },
-          "displayName": "Subscribers",
+          "displayName": "Producers",
+          "mappings": [],
+          "max": 20,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 30
+      },
+      "id": 25,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "11.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "hedera_block_node_producers",
+          "instant": false,
+          "legendFormat": "Producers",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Producers",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "displayName": "Consumers",
           "mappings": [],
           "max": 20,
           "min": 0,
@@ -744,10 +982,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 6,
-        "x": 0,
-        "y": 32
+        "x": 6,
+        "y": 30
       },
       "id": 4,
       "options": {
@@ -773,14 +1011,14 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "hedera_block_node_subscribers",
+          "expr": "hedera_block_node_consumers",
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "Consumers",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Subscribers",
+      "title": "Consumers",
       "type": "gauge"
     },
     {
@@ -789,7 +1027,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 37
       },
       "id": 18,
       "panels": [],
@@ -821,10 +1059,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 6,
         "w": 6,
         "x": 0,
-        "y": 41
+        "y": 38
       },
       "id": 6,
       "options": {
@@ -927,10 +1165,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 6,
         "w": 18,
         "x": 6,
-        "y": 41
+        "y": 38
       },
       "id": 8,
       "options": {
@@ -969,7 +1207,339 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 48
+        "y": 44
+      },
+      "id": 23,
+      "panels": [],
+      "title": "Live Stream Responses",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 45
+      },
+      "id": 24,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "hedera_block_node_successful_pub_stream_resp_total",
+          "instant": false,
+          "legendFormat": "PublishStreamResponses",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "PublishStreamResponses Generated",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 18,
+        "x": 6,
+        "y": 45
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "rate( hedera_block_node_successful_pub_stream_resp_total [$__rate_interval])",
+          "instant": false,
+          "legendFormat": "PublishStreamResponses",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Rate of PublishStreamResponses Generated",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 51
+      },
+      "id": 27,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "hedera_block_node_successful_pub_stream_resp_sent_total",
+          "instant": false,
+          "legendFormat": "PublishStreamResponses",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "PublishStreamResponses Sent",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 18,
+        "x": 6,
+        "y": 51
+      },
+      "id": 26,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "rate(hedera_block_node_successful_pub_stream_resp_sent_total[$__rate_interval])",
+          "instant": false,
+          "legendFormat": "PublishStreamResponses",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Rate of PublishStreamResponses Sent to Producers",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 57
       },
       "id": 17,
       "panels": [],
@@ -1005,10 +1575,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 6,
         "w": 6,
         "x": 0,
-        "y": 49
+        "y": 58
       },
       "id": 19,
       "options": {
@@ -1107,10 +1677,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 6,
         "w": 18,
         "x": 6,
-        "y": 49
+        "y": 58
       },
       "id": 5,
       "options": {
@@ -1157,8 +1727,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1171,10 +1740,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 6,
         "w": 6,
         "x": 0,
-        "y": 57
+        "y": 64
       },
       "id": 21,
       "options": {
@@ -1259,8 +1828,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1273,10 +1841,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 6,
         "w": 18,
         "x": 6,
-        "y": 57
+        "y": 64
       },
       "id": 20,
       "options": {

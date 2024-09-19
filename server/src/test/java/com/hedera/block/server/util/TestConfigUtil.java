@@ -34,6 +34,7 @@ import java.util.Map;
 public class TestConfigUtil {
 
     public static final String CONSUMER_TIMEOUT_THRESHOLD_KEY = "consumer.timeoutThresholdMillis";
+    public static final String MEDIATOR_RING_BUFFER_SIZE_KEY = "mediator.ringBufferSize";
 
     private static final String TEST_APP_PROPERTIES_FILE = "app.properties";
 

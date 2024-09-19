@@ -17,10 +17,11 @@
 package com.hedera.block.server;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.Block;

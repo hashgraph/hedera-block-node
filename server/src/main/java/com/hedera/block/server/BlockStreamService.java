@@ -32,11 +32,14 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
-import com.hedera.block.server.data.ObjectEvent;
-import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.block.server.events.BlockNodeEventHandler;
+import com.hedera.block.server.events.ObjectEvent;
+import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.SingleBlockRequest;
 import com.hedera.hapi.block.SingleBlockResponse;
 import com.hedera.hapi.block.SingleBlockResponseCode;
@@ -44,7 +47,6 @@ import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.protoc.BlockService;
 import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.StreamObserver;
@@ -63,11 +65,14 @@ public class BlockStreamService implements GrpcService {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
+    private final LiveStreamMediator streamMediator;
     private final ServiceStatus serviceStatus;
     private final BlockReader<Block> blockReader;
+
     private final BlockNodeContext blockNodeContext;
     private final MetricsService metricsService;
+
+    private final Notifier notifier;
 
     /**
      * Constructor for the BlockStreamService class. It initializes the BlockStreamService with the
@@ -82,17 +87,22 @@ public class BlockStreamService implements GrpcService {
      */
     @Inject
     BlockStreamService(
-            @NonNull
-                    final StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>>
-                            streamMediator,
+            @NonNull final LiveStreamMediator streamMediator,
             @NonNull final BlockReader<Block> blockReader,
             @NonNull final ServiceStatus serviceStatus,
+            @NonNull
+                    final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>
+                            streamPersistenceHandler,
+            @NonNull final Notifier notifier,
             @NonNull final BlockNodeContext blockNodeContext) {
-        this.streamMediator = streamMediator;
         this.blockReader = blockReader;
         this.serviceStatus = serviceStatus;
+        this.notifier = notifier;
         this.blockNodeContext = blockNodeContext;
         this.metricsService = blockNodeContext.metricsService();
+
+        streamMediator.subscribe(streamPersistenceHandler);
+        this.streamMediator = streamMediator;
     }
 
     /**
@@ -139,8 +149,23 @@ public class BlockStreamService implements GrpcService {
                             publishStreamResponseObserver) {
         LOGGER.log(DEBUG, "Executing bidirectional publishBlockStream gRPC method");
 
-        return new ProducerBlockItemObserver(
-                streamMediator, publishStreamResponseObserver, blockNodeContext, serviceStatus);
+        // Unsubscribe any expired notifiers
+        notifier.unsubscribeAllExpired();
+
+        final var producerBlockItemObserver =
+                new ProducerBlockItemObserver(
+                        Clock.systemDefaultZone(),
+                        streamMediator,
+                        notifier,
+                        publishStreamResponseObserver,
+                        blockNodeContext,
+                        serviceStatus);
+
+        // Register the producer observer with the notifier to publish responses back to the
+        // producer
+        notifier.subscribe(producerBlockItemObserver);
+
+        return producerBlockItemObserver;
     }
 
     void protocSubscribeBlockStream(
@@ -152,16 +177,18 @@ public class BlockStreamService implements GrpcService {
                             subscribeStreamResponseObserver) {
         LOGGER.log(DEBUG, "Executing Server Streaming subscribeBlockStream gRPC method");
 
-        // Return a custom StreamObserver to handle streaming blocks from the producer.
         if (serviceStatus.isRunning()) {
-            final var streamObserver =
+            // Unsubscribe any expired notifiers
+            streamMediator.unsubscribeAllExpired();
+
+            final var consumerStreamResponseObserver =
                     new ConsumerStreamResponseObserver(
-                            blockNodeContext,
                             Clock.systemDefaultZone(),
                             streamMediator,
-                            subscribeStreamResponseObserver);
+                            subscribeStreamResponseObserver,
+                            blockNodeContext);
 
-            streamMediator.subscribe(streamObserver);
+            streamMediator.subscribe(consumerStreamResponseObserver);
         } else {
             LOGGER.log(
                     ERROR,

@@ -39,20 +39,20 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.protobuf.Descriptors;
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.data.ObjectEvent;
-import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.block.server.mediator.LiveStreamMediator;
+import com.hedera.block.server.notifier.Notifier;
+import com.hedera.block.server.persistence.StreamPersistenceHandlerImpl;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.SingleBlockResponse;
 import com.hedera.hapi.block.SingleBlockResponseCode;
-import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
@@ -62,7 +62,6 @@ import io.helidon.webserver.grpc.GrpcService;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -76,11 +75,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class BlockStreamServiceTest {
 
+    @Mock private Notifier notifier;
+
     @Mock private StreamObserver<com.hedera.hapi.block.protoc.SingleBlockResponse> responseObserver;
 
-    @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
+    @Mock private LiveStreamMediator streamMediator;
 
     @Mock private BlockReader<Block> blockReader;
+
+    @Mock private BlockWriter<BlockItem> blockWriter;
 
     @Mock private ServiceStatus serviceStatus;
 
@@ -111,11 +114,19 @@ public class BlockStreamServiceTest {
     }
 
     @Test
-    public void testServiceName() throws IOException, NoSuchAlgorithmException {
+    public void testServiceName() {
 
+        final var blockNodeEventHandler =
+                new StreamPersistenceHandlerImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator,
+                        blockReader,
+                        serviceStatus,
+                        blockNodeEventHandler,
+                        notifier,
+                        blockNodeContext);
 
         // Verify the service name
         assertEquals(Constants.SERVICE_NAME, blockStreamService.serviceName());
@@ -125,10 +136,19 @@ public class BlockStreamServiceTest {
     }
 
     @Test
-    public void testProto() throws IOException, NoSuchAlgorithmException {
+    public void testProto() {
+
+        final var blockNodeEventHandler =
+                new StreamPersistenceHandlerImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator,
+                        blockReader,
+                        serviceStatus,
+                        blockNodeEventHandler,
+                        notifier,
+                        blockNodeContext);
         Descriptors.FileDescriptor fileDescriptor = blockStreamService.proto();
 
         // Verify the current rpc methods
@@ -141,10 +161,18 @@ public class BlockStreamServiceTest {
     @Test
     void testSingleBlockHappyPath() throws IOException, ParseException {
 
+        final var blockNodeEventHandler =
+                new StreamPersistenceHandlerImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator,
+                        blockReader,
+                        serviceStatus,
+                        blockNodeEventHandler,
+                        notifier,
+                        blockNodeContext);
 
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
@@ -196,9 +224,17 @@ public class BlockStreamServiceTest {
                         .build();
 
         // Call the service
+        final var blockNodeEventHandler =
+                new StreamPersistenceHandlerImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator,
+                        blockReader,
+                        serviceStatus,
+                        blockNodeEventHandler,
+                        notifier,
+                        blockNodeContext);
 
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
@@ -208,11 +244,19 @@ public class BlockStreamServiceTest {
     }
 
     @Test
-    void testSingleBlockServiceNotAvailable() throws InvalidProtocolBufferException {
+    void testSingleBlockServiceNotAvailable() {
 
+        final var blockNodeEventHandler =
+                new StreamPersistenceHandlerImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator,
+                        blockReader,
+                        serviceStatus,
+                        blockNodeEventHandler,
+                        notifier,
+                        blockNodeContext);
 
         // Set the service status to not running
         when(serviceStatus.isRunning()).thenReturn(false);
@@ -231,9 +275,17 @@ public class BlockStreamServiceTest {
 
     @Test
     public void testSingleBlockIOExceptionPath() throws IOException, ParseException {
+        final var blockNodeEventHandler =
+                new StreamPersistenceHandlerImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator,
+                        blockReader,
+                        serviceStatus,
+                        blockNodeEventHandler,
+                        notifier,
+                        blockNodeContext);
 
         when(serviceStatus.isRunning()).thenReturn(true);
         when(blockReader.read(1)).thenThrow(new IOException("Test exception"));
@@ -252,9 +304,17 @@ public class BlockStreamServiceTest {
 
     @Test
     public void testSingleBlockParseExceptionPath() throws IOException, ParseException {
+        final var blockNodeEventHandler =
+                new StreamPersistenceHandlerImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator,
+                        blockReader,
+                        serviceStatus,
+                        blockNodeEventHandler,
+                        notifier,
+                        blockNodeContext);
 
         when(serviceStatus.isRunning()).thenReturn(true);
         when(blockReader.read(1)).thenThrow(new ParseException("Test exception"));
@@ -274,9 +334,7 @@ public class BlockStreamServiceTest {
     @Test
     public void testUpdateInvokesRoutingWithLambdas() {
 
-        final BlockStreamService blockStreamService =
-                new BlockStreamService(
-                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+        final BlockStreamService blockStreamService = getBlockStreamService();
 
         GrpcService.Routing routing = mock(GrpcService.Routing.class);
         blockStreamService.update(routing);
@@ -291,13 +349,36 @@ public class BlockStreamServiceTest {
                 .unary(eq(SINGLE_BLOCK_METHOD_NAME), any(ServerCalls.UnaryMethod.class));
     }
 
+    private BlockStreamService getBlockStreamService() {
+        final var blockNodeEventHandler =
+                new StreamPersistenceHandlerImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+        final BlockStreamService blockStreamService =
+                new BlockStreamService(
+                        streamMediator,
+                        blockReader,
+                        serviceStatus,
+                        blockNodeEventHandler,
+                        notifier,
+                        blockNodeContext);
+        return blockStreamService;
+    }
+
     @Test
     public void testProtocParseExceptionHandling() {
         // TODO: We might be able to remove this test once we can remove the Translator class
 
+        final var blockNodeEventHandler =
+                new StreamPersistenceHandlerImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
-                        streamMediator, blockReader, serviceStatus, blockNodeContext);
+                        streamMediator,
+                        blockReader,
+                        serviceStatus,
+                        blockNodeEventHandler,
+                        notifier,
+                        blockNodeContext);
 
         // Build a request to invoke the service
         final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =

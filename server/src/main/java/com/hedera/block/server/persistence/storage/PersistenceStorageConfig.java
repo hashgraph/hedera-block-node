@@ -17,6 +17,7 @@
 package com.hedera.block.server.persistence.storage;
 
 import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.INFO;
 
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
@@ -33,6 +34,8 @@ import java.nio.file.Paths;
  */
 @ConfigData("persistence.storage")
 public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String rootPath) {
+    private static final System.Logger LOGGER =
+            System.getLogger(PersistenceStorageConfig.class.getName());
 
     /**
      * Constructor to set the default root path if not provided, it will be set to the data
@@ -57,6 +60,7 @@ public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String
             }
         }
 
+        LOGGER.log(INFO, "Persistence Storage configuration persistence.storage.rootPath: " + path);
         rootPath = path.toString();
     }
 }

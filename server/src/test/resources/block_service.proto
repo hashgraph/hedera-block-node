@@ -150,8 +150,8 @@ message BlockItem {
 //        TransactionOutput transaction_output = 6;
 //        StateChanges state_changes = 7;
 //        FilteredItemHash filtered_item_hash = 8;
-//        BlockProof block_proof = 9;
-        BlockProof block_proof = 3;
+        BlockProof block_proof = 9;
+//        BlockProof block_proof = 3;
 //        RecordFileItem record_file = 10;
     }
 }

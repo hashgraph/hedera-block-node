@@ -16,12 +16,11 @@
 
 package com.hedera.block.server.mediator;
 
-import com.hedera.block.server.ServiceStatus;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.data.ObjectEvent;
-import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.notifier.Notifiable;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.SubscribeStreamResponse;
-import com.hedera.hapi.block.stream.BlockItem;
+import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -34,18 +33,35 @@ public interface MediatorInjectionModule {
     /**
      * Provides the stream mediator.
      *
-     * @param blockWriter the block writer
      * @param blockNodeContext the block node context
      * @param serviceStatus the service status
      * @return the stream mediator
      */
     @Provides
     @Singleton
-    static StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> providesStreamMediator(
-            @NonNull BlockWriter<BlockItem> blockWriter,
-            @NonNull BlockNodeContext blockNodeContext,
-            @NonNull ServiceStatus serviceStatus) {
-        return LiveStreamMediatorBuilder.newBuilder(blockWriter, blockNodeContext, serviceStatus)
-                .build();
+    static LiveStreamMediator providesLiveStreamMediator(
+            @NonNull BlockNodeContext blockNodeContext, @NonNull ServiceStatus serviceStatus) {
+        return LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
     }
+
+    /**
+     * Binds the subscription handler to the live stream mediator.
+     *
+     * @param liveStreamMediator the live stream mediator
+     * @return the subscription handler
+     */
+    @Binds
+    @Singleton
+    SubscriptionHandler<SubscribeStreamResponse> bindSubscriptionHandler(
+            @NonNull final LiveStreamMediator liveStreamMediator);
+
+    /**
+     * Binds the mediator to the notifiable interface.
+     *
+     * @param liveStreamMediator the live stream mediator
+     * @return the notifiable interface
+     */
+    @Binds
+    @Singleton
+    Notifiable bindMediator(@NonNull final LiveStreamMediator liveStreamMediator);
 }

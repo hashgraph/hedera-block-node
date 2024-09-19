@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -97,7 +98,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
      * @throws IOException if an error occurs while writing the block item
      */
     @Override
-    public void write(@NonNull final BlockItem blockItem) throws IOException {
+    public Optional<BlockItem> write(@NonNull final BlockItem blockItem) throws IOException {
 
         if (blockItem.hasBlockHeader()) {
             resetState(blockItem);
@@ -126,6 +127,13 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                 }
             }
         }
+
+        if (blockItem.hasBlockProof()) {
+            metricsService.get(BlocksPersisted).increment();
+            return Optional.of(blockItem);
+        }
+
+        return Optional.empty();
     }
 
     /**
@@ -161,9 +169,6 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
 
         // Reset
         blockNodeFileNameIndex = 0;
-
-        // Increment the block counter
-        metricsService.get(BlocksPersisted).increment();
     }
 
     private void repairPermissions(@NonNull final Path path) throws IOException {
@@ -174,13 +179,8 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                     "Block node root directory is not writable. Attempting to change the"
                             + " permissions.");
 
-            try {
-                // Attempt to restore the permissions on the block node root directory
-                Files.setPosixFilePermissions(path, filePerms.value());
-            } catch (IOException e) {
-                LOGGER.log(ERROR, "Error setting permissions on the path: " + path, e);
-                throw e;
-            }
+            // Attempt to restore the permissions on the block node root directory
+            Files.setPosixFilePermissions(path, filePerms.value());
         }
     }
 

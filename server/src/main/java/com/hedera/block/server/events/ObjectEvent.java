@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.data;
+package com.hedera.block.server.events;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 

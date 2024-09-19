@@ -17,6 +17,8 @@
 package com.hedera.block.server.config;
 
 import com.hedera.block.server.consumer.ConsumerConfig;
+import com.hedera.block.server.mediator.MediatorConfig;
+import com.hedera.block.server.notifier.NotifierConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.swirlds.common.metrics.config.MetricsConfig;
 import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
@@ -78,5 +80,29 @@ public interface ConfigInjectionModule {
     @Provides
     static ConsumerConfig provideConsumerConfig(Configuration configuration) {
         return configuration.getConfigData(ConsumerConfig.class);
+    }
+
+    /**
+     * Provides a mediator configuration singleton using the configuration.
+     *
+     * @param configuration is the configuration singleton
+     * @return a mediator configuration singleton
+     */
+    @Singleton
+    @Provides
+    static MediatorConfig provideMediatorConfig(Configuration configuration) {
+        return configuration.getConfigData(MediatorConfig.class);
+    }
+
+    /**
+     * Provides a notifier configuration singleton using the configuration.
+     *
+     * @param configuration is the configuration singleton
+     * @return a notifier configuration singleton
+     */
+    @Singleton
+    @Provides
+    static NotifierConfig provideNotifierConfig(Configuration configuration) {
+        return configuration.getConfigData(NotifierConfig.class);
     }
 }

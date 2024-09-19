@@ -17,11 +17,20 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.persistence.storage.read.BlockAsDirReaderTest.removeBlockReadPerms;
+import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.same;
+import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.FileUtils;
@@ -30,7 +39,6 @@ import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.stream.Block;
@@ -83,12 +91,24 @@ public class BlockAsDirWriterTest {
     public void testWriterAndReaderHappyPath() throws IOException, ParseException {
 
         // Write a block
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+        final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-        for (BlockItem blockItem : blockItems) {
-            blockWriter.write(blockItem);
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext)
+                        .filePerms(FileUtils.defaultPerms)
+                        .build();
+        for (int i = 0; i < 10; i++) {
+            if (i == 9) {
+                Optional<BlockItem> result = blockWriter.write(blockItems.get(i));
+                if (result.isPresent()) {
+                    assertEquals(blockItems.get(i), result.get());
+                } else {
+                    fail("The optional should contain the last block proof block item");
+                }
+            } else {
+                Optional<BlockItem> result = blockWriter.write(blockItems.get(i));
+                assertTrue(result.isEmpty());
+            }
         }
 
         // Confirm the block
@@ -108,6 +128,8 @@ public class BlockAsDirWriterTest {
                 hasBlockProof = true;
             } else if (blockItem.hasEventHeader()) {
                 hasStartEvent = true;
+            } else {
+                fail("Unknown block item type");
             }
         }
 
@@ -119,7 +141,7 @@ public class BlockAsDirWriterTest {
     @Test
     public void testRemoveBlockWritePerms() throws IOException, ParseException {
 
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+        final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
@@ -129,7 +151,8 @@ public class BlockAsDirWriterTest {
 
         // The first BlockItem contains a header which will create a new block directory.
         // The BlockWriter will attempt to repair the permissions and should succeed.
-        blockWriter.write(blockItems.getFirst());
+        Optional<BlockItem> result = blockWriter.write(blockItems.getFirst());
+        assertFalse(result.isPresent());
 
         // Confirm we're able to read 1 block item
         BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(testConfig).build();
@@ -141,7 +164,8 @@ public class BlockAsDirWriterTest {
         // Remove all permissions on the block directory and
         // attempt to write the next block item
         removeBlockAllPerms(1, testConfig);
-        blockWriter.write(blockItems.get(1));
+        result = blockWriter.write(blockItems.get(1));
+        assertFalse(result.isPresent());
 
         // There should now be 2 blockItems in the block
         blockOpt = blockReader.read(1);
@@ -151,7 +175,8 @@ public class BlockAsDirWriterTest {
 
         // Remove read permission on the block directory
         removeBlockReadPerms(1, testConfig);
-        blockWriter.write(blockItems.get(2));
+        result = blockWriter.write(blockItems.get(2));
+        assertFalse(result.isPresent());
 
         // There should now be 3 blockItems in the block
         blockOpt = blockReader.read(1);
@@ -163,7 +188,7 @@ public class BlockAsDirWriterTest {
     @Test
     public void testUnrecoverableIOExceptionOnWrite() throws IOException {
 
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+        final List<BlockItem> blockItems = generateBlockItems(1);
         final BlockRemover blockRemover =
                 new BlockAsDirRemover(Path.of(testConfig.rootPath()), FileUtils.defaultPerms);
 
@@ -179,14 +204,15 @@ public class BlockAsDirWriterTest {
 
     @Test
     public void testRemoveRootDirReadPerm() throws IOException, ParseException {
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+        final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<BlockItem> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
 
         // Write the first block item to create the block
         // directory
-        blockWriter.write(blockItems.getFirst());
+        Optional<BlockItem> result = blockWriter.write(blockItems.getFirst());
+        assertFalse(result.isPresent());
 
         // Remove root dir read permissions and
         // block dir read permissions
@@ -196,7 +222,17 @@ public class BlockAsDirWriterTest {
         // Attempt to write the remaining block
         // items
         for (int i = 1; i < 10; i++) {
-            blockWriter.write(blockItems.get(i));
+            if (i == 9) {
+                result = blockWriter.write(blockItems.get(i));
+                if (result.isPresent()) {
+                    assertEquals(blockItems.get(i), result.get());
+                } else {
+                    fail("The optional should contain the last block proof block item");
+                }
+            } else {
+                result = blockWriter.write(blockItems.get(i));
+                assertTrue(result.isEmpty());
+            }
         }
 
         BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(testConfig).build();
@@ -207,13 +243,13 @@ public class BlockAsDirWriterTest {
 
     @Test
     public void testPartialBlockRemoval() throws IOException, ParseException {
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(3);
+        final List<BlockItem> blockItems = generateBlockItems(3);
         final BlockRemover blockRemover =
                 new BlockAsDirRemover(Path.of(testConfig.rootPath()), FileUtils.defaultPerms);
 
         // Use a spy of TestBlockAsDirWriter to proxy block items to the real writer
         // for the first 22 block items.  Then simulate an IOException on the 23rd block item
-        // thrown from a protected write method in the real class.  This should trigger the
+        // thrown from a protected write method in the real class. This should trigger the
         // blockRemover instance to remove the partially written block.
         final TestBlockAsDirWriter blockWriter =
                 spy(
@@ -232,7 +268,16 @@ public class BlockAsDirWriterTest {
 
         // Now make the calls
         for (int i = 0; i < 23; i++) {
-            blockWriter.write(blockItems.get(i));
+            Optional<BlockItem> result = blockWriter.write(blockItems.get(i));
+            if (i == 9 || i == 19) {
+                // The last block item in each block is the block proof
+                // and should be returned by the write method
+                assertTrue(result.isPresent());
+                assertEquals(blockItems.get(i), result.get());
+            } else {
+                // The write method should return an empty optional
+                assertTrue(result.isEmpty());
+            }
         }
 
         // Verify the IOException was thrown on the 23rd block item

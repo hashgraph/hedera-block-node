@@ -34,16 +34,6 @@ import javax.inject.Singleton;
 public interface BlockNodeAppInjectionModule {
 
     /**
-     * Binds the service status to the service status implementation.
-     *
-     * @param serviceStatus needs a service status implementation
-     * @return the service status implementation
-     */
-    @Singleton
-    @Binds
-    ServiceStatus bindServiceStatus(ServiceStatusImpl serviceStatus);
-
-    /**
      * Provides a block node context singleton.
      *
      * @param config should come from DI

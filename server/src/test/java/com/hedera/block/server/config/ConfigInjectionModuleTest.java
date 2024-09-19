@@ -19,6 +19,8 @@ package com.hedera.block.server.config;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.server.consumer.ConsumerConfig;
+import com.hedera.block.server.mediator.MediatorConfig;
+import com.hedera.block.server.notifier.NotifierConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.swirlds.common.metrics.config.MetricsConfig;
@@ -90,5 +92,31 @@ class ConfigInjectionModuleTest {
         // Verify that the correct config data is returned
         assertNotNull(providedConfig);
         assertSame(consumerConfig, providedConfig);
+    }
+
+    @Test
+    void testProvideMediatorConfig() throws IOException {
+        BlockNodeContext context = TestConfigUtil.getTestBlockNodeContext();
+        Configuration configuration = context.configuration();
+        MediatorConfig mediatorConfig = configuration.getConfigData(MediatorConfig.class);
+
+        MediatorConfig providedConfig = ConfigInjectionModule.provideMediatorConfig(configuration);
+
+        // Verify the config
+        assertNotNull(providedConfig);
+        assertSame(mediatorConfig, providedConfig);
+    }
+
+    @Test
+    void testProvideNotifierConfig() throws IOException {
+        BlockNodeContext context = TestConfigUtil.getTestBlockNodeContext();
+        Configuration configuration = context.configuration();
+        NotifierConfig notifierConfig = configuration.getConfigData(NotifierConfig.class);
+
+        NotifierConfig providedConfig = ConfigInjectionModule.provideNotifierConfig(configuration);
+
+        // Verify the config
+        assertNotNull(providedConfig);
+        assertSame(notifierConfig, providedConfig);
     }
 }

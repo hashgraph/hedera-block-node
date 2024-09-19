@@ -57,7 +57,7 @@ public class Server {
         Config.global(config);
 
         // Init BlockNode Configuration
-        Configuration configuration =
+        final Configuration configuration =
                 ConfigurationBuilder.create()
                         .withSource(SystemEnvironmentConfigSource.getInstance())
                         .withSource(SystemPropertiesConfigSource.getInstance())

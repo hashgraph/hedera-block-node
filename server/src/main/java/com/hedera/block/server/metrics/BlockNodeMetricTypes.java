@@ -41,11 +41,15 @@ public final class BlockNodeMetricTypes {
         /** The number of live block items received before publishing to the RingBuffer. */
         LiveBlockItems("live_block_items", "Live BlockItems"),
 
-        /**
-         * The number of blocks persisted to storage.
-         *
-         * <p>Block items are not counted here, only the blocks.
-         */
+        /** The number of PublishStreamResponses generated and published to the subscribers. */
+        SuccessfulPubStreamResp(
+                "successful_pub_stream_resp", "Successful Publish Stream Responses"),
+
+        /** The number of PublishStreamResponses sent to the producers. */
+        SuccessfulPubStreamRespSent(
+                "successful_pub_stream_resp_sent", "Successful Publish Stream Responses Sent"),
+
+        /** The number of blocks persisted to storage. */
         BlocksPersisted("blocks_persisted", "Blocks Persisted"),
 
         /** The number of live block items consumed from the by each consumer observer. */
@@ -61,7 +65,11 @@ public final class BlockNodeMetricTypes {
 
         /** The number of errors encountered by the live block stream mediator. */
         LiveBlockStreamMediatorError(
-                "live_block_stream_mediator_error", "Live Block Stream Mediator Error");
+                "live_block_stream_mediator_error", "Live Block Stream Mediator Error"),
+
+        /** The number of errors encountered by the stream persistence handler. */
+        StreamPersistenceHandlerError(
+                "stream_persistence_handler_error", "Stream Persistence Handler Error");
 
         private final String grafanaLabel;
         private final String description;
@@ -93,7 +101,10 @@ public final class BlockNodeMetricTypes {
     public enum Gauge implements MetricMetadata {
 
         /** The number of subscribers receiving the live block stream. */
-        Subscribers("subscribers", "Subscribers");
+        Consumers("consumers", "Consumers"),
+
+        /** The number of producers publishing block items. */
+        Producers("producers", "Producers");
 
         private final String grafanaLabel;
         private final String description;

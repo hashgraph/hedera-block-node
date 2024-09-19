@@ -4,6 +4,7 @@ import com.hedera.block.server.config.BlockNodeConfigExtension;
 module com.hedera.block.server {
     exports com.hedera.block.server;
     exports com.hedera.block.server.consumer;
+    exports com.hedera.block.server.exception;
     exports com.hedera.block.server.persistence.storage;
     exports com.hedera.block.server.persistence.storage.write;
     exports com.hedera.block.server.persistence.storage.read;
@@ -11,9 +12,11 @@ module com.hedera.block.server {
     exports com.hedera.block.server.config;
     exports com.hedera.block.server.mediator;
     exports com.hedera.block.server.metrics;
-    exports com.hedera.block.server.data;
+    exports com.hedera.block.server.events;
     exports com.hedera.block.server.health;
     exports com.hedera.block.server.persistence;
+    exports com.hedera.block.server.notifier;
+    exports com.hedera.block.server.service;
 
     requires com.hedera.block.stream;
     requires com.google.protobuf;

@@ -20,7 +20,9 @@ import com.hedera.block.server.config.ConfigInjectionModule;
 import com.hedera.block.server.health.HealthInjectionModule;
 import com.hedera.block.server.mediator.MediatorInjectionModule;
 import com.hedera.block.server.metrics.MetricsInjectionModule;
+import com.hedera.block.server.notifier.NotifierInjectionModule;
 import com.hedera.block.server.persistence.PersistenceInjectionModule;
+import com.hedera.block.server.service.ServiceInjectionModule;
 import com.swirlds.config.api.Configuration;
 import dagger.BindsInstance;
 import dagger.Component;
@@ -30,6 +32,8 @@ import javax.inject.Singleton;
 @Singleton
 @Component(
         modules = {
+            NotifierInjectionModule.class,
+            ServiceInjectionModule.class,
             BlockNodeAppInjectionModule.class,
             HealthInjectionModule.class,
             PersistenceInjectionModule.class,

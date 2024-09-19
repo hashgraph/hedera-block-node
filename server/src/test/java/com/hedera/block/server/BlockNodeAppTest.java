@@ -21,6 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.health.HealthService;
+import com.hedera.block.server.service.ServiceStatus;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.WebServerConfig;
 import io.helidon.webserver.grpc.GrpcRouting;

@@ -23,13 +23,14 @@ import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.data.ObjectEvent;
+import com.hedera.block.server.events.BlockNodeEventHandler;
+import com.hedera.block.server.events.LivenessCalculator;
+import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.OneOf;
-import com.lmax.disruptor.EventHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -39,22 +40,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * The ConsumerBlockItemObserver class is the primary integration point between the LMAX Disruptor
  * and an instance of a downstream consumer (represented by subscribeStreamResponseObserver provided
- * by Helidon). The ConsumerBlockItemObserver implements the EventHandler interface so the Disruptor
- * can invoke the onEvent() method when a new SubscribeStreamResponse is available.
+ * by Helidon). The ConsumerBlockItemObserver implements the BlockNodeEventHandler interface so the
+ * Disruptor can invoke the onEvent() method when a new SubscribeStreamResponse is available.
  */
 public class ConsumerStreamResponseObserver
-        implements EventHandler<ObjectEvent<SubscribeStreamResponse>> {
+        implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final MetricsService metricsService;
     private final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
             subscribeStreamResponseObserver;
-    private final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>> subscriptionHandler;
-
-    private final long timeoutThresholdMillis;
-    private final InstantSource producerLivenessClock;
-    private long producerLivenessMillis;
+    private final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
 
     private final AtomicBoolean isResponsePermitted = new AtomicBoolean(true);
     private final ResponseSender statusResponseSender = new StatusResponseSender();
@@ -62,6 +59,8 @@ public class ConsumerStreamResponseObserver
 
     private static final String PROTOCOL_VIOLATION_MESSAGE =
             "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
+
+    private final LivenessCalculator livenessCalculator;
 
     /**
      * The onCancel handler to execute when the consumer cancels the stream. This handler is
@@ -80,28 +79,31 @@ public class ConsumerStreamResponseObserver
      * SubscribeStreamResponse events from the Disruptor and passing them to the downstream consumer
      * via the subscribeStreamResponseObserver.
      *
-     * @param context contains the context with metrics and configuration for the application
      * @param producerLivenessClock the clock to use to determine the producer liveness
      * @param subscriptionHandler the subscription handler to use to manage the subscription
      *     lifecycle
      * @param subscribeStreamResponseObserver the observer to use to send responses to the consumer
+     * @param blockNodeContext contains the context with metrics and configuration for the
+     *     application
      */
     public ConsumerStreamResponseObserver(
-            @NonNull final BlockNodeContext context,
             @NonNull final InstantSource producerLivenessClock,
-            @NonNull
-                    final SubscriptionHandler<ObjectEvent<SubscribeStreamResponse>>
-                            subscriptionHandler,
+            @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler,
             @NonNull
                     final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
-                            subscribeStreamResponseObserver) {
+                            subscribeStreamResponseObserver,
+            @NonNull final BlockNodeContext blockNodeContext) {
 
-        this.timeoutThresholdMillis =
-                context.configuration()
-                        .getConfigData(ConsumerConfig.class)
-                        .timeoutThresholdMillis();
+        this.livenessCalculator =
+                new LivenessCalculator(
+                        producerLivenessClock,
+                        blockNodeContext
+                                .configuration()
+                                .getConfigData(ConsumerConfig.class)
+                                .timeoutThresholdMillis());
+
         this.subscriptionHandler = subscriptionHandler;
-        this.metricsService = context.metricsService();
+        this.metricsService = blockNodeContext.metricsService();
 
         // The ServerCallStreamObserver can be configured with Runnable handlers to
         // be executed when a downstream consumer closes the connection. The handlers
@@ -117,7 +119,7 @@ public class ConsumerStreamResponseObserver
                         // Do not allow additional responses to be sent.
                         isResponsePermitted.set(false);
                         subscriptionHandler.unsubscribe(this);
-                        LOGGER.log(DEBUG, "Consumer cancelled stream.  Observer unsubscribed.");
+                        LOGGER.log(DEBUG, "Consumer cancelled the stream. Observer unsubscribed.");
                     };
             serverCallStreamObserver.setOnCancelHandler(onCancel);
 
@@ -127,14 +129,12 @@ public class ConsumerStreamResponseObserver
                         // Do not allow additional responses to be sent.
                         isResponsePermitted.set(false);
                         subscriptionHandler.unsubscribe(this);
-                        LOGGER.log(DEBUG, "Consumer completed stream.  Observer unsubscribed.");
+                        LOGGER.log(DEBUG, "Consumer completed stream. Observer unsubscribed.");
                     };
             serverCallStreamObserver.setOnCloseHandler(onClose);
         }
 
         this.subscribeStreamResponseObserver = subscribeStreamResponseObserver;
-        this.producerLivenessClock = producerLivenessClock;
-        this.producerLivenessMillis = producerLivenessClock.millis();
     }
 
     /**
@@ -157,21 +157,25 @@ public class ConsumerStreamResponseObserver
         // Only send the response if the consumer has not cancelled
         // or closed the stream.
         if (isResponsePermitted.get()) {
-            final long currentMillis = producerLivenessClock.millis();
-            if (currentMillis - producerLivenessMillis > timeoutThresholdMillis) {
+            if (isTimeoutExpired()) {
                 subscriptionHandler.unsubscribe(this);
                 LOGGER.log(
                         DEBUG,
                         "Producer liveness timeout. Unsubscribed ConsumerBlockItemObserver.");
             } else {
                 // Refresh the producer liveness and pass the BlockItem to the downstream observer.
-                producerLivenessMillis = currentMillis;
+                livenessCalculator.refresh();
 
                 final SubscribeStreamResponse subscribeStreamResponse = event.get();
                 final ResponseSender responseSender = getResponseSender(subscribeStreamResponse);
                 responseSender.send(subscribeStreamResponse);
             }
         }
+    }
+
+    @Override
+    public boolean isTimeoutExpired() {
+        return livenessCalculator.isTimeoutExpired();
     }
 
     @NonNull
@@ -215,7 +219,7 @@ public class ConsumerStreamResponseObserver
                 }
 
                 if (streamStarted) {
-                    LOGGER.log(DEBUG, "Sending BlockItem downstream: {0}", blockItem);
+                    LOGGER.log(DEBUG, "Sending BlockItem downstream: " + blockItem);
 
                     // Increment counter
                     metricsService.get(LiveBlockItemsConsumed).increment();
@@ -225,12 +229,13 @@ public class ConsumerStreamResponseObserver
         }
     }
 
+    // TODO: Implement another StatusResponseSender that will unsubscribe the observer once the
+    // status code is fixed.
     private final class StatusResponseSender implements ResponseSender {
         public void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse) {
             LOGGER.log(
                     DEBUG,
-                    "Sending SubscribeStreamResponse downstream: {0} ",
-                    subscribeStreamResponse);
+                    "Sending SubscribeStreamResponse downstream: " + subscribeStreamResponse);
             subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
         }
     }
