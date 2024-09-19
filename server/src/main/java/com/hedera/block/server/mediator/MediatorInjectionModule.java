@@ -20,6 +20,7 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.notifier.Notifiable;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.SubscribeStreamResponse;
+import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -44,32 +45,23 @@ public interface MediatorInjectionModule {
     }
 
     /**
-     * Provides the subscription handler.
+     * Binds the subscription handler to the live stream mediator.
      *
-     * @param blockNodeContext the block node context
-     * @param serviceStatus the service status
+     * @param liveStreamMediator the live stream mediator
      * @return the subscription handler
      */
-    @Provides
+    @Binds
     @Singleton
-    static SubscriptionHandler<SubscribeStreamResponse> provideSubscriptionHandler(
-            @NonNull final BlockNodeContext blockNodeContext,
-            @NonNull final ServiceStatus serviceStatus) {
-        return LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
-    }
+    SubscriptionHandler<SubscribeStreamResponse> bindSubscriptionHandler(
+            @NonNull final LiveStreamMediator liveStreamMediator);
 
     /**
-     * Provides the mediator as a Notifiable instance.
+     * Binds the mediator to the notifiable interface.
      *
-     * @param blockNodeContext the block node context
-     * @param serviceStatus the service status
-     * @return the mediator as a Notifiable instance
+     * @param liveStreamMediator the live stream mediator
+     * @return the notifiable interface
      */
-    @Provides
+    @Binds
     @Singleton
-    static Notifiable provideMediator(
-            @NonNull final BlockNodeContext blockNodeContext,
-            @NonNull final ServiceStatus serviceStatus) {
-        return LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
-    }
+    Notifiable bindMediator(@NonNull final LiveStreamMediator liveStreamMediator);
 }
