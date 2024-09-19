@@ -27,5 +27,10 @@ RUN tar -xvf server-${VERSION}.tar
 # Copy the logging properties file
 COPY logging.properties logging.properties
 
+# HEALTHCHECK for liveness and readiness
+HEALTHCHECK --interval=30s --timeout=10s --start-period=3s --retries=3 \
+  CMD curl -f http://localhost:8080/healthz/livez || exit 1 && \
+      curl -f http://localhost:8080/healthz/readyz || exit 1
+
 # RUN the bin script for starting the server
 ENTRYPOINT ["/bin/bash", "-c", "/app/server-${VERSION}/bin/server"]
