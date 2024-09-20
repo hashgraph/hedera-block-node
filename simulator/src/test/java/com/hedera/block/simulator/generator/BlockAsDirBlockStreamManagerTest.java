@@ -16,16 +16,18 @@
 
 package com.hedera.block.simulator.generator;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
 
-class BlockAsFileBlockStreamManagerTest {
+class BlockAsDirBlockStreamManagerTest {
 
-    private final String gzRootFolder = "src/main/resources/block-0.0.3/";
+    private final String rootFolder = "src/test/resources/blockAsDirExample/";
 
     private String getAbsoluteFolder(String relativePath) {
         return Paths.get(relativePath).toAbsolutePath().toString();
@@ -34,49 +36,49 @@ class BlockAsFileBlockStreamManagerTest {
     @Test
     void getGenerationMode() {
         BlockStreamManager blockStreamManager =
-                getBlockAsFileBlockStreamManager(getAbsoluteFolder(gzRootFolder));
+                getBlockAsDirBlockStreamManager(getAbsoluteFolder(rootFolder));
         assertEquals(GenerationMode.DIR, blockStreamManager.getGenerationMode());
+
+        assertEquals(GenerationMode.DIR, blockStreamManager.getGenerationMode());
+    }
+
+    @Test
+    void getNextBlockItem() {
+        BlockStreamManager blockStreamManager =
+                getBlockAsDirBlockStreamManager(getAbsoluteFolder(rootFolder));
+
+        for (int i = 0; i < 1000; i++) {
+            assertNotNull(blockStreamManager.getNextBlockItem());
+        }
     }
 
     @Test
     void getNextBlock() {
         BlockStreamManager blockStreamManager =
-                getBlockAsFileBlockStreamManager(getAbsoluteFolder(gzRootFolder));
+                getBlockAsDirBlockStreamManager(getAbsoluteFolder(rootFolder));
+
         for (int i = 0; i < 3000; i++) {
             assertNotNull(blockStreamManager.getNextBlock());
         }
     }
 
     @Test
-    void getNextBlockItem() {
-        BlockStreamManager blockStreamManager =
-                getBlockAsFileBlockStreamManager(getAbsoluteFolder(gzRootFolder));
-        for (int i = 0; i < 35000; i++) {
-            assertNotNull(blockStreamManager.getNextBlockItem());
-        }
-    }
-
-    @Test
-    void loadBlockBlk() {
-        String blkRootFolder = "src/test/resources/block-0.0.3-blk/";
-        BlockStreamManager blockStreamManager =
-                getBlockAsFileBlockStreamManager(getAbsoluteFolder(blkRootFolder));
-        assertNotNull(blockStreamManager.getNextBlock());
-    }
-
-    @Test
     void BlockAsFileBlockStreamManagerInvalidRootPath() {
-        assertThrows(RuntimeException.class, () -> getBlockAsFileBlockStreamManager("/etc"));
+        assertThrows(
+                RuntimeException.class,
+                () ->
+                        getBlockAsDirBlockStreamManager(
+                                getAbsoluteFolder("src/test/resources/BlockAsDirException/")));
     }
 
-    private BlockAsFileBlockStreamManager getBlockAsFileBlockStreamManager(String rootFolder) {
+    private BlockStreamManager getBlockAsDirBlockStreamManager(String rootFolder) {
         BlockStreamConfig blockStreamConfig =
                 new BlockStreamConfig(
                         GenerationMode.DIR,
                         rootFolder,
                         1_500_000,
-                        "BlockAsFileBlockStreamManager",
+                        "BlockAsDirBlockStreamManager",
                         10_000);
-        return new BlockAsFileBlockStreamManager(blockStreamConfig);
+        return new BlockAsDirBlockStreamManager(blockStreamConfig);
     }
 }

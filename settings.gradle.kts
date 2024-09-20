@@ -43,6 +43,9 @@ dependencyResolutionManagement {
             // Define a constant for the Dagger version.
             val daggerVersion = "2.42"
 
+            // Define a constant for protobuf version.
+            val protobufVersion = "4.28.2"
+
             // Compile time dependencies
             version("io.helidon.webserver.http2", "4.1.0")
             version("io.helidon.webserver.grpc", "4.1.0")
@@ -63,14 +66,15 @@ dependencyResolutionManagement {
             version("io.grpc", "1.65.1")
             version("io.grpc.protobuf", "1.65.1")
             version("io.grpc.stub", "1.65.1")
+            version("io.grpc.netty.shaded", "1.65.1")
 
             // Reference from the protobuf plugin
-            version("google.proto", "4.27.3")
+            version("google.proto", protobufVersion)
             version("grpc.protobuf.grpc", "1.65.1")
 
             // Google protobuf dependencies
-            version("com.google.protobuf", "4.27.3")
-            version("com.google.protobuf.util", "4.27.3")
+            version("com.google.protobuf", protobufVersion)
+            version("com.google.protobuf.util", protobufVersion)
 
             // PBJ dependencies
             plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.9.2")

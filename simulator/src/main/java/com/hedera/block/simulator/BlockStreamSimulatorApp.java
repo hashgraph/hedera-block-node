@@ -16,7 +16,10 @@
 
 package com.hedera.block.simulator;
 
+import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.generator.BlockStreamManager;
+import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
+import com.hedera.hapi.block.stream.BlockItem;
 import com.swirlds.config.api.Configuration;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.inject.Inject;
@@ -29,6 +32,10 @@ public class BlockStreamSimulatorApp {
 
     Configuration configuration;
     BlockStreamManager blockStreamManager;
+    PublishStreamGrpcClient publishStreamGrpcClient;
+    BlockStreamConfig blockStreamConfig;
+
+    private final int delayBetweenBlockItems;
 
     boolean isRunning = false;
 
@@ -37,33 +44,51 @@ public class BlockStreamSimulatorApp {
      *
      * @param configuration the configuration to be used by the block stream simulator
      * @param blockStreamManager the block stream manager to be used by the block stream simulator
+     * @param publishStreamGrpcClient the gRPC client to be used by the block stream simulator
      */
     @Inject
     public BlockStreamSimulatorApp(
-            @NonNull Configuration configuration, @NonNull BlockStreamManager blockStreamManager) {
+            @NonNull Configuration configuration,
+            @NonNull BlockStreamManager blockStreamManager,
+            @NonNull PublishStreamGrpcClient publishStreamGrpcClient) {
         this.configuration = configuration;
         this.blockStreamManager = blockStreamManager;
+        this.publishStreamGrpcClient = publishStreamGrpcClient;
+
+        blockStreamConfig = configuration.getConfigData(BlockStreamConfig.class);
+
+        delayBetweenBlockItems = blockStreamConfig.delayBetweenBlockItems();
     }
 
-    /** Starts the block stream simulator. */
-    public void start() {
+    /**
+     * Starts the block stream simulator.
+     *
+     * @throws InterruptedException if the thread is interrupted
+     */
+    public void start() throws InterruptedException {
+        int delayMSBetweenBlockItems = delayBetweenBlockItems / 1_000_000;
+        int delayNSBetweenBlockItems = delayBetweenBlockItems % 1_000_000;
 
-        // use blockStreamManager to get block stream
-
-        // use PublishStreamGrpcClient to stream it to the block-node.
         isRunning = true;
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has started");
 
-        // while
+        boolean streamBlockItem = true;
+        int blockItemsStreamed = 0;
 
-        // get block item
-        // send block item
+        while (streamBlockItem) {
+            // get block item
+            BlockItem blockItem = blockStreamManager.getNextBlockItem();
+            publishStreamGrpcClient.streamBlockItem(blockItem);
+            blockItemsStreamed++;
 
-        // verify if ack is needed
-        // wait for ack async...
+            Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);
 
-        // verify exit condition
+            if (blockItemsStreamed >= blockStreamConfig.maxBlockItemsToStream()) {
+                streamBlockItem = false;
+            }
+        }
 
+        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
     }
 
     /**

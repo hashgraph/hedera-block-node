@@ -36,8 +36,11 @@ import java.util.List;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 
-/** The block as file block stream manager. */
-public class BlockAsFileBlockStreamManager implements BlockStreamManager {
+/**
+ * The BlockAsDirBlockStreamManager class implements the BlockStreamManager interface to manage the
+ * block stream from a directory.
+ */
+public class BlockAsDirBlockStreamManager implements BlockStreamManager {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -50,12 +53,13 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
     int lastGivenBlockNumber = 0;
 
     /**
-     * Constructor for the block as file block stream manager.
+     * Constructor to initialize the BlockAsDirBlockStreamManager with the block stream
+     * configuration.
      *
-     * @param blockStreamConfig the block stream config
+     * @param blockStreamConfig the block stream configuration
      */
     @Inject
-    public BlockAsFileBlockStreamManager(@NonNull BlockStreamConfig blockStreamConfig) {
+    public BlockAsDirBlockStreamManager(@NonNull BlockStreamConfig blockStreamConfig) {
         this.rootFolder = blockStreamConfig.folderRootPath();
         try {
             this.loadBlocks();
@@ -67,11 +71,13 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
         LOGGER.log(INFO, "Loaded " + blocks.size() + " blocks into memory");
     }
 
+    /** Generation Mode of the implementation */
     @Override
     public GenerationMode getGenerationMode() {
         return GenerationMode.DIR;
     }
 
+    /** gets the next block item from the manager */
     @Override
     public BlockItem getNextBlockItem() {
         BlockItem nextBlockItem = blocks.get(currentBlockIndex).items().get(currentBlockItemIndex);
@@ -86,6 +92,7 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
         return nextBlockItem;
     }
 
+    /** gets the next block from the manager */
     @Override
     public Block getNextBlock() {
         Block nextBlock = blocks.get(currentBlockIndex);
@@ -98,29 +105,60 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
     }
 
     private void loadBlocks() throws IOException, ParseException {
-
         Path rootPath = Path.of(rootFolder);
 
-        try (Stream<Path> blockFiles = Files.list(rootPath)) {
+        try (Stream<Path> blockDirs = Files.list(rootPath).filter(Files::isDirectory)) {
+            List<Path> sortedBlockDirs =
+                    blockDirs.sorted(Comparator.comparing(Path::getFileName)).toList();
 
-            List<Path> sortedBlockFiles =
-                    blockFiles.sorted(Comparator.comparing(Path::getFileName)).toList();
+            for (Path blockDirPath : sortedBlockDirs) {
+                List<BlockItem> parsedBlockItems = new ArrayList<>();
 
-            for (Path blockPath : sortedBlockFiles) {
+                try (Stream<Path> blockItems =
+                        Files.list(blockDirPath).filter(Files::isRegularFile)) {
+                    List<Path> sortedBlockItems =
+                            blockItems
+                                    .sorted(
+                                            Comparator.comparing(
+                                                    BlockAsDirBlockStreamManager
+                                                            ::extractNumberFromPath))
+                                    .toList();
 
-                byte[] blockBytes;
-                if (blockPath.toString().endsWith(".gz")) {
-                    blockBytes = Utils.readGzFile(blockPath);
-                } else if (blockPath.toString().endsWith(".blk")) {
-                    blockBytes = Files.readAllBytes(blockPath);
-                } else {
-                    throw new IllegalArgumentException("Invalid file format: " + blockPath);
+                    for (Path pathBlockItem : sortedBlockItems) {
+                        byte[] blockItemBytes = readBlockItemBytes(pathBlockItem);
+                        // if null means the file is not a block item and we can skip the file.
+                        if (blockItemBytes == null) {
+                            continue;
+                        }
+                        BlockItem blockItem = BlockItem.PROTOBUF.parse(Bytes.wrap(blockItemBytes));
+                        parsedBlockItems.add(blockItem);
+                    }
                 }
 
-                Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
-                blocks.add(block);
-                LOGGER.log(DEBUG, "Loaded block: " + blockPath);
+                blocks.add(Block.newBuilder().items(parsedBlockItems).build());
+                LOGGER.log(DEBUG, "Loaded block: " + blockDirPath);
             }
+        }
+    }
+
+    private byte[] readBlockItemBytes(Path pathBlockItem) throws IOException {
+        if (pathBlockItem.toString().endsWith(".gz")) {
+            return Utils.readGzFile(pathBlockItem);
+        } else if (pathBlockItem.toString().endsWith(".blk")) {
+            return Files.readAllBytes(pathBlockItem);
+        }
+        return null;
+    }
+
+    // Method to extract the numeric part of the filename from a Path object
+    // Returns -1 if the filename is not a valid number
+    private static int extractNumberFromPath(Path path) {
+        String filename = path.getFileName().toString();
+        String numPart = filename.split("\\.")[0]; // Get the part before the first dot
+        try {
+            return Integer.parseInt(numPart);
+        } catch (NumberFormatException e) {
+            return -1; // Return -1 if parsing fails
         }
     }
 }
