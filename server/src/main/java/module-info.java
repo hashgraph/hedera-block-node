@@ -21,13 +21,13 @@ module com.hedera.block.server {
 
     requires com.hedera.block.common;
     requires com.hedera.block.stream;
-    requires com.google.protobuf;
     requires com.hedera.pbj.runtime;
-    requires com.lmax.disruptor;
     requires com.swirlds.common;
     requires com.swirlds.config.api;
     requires com.swirlds.config.extensions;
     requires com.swirlds.metrics.api;
+    requires com.google.protobuf;
+    requires com.lmax.disruptor;
     requires dagger;
     requires io.grpc.stub;
     requires io.helidon.common;
@@ -37,6 +37,7 @@ module com.hedera.block.server {
     requires javax.inject;
     requires static com.github.spotbugs.annotations;
     requires static com.google.auto.service;
+    requires static java.compiler; // javax.annotation.processing.Generated
 
     provides com.swirlds.config.api.ConfigurationExtension with
             BlockNodeConfigExtension;
