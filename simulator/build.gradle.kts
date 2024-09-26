@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Hedera Hashgraph, LLC
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,16 @@
 
 plugins {
     id("application")
-    id("com.hedera.block.simulator")
+    id("org.hiero.gradle.module.library")
 }
 
 // dependencies { implementation(project(":common")) }
 
 description = "Hedera Block Stream Simulator"
+
+// Remove the following line to enable all 'javac' lint checks that we have turned on by default
+// and then fix the reported issues.
+tasks.withType<JavaCompile>().configureEach { options.compilerArgs.add("-Xlint:-exports") }
 
 application {
     mainModule = "com.hedera.block.simulator"
@@ -33,7 +37,7 @@ mainModuleInfo {
     annotationProcessor("com.google.auto.service.processor")
     runtimeOnly("com.swirlds.config.impl")
     runtimeOnly("org.apache.logging.log4j.slf4j2.impl")
-    runtimeOnly("io.grpc.netty.shaded")
+    runtimeOnly("io.grpc.netty")
 }
 
 testModuleInfo {

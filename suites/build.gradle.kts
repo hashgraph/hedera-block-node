@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Hedera Hashgraph, LLC
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,10 @@
 
 plugins {
     id("application")
-    id("com.hedera.block.suites")
+    id("org.hiero.gradle.module.library")
 }
 
 description = "Hedera Block Node E2E Suites"
-
-dependencies { implementation(project(":simulator")) }
 
 application {
     mainModule = "com.hedera.block.suites"
@@ -29,14 +27,31 @@ application {
 }
 
 mainModuleInfo {
-    runtimeOnly("org.testcontainers.junit-jupiter")
+    runtimeOnly("org.testcontainers.junit.jupiter")
     runtimeOnly("org.junit.jupiter.engine")
     runtimeOnly("org.testcontainers")
     runtimeOnly("com.swirlds.config.impl")
 }
 
-// workaround until https://github.com/hashgraph/hedera-block-node/pull/216 is integrated
-dependencies.constraints { implementation("org.slf4j:slf4j-api:2.0.6") }
+val updateDockerEnv =
+    tasks.register<Exec>("updateDockerEnv") {
+        description =
+            "Creates the .env file in the docker folder that contains environment variables for Docker"
+        group = "docker"
+
+        workingDir(layout.projectDirectory.dir("../server/docker"))
+        commandLine("sh", "-c", "./update-env.sh ${project.version} false false")
+    }
+
+// Task to build the Docker image
+tasks.register<Exec>("createDockerImage") {
+    description = "Creates the Docker image of the Block Node Server based on the current version"
+    group = "docker"
+
+    dependsOn(updateDockerEnv, tasks.assemble)
+    workingDir(layout.projectDirectory.dir("../server/docker"))
+    commandLine("./docker-build.sh", project.version, layout.projectDirectory.dir("..").asFile)
+}
 
 tasks.register<Test>("runSuites") {
     description = "Runs E2E Test Suites"
