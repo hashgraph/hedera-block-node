@@ -12,8 +12,6 @@ module com.hedera.block.simulator {
     exports com.hedera.block.simulator.metrics;
     exports com.hedera.block.simulator.grpc.impl;
 
-    requires static com.github.spotbugs.annotations;
-    requires static com.google.auto.service;
     requires com.hedera.block.common;
     requires com.hedera.block.stream;
     requires com.hedera.pbj.runtime;
@@ -26,6 +24,9 @@ module com.hedera.block.simulator {
     requires io.grpc;
     requires java.logging;
     requires javax.inject;
+    requires static transitive com.github.spotbugs.annotations;
+    requires static transitive com.google.auto.service;
+    requires static java.compiler; // javax.annotation.processing.Generated
 
     provides com.swirlds.config.api.ConfigurationExtension with
             SimulatorConfigExtension;
