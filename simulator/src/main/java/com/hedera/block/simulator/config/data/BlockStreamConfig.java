@@ -37,8 +37,7 @@ public record BlockStreamConfig(
         @ConfigProperty(defaultValue = "DIR") GenerationMode generationMode,
         @ConfigProperty(defaultValue = "") String folderRootPath,
         @ConfigProperty(defaultValue = "1_500_000") int delayBetweenBlockItems,
-        @ConfigProperty(defaultValue = "BlockAsFileBlockStreamManager")
-                String managerImplementation,
+        @ConfigProperty(defaultValue = "DynamicBlockItemGenerator") String managerImplementation,
         @ConfigProperty(defaultValue = "10_000") int maxBlockItemsToStream) {
 
     /**

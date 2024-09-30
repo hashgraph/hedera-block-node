@@ -72,20 +72,14 @@ public class BlockStreamSimulatorApp {
         isRunning = true;
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has started");
 
-        boolean streamBlockItem = true;
-        int blockItemsStreamed = 0;
+        for (int blockItemsStreamed = 0;
+                blockItemsStreamed < blockStreamConfig.maxBlockItemsToStream(); ) {
 
-        while (streamBlockItem) {
             // get block item
             BlockItem blockItem = blockStreamManager.getNextBlockItem();
             publishStreamGrpcClient.streamBlockItem(blockItem);
-            blockItemsStreamed++;
 
             Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);
-
-            if (blockItemsStreamed >= blockStreamConfig.maxBlockItemsToStream()) {
-                streamBlockItem = false;
-            }
         }
 
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
