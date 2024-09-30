@@ -1,0 +1,221 @@
+##
+# Copyright (C) 2024 Hedera Hashgraph, LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##
+name: Release Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version (semver)"
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  LC_ALL: C.UTF-8
+
+jobs:
+  release:
+    name: Release
+    runs-on: block-node-linux-medium
+    env:
+      RELEASE_NOTES_FILENAME: release_notes
+    outputs:
+      create_pr: ${{ env.CREATE_PR }}
+      next_version_snapshot: ${{ env.NEXT_VERSION_SNAPSHOT }}
+      pr_title: ${{ env.PR_TITLE }}
+      release_branch: ${{ env.RELEASE_BRANCH }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
+        with:
+          egress-policy: audit
+
+      - name: Parse Version
+        id: version_parser
+        uses: step-security/semver-utils@c392dfe4e25826fe9fe6aa4c872c9c216b1982cb # v3.1.0
+        with:
+          lenient: false
+          version: ${{ github.event.inputs.version }}
+
+      - name: Set Release Environment Variables
+        run: |
+          PREMINOR_VERSION=${{ steps.version_parser.outputs.inc-preminor }}
+          NEXT_VERSION_SNAPSHOT=${PREMINOR_VERSION//-0/-SNAPSHOT}
+          RELEASE_BRANCH="release/${{ steps.version_parser.outputs.major }}.${{ steps.version_parser.outputs.minor }}"
+          [[ -z "${{ steps.version_parser.outputs.prerelease }}" ]] && \
+            VERSION=${{ steps.version_parser.outputs.release }} || \
+            VERSION="${{ steps.version_parser.outputs.release }}-${{ steps.version_parser.outputs.prerelease }}"
+          RELEASE_TAG="v${VERSION}"
+
+          cat >> $GITHUB_ENV <<EOF
+          NEXT_VERSION_SNAPSHOT=$NEXT_VERSION_SNAPSHOT
+          RELEASE_BRANCH=$RELEASE_BRANCH
+          RELEASE_TAG=$RELEASE_TAG
+          VERSION=$VERSION
+          EOF
+
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+          ref: main
+          token: ${{ secrets.HEDERA_BOT_TOKEN }}
+
+      - name: Import GPG Key
+        id: gpg_importer
+        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
+        with:
+          git_commit_gpgsign: true
+          git_tag_gpgsign: true
+          git_user_signingkey: true
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Install JDK
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
+        with:
+          distribution: "temurin"
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+
+      - name: Create and Switch to Release Branch
+        run: |
+          if ! git ls-remote --exit-code --heads --quiet origin refs/heads/${RELEASE_BRANCH}; then
+            git checkout -b ${RELEASE_BRANCH}
+            git push -u origin ${RELEASE_BRANCH}
+
+            # create a PR to bump main branch to the next snapshot version
+            echo "CREATE_PR=true" >> $GITHUB_ENV
+            echo "PR_TITLE=Bump versions for v$NEXT_VERSION_SNAPSHOT" >> $GITHUB_ENV
+          else
+            git checkout ${RELEASE_BRANCH}
+          fi
+
+      # task is currently failing due to needing credentials.username for PublishToMavenRepository task
+      #- name: Gradle Release
+      #  run: ./gradlew release -Pversion=${{ env.VERSION }}
+
+      - name: Bump Version
+        run: ./gradlew bumpVersion -Pversion=${{ env.VERSION }}
+
+      - name: Close the Milestone
+        if: ${{ steps.version_parser.outputs.prerelease == '' }}
+        id: milestone
+        uses: Akkjon/close-milestone@88d3cb00ca452cb8d33f18fc0a1e22a730306b61 # v2.1.0
+        with:
+          milestone_name: ${{ steps.version_parser.outputs.release }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release Notes
+        if: ${{ steps.milestone.outputs.milestone_id != '' }}
+        uses: Decathlon/release-notes-generator-action@98423db7024696a339f3988ac8a2b051c5860741 # v3.1.6
+        env:
+          FILENAME: ${{ env.RELEASE_NOTES_FILENAME }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MILESTONE_NUMBER: ${{ steps.milestone.outputs.milestone_id }}
+
+      - name: Commit and Tag
+        uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842 # v5.0.1
+        with:
+          commit_author: ${{ steps.gpg_importer.outputs.name }} <${{ steps.gpg_importer.outputs.email }}>
+          commit_message: Bump versions for ${{ env.RELEASE_TAG }}
+          commit_options: "--no-verify --signoff"
+          commit_user_name: ${{ steps.gpg_importer.outputs.name }}
+          commit_user_email: ${{ steps.gpg_importer.outputs.email }}
+          tagging_message: ${{ env.RELEASE_TAG }}
+
+      - name: Create Github Release
+        uses: ncipollo/release-action@2c591bcc8ecdcd2db72b97d6147f871fcd833ba5 # v1.14.0
+        with:
+          bodyFile: ${{ env.RELEASE_NOTES_FILENAME }}.md
+          commit: ${{ env.RELEASE_BRANCH }}
+          draft: ${{ steps.version_parser.outputs.prerelease == '' }}
+          name: ${{ env.RELEASE_TAG }}
+          omitBody: ${{ steps.milestone.outputs.milestone_id == '' }}
+          prerelease: ${{ steps.version_parser.outputs.prerelease != '' }}
+          tag: ${{ env.RELEASE_TAG }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  create_pr:
+    name: Create PR
+    runs-on: block-node-linux-medium
+    needs: release
+    if: ${{ needs.release.outputs.create_pr == 'true' }}
+    env:
+      NEXT_VERSION_SNAPSHOT: ${{ needs.release.outputs.next_version_snapshot }}
+      RELEASE_BRANCH: ${{ needs.release.outputs.release_branch }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          ref: main
+
+      - name: Import GPG Key
+        id: gpg_importer
+        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
+        with:
+          git_commit_gpgsign: true
+          git_tag_gpgsign: true
+          git_user_signingkey: true
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Install JDK
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
+        with:
+          distribution: "temurin"
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+
+      - name: Reset main to release branch
+        run: |
+          git fetch origin $RELEASE_BRANCH:$RELEASE_BRANCH
+          git reset --hard $RELEASE_BRANCH
+
+      - name: Gradle Release for Next Minor Snapshot
+        run: ./gradlew bumpVersion -Pversion=${{ env.NEXT_VERSION_SNAPSHOT }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6.1.0
+        with:
+          author: ${{ steps.gpg_importer.outputs.name }} <${{ steps.gpg_importer.outputs.email }}>
+          body: Bump versions for v${{ env.NEXT_VERSION_SNAPSHOT }}
+          branch: create-pull-request/${{ env.RELEASE_BRANCH }}
+          commit-message: Bump versions for v${{ env.NEXT_VERSION_SNAPSHOT }}
+          committer: ${{ steps.gpg_importer.outputs.name }} <${{ steps.gpg_importer.outputs.email }}>
+          delete-branch: true
+          signoff: true
+          title: ${{ needs.release.outputs.pr_title }}
+          token: ${{ secrets.HEDERA_BOT_TOKEN }}
