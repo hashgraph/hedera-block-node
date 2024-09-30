@@ -104,29 +104,30 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
             resetState(blockItem);
         }
 
-        final Path blockItemFilePath = calculateBlockItemPath();
-        for (int retries = 0; ; retries++) {
-            try {
-                write(blockItemFilePath, blockItem);
-                break;
-            } catch (IOException e) {
-
-                LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
-
-                // Remove the block if repairing the permissions fails
-                if (retries > 0) {
-                    // Attempt to remove the block
-                    blockRemover.remove(Long.parseLong(currentBlockDir.toString()));
-                    throw e;
-                } else {
-                    // Attempt to repair the permissions on the block path
-                    // and the blockItem path
-                    repairPermissions(blockNodeRootPath);
-                    repairPermissions(calculateBlockPath());
-                    LOGGER.log(INFO, "Retrying to write the BlockItem protobuf to a file");
-                }
-            }
-        }
+        //        final Path blockItemFilePath = calculateBlockItemPath();
+        //        for (int retries = 0; ; retries++) {
+        //            try {
+        //                write(blockItemFilePath, blockItem);
+        //                break;
+        //            } catch (IOException e) {
+        //
+        //                LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
+        //
+        //                // Remove the block if repairing the permissions fails
+        //                if (retries > 0) {
+        //                    // Attempt to remove the block
+        //                    blockRemover.remove(Long.parseLong(currentBlockDir.toString()));
+        //                    throw e;
+        //                } else {
+        //                    // Attempt to repair the permissions on the block path
+        //                    // and the blockItem path
+        //                    repairPermissions(blockNodeRootPath);
+        //                    repairPermissions(calculateBlockPath());
+        //                    LOGGER.log(INFO, "Retrying to write the BlockItem protobuf to a
+        // file");
+        //                }
+        //            }
+        //        }
 
         if (blockItem.hasBlockProof()) {
             metricsService.get(BlocksPersisted).increment();

@@ -42,14 +42,12 @@ public record BlockStreamConfig(
         @ConfigProperty(defaultValue = "DIR") GenerationMode generationMode,
         @ConfigProperty(defaultValue = "") String folderRootPath,
         @ConfigProperty(defaultValue = "1_500_000") int delayBetweenBlockItems,
-        @ConfigProperty(defaultValue = "BlockAsFileBlockStreamManager")
-                String managerImplementation,
+        @ConfigProperty(defaultValue = "DynamicBlockItemGenerator") String managerImplementation,
         @ConfigProperty(defaultValue = "10_000") int maxBlockItemsToStream,
         @ConfigProperty(defaultValue = "36") int paddedLength,
         @ConfigProperty(defaultValue = ".blk.gz") String fileExtension,
         @ConfigProperty(defaultValue = "MILLIS_PER_BLOCK") StreamingMode streamingMode,
         @ConfigProperty(defaultValue = "1000") int millisecondsPerBlock) {
-
     /**
      * Constructor to set the default root path if not provided, it will be set to the data
      * directory in the current working directory
