@@ -40,4 +40,13 @@ public final class Utils {
             return gzipInputStream.readAllBytes();
         }
     }
+
+    public static byte[] readFileBytes(Path filePath) throws IOException {
+        if (filePath.toString().endsWith(".gz")) {
+            return Utils.readGzFile(filePath);
+        } else if (filePath.toString().endsWith(".blk")) {
+            return Files.readAllBytes(filePath);
+        }
+        return null;
+    }
 }

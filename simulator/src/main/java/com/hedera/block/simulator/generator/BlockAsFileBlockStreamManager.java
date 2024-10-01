@@ -16,6 +16,7 @@
 
 package com.hedera.block.simulator.generator;
 
+import static com.hedera.block.simulator.generator.Utils.readFileBytes;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
@@ -108,13 +109,10 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
 
             for (Path blockPath : sortedBlockFiles) {
 
-                byte[] blockBytes;
-                if (blockPath.toString().endsWith(".gz")) {
-                    blockBytes = Utils.readGzFile(blockPath);
-                } else if (blockPath.toString().endsWith(".blk")) {
-                    blockBytes = Files.readAllBytes(blockPath);
-                } else {
-                    throw new IllegalArgumentException("Invalid file format: " + blockPath);
+                byte[] blockBytes = readFileBytes(blockPath);
+                // skip if block is null, usually due to SO files like .DS_STORE
+                if (blockBytes == null) {
+                    continue;
                 }
 
                 Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));

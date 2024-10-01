@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
+import com.hedera.pbj.runtime.ParseException;
 import com.swirlds.config.api.Configuration;
 import java.io.IOException;
 import java.util.Map;
@@ -58,7 +59,7 @@ class BlockStreamSimulatorTest {
     }
 
     @Test
-    void start_logsStartedMessage() throws InterruptedException {
+    void start_logsStartedMessage() throws InterruptedException, ParseException, IOException {
         blockStreamSimulator.start();
         assertTrue(blockStreamSimulator.isRunning());
     }
