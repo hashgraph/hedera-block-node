@@ -39,7 +39,9 @@ public record BlockStreamConfig(
         @ConfigProperty(defaultValue = "1_500_000") int delayBetweenBlockItems,
         @ConfigProperty(defaultValue = "BlockAsFileBlockStreamManager")
                 String managerImplementation,
-        @ConfigProperty(defaultValue = "10_000") int maxBlockItemsToStream) {
+        @ConfigProperty(defaultValue = "10_000") int maxBlockItemsToStream,
+        @ConfigProperty(defaultValue = "36") int paddedLength,
+        @ConfigProperty(defaultValue = ".blk.gz") String fileExtension) {
 
     /**
      * Constructor to set the default root path if not provided, it will be set to the data

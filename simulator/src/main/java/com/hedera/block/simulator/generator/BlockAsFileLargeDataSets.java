@@ -38,9 +38,13 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
     private int currentBlockItemIndex = 0;
 
     private Block currentBlock = null;
+    int paddedLength;
+    String fileExtension;
 
     public BlockAsFileLargeDataSets(@NonNull BlockStreamConfig config) {
         this.blockstreamPath = config.folderRootPath();
+        this.paddedLength = config.paddedLength();
+        this.fileExtension = config.fileExtension();
     }
 
     @Override
@@ -66,15 +70,16 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
     @Override
     public Block getNextBlock() throws IOException, ParseException {
         currentBlockIndex++;
-        String nextBlockFileName = String.format("%036d.blk.gz", currentBlockIndex);
+
+        String formatString = "%0" + paddedLength + "d" + fileExtension;
+        String nextBlockFileName = String.format(formatString, currentBlockIndex);
         File blockFile = new File(blockstreamPath, nextBlockFileName);
 
         if (blockFile.exists()) {
             byte[] blockBytes = readFileBytes(blockFile.toPath());
 
             LOGGER.log(INFO, "Loading block: " + blockFile.getName());
-            assert blockBytes
-                    != null; // since blockFile.exists() is true, so blockBytes should not be null
+
             Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
             LOGGER.log(INFO, "block loaded with items size= " + block.items().size());
             return block;

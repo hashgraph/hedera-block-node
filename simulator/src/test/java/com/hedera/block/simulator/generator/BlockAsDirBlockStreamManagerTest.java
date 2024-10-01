@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.pbj.runtime.ParseException;
+import java.io.IOException;
 import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
 
@@ -43,7 +45,7 @@ class BlockAsDirBlockStreamManagerTest {
     }
 
     @Test
-    void getNextBlockItem() {
+    void getNextBlockItem() throws IOException, ParseException {
         BlockStreamManager blockStreamManager =
                 getBlockAsDirBlockStreamManager(getAbsoluteFolder(rootFolder));
 
@@ -53,7 +55,7 @@ class BlockAsDirBlockStreamManagerTest {
     }
 
     @Test
-    void getNextBlock() {
+    void getNextBlock() throws IOException, ParseException {
         BlockStreamManager blockStreamManager =
                 getBlockAsDirBlockStreamManager(getAbsoluteFolder(rootFolder));
 
@@ -78,7 +80,9 @@ class BlockAsDirBlockStreamManagerTest {
                         rootFolder,
                         1_500_000,
                         "BlockAsDirBlockStreamManager",
-                        10_000);
+                        10_000,
+                        36,
+                        ".blk");
         return new BlockAsDirBlockStreamManager(blockStreamConfig);
     }
 }
