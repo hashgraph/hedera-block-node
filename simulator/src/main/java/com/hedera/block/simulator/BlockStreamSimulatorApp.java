@@ -26,9 +26,9 @@ import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
 import com.swirlds.config.extensions.sources.SystemEnvironmentConfigSource;
 import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
+import javax.inject.Inject;
 
 /** BlockStream Simulator App */
 public class BlockStreamSimulatorApp {
@@ -93,7 +93,8 @@ public class BlockStreamSimulatorApp {
     }
 
     /**
-     * Initializes the configuration by retrieving the {@code BlockStreamConfig} from the current configuration.
+     * Initializes the configuration by retrieving the {@code BlockStreamConfig} from the current
+     * configuration.
      */
     private void initializeConfig() {
         this.blockStreamConfig = configuration.getConfigData(BlockStreamConfig.class);
@@ -103,7 +104,8 @@ public class BlockStreamSimulatorApp {
      * Initializes the dependencies required by the simulator app using Dagger dependency injection.
      */
     private void initilizeDependencies() {
-        BlockStreamSimulatorInjectionComponent DIComponent = DaggerBlockStreamSimulatorInjectionComponent.factory().create(configuration);
+        BlockStreamSimulatorInjectionComponent DIComponent =
+                DaggerBlockStreamSimulatorInjectionComponent.factory().create(configuration);
 
         this.blockStreamManager = DIComponent.getBlockStreamManager();
         this.publishStreamGrpcClient = DIComponent.getPublishStreamGrpcClient();
