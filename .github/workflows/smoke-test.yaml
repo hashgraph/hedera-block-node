@@ -81,7 +81,7 @@ jobs:
 
       - name: Run application in background, capture logs in app.log
         run: |
-          ${{ env.GRADLE_EXEC }} run :server:run 2> server/src/test/resources/app.log < /dev/null &
+          ${{ env.GRADLE_EXEC }} :server:run 2> server/src/test/resources/app.log < /dev/null &
           echo "Application started with PID $APP_PID"
           sleep 10
 
