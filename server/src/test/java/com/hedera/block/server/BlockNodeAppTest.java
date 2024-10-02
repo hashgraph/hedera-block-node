@@ -22,9 +22,9 @@ import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.health.HealthService;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.pbj.grpc.helidon.PbjRouting;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.WebServerConfig;
-import io.helidon.webserver.grpc.GrpcRouting;
 import io.helidon.webserver.http.HttpRouting;
 import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,8 +41,6 @@ class BlockNodeAppTest {
 
     @Mock private HealthService healthService;
 
-    @Mock private BlockStreamService blockStreamService;
-
     @Mock private WebServerConfig.Builder webServerBuilder;
 
     @Mock private WebServer webServer;
@@ -52,7 +50,7 @@ class BlockNodeAppTest {
     @BeforeEach
     void setup() {
         when(webServerBuilder.port(8080)).thenReturn(webServerBuilder);
-        when(webServerBuilder.addRouting(any(GrpcRouting.Builder.class)))
+        when(webServerBuilder.addRouting(any(PbjRouting.Builder.class)))
                 .thenReturn(webServerBuilder);
         when(webServerBuilder.addRouting(any(HttpRouting.Builder.class)))
                 .thenReturn(webServerBuilder);
@@ -70,7 +68,7 @@ class BlockNodeAppTest {
         verify(webServer).start();
         verify(healthService).getHealthRootPath();
         verify(webServerBuilder).port(8080);
-        verify(webServerBuilder).addRouting(any(GrpcRouting.Builder.class));
+        verify(webServerBuilder).addRouting(any(PbjRouting.Builder.class));
         verify(webServerBuilder).addRouting(any(HttpRouting.Builder.class));
         verify(webServerBuilder).build();
     }
