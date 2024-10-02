@@ -16,12 +16,15 @@
 
 package com.hedera.block.suites;
 
+import com.hedera.block.simulator.BlockStreamSimulatorApp;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
+
+import java.io.IOException;
 
 /**
  * BaseSuite is an abstract class that provides common setup and teardown functionality for test
@@ -44,6 +47,8 @@ public abstract class BaseSuite {
     /** Port that is used by the Block Node Application */
     protected static int blockNodePort;
 
+    protected static BlockStreamSimulatorApp blockStreamSimulatorApp;
+
     /**
      * Default constructor for the BaseSuite class.
      *
@@ -60,9 +65,12 @@ public abstract class BaseSuite {
      * <p>This method initializes the Block Node server container using Testcontainers.
      */
     @BeforeAll
-    public static void setup() {
+    public static void setup() throws IOException, InterruptedException {
         blockNodeContainer = getConfiguration();
         blockNodeContainer.start();
+
+//        blockStreamSimulatorApp = new BlockStreamSimulatorApp();
+//        blockStreamSimulatorApp.start();
     }
 
     /**
@@ -76,6 +84,10 @@ public abstract class BaseSuite {
         if (blockNodeContainer != null) {
             blockNodeContainer.stop();
         }
+
+//        if (blockStreamSimulatorApp != null && blockStreamSimulatorApp.isRunning()) {
+//            blockStreamSimulatorApp.stop();
+//        }
     }
 
     /**

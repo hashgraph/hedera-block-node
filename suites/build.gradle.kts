@@ -26,13 +26,14 @@ application {
     mainClass = "com.hedera.block.suites.BaseSuite"
 }
 
+dependencies{
+    implementation(project(":simulator"))
+}
+
 mainModuleInfo {
-    requires("org.junit.jupiter.api")
-    requires("org.junit.platform.suite.api")
-    requires("org.testcontainers")
-    requires("io.github.cdimascio")
     runtimeOnly("org.testcontainers.junit-jupiter")
     runtimeOnly("org.junit.jupiter.engine")
+    runtimeOnly("org.slf4j")
 }
 
 val updateDockerEnv =
