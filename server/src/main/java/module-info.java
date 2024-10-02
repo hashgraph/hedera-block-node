@@ -20,6 +20,8 @@ module com.hedera.block.server {
 
     requires com.hedera.block.stream;
     requires com.google.protobuf;
+    requires com.hedera.pbj.grpc.helidon;
+    requires com.hedera.pbj.grpc.helidon.config;
     requires com.hedera.pbj.runtime;
     requires com.lmax.disruptor;
     requires com.swirlds.common;
@@ -27,8 +29,6 @@ module com.hedera.block.server {
     requires com.swirlds.config.extensions;
     requires com.swirlds.metrics.api;
     requires dagger;
-    requires com.hedera.pbj.grpc.helidon;
-    requires com.hedera.pbj.grpc.helidon.config;
     requires io.grpc.stub;
     requires io.helidon.common;
     requires io.helidon.config;
