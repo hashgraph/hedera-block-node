@@ -20,12 +20,13 @@ import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.health.HealthService;
+import com.hedera.block.server.pbj.PbjBlockStreamServiceProxy;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.pbj.grpc.helidon.PbjRouting;
 import com.hedera.pbj.grpc.helidon.config.*;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.WebServerConfig;
-import io.helidon.webserver.grpc.GrpcRouting;
 import io.helidon.webserver.grpc.GrpcService;
 import io.helidon.webserver.http.HttpRouting;
 import java.io.IOException;
@@ -73,7 +74,8 @@ public class BlockNodeApp {
      */
     public void start() throws IOException {
 
-        final GrpcRouting.Builder grpcRouting = GrpcRouting.builder().service(blockStreamService);
+        //        final GrpcRouting.Builder grpcRouting =
+        // GrpcRouting.builder().service(blockStreamService);
 
         final HttpRouting.Builder httpRouting =
                 HttpRouting.builder().register(healthService.getHealthRootPath(), healthService);
@@ -81,11 +83,11 @@ public class BlockNodeApp {
         // Build the web server
         // TODO: make port server a configurable value.
         final WebServer webServer =
-                webServerBuilder.port(8080).addRouting(grpcRouting).addRouting(httpRouting).build();
-
-        final PbjConfigBlueprint pbjConfigBlueprint = new PbjConfig.BUILDER().build();
-        final WebServer ws =
-                webServerBuilder.port(8080).addRouting(httpRouting).addRouting().build();
+                webServerBuilder
+                        .port(8080)
+                        .addRouting(PbjRouting.builder().service(new PbjBlockStreamServiceProxy()))
+                        .addRouting(httpRouting)
+                        .build();
 
         // Update the serviceStatus with the web server
         serviceStatus.setWebServer(webServer);

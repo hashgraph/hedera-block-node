@@ -17,11 +17,12 @@ module com.hedera.block.server {
     exports com.hedera.block.server.persistence;
     exports com.hedera.block.server.notifier;
     exports com.hedera.block.server.service;
+    exports com.hedera.block.server.pbj;
 
     requires com.hedera.block.stream;
     requires com.google.protobuf;
-    requires com.hedera.pbj.grpc.helidon;
     requires com.hedera.pbj.grpc.helidon.config;
+    requires com.hedera.pbj.grpc.helidon;
     requires com.hedera.pbj.runtime;
     requires com.lmax.disruptor;
     requires com.swirlds.common;
