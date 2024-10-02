@@ -17,8 +17,10 @@
 package com.hedera.block.simulator;
 
 import com.hedera.block.simulator.config.ConfigInjectionModule;
+import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.generator.GeneratorInjectionModule;
 import com.hedera.block.simulator.grpc.GrpcInjectionModule;
+import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.swirlds.config.api.Configuration;
 import dagger.BindsInstance;
 import dagger.Component;
@@ -40,6 +42,20 @@ public interface BlockStreamSimulatorInjectionComponent {
      * @return the block stream simulator
      */
     BlockStreamSimulatorApp getBlockStreamSimulatorApp();
+
+    /**
+     * Gets the block stream manager.
+     *
+     * @return the block stream manager
+     */
+    BlockStreamManager getBlockStreamManager();
+
+    /**
+     * Gets publish grpc client.
+     *
+     * @return publish grpc client
+     */
+    PublishStreamGrpcClient getPublishStreamGrpcClient();
 
     /** The factory used to create the block stream simulator injection component. */
     @Component.Factory

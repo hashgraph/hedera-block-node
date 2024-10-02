@@ -40,21 +40,21 @@ class BlockStreamSimulatorTest {
 
     private Configuration configuration;
 
-    @Mock private BlockStreamManager blockStreamManager;
+    @Mock
+    private BlockStreamManager blockStreamManager;
 
-    @Mock private PublishStreamGrpcClient publishStreamGrpcClient;
+    @Mock
+    private PublishStreamGrpcClient publishStreamGrpcClient;
 
     private BlockStreamSimulatorApp blockStreamSimulator;
 
     @BeforeEach
     void setUp() throws IOException {
 
-        configuration =
-                TestUtils.getTestConfiguration(Map.of("blockStream.maxBlockItemsToStream", "100"));
+        configuration = TestUtils.getTestConfiguration(Map.of("blockStream.maxBlockItemsToStream", "100"));
 
-        blockStreamSimulator =
-                new BlockStreamSimulatorApp(
-                        configuration, blockStreamManager, publishStreamGrpcClient);
+        blockStreamSimulator = new BlockStreamSimulatorApp(
+                configuration, blockStreamManager, publishStreamGrpcClient);
     }
 
     @AfterEach
@@ -88,12 +88,20 @@ class BlockStreamSimulatorTest {
                 new BlockStreamSimulatorApp(
                         configuration, blockStreamManager, publishStreamGrpcClient);
 
+    void start_usingConfigurationConstructor() throws InterruptedException {
+        blockStreamSimulator = new BlockStreamSimulatorApp(configuration);
         blockStreamSimulator.start();
         assertTrue(blockStreamSimulator.isRunning());
     }
 
     private String getAbsoluteFolder(String relativePath) {
         return Paths.get(relativePath).toAbsolutePath().toString();
+
+    @Test
+    void start_usingEmptyConstructor() throws IOException, InterruptedException {
+        blockStreamSimulator = new BlockStreamSimulatorApp();
+        blockStreamSimulator.start();
+        assertTrue(blockStreamSimulator.isRunning());
     }
 
     @Test
