@@ -21,6 +21,7 @@ import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.health.HealthService;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.pbj.grpc.helidon.config.*;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.WebServerConfig;
@@ -82,12 +83,9 @@ public class BlockNodeApp {
         final WebServer webServer =
                 webServerBuilder.port(8080).addRouting(grpcRouting).addRouting(httpRouting).build();
 
-        //        PbjConfigBlueprint pbjConfigBlueprint = new PbjConfig.BUILDER().build();
-        //        final WebServer ws = webServerBuilder
-        //                .port(8080)
-        //                .addRouting(httpRouting)
-        //                .addRouting()
-        //                .build();
+        final PbjConfigBlueprint pbjConfigBlueprint = new PbjConfig.BUILDER().build();
+        final WebServer ws =
+                webServerBuilder.port(8080).addRouting(httpRouting).addRouting().build();
 
         // Update the serviceStatus with the web server
         serviceStatus.setWebServer(webServer);
