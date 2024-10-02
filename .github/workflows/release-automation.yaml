@@ -80,7 +80,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: main
-          token: ${{ secrets.HEDERA_BOT_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Import GPG Key
         id: gpg_importer
@@ -218,4 +218,4 @@ jobs:
           delete-branch: true
           signoff: true
           title: ${{ needs.release.outputs.pr_title }}
-          token: ${{ secrets.HEDERA_BOT_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
