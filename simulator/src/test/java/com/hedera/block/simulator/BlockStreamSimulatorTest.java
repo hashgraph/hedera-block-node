@@ -64,6 +64,20 @@ class BlockStreamSimulatorTest {
     }
 
     @Test
+    void start_usingConfigurationConstructor() throws InterruptedException {
+        blockStreamSimulator = new BlockStreamSimulatorApp(configuration);
+        blockStreamSimulator.start();
+        assertTrue(blockStreamSimulator.isRunning());
+    }
+
+    @Test
+    void start_usingEmptyConstructor() throws IOException, InterruptedException {
+        blockStreamSimulator = new BlockStreamSimulatorApp();
+        blockStreamSimulator.start();
+        assertTrue(blockStreamSimulator.isRunning());
+    }
+
+    @Test
     void stop_doesNotThrowException() {
         assertDoesNotThrow(() -> blockStreamSimulator.stop());
     }

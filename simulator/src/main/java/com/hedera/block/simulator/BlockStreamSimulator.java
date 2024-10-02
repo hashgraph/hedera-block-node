@@ -18,14 +18,8 @@ package com.hedera.block.simulator;
 
 import static java.lang.System.Logger.Level.INFO;
 
-import com.swirlds.config.api.Configuration;
-import com.swirlds.config.api.ConfigurationBuilder;
-import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
-import com.swirlds.config.extensions.sources.SystemEnvironmentConfigSource;
-import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import java.io.IOException;
 import java.lang.System.Logger;
-import java.nio.file.Path;
 
 /** The BlockStreamSimulator class defines the simulator for the block stream. */
 public class BlockStreamSimulator {
@@ -45,19 +39,7 @@ public class BlockStreamSimulator {
 
         LOGGER.log(INFO, "Starting Block Stream Simulator");
 
-        ConfigurationBuilder configurationBuilder =
-                ConfigurationBuilder.create()
-                        .withSource(SystemEnvironmentConfigSource.getInstance())
-                        .withSource(SystemPropertiesConfigSource.getInstance())
-                        .withSource(new ClasspathFileConfigSource(Path.of("app.properties")))
-                        .autoDiscoverExtensions();
-
-        Configuration configuration = configurationBuilder.build();
-
-        BlockStreamSimulatorInjectionComponent DIComponent =
-                DaggerBlockStreamSimulatorInjectionComponent.factory().create(configuration);
-
-        BlockStreamSimulatorApp blockStreamSimulatorApp = DIComponent.getBlockStreamSimulatorApp();
+        BlockStreamSimulatorApp blockStreamSimulatorApp = new BlockStreamSimulatorApp();
         blockStreamSimulatorApp.start();
     }
 }
