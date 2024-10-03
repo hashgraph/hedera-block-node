@@ -41,6 +41,13 @@ public final class Utils {
         }
     }
 
+    /**
+     * Read a file and return the content as a byte array.
+     *
+     * @param filePath Path to the file
+     * @return byte array of the content of the file
+     * @throws IOException if an I/O error occurs
+     */
     public static byte[] readFileBytes(Path filePath) throws IOException {
         if (filePath.toString().endsWith(".gz")) {
             return Utils.readGzFile(filePath);

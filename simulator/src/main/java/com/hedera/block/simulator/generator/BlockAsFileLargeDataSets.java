@@ -28,7 +28,9 @@ import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
 import java.io.IOException;
+import javax.inject.Inject;
 
+/** A block stream manager that reads blocks from files in a directory. */
 public class BlockAsFileLargeDataSets implements BlockStreamManager {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
@@ -38,9 +40,15 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
     private int currentBlockItemIndex = 0;
 
     private Block currentBlock = null;
-    int paddedLength;
-    String fileExtension;
+    private final int paddedLength;
+    private final String fileExtension;
 
+    /**
+     * Constructs a new BlockAsFileLargeDataSets instance.
+     *
+     * @param config the block stream configuration
+     */
+    @Inject
     public BlockAsFileLargeDataSets(@NonNull BlockStreamConfig config) {
         this.blockstreamPath = config.folderRootPath();
         this.paddedLength = config.paddedLength();

@@ -66,6 +66,8 @@ public class BlockStreamSimulatorApp {
      * Starts the block stream simulator.
      *
      * @throws InterruptedException if the thread is interrupted
+     * @throws ParseException if a parse error occurs
+     * @throws IOException if an I/O error occurs
      */
     public void start() throws InterruptedException, ParseException, IOException {
         int delayMSBetweenBlockItems = delayBetweenBlockItems / 1_000_000;

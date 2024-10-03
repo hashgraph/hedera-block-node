@@ -23,11 +23,11 @@ Entry point for the project is `BlockStreamSimulator.java`, in wich the main met
 3. Start the BlockStreamSimulatorApp, contains the orchestration of the different parts of the simulation using generic interfaces and handles the rate of streaming and the exit conditions.
 
 The BlockStreamSimulatorApp consumes other services that are injected using DaggerComponent, these are:
-1. generator: responsible for generating blocks, exposes a single interface `BlockStreamManager` and several implementations
-    a. BlockAsDirBlockStreamManager: generates blocks from a directory, each folder is a block, and block-items are single 'blk' or 'blk.gz' files.
-    b. BlockAsFileBlockStreamManager: generates blocks from a single file, each file is a block, used to the format of the CN recordings. (since it loads blocks on memory it can stream really fast, really useful for simple streaming tests)
-    c. BlockAsFileLargeDataSets: similar to BlockAsFileBLockStreamManager, but designed to work with GB folders with thousands of big blocks (since it has a high size block and volume of blocks, is useful for performace, load and stress testing)
-2. grpc: responsible for the communication with the Block-Node, currently only has 1 interface `PublishStreamGrpcClient` and 1 Implementation, however also exposes a `PublishStreamObserver'
+1. **generator:** responsible for generating blocks, exposes a single interface `BlockStreamManager` and several implementations
+   1. BlockAsDirBlockStreamManager: generates blocks from a directory, each folder is a block, and block-items are single 'blk' or 'blk.gz' files.
+   2. BlockAsFileBlockStreamManager: generates blocks from a single file, each file is a block, used to the format of the CN recordings. (since it loads blocks on memory it can stream really fast, really useful for simple streaming tests)
+   3. BlockAsFileLargeDataSets: similar to BlockAsFileBLockStreamManager, but designed to work with GB folders with thousands of big blocks (since it has a high size block and volume of blocks, is useful for performace, load and stress testing)
+2. **grpc:** responsible for the communication with the Block-Node, currently only has 1 interface `PublishStreamGrpcClient` and 1 Implementation, however also exposes a `PublishStreamObserver'
 
 ## Configuration
 
@@ -61,4 +61,23 @@ Uses the prefix `grpc` so all properties should start with `grpc.`
 To build the project, run the following command:
 
 ```sh
-./gradlew build
+./gradlew :simulator:build
+```
+
+## Running the Project
+
+Usually you will want to run a Block-Node server before the simulator, for that you can use the following commnad:
+
+```sh
+    ./gradlew :server:run
+```
+However we recommend running the block-node server as a docker container:
+```sh
+./gradlew :server:build :server:createDockerImage :server:startDockerContainer
+```
+
+Once the project is built, you can run it using the following command:
+
+```sh
+./gradlew :simulator:run
+```

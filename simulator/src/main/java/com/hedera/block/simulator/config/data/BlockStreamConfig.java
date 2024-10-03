@@ -31,6 +31,8 @@ import java.nio.file.Paths;
  * @param delayBetweenBlockItems the delay between block items
  * @param managerImplementation the implementation of the block stream manager
  * @param maxBlockItemsToStream the maximum number of block items to stream
+ * @param paddedLength the padded length of 0 the block file format
+ * @param fileExtension the file extension of the block file format
  */
 @ConfigData("blockStream")
 public record BlockStreamConfig(
