@@ -33,7 +33,6 @@ dependencies{
 mainModuleInfo {
     runtimeOnly("org.testcontainers.junit-jupiter")
     runtimeOnly("org.junit.jupiter.engine")
-    runtimeOnly("org.slf4j")
 }
 
 val updateDockerEnv =
