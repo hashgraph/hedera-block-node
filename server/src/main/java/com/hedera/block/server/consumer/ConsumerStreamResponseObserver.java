@@ -16,7 +16,6 @@
 
 package com.hedera.block.server.consumer;
 
-import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItemsConsumed;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
@@ -32,9 +31,8 @@ import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.OneOf;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.grpc.stub.ServerCallStreamObserver;
-import io.grpc.stub.StreamObserver;
 import java.time.InstantSource;
+import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -49,8 +47,7 @@ public class ConsumerStreamResponseObserver
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final MetricsService metricsService;
-    private final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
-            subscribeStreamResponseObserver;
+    private final Flow.Subscriber<? super SubscribeStreamResponse> subscribeStreamResponseObserver;
     private final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
 
     private final AtomicBoolean isResponsePermitted = new AtomicBoolean(true);
@@ -90,7 +87,7 @@ public class ConsumerStreamResponseObserver
             @NonNull final InstantSource producerLivenessClock,
             @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler,
             @NonNull
-                    final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+                    final Flow.Subscriber<? super SubscribeStreamResponse>
                             subscribeStreamResponseObserver,
             @NonNull final BlockNodeContext blockNodeContext) {
 
@@ -108,31 +105,34 @@ public class ConsumerStreamResponseObserver
         // The ServerCallStreamObserver can be configured with Runnable handlers to
         // be executed when a downstream consumer closes the connection. The handlers
         // unsubscribe this observer.
-        if (subscribeStreamResponseObserver
-                instanceof
-                ServerCallStreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
-                serverCallStreamObserver) {
-
-            onCancel =
-                    () -> {
-                        // The consumer has cancelled the stream.
-                        // Do not allow additional responses to be sent.
-                        isResponsePermitted.set(false);
-                        subscriptionHandler.unsubscribe(this);
-                        LOGGER.log(DEBUG, "Consumer cancelled the stream. Observer unsubscribed.");
-                    };
-            serverCallStreamObserver.setOnCancelHandler(onCancel);
-
-            onClose =
-                    () -> {
-                        // The consumer has closed the stream.
-                        // Do not allow additional responses to be sent.
-                        isResponsePermitted.set(false);
-                        subscriptionHandler.unsubscribe(this);
-                        LOGGER.log(DEBUG, "Consumer completed stream. Observer unsubscribed.");
-                    };
-            serverCallStreamObserver.setOnCloseHandler(onClose);
-        }
+        //        if (subscribeStreamResponseObserver
+        //                instanceof
+        //
+        // ServerCallStreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
+        //                serverCallStreamObserver) {
+        //
+        //            onCancel =
+        //                    () -> {
+        //                        // The consumer has cancelled the stream.
+        //                        // Do not allow additional responses to be sent.
+        //                        isResponsePermitted.set(false);
+        //                        subscriptionHandler.unsubscribe(this);
+        //                        LOGGER.log(DEBUG, "Consumer cancelled the stream. Observer
+        // unsubscribed.");
+        //                    };
+        //            serverCallStreamObserver.setOnCancelHandler(onCancel);
+        //
+        //            onClose =
+        //                    () -> {
+        //                        // The consumer has closed the stream.
+        //                        // Do not allow additional responses to be sent.
+        //                        isResponsePermitted.set(false);
+        //                        subscriptionHandler.unsubscribe(this);
+        //                        LOGGER.log(DEBUG, "Consumer completed stream. Observer
+        // unsubscribed.");
+        //                    };
+        //            serverCallStreamObserver.setOnCloseHandler(onClose);
+        //        }
 
         this.subscribeStreamResponseObserver = subscribeStreamResponseObserver;
     }
@@ -223,7 +223,7 @@ public class ConsumerStreamResponseObserver
 
                     // Increment counter
                     metricsService.get(LiveBlockItemsConsumed).increment();
-                    subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
+                    subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
                 }
             }
         }
@@ -236,7 +236,7 @@ public class ConsumerStreamResponseObserver
             LOGGER.log(
                     DEBUG,
                     "Sending SubscribeStreamResponse downstream: " + subscribeStreamResponse);
-            subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
+            subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
         }
     }
 }

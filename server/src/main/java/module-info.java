@@ -29,7 +29,6 @@ module com.hedera.block.server {
     requires com.swirlds.config.extensions;
     requires com.swirlds.metrics.api;
     requires dagger;
-    requires io.grpc.stub;
     requires io.helidon.common;
     requires io.helidon.config;
     requires io.helidon.webserver;
