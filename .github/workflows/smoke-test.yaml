@@ -76,14 +76,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build application
-        run: ${{ env.GRADLE_EXEC }} build
+#      - name: Build application
+#        run: ${{ env.GRADLE_EXEC }} build
 
-      - name: Run application in background, capture logs in app.log
-        run: |
-          ${{ env.GRADLE_EXEC }} run -x :suites:run 2> server/src/test/resources/app.log < /dev/null &
-          echo "Application started with PID $APP_PID"
-          sleep 10
+#      - name: Run application in background, capture logs in app.log
+#        run: |
+#          ${{ env.GRADLE_EXEC }} run -x :suites:run 2> server/src/test/resources/app.log < /dev/null &
+#          echo "Application started with PID $APP_PID"
+#          sleep 10
+
+# We need to here have a gradle task that will build the jar of the server but to change the
+# app.properties with the test ones before running it. This is the best approach currently, since
+# setting an env var for example: mediator.ringBufferSize=1024 will not be seen when the swirlds
+# config dependency tries to read the env with System.getenv() since the JVM looks for
+# case-sensitive keys...
 
       - name: Print App Logs
         run: cat server/src/test/resources/app.log
