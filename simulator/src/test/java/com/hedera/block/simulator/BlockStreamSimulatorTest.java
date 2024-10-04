@@ -17,17 +17,22 @@
 package com.hedera.block.simulator;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
+import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
 import com.swirlds.config.api.Configuration;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,9 +63,37 @@ class BlockStreamSimulatorTest {
     }
 
     @Test
-    void start_logsStartedMessage() throws InterruptedException {
+    void start_logsStartedMessage() throws InterruptedException, ParseException, IOException {
         blockStreamSimulator.start();
         assertTrue(blockStreamSimulator.isRunning());
+    }
+
+    @Test
+    void start_exitByBlockNull() throws InterruptedException, ParseException, IOException {
+
+        BlockStreamManager blockStreamManager = Mockito.mock(BlockStreamManager.class);
+        when(blockStreamManager.getNextBlockItem()).thenReturn(BlockItem.newBuilder().build());
+
+        Configuration configuration =
+                TestUtils.getTestConfiguration(
+                        Map.of(
+                                "blockStream.maxBlockItemsToStream",
+                                "2",
+                                "blockStream.BlockAsFileBlockStreamManager",
+                                "BlockAsFileLargeDataSets",
+                                "blockStream.rootPath",
+                                getAbsoluteFolder("src/test/resources/block-0.0.3-blk/")));
+
+        BlockStreamSimulatorApp blockStreamSimulator =
+                new BlockStreamSimulatorApp(
+                        configuration, blockStreamManager, publishStreamGrpcClient);
+
+        blockStreamSimulator.start();
+        assertTrue(blockStreamSimulator.isRunning());
+    }
+
+    private String getAbsoluteFolder(String relativePath) {
+        return Paths.get(relativePath).toAbsolutePath().toString();
     }
 
     @Test

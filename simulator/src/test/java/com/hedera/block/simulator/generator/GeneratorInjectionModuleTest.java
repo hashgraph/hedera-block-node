@@ -27,6 +27,23 @@ import org.junit.jupiter.api.Test;
 class GeneratorInjectionModuleTest {
 
     @Test
+    void providesBlockStreamManager_AsFileLargeDataSets() throws IOException {
+
+        BlockStreamConfig blockStreamConfig =
+                TestUtils.getTestConfiguration(
+                                Map.of(
+                                        "blockStream.managerImplementation",
+                                        "BlockAsFileLargeDataSets"))
+                        .getConfigData(BlockStreamConfig.class);
+
+        BlockStreamManager blockStreamManager =
+                GeneratorInjectionModule.providesBlockStreamManager(blockStreamConfig);
+
+        assertEquals(
+                blockStreamManager.getClass().getName(), BlockAsFileLargeDataSets.class.getName());
+    }
+
+    @Test
     void providesBlockStreamManager_AsFile() throws IOException {
         BlockStreamConfig blockStreamConfig =
                 TestUtils.getTestConfiguration().getConfigData(BlockStreamConfig.class);

@@ -39,6 +39,8 @@ public interface GeneratorInjectionModule {
 
         if ("BlockAsDirBlockStreamManager".equalsIgnoreCase(config.managerImplementation())) {
             return new BlockAsDirBlockStreamManager(config);
+        } else if ("BlockAsFileLargeDataSets".equalsIgnoreCase(config.managerImplementation())) {
+            return new BlockAsFileLargeDataSets(config);
         }
 
         return new BlockAsFileBlockStreamManager(config);
