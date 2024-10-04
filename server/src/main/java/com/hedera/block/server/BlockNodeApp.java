@@ -23,11 +23,9 @@ import com.hedera.block.server.health.HealthService;
 import com.hedera.block.server.pbj.PbjBlockStreamServiceProxy;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.pbj.grpc.helidon.PbjRouting;
-import com.hedera.pbj.grpc.helidon.config.*;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.WebServerConfig;
-import io.helidon.webserver.grpc.GrpcService;
 import io.helidon.webserver.http.HttpRouting;
 import java.io.IOException;
 import javax.inject.Inject;
@@ -44,7 +42,6 @@ public class BlockNodeApp {
 
     private final ServiceStatus serviceStatus;
     private final HealthService healthService;
-    private final GrpcService blockStreamService;
     private final WebServerConfig.Builder webServerBuilder;
 
     /**
@@ -52,18 +49,15 @@ public class BlockNodeApp {
      *
      * @param serviceStatus has the status of the service
      * @param healthService handles the health API requests
-     * @param blockStreamService handles the GRPC API requests
      * @param webServerBuilder used to build the web server and start it
      */
     @Inject
     public BlockNodeApp(
             @NonNull ServiceStatus serviceStatus,
             @NonNull HealthService healthService,
-            @NonNull GrpcService blockStreamService,
             @NonNull WebServerConfig.Builder webServerBuilder) {
         this.serviceStatus = serviceStatus;
         this.healthService = healthService;
-        this.blockStreamService = blockStreamService;
         this.webServerBuilder = webServerBuilder;
     }
 

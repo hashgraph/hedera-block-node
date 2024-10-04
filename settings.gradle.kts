@@ -50,7 +50,8 @@ dependencyResolutionManagement {
 
             // Compile time dependencies
             version("io.helidon.webserver.http2", helidonVersion)
-            version("io.helidon.webserver.grpc", helidonVersion)
+            version("io.helidon.webserver", helidonVersion)
+//            version("io.helidon.webserver.grpc", helidonVersion)
             version("io.helidon.logging", helidonVersion)
 //            version("io.helidon.common.features", helidonVersion)
 

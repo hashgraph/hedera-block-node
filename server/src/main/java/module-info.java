@@ -21,7 +21,6 @@ module com.hedera.block.server {
 
     requires com.hedera.block.stream;
     requires com.google.protobuf;
-    requires com.hedera.pbj.grpc.helidon.config;
     requires com.hedera.pbj.grpc.helidon;
     requires com.hedera.pbj.runtime;
     requires com.lmax.disruptor;
@@ -33,7 +32,6 @@ module com.hedera.block.server {
     requires io.grpc.stub;
     requires io.helidon.common;
     requires io.helidon.config;
-    requires io.helidon.webserver.grpc;
     requires io.helidon.webserver;
     requires javax.inject;
     requires static com.github.spotbugs.annotations;
