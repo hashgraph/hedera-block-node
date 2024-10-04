@@ -51,9 +51,7 @@ dependencyResolutionManagement {
             // Compile time dependencies
             version("io.helidon.webserver.http2", helidonVersion)
             version("io.helidon.webserver", helidonVersion)
-//            version("io.helidon.webserver.grpc", helidonVersion)
             version("io.helidon.logging", helidonVersion)
-//            version("io.helidon.common.features", helidonVersion)
 
             version("com.lmax.disruptor", "4.0.0")
             version("com.github.spotbugs.annotations", "4.7.3")
@@ -67,10 +65,12 @@ dependencyResolutionManagement {
             version("com.google.auto.service", "1.1.1")
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
 
-            // gRPC dependencies
+            // gRPC dependencies for the stream subproject
             version("io.grpc", "1.65.1")
             version("io.grpc.protobuf", "1.65.1")
             version("io.grpc.stub", "1.65.1")
+
+            // netty dependency for the simulator subproject
             version("io.grpc.netty.shaded", "1.65.1")
 
             // Reference from the protobuf plugin

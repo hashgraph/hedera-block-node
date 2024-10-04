@@ -20,7 +20,7 @@ import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.health.HealthService;
-import com.hedera.block.server.pbj.PbjBlockStreamServiceProxy;
+import com.hedera.block.server.pbj.PbjBlockStreamService;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.pbj.grpc.helidon.PbjRouting;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -43,6 +43,7 @@ public class BlockNodeApp {
     private final ServiceStatus serviceStatus;
     private final HealthService healthService;
     private final WebServerConfig.Builder webServerBuilder;
+    private final PbjBlockStreamService pbjBlockStreamService;
 
     /**
      * Constructs a new BlockNodeApp with the specified dependencies.
@@ -55,9 +56,11 @@ public class BlockNodeApp {
     public BlockNodeApp(
             @NonNull ServiceStatus serviceStatus,
             @NonNull HealthService healthService,
+            @NonNull PbjBlockStreamService pbjBlockStreamService,
             @NonNull WebServerConfig.Builder webServerBuilder) {
         this.serviceStatus = serviceStatus;
         this.healthService = healthService;
+        this.pbjBlockStreamService = pbjBlockStreamService;
         this.webServerBuilder = webServerBuilder;
     }
 
@@ -79,7 +82,7 @@ public class BlockNodeApp {
         final WebServer webServer =
                 webServerBuilder
                         .port(8080)
-                        .addRouting(PbjRouting.builder().service(new PbjBlockStreamServiceProxy()))
+                        .addRouting(PbjRouting.builder().service(pbjBlockStreamService))
                         .addRouting(httpRouting)
                         .build();
 
