@@ -16,6 +16,8 @@
 
 package com.hedera.block.simulator.generator;
 
+import com.hedera.block.simulator.Constants;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -34,7 +36,7 @@ public final class Utils {
      * @return byte array of the content of the GZIP file
      * @throws IOException if an I/O error occurs
      */
-    public static byte[] readGzFile(Path filePath) throws IOException {
+    public static byte[] readGzFile(@NonNull Path filePath) throws IOException {
         try (InputStream fileInputStream = Files.newInputStream(filePath);
                 GZIPInputStream gzipInputStream = new GZIPInputStream(fileInputStream)) {
             return gzipInputStream.readAllBytes();
@@ -45,13 +47,13 @@ public final class Utils {
      * Read a file and return the content as a byte array.
      *
      * @param filePath Path to the file
-     * @return byte array of the content of the file
+     * @return byte array of the content of the file or null if the file extension is not supported
      * @throws IOException if an I/O error occurs
      */
-    public static byte[] readFileBytes(Path filePath) throws IOException {
-        if (filePath.toString().endsWith(".gz")) {
+    public static byte[] readFileBytes(@NonNull Path filePath) throws IOException {
+        if (filePath.toString().endsWith(Constants.GZ_EXTENSION)) {
             return Utils.readGzFile(filePath);
-        } else if (filePath.toString().endsWith(".blk")) {
+        } else if (filePath.toString().endsWith(Constants.RECORD_EXTENSION)) {
             return Files.readAllBytes(filePath);
         }
         return null;

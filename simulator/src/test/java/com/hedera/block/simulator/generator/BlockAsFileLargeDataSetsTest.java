@@ -26,16 +26,16 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class BlockAsFileLargeDataSetsTest {
 
-    private final String rootFolder = "src/test/resources/block-0.0.3-blk/";
-    private int filesInFolder;
+    private static final String rootFolder = "src/test/resources/block-0.0.3-blk/";
+    private static int filesInFolder;
 
-    @BeforeEach
-    void setUp() {
+    @BeforeAll
+    static void setUp() {
         filesInFolder = getFilesInFolder(getAbsoluteFolder(rootFolder));
     }
 
@@ -89,11 +89,11 @@ class BlockAsFileLargeDataSetsTest {
         return new BlockAsFileLargeDataSets(blockStreamConfig);
     }
 
-    private String getAbsoluteFolder(String relativePath) {
+    private static String getAbsoluteFolder(String relativePath) {
         return Paths.get(relativePath).toAbsolutePath().toString();
     }
 
-    private int getFilesInFolder(String absolutePath) {
+    private static int getFilesInFolder(String absolutePath) {
         File folder = new File(absolutePath);
         File[] blkFiles =
                 folder.listFiles(

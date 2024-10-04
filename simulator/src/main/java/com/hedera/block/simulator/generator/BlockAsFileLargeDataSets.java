@@ -40,8 +40,7 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
     private int currentBlockItemIndex = 0;
 
     private Block currentBlock = null;
-    private final int paddedLength;
-    private final String fileExtension;
+    private final String formatString;
 
     /**
      * Constructs a new BlockAsFileLargeDataSets instance.
@@ -51,8 +50,7 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
     @Inject
     public BlockAsFileLargeDataSets(@NonNull BlockStreamConfig config) {
         this.blockstreamPath = config.folderRootPath();
-        this.paddedLength = config.paddedLength();
-        this.fileExtension = config.fileExtension();
+        this.formatString = "%0" + config.paddedLength() + "d" + config.fileExtension();
     }
 
     @Override
@@ -79,7 +77,6 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
     public Block getNextBlock() throws IOException, ParseException {
         currentBlockIndex++;
 
-        String formatString = "%0" + paddedLength + "d" + fileExtension;
         String nextBlockFileName = String.format(formatString, currentBlockIndex);
         File blockFile = new File(blockstreamPath, nextBlockFileName);
 
