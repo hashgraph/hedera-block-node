@@ -146,7 +146,9 @@ public class ProducerBlockItemObserver
     }
 
     @Override
-    public void onSubscribe(Flow.Subscription subscription) {}
+    public void onSubscribe(Flow.Subscription subscription) {
+        LOGGER.log(DEBUG, "onSubscribe called");
+    }
 
     /**
      * Helidon triggers this method when it receives a new PublishStreamRequest from the upstream

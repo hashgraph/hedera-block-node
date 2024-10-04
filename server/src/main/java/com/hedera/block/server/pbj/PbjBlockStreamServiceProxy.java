@@ -22,6 +22,7 @@ import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediator;
@@ -37,6 +38,7 @@ import com.hedera.hapi.block.SingleBlockResponse;
 import com.hedera.hapi.block.SingleBlockResponseCode;
 import com.hedera.hapi.block.SubscribeStreamRequest;
 import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.grpc.Pipelines;
@@ -81,32 +83,6 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         this.streamMediator = streamMediator;
     }
 
-    //    @NonNull
-    //    private SingleBlockResponse singleBlock(SingleBlockRequest singleBlockRequest) {
-    //        return pbjBlockStreamService.singleBlock(singleBlockRequest);
-    //    }
-    //
-    //    public Flow.Subscriber<? super PublishStreamRequest> publishBlockStream(
-    //            Flow.Subscriber<? super PublishStreamResponse> publishStreamRequest) {
-    //        return pbjBlockStreamService.publishBlockStream(publishStreamRequest);
-    //    }
-    //
-    //    public void subscribeBlockStream(
-    //            SubscribeStreamRequest subscribeStreamRequest,
-    //            Flow.Subscriber<? super SubscribeStreamResponse> responses) {
-    //        pbjBlockStreamService.subscribeBlockStream(subscribeStreamRequest, responses);
-    //    }
-
-    // rpc methods defined in hedera-protobufs/block/block_service.proto
-    //    SingleBlockResponse singleBlock(SingleBlockRequest singleBlockRequest);
-    //
-    //    Flow.Subscriber<? super PublishStreamRequest> publishBlockStream(
-    //            Flow.Subscriber<? super PublishStreamResponse> publishStreamRequest);
-    //
-    //    void subscribeBlockStream(
-    //            SubscribeStreamRequest subscribeStreamRequest,
-    //            Flow.Subscriber<? super SubscribeStreamResponse> responses);
-
     @Override
     @NonNull
     public Flow.Subscriber<? super Bytes> open(
@@ -130,20 +106,13 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
                         .mapResponse(reply -> createPublishStreamResponse(reply, options))
                         .respondTo(replies)
                         .build();
-                    // Client sends a single request and the server sends a stream of responses
-                    //                case subscribeBlockStream -> Pipelines
-                    //                        .<SubscribeStreamRequest,
-                    // SubscribeStreamResponse>serverStreaming()
-                    //                        .mapRequest(bytes ->
-                    // parseSubscribeStreamRequest(bytes, options))
-                    //                        .method(this::subscribeBlockStream)
-                    //                        .mapResponse(reply ->
-                    // createSubscribeStreamResponse(reply, options))
-                    //                        .respondTo(replies)
-                    //                        .build();
-                    // Client and server are sending messages back and forth.
-
-                case subscribeBlockStream -> null;
+                case subscribeBlockStream -> Pipelines
+                        .<SubscribeStreamRequest, SubscribeStreamResponse>serverStreaming()
+                        .mapRequest(bytes -> parseSubscribeStreamRequest(bytes, options))
+                        .method(this::subscribeBlockStream)
+                        .mapResponse(reply -> createSubscribeStreamResponse(reply, options))
+                        .respondTo(replies)
+                        .build();
             };
         } catch (Exception e) {
             replies.onError(e);
@@ -151,7 +120,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         }
     }
 
-    Flow.Subscriber<? super PublishStreamRequest> publishBlockStream(
+    private Flow.Subscriber<? super PublishStreamRequest> publishBlockStream(
             Flow.Subscriber<? super PublishStreamResponse> publishStreamResponseObserver) {
         LOGGER.log(DEBUG, "Executing bidirectional publishBlockStream gRPC method");
 
@@ -174,6 +143,36 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         return producerBlockItemObserver;
     }
 
+    private void subscribeBlockStream(
+            SubscribeStreamRequest subscribeStreamRequest,
+            Flow.Subscriber<? super SubscribeStreamResponse> subscribeStreamResponseObserver) {
+
+        LOGGER.log(DEBUG, "Executing Server Streaming subscribeBlockStream gRPC method");
+
+        if (serviceStatus.isRunning()) {
+            // Unsubscribe any expired notifiers
+            streamMediator.unsubscribeAllExpired();
+
+            final var consumerStreamResponseObserver =
+                    new ConsumerStreamResponseObserver(
+                            Clock.systemDefaultZone(),
+                            streamMediator,
+                            subscribeStreamResponseObserver,
+                            blockNodeContext);
+
+            streamMediator.subscribe(consumerStreamResponseObserver);
+        } else {
+            LOGGER.log(
+                    ERROR,
+                    "Server Streaming subscribeBlockStream gRPC Service is not currently running");
+
+            subscribeStreamResponseObserver.onNext(
+                    SubscribeStreamResponse.newBuilder()
+                            .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
+                            .build());
+        }
+    }
+
     private SingleBlockResponse singleBlock(SingleBlockRequest singleBlockRequest) {
 
         LOGGER.log(DEBUG, "Executing Unary singleBlock gRPC method");
@@ -188,6 +187,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
 
                     return SingleBlockResponse.newBuilder()
                             .status(SingleBlockResponseCode.READ_BLOCK_SUCCESS)
+                            .block(blockOpt.get())
                             .build();
                 } else {
                     LOGGER.log(DEBUG, "Block number {0} not found", blockNumber);
