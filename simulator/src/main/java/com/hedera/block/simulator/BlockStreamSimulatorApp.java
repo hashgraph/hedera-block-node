@@ -20,8 +20,10 @@ import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.ParseException;
 import com.swirlds.config.api.Configuration;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.IOException;
 import javax.inject.Inject;
 
 /** BlockStream Simulator App */
@@ -64,8 +66,10 @@ public class BlockStreamSimulatorApp {
      * Starts the block stream simulator.
      *
      * @throws InterruptedException if the thread is interrupted
+     * @throws ParseException if a parse error occurs
+     * @throws IOException if an I/O error occurs
      */
-    public void start() throws InterruptedException {
+    public void start() throws InterruptedException, ParseException, IOException {
         int delayMSBetweenBlockItems = delayBetweenBlockItems / 1_000_000;
         int delayNSBetweenBlockItems = delayBetweenBlockItems % 1_000_000;
 
@@ -78,12 +82,24 @@ public class BlockStreamSimulatorApp {
         while (streamBlockItem) {
             // get block item
             BlockItem blockItem = blockStreamManager.getNextBlockItem();
+
+            if (blockItem == null) {
+                LOGGER.log(
+                        System.Logger.Level.INFO,
+                        "Block Stream Simulator has reached the end of the block items");
+                break;
+            }
+
             publishStreamGrpcClient.streamBlockItem(blockItem);
             blockItemsStreamed++;
 
             Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);
 
             if (blockItemsStreamed >= blockStreamConfig.maxBlockItemsToStream()) {
+                LOGGER.log(
+                        System.Logger.Level.INFO,
+                        "Block Stream Simulator has reached the maximum number of block items to"
+                                + " stream");
                 streamBlockItem = false;
             }
         }

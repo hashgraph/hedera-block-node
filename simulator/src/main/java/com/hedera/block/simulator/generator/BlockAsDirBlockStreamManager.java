@@ -16,6 +16,7 @@
 
 package com.hedera.block.simulator.generator;
 
+import static com.hedera.block.simulator.generator.Utils.readFileBytes;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
@@ -125,7 +126,7 @@ public class BlockAsDirBlockStreamManager implements BlockStreamManager {
                                     .toList();
 
                     for (Path pathBlockItem : sortedBlockItems) {
-                        byte[] blockItemBytes = readBlockItemBytes(pathBlockItem);
+                        byte[] blockItemBytes = readFileBytes(pathBlockItem);
                         // if null means the file is not a block item and we can skip the file.
                         if (blockItemBytes == null) {
                             continue;
@@ -139,15 +140,6 @@ public class BlockAsDirBlockStreamManager implements BlockStreamManager {
                 LOGGER.log(DEBUG, "Loaded block: " + blockDirPath);
             }
         }
-    }
-
-    private byte[] readBlockItemBytes(Path pathBlockItem) throws IOException {
-        if (pathBlockItem.toString().endsWith(".gz")) {
-            return Utils.readGzFile(pathBlockItem);
-        } else if (pathBlockItem.toString().endsWith(".blk")) {
-            return Files.readAllBytes(pathBlockItem);
-        }
-        return null;
     }
 
     // Method to extract the numeric part of the filename from a Path object

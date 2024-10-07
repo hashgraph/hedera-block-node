@@ -29,6 +29,8 @@ class BlockStreamConfigTest {
     private final int delayBetweenBlockItems = 1_500_000;
     private final String blockStreamManagerImplementation = "BlockAsFileBlockStreamManager";
     private final int maxBlockItemsToStream = 10_000;
+    private final int paddedLength = 36;
+    private final String fileExtension = ".blk";
 
     private String getAbsoluteFolder(String relativePath) {
         return Paths.get(relativePath).toAbsolutePath().toString();
@@ -52,7 +54,9 @@ class BlockStreamConfigTest {
                         folderRootPath,
                         delayBetweenBlockItems,
                         blockStreamManagerImplementation,
-                        maxBlockItemsToStream);
+                        maxBlockItemsToStream,
+                        paddedLength,
+                        fileExtension);
 
         assertEquals(folderRootPath, config.folderRootPath());
         assertEquals(GenerationMode.DIR, config.generationMode());
@@ -71,7 +75,9 @@ class BlockStreamConfigTest {
                         folderRootPath,
                         delayBetweenBlockItems,
                         blockStreamManagerImplementation,
-                        maxBlockItemsToStream);
+                        maxBlockItemsToStream,
+                        paddedLength,
+                        fileExtension);
 
         // Verify that the path is set to the default
         Path expectedPath = Paths.get("src/main/resources/block-0.0.3/").toAbsolutePath();
@@ -95,7 +101,9 @@ class BlockStreamConfigTest {
                                         relativeFolderPath,
                                         delayBetweenBlockItems,
                                         blockStreamManagerImplementation,
-                                        maxBlockItemsToStream));
+                                        maxBlockItemsToStream,
+                                        paddedLength,
+                                        fileExtension));
 
         // Verify the exception message
         assertEquals(relativeFolderPath + " Root path must be absolute", exception.getMessage());
@@ -121,7 +129,9 @@ class BlockStreamConfigTest {
                                         folderRootPath,
                                         delayBetweenBlockItems,
                                         blockStreamManagerImplementation,
-                                        maxBlockItemsToStream));
+                                        maxBlockItemsToStream,
+                                        paddedLength,
+                                        fileExtension));
 
         // Verify the exception message
         assertEquals("Folder does not exist: " + path, exception.getMessage());
@@ -140,7 +150,9 @@ class BlockStreamConfigTest {
                         folderRootPath,
                         delayBetweenBlockItems,
                         blockStreamManagerImplementation,
-                        maxBlockItemsToStream);
+                        maxBlockItemsToStream,
+                        paddedLength,
+                        fileExtension);
 
         // Verify that the configuration was created successfully
         assertEquals(folderRootPath, config.folderRootPath());

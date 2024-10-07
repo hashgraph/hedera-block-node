@@ -31,6 +31,8 @@ import java.nio.file.Paths;
  * @param delayBetweenBlockItems the delay between block items
  * @param managerImplementation the implementation of the block stream manager
  * @param maxBlockItemsToStream the maximum number of block items to stream
+ * @param paddedLength the padded length of 0 the block file format
+ * @param fileExtension the file extension of the block file format
  */
 @ConfigData("blockStream")
 public record BlockStreamConfig(
@@ -39,7 +41,9 @@ public record BlockStreamConfig(
         @ConfigProperty(defaultValue = "1_500_000") int delayBetweenBlockItems,
         @ConfigProperty(defaultValue = "BlockAsFileBlockStreamManager")
                 String managerImplementation,
-        @ConfigProperty(defaultValue = "10_000") int maxBlockItemsToStream) {
+        @ConfigProperty(defaultValue = "10_000") int maxBlockItemsToStream,
+        @ConfigProperty(defaultValue = "36") int paddedLength,
+        @ConfigProperty(defaultValue = ".blk.gz") String fileExtension) {
 
     /**
      * Constructor to set the default root path if not provided, it will be set to the data
