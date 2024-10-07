@@ -229,11 +229,11 @@ public class ProducerBlockItemObserver
      * Helidon triggers this method when the bidirectional stream to the upstream producer is
      * completed. Unsubscribe all the observers from the mediator.
      */
-     @Override
-     public void onComplete() {
+    @Override
+    public void onComplete() {
         LOGGER.log(DEBUG, "ProducerBlockStreamObserver completed");
         publishStreamResponseObserver.onComplete();
-     }
+    }
 
     @Override
     public boolean isTimeoutExpired() {
