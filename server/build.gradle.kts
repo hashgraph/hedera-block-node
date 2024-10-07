@@ -141,6 +141,11 @@ tasks.register("runSmokeTests") {
                 project.version,
                 layout.projectDirectory.dir("..").asFile
             )
+            commandLine(
+                "sh",
+                "-c",
+                "docker compose -p block-node up -d"
+            )
         }
         println("Build completed using src/test/resources/app.properties")
     }

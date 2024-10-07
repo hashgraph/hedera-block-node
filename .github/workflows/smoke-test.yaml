@@ -80,13 +80,14 @@ jobs:
         run: ${{ env.GRADLE_EXEC }} clean :server:build -x test
 
       - name: Create and Run Smoke Test Container
-        run: ${{ env.GRADLE_EXEC }} runSmokeTests 2> server/src/test/resources/app.log < /dev/null &
+        run: ${{ env.GRADLE_EXEC }} runSmokeTests &
           echo "Application started with PID $APP_PID"
           sleep 10
 
-      - name: Print App Logs
-        run: cat server/src/test/resources/app.log
-
       - name: Smoke Test
         working-directory: server/src/test/resources/
-        run: ./smoke-test.sh app.log
+        run: ./smoke-test.sh
+
+      # TODO do we need to stop this container? In theory when the job runs, everything gets scrapped
+      - name: Stop Docker Container
+        run: ${{ env.GRADLE_EXEC }} stopDockerContainer
