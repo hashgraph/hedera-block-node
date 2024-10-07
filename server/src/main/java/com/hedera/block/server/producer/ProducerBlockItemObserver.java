@@ -36,7 +36,7 @@ import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.Block;
 import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
@@ -59,7 +59,7 @@ public class ProducerBlockItemObserver
     private final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
             publishStreamResponseObserver;
     private final SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
-    private final Publisher<BlockItem> publisher;
+    private final Publisher<Block> publisher;
     private final ServiceStatus serviceStatus;
     private final MetricsService metricsService;
 
@@ -97,7 +97,7 @@ public class ProducerBlockItemObserver
      */
     public ProducerBlockItemObserver(
             @NonNull final InstantSource producerLivenessClock,
-            @NonNull final Publisher<BlockItem> publisher,
+            @NonNull final Publisher<Block> publisher,
             @NonNull final SubscriptionHandler<PublishStreamResponse> subscriptionHandler,
             @NonNull
                     final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
@@ -159,9 +159,9 @@ public class ProducerBlockItemObserver
 
         try {
             LOGGER.log(DEBUG, "Received PublishStreamRequest from producer");
-            final BlockItem blockItem =
-                    toPbj(BlockItem.PROTOBUF, publishStreamRequest.getBlockItem().toByteArray());
-            LOGGER.log(DEBUG, "Received block item: " + blockItem);
+            final Block block =
+                    toPbj(Block.PROTOBUF, publishStreamRequest.getBlock().toByteArray());
+            LOGGER.log(DEBUG, "Received block: " + block);
 
             metricsService.get(LiveBlockItemsReceived).increment();
 
@@ -172,7 +172,7 @@ public class ProducerBlockItemObserver
                 livenessCalculator.refresh();
 
                 // Publish the block to the mediator
-                publisher.publish(blockItem);
+                publisher.publish(block);
 
             } else {
                 LOGGER.log(ERROR, getClass().getName() + " is not accepting BlockItems");
@@ -188,7 +188,7 @@ public class ProducerBlockItemObserver
             LOGGER.log(
                     ERROR,
                     "Error parsing inbound block item from a producer: "
-                            + publishStreamRequest.getBlockItem(),
+                            + publishStreamRequest.getBlock(),
                     e);
 
             // Stop the server

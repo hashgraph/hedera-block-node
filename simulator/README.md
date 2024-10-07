@@ -8,7 +8,6 @@ It uses various configuration sources and dependency injection to manage its com
 ## Prerequisites
 
 - Java 21
-- Gradle
 - IntelliJ IDEA (recommended for development)
 
 ## Project Design Structure

@@ -58,12 +58,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Override
     public boolean streamBlockItem(BlockItem blockItem) {
-        requestStreamObserver.onNext(
-                PublishStreamRequest.newBuilder()
-                        .setBlockItem(Translator.fromPbj(blockItem))
-                        .build());
-
-        return true;
+        return false;
     }
 
     /**
@@ -72,12 +67,8 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Override
     public boolean streamBlock(Block block) {
-        for (BlockItem blockItem : block.items()) {
-            streamBlockItem(blockItem);
-        }
-
-        // wait for ack on the block
-        // if and when the ack is received return true
+        requestStreamObserver.onNext(
+                PublishStreamRequest.newBuilder().setBlock(Translator.fromPbj(block)).build());
 
         return true;
     }

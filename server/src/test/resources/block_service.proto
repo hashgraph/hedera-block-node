@@ -10,7 +10,7 @@ option java_multiple_files = true;
 //import "stream/block_item.proto";
 
 message PublishStreamRequest {
-    BlockItem block_item = 1;
+    Block block = 1;
 }
 
 message PublishStreamResponse {

@@ -30,7 +30,7 @@ import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.Block;
 import com.lmax.disruptor.BatchEventProcessor;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
@@ -89,18 +89,16 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
      * Publishes the given block item to all subscribers. If an exception occurs while persisting
      * the block item, the service status is set to not running, and all downstream consumers are
      * unsubscribed.
-     *
-     * @param blockItem the block item from the upstream producer to publish to downstream consumers
      */
     @Override
-    public void publish(@NonNull final BlockItem blockItem) {
+    public void publish(@NonNull final Block block) {
 
         if (serviceStatus.isRunning()) {
 
             // Publish the block for all subscribers to receive
-            LOGGER.log(DEBUG, "Publishing BlockItem: " + blockItem);
+            LOGGER.log(DEBUG, "Publishing BlockItem: " + block);
             final var subscribeStreamResponse =
-                    SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
+                    SubscribeStreamResponse.newBuilder().block(block).build();
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
 
             // Increment the block item counter

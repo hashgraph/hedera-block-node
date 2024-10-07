@@ -26,6 +26,7 @@ import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SingleBlockResponse;
 import com.hedera.hapi.block.SubscribeStreamRequest;
 import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.Codec;
 import com.hedera.pbj.runtime.ParseException;
@@ -47,6 +48,24 @@ public final class Translator {
             "Invalid protocol buffer converting %s from PBJ to protoc for %s";
 
     private Translator() {}
+
+    /**
+     * Converts a {@link Block} to a {@link com.hedera.hapi.block.stream.protoc.Block}.
+     *
+     * @param block the {@link Block} to convert
+     * @return the converted {@link com.hedera.hapi.block.stream.protoc.Block}
+     */
+    @NonNull
+    public static com.hedera.hapi.block.stream.protoc.Block fromPbj(@NonNull final Block block) {
+        try {
+            final byte[] pbjBytes = asBytes(com.hedera.hapi.block.stream.Block.PROTOBUF, block);
+            return com.hedera.hapi.block.stream.protoc.Block.parseFrom(pbjBytes);
+        } catch (InvalidProtocolBufferException e) {
+            final String message = INVALID_BUFFER_MESSAGE.formatted("SingleBlockResponse", block);
+            LOGGER.log(ERROR, message);
+            throw new RuntimeException(message, e);
+        }
+    }
 
     /**
      * Converts a {@link BlockItem} to a {@link com.hedera.hapi.block.stream.protoc.BlockItem}.

@@ -29,7 +29,7 @@ import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.SubscribeStreamResponse;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.Block;
 import com.hedera.pbj.runtime.OneOf;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
@@ -186,7 +186,7 @@ public class ConsumerStreamResponseObserver
                 subscribeStreamResponse.response();
         return switch (oneOfTypeOneOf.kind()) {
             case STATUS -> statusResponseSender;
-            case BLOCK_ITEM -> blockItemResponseSender;
+            case BLOCK -> blockItemResponseSender;
             default -> throw new IllegalArgumentException(
                     "Unknown response type: " + oneOfTypeOneOf.kind());
         };
@@ -203,8 +203,8 @@ public class ConsumerStreamResponseObserver
 
             // Only start sending BlockItems after we've reached
             // the beginning of a block.
-            final BlockItem blockItem = subscribeStreamResponse.blockItem();
-            if (blockItem == null) {
+            final Block block = subscribeStreamResponse.block();
+            if (block == null) {
                 final String message =
                         PROTOCOL_VIOLATION_MESSAGE.formatted(
                                 "SubscribeStreamResponse",
@@ -214,12 +214,9 @@ public class ConsumerStreamResponseObserver
                 LOGGER.log(ERROR, message);
                 throw new IllegalArgumentException(message);
             } else {
-                if (!streamStarted && blockItem.hasBlockHeader()) {
-                    streamStarted = true;
-                }
 
                 if (streamStarted) {
-                    LOGGER.log(DEBUG, "Sending BlockItem downstream: " + blockItem);
+                    LOGGER.log(DEBUG, "Sending Block downstream: " + block);
 
                     // Increment counter
                     metricsService.get(LiveBlockItemsConsumed).increment();

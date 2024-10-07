@@ -33,7 +33,10 @@ import java.nio.file.Paths;
  *     set it as persistence.storage.rootPath
  */
 @ConfigData("persistence.storage")
-public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String rootPath) {
+public record PersistenceStorageConfig(
+        @ConfigProperty(defaultValue = "") String rootPath,
+        @ConfigProperty(defaultValue = "false") boolean enableCompression,
+        @ConfigProperty(defaultValue = "gzip") String compressionAlgorithm) {
     private static final System.Logger LOGGER =
             System.getLogger(PersistenceStorageConfig.class.getName());
 

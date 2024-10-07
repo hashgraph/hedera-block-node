@@ -17,6 +17,7 @@
 package com.hedera.block.simulator.config.data;
 
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.block.simulator.simulator.BlockStreamRateMode;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 import java.nio.file.Files;
@@ -43,7 +44,9 @@ public record BlockStreamConfig(
                 String managerImplementation,
         @ConfigProperty(defaultValue = "10_000") int maxBlockItemsToStream,
         @ConfigProperty(defaultValue = "36") int paddedLength,
-        @ConfigProperty(defaultValue = ".blk.gz") String fileExtension) {
+        @ConfigProperty(defaultValue = ".blk.gz") String fileExtension,
+        @ConfigProperty(defaultValue = "1000") int millisecondsPerBlock,
+        @ConfigProperty(defaultValue = "CONSTANT_RATE") BlockStreamRateMode blockStreamRateMode) {
 
     /**
      * Constructor to set the default root path if not provided, it will be set to the data

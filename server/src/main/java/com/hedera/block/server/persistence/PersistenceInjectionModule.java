@@ -22,20 +22,22 @@ import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
-import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
+import com.hedera.block.server.persistence.storage.write.BlockAsFileWriter;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
-import java.io.IOException;
 import javax.inject.Singleton;
 
 /** A Dagger module for providing dependencies for Persistence Module. */
 @Module
 public interface PersistenceInjectionModule {
+
+    //    @Binds
+    //    @Singleton
+    //    BlockWriter<BlockItem> bindBlockWriter(BlockAsFileWriter blockWriter);
 
     /**
      * Provides a block writer singleton using the block node context.
@@ -45,12 +47,10 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static BlockWriter<BlockItem> providesBlockWriter(BlockNodeContext blockNodeContext) {
-        try {
-            return BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create block writer", e);
-        }
+    static BlockWriter<Block> providesBlockWriter(BlockNodeContext blockNodeContext) {
+        return new BlockAsFileWriter(
+                blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class),
+                blockNodeContext.metricsService());
     }
 
     /**
