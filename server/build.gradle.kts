@@ -113,3 +113,35 @@ tasks.register<Exec>("stopDockerContainer") {
     workingDir(layout.projectDirectory.dir("docker"))
     commandLine("sh", "-c", "docker-compose -p block-node stop")
 }
+
+tasks.register("runSmokeTests") {
+    doFirst {
+        tasks.named("test").configure {
+            enabled = false // disable test task, we do not need here
+        }
+        // override processResources locally
+        tasks.named("processResources", ProcessResources::class).configure {
+            duplicatesStrategy = DuplicatesStrategy.INCLUDE
+            from("src/main/resources") {
+                exclude("app.properties") // we exclude src/main/resources/app.properties
+            }
+            from("src/test/resources/app.properties") // we include src/test/resources/app.properties
+        }
+    }
+
+    // build the project
+    finalizedBy("build") // Ensures the build is finalized after this task runs
+
+    // exec docker build & log
+    doLast {
+        exec {
+            workingDir(layout.projectDirectory.dir("docker"))
+            commandLine(
+                "./docker-build.sh",
+                project.version,
+                layout.projectDirectory.dir("..").asFile
+            )
+        }
+        println("Build completed using src/test/resources/app.properties")
+    }
+}
