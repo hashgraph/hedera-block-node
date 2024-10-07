@@ -80,7 +80,8 @@ jobs:
         run: ${{ env.GRADLE_EXEC }} clean :server:build -x test
 
       - name: Create and Run Smoke Test Container
-        run: ${{ env.GRADLE_EXEC }} runSmokeTests &
+        run: |
+          ${{ env.GRADLE_EXEC }} runSmokeTests &
           echo "Application started with PID $APP_PID"
           sleep 10
 
