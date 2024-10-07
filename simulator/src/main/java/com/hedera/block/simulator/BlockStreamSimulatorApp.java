@@ -16,6 +16,8 @@
 
 package com.hedera.block.simulator;
 
+import static com.hedera.block.simulator.Constants.CONFIGURATION_FILE;
+
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
@@ -28,21 +30,18 @@ import com.swirlds.config.extensions.sources.SystemEnvironmentConfigSource;
 import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
-import javax.inject.Inject;
-import java.io.IOException;
 import java.nio.file.Path;
 import javax.inject.Inject;
 
 /** BlockStream Simulator App */
 public class BlockStreamSimulatorApp {
 
-    private static final System.Logger LOGGER = System.getLogger(BlockStreamSimulatorApp.class.getName());
+    private static final System.Logger LOGGER =
+            System.getLogger(BlockStreamSimulatorApp.class.getName());
 
-    private final Configuration configuration;
-    private BlockStreamManager blockStreamManager;
-    private PublishStreamGrpcClient publishStreamGrpcClient;
-    private BlockStreamConfig blockStreamConfig;
-
+    private final BlockStreamManager blockStreamManager;
+    private final PublishStreamGrpcClient publishStreamGrpcClient;
+    private final BlockStreamConfig blockStreamConfig;
     private final int delayBetweenBlockItems;
 
     private boolean isRunning = false;
@@ -50,75 +49,64 @@ public class BlockStreamSimulatorApp {
     /**
      * Creates a new BlockStreamSimulatorApp instance.
      *
-     * @param configuration           the configuration to be used by the block
-     *                                stream simulator
-     * @param blockStreamManager      the block stream manager to be used by the
-     *                                block stream simulator
-     * @param publishStreamGrpcClient the gRPC client to be used by the block stream
-     *                                simulator
+     * @param configuration the configuration to be used by the block stream simulator
+     * @param blockStreamManager the block stream manager to be used by the block stream simulator
+     * @param publishStreamGrpcClient the gRPC client to be used by the block stream simulator
      */
     @Inject
     public BlockStreamSimulatorApp(
             @NonNull Configuration configuration,
             @NonNull BlockStreamManager blockStreamManager,
             @NonNull PublishStreamGrpcClient publishStreamGrpcClient) {
-        this.configuration = configuration;
         this.blockStreamManager = blockStreamManager;
         this.publishStreamGrpcClient = publishStreamGrpcClient;
 
         blockStreamConfig = configuration.getConfigData(BlockStreamConfig.class);
-
         delayBetweenBlockItems = blockStreamConfig.delayBetweenBlockItems();
     }
 
     /**
-     * Constructs a new {@code BlockStreamSimulatorApp} with the specified
-     * configuration.
+     * Constructor that accepts a custom configuration and initializes dependencies internally.
      *
-     * @param configuration the configuration to use for the simulator app
+     * @param configuration the custom configuration to use
      */
     public BlockStreamSimulatorApp(Configuration configuration) {
-        this.configuration = configuration;
-        initilizeDependencies();
-        initializeConfig();
-
-        this.delayBetweenBlockItems = blockStreamConfig.delayBetweenBlockItems();
+        this(configuration, createComponent(configuration));
     }
 
     /**
-     * Constructs a new {@code BlockStreamSimulatorApp} with the default
-     * configuration.
+     * Private constructor that initializes the class using a configuration and a Dagger component.
      *
-     * @throws IOException if an I/O error occurs while loading the default
-     *                     configuration
+     * @param configuration the configuration to use
+     * @param component the Dagger component for dependency injection
+     */
+    private BlockStreamSimulatorApp(
+            Configuration configuration, BlockStreamSimulatorInjectionComponent component) {
+
+        this(
+                configuration,
+                component.getBlockStreamManager(),
+                component.getPublishStreamGrpcClient());
+    }
+
+    /**
+     * Default constructor that loads the default configuration and initializes dependencies.
+     *
+     * @throws IOException if an I/O error occurs while loading the default configuration
      */
     public BlockStreamSimulatorApp() throws IOException {
-        this.configuration = loadDefaultConfiguration();
-        initilizeDependencies();
-        initializeConfig();
-
-        this.delayBetweenBlockItems = blockStreamConfig.delayBetweenBlockItems();
+        this(loadDefaultConfiguration());
     }
 
     /**
-     * Initializes the configuration by retrieving the {@code BlockStreamConfig}
-     * from the current
-     * configuration.
+     * Helper method to create the Dagger component with the given configuration.
+     *
+     * @param configuration the configuration to use
+     * @return the Dagger component
      */
-    private void initializeConfig() {
-        this.blockStreamConfig = configuration.getConfigData(BlockStreamConfig.class);
-    }
-
-    /**
-     * Initializes the dependencies required by the simulator app using Dagger
-     * dependency injection.
-     */
-    private void initilizeDependencies() {
-        BlockStreamSimulatorInjectionComponent DIComponent = DaggerBlockStreamSimulatorInjectionComponent.factory()
-                .create(configuration);
-
-        this.blockStreamManager = DIComponent.getBlockStreamManager();
-        this.publishStreamGrpcClient = DIComponent.getPublishStreamGrpcClient();
+    private static BlockStreamSimulatorInjectionComponent createComponent(
+            Configuration configuration) {
+        return DaggerBlockStreamSimulatorInjectionComponent.factory().create(configuration);
     }
 
     /**
@@ -127,12 +115,13 @@ public class BlockStreamSimulatorApp {
      * @return the default configuration
      * @throws IOException if an I/O error occurs while loading the configuration
      */
-    private Configuration loadDefaultConfiguration() throws IOException {
-        ConfigurationBuilder configurationBuilder = ConfigurationBuilder.create()
-                .withSource(SystemEnvironmentConfigSource.getInstance())
-                .withSource(SystemPropertiesConfigSource.getInstance())
-                .withSource(new ClasspathFileConfigSource(Path.of("app.properties")))
-                .autoDiscoverExtensions();
+    private static Configuration loadDefaultConfiguration() throws IOException {
+        ConfigurationBuilder configurationBuilder =
+                ConfigurationBuilder.create()
+                        .withSource(SystemEnvironmentConfigSource.getInstance())
+                        .withSource(SystemPropertiesConfigSource.getInstance())
+                        .withSource(new ClasspathFileConfigSource(Path.of(CONFIGURATION_FILE)))
+                        .autoDiscoverExtensions();
         return configurationBuilder.build();
     }
 
@@ -140,8 +129,8 @@ public class BlockStreamSimulatorApp {
      * Starts the block stream simulator.
      *
      * @throws InterruptedException if the thread is interrupted
-     * @throws ParseException       if a parse error occurs
-     * @throws IOException          if an I/O error occurs
+     * @throws ParseException if a parse error occurs
+     * @throws IOException if an I/O error occurs
      */
     public void start() throws InterruptedException, ParseException, IOException {
         int delayMSBetweenBlockItems = delayBetweenBlockItems / 1_000_000;

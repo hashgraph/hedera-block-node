@@ -18,8 +18,12 @@ package com.hedera.block.simulator;
 
 public class Constants {
 
-    // The file extension for block files.
+    /** The file extension for block files. */
     public static final String RECORD_EXTENSION = "blk";
-    // postfix for gzipped files
+
+    /** Postfix for gzipped files */
     public static final String GZ_EXTENSION = ".gz";
+
+    /** Name and file extension used for the configuration file. */
+    public static final String CONFIGURATION_FILE = "app.properties";
 }
