@@ -114,7 +114,9 @@ tasks.register<Exec>("stopDockerContainer") {
     commandLine("sh", "-c", "docker-compose -p block-node stop")
 }
 
-tasks.register("runSmokeTests") {
+tasks.register("buildSmokeTests") {
+    dependsOn("updateDockerEnv")
+
     doFirst {
         tasks.named("test").configure {
             enabled = false // disable test task, we do not need here
@@ -134,19 +136,6 @@ tasks.register("runSmokeTests") {
 
     // exec docker build & log
     doLast {
-        exec {
-            workingDir(layout.projectDirectory.dir("docker"))
-            commandLine(
-                "./docker-build.sh",
-                project.version,
-                layout.projectDirectory.dir("..").asFile
-            )
-            commandLine(
-                "sh",
-                "-c",
-                "docker compose -p block-node up -d"
-            )
-        }
         println("Build completed using src/test/resources/app.properties")
     }
 }

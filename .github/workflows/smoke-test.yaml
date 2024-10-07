@@ -65,7 +65,6 @@ jobs:
           sudo tar -xzf grpcurl.tar.gz -C /usr/local/bin grpcurl
           rm grpcurl.tar.gz
 
-
       - name: Cache Gradle packages
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
@@ -79,16 +78,20 @@ jobs:
       - name: Build application
         run: ${{ env.GRADLE_EXEC }} clean :server:build -x test
 
-      - name: Create and Run Smoke Test Container
+      - name: Build Smoke Tests
+        run: ${{ env.GRADLE_EXEC }} buildSmokeTests
+
+      # FIXME for POC, version and exit code are static, they need to be dynamic, see docker script
+      - name: Create & Start Container
+        working-directory: server/docker/
         run: |
-          ${{ env.GRADLE_EXEC }} runSmokeTests &
-          echo "Application started with PID $APP_PID"
-          sleep 10
+          docker buildx build --load -t "block-node-server:0.1.0-SNAPSHOT" --build-context distributions=../build/distributions --build-arg VERSION="0.1.0-SNAPSHOT" . || exit "123"
+          docker compose -p block-node up -d
 
       - name: Smoke Test
         working-directory: server/src/test/resources/
         run: ./smoke-test.sh
 
-      # TODO do we need to stop this container? In theory when the job runs, everything gets scrapped
+      # TODO Do we need to stop this container? In theory when the job runs, everything gets scrapped
       - name: Stop Docker Container
-        run: ${{ env.GRADLE_EXEC }} stopDockerContainer
+        run: docker compose -p block-node stop
