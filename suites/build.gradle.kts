@@ -35,6 +35,9 @@ mainModuleInfo {
     runtimeOnly("org.junit.jupiter.engine")
 }
 
+// workaround until https://github.com/hashgraph/hedera-block-node/pull/216 is integrated
+dependencies.constraints { implementation("org.slf4j:slf4j-api:2.0.6") }
+
 val updateDockerEnv =
     tasks.register<Exec>("updateDockerEnv") {
         description =
