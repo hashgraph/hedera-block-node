@@ -31,6 +31,7 @@ import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
 /** BlockStream Simulator App */
@@ -43,8 +44,7 @@ public class BlockStreamSimulatorApp {
     private final PublishStreamGrpcClient publishStreamGrpcClient;
     private final BlockStreamConfig blockStreamConfig;
     private final int delayBetweenBlockItems;
-
-    private boolean isRunning = false;
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
     /**
      * Creates a new BlockStreamSimulatorApp instance.
@@ -136,7 +136,7 @@ public class BlockStreamSimulatorApp {
         int delayMSBetweenBlockItems = delayBetweenBlockItems / 1_000_000;
         int delayNSBetweenBlockItems = delayBetweenBlockItems % 1_000_000;
 
-        isRunning = true;
+        isRunning.set(true);
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has started");
 
         boolean streamBlockItem = true;
@@ -176,12 +176,12 @@ public class BlockStreamSimulatorApp {
      * @return true if the block stream simulator is running, false otherwise
      */
     public boolean isRunning() {
-        return isRunning;
+        return isRunning.get();
     }
 
     /** Stops the block stream simulator. */
     public void stop() {
-        isRunning = false;
+        isRunning.set(false);
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
     }
 }

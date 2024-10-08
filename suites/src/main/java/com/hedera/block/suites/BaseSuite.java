@@ -16,6 +16,7 @@
 
 package com.hedera.block.suites;
 
+import com.hedera.block.simulator.BlockStreamSimulatorApp;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -40,6 +41,11 @@ public abstract class BaseSuite {
 
     /** Container running the Block Node Application */
     protected static GenericContainer<?> blockNodeContainer;
+
+    /**
+     * Block Simulator Application instance
+     */
+    protected static BlockStreamSimulatorApp blockStreamSimulatorApp;
 
     /** Port that is used by the Block Node Application */
     protected static int blockNodePort;
