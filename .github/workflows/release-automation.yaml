@@ -30,9 +30,6 @@ defaults:
   run:
     shell: bash
 
-env:
-  LC_ALL: C.UTF-8
-
 jobs:
   release:
     name: Release
@@ -84,7 +81,7 @@ jobs:
 
       - name: Import GPG Key
         id: gpg_importer
-        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
+        uses: step-security/ghaction-import-gpg@6c8fe4d0126a59d57c21f87c9ae5dd3451fa3cca # v6.1.0
         with:
           git_commit_gpgsign: true
           git_tag_gpgsign: true
@@ -103,13 +100,14 @@ jobs:
 
       - name: Create and Switch to Release Branch
         run: |
+          git fetch origin
           if ! git ls-remote --exit-code --heads --quiet origin refs/heads/${RELEASE_BRANCH}; then
             git checkout -b ${RELEASE_BRANCH}
             git push -u origin ${RELEASE_BRANCH}
 
             # create a PR to bump main branch to the next snapshot version
             echo "CREATE_PR=true" >> $GITHUB_ENV
-            echo "PR_TITLE=Bump versions for v$NEXT_VERSION_SNAPSHOT" >> $GITHUB_ENV
+            echo "PR_TITLE=chore(release): Bump versions for v$NEXT_VERSION_SNAPSHOT" >> $GITHUB_ENV
           else
             git checkout ${RELEASE_BRANCH}
           fi
