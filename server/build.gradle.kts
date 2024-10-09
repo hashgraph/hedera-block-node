@@ -40,6 +40,8 @@ testModuleInfo {
     requiresStatic("com.github.spotbugs.annotations")
 }
 
+jmhModuleInfo { requires("jmh.core") }
+
 // Release related tasks
 
 fun replaceVersion(files: String, match: String) {
