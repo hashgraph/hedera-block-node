@@ -78,6 +78,7 @@ jobs:
           fetch-depth: 0
           ref: main
           token: ${{ secrets.GH_ACCESS_TOKEN }}
+          persist-credentials: 'true'
 
       - name: Import GPG Key
         id: gpg_importer
