@@ -75,23 +75,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build application
-        run: ${{ env.GRADLE_EXEC }} clean :server:build -x test
+      - name: Build & Run Smoke Tests Container
+        run: ${{ env.GRADLE_EXEC }} buildAndRunSmokeTestsContainer -x test
 
-      - name: Build Smoke Tests
-        run: ${{ env.GRADLE_EXEC }} buildSmokeTests
-
-      # FIXME for POC, version and exit code are static, they need to be dynamic, see docker script
-      - name: Create & Start Container
-        working-directory: server/docker/
-        run: |
-          docker buildx build --load -t "block-node-server:0.1.0-SNAPSHOT" --build-context distributions=../build/distributions --build-arg VERSION="0.1.0-SNAPSHOT" . || exit "123"
-          docker compose -p block-node up -d
-
-      - name: Smoke Test
+      - name: Run Smoke Test
         working-directory: server/src/test/resources/
         run: ./smoke-test.sh
 
-      # TODO Do we need to stop this container? In theory when the job runs, everything gets scrapped
-      - name: Stop Docker Container
-        run: docker compose -p block-node stop
+      - name: Stop Smoke Tests Container
+        run: ${{ env.GRADLE_EXEC }} :server:stopDockerContainer
