@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: 99.99.99-draft
+appVersion: 99.100.0-SNAPSHOT
 description: A Helm chart for Hedera Block Node
 home: https://github.com/hashgraph/hedera-block-node
 keywords:
@@ -13,4 +13,4 @@ maintainers:
 name: hedera-block-node
 sources:
   - https://github.com/hashgraph/hedera-block-node
-version: 99.99.99-draft
+version: 99.100.0-SNAPSHOT
