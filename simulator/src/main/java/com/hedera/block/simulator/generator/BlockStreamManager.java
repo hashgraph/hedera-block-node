@@ -17,10 +17,10 @@
 package com.hedera.block.simulator.generator;
 
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.block.simulator.exception.BlockSimulatorException;
+import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
-import com.hedera.pbj.runtime.ParseException;
-import java.io.IOException;
 
 /** The block stream manager interface. */
 public interface BlockStreamManager {
@@ -36,17 +36,17 @@ public interface BlockStreamManager {
      * Get the next block item.
      *
      * @return the next block item
-     * @throws IOException if an I/O error occurs
-     * @throws ParseException if a parse error occurs
+     * @throws BlockSimulatorParsingException if a parsing error occurs
+     * @throws BlockSimulatorException if a generic simulator error occurs
      */
-    BlockItem getNextBlockItem() throws IOException, ParseException;
+    BlockItem getNextBlockItem() throws BlockSimulatorParsingException, BlockSimulatorException;
 
     /**
      * Get the next block.
      *
      * @return the next block
-     * @throws IOException if an I/O error occurs
-     * @throws ParseException if a parse error occurs
+     * @throws BlockSimulatorParsingException if a parsing error occurs
+     * @throws BlockSimulatorException if a generic simulator error occurs
      */
-    Block getNextBlock() throws IOException, ParseException;
+    Block getNextBlock() throws BlockSimulatorParsingException, BlockSimulatorException;
 }

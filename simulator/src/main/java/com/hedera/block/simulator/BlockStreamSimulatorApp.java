@@ -19,10 +19,11 @@ package com.hedera.block.simulator;
 import static com.hedera.block.simulator.Constants.CONFIGURATION_FILE;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.exception.BlockSimulatorException;
+import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.hapi.block.stream.BlockItem;
-import com.hedera.pbj.runtime.ParseException;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
@@ -129,10 +130,11 @@ public class BlockStreamSimulatorApp {
      * Starts the block stream simulator.
      *
      * @throws InterruptedException if the thread is interrupted
-     * @throws ParseException if a parse error occurs
-     * @throws IOException if an I/O error occurs
+     * @throws BlockSimulatorParsingException if a parsing error occurs
+     * @throws BlockSimulatorException if a generic simulator error occurs
      */
-    public void start() throws InterruptedException, ParseException, IOException {
+    public void start()
+            throws InterruptedException, BlockSimulatorParsingException, BlockSimulatorException {
         int delayMSBetweenBlockItems = delayBetweenBlockItems / 1_000_000;
         int delayNSBetweenBlockItems = delayBetweenBlockItems % 1_000_000;
 

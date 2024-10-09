@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package com.hedera.block.simulator;
+package com.hedera.block.simulator.exception;
 
-/** Constants class defines predefined extracted variables for ease of use. */
-public class Constants {
+/** Use this checked exception to represent a Block Simulator general exception. */
+public class BlockSimulatorException extends Exception {
 
-    /** The file extension for block files. */
-    public static final String RECORD_EXTENSION = "blk";
-
-    /** Postfix for gzipped files */
-    public static final String GZ_EXTENSION = ".gz";
-
-    /** Name and file extension used for the configuration file. */
-    public static final String CONFIGURATION_FILE = "app.properties";
+    /**
+     * Constructs a new generic exception with the specified detail message.
+     *
+     * @param message the detail message
+     */
+    public BlockSimulatorException(String message) {
+        super(message);
+    }
 }

@@ -19,10 +19,11 @@ package com.hedera.block.simulator;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.simulator.exception.BlockSimulatorException;
+import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.hapi.block.stream.BlockItem;
-import com.hedera.pbj.runtime.ParseException;
 import com.swirlds.config.api.Configuration;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -63,13 +64,18 @@ class BlockStreamSimulatorTest {
     }
 
     @Test
-    void start_logsStartedMessage() throws InterruptedException, ParseException, IOException {
+    void start_logsStartedMessage()
+            throws InterruptedException, BlockSimulatorParsingException, BlockSimulatorException {
         blockStreamSimulator.start();
         assertTrue(blockStreamSimulator.isRunning());
     }
 
     @Test
-    void start_exitByBlockNull() throws InterruptedException, ParseException, IOException {
+    void start_exitByBlockNull()
+            throws InterruptedException,
+                    IOException,
+                    BlockSimulatorParsingException,
+                    BlockSimulatorException {
 
         BlockStreamManager blockStreamManager = Mockito.mock(BlockStreamManager.class);
         when(blockStreamManager.getNextBlockItem()).thenReturn(BlockItem.newBuilder().build());
@@ -93,7 +99,7 @@ class BlockStreamSimulatorTest {
     }
 
     void start_usingConfigurationConstructor()
-            throws InterruptedException, ParseException, IOException {
+            throws InterruptedException, BlockSimulatorParsingException, BlockSimulatorException {
         blockStreamSimulator = new BlockStreamSimulatorApp(configuration);
         blockStreamSimulator.start();
         assertTrue(blockStreamSimulator.isRunning());
@@ -104,7 +110,11 @@ class BlockStreamSimulatorTest {
     }
 
     @Test
-    void start_usingEmptyConstructor() throws IOException, InterruptedException, ParseException {
+    void start_usingEmptyConstructor()
+            throws IOException,
+                    InterruptedException,
+                    BlockSimulatorParsingException,
+                    BlockSimulatorException {
         blockStreamSimulator = new BlockStreamSimulatorApp();
         blockStreamSimulator.start();
         assertTrue(blockStreamSimulator.isRunning());

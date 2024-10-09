@@ -26,9 +26,7 @@ application {
     mainClass = "com.hedera.block.suites.BaseSuite"
 }
 
-dependencies {
-    implementation(project(":simulator"))
-}
+dependencies { implementation(project(":simulator")) }
 
 mainModuleInfo {
     runtimeOnly("org.testcontainers.junit-jupiter")

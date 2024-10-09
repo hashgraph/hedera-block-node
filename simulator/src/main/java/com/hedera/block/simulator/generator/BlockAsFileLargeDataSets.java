@@ -21,13 +21,14 @@ import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.block.simulator.exception.BlockSimulatorException;
+import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
-import java.io.IOException;
 import javax.inject.Inject;
 
 /** A block stream manager that reads blocks from files in a directory. */
@@ -59,7 +60,8 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
     }
 
     @Override
-    public BlockItem getNextBlockItem() throws IOException, ParseException {
+    public BlockItem getNextBlockItem()
+            throws BlockSimulatorParsingException, BlockSimulatorException {
         if (currentBlock != null && currentBlock.items().size() > currentBlockItemIndex) {
             return currentBlock.items().get(currentBlockItemIndex++);
         } else {
@@ -74,22 +76,27 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
     }
 
     @Override
-    public Block getNextBlock() throws IOException, ParseException {
+    public Block getNextBlock() throws BlockSimulatorParsingException, BlockSimulatorException {
         currentBlockIndex++;
 
         String nextBlockFileName = String.format(formatString, currentBlockIndex);
         File blockFile = new File(blockstreamPath, nextBlockFileName);
 
-        if (blockFile.exists()) {
+        if (!blockFile.exists()) {
+            return null; // No more blocks found
+        }
+
+        try {
             byte[] blockBytes = readFileBytes(blockFile.toPath());
 
             LOGGER.log(INFO, "Loading block: " + blockFile.getName());
-
             Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
             LOGGER.log(INFO, "block loaded with items size= " + block.items().size());
             return block;
+        } catch (ParseException e) {
+            throw new BlockSimulatorParsingException(e.getMessage());
+        } catch (Exception e) {
+            throw new BlockSimulatorException(e.getMessage());
         }
-
-        return null; // No more blocks found
     }
 }

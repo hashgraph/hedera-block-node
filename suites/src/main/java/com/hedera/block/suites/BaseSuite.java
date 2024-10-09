@@ -17,7 +17,10 @@
 package com.hedera.block.suites;
 
 import com.hedera.block.simulator.BlockStreamSimulatorApp;
+import com.hedera.block.simulator.exception.BlockSimulatorException;
+import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import io.github.cdimascio.dotenv.Dotenv;
+import java.io.IOException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.GenericContainer;
@@ -42,13 +45,13 @@ public abstract class BaseSuite {
     /** Container running the Block Node Application */
     protected static GenericContainer<?> blockNodeContainer;
 
-    /**
-     * Block Simulator Application instance
-     */
+    /** Block Simulator Application instance */
     protected static BlockStreamSimulatorApp blockStreamSimulatorApp;
 
     /** Port that is used by the Block Node Application */
     protected static int blockNodePort;
+
+    private static Thread blockStreamSimulatorThread;
 
     /**
      * Default constructor for the BaseSuite class.
@@ -69,6 +72,9 @@ public abstract class BaseSuite {
     public static void setup() {
         blockNodeContainer = getConfiguration();
         blockNodeContainer.start();
+
+        // TODO after #239
+        //        blockStreamSimulatorApp = new BlockStreamSimulatorApp();
     }
 
     /**
@@ -82,6 +88,41 @@ public abstract class BaseSuite {
         if (blockNodeContainer != null) {
             blockNodeContainer.stop();
         }
+        // Stop the simulator
+        if (blockStreamSimulatorApp != null && blockStreamSimulatorApp.isRunning()) {
+            blockStreamSimulatorApp.stop();
+        }
+        // Interrupt the simulator thread if it's still running
+        if (blockStreamSimulatorThread != null && blockStreamSimulatorThread.isAlive()) {
+            blockStreamSimulatorThread.interrupt();
+        }
+    }
+
+    /**
+     * Starts the simulator in a separate thread and returns a reference to it.
+     *
+     * @return the simulator instance
+     */
+    // TODO WIP -> additional refinements, depending on simulator refactors
+    protected BlockStreamSimulatorApp startSimulator() throws IOException {
+        // Create the simulator instance
+        BlockStreamSimulatorApp simulatorApp = new BlockStreamSimulatorApp();
+
+        // Create a new thread to run the simulator
+        blockStreamSimulatorThread =
+                new Thread(
+                        () -> {
+                            try {
+                                simulatorApp.start();
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            } catch (BlockSimulatorParsingException | BlockSimulatorException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+        blockStreamSimulatorThread.start();
+
+        return simulatorApp;
     }
 
     /**
