@@ -54,6 +54,8 @@ fun replaceVersion(files: String, match: String) {
     }
 }
 
+tasks.register("printProjectVersion") { doLast { println(project.version) } }
+
 tasks.register("bumpVersion") {
     description = "Bump versions of the project"
     group = "release"
@@ -114,7 +116,7 @@ tasks.register<Exec>("stopDockerContainer") {
     commandLine("sh", "-c", "docker-compose -p block-node stop")
 }
 
-tasks.register("buildAndRunSmokeTestsContainer") {
+tasks.register("buildSmokeTestsContainer") {
     doFirst {
         // ensure smoke test .env properties before creating the container
         exec {
@@ -125,12 +127,4 @@ tasks.register("buildAndRunSmokeTestsContainer") {
 
     // build the project
     dependsOn(tasks.build)
-
-    doLast {
-        // start the container
-        exec {
-            workingDir(layout.projectDirectory.dir("docker"))
-            commandLine("sh", "-c", "docker-compose -p block-node up -d")
-        }
-    }
 }
