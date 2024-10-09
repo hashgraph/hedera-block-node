@@ -76,23 +76,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build Smoke Tests
-        run: ${{ env.GRADLE_EXEC }} buildSmokeTestsContainer -x test
-
-      - name: Set Project Version Env Variable
-        run: echo "GRADLE_PROJECT_VERSION=$(${{ env.GRADLE_EXEC }} -q printProjectVersion)" >> "$GITHUB_ENV"
-
-      # TODO if I use 'docker compose' from a shell script (meaning I call a shell scrip here instead)
-      # I get permission denied and it exits (which makes sense). Locally with the tool act I am able
-      # to reproduce it as well. If I use 'docker-compose' from a shell script however, locally with
-      # act it seems to pass, so maybe will pass in gh actions as well, but when I pushed, it exited
-      # saying 'docker-compose not found'. In theory maybe we can have 'docker-compose' available
-      # in gh actions so we can have a single gradle script that will do all the job and we will
-      # not need all these steps that will use docker directly (which was the initial idea)
-      - name: Create & Start Smoke Tests Container
-        working-directory: server/docker/
-        run: |
-          docker buildx build --load -t "block-node-server:${{ env.GRADLE_PROJECT_VERSION }}" --build-context distributions=../build/distributions --build-arg VERSION="${{ env.GRADLE_PROJECT_VERSION }}" . || exit "${?}"
-          docker compose -p block-node up -d
+        run: ${{ env.GRADLE_EXEC }} buildAndRunSmokeTestsContainer -x test
 
       - name: Run Smoke Test
         working-directory: server/src/test/resources/
