@@ -18,6 +18,8 @@ plugins {
     id("com.gradle.enterprise").version("3.15.1")
 }
 
+includeBuild("/Users/mattpeterson/repos/pbj/pbj-core")
+
 // Include the subprojects
 include(":common")
 include(":suites")
