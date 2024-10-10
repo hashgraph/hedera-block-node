@@ -20,7 +20,6 @@ module com.hedera.block.server {
     exports com.hedera.block.server.pbj;
 
     requires com.hedera.block.stream;
-    requires com.google.protobuf;
     requires com.hedera.pbj.grpc.helidon;
     requires com.hedera.pbj.runtime;
     requires com.lmax.disruptor;
