@@ -99,13 +99,15 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
                         .mapResponse(reply -> createSingleBlockResponse(reply, options))
                         .respondTo(replies)
                         .build();
-                case publishBlockStream -> Pipelines
-                        .<PublishStreamRequest, PublishStreamResponse>bidiStreaming()
-                        .mapRequest(bytes -> parsePublishStreamRequest(bytes, options))
-                        .method(this::publishBlockStream)
-                        .mapResponse(reply -> createPublishStreamResponse(reply, options))
-                        .respondTo(replies)
-                        .build();
+                case publishBlockStream -> {
+                    notifier.unsubscribeAllExpired();
+                    yield Pipelines.<PublishStreamRequest, PublishStreamResponse>bidiStreaming()
+                            .mapRequest(bytes -> parsePublishStreamRequest(bytes, options))
+                            .method(this::publishBlockStream)
+                            .mapResponse(reply -> createPublishStreamResponse(reply, options))
+                            .respondTo(replies)
+                            .build();
+                }
                 case subscribeBlockStream -> Pipelines
                         .<SubscribeStreamRequest, SubscribeStreamResponse>serverStreaming()
                         .mapRequest(bytes -> parseSubscribeStreamRequest(bytes, options))

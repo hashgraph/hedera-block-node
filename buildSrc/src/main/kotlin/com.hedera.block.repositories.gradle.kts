@@ -15,7 +15,6 @@
  */
 
 repositories {
-    mavenLocal()
     mavenCentral()
     maven {
         url = uri("https://hyperledger.jfrog.io/artifactory/besu-maven")

@@ -222,6 +222,10 @@ public class ProducerBlockItemObserver
     @Override
     public void onError(@NonNull final Throwable t) {
         LOGGER.log(ERROR, "onError method invoked with an exception: ", t);
+
+        isResponsePermitted.set(false);
+        subscriptionHandler.unsubscribe(this);
+        LOGGER.log(ERROR, "Producer cancelled the stream. Observer unsubscribed.");
         publishStreamResponseObserver.onError(t);
     }
 
@@ -232,6 +236,10 @@ public class ProducerBlockItemObserver
     @Override
     public void onComplete() {
         LOGGER.log(DEBUG, "ProducerBlockStreamObserver completed");
+
+        isResponsePermitted.set(false);
+        subscriptionHandler.unsubscribe(this);
+        LOGGER.log(DEBUG, "Producer cancelled the stream. Observer unsubscribed.");
         publishStreamResponseObserver.onComplete();
     }
 
