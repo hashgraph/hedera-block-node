@@ -113,3 +113,27 @@ tasks.register<Exec>("stopDockerContainer") {
     workingDir(layout.projectDirectory.dir("docker"))
     commandLine("sh", "-c", "docker-compose -p block-node stop")
 }
+
+tasks.register("buildAndRunSmokeTestsContainer") {
+    doFirst {
+        // ensure smoke test .env properties before creating the container
+        exec {
+            workingDir(layout.projectDirectory.dir("docker"))
+            commandLine("sh", "-c", "./update-env.sh ${project.version} false true")
+        }
+    }
+
+    // build the project
+    dependsOn(tasks.build)
+
+    doLast {
+        exec {
+            workingDir(layout.projectDirectory.dir("docker"))
+            commandLine(
+                "sh",
+                "-c",
+                "./docker-build.sh ${project.version} && docker compose -p block-node up -d"
+            )
+        }
+    }
+}

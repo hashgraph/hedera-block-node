@@ -35,6 +35,25 @@ mainModuleInfo {
     runtimeOnly("org.junit.jupiter.engine")
 }
 
+// Let's discuss: we have two repeating task names with the suites and server - 'updateDockerEnv'
+// and 'createDockerImage'. When running any of these tasks from repo root w/o any specific
+// qualifiers
+// like ':suites:updateDockerEnv', both will run. While the overhead is only once since this gets
+// cached, it might be a good idea to change the task names so they are different, and we can be
+// sure
+// what will be run from repo root w/o having qualifiers. For these building tasks are probably not
+// going to mess up some common files between them, it is a concern for the future, since not
+// clearly
+// knowing what is being run could lead to silent bugs that are hard to come by. Not to mention, if
+// we have a task that will run a project, and then a task with the same name that will also run a
+// project, now when executing from root we will run two projects which might be problematic.
+// Having qualifiers is a 'need-to-know' solution which is not preferable. But there is also the
+// case
+// that it would be a good idea to have tasks with the same name that we know for sure run isolated,
+// and we need them to run on all projects easily, so running the task from repo root will execute
+// everywhere it is present. So the question is should these remain with the same name and what
+// should be our approach for the future?
+
 val updateDockerEnv =
     tasks.register<Exec>("updateDockerEnv") {
         description =
