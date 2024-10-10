@@ -35,7 +35,6 @@ mainModuleInfo {
 testModuleInfo {
     annotationProcessor("dagger.compiler")
     requires("org.junit.jupiter.api")
-    requires("org.junit.platform.commons")
     requires("org.mockito")
     requires("org.mockito.junit.jupiter")
     requiresStatic("com.github.spotbugs.annotations")

@@ -18,13 +18,15 @@ package com.hedera.block.server.config;
 
 import com.swirlds.config.extensions.sources.ConfigMapping;
 import com.swirlds.config.extensions.sources.MappedConfigSource;
+import java.lang.reflect.AccessFlag;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Queue;
 import java.util.function.Predicate;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.function.Try;
-import org.junit.platform.commons.util.ReflectionUtils;
 
 class ServerMappedConfigSourceInitializerTest {
     private static final ConfigMapping[] SUPPORTED_MAPPINGS = {
@@ -48,7 +50,7 @@ class ServerMappedConfigSourceInitializerTest {
      * ServerMappedConfigSourceInitializer#MAPPINGS} to make this pass.
      */
     @Test
-    void test_VerifyAllSupportedMappingsAreAddedToInstance() {
+    void test_VerifyAllSupportedMappingsAreAddedToInstance() throws ReflectiveOperationException {
         final Queue<ConfigMapping> actual = extractConfigMappings();
 
         Assertions.assertEquals(SUPPORTED_MAPPINGS.length, actual.size());
@@ -67,11 +69,32 @@ class ServerMappedConfigSourceInitializerTest {
         }
     }
 
-    private static Queue<ConfigMapping> extractConfigMappings() {
-        final Try<Object> mappings =
-                ReflectionUtils.tryToReadFieldValue(
-                        MappedConfigSource.class, "configMappings", toTest);
+    @Test
+    void test_VerifyNoInstanceCanBeCreated() {
+        final Constructor<?>[] declaredConstructors =
+                ServerMappedConfigSourceInitializer.class.getDeclaredConstructors();
+        Assertions.assertEquals(1, declaredConstructors.length);
 
-        return (Queue<ConfigMapping>) mappings.getOrThrow(IllegalStateException::new);
+        final Constructor<?> privateNoArgsConstructor = declaredConstructors[0];
+        Assertions.assertEquals(0, privateNoArgsConstructor.getParameterCount());
+        Assertions.assertTrue(privateNoArgsConstructor.accessFlags().contains(AccessFlag.PRIVATE));
+        try {
+            privateNoArgsConstructor.setAccessible(true);
+            Assertions.assertThrows(
+                    InvocationTargetException.class, privateNoArgsConstructor::newInstance);
+        } finally {
+            privateNoArgsConstructor.setAccessible(false);
+        }
+    }
+
+    private static Queue<ConfigMapping> extractConfigMappings()
+            throws ReflectiveOperationException {
+        final Field configMappings = MappedConfigSource.class.getDeclaredField("configMappings");
+        try {
+            configMappings.setAccessible(true);
+            return (Queue<ConfigMapping>) configMappings.get(toTest);
+        } finally {
+            configMappings.setAccessible(false);
+        }
     }
 }
