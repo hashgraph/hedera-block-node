@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
-import com.hedera.pbj.runtime.ParseException;
+import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import java.io.IOException;
 import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
@@ -41,7 +41,7 @@ class BlockAsFileBlockStreamManagerTest {
     }
 
     @Test
-    void getNextBlock() throws IOException, ParseException {
+    void getNextBlock() throws IOException, BlockSimulatorParsingException {
         BlockStreamManager blockStreamManager =
                 getBlockAsFileBlockStreamManager(getAbsoluteFolder(gzRootFolder));
         for (int i = 0; i < 3000; i++) {
@@ -50,7 +50,7 @@ class BlockAsFileBlockStreamManagerTest {
     }
 
     @Test
-    void getNextBlockItem() throws IOException, ParseException {
+    void getNextBlockItem() throws IOException, BlockSimulatorParsingException {
         BlockStreamManager blockStreamManager =
                 getBlockAsFileBlockStreamManager(getAbsoluteFolder(gzRootFolder));
         for (int i = 0; i < 35000; i++) {
@@ -59,7 +59,7 @@ class BlockAsFileBlockStreamManagerTest {
     }
 
     @Test
-    void loadBlockBlk() throws IOException, ParseException {
+    void loadBlockBlk() throws IOException, BlockSimulatorParsingException {
         String blkRootFolder = "src/test/resources/block-0.0.3-blk/";
         BlockStreamManager blockStreamManager =
                 getBlockAsFileBlockStreamManager(getAbsoluteFolder(blkRootFolder));

@@ -16,7 +16,17 @@
 
 package com.hedera.block.suites;
 
+import com.hedera.block.simulator.BlockStreamSimulatorApp;
+import com.hedera.block.simulator.BlockStreamSimulatorInjectionComponent;
+import com.hedera.block.simulator.DaggerBlockStreamSimulatorInjectionComponent;
+import com.swirlds.config.api.Configuration;
+import com.swirlds.config.api.ConfigurationBuilder;
+import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
+import com.swirlds.config.extensions.sources.SystemEnvironmentConfigSource;
+import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import io.github.cdimascio.dotenv.Dotenv;
+import java.io.IOException;
+import java.nio.file.Path;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.GenericContainer;
@@ -44,6 +54,9 @@ public abstract class BaseSuite {
     /** Port that is used by the Block Node Application */
     protected static int blockNodePort;
 
+    /** Block Simulator Application instance */
+    protected static BlockStreamSimulatorApp blockStreamSimulatorApp;
+
     /**
      * Default constructor for the BaseSuite class.
      *
@@ -60,9 +73,16 @@ public abstract class BaseSuite {
      * <p>This method initializes the Block Node server container using Testcontainers.
      */
     @BeforeAll
-    public static void setup() {
+    public static void setup() throws IOException {
         blockNodeContainer = getConfiguration();
         blockNodeContainer.start();
+
+        // TODO remove in the next PR which adds tests
+        BlockStreamSimulatorInjectionComponent DIComponent =
+                DaggerBlockStreamSimulatorInjectionComponent.factory()
+                        .create(loadDefaultConfiguration());
+
+        BlockStreamSimulatorApp blockStreamSimulatorApp = DIComponent.getBlockStreamSimulatorApp();
     }
 
     /**
@@ -105,6 +125,23 @@ public abstract class BaseSuite {
                         .waitingFor(Wait.forListeningPort())
                         .waitingFor(Wait.forHealthcheck());
         return blockNodeContainer;
+    }
+
+    /**
+     * Builds the default block simulator configuration
+     *
+     * @return default block simulator configuration
+     * @throws IOException if an I/O error occurs
+     */
+    protected static Configuration loadDefaultConfiguration() throws IOException {
+        ConfigurationBuilder configurationBuilder =
+                ConfigurationBuilder.create()
+                        .withSource(SystemEnvironmentConfigSource.getInstance())
+                        .withSource(SystemPropertiesConfigSource.getInstance())
+                        .withSource(new ClasspathFileConfigSource(Path.of("app.properties")))
+                        .autoDiscoverExtensions();
+
+        return configurationBuilder.build();
     }
 
     /**

@@ -21,6 +21,7 @@ import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
@@ -59,7 +60,7 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
     }
 
     @Override
-    public BlockItem getNextBlockItem() throws IOException, ParseException {
+    public BlockItem getNextBlockItem() throws IOException, BlockSimulatorParsingException {
         if (currentBlock != null && currentBlock.items().size() > currentBlockItemIndex) {
             return currentBlock.items().get(currentBlockItemIndex++);
         } else {
@@ -74,13 +75,17 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
     }
 
     @Override
-    public Block getNextBlock() throws IOException, ParseException {
+    public Block getNextBlock() throws IOException, BlockSimulatorParsingException {
         currentBlockIndex++;
 
         String nextBlockFileName = String.format(formatString, currentBlockIndex);
         File blockFile = new File(blockstreamPath, nextBlockFileName);
 
-        if (blockFile.exists()) {
+        if (!blockFile.exists()) {
+            return null;
+        }
+
+        try {
             byte[] blockBytes = readFileBytes(blockFile.toPath());
 
             LOGGER.log(INFO, "Loading block: " + blockFile.getName());
@@ -88,8 +93,8 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
             Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
             LOGGER.log(INFO, "block loaded with items size= " + block.items().size());
             return block;
+        } catch (ParseException e) {
+            throw new BlockSimulatorParsingException(e.getMessage());
         }
-
-        return null; // No more blocks found
     }
 }

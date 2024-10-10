@@ -21,19 +21,22 @@ plugins {
 
 description = "Hedera Block Node E2E Suites"
 
+dependencies { implementation(project(":simulator")) }
+
 application {
     mainModule = "com.hedera.block.suites"
     mainClass = "com.hedera.block.suites.BaseSuite"
 }
 
 mainModuleInfo {
-    requires("org.junit.jupiter.api")
-    requires("org.junit.platform.suite.api")
-    requires("org.testcontainers")
-    requires("io.github.cdimascio")
     runtimeOnly("org.testcontainers.junit-jupiter")
     runtimeOnly("org.junit.jupiter.engine")
+    runtimeOnly("org.testcontainers")
+    runtimeOnly("com.swirlds.config.impl")
 }
+
+// workaround until https://github.com/hashgraph/hedera-block-node/pull/216 is integrated
+dependencies.constraints { implementation("org.slf4j:slf4j-api:2.0.6") }
 
 val updateDockerEnv =
     tasks.register<Exec>("updateDockerEnv") {
@@ -58,6 +61,7 @@ tasks.register<Exec>("createDockerImage") {
 tasks.register<Test>("runSuites") {
     description = "Runs E2E Test Suites"
     group = "suites"
+    modularity.inferModulePath = false
     dependsOn("createDockerImage")
 
     useJUnitPlatform()

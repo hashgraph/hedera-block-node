@@ -17,13 +17,14 @@
 package com.hedera.block.simulator;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.hapi.block.stream.BlockItem;
-import com.hedera.pbj.runtime.ParseException;
 import com.swirlds.config.api.Configuration;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
 /** BlockStream Simulator App */
@@ -39,7 +40,7 @@ public class BlockStreamSimulatorApp {
 
     private final int delayBetweenBlockItems;
 
-    boolean isRunning = false;
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
     /**
      * Creates a new BlockStreamSimulatorApp instance.
@@ -66,14 +67,14 @@ public class BlockStreamSimulatorApp {
      * Starts the block stream simulator.
      *
      * @throws InterruptedException if the thread is interrupted
-     * @throws ParseException if a parse error occurs
+     * @throws BlockSimulatorParsingException if a parse error occurs
      * @throws IOException if an I/O error occurs
      */
-    public void start() throws InterruptedException, ParseException, IOException {
+    public void start() throws InterruptedException, BlockSimulatorParsingException, IOException {
         int delayMSBetweenBlockItems = delayBetweenBlockItems / 1_000_000;
         int delayNSBetweenBlockItems = delayBetweenBlockItems % 1_000_000;
 
-        isRunning = true;
+        isRunning.set(true);
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has started");
 
         boolean streamBlockItem = true;
@@ -113,12 +114,12 @@ public class BlockStreamSimulatorApp {
      * @return true if the block stream simulator is running, false otherwise
      */
     public boolean isRunning() {
-        return isRunning;
+        return isRunning.get();
     }
 
     /** Stops the block stream simulator. */
     public void stop() {
-        isRunning = false;
+        isRunning.set(false);
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
     }
 }
