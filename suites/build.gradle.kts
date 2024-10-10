@@ -16,7 +16,7 @@
 
 plugins {
     id("application")
-    id("com.hedera.block.suites")
+    id("com.hedera.gradle.module.library")
 }
 
 description = "Hedera Block Node E2E Suites"
@@ -30,8 +30,8 @@ mainModuleInfo {
     requires("org.junit.jupiter.api")
     requires("org.junit.platform.suite.api")
     requires("org.testcontainers")
-    requires("io.github.cdimascio")
-    runtimeOnly("org.testcontainers.junit-jupiter")
+    requires("io.github.cdimascio.dotenv.java")
+    runtimeOnly("org.testcontainers.junit.jupiter")
     runtimeOnly("org.junit.jupiter.engine")
 }
 
