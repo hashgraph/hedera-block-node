@@ -21,9 +21,7 @@ plugins {
 
 description = "Hedera Block Node E2E Suites"
 
-dependencies{
-    implementation(project(":simulator"))
-}
+dependencies { implementation(project(":simulator")) }
 
 application {
     mainModule = "com.hedera.block.suites"

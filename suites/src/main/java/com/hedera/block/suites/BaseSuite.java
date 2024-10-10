@@ -25,14 +25,13 @@ import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
 import com.swirlds.config.extensions.sources.SystemEnvironmentConfigSource;
 import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import io.github.cdimascio.dotenv.Dotenv;
+import java.io.IOException;
+import java.nio.file.Path;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
-
-import java.io.IOException;
-import java.nio.file.Path;
 
 /**
  * BaseSuite is an abstract class that provides common setup and teardown functionality for test
@@ -57,6 +56,7 @@ public abstract class BaseSuite {
 
     /** Block Simulator Application instance */
     protected static BlockStreamSimulatorApp blockStreamSimulatorApp;
+
     /**
      * Default constructor for the BaseSuite class.
      *
@@ -77,9 +77,10 @@ public abstract class BaseSuite {
         blockNodeContainer = getConfiguration();
         blockNodeContainer.start();
 
-        //TODO remove in the next PR which adds tests
+        // TODO remove in the next PR which adds tests
         BlockStreamSimulatorInjectionComponent DIComponent =
-                DaggerBlockStreamSimulatorInjectionComponent.factory().create(loadDefaultConfiguration());
+                DaggerBlockStreamSimulatorInjectionComponent.factory()
+                        .create(loadDefaultConfiguration());
 
         BlockStreamSimulatorApp blockStreamSimulatorApp = DIComponent.getBlockStreamSimulatorApp();
     }

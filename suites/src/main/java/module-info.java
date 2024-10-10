@@ -10,5 +10,6 @@ module com.hedera.block.node.suites {
     requires org.junit.platform.suite.api;
     requires org.testcontainers;
 
-    exports com.hedera.block.suites to org.junit.platform.commons;
+    exports com.hedera.block.suites to
+            org.junit.platform.commons;
 }
