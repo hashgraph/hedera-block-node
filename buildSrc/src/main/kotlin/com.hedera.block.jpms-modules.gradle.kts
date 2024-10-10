@@ -207,6 +207,13 @@ extraJavaModuleInfo {
     module("org.testcontainers:junit-jupiter", "org.testcontainers.junit.jupiter")
     module("org.testcontainers:testcontainers", "org.testcontainers")
     module("org.mockito:mockito-junit-jupiter", "org.mockito.junit.jupiter")
+
+    // JMH Only
+    module("net.sf.jopt-simple:jopt-simple", "jopt.simple")
+    module("org.openjdk.jmh:jmh-core", "jmh.core")
+    module("org.openjdk.jmh:jmh-generator-asm", "jmh.generator.asm")
+    module("org.openjdk.jmh:jmh-generator-bytecode", "jmh.generator.bytecode")
+    module("org.openjdk.jmh:jmh-generator-reflection", "jmh.generator.reflection")
 }
 
 // Make 'javax.annotation:javax.annotation-api' discoverable for merging it into
