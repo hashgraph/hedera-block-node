@@ -22,6 +22,26 @@ entries:
     - https://hashgraph.github.io/hedera-block-node/charts/hedera-block-node-99.99.99-draft.tgz
     version: 99.99.99-draft
   - apiVersion: v2
+    appVersion: 0.1.0-rc1
+    created: "2024-10-10T15:53:19.456350507Z"
+    description: A Helm chart for Hedera Block Node
+    digest: 38af214e2a3856d71105633727a27bc94e11a52dff9e87aba67710cb01e6af5c
+    home: https://github.com/hashgraph/hedera-block-node
+    keywords:
+    - blocknode
+    - dlt
+    - hedera
+    - hashgraph
+    maintainers:
+    - email: blocknode@hashgraph.com
+      name: Hedera Block Node Team
+    name: hedera-block-node
+    sources:
+    - https://github.com/hashgraph/hedera-block-node
+    urls:
+    - https://hashgraph.github.io/hedera-block-node/charts/hedera-block-node-0.1.0-rc1.tgz
+    version: 0.1.0-rc1
+  - apiVersion: v2
     appVersion: 0.1.0-SNAPSHOT
     created: "2024-10-09T15:03:49.162838256Z"
     description: A Helm chart for Hedera Block Node
@@ -41,4 +61,4 @@ entries:
     urls:
     - https://hashgraph.github.io/hedera-block-node/charts/hedera-block-node-0.1.0-SNAPSHOT.tgz
     version: 0.1.0-SNAPSHOT
-generated: "2024-10-09T15:03:49.162245384Z"
+generated: "2024-10-10T15:53:19.455647126Z"
