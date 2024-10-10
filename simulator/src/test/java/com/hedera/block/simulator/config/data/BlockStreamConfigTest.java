@@ -19,6 +19,7 @@ package com.hedera.block.simulator.config.data;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.block.simulator.config.types.StreamingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,6 +32,8 @@ class BlockStreamConfigTest {
     private final int maxBlockItemsToStream = 10_000;
     private final int paddedLength = 36;
     private final String fileExtension = ".blk";
+    private final StreamingMode streamingMode = StreamingMode.CONSTANT_RATE;
+    private final int millisPerBlock = 1000;
 
     private String getAbsoluteFolder(String relativePath) {
         return Paths.get(relativePath).toAbsolutePath().toString();
@@ -56,7 +59,9 @@ class BlockStreamConfigTest {
                         blockStreamManagerImplementation,
                         maxBlockItemsToStream,
                         paddedLength,
-                        fileExtension);
+                        fileExtension,
+                        streamingMode,
+                        millisPerBlock);
 
         assertEquals(folderRootPath, config.folderRootPath());
         assertEquals(GenerationMode.DIR, config.generationMode());
@@ -77,7 +82,9 @@ class BlockStreamConfigTest {
                         blockStreamManagerImplementation,
                         maxBlockItemsToStream,
                         paddedLength,
-                        fileExtension);
+                        fileExtension,
+                        streamingMode,
+                        millisPerBlock);
 
         // Verify that the path is set to the default
         Path expectedPath = Paths.get("src/main/resources/block-0.0.3/").toAbsolutePath();
@@ -103,7 +110,9 @@ class BlockStreamConfigTest {
                                         blockStreamManagerImplementation,
                                         maxBlockItemsToStream,
                                         paddedLength,
-                                        fileExtension));
+                                        fileExtension,
+                                        streamingMode,
+                                        millisPerBlock));
 
         // Verify the exception message
         assertEquals(relativeFolderPath + " Root path must be absolute", exception.getMessage());
@@ -131,7 +140,9 @@ class BlockStreamConfigTest {
                                         blockStreamManagerImplementation,
                                         maxBlockItemsToStream,
                                         paddedLength,
-                                        fileExtension));
+                                        fileExtension,
+                                        streamingMode,
+                                        millisPerBlock));
 
         // Verify the exception message
         assertEquals("Folder does not exist: " + path, exception.getMessage());
@@ -152,7 +163,9 @@ class BlockStreamConfigTest {
                         blockStreamManagerImplementation,
                         maxBlockItemsToStream,
                         paddedLength,
-                        fileExtension);
+                        fileExtension,
+                        streamingMode,
+                        millisPerBlock);
 
         // Verify that the configuration was created successfully
         assertEquals(folderRootPath, config.folderRootPath());
