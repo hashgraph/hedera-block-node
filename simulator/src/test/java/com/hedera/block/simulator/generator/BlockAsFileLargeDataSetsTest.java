@@ -24,10 +24,13 @@ import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.hapi.block.stream.BlockItem;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class BlockAsFileLargeDataSetsTest {
 
@@ -73,6 +76,41 @@ class BlockAsFileLargeDataSetsTest {
             }
             assertNotNull(blockItem);
         }
+    }
+
+    @Test
+    void gettingNextBlockItemThrowsParsingException(@TempDir Path tempDir) throws IOException {
+        String blockFolderName = "block-0.0.3-blk";
+        Path blockDirPath = tempDir.resolve(blockFolderName);
+        Files.createDirectories(blockDirPath);
+
+        int nextBlockIndex = 1;
+        int paddedLength = 36;
+        String fileExtension = ".blk";
+        String formatString = "%0" + paddedLength + "d" + fileExtension;
+
+        String currentBlockFileName = String.format(formatString, nextBlockIndex);
+        Path currentBlockFilePath = blockDirPath.resolve(currentBlockFileName);
+
+        byte[] invalidData = "invalid block data".getBytes();
+        Files.write(currentBlockFilePath, invalidData);
+
+        BlockStreamConfig blockStreamConfig =
+                new BlockStreamConfig(
+                        GenerationMode.DIR,
+                        blockDirPath.toString(),
+                        1_500_000,
+                        "BlockAsFileBlockStreamManager",
+                        10_000,
+                        36,
+                        ".blk");
+        BlockAsFileLargeDataSets blockStreamManager =
+                new BlockAsFileLargeDataSets(blockStreamConfig);
+
+        assertThrows(
+                BlockSimulatorParsingException.class,
+                blockStreamManager::getNextBlock,
+                "Expected getNextBlock() to throw BlockSimulatorParsingException");
     }
 
     private BlockAsFileLargeDataSets getBlockAsFileLargeDatasetsBlockStreamManager(
