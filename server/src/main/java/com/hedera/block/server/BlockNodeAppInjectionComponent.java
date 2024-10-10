@@ -21,6 +21,7 @@ import com.hedera.block.server.health.HealthInjectionModule;
 import com.hedera.block.server.mediator.MediatorInjectionModule;
 import com.hedera.block.server.metrics.MetricsInjectionModule;
 import com.hedera.block.server.notifier.NotifierInjectionModule;
+import com.hedera.block.server.pbj.PbjInjectionModule;
 import com.hedera.block.server.persistence.PersistenceInjectionModule;
 import com.hedera.block.server.service.ServiceInjectionModule;
 import com.swirlds.config.api.Configuration;
@@ -40,6 +41,7 @@ import javax.inject.Singleton;
             MediatorInjectionModule.class,
             ConfigInjectionModule.class,
             MetricsInjectionModule.class,
+            PbjInjectionModule.class,
         })
 public interface BlockNodeAppInjectionComponent {
     /**

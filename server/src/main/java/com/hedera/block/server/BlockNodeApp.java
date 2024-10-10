@@ -71,9 +71,6 @@ public class BlockNodeApp {
      */
     public void start() throws IOException {
 
-        //        final GrpcRouting.Builder grpcRouting =
-        // GrpcRouting.builder().service(blockStreamService);
-
         final HttpRouting.Builder httpRouting =
                 HttpRouting.builder().register(healthService.getHealthRootPath(), healthService);
 

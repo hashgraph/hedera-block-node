@@ -21,6 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.health.HealthService;
+import com.hedera.block.server.pbj.PbjBlockStreamService;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.pbj.grpc.helidon.PbjRouting;
 import io.helidon.webserver.WebServer;
@@ -37,6 +38,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class BlockNodeAppTest {
 
+    // Mocks needed to inject the BlockNodeApp via Dagger
     @Mock private ServiceStatus serviceStatus;
 
     @Mock private HealthService healthService;
@@ -44,6 +46,8 @@ class BlockNodeAppTest {
     @Mock private WebServerConfig.Builder webServerBuilder;
 
     @Mock private WebServer webServer;
+
+    @Mock private PbjBlockStreamService pbjBlockStreamService;
 
     @InjectMocks private BlockNodeApp blockNodeApp;
 
