@@ -20,8 +20,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.hapi.block.stream.BlockItem;
-import com.hedera.pbj.runtime.ParseException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -51,7 +51,7 @@ class BlockAsFileLargeDataSetsTest {
     }
 
     @Test
-    void getNextBlock() throws IOException, ParseException {
+    void getNextBlock() throws IOException, BlockSimulatorParsingException {
         BlockStreamManager blockStreamManager =
                 getBlockAsFileLargeDatasetsBlockStreamManager(getAbsoluteFolder(rootFolder));
         for (int i = 0; i < filesInFolder; i++) {
@@ -62,7 +62,7 @@ class BlockAsFileLargeDataSetsTest {
     }
 
     @Test
-    void getNextBlockItem() throws IOException, ParseException {
+    void getNextBlockItem() throws IOException, BlockSimulatorParsingException {
         BlockStreamManager blockStreamManager =
                 getBlockAsFileLargeDatasetsBlockStreamManager(getAbsoluteFolder(rootFolder));
 

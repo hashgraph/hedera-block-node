@@ -19,7 +19,6 @@ package com.hedera.block.simulator;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
-import com.hedera.pbj.runtime.ParseException;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;

@@ -19,10 +19,10 @@ package com.hedera.block.simulator;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.hapi.block.stream.BlockItem;
-import com.hedera.pbj.runtime.ParseException;
 import com.swirlds.config.api.Configuration;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -63,13 +63,15 @@ class BlockStreamSimulatorTest {
     }
 
     @Test
-    void start_logsStartedMessage() throws InterruptedException, ParseException, IOException {
+    void start_logsStartedMessage()
+            throws InterruptedException, BlockSimulatorParsingException, IOException {
         blockStreamSimulator.start();
         assertTrue(blockStreamSimulator.isRunning());
     }
 
     @Test
-    void start_exitByBlockNull() throws InterruptedException, ParseException, IOException {
+    void start_exitByBlockNull()
+            throws InterruptedException, BlockSimulatorParsingException, IOException {
 
         BlockStreamManager blockStreamManager = Mockito.mock(BlockStreamManager.class);
         when(blockStreamManager.getNextBlockItem()).thenReturn(BlockItem.newBuilder().build());
