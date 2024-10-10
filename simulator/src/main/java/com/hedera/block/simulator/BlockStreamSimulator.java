@@ -18,7 +18,7 @@ package com.hedera.block.simulator;
 
 import static java.lang.System.Logger.Level.INFO;
 
-import com.hedera.pbj.runtime.ParseException;
+import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
@@ -41,10 +41,10 @@ public class BlockStreamSimulator {
      * @param args the arguments to be passed to the block stream simulator
      * @throws IOException if an I/O error occurs
      * @throws InterruptedException if the thread is interrupted
-     * @throws ParseException if a parse error occurs
+     * @throws BlockSimulatorParsingException if a parse error occurs
      */
     public static void main(String[] args)
-            throws IOException, InterruptedException, ParseException {
+            throws IOException, InterruptedException, BlockSimulatorParsingException {
 
         LOGGER.log(INFO, "Starting Block Stream Simulator");
 

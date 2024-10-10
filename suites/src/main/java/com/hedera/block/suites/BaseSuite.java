@@ -127,7 +127,13 @@ public abstract class BaseSuite {
         return blockNodeContainer;
     }
 
-    private static Configuration loadDefaultConfiguration() throws IOException {
+    /**
+     * Builds the default block simulator configuration
+     *
+     * @return default block simulator configuration
+     * @throws IOException if an I/O error occurs
+     */
+    protected static Configuration loadDefaultConfiguration() throws IOException {
         ConfigurationBuilder configurationBuilder =
                 ConfigurationBuilder.create()
                         .withSource(SystemEnvironmentConfigSource.getInstance())
