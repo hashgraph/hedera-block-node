@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.block.simulator.config.types.StreamingMode;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
 import java.io.File;
@@ -85,7 +86,9 @@ class BlockAsFileLargeDataSetsTest {
                         "BlockAsFileBlockStreamManager",
                         10_000,
                         36,
-                        ".blk");
+                        ".blk",
+                        StreamingMode.CONSTANT_RATE,
+                        1000);
         return new BlockAsFileLargeDataSets(blockStreamConfig);
     }
 
