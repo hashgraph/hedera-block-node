@@ -16,32 +16,28 @@
 
 package com.hedera.block.server.config;
 
-import com.swirlds.config.api.source.ConfigSource;
 import com.swirlds.config.extensions.sources.ConfigMapping;
 import com.swirlds.config.extensions.sources.MappedConfigSource;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import com.swirlds.config.extensions.sources.SystemEnvironmentConfigSource;
 import java.util.List;
 
 /**
  * A class that extends {@link MappedConfigSource} ir order to have project-relevant initialization.
  */
-public final class BlockNodeMappedConfigSource extends MappedConfigSource {
+public final class ServerMappedConfigSourceInitializer {
     private static final List<ConfigMapping> MAPPINGS =
             List.of(
                     new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),
                     new ConfigMapping("notifier.ringBufferSize", "NOTIFIER_RING_BUFFER_SIZE"));
 
-    /**
-     * Constructor.
-     *
-     * @param wrappedSource valid, non-null instance of {@link ConfigSource} to be used internally
-     */
-    public BlockNodeMappedConfigSource(@NonNull final ConfigSource wrappedSource) {
-        super(wrappedSource); // super checks for null
-        init();
+    private ServerMappedConfigSourceInitializer() {
+        throw new UnsupportedOperationException("Creating instances is not supported!");
     }
 
-    private void init() {
-        MAPPINGS.forEach(super::addMapping);
+    public static MappedConfigSource getMappedConfigSource() {
+        final MappedConfigSource config =
+                new MappedConfigSource(SystemEnvironmentConfigSource.getInstance());
+        MAPPINGS.forEach(config::addMapping);
+        return config;
     }
 }

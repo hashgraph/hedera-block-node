@@ -22,11 +22,10 @@ import static io.helidon.config.ConfigSources.file;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 
-import com.hedera.block.server.config.BlockNodeMappedConfigSource;
+import com.hedera.block.server.config.ServerMappedConfigSourceInitializer;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
-import com.swirlds.config.extensions.sources.SystemEnvironmentConfigSource;
 import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import io.helidon.config.Config;
 import java.io.IOException;
@@ -60,9 +59,7 @@ public class Server {
         // Init BlockNode Configuration
         final Configuration configuration =
                 ConfigurationBuilder.create()
-                        .withSource(
-                                new BlockNodeMappedConfigSource(
-                                        SystemEnvironmentConfigSource.getInstance()))
+                        .withSource(ServerMappedConfigSourceInitializer.getMappedConfigSource())
                         .withSource(SystemPropertiesConfigSource.getInstance())
                         .withSources(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES)))
                         .autoDiscoverExtensions()
