@@ -71,6 +71,8 @@ public abstract class BaseSuite {
      * Setup method to be executed before all tests.
      *
      * <p>This method initializes the Block Node server container using Testcontainers.
+     *
+     * @throws IOException if an I/O error occurs
      */
     @BeforeAll
     public static void setup() throws IOException {
