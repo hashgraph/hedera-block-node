@@ -51,4 +51,8 @@ public class ObjectEvent<T> {
     public T get() {
         return val;
     }
+
+    public void clear() {
+        val = null;
+    }
 }

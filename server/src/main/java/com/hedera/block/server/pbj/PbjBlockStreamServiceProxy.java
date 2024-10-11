@@ -122,7 +122,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         }
     }
 
-    private Flow.Subscriber<? super PublishStreamRequest> publishBlockStream(
+    Flow.Subscriber<PublishStreamRequest> publishBlockStream(
             Flow.Subscriber<? super PublishStreamResponse> publishStreamResponseObserver) {
         LOGGER.log(DEBUG, "Executing bidirectional publishBlockStream gRPC method");
 
@@ -145,7 +145,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         return producerBlockItemObserver;
     }
 
-    private void subscribeBlockStream(
+    void subscribeBlockStream(
             SubscribeStreamRequest subscribeStreamRequest,
             Flow.Subscriber<? super SubscribeStreamResponse> subscribeStreamResponseObserver) {
 
@@ -175,7 +175,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         }
     }
 
-    private SingleBlockResponse singleBlock(SingleBlockRequest singleBlockRequest) {
+    SingleBlockResponse singleBlock(SingleBlockRequest singleBlockRequest) {
 
         LOGGER.log(DEBUG, "Executing Unary singleBlock gRPC method");
 

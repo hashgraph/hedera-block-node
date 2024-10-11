@@ -18,6 +18,8 @@ USER $UNAME
 # Set the working directory inside the container
 WORKDIR /app
 
+RUN mkdir /app/dockermount
+
 # Copy Distribution TAR file
 COPY --from=distributions server-${VERSION}.tar .
 

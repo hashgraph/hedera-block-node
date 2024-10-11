@@ -81,56 +81,6 @@ public class ProducerBlockItemObserverTest {
     }
 
     //    @Test
-    //    public void testBlockItemThrowsParseException() throws IOException {
-    //
-    //        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
-    //        final ProducerBlockItemObserver producerBlockItemObserver =
-    //                new ProducerBlockItemObserver(
-    //                        testClock,
-    //                        publisher,
-    //                        subscriptionHandler,
-    //                        publishStreamResponseObserver,
-    //                        blockNodeContext,
-    //                        serviceStatus);
-    //
-    //        // Create a pbj block item
-    //        final List<BlockItem> blockItems = generateBlockItems(1);
-    //        final BlockItem blockHeader = blockItems.getFirst();
-    //
-    //        // Convert the block item to a protoc and add a spy to reverse the bytes to
-    //        // provoke a ParseException
-    //        final byte[] pbjBytes = BlockItem.PROTOBUF.toBytes(blockHeader).toByteArray();
-    //
-    //        // set up the spy to pass the reversed bytes when called
-    //        final byte[] reversedBytes = reverseByteArray(protocBlockItem.toByteArray());
-    //        when(protocBlockItem.toByteArray()).thenReturn(reversedBytes);
-    //
-    //        // create the PublishStreamRequest with the spy block item
-    //        final PublishStreamRequest protocPublishStreamRequest =
-    // PublishStreamRequest.newBuilder()
-    //                .blockItem()
-    //                        .setBlockItem(protocBlockItem)
-    //                        .build();
-    //
-    //        // call the producerBlockItemObserver
-    //        producerBlockItemObserver.onNext(protocPublishStreamRequest);
-    //
-    //        // TODO: Replace this with a real error enum.
-    //        final EndOfStream endOfStream =
-    //                EndOfStream.newBuilder()
-    //                        .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
-    //                        .build();
-    //        fromPbj(PublishStreamResponse.newBuilder().status(endOfStream).build());
-    //
-    //        // verify the ProducerBlockItemObserver has sent an error response
-    //        verify(publishStreamResponseObserver, timeout(testTimeout).times(1))
-    //
-    // .onNext(fromPbj(PublishStreamResponse.newBuilder().status(endOfStream).build()));
-    //
-    //        verify(serviceStatus, timeout(testTimeout).times(1)).stopWebServer(any());
-    //    }
-    //
-    //    @Test
     //    public void testResponseNotPermittedAfterCancel() throws NoSuchAlgorithmException {
     //
     //        final TestProducerBlockItemObserver producerStreamResponseObserver =

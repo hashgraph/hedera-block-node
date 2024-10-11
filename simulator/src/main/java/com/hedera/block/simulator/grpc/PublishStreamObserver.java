@@ -34,7 +34,8 @@ public class PublishStreamObserver implements StreamObserver<PublishStreamRespon
     /** what will the stream observer do with the response from the server */
     @Override
     public void onNext(PublishStreamResponse publishStreamResponse) {
-        logger.log(Logger.Level.INFO, "Received Response: " + publishStreamResponse.toString());
+//        logger.log(Logger.Level.INFO, "Received Response: " + publishStreamResponse.toString());
+        logger.log(Logger.Level.INFO, "Received Response");
     }
 
     /** what will the stream observer do when an error occurs */
