@@ -15,7 +15,7 @@
  */
 
 plugins {
-    id("application")
+    id("java-library")
     id("com.hedera.block.conventions")
     id("me.champeau.jmh")
 }
