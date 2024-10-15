@@ -53,27 +53,41 @@ public final class FileUtils {
                             PosixFilePermission.OTHERS_EXECUTE));
 
     /**
-     * Use this to create a Dir if it does not exist with the given permissions and log the result.
+     * Use this to create a Dir or File if it does not exist with the given permissions and log the
+     * result.
      *
-     * @param blockNodePath the path to create
-     * @param logLevel the log level to use
-     * @param perms the permissions to use when creating the directory
+     * @param toCreate valid, non-null instance of {@link Path} to be created
+     * @param logLevel valid, non-null instance of {@link System.Logger.Level} to use
+     * @param perms valid, non-null instance of {@link FileAttribute} permissions to use when
+     *     creating the path
+     * @param semanticPathName valid, non-blank {@link String} used for logging that represents the
+     *     desired path semantically
+     * @param createDir {@link Boolean} value if we should create a directory or a file
      * @throws IOException if the directory cannot be created
      */
     public static void createPathIfNotExists(
-            @NonNull final Path blockNodePath,
+            @NonNull final Path toCreate,
             @NonNull final System.Logger.Level logLevel,
-            @NonNull final FileAttribute<Set<PosixFilePermission>> perms)
+            @NonNull final FileAttribute<Set<PosixFilePermission>> perms,
+            final String semanticPathName,
+            final boolean createDir)
             throws IOException {
-        Objects.requireNonNull(blockNodePath);
+        Objects.requireNonNull(toCreate);
         Objects.requireNonNull(logLevel);
         Objects.requireNonNull(perms);
-        // Initialize the Block directory if it does not exist
-        if (Files.notExists(blockNodePath)) {
-            Files.createDirectory(blockNodePath, perms);
-            LOGGER.log(logLevel, "Created block node root directory: " + blockNodePath);
+        StringUtils.requireNotBlank(semanticPathName);
+        final String type = createDir ? "directory" : "file";
+        if (Files.notExists(toCreate)) {
+            if (createDir) {
+                Files.createDirectories(toCreate, perms);
+            } else {
+                Files.createFile(toCreate, perms);
+            }
+            LOGGER.log(logLevel, "Created " + type + " [" + semanticPathName + "] at:" + toCreate);
         } else {
-            LOGGER.log(logLevel, "Using existing block node root directory: " + blockNodePath);
+            LOGGER.log(
+                    logLevel,
+                    "Using existing " + type + " [" + semanticPathName + "] at:" + toCreate);
         }
     }
 
