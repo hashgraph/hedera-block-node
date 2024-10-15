@@ -1,0 +1,117 @@
+/*
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.hedera.block.common.utils;
+
+import com.hedera.block.common.constants.ErrorMessageConstants;
+import com.hedera.block.common.constants.StringConstants;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.System.Logger;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Objects;
+import java.util.Set;
+import java.util.zip.GZIPInputStream;
+
+/** A utility class that deals with logic related to dealing with files. */
+public final class FileUtils {
+    private static final Logger LOGGER = System.getLogger(FileUtils.class.getName());
+
+    /**
+     * Default file permissions defines the file and directory for the storage package.
+     *
+     * <p>Default permissions are set to: rwxr-xr-x
+     */
+    @NonNull
+    public static final FileAttribute<Set<PosixFilePermission>> DEFAULT_PERMS =
+            PosixFilePermissions.asFileAttribute(
+                    Set.of(
+                            PosixFilePermission.OWNER_READ,
+                            PosixFilePermission.OWNER_WRITE,
+                            PosixFilePermission.OWNER_EXECUTE,
+                            PosixFilePermission.GROUP_READ,
+                            PosixFilePermission.GROUP_EXECUTE,
+                            PosixFilePermission.OTHERS_READ,
+                            PosixFilePermission.OTHERS_EXECUTE));
+
+    /**
+     * Use this to create a Dir if it does not exist with the given permissions and log the result.
+     *
+     * @param blockNodePath the path to create
+     * @param logLevel the log level to use
+     * @param perms the permissions to use when creating the directory
+     * @throws IOException if the directory cannot be created
+     */
+    public static void createPathIfNotExists(
+            @NonNull final Path blockNodePath,
+            @NonNull final System.Logger.Level logLevel,
+            @NonNull final FileAttribute<Set<PosixFilePermission>> perms)
+            throws IOException {
+        Objects.requireNonNull(blockNodePath);
+        Objects.requireNonNull(logLevel);
+        Objects.requireNonNull(perms);
+        // Initialize the Block directory if it does not exist
+        if (Files.notExists(blockNodePath)) {
+            Files.createDirectory(blockNodePath, perms);
+            LOGGER.log(logLevel, "Created block node root directory: " + blockNodePath);
+        } else {
+            LOGGER.log(logLevel, "Using existing block node root directory: " + blockNodePath);
+        }
+    }
+
+    /**
+     * Read a GZIP file and return the content as a byte array.
+     *
+     * @param filePath Path to the GZIP file
+     * @return byte array of the content of the GZIP file
+     * @throws IOException if an I/O error occurs
+     */
+    public static byte[] readGzFile(@NonNull final Path filePath) throws IOException {
+        try (final InputStream fileInputStream =
+                        Files.newInputStream(Objects.requireNonNull(filePath));
+                final GZIPInputStream gzipInputStream = new GZIPInputStream(fileInputStream)) {
+            return gzipInputStream.readAllBytes();
+        }
+    }
+
+    /**
+     * Read a file and return the content as a byte array.
+     *
+     * @param filePath Path to the file
+     * @return byte array of the content of the file or null if the file extension is not supported
+     * @throws IOException if an I/O error occurs
+     */
+    public static byte[] readFileBytes(@NonNull final Path filePath) throws IOException {
+        final String filePathAsString = Objects.requireNonNull(filePath).toString();
+        if (filePathAsString.endsWith(StringConstants.GZ_FILE_EXTENSION)) {
+            return readGzFile(filePath);
+        } else if (filePathAsString.endsWith(StringConstants.BLOCK_FILE_EXTENSION)) {
+            return Files.readAllBytes(filePath);
+        } else {
+            return null;
+        }
+    }
+
+    private FileUtils() {
+        throw new UnsupportedOperationException(
+                ErrorMessageConstants.CREATING_INSTANCES_NOT_SUPPORTED);
+    }
+}
