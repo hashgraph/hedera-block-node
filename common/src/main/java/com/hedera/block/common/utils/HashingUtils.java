@@ -17,6 +17,7 @@
 package com.hedera.block.common.utils;
 
 import com.hedera.block.common.constants.ErrorMessageConstants;
+import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -28,14 +29,15 @@ public final class HashingUtils {
      * Gets a fake hash for the given block item. This is a placeholder and should be replaced with
      * real hash functionality once the hedera-protobufs types are integrated.
      *
-     * @param bytes to get the fake hash for
+     * @param blockItem to get the fake hash for
      * @return the fake hash for the given block item
      * @throws NoSuchAlgorithmException thrown if the SHA-384 algorithm is not available
      */
-    public static byte[] getFakeHash(@NonNull final byte[] bytes) throws NoSuchAlgorithmException {
-        Objects.requireNonNull(bytes);
+    public static byte[] getFakeHash(@NonNull final BlockItem blockItem)
+            throws NoSuchAlgorithmException {
+        Objects.requireNonNull(blockItem);
         final MessageDigest digest = MessageDigest.getInstance("SHA-384");
-        return digest.digest(bytes);
+        return digest.digest(BlockItem.PROTOBUF.toBytes(blockItem).toByteArray());
     }
 
     private HashingUtils() {
