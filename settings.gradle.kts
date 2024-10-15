@@ -19,6 +19,7 @@ plugins {
 }
 
 // Include the subprojects
+include(":common")
 include(":suites")
 include(":stream")
 include(":server")
