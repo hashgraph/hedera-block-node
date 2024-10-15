@@ -16,6 +16,9 @@
 
 package com.hedera.block.server.producer;
 
+import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import com.hedera.block.server.config.BlockNodeContext;
@@ -23,11 +26,14 @@ import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.hapi.block.PublishStreamRequest;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import java.io.IOException;
 import java.time.InstantSource;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Flow;
 import org.junit.jupiter.api.BeforeEach;
@@ -155,38 +161,38 @@ public class ProducerBlockItemObserverTest {
     //        verify(serverCallStreamObserver, timeout(testTimeout).times(1))
     //                .onNext(fromPbj(publishStreamResponse));
     //    }
-    //
-    //    @Test
-    //    public void testOnlyErrorStreamResponseAllowedAfterStatusChange() {
-    //
-    //        final ServiceStatus serviceStatus = new ServiceStatusImpl(testContext);
-    //
-    //        final ProducerBlockItemObserver producerBlockItemObserver =
-    //                new ProducerBlockItemObserver(
-    //                        testClock,
-    //                        publisher,
-    //                        subscriptionHandler,
-    //                        serverCallStreamObserver,
-    //                        testContext,
-    //                        serviceStatus);
-    //
-    //        final List<BlockItem> blockItems = generateBlockItems(1);
-    //        final PublishStreamRequest publishStreamRequest =
-    //                PublishStreamRequest.newBuilder().blockItem(blockItems.getFirst()).build();
-    //
-    //        // Confirm that the observer is called with the first BlockItem
-    //        producerBlockItemObserver.onNext(fromPbj(publishStreamRequest));
-    //
-    //        // Change the status of the service
-    //        serviceStatus.stopRunning(getClass().getName());
-    //
-    //        // Confirm that the observer is called with the first BlockItem
-    //        producerBlockItemObserver.onNext(fromPbj(publishStreamRequest));
-    //
-    //        // Confirm that closing the observer allowed only 1 response to be sent.
-    //        verify(serverCallStreamObserver, timeout(testTimeout).times(1)).onNext(any());
-    //    }
-    //
+
+    @Test
+    public void testOnlyErrorStreamResponseAllowedAfterStatusChange() {
+
+        final ServiceStatus serviceStatus = new ServiceStatusImpl(testContext);
+
+        final ProducerBlockItemObserver producerBlockItemObserver =
+                new ProducerBlockItemObserver(
+                        testClock,
+                        publisher,
+                        subscriptionHandler,
+                        publishStreamResponseObserver,
+                        testContext,
+                        serviceStatus);
+
+        final List<BlockItem> blockItems = generateBlockItems(1);
+        final PublishStreamRequest publishStreamRequest =
+                PublishStreamRequest.newBuilder().blockItem(blockItems.getFirst()).build();
+
+        // Confirm that the observer is called with the first BlockItem
+        producerBlockItemObserver.onNext(publishStreamRequest);
+
+        // Change the status of the service
+        serviceStatus.stopRunning(getClass().getName());
+
+        // Confirm that the observer is called with the first BlockItem
+        producerBlockItemObserver.onNext(publishStreamRequest);
+
+        // Confirm that closing the observer allowed only 1 response to be sent.
+        verify(publishStreamResponseObserver, timeout(testTimeout).times(1)).onNext(any());
+    }
+
     //    private static class TestProducerBlockItemObserver extends ProducerBlockItemObserver {
     //        public TestProducerBlockItemObserver(
     //                @NonNull final InstantSource clock,
