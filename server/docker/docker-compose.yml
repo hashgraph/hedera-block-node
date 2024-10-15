@@ -10,6 +10,16 @@ services:
       - "5005:5005"
       - "9999:9999"
 
+  cadvisor:
+    image: "gcr.io/cadvisor/cadvisor:v0.47.0"
+    container_name: cadvisor
+    ports:
+      - "8081:8080" # Expose cAdvisor on port 8081
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
   prometheus:
     image: prom/prometheus
     container_name: prometheus
@@ -26,9 +36,11 @@ services:
     depends_on:
       - prometheus
     environment:
-        - GF_SECURITY_ADMIN_USER=admin
-        - GF_SECURITY_ADMIN_PASSWORD=admin
-        - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      GF_AUTH_DISABLE_SIGNOUT_MENU: "true"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
     volumes:
       - ./metrics/dashboards:/etc/grafana/provisioning/dashboards
       - ./metrics/datasources/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
