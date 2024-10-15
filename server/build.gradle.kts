@@ -38,7 +38,6 @@ testModuleInfo {
     requires("org.junit.jupiter.api")
     requires("org.mockito")
     requires("org.mockito.junit.jupiter")
-    requires("io.grpc.stub")
     requiresStatic("com.github.spotbugs.annotations")
 }
 
