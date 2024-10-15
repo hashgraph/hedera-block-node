@@ -70,7 +70,6 @@ public final class FileUtils {
             @NonNull final System.Logger.Level logLevel,
             @NonNull final FileAttribute<Set<PosixFilePermission>> perms,
             @NonNull final String semanticPathName,
-            // TODO: String should be @NotBlank if we could introduce jakarta.validations?
             final boolean createDir)
             throws IOException {
         Objects.requireNonNull(toCreate);
