@@ -44,6 +44,7 @@ import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.swirlds.metrics.api.LongGauge;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.time.InstantSource;
 import java.util.HashMap;
@@ -469,61 +470,56 @@ public class LiveStreamMediatorImplTest {
         verify(blockWriter, timeout(testTimeout).times(1)).write(firstBlockItem);
     }
 
-    //    @Test
-    //    public void testUnsubscribeWhenNotSubscribed() throws IOException {
-    //
-    //        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
-    //        final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
-    //        final var streamMediator =
-    //                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
-    //
-    //        // register the stream validator
-    //        final var streamValidator =
-    //                new StreamPersistenceHandlerImpl(
-    //                        streamMediator, notifier, blockWriter, blockNodeContext,
-    // serviceStatus);
-    //        streamMediator.subscribe(streamValidator);
-    //
-    //        final var testConsumerBlockItemObserver =
-    //                new TestConsumerStreamResponseObserver(
-    //                        testClock, streamMediator, serverCallStreamObserver, testContext);
-    //
-    //        // Confirm the observer is not subscribed
-    //        assertFalse(streamMediator.isSubscribed(testConsumerBlockItemObserver));
-    //
-    //        // Attempt to unsubscribe the observer
-    //        streamMediator.unsubscribe(testConsumerBlockItemObserver);
-    //
-    //        // Confirm the observer is still not subscribed
-    //        assertFalse(streamMediator.isSubscribed(testConsumerBlockItemObserver));
-    //
-    //        // Confirm the stream validator is still subscribed
-    //        assertTrue(streamMediator.isSubscribed(streamValidator));
-    //    }
-    //
-    //    private static class TestConsumerStreamResponseObserver extends
-    // ConsumerStreamResponseObserver {
-    //        public TestConsumerStreamResponseObserver(
-    //                @NonNull final InstantSource producerLivenessClock,
-    //                @NonNull final StreamMediator<BlockItem, SubscribeStreamResponse>
-    // streamMediator,
-    //                @NonNull
-    //                        final
-    // StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
-    //                                responseStreamObserver,
-    //                @NonNull final BlockNodeContext blockNodeContext) {
-    //            super(producerLivenessClock, streamMediator, responseStreamObserver,
-    // blockNodeContext);
-    //        }
-    //
-    //        @NonNull
-    //        public Runnable getOnCancel() {
-    //            return onCancel;
-    //        }
-    //
-    //        @NonNull
-    //        public Runnable getOnClose() {
-    //            return onClose;
-    //        }
-    //    }
+    @Test
+    public void testUnsubscribeWhenNotSubscribed() throws IOException {
+
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
+        final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
+        final var streamMediator =
+                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
+
+        // register the stream validator
+        final var streamValidator =
+                new StreamPersistenceHandlerImpl(
+                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+        streamMediator.subscribe(streamValidator);
+
+        final var testConsumerBlockItemObserver =
+                new TestConsumerStreamResponseObserver(
+                        testClock, streamMediator, streamObserver1, testContext);
+
+        // Confirm the observer is not subscribed
+        assertFalse(streamMediator.isSubscribed(testConsumerBlockItemObserver));
+
+        // Attempt to unsubscribe the observer
+        streamMediator.unsubscribe(testConsumerBlockItemObserver);
+
+        // Confirm the observer is still not subscribed
+        assertFalse(streamMediator.isSubscribed(testConsumerBlockItemObserver));
+
+        // Confirm the stream validator is still subscribed
+        assertTrue(streamMediator.isSubscribed(streamValidator));
+    }
+
+    private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
+        public TestConsumerStreamResponseObserver(
+                @NonNull final InstantSource producerLivenessClock,
+                @NonNull final StreamMediator<BlockItem, SubscribeStreamResponse> streamMediator,
+                @NonNull
+                        final Flow.Subscriber<? super SubscribeStreamResponse>
+                                responseStreamObserver,
+                @NonNull final BlockNodeContext blockNodeContext) {
+            super(producerLivenessClock, streamMediator, responseStreamObserver, blockNodeContext);
+        }
+
+        @NonNull
+        public Runnable getOnCancel() {
+            return onCancel;
+        }
+
+        @NonNull
+        public Runnable getOnClose() {
+            return onClose;
+        }
+    }
 }

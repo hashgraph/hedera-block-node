@@ -103,7 +103,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
             resetState(blockItem);
         }
 
-        /*
+        //        /*
         final Path blockItemFilePath = calculateBlockItemPath();
         for (int retries = 0; ; retries++) {
             try {
@@ -127,7 +127,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
                 }
             }
         }
-        */
+        //                */
 
         if (blockItem.hasBlockProof()) {
             //            metricsService.get(BlocksPersisted).increment();

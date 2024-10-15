@@ -117,8 +117,7 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
                         PublishStreamResponse.newBuilder()
                                 .acknowledgement(buildAck(blockItem))
                                 .build();
-                //                ringBuffer.publishEvent((event, sequence) ->
-                // event.set(publishStreamResponse));
+                ringBuffer.publishEvent((event, sequence) -> event.set(publishStreamResponse));
 
                 metricsService.get(SuccessfulPubStreamResp).increment();
             } else {

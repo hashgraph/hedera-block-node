@@ -16,6 +16,8 @@
 
 package com.hedera.block.server.consumer;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,7 +28,10 @@ import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.BlockProof;
+import com.hedera.hapi.block.stream.input.EventHeader;
 import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.hapi.platform.event.EventCore;
 import java.io.IOException;
 import java.time.InstantSource;
 import java.util.Map;
@@ -170,88 +175,85 @@ public class ConsumerStreamResponseObserverTest {
     //                .onNext(fromPbj(subscribeStreamResponse));
     //    }
 
-    //    @Test
-    //    public void testConsumerNotToSendBeforeBlockHeader() {
-    //
-    //        // Mock a clock with 2 different return values in response to anticipated
-    //        // millis() calls. Here the second call will always be inside the timeout window.
-    //        when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
-    //
-    //        final var consumerBlockItemObserver =
-    //                new ConsumerStreamResponseObserver(
-    //                        testClock, streamMediator, responseStreamObserver, testContext);
-    //
-    //        // Send non-header BlockItems to validate that the observer does not send them
-    //        for (int i = 1; i <= 10; i++) {
-    //
-    //            if (i % 2 == 0) {
-    //                final EventHeader eventHeader =
-    //
-    // EventHeader.newBuilder().eventCore(EventCore.newBuilder().build()).build();
-    //                final BlockItem blockItem =
-    // BlockItem.newBuilder().eventHeader(eventHeader).build();
-    //                final SubscribeStreamResponse subscribeStreamResponse =
-    //                        SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
-    //                when(objectEvent.get()).thenReturn(subscribeStreamResponse);
-    //            } else {
-    //                final BlockProof blockProof = BlockProof.newBuilder().block(i).build();
-    //                final BlockItem blockItem =
-    // BlockItem.newBuilder().blockProof(blockProof).build();
-    //                final SubscribeStreamResponse subscribeStreamResponse =
-    //                        SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
-    //                when(objectEvent.get()).thenReturn(subscribeStreamResponse);
-    //            }
-    //
-    //            consumerBlockItemObserver.onEvent(objectEvent, 0, true);
-    //        }
-    //
-    //        final BlockItem blockItem = BlockItem.newBuilder().build();
-    //        final SubscribeStreamResponse subscribeStreamResponse =
-    //                SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
-    //
-    //        // Confirm that the observer was called with the next BlockItem
-    //        // since we never send a BlockItem with a Header to start the stream.
-    //        verify(responseStreamObserver, timeout(testTimeout).times(0))
-    //                .onNext(subscribeStreamResponse);
-    //    }
-    //
-    //    @Test
-    //    public void testSubscriberStreamResponseIsBlockItemWhenBlockItemIsNull() {
-    //
-    //        // The generated objects contain safeguards to prevent a SubscribeStreamResponse
-    //        // being created with a null BlockItem. Here, I have to used a spy() to even
-    //        // manufacture this scenario. This should not happen in production.
-    //        final BlockItem blockItem = BlockItem.newBuilder().build();
-    //        final SubscribeStreamResponse subscribeStreamResponse =
-    //                spy(SubscribeStreamResponse.newBuilder().blockItem(blockItem).build());
-    //
-    //        when(subscribeStreamResponse.blockItem()).thenReturn(null);
-    //        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
-    //
-    //        final var consumerBlockItemObserver =
-    //                new ConsumerStreamResponseObserver(
-    //                        testClock, streamMediator, responseStreamObserver, testContext);
-    //        assertThrows(
-    //                IllegalArgumentException.class,
-    //                () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
-    //    }
-    //
-    //    @Test
-    //    public void testSubscribeStreamResponseTypeNotSupported() {
-    //
-    //        final SubscribeStreamResponse subscribeStreamResponse =
-    //                SubscribeStreamResponse.newBuilder().build();
-    //        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
-    //
-    //        final var consumerBlockItemObserver =
-    //                new ConsumerStreamResponseObserver(
-    //                        testClock, streamMediator, responseStreamObserver, testContext);
-    //
-    //        assertThrows(
-    //                IllegalArgumentException.class,
-    //                () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
-    //    }
-    //
+    @Test
+    public void testConsumerNotToSendBeforeBlockHeader() {
+
+        // Mock a clock with 2 different return values in response to anticipated
+        // millis() calls. Here the second call will always be inside the timeout window.
+        when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
+
+        final var consumerBlockItemObserver =
+                new ConsumerStreamResponseObserver(
+                        testClock, streamMediator, responseStreamObserver, testContext);
+
+        // Send non-header BlockItems to validate that the observer does not send them
+        for (int i = 1; i <= 10; i++) {
+
+            if (i % 2 == 0) {
+                final EventHeader eventHeader =
+                        EventHeader.newBuilder().eventCore(EventCore.newBuilder().build()).build();
+                final BlockItem blockItem = BlockItem.newBuilder().eventHeader(eventHeader).build();
+                final SubscribeStreamResponse subscribeStreamResponse =
+                        SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
+                when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+            } else {
+                final BlockProof blockProof = BlockProof.newBuilder().block(i).build();
+                final BlockItem blockItem = BlockItem.newBuilder().blockProof(blockProof).build();
+                final SubscribeStreamResponse subscribeStreamResponse =
+                        SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
+                when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+            }
+
+            consumerBlockItemObserver.onEvent(objectEvent, 0, true);
+        }
+
+        final BlockItem blockItem = BlockItem.newBuilder().build();
+        final SubscribeStreamResponse subscribeStreamResponse =
+                SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
+
+        // Confirm that the observer was called with the next BlockItem
+        // since we never send a BlockItem with a Header to start the stream.
+        verify(responseStreamObserver, timeout(testTimeout).times(0))
+                .onNext(subscribeStreamResponse);
+    }
+
+    @Test
+    public void testSubscriberStreamResponseIsBlockItemWhenBlockItemIsNull() {
+
+        // The generated objects contain safeguards to prevent a SubscribeStreamResponse
+        // being created with a null BlockItem. Here, I have to used a spy() to even
+        // manufacture this scenario. This should not happen in production.
+        final BlockItem blockItem = BlockItem.newBuilder().build();
+        final SubscribeStreamResponse subscribeStreamResponse =
+                spy(SubscribeStreamResponse.newBuilder().blockItem(blockItem).build());
+
+        when(subscribeStreamResponse.blockItem()).thenReturn(null);
+        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+
+        final var consumerBlockItemObserver =
+                new ConsumerStreamResponseObserver(
+                        testClock, streamMediator, responseStreamObserver, testContext);
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
+    }
+
+    @Test
+    public void testSubscribeStreamResponseTypeNotSupported() {
+
+        final SubscribeStreamResponse subscribeStreamResponse =
+                SubscribeStreamResponse.newBuilder().build();
+        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+
+        final var consumerBlockItemObserver =
+                new ConsumerStreamResponseObserver(
+                        testClock, streamMediator, responseStreamObserver, testContext);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
+    }
+
     //    private static class TestConsumerStreamResponseObserver extends
     // ConsumerStreamResponseObserver {
     //
