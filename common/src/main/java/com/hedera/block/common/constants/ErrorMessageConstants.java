@@ -16,11 +16,8 @@
 
 package com.hedera.block.common.constants;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-
-/** A class that holds common error message {@link String} literals that are used across projects */
+/** A class that holds common error message literals that are used across projects */
 public final class ErrorMessageConstants {
-    @NonNull
     public static final String CREATING_INSTANCES_NOT_SUPPORTED =
             "Creating instances is not supported!";
 

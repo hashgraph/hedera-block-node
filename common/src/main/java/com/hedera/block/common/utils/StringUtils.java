@@ -19,7 +19,7 @@ package com.hedera.block.common.utils;
 import com.hedera.block.common.constants.ErrorMessageConstants;
 import java.util.Objects;
 
-/** A utility class that deals with logic related to {@link String}s. */
+/** A utility class that deals with logic related to Strings. */
 public final class StringUtils {
     /**
      * This method checks if a given {@link String} is blank, meaning if it is {@code null} or

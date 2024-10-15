@@ -40,7 +40,6 @@ public final class FileUtils {
      *
      * <p>Default permissions are set to: rwxr-xr-x
      */
-    @NonNull
     public static final FileAttribute<Set<PosixFilePermission>> DEFAULT_PERMS =
             PosixFilePermissions.asFileAttribute(
                     Set.of(
