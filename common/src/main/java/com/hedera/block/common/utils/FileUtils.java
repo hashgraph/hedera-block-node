@@ -63,13 +63,14 @@ public final class FileUtils {
      * @param semanticPathName valid, non-blank {@link String} used for logging that represents the
      *     desired path semantically
      * @param createDir {@link Boolean} value if we should create a directory or a file
-     * @throws IOException if the directory cannot be created
+     * @throws IOException if the path cannot be created
      */
     public static void createPathIfNotExists(
             @NonNull final Path toCreate,
             @NonNull final System.Logger.Level logLevel,
             @NonNull final FileAttribute<Set<PosixFilePermission>> perms,
-            final String semanticPathName,
+            @NonNull final String semanticPathName,
+            // TODO: String should be @NotBlank if we could introduce jakarta.validations?
             final boolean createDir)
             throws IOException {
         Objects.requireNonNull(toCreate);
