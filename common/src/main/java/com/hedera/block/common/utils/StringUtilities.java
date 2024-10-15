@@ -16,10 +16,11 @@
 
 package com.hedera.block.common.utils;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 
 /** A utility class that deals with logic related to Strings. */
-public final class StringUtils {
+public final class StringUtilities {
     /**
      * This method checks if a given {@link String} is blank, meaning if it is {@code null} or
      * contains only whitespaces as defined by {@link String#isBlank()}. If the given {@link String}
@@ -29,13 +30,13 @@ public final class StringUtils {
      * @return the {@link String} to be checked if it is not blank as defined above
      * @throws IllegalArgumentException if the input {@link String} to be checked is blank
      */
-    public static String requireNotBlank(final String toCheck) {
-        if (Objects.isNull(toCheck) || toCheck.isBlank()) {
-            throw new IllegalArgumentException("String is required not blank!");
+    public static String requireNotBlank(@NonNull final String toCheck) {
+        if (Objects.requireNonNull(toCheck).isBlank()) {
+            throw new IllegalArgumentException("A String required to be non-blank is blank.");
         } else {
             return toCheck;
         }
     }
 
-    private StringUtils() {}
+    private StringUtilities() {}
 }
