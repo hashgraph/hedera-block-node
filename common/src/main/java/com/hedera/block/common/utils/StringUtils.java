@@ -16,7 +16,6 @@
 
 package com.hedera.block.common.utils;
 
-import com.hedera.block.common.constants.ErrorMessageConstants;
 import java.util.Objects;
 
 /** A utility class that deals with logic related to Strings. */
@@ -38,8 +37,5 @@ public final class StringUtils {
         }
     }
 
-    private StringUtils() {
-        throw new UnsupportedOperationException(
-                ErrorMessageConstants.CREATING_INSTANCES_NOT_SUPPORTED);
-    }
+    private StringUtils() {}
 }

@@ -16,8 +16,6 @@
 
 package com.hedera.block.common.utils;
 
-import com.hedera.block.common.constants.ErrorMessageConstants;
-import com.hedera.block.common.constants.StringConstants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.InputStream;
@@ -105,26 +103,28 @@ public final class FileUtils {
         }
     }
 
-    /**
-     * Read a file and return the content as a byte array.
-     *
-     * @param filePath Path to the file
-     * @return byte array of the content of the file or null if the file extension is not supported
-     * @throws IOException if an I/O error occurs
-     */
-    public static byte[] readFileBytes(@NonNull final Path filePath) throws IOException {
-        final String filePathAsString = Objects.requireNonNull(filePath).toString();
-        if (filePathAsString.endsWith(StringConstants.GZ_FILE_EXTENSION)) {
-            return readGzFile(filePath);
-        } else if (filePathAsString.endsWith(StringConstants.BLOCK_FILE_EXTENSION)) {
-            return Files.readAllBytes(filePath);
-        } else {
-            return null;
-        }
-    }
+    // TODO the below code required the .gz and .blk file extension strings that we agreed to remove
+    // please remove the method if you think it should not exist here, if it should, then should the
+    // string literals .gz and .blk be back in the Strings constants class, or introduced here
+    // directly
+    //    /**
+    //     * Read a file and return the content as a byte array.
+    //     *
+    //     * @param filePath Path to the file
+    //     * @return byte array of the content of the file or null if the file extension is not
+    // supported
+    //     * @throws IOException if an I/O error occurs
+    //     */
+    //    public static byte[] readFileBytes(@NonNull final Path filePath) throws IOException {
+    //        final String filePathAsString = Objects.requireNonNull(filePath).toString();
+    //        if (filePathAsString.endsWith(Strings.GZ_FILE_EXTENSION)) {
+    //            return readGzFile(filePath);
+    //        } else if (filePathAsString.endsWith(Strings.BLOCK_FILE_EXTENSION)) {
+    //            return Files.readAllBytes(filePath);
+    //        } else {
+    //            return null;
+    //        }
+    //    }
 
-    private FileUtils() {
-        throw new UnsupportedOperationException(
-                ErrorMessageConstants.CREATING_INSTANCES_NOT_SUPPORTED);
-    }
+    private FileUtils() {}
 }

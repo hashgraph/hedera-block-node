@@ -16,25 +16,11 @@
 
 package com.hedera.block.common.constants;
 
-import static com.hedera.block.common.constants.ErrorMessageConstants.CREATING_INSTANCES_NOT_SUPPORTED;
-
 /** A class that hold common String literals used across projects. */
-public final class StringConstants {
+public final class Strings {
     // FILES
     public static final String APPLICATION_PROPERTIES = "app.properties";
     public static final String LOGGING_PROPERTIES = "logging.properties";
 
-    // FILE EXTENSIONS
-    public static final String BLOCK_FILE_EXTENSION = ".blk";
-    public static final String GZ_FILE_EXTENSION = ".gz";
-
-    // PROJECT RELATED
-    public static final String SERVICE_NAME = "BlockStreamService";
-    public static final String CLIENT_STREAMING_METHOD_NAME = "publishBlockStream";
-    public static final String SERVER_STREAMING_METHOD_NAME = "subscribeBlockStream";
-    public static final String SINGLE_BLOCK_METHOD_NAME = "singleBlock";
-
-    private StringConstants() {
-        throw new UnsupportedOperationException(CREATING_INSTANCES_NOT_SUPPORTED);
-    }
+    private Strings() {}
 }
