@@ -30,9 +30,12 @@ import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
+import com.hedera.hapi.block.SubscribeStreamResponseSet;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.BatchEventProcessor;
+import com.swirlds.metrics.api.Counter;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -87,24 +90,30 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
 
     /**
      * Publishes the given block item to all subscribers. If an exception occurs while persisting
-     * the block item, the service status is set to not running, and all downstream consumers are
+     * the block items, the service status is set to not running, and all downstream consumers are
      * unsubscribed.
      *
-     * @param blockItem the block item from the upstream producer to publish to downstream consumers
+     * @param blockItems the block item from the upstream producer to publish to downstream
+     *     consumers
      */
     @Override
-    public void publish(@NonNull final BlockItem blockItem) {
+    public void publish(@NonNull final List<BlockItem> blockItems) {
 
         if (serviceStatus.isRunning()) {
 
             // Publish the block for all subscribers to receive
-            LOGGER.log(DEBUG, "Publishing BlockItem: " + blockItem);
+            LOGGER.log(DEBUG, "Publishing BlockItem");
+            final SubscribeStreamResponseSet blockItemsSet =
+                    SubscribeStreamResponseSet.newBuilder().blockItems(blockItems).build();
             final var subscribeStreamResponse =
-                    SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
+                    SubscribeStreamResponse.newBuilder().blockItems(blockItemsSet).build();
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
 
             // Increment the block item counter
-            metricsService.get(LiveBlockItems).increment();
+            Counter liveBlockItems = metricsService.get(LiveBlockItems);
+            for (int i = 0; i < blockItems.size(); i++) {
+                liveBlockItems.increment();
+            }
 
         } else {
             LOGGER.log(ERROR, "StreamMediator is not accepting BlockItems");
