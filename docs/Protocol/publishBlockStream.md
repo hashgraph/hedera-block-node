@@ -1,10 +1,6 @@
 # Block Node Connect Protocol for `publishBlockStream`
 ## Definitions
 
-Publisher
-: An entity publishing blocks to a Block Node via the `publishBlockStream` API
-  This is typically a Consensus Node or another Block Node.
-
 Block Node
 : A software system intended to store and process a Block Stream.  The API for
   a Block Node is defined in HIP 1056, among others.
@@ -12,6 +8,14 @@ Block Node
 Block Number
 : A monotonically increasing number assigned by consensus to each block produced
   by the network.
+
+Publisher
+: An entity publishing blocks to a Block Node via the `publishBlockStream` API
+  This is typically a Consensus Node or another Block Node.
+
+Subscriber
+: An entity that subscribes to a verified or unverified Block Stream from a
+  Block Node.
 
 Verified Block
 : A verified block is a block for which a Block Proof is received and for which
@@ -69,11 +73,50 @@ Verified Block
   next block from Publisher with a block number that is not what the Block Node
   expects. This simplifies logic for working out when to retry or reset a stream.
 
+### Base Protocol Diagram
+```mermaid
+sequenceDiagram
+    participant Publisher
+    participant BlockNode
+    participant AnotherBlockNode
+
+    Publisher->>BlockNode: Connect and send block header with block number N
+    Note over BlockNode: Block Node checks block number N
+
+    alt N == last known verified block number + 1
+        BlockNode-->>Publisher: Accept and start streaming
+    else N < last known verified block number
+        BlockNode-->>Publisher: Respond with "DuplicateBlock" (includes last known block L)
+        Publisher-->>BlockNode: Send new block header from block L+1 or send EndOfStream and retry
+        Note over Publisher: Reconnect to consensus network, if needed
+    else N > last known verified block number + 1
+        BlockNode-->>Publisher: Respond with "Behind" (includes last known block L)
+        Publisher-->>BlockNode: Send from block L+1 or send EndOfStream and retry with exponential backoff
+        Note over Publisher: Includes earliest known block with EndOfStream
+        Note over BlockNode: Needs to catch up from another Block Node
+
+    Note over Publisher,BlockNode: During this "catch up" Publisher will continue to occasionally<br/>connect and send a block header with the latest block number N
+        par
+            BlockNode->>AnotherBlockNode: Query "status" API for last available block
+            Note over BlockNode: Attempting to catch up
+        and
+            alt Last available block ≥ N
+                BlockNode->>AnotherBlockNode: Request blocks from L+1 to last available block
+                Note over BlockNode: Catching up before next Publisher connection
+            else Last available block < N
+                BlockNode->>AnotherBlockNode: Request stream from L+1 onward or find another Block Node
+            end
+        end
+    end
+
+    Note over Publisher,BlockNode: Repeat process until block number matches
+```
+
 ## Error Handling
 * If Publisher detects an error at any time
    * Next BlockItem will be an `EndStream` item with an appropriate error code.
    * Block Node will drop any in-progress unproven block from that Publisher,
-     and, if no remaining active incoming streams, notify all subscribers with
+     and, if no remaining active incoming streams, notify all Subscribers with
      an `EndStream` item specifying "source error".
    * Block Node will continue streaming from other incoming stream sources, if
      any, or await a restarted stream if no other incoming stream sources.
@@ -86,6 +129,36 @@ Verified Block
          * If Publisher has multiple "downstream" Block Node options, a
            Publisher _may_ connect to an alternate Block Node for reliability
            and mark the failed Block Node as a backup.
-   * Block Node will send `EndStream` to all subscribers with appropriate
+   * Block Node will send `EndStream` to all Subscribers with appropriate
      status code.
+      * Subscribers _should_ resume streaming from another Block Node
    * Block Node will either recover or await manual recovery.
+
+### Error Handling Diagram
+```mermaid
+sequenceDiagram
+    participant Publisher
+    participant BlockNode
+    participant Subscriber
+
+    Note over Publisher,BlockNode: An error occurs during streaming
+
+    alt Publisher detects an error
+        Publisher-->>BlockNode: Send EndStream with error code
+        BlockNode-->>BlockNode: Drop in-progress unproven block from Publisher
+        alt No remaining active incoming streams
+            BlockNode-->>Subscriber: Send EndStream ("source error")
+            BlockNode-->>BlockNode: Await restarted stream
+        else Other incoming streams active
+            BlockNode-->>Subscriber: Continue streaming from other sources
+            Publisher-->>BlockNode: Publisher initiates a new stream after handling the error
+        end
+    else BlockNode detects an error
+        BlockNode-->>Publisher: Send EndStream response with error code
+        Publisher-->>BlockNode: Retry publishing with exponential backoff
+        Note over Publisher: May connect to alternate Block Node
+        BlockNode-->>Subscriber: Send EndStream with error code
+        Note over Subscriber: Should resume streaming from another Block Node
+        BlockNode-->>BlockNode: Recover or await manual recovery
+    end
+```
