@@ -180,6 +180,9 @@ public class ProducerBlockItemObserver
 
             // Close the upstream connection to the producer(s)
             final var errorResponse = buildErrorStreamResponse();
+
+            isResponsePermitted.set(false);
+            subscriptionHandler.unsubscribe(this);
             publishStreamResponseObserver.onNext(errorResponse);
             LOGGER.log(ERROR, "Error PublishStreamResponse sent to upstream producer");
         }

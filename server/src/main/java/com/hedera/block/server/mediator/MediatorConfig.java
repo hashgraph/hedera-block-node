@@ -29,7 +29,7 @@ import com.swirlds.config.api.ConfigProperty;
  * @param ringBufferSize the size of the ring buffer used by the mediator
  */
 @ConfigData("mediator")
-public record MediatorConfig(@ConfigProperty(defaultValue = "67108864") int ringBufferSize) {
+public record MediatorConfig(@ConfigProperty(defaultValue = "65536") int ringBufferSize) {
     private static final System.Logger LOGGER = System.getLogger(MediatorConfig.class.getName());
 
     /**
