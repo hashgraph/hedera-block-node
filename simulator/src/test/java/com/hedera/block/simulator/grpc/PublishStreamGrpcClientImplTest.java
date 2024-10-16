@@ -23,6 +23,7 @@ import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import java.io.IOException;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ class PublishStreamGrpcClientImplTest {
         BlockItem blockItem = BlockItem.newBuilder().build();
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
                 new PublishStreamGrpcClientImpl(grpcConfig);
-        boolean result = publishStreamGrpcClient.streamBlockItem(blockItem);
+        boolean result = publishStreamGrpcClient.streamBlockItem(List.of(blockItem));
         assertTrue(result);
     }
 

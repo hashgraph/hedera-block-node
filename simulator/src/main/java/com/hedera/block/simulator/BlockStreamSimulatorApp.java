@@ -26,6 +26,7 @@ import com.hedera.hapi.block.stream.BlockItem;
 import com.swirlds.config.api.Configuration;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
@@ -130,7 +131,7 @@ public class BlockStreamSimulatorApp {
                 break;
             }
 
-            publishStreamGrpcClient.streamBlockItem(blockItem);
+            publishStreamGrpcClient.streamBlockItem(List.of(blockItem));
             blockItemsStreamed++;
 
             Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);

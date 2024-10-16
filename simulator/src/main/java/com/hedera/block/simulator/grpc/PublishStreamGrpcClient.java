@@ -18,6 +18,7 @@ package com.hedera.block.simulator.grpc;
 
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import java.util.List;
 
 /**
  * The PublishStreamGrpcClient interface provides the methods to stream the block and block item.
@@ -26,10 +27,10 @@ public interface PublishStreamGrpcClient {
     /**
      * Streams the block item.
      *
-     * @param blockItem the block item to be streamed
+     * @param blockItems list of the block item to be streamed
      * @return true if the block item is streamed successfully, false otherwise
      */
-    boolean streamBlockItem(BlockItem blockItem);
+    boolean streamBlockItem(List<BlockItem> blockItems);
 
     /**
      * Streams the block.

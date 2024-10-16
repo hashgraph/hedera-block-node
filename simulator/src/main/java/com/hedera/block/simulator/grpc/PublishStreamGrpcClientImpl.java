@@ -26,6 +26,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
+import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
 
 /**
@@ -57,11 +59,15 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      * stream.
      */
     @Override
-    public boolean streamBlockItem(BlockItem blockItem) {
+    public boolean streamBlockItem(List<BlockItem> blockItems) {
+
+        List<com.hedera.hapi.block.stream.protoc.BlockItem> blockItemsProtoc = new ArrayList<>();
+        for (BlockItem blockItem : blockItems) {
+            blockItemsProtoc.add(Translator.fromPbj(blockItem));
+        }
+
         requestStreamObserver.onNext(
-                PublishStreamRequest.newBuilder()
-                        .setBlockItem(Translator.fromPbj(blockItem))
-                        .build());
+                PublishStreamRequest.newBuilder().addAllBlockItems(blockItemsProtoc).build());
 
         return true;
     }
@@ -72,12 +78,13 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Override
     public boolean streamBlock(Block block) {
+        List<com.hedera.hapi.block.stream.protoc.BlockItem> blockItemsProtoc = new ArrayList<>();
         for (BlockItem blockItem : block.items()) {
-            streamBlockItem(blockItem);
+            blockItemsProtoc.add(Translator.fromPbj(blockItem));
         }
 
-        // wait for ack on the block
-        // if and when the ack is received return true
+        requestStreamObserver.onNext(
+                PublishStreamRequest.newBuilder().addAllBlockItems(blockItemsProtoc).build());
 
         return true;
     }
