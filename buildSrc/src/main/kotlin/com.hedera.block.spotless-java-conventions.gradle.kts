@@ -19,11 +19,18 @@ plugins { id("com.diffplug.spotless") }
 spotless {
     java {
         targetExclude("build/generated/**/*.java", "build/generated/**/*.proto")
-        // enable toggle comment support
+        // Enables the spotless:on and spotless:off comments
         toggleOffOn()
         // don't need to set target, it is inferred from java
         // apply a specific flavor of google-java-format
-        googleJavaFormat("1.17.0").aosp().reflowLongStrings()
+        // also reflow long strings, and do not format javadoc
+        // because the default setup is _very_ bad for javadoc
+        // We need to figure out a "correct" _separate_ setup for that.
+        googleJavaFormat("1.17.0").aosp().reflowLongStrings().formatJavadoc(false)
+        // Fix some left-out items from the google plugin
+        indentWithSpaces(4)
+        trimTrailingWhitespace()
+        endWithNewline()
         // make sure every file has the following copyright header.
         // optionally, Spotless can set copyright years by digging
         // through git history (see "license" section below).
