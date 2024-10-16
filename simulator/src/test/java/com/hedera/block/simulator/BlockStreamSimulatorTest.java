@@ -22,11 +22,18 @@ import static org.mockito.Mockito.when;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
+import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.swirlds.config.api.Configuration;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,8 +45,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class BlockStreamSimulatorTest {
 
-    private Configuration configuration;
-
     @Mock private BlockStreamManager blockStreamManager;
 
     @Mock private PublishStreamGrpcClient publishStreamGrpcClient;
@@ -49,8 +54,13 @@ class BlockStreamSimulatorTest {
     @BeforeEach
     void setUp() throws IOException {
 
-        configuration =
-                TestUtils.getTestConfiguration(Map.of("blockStream.maxBlockItemsToStream", "100"));
+        Configuration configuration =
+                TestUtils.getTestConfiguration(
+                        Map.of(
+                                "blockStream.maxBlockItemsToStream",
+                                "100",
+                                "blockStream.streamingMode",
+                                "CONSTANT_RATE"));
 
         blockStreamSimulator =
                 new BlockStreamSimulatorApp(
@@ -84,7 +94,9 @@ class BlockStreamSimulatorTest {
                                 "blockStream.BlockAsFileBlockStreamManager",
                                 "BlockAsFileLargeDataSets",
                                 "blockStream.rootPath",
-                                getAbsoluteFolder("src/test/resources/block-0.0.3-blk/")));
+                                getAbsoluteFolder("src/test/resources/block-0.0.3-blk/"),
+                                "blockStream.streamingMode",
+                                "CONSTANT_RATE"));
 
         BlockStreamSimulatorApp blockStreamSimulator =
                 new BlockStreamSimulatorApp(
@@ -101,5 +113,122 @@ class BlockStreamSimulatorTest {
     @Test
     void stop_doesNotThrowException() {
         assertDoesNotThrow(() -> blockStreamSimulator.stop());
+    }
+
+    @Test
+    void start_millisPerSecond()
+            throws InterruptedException, IOException, BlockSimulatorParsingException {
+        BlockStreamManager blockStreamManager = Mockito.mock(BlockStreamManager.class);
+        BlockItem blockItem =
+                BlockItem.newBuilder()
+                        .blockHeader(BlockHeader.newBuilder().number(1L).build())
+                        .build();
+        Block block = Block.newBuilder().items(blockItem).build();
+        when(blockStreamManager.getNextBlock()).thenReturn(block, block, null);
+
+        Configuration configuration =
+                TestUtils.getTestConfiguration(
+                        Map.of(
+                                "blockStream.maxBlockItemsToStream",
+                                "2",
+                                "blockStream.BlockAsFileBlockStreamManager",
+                                "BlockAsFileLargeDataSets",
+                                "blockStream.rootPath",
+                                getAbsoluteFolder("src/test/resources/block-0.0.3-blk/"),
+                                "blockStream.streamingMode",
+                                "MILLIS_PER_BLOCK"));
+
+        BlockStreamSimulatorApp blockStreamSimulator =
+                new BlockStreamSimulatorApp(
+                        configuration, blockStreamManager, publishStreamGrpcClient);
+
+        blockStreamSimulator.start();
+        assertTrue(blockStreamSimulator.isRunning());
+    }
+
+    @Test
+    void start_millisPerSecond_streamingLagVerifyWarnLog()
+            throws InterruptedException, IOException, BlockSimulatorParsingException {
+        List<LogRecord> logRecords = captureLogs();
+
+        BlockStreamManager blockStreamManager = Mockito.mock(BlockStreamManager.class);
+        BlockItem blockItem =
+                BlockItem.newBuilder()
+                        .blockHeader(BlockHeader.newBuilder().number(1L).build())
+                        .build();
+        Block block = Block.newBuilder().items(blockItem).build();
+        when(blockStreamManager.getNextBlock()).thenReturn(block, block, null);
+        PublishStreamGrpcClient publishStreamGrpcClient =
+                Mockito.mock(PublishStreamGrpcClient.class);
+
+        // simulate that the first block takes 15ms to stream, when the limit is 10, to force to go
+        // over WARN Path.
+        when(publishStreamGrpcClient.streamBlock(block))
+                .thenAnswer(
+                        invocation -> {
+                            Thread.sleep(15);
+                            return true;
+                        })
+                .thenReturn(true);
+
+        Configuration configuration =
+                TestUtils.getTestConfiguration(
+                        Map.of(
+                                "blockStream.maxBlockItemsToStream",
+                                "2",
+                                "blockStream.BlockAsFileBlockStreamManager",
+                                "BlockAsFileLargeDataSets",
+                                "blockStream.rootPath",
+                                getAbsoluteFolder("src/test/resources/block-0.0.3-blk/"),
+                                "blockStream.streamingMode",
+                                "MILLIS_PER_BLOCK",
+                                "blockStream.millisecondsPerBlock",
+                                "10"));
+
+        BlockStreamSimulatorApp blockStreamSimulator =
+                new BlockStreamSimulatorApp(
+                        configuration, blockStreamManager, publishStreamGrpcClient);
+
+        blockStreamSimulator.start();
+        assertTrue(blockStreamSimulator.isRunning());
+
+        // Assert log exists
+        boolean found_log =
+                logRecords.stream()
+                        .anyMatch(
+                                logRecord ->
+                                        logRecord
+                                                .getMessage()
+                                                .contains(
+                                                        "Block Server is running behind, Streaming"
+                                                            + " took longer than max expected: 10"
+                                                            + " milliseconds"));
+        assertTrue(found_log);
+    }
+
+    private List<LogRecord> captureLogs() {
+        // Capture logs
+        Logger logger = Logger.getLogger(BlockStreamSimulatorApp.class.getName());
+        final List<LogRecord> logRecords = new ArrayList<>();
+
+        // Custom handler to capture logs
+        Handler handler =
+                new Handler() {
+                    @Override
+                    public void publish(LogRecord record) {
+                        logRecords.add(record);
+                    }
+
+                    @Override
+                    public void flush() {}
+
+                    @Override
+                    public void close() throws SecurityException {}
+                };
+
+        // Add handler to logger
+        logger.addHandler(handler);
+
+        return logRecords;
     }
 }

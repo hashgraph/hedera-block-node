@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package com.hedera.block.simulator;
+package com.hedera.block.simulator.config.types;
 
-/** The Constants class defines the constants for the block simulator. */
-public class Constants {
+import static org.junit.jupiter.api.Assertions.*;
 
-    /** Constructor to prevent instantiation. this is only a utility class */
-    private Constants() {}
+class StreamingModeTest {
 
-    /** The file extension for block files. */
-    public static final String RECORD_EXTENSION = "blk";
-
-    /** postfix for gzip files */
-    public static final String GZ_EXTENSION = ".gz";
+    @org.junit.jupiter.api.Test
+    void fromString() {
+        assertEquals(StreamingMode.CONSTANT_RATE, StreamingMode.fromString("CONSTANT_RATE"));
+        assertEquals(StreamingMode.MILLIS_PER_BLOCK, StreamingMode.fromString("MILLIS_PER_BLOCK"));
+        assertThrows(IllegalArgumentException.class, () -> StreamingMode.fromString("INVALID"));
+    }
 }

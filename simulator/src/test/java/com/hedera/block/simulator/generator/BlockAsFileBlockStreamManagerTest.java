@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.block.simulator.config.types.StreamingMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -84,7 +85,9 @@ class BlockAsFileBlockStreamManagerTest {
                         "BlockAsFileBlockStreamManager",
                         10_000,
                         36,
-                        ".blk");
+                        ".blk",
+                        StreamingMode.CONSTANT_RATE,
+                        1000);
         return new BlockAsFileBlockStreamManager(blockStreamConfig);
     }
 }
