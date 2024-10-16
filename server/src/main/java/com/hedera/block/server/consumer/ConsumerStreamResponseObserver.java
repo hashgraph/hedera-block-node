@@ -185,7 +185,11 @@ public class ConsumerStreamResponseObserver
         final OneOf<SubscribeStreamResponse.ResponseOneOfType> oneOfTypeOneOf =
                 subscribeStreamResponse.response();
         return switch (oneOfTypeOneOf.kind()) {
-            case STATUS -> statusResponseSender;
+            case STATUS -> {
+                isResponsePermitted.set(false);
+                subscriptionHandler.unsubscribe(this);
+                yield statusResponseSender;
+            }
             case BLOCK_ITEM -> blockItemResponseSender;
             default -> throw new IllegalArgumentException(
                     "Unknown response type: " + oneOfTypeOneOf.kind());
@@ -237,6 +241,7 @@ public class ConsumerStreamResponseObserver
                     DEBUG,
                     "Sending SubscribeStreamResponse downstream: " + subscribeStreamResponse);
             subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
+            subscribeStreamResponseObserver.onComplete();
         }
     }
 }
