@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-plugins {
-    id("com.hedera.block.protobuf")
-    alias(libs.plugins.pbj)
-}
+import org.hiero.gradle.tasks.GitClone
 
-group = "com.hedera.block"
+plugins {
+    id("org.hiero.gradle.module.library")
+    id("org.hiero.gradle.feature.protobuf")
+    id("com.hedera.pbj.pbj-compiler") version "0.9.2"
+}
 
 description = "Hedera API"
 
@@ -30,28 +31,31 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 // Add downloaded HAPI repo protobuf files into build directory and add to sources to build them
-tasks.cloneHederaProtobufs {
-    // uncomment below to use a specific tag
-    // tag = "v0.53.0" or a specific commit like "0047255"
-    tag = "d5e6988"
+val cloneHederaProtobufs =
+    tasks.register<GitClone>("cloneHederaProtobufs") {
+        url = "https://github.com/hashgraph/hedera-protobufs.git"
 
-    // uncomment below to use a specific branch
-    // branch = "main"
-}
+        // uncomment below to use a specific tag
+        // tag = "v0.53.0" or a specific commit like "0047255"
+        tag = "d5e6988"
+
+        // uncomment below to use a specific branch
+        // branch = "main"
+    }
 
 sourceSets {
     main {
         pbj {
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("services") })
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("block") })
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("platform") })
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("streams") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("services") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("block") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("platform") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("streams") })
         }
         proto {
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("services") })
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("block") })
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("platform") })
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("streams") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("services") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("block") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("platform") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("streams") })
         }
     }
 }

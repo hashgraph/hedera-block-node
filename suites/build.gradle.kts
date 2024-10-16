@@ -16,12 +16,10 @@
 
 plugins {
     id("application")
-    id("com.hedera.block.suites")
+    id("org.hiero.gradle.module.library")
 }
 
 description = "Hedera Block Node E2E Suites"
-
-dependencies { implementation(project(":simulator")) }
 
 application {
     mainModule = "com.hedera.block.suites"
@@ -29,14 +27,11 @@ application {
 }
 
 mainModuleInfo {
-    runtimeOnly("org.testcontainers.junit-jupiter")
+    runtimeOnly("org.testcontainers.junit.jupiter")
     runtimeOnly("org.junit.jupiter.engine")
     runtimeOnly("org.testcontainers")
     runtimeOnly("com.swirlds.config.impl")
 }
-
-// workaround until https://github.com/hashgraph/hedera-block-node/pull/216 is integrated
-dependencies.constraints { implementation("org.slf4j:slf4j-api:2.0.6") }
 
 val updateDockerEnv =
     tasks.register<Exec>("updateDockerEnv") {
