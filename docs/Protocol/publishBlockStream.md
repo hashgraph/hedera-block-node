@@ -1,25 +1,53 @@
 # Block Node Connect Protocol for `publishBlockStream`
+
+## Abstract
+This protocol describes how a Publisher and Block Node SHALL interact for
+the `publishBlockStream` API. The protocol provides for either side of the
+stream to signal an orderly end of the stream, for the block node to signal
+that it has fallen behind the publisher, for the block node to signal that the
+publisher has fallen behind the block node, and describes basic error
+conditions. The protocol also includes specific provision for how both
+publisher and block node will behave when a block node must spend time to
+"catch up" to a publisher by requesting older blocks from another block node.
+This protocol does not describe behavior related to the similar "pull" API
+`subscribeBlockStream` or to the "catch up" process.
+
+### Reliability note
+This protocol is very careful about error conditions. A consensus node
+publishing to a block node faces a hard requirement that if a block is not
+validated and persisted within a short time, the consensus node must stop
+processing entirely until it does have assurance that its blocks are
+validated and persisted. This occurs because the block stream is the actual
+"block chain" for the network, and if even one block is lost, then the chain
+is broken; with disastrous consequences. Consensus nodes are one of the
+core clients of this protocol as Publisher, so a core assumption of this
+protocol is that if anything occurs to suggest to a publisher that a block
+node might fail to store blocks permanently, the publisher should end the
+stream and retry (either to another block node, or after a short delay).
+
 ## Definitions
 
-Block Node
-: A software system intended to store and process a Block Stream.  The API for
-  a Block Node is defined in HIP 1056, among others.
+<dl>
+<dt>Block Node</dt>
+<dd>A software system intended to store and process a Block Stream.  The API for
+    a Block Node is defined in HIP 1056, among others.</dd>
 
-Block Number
-: A monotonically increasing number assigned by consensus to each block produced
-  by the network.
+<dt>Block Number</dt>
+<dd>A monotonically increasing number assigned by consensus to each block produced
+  by the network.</dd>
 
-Publisher
-: An entity publishing blocks to a Block Node via the `publishBlockStream` API
-  This is typically a Consensus Node or another Block Node.
+<dt>Publisher</dt>
+<dd>An entity publishing blocks to a Block Node via the `publishBlockStream` API
+  This is typically a Consensus Node or another Block Node.</dd>
 
-Subscriber
-: An entity that subscribes to a verified or unverified Block Stream from a
-  Block Node.
+<dt>Subscriber</dt>
+<dd>An entity that subscribes to a verified or unverified Block Stream from a
+  Block Node.</dd>
 
-Verified Block
-: A verified block is a block for which a Block Proof is received and for which
-  the TSS signature of the network ledger ID is valid.
+<dt>Verified Block</dt>
+<dd>A verified block is a block for which a Block Proof is received and for which
+  the TSS signature of the network ledger ID is valid.</dd>
+</dl>
 
 ## Base Protocol
 * Publisher, on connect, sends a block header, this contains a block number.
@@ -69,9 +97,10 @@ Verified Block
    * Each Publisher connect will send a block header, repeat above process until
      the Block Node gets a matched block number or Publisher can finish
      catching up that Block Node.
-* Note, a Block Node can (re)enter connect _any_ time that Block Node gets the
-  next block from Publisher with a block number that is not what the Block Node
-  expects. This simplifies logic for working out when to retry or reset a stream.
+* > Note, a Block Node can (re)enter "catch up" _any_ time that Block Node gets
+    the next block from Publisher with a block number that is not what the Block
+    Node expects. This simplifies logic for working out when to retry or
+    reset a stream.
 
 ### Base Protocol Diagram
 ```mermaid
