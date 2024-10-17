@@ -18,6 +18,7 @@ package com.hedera.block.simulator;
 
 import static java.lang.System.Logger.Level.INFO;
 
+import com.hedera.block.common.constants.StringsConstants;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
@@ -28,39 +29,47 @@ import java.io.IOException;
 import java.lang.System.Logger;
 import java.nio.file.Path;
 
-/** The BlockStreamSimulator class defines the simulator for the block stream. */
+/**
+ * The BlockStreamSimulator class defines the simulator for the block stream.
+ */
 public class BlockStreamSimulator {
     private static final Logger LOGGER = System.getLogger(BlockStreamSimulator.class.getName());
 
-    /** This constructor should not be instantiated. */
+    /**
+     * This constructor should not be instantiated.
+     */
     private BlockStreamSimulator() {}
 
     /**
      * The main entry point for the block stream simulator.
      *
      * @param args the arguments to be passed to the block stream simulator
-     * @throws IOException if an I/O error occurs
-     * @throws InterruptedException if the thread is interrupted
+     *
+     * @throws IOException                    if an I/O error occurs
+     * @throws InterruptedException           if the thread is interrupted
      * @throws BlockSimulatorParsingException if a parse error occurs
      */
-    public static void main(String[] args)
+    public static void main(final String[] args)
             throws IOException, InterruptedException, BlockSimulatorParsingException {
 
         LOGGER.log(INFO, "Starting Block Stream Simulator");
 
-        ConfigurationBuilder configurationBuilder =
+        final ConfigurationBuilder configurationBuilder =
                 ConfigurationBuilder.create()
                         .withSource(SystemEnvironmentConfigSource.getInstance())
                         .withSource(SystemPropertiesConfigSource.getInstance())
-                        .withSource(new ClasspathFileConfigSource(Path.of("app.properties")))
+                        .withSource(
+                                new ClasspathFileConfigSource(
+                                        Path.of(StringsConstants.APPLICATION_PROPERTIES)))
                         .autoDiscoverExtensions();
 
-        Configuration configuration = configurationBuilder.build();
+        final Configuration configuration = configurationBuilder.build();
 
-        BlockStreamSimulatorInjectionComponent DIComponent =
+        final BlockStreamSimulatorInjectionComponent DIComponent =
                 DaggerBlockStreamSimulatorInjectionComponent.factory().create(configuration);
 
-        BlockStreamSimulatorApp blockStreamSimulatorApp = DIComponent.getBlockStreamSimulatorApp();
+        final BlockStreamSimulatorApp blockStreamSimulatorApp =
+                DIComponent.getBlockStreamSimulatorApp();
         blockStreamSimulatorApp.start();
     }
 }
