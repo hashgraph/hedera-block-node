@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -48,7 +49,7 @@ import java.util.Set;
  * to remove the current, incomplete block (directory) before re-throwing the exception to the
  * caller.
  */
-class BlockAsDirWriter implements BlockWriter<BlockItem> {
+class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -94,20 +95,23 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
     /**
      * Writes the given block item to the filesystem.
      *
-     * @param blockItem the block item to write
+     * @param blockItems the block item to write
      * @throws IOException if an error occurs while writing the block item
      */
     @Override
-    public Optional<BlockItem> write(@NonNull final BlockItem blockItem) throws IOException {
+    public Optional<List<BlockItem>> write(@NonNull final List<BlockItem> blockItems)
+            throws IOException {
 
-        if (blockItem.hasBlockHeader()) {
-            resetState(blockItem);
+        if (blockItems.getFirst().hasBlockHeader()) {
+            resetState(blockItems.getFirst());
         }
 
         final Path blockItemFilePath = calculateBlockItemPath();
         for (int retries = 0; ; retries++) {
             try {
-                write(blockItemFilePath, blockItem);
+                for (BlockItem blockItem : blockItems) {
+                    write(blockItemFilePath, blockItem);
+                }
                 break;
             } catch (IOException e) {
 
@@ -128,9 +132,9 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
             }
         }
 
-        if (blockItem.hasBlockProof()) {
+        if (blockItems.getLast().hasBlockProof()) {
             metricsService.get(BlocksPersisted).increment();
-            return Optional.of(blockItem);
+            return Optional.of(blockItems);
         }
 
         return Optional.empty();
