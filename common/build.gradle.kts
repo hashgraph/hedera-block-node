@@ -21,4 +21,7 @@ plugins {
 
 description = "Commons module with logic that could be abstracted and reused."
 
-testModuleInfo { requiresStatic("com.github.spotbugs.annotations") }
+testModuleInfo {
+    requiresStatic("com.github.spotbugs.annotations")
+    requires("org.assertj.core")
+}
