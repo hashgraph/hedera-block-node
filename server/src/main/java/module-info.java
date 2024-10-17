@@ -18,6 +18,7 @@ module com.hedera.block.server {
     exports com.hedera.block.server.notifier;
     exports com.hedera.block.server.service;
 
+    requires com.hedera.block.common;
     requires com.hedera.block.stream;
     requires com.google.protobuf;
     requires com.hedera.pbj.runtime;
