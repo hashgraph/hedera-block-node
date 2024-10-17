@@ -45,7 +45,7 @@ val updateDockerEnv =
         group = "docker"
 
         workingDir(layout.projectDirectory.dir("../server/docker"))
-        commandLine("./update-env.sh", project.version)
+        commandLine("sh", "-c", "./update-env.sh ${project.version} false false")
     }
 
 // Task to build the Docker image
