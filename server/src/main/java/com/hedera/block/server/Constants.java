@@ -22,15 +22,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public final class Constants {
     private Constants() {}
 
-    /** Constant mapped to the application.properties file in resources with default values */
-    @NonNull public static final String APPLICATION_PROPERTIES = "app.properties";
-
-    /**
-     * Constant mapped to the Helidon logging.properties file in the docker directory with default
-     * values.
-     */
-    @NonNull public static final String LOGGING_PROPERTIES = "logging.properties";
-
     /** Constant mapped to the name of the BlockStream service in the .proto file */
     @NonNull public static final String SERVICE_NAME_BLOCK_STREAM = "BlockStreamService";
 
