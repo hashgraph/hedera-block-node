@@ -16,23 +16,22 @@
 
 package com.hedera.block.suites.persistence.positive;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.hedera.block.simulator.BlockStreamSimulatorInjectionComponent;
 import com.hedera.block.simulator.DaggerBlockStreamSimulatorInjectionComponent;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.suites.BaseSuite;
-import com.swirlds.config.api.Configuration;
+import java.io.IOException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.Container;
 
-import java.io.IOException;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @DisplayName("Positive Data Persistence Tests")
 public class PositiveDataPersistenceTests extends BaseSuite {
     private final String[] GET_BLOCKS_COMMAND = new String[] {"ls", "data", "-1"};
+
     /** Default constructor for the {@link PositiveDataPersistenceTests} class. */
     public PositiveDataPersistenceTests() {}
 
@@ -49,10 +48,7 @@ public class PositiveDataPersistenceTests extends BaseSuite {
      */
     @Test
     public void verifyBlockDataSavedInCorrectDirectory()
-            throws
-            InterruptedException,
-            BlockSimulatorParsingException,
-            IOException {
+            throws InterruptedException, BlockSimulatorParsingException, IOException {
         String savedBlocksFolderBefore = getContainerCommandResult(GET_BLOCKS_COMMAND);
         int savedBlocksCountBefore = getSavedBlocksCount(savedBlocksFolderBefore);
         BlockStreamSimulatorInjectionComponent DIComponent =
@@ -81,5 +77,4 @@ public class PositiveDataPersistenceTests extends BaseSuite {
         Container.ExecResult result = blockNodeContainer.execInContainer(command);
         return result.getStdout();
     }
-
 }

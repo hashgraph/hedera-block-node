@@ -19,6 +19,7 @@ package com.hedera.block.simulator.config.data;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.block.simulator.config.types.SimulatorMode;
 import com.hedera.block.simulator.config.types.StreamingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,6 +34,7 @@ class BlockStreamConfigTest {
     private final int paddedLength = 36;
     private final String fileExtension = ".blk";
     private final StreamingMode streamingMode = StreamingMode.CONSTANT_RATE;
+    private final SimulatorMode simulatorMode = SimulatorMode.PUBLISHER;
     private final int millisPerBlock = 1000;
 
     private String getAbsoluteFolder(String relativePath) {
@@ -53,6 +55,7 @@ class BlockStreamConfigTest {
         // No exception should be thrown
         BlockStreamConfig config =
                 new BlockStreamConfig(
+                        simulatorMode,
                         generationMode,
                         folderRootPath,
                         delayBetweenBlockItems,
@@ -76,6 +79,7 @@ class BlockStreamConfigTest {
         // No exception should be thrown, and the default folder should be used
         BlockStreamConfig config =
                 new BlockStreamConfig(
+                        simulatorMode,
                         generationMode,
                         folderRootPath,
                         delayBetweenBlockItems,
@@ -104,6 +108,7 @@ class BlockStreamConfigTest {
                         IllegalArgumentException.class,
                         () ->
                                 new BlockStreamConfig(
+                                        simulatorMode,
                                         generationMode,
                                         relativeFolderPath,
                                         delayBetweenBlockItems,
@@ -134,6 +139,7 @@ class BlockStreamConfigTest {
                         IllegalArgumentException.class,
                         () ->
                                 new BlockStreamConfig(
+                                        simulatorMode,
                                         generationMode,
                                         folderRootPath,
                                         delayBetweenBlockItems,
@@ -157,6 +163,7 @@ class BlockStreamConfigTest {
         // No exception should be thrown because generation mode is not DIR
         BlockStreamConfig config =
                 new BlockStreamConfig(
+                        simulatorMode,
                         generationMode,
                         folderRootPath,
                         delayBetweenBlockItems,

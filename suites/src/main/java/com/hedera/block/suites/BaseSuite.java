@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.GenericContainer;
@@ -85,7 +84,8 @@ public abstract class BaseSuite {
                 DaggerBlockStreamSimulatorInjectionComponent.factory()
                         .create(loadDefaultConfiguration());
 
-//        BlockStreamSimulatorApp blockStreamSimulatorApp = DIComponent.getBlockStreamSimulatorApp();
+        //        BlockStreamSimulatorApp blockStreamSimulatorApp =
+        // DIComponent.getBlockStreamSimulatorApp();
     }
 
     /**

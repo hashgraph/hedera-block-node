@@ -18,6 +18,7 @@ package com.hedera.block.simulator.config.data;
 
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.block.simulator.config.types.SimulatorMode;
+import com.hedera.block.simulator.config.types.StreamingMode;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 import java.nio.file.Files;

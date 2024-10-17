@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.block.simulator.config.types.SimulatorMode;
 import com.hedera.block.simulator.config.types.StreamingMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import java.io.IOException;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.Test;
 class BlockAsDirBlockStreamManagerTest {
 
     private final String rootFolder = "src/test/resources/blockAsDirExample/";
+    private final SimulatorMode simulatorMode = SimulatorMode.PUBLISHER;
 
     private String getAbsoluteFolder(String relativePath) {
         return Paths.get(relativePath).toAbsolutePath().toString();
@@ -77,6 +79,7 @@ class BlockAsDirBlockStreamManagerTest {
     private BlockStreamManager getBlockAsDirBlockStreamManager(String rootFolder) {
         BlockStreamConfig blockStreamConfig =
                 new BlockStreamConfig(
+                        simulatorMode,
                         GenerationMode.DIR,
                         rootFolder,
                         1_500_000,

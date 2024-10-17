@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package com.hedera.block.simulator.config.types;
+package com.hedera.block.simulator.mode;
 
-/** The SimulatorMode enum defines the work modes of the block stream simulator. */
-public enum SimulatorMode {
+import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
+import com.hedera.block.simulator.generator.BlockStreamManager;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.IOException;
+
+public interface SimulatorModeHandler {
     /**
-     * Indicates a work mode in which the simulator is working as both consumer and publisher.
+     * Starts the simulator and initiate streaming, depending on the working mode.
      */
-    BOTH,
-    /**
-     * Indicates a work mode in which the simulator is working in consumer mode.
-     */
-    CONSUMER,
-    /**
-     * Indicates a work mode in which the simulator is working in publisher mode.
-     */
-    PUBLISHER
+    void start(@NonNull BlockStreamManager blockStreamManager)
+            throws BlockSimulatorParsingException, IOException, InterruptedException;
 }
