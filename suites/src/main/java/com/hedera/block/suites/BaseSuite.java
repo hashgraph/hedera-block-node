@@ -79,13 +79,11 @@ public abstract class BaseSuite {
         blockNodeContainer = getConfiguration();
         blockNodeContainer.start();
 
-        // TODO remove in the next PR which adds tests
         BlockStreamSimulatorInjectionComponent DIComponent =
                 DaggerBlockStreamSimulatorInjectionComponent.factory()
                         .create(loadDefaultConfiguration());
 
-        //        BlockStreamSimulatorApp blockStreamSimulatorApp =
-        // DIComponent.getBlockStreamSimulatorApp();
+        blockStreamSimulatorApp = DIComponent.getBlockStreamSimulatorApp();
     }
 
     /**
@@ -98,6 +96,10 @@ public abstract class BaseSuite {
     public static void teardown() {
         if (blockNodeContainer != null) {
             blockNodeContainer.stop();
+        }
+
+        if (blockStreamSimulatorApp != null) {
+            blockStreamSimulatorApp.stop();
         }
     }
 
@@ -121,7 +123,7 @@ public abstract class BaseSuite {
         String blockNodeVersion = BaseSuite.getBlockNodeVersion();
         blockNodePort = 8080;
         List<String> portBindings = new ArrayList<>();
-        portBindings.add("8080:8080");
+        portBindings.add(String.format("%d:%2d", blockNodePort, blockNodePort));
         blockNodeContainer =
                 new GenericContainer<>(
                                 DockerImageName.parse("block-node-server:" + blockNodeVersion))

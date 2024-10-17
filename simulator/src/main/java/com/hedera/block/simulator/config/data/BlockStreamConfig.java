@@ -41,7 +41,7 @@ import java.nio.file.Paths;
  */
 @ConfigData("blockStream")
 public record BlockStreamConfig(
-        @ConfigProperty(defaultValue = "BOTH") SimulatorMode simulatorMode,
+        @ConfigProperty(defaultValue = "PUBLISHER") SimulatorMode simulatorMode,
         @ConfigProperty(defaultValue = "DIR") GenerationMode generationMode,
         @ConfigProperty(defaultValue = "") String folderRootPath,
         @ConfigProperty(defaultValue = "1_500_000") int delayBetweenBlockItems,

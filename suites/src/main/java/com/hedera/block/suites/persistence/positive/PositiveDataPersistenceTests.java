@@ -19,8 +19,6 @@ package com.hedera.block.suites.persistence.positive;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.hedera.block.simulator.BlockStreamSimulatorInjectionComponent;
-import com.hedera.block.simulator.DaggerBlockStreamSimulatorInjectionComponent;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.suites.BaseSuite;
 import java.io.IOException;
@@ -51,13 +49,8 @@ public class PositiveDataPersistenceTests extends BaseSuite {
             throws InterruptedException, BlockSimulatorParsingException, IOException {
         String savedBlocksFolderBefore = getContainerCommandResult(GET_BLOCKS_COMMAND);
         int savedBlocksCountBefore = getSavedBlocksCount(savedBlocksFolderBefore);
-        BlockStreamSimulatorInjectionComponent DIComponent =
-                DaggerBlockStreamSimulatorInjectionComponent.factory()
-                        .create(loadDefaultConfiguration());
-        blockStreamSimulatorApp = DIComponent.getBlockStreamSimulatorApp();
-        blockStreamSimulatorApp.start();
 
-        Thread.sleep(10000);
+        blockStreamSimulatorApp.start();
 
         String savedBlocksFolderAfter = getContainerCommandResult(GET_BLOCKS_COMMAND);
         int savedBlocksCountAfter = getSavedBlocksCount(savedBlocksFolderAfter);
