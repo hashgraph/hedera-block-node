@@ -20,8 +20,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIOException;
 
 import java.io.IOException;
+import java.lang.System.Logger.Level;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -38,9 +42,79 @@ class FileUtilitiesTest {
     private static final Path GZ_INVALID1_PATH = Path.of("src/test/resources/invalid1.gz");
     private static final Path GZ_INVALID2_PATH = Path.of("src/test/resources/nonexistent.gz");
 
+    @Test
+    void test_createPathIfNotExists_CreatesDirIfDoesNotExist(@TempDir final Path tempDir)
+            throws IOException {
+        final String newDir = "newDir";
+        final Path toCreate = tempDir.resolve(newDir);
+
+        assertThat(tempDir).isEmptyDirectory();
+        assertThat(toCreate).doesNotExist();
+
+        FileUtilities.createPathIfNotExists(toCreate, Level.ERROR, "test dir 1", true);
+
+        assertThat(tempDir.toFile().listFiles()).hasSize(1);
+        assertThat(toCreate).exists().isDirectory();
+    }
+
+    @Test
+    void test_createPathIfNotExists_CreatesFileIfDoesNotExist(@TempDir final Path tempDir)
+            throws IOException {
+        final String newFile = "newFile";
+        final Path toCreate = tempDir.resolve(newFile);
+
+        assertThat(tempDir).isEmptyDirectory();
+        assertThat(toCreate).doesNotExist();
+
+        FileUtilities.createPathIfNotExists(toCreate, Level.ERROR, "test file 1", false);
+
+        assertThat(tempDir.toFile().listFiles()).hasSize(1);
+        assertThat(toCreate).exists().isEmptyFile();
+    }
+
+    @Test
+    void test_createPathIfNotExists_DoesNotCreateDirIfExists(@TempDir final Path tempDir)
+            throws IOException {
+        final String newDir = "newDir";
+        final Path toCreate = tempDir.resolve(newDir);
+
+        assertThat(tempDir).isEmptyDirectory();
+        assertThat(toCreate).doesNotExist();
+
+        Files.createDirectory(toCreate);
+
+        assertThat(tempDir.toFile().listFiles()).hasSize(1);
+        assertThat(toCreate).exists().isDirectory();
+
+        FileUtilities.createPathIfNotExists(toCreate, Level.ERROR, "test dir 1", true);
+
+        assertThat(tempDir.toFile().listFiles()).hasSize(1);
+        assertThat(toCreate).exists().isDirectory();
+    }
+
+    @Test
+    void test_createPathIfNotExists_DoesNotCreateFileIfExists(@TempDir final Path tempDir)
+            throws IOException {
+        final String newFile = "newFile";
+        final Path toCreate = tempDir.resolve(newFile);
+
+        assertThat(tempDir).isEmptyDirectory();
+        assertThat(toCreate).doesNotExist();
+
+        Files.createFile(toCreate);
+
+        assertThat(tempDir.toFile().listFiles()).hasSize(1);
+        assertThat(toCreate).exists().isEmptyFile();
+
+        FileUtilities.createPathIfNotExists(toCreate, Level.ERROR, "test file 1", false);
+
+        assertThat(tempDir.toFile().listFiles()).hasSize(1);
+        assertThat(toCreate).exists().isEmptyFile();
+    }
+
     @ParameterizedTest
     @MethodSource("validGzipFiles")
-    void readGzipFileUnsafe_ReturnsByteArrayForValidGzipFile(
+    void test_readGzipFileUnsafe_ReturnsByteArrayWithValidContentForValidGzipFile(
             final Path filePath, final String expectedContent) throws IOException {
         final byte[] actualContent = FileUtilities.readGzipFileUnsafe(filePath);
         assertThat(actualContent)
@@ -54,7 +128,7 @@ class FileUtilitiesTest {
 
     @ParameterizedTest
     @MethodSource("invalidGzipFiles")
-    void readGzipFileUnsafe_ThrowsIOExceptionForInvalidGzipFile(final Path filePath) {
+    void test_readGzipFileUnsafe_ThrowsIOExceptionForInvalidGzipFile(final Path filePath) {
         assertThatIOException().isThrownBy(() -> FileUtilities.readGzipFileUnsafe(filePath));
     }
 
