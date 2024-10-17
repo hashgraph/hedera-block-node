@@ -225,7 +225,9 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     private SingleBlockRequest parseSingleBlockRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options)
             throws ParseException {
-        return SingleBlockRequest.PROTOBUF.parse(message);
+        //        return SingleBlockRequest.PROTOBUF.parse(message);
+        byte[] b = message.toByteArray();
+        return SingleBlockRequest.PROTOBUF.parse(Bytes.wrap(b));
     }
 
     @NonNull
@@ -238,7 +240,10 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     private SubscribeStreamRequest parseSubscribeStreamRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options)
             throws ParseException {
-        return SubscribeStreamRequest.PROTOBUF.parse(message);
+
+        //        return SubscribeStreamRequest.PROTOBUF.parse(message);
+        byte[] b = message.toByteArray();
+        return SubscribeStreamRequest.PROTOBUF.parse(Bytes.wrap(b));
     }
 
     @NonNull
@@ -253,8 +258,10 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     private PublishStreamRequest parsePublishStreamRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options)
             throws ParseException {
+        //        return PublishStreamRequest.PROTOBUF.parse(message);
 
-        return PublishStreamRequest.PROTOBUF.parse(message);
+        byte[] b = message.toByteArray();
+        return PublishStreamRequest.PROTOBUF.parse(Bytes.wrap(b));
     }
 
     @NonNull

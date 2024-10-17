@@ -123,7 +123,7 @@ public class StreamPersistenceHandlerImpl
                             if (result.isPresent()) {
                                 // Publish the block item back upstream to the notifier
                                 // to send responses to producers.
-                                notifier.publish(blockItem);
+                                //                                notifier.publish(blockItem);
                             }
                         }
                     }

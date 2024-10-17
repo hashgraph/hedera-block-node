@@ -17,7 +17,6 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -104,6 +103,7 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
             resetState(blockItem);
         }
 
+        /*
         final Path blockItemFilePath = calculateBlockItemPath();
         for (int retries = 0; ; retries++) {
             try {
@@ -128,9 +128,11 @@ class BlockAsDirWriter implements BlockWriter<BlockItem> {
             }
         }
 
+         */
+
         if (blockItem.hasBlockProof()) {
-            metricsService.get(BlocksPersisted).increment();
-            return Optional.of(blockItem);
+            //            metricsService.get(BlocksPersisted).increment();
+            //            return Optional.of(blockItem);
         }
 
         return Optional.empty();

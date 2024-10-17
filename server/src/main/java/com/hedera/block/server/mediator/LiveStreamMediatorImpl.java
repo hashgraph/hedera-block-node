@@ -22,6 +22,7 @@ import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Consume
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
@@ -102,6 +103,7 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
             final var subscribeStreamResponse =
                     SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
+            LOGGER.log(INFO, "RingBuffer Remaining Capacity: " + ringBuffer.remainingCapacity());
 
             // Increment the block item counter
             metricsService.get(LiveBlockItems).increment();
