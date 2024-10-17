@@ -27,6 +27,9 @@ import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.GenericContainer;
@@ -82,7 +85,7 @@ public abstract class BaseSuite {
                 DaggerBlockStreamSimulatorInjectionComponent.factory()
                         .create(loadDefaultConfiguration());
 
-        BlockStreamSimulatorApp blockStreamSimulatorApp = DIComponent.getBlockStreamSimulatorApp();
+//        BlockStreamSimulatorApp blockStreamSimulatorApp = DIComponent.getBlockStreamSimulatorApp();
     }
 
     /**
@@ -117,6 +120,8 @@ public abstract class BaseSuite {
     public static GenericContainer<?> getConfiguration() {
         String blockNodeVersion = BaseSuite.getBlockNodeVersion();
         blockNodePort = 8080;
+        List<String> portBindings = new ArrayList<>();
+        portBindings.add("8080:8080");
         blockNodeContainer =
                 new GenericContainer<>(
                                 DockerImageName.parse("block-node-server:" + blockNodeVersion))
@@ -124,6 +129,7 @@ public abstract class BaseSuite {
                         .withEnv("VERSION", blockNodeVersion)
                         .waitingFor(Wait.forListeningPort())
                         .waitingFor(Wait.forHealthcheck());
+        blockNodeContainer.setPortBindings(portBindings);
         return blockNodeContainer;
     }
 
