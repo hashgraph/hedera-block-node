@@ -38,9 +38,15 @@ class FileUtilitiesTest {
     private static final Path GZ_VALID2_PATH = Path.of("src/test/resources/valid2.txt.gz");
     private static final String GZ_VALID2_CONTENT = "valid2";
 
+    private static final Path BLK_VALID1_PATH = Path.of("src/test/resources/valid1.blk");
+    private static final String BLK_VALID1_CONTENT = "valid1blk";
+
+    private static final Path BLK_VALID2_PATH = Path.of("src/test/resources/valid2.blk");
+    private static final String BLK_VALID2_CONTENT = "valid2blk";
+
     // INVALID PATHS
     private static final Path GZ_INVALID1_PATH = Path.of("src/test/resources/invalid1.gz");
-    private static final Path GZ_INVALID2_PATH = Path.of("src/test/resources/nonexistent.gz");
+    private static final Path FILE_INVALID2_PATH = Path.of("src/test/resources/nonexistent.gz");
 
     @Test
     void test_createPathIfNotExists_CreatesDirIfDoesNotExist(@TempDir final Path tempDir)
@@ -127,9 +133,29 @@ class FileUtilitiesTest {
     }
 
     @ParameterizedTest
-    @MethodSource("invalidGzipFiles")
+    @MethodSource("invalidFiles")
     void test_readGzipFileUnsafe_ThrowsIOExceptionForInvalidGzipFile(final Path filePath) {
         assertThatIOException().isThrownBy(() -> FileUtilities.readGzipFileUnsafe(filePath));
+    }
+
+    @ParameterizedTest
+    @MethodSource({"validGzipFiles", "validBlkFiles"})
+    void test_readFileBytesUnsafe_ReturnsByteArrayWithValidContentForValidFile(
+            final Path filePath, final String expectedContent) throws IOException {
+        final byte[] actualContent = FileUtilities.readFileBytesUnsafe(filePath);
+        assertThat(actualContent)
+                .isNotNull()
+                .isNotEmpty()
+                .asString()
+                .isNotNull()
+                .isNotBlank()
+                .isEqualTo(expectedContent);
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidFiles")
+    void test_readFileBytesUnsafe_ThrowsIOExceptionForInvalidGzipFile(final Path filePath) {
+        assertThatIOException().isThrownBy(() -> FileUtilities.readFileBytesUnsafe(filePath));
     }
 
     private static Stream<Arguments> validGzipFiles() {
@@ -138,7 +164,13 @@ class FileUtilitiesTest {
                 Arguments.of(GZ_VALID2_PATH, GZ_VALID2_CONTENT));
     }
 
-    private static Stream<Arguments> invalidGzipFiles() {
-        return Stream.of(Arguments.of(GZ_INVALID1_PATH), Arguments.of(GZ_INVALID2_PATH));
+    private static Stream<Arguments> validBlkFiles() {
+        return Stream.of(
+                Arguments.of(BLK_VALID1_PATH, BLK_VALID1_CONTENT),
+                Arguments.of(BLK_VALID2_PATH, BLK_VALID2_CONTENT));
+    }
+
+    private static Stream<Arguments> invalidFiles() {
+        return Stream.of(Arguments.of(GZ_INVALID1_PATH), Arguments.of(FILE_INVALID2_PATH));
     }
 }
