@@ -16,11 +16,11 @@
 
 package com.hedera.block.simulator.generator;
 
-import static com.hedera.block.simulator.generator.Utils.readFileBytes;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 
+import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.hapi.block.stream.Block;
@@ -100,22 +100,22 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
 
     private void loadBlocks() throws IOException, ParseException {
 
-        Path rootPath = Path.of(rootFolder);
+        final Path rootPath = Path.of(rootFolder);
 
-        try (Stream<Path> blockFiles = Files.list(rootPath)) {
+        try (final Stream<Path> blockFiles = Files.list(rootPath)) {
 
-            List<Path> sortedBlockFiles =
+            final List<Path> sortedBlockFiles =
                     blockFiles.sorted(Comparator.comparing(Path::getFileName)).toList();
 
-            for (Path blockPath : sortedBlockFiles) {
+            for (final Path blockPath : sortedBlockFiles) {
 
-                byte[] blockBytes = readFileBytes(blockPath);
+                final byte[] blockBytes = FileUtilities.readFileBytesUnsafe(blockPath);
                 // skip if block is null, usually due to SO files like .DS_STORE
                 if (blockBytes == null) {
                     continue;
                 }
 
-                Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
+                final Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
                 blocks.add(block);
                 LOGGER.log(DEBUG, "Loaded block: " + blockPath);
             }

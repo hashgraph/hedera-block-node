@@ -16,9 +16,9 @@
 
 package com.hedera.block.simulator.generator;
 
-import static com.hedera.block.simulator.generator.Utils.readFileBytes;
 import static java.lang.System.Logger.Level.INFO;
 
+import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
@@ -78,22 +78,22 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
     public Block getNextBlock() throws IOException, BlockSimulatorParsingException {
         currentBlockIndex++;
 
-        String nextBlockFileName = String.format(formatString, currentBlockIndex);
-        File blockFile = new File(blockstreamPath, nextBlockFileName);
+        final String nextBlockFileName = String.format(formatString, currentBlockIndex);
+        final File blockFile = new File(blockstreamPath, nextBlockFileName);
 
         if (!blockFile.exists()) {
             return null;
         }
 
         try {
-            byte[] blockBytes = readFileBytes(blockFile.toPath());
+            final byte[] blockBytes = FileUtilities.readFileBytesUnsafe(blockFile.toPath());
 
             LOGGER.log(INFO, "Loading block: " + blockFile.getName());
 
-            Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
+            final Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
             LOGGER.log(INFO, "block loaded with items size= " + block.items().size());
             return block;
-        } catch (ParseException e) {
+        } catch (final ParseException e) {
             throw new BlockSimulatorParsingException(e.getMessage());
         }
     }
