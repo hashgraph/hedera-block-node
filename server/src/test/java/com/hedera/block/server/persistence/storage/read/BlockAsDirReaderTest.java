@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
+import static com.hedera.block.common.utils.FileUtilities.DEFAULT_DIR_PERMISSIONS;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
@@ -26,7 +27,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
@@ -241,7 +241,7 @@ public class BlockAsDirReaderTest {
     // IOException while allowing the real setPerm() method to remain protected.
     private static final class TestBlockAsDirReader extends BlockAsDirReader {
         public TestBlockAsDirReader(PersistenceStorageConfig config) {
-            super(config, FileUtils.defaultPerms);
+            super(config, DEFAULT_DIR_PERMISSIONS);
         }
 
         @Override

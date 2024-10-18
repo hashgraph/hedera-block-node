@@ -37,7 +37,7 @@ public final class FileUtilities {
      * <p>
      * Default permissions are set to: rw-r--r--
      */
-    private static final FileAttribute<Set<PosixFilePermission>> DEFAULT_FILE_PERMISSIONS =
+    public static final FileAttribute<Set<PosixFilePermission>> DEFAULT_FILE_PERMISSIONS =
             PosixFilePermissions.asFileAttribute(
                     Set.of(
                             PosixFilePermission.OWNER_READ,
@@ -50,7 +50,7 @@ public final class FileUtilities {
      * <p>
      * Default permissions are set to: rwxr-xr-x
      */
-    private static final FileAttribute<Set<PosixFilePermission>> DEFAULT_FOLDER_PERMISSIONS =
+    public static final FileAttribute<Set<PosixFilePermission>> DEFAULT_DIR_PERMISSIONS =
             PosixFilePermissions.asFileAttribute(
                     Set.of(
                             PosixFilePermission.OWNER_READ,
@@ -88,8 +88,7 @@ public final class FileUtilities {
         createPathIfNotExists(
                 toCreate,
                 logLevel,
-                DEFAULT_FILE_PERMISSIONS,
-                DEFAULT_FOLDER_PERMISSIONS,
+                createDir ? DEFAULT_DIR_PERMISSIONS : DEFAULT_FILE_PERMISSIONS,
                 semanticPathName,
                 createDir);
     }
@@ -99,8 +98,7 @@ public final class FileUtilities {
      *
      * @param toCreate The path to be created.
      * @param logLevel The logging level to use when logging this event.
-     * @param filePermissions Permissions to use when creating a new file.
-     * @param folderPermissions Permissions to use when creating a new folder.
+     * @param permissions Permissions to use when creating the path.
      * @param semanticPathName A name to represent the path in a logging
      *     statement.
      * @param createDir A flag indicating we should create a directory
@@ -111,22 +109,20 @@ public final class FileUtilities {
     public static void createPathIfNotExists(
             @NonNull final Path toCreate,
             @NonNull final System.Logger.Level logLevel,
-            @NonNull final FileAttribute<Set<PosixFilePermission>> filePermissions,
-            @NonNull final FileAttribute<Set<PosixFilePermission>> folderPermissions,
+            @NonNull final FileAttribute<Set<PosixFilePermission>> permissions,
             @NonNull final String semanticPathName,
             final boolean createDir)
             throws IOException {
         Objects.requireNonNull(toCreate);
         Objects.requireNonNull(logLevel);
-        Objects.requireNonNull(filePermissions);
-        Objects.requireNonNull(folderPermissions);
+        Objects.requireNonNull(permissions);
         StringUtilities.requireNotBlank(semanticPathName);
         final String requestedType = createDir ? "directory" : "file";
         if (Files.notExists(toCreate)) {
             if (createDir) {
-                Files.createDirectories(toCreate, folderPermissions);
+                Files.createDirectories(toCreate, permissions);
             } else {
-                Files.createFile(toCreate, filePermissions);
+                Files.createFile(toCreate, permissions);
             }
             final String logMessage =
                     "Created %s [%s] at %s".formatted(requestedType, semanticPathName, toCreate);

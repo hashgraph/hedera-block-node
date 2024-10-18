@@ -16,11 +16,12 @@
 
 package com.hedera.block.server;
 
+import static com.hedera.block.common.constants.StringsConstants.APPLICATION_PROPERTIES;
+import static com.hedera.block.common.constants.StringsConstants.LOGGING_PROPERTIES;
 import static io.helidon.config.ConfigSources.file;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 
-import com.hedera.block.common.constants.StringsConstants;
 import com.hedera.block.server.config.ServerMappedConfigSourceInitializer;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
@@ -50,9 +51,7 @@ public class Server {
         // Set the global configuration
         final Config config =
                 Config.builder()
-                        .sources(
-                                file(Paths.get("/app", StringsConstants.LOGGING_PROPERTIES))
-                                        .optional())
+                        .sources(file(Paths.get("/app", LOGGING_PROPERTIES)).optional())
                         .build();
 
         Config.global(config);
@@ -62,9 +61,7 @@ public class Server {
                 ConfigurationBuilder.create()
                         .withSource(ServerMappedConfigSourceInitializer.getMappedConfigSource())
                         .withSource(SystemPropertiesConfigSource.getInstance())
-                        .withSources(
-                                new ClasspathFileConfigSource(
-                                        Path.of(StringsConstants.APPLICATION_PROPERTIES)))
+                        .withSources(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES)))
                         .autoDiscoverExtensions()
                         .build();
 
