@@ -94,7 +94,9 @@ public class BlockAsDirWriterTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext)
+                        .filePerms(DEFAULT_DIR_PERMISSIONS)
+                        .build();
         for (int i = 0; i < 10; i++) {
             if (i == 9) {
                 Optional<List<BlockItem>> result = blockWriter.write(List.of(blockItems.get(i)));
