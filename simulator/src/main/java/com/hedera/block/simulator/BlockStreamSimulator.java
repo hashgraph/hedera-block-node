@@ -16,9 +16,9 @@
 
 package com.hedera.block.simulator;
 
+import static com.hedera.block.common.constants.StringsConstants.APPLICATION_PROPERTIES;
 import static java.lang.System.Logger.Level.INFO;
 
-import com.hedera.block.common.constants.StringsConstants;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
@@ -58,9 +58,7 @@ public class BlockStreamSimulator {
                 ConfigurationBuilder.create()
                         .withSource(SystemEnvironmentConfigSource.getInstance())
                         .withSource(SystemPropertiesConfigSource.getInstance())
-                        .withSource(
-                                new ClasspathFileConfigSource(
-                                        Path.of(StringsConstants.APPLICATION_PROPERTIES)))
+                        .withSource(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES)))
                         .autoDiscoverExtensions();
 
         final Configuration configuration = configurationBuilder.build();
