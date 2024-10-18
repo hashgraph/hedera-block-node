@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
+import static com.hedera.block.common.utils.FileUtilities.DEFAULT_DIR_PERMISSIONS;
 import static com.hedera.block.server.persistence.storage.read.BlockAsDirReaderTest.removeBlockReadPerms;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static java.lang.System.Logger;
@@ -33,7 +34,6 @@ import static org.mockito.Mockito.same;
 import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
@@ -94,9 +94,7 @@ public class BlockAsDirWriterTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(blockNodeContext)
-                        .filePerms(FileUtils.defaultPerms)
-                        .build();
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         for (int i = 0; i < 10; i++) {
             if (i == 9) {
                 Optional<List<BlockItem>> result = blockWriter.write(List.of(blockItems.get(i)));
@@ -190,7 +188,7 @@ public class BlockAsDirWriterTest {
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final BlockRemover blockRemover =
-                new BlockAsDirRemover(Path.of(testConfig.rootPath()), FileUtils.defaultPerms);
+                new BlockAsDirRemover(Path.of(testConfig.rootPath()), DEFAULT_DIR_PERMISSIONS);
 
         // Use a spy to simulate an IOException when the first block item is written
         final BlockWriter<List<BlockItem>> blockWriter =
@@ -245,7 +243,7 @@ public class BlockAsDirWriterTest {
     public void testPartialBlockRemoval() throws IOException, ParseException {
         final List<BlockItem> blockItems = generateBlockItems(3);
         final BlockRemover blockRemover =
-                new BlockAsDirRemover(Path.of(testConfig.rootPath()), FileUtils.defaultPerms);
+                new BlockAsDirRemover(Path.of(testConfig.rootPath()), DEFAULT_DIR_PERMISSIONS);
 
         // Use a spy of TestBlockAsDirWriter to proxy block items to the real writer
         // for the first 22 block items.  Then simulate an IOException on the 23rd block item
@@ -254,7 +252,7 @@ public class BlockAsDirWriterTest {
         final TestBlockAsDirWriter blockWriter =
                 spy(
                         new TestBlockAsDirWriter(
-                                blockRemover, FileUtils.defaultPerms, blockNodeContext));
+                                blockRemover, DEFAULT_DIR_PERMISSIONS, blockNodeContext));
 
         for (int i = 0; i < 23; i++) {
             // Prepare the block writer to call the actual write method
