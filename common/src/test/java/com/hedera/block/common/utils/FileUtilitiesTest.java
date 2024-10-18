@@ -19,6 +19,7 @@ package com.hedera.block.common.utils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIOException;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.System.Logger.Level;
 import java.nio.file.Files;
@@ -31,36 +32,49 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class FileUtilitiesTest {
-    // VALID PATHS & CONTENT
-    private static final Path GZ_VALID1_PATH = Path.of("src/test/resources/valid1.txt.gz");
-    private static final String GZ_VALID1_CONTENT = "valid1";
-
-    private static final Path GZ_VALID2_PATH = Path.of("src/test/resources/valid2.txt.gz");
-    private static final String GZ_VALID2_CONTENT = "valid2";
-
-    private static final Path BLK_VALID1_PATH = Path.of("src/test/resources/valid1.blk");
-    private static final String BLK_VALID1_CONTENT = "valid1blk";
-
-    private static final Path BLK_VALID2_PATH = Path.of("src/test/resources/valid2.blk");
-    private static final String BLK_VALID2_CONTENT = "valid2blk";
-
-    // INVALID PATHS
-    private static final Path GZ_INVALID1_PATH = Path.of("src/test/resources/invalid1.gz");
-    private static final Path FILE_INVALID2_PATH = Path.of("src/test/resources/nonexistent.gz");
-
     @Test
     void test_createPathIfNotExists_CreatesDirIfDoesNotExist(@TempDir final Path tempDir)
             throws IOException {
         final String newDir = "newDir";
         final Path toCreate = tempDir.resolve(newDir);
 
+        // ensure the temp directory is empty in the beginning
         assertThat(tempDir).isEmptyDirectory();
         assertThat(toCreate).doesNotExist();
 
+        // run actual
         FileUtilities.createPathIfNotExists(toCreate, Level.ERROR, "test dir 1", true);
 
-        assertThat(tempDir.toFile().listFiles()).hasSize(1);
+        // assert
         assertThat(toCreate).exists().isDirectory();
+        assertThat(tempDir.toFile().listFiles()).hasSize(1).contains(toCreate.toFile());
+    }
+
+    @Test
+    void test_createPathIfNotExists_DoesNotCreateDirIfExists(@TempDir final Path tempDir)
+        throws IOException {
+        final String newDir = "newDir";
+        final Path toCreate = tempDir.resolve(newDir);
+
+        // ensure the temp directory is empty in the beginning
+        assertThat(tempDir).isEmptyDirectory();
+        assertThat(toCreate).doesNotExist();
+
+        // create 'newDir'
+        Files.createDirectory(toCreate);
+
+        // ensure the temp directory contains only 'newDir' before running actual
+        final File tempDirAsFile = tempDir.toFile();
+        final File toCreateAsFile = toCreate.toFile();
+        assertThat(tempDirAsFile.listFiles()).hasSize(1).contains(toCreateAsFile);
+        assertThat(toCreate).exists().isDirectory();
+
+        // run actual
+        FileUtilities.createPathIfNotExists(toCreate, Level.ERROR, "test dir 1", true);
+
+        // assert
+        assertThat(toCreate).exists().isDirectory();
+        assertThat(tempDirAsFile.listFiles()).hasSize(1).contains(toCreateAsFile);
     }
 
     @Test
@@ -69,33 +83,16 @@ class FileUtilitiesTest {
         final String newFile = "newFile";
         final Path toCreate = tempDir.resolve(newFile);
 
+        // ensure the temp directory is empty in the beginning
         assertThat(tempDir).isEmptyDirectory();
         assertThat(toCreate).doesNotExist();
 
+        // run actual
         FileUtilities.createPathIfNotExists(toCreate, Level.ERROR, "test file 1", false);
 
-        assertThat(tempDir.toFile().listFiles()).hasSize(1);
+        // assert
         assertThat(toCreate).exists().isEmptyFile();
-    }
-
-    @Test
-    void test_createPathIfNotExists_DoesNotCreateDirIfExists(@TempDir final Path tempDir)
-            throws IOException {
-        final String newDir = "newDir";
-        final Path toCreate = tempDir.resolve(newDir);
-
-        assertThat(tempDir).isEmptyDirectory();
-        assertThat(toCreate).doesNotExist();
-
-        Files.createDirectory(toCreate);
-
-        assertThat(tempDir.toFile().listFiles()).hasSize(1);
-        assertThat(toCreate).exists().isDirectory();
-
-        FileUtilities.createPathIfNotExists(toCreate, Level.ERROR, "test dir 1", true);
-
-        assertThat(tempDir.toFile().listFiles()).hasSize(1);
-        assertThat(toCreate).exists().isDirectory();
+        assertThat(tempDir.toFile().listFiles()).hasSize(1).contains(toCreate.toFile());
     }
 
     @Test
@@ -104,18 +101,25 @@ class FileUtilitiesTest {
         final String newFile = "newFile";
         final Path toCreate = tempDir.resolve(newFile);
 
+        // ensure the temp directory is empty in the beginning
         assertThat(tempDir).isEmptyDirectory();
         assertThat(toCreate).doesNotExist();
 
+        // create 'newFile'
         Files.createFile(toCreate);
 
-        assertThat(tempDir.toFile().listFiles()).hasSize(1);
+        // ensure the temp directory contains only 'newFile' before running actual
+        final File tempDirAsFile = tempDir.toFile();
+        final File toCreateAsFile = toCreate.toFile();
+        assertThat(tempDirAsFile.listFiles()).hasSize(1).contains(toCreateAsFile);
         assertThat(toCreate).exists().isEmptyFile();
 
+        // run actual
         FileUtilities.createPathIfNotExists(toCreate, Level.ERROR, "test file 1", false);
 
-        assertThat(tempDir.toFile().listFiles()).hasSize(1);
+        // assert
         assertThat(toCreate).exists().isEmptyFile();
+        assertThat(tempDirAsFile.listFiles()).hasSize(1).contains(toCreateAsFile);
     }
 
     @ParameterizedTest
@@ -160,17 +164,19 @@ class FileUtilitiesTest {
 
     private static Stream<Arguments> validGzipFiles() {
         return Stream.of(
-                Arguments.of(GZ_VALID1_PATH, GZ_VALID1_CONTENT),
-                Arguments.of(GZ_VALID2_PATH, GZ_VALID2_CONTENT));
+                Arguments.of("src/test/resources/valid1.txt.gz", "valid1"),
+                Arguments.of("src/test/resources/valid2.txt.gz", "valid2"));
     }
 
     private static Stream<Arguments> validBlkFiles() {
         return Stream.of(
-                Arguments.of(BLK_VALID1_PATH, BLK_VALID1_CONTENT),
-                Arguments.of(BLK_VALID2_PATH, BLK_VALID2_CONTENT));
+                Arguments.of("src/test/resources/valid1.blk", "valid1blk"),
+                Arguments.of("src/test/resources/valid2.blk", "valid2blk"));
     }
 
     private static Stream<Arguments> invalidFiles() {
-        return Stream.of(Arguments.of(GZ_INVALID1_PATH), Arguments.of(FILE_INVALID2_PATH));
+        return Stream.of(
+                Arguments.of("src/test/resources/invalid1.gz"),
+                Arguments.of("src/test/resources/nonexistent.gz"));
     }
 }
