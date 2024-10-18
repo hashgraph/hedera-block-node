@@ -18,6 +18,7 @@ package com.hedera.block.server;
 
 import static com.hedera.block.server.Constants.APPLICATION_PROPERTIES;
 import static com.hedera.block.server.Constants.LOGGING_PROPERTIES;
+import static io.helidon.config.ConfigSources.classpath;
 import static io.helidon.config.ConfigSources.file;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
@@ -52,6 +53,7 @@ public class Server {
         final Config config =
                 Config.builder()
                         .sources(file(Paths.get("/app", LOGGING_PROPERTIES)).optional())
+                        .sources(classpath("helidon.properties"))
                         .build();
 
         Config.global(config);

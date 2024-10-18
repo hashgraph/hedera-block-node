@@ -104,7 +104,15 @@ public final class BlockNodeMetricTypes {
         Consumers("consumers", "Consumers"),
 
         /** The number of producers publishing block items. */
-        Producers("producers", "Producers");
+        Producers("producers", "Producers"),
+
+        MediatorRingBufferRemainingCapacity(
+                "mediator_ring_buffer_remaining_capacity",
+                "Mediator Ring Buffer Remaining Capacity"),
+
+        NotifierRingBufferRemainingCapacity(
+                "notifier_ring_buffer_remaining_capacity",
+                "Notifier Ring Buffer Remaining Capacity");
 
         private final String grafanaLabel;
         private final String description;

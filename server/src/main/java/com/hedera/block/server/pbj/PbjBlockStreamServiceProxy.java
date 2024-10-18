@@ -29,7 +29,9 @@ import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
+import com.hedera.block.server.producer.MockNoOpProducerObserver;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
+import com.hedera.block.server.producer.ProducerConfig;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.PublishStreamRequest;
 import com.hedera.hapi.block.PublishStreamResponse;
@@ -129,20 +131,31 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         // Unsubscribe any expired notifiers
         notifier.unsubscribeAllExpired();
 
-        final var producerBlockItemObserver =
-                new ProducerBlockItemObserver(
-                        Clock.systemDefaultZone(),
-                        streamMediator,
-                        notifier,
-                        publishStreamResponseObserver,
-                        blockNodeContext,
-                        serviceStatus);
+        final String observerClassType =
+                blockNodeContext
+                        .configuration()
+                        .getConfigData(ProducerConfig.class)
+                        .observerClassType();
 
-        // Register the producer observer with the notifier to publish responses back to the
-        // producer
-        notifier.subscribe(producerBlockItemObserver);
+        if ("NOOP".equalsIgnoreCase(observerClassType)) {
+            // No need to register with the notifier for NOOP
+            return new MockNoOpProducerObserver(blockNodeContext);
+        } else {
+            final var productionProducerBlockItemObserver =
+                    new ProducerBlockItemObserver(
+                            Clock.systemDefaultZone(),
+                            streamMediator,
+                            notifier,
+                            publishStreamResponseObserver,
+                            blockNodeContext,
+                            serviceStatus);
 
-        return producerBlockItemObserver;
+            // Register the producer observer with the notifier to publish responses back to the
+            // producer
+            notifier.subscribe(productionProducerBlockItemObserver);
+
+            return productionProducerBlockItemObserver;
+        }
     }
 
     void subscribeBlockStream(
@@ -225,7 +238,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     private SingleBlockRequest parseSingleBlockRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options)
             throws ParseException {
-        //        return SingleBlockRequest.PROTOBUF.parse(message);
+
         byte[] b = message.toByteArray();
         return SingleBlockRequest.PROTOBUF.parse(Bytes.wrap(b));
     }
@@ -241,7 +254,6 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
             @NonNull final Bytes message, @NonNull final RequestOptions options)
             throws ParseException {
 
-        //        return SubscribeStreamRequest.PROTOBUF.parse(message);
         byte[] b = message.toByteArray();
         return SubscribeStreamRequest.PROTOBUF.parse(Bytes.wrap(b));
     }
@@ -258,7 +270,6 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     private PublishStreamRequest parsePublishStreamRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options)
             throws ParseException {
-        //        return PublishStreamRequest.PROTOBUF.parse(message);
 
         byte[] b = message.toByteArray();
         return PublishStreamRequest.PROTOBUF.parse(Bytes.wrap(b));
@@ -268,6 +279,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     private Bytes createPublishStreamResponse(
             @NonNull final PublishStreamResponse publishStreamResponse,
             @NonNull final RequestOptions options) {
+
         return PublishStreamResponse.PROTOBUF.toBytes(publishStreamResponse);
     }
 }

@@ -18,6 +18,7 @@ module com.hedera.block.server {
     exports com.hedera.block.server.notifier;
     exports com.hedera.block.server.service;
     exports com.hedera.block.server.pbj;
+    exports com.hedera.block.server.producer;
 
     requires com.hedera.block.stream;
     requires com.hedera.pbj.grpc.helidon;

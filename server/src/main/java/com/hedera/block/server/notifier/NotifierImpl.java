@@ -17,6 +17,7 @@
 package com.hedera.block.server.notifier;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.SuccessfulPubStreamResp;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.NotifierRingBufferRemainingCapacity;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Producers;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static java.lang.System.Logger.Level.ERROR;
@@ -119,6 +120,9 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
                                 .build();
                 ringBuffer.publishEvent((event, sequence) -> event.set(publishStreamResponse));
 
+                metricsService
+                        .get(NotifierRingBufferRemainingCapacity)
+                        .set(ringBuffer.remainingCapacity());
                 metricsService.get(SuccessfulPubStreamResp).increment();
             } else {
                 LOGGER.log(ERROR, "Notifier is not running.");

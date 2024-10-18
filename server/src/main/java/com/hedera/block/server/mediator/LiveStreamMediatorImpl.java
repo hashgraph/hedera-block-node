@@ -19,10 +19,10 @@ package com.hedera.block.server.mediator;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItems;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockStreamMediatorError;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Consumers;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.MediatorRingBufferRemainingCapacity;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
-import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
@@ -103,11 +103,11 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
             final var subscribeStreamResponse =
                     SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
-            LOGGER.log(INFO, "RingBuffer Remaining Capacity: " + ringBuffer.remainingCapacity());
 
-            // Increment the block item counter
+            long remainingCapacity = ringBuffer.remainingCapacity();
+
+            metricsService.get(MediatorRingBufferRemainingCapacity).set(remainingCapacity);
             metricsService.get(LiveBlockItems).increment();
-
         } else {
             LOGGER.log(ERROR, "StreamMediator is not accepting BlockItems");
         }

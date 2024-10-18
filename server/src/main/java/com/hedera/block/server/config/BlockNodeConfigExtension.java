@@ -21,6 +21,7 @@ import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.mediator.MediatorConfig;
 import com.hedera.block.server.notifier.NotifierConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.producer.ProducerConfig;
 import com.hedera.block.server.service.ServiceConfig;
 import com.swirlds.common.metrics.config.MetricsConfig;
 import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
@@ -51,6 +52,7 @@ public class BlockNodeConfigExtension implements ConfigurationExtension {
                 NotifierConfig.class,
                 MetricsConfig.class,
                 PrometheusConfig.class,
+                ProducerConfig.class,
                 ConsumerConfig.class,
                 PersistenceStorageConfig.class);
     }
