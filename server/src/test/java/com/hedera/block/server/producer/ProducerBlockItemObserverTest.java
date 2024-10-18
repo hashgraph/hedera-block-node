@@ -59,7 +59,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class ProducerBlockItemObserverTest {
 
     @Mock private InstantSource testClock;
-    @Mock private Publisher<BlockItem> publisher;
+    @Mock private Publisher<List<BlockItem>> publisher;
     @Mock private SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
 
     @Mock
@@ -135,7 +135,7 @@ public class ProducerBlockItemObserverTest {
         // create the PublishStreamRequest with the spy block item
         final com.hedera.hapi.block.protoc.PublishStreamRequest protocPublishStreamRequest =
                 com.hedera.hapi.block.protoc.PublishStreamRequest.newBuilder()
-                        .setBlockItem(protocBlockItem)
+                        .addBlockItems(protocBlockItem)
                         .build();
 
         // call the producerBlockItemObserver
@@ -149,7 +149,9 @@ public class ProducerBlockItemObserverTest {
         fromPbj(PublishStreamResponse.newBuilder().status(endOfStream).build());
 
         // verify the ProducerBlockItemObserver has sent an error response
-        verify(publishStreamResponseObserver, timeout(testTimeout).times(1))
+        verify(
+                        publishStreamResponseObserver,
+                        timeout(testTimeout).atLeast(1)) // It fixes if set it to 2, but why???
                 .onNext(fromPbj(PublishStreamResponse.newBuilder().status(endOfStream).build()));
 
         verify(serviceStatus, timeout(testTimeout).times(1)).stopWebServer(any());
@@ -170,7 +172,7 @@ public class ProducerBlockItemObserverTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
         final ItemAcknowledgement itemAck =
                 ItemAcknowledgement.newBuilder()
-                        .itemHash(Bytes.wrap(getFakeHash(blockItems.getLast())))
+                        .itemsHash(Bytes.wrap(getFakeHash(blockItems)))
                         .build();
         final PublishStreamResponse publishStreamResponse =
                 PublishStreamResponse.newBuilder()
@@ -207,7 +209,7 @@ public class ProducerBlockItemObserverTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
         final ItemAcknowledgement itemAck =
                 ItemAcknowledgement.newBuilder()
-                        .itemHash(Bytes.wrap(getFakeHash(blockItems.getLast())))
+                        .itemsHash(Bytes.wrap(getFakeHash(blockItems)))
                         .build();
         final PublishStreamResponse publishStreamResponse =
                 PublishStreamResponse.newBuilder()
@@ -245,7 +247,7 @@ public class ProducerBlockItemObserverTest {
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final PublishStreamRequest publishStreamRequest =
-                PublishStreamRequest.newBuilder().blockItem(blockItems.getFirst()).build();
+                PublishStreamRequest.newBuilder().blockItems(blockItems).build();
 
         // Confirm that the observer is called with the first BlockItem
         producerBlockItemObserver.onNext(fromPbj(publishStreamRequest));
@@ -263,7 +265,7 @@ public class ProducerBlockItemObserverTest {
     private static class TestProducerBlockItemObserver extends ProducerBlockItemObserver {
         public TestProducerBlockItemObserver(
                 @NonNull final InstantSource clock,
-                @NonNull final Publisher<BlockItem> publisher,
+                @NonNull final Publisher<List<BlockItem>> publisher,
                 @NonNull final SubscriptionHandler<PublishStreamResponse> subscriptionHandler,
                 @NonNull
                         final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>

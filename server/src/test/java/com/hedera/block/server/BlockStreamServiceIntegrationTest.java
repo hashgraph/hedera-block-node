@@ -57,6 +57,7 @@ import com.hedera.hapi.block.SingleBlockResponseCode;
 import com.hedera.hapi.block.SubscribeStreamRequest;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
+import com.hedera.hapi.block.SubscribeStreamResponseSet;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
@@ -133,7 +134,7 @@ public class BlockStreamServiceIntegrationTest {
     @Mock private WebServer webServer;
 
     @Mock private BlockReader<Block> blockReader;
-    @Mock private BlockWriter<BlockItem> blockWriter;
+    @Mock private BlockWriter<List<BlockItem>> blockWriter;
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
 
@@ -196,16 +197,16 @@ public class BlockStreamServiceIntegrationTest {
         List<BlockItem> blockItems = generateBlockItems(1);
         for (int i = 0; i < blockItems.size(); i++) {
             if (i == 9) {
-                when(blockWriter.write(blockItems.get(i)))
-                        .thenReturn(Optional.of(blockItems.get(i)));
+                when(blockWriter.write(List.of(blockItems.get(i))))
+                        .thenReturn(Optional.of(List.of(blockItems.get(i))));
             } else {
-                when(blockWriter.write(blockItems.get(i))).thenReturn(Optional.empty());
+                when(blockWriter.write(List.of(blockItems.get(i)))).thenReturn(Optional.empty());
             }
         }
 
         for (BlockItem blockItem : blockItems) {
             final PublishStreamRequest publishStreamRequest =
-                    PublishStreamRequest.newBuilder().blockItem(blockItem).build();
+                    PublishStreamRequest.newBuilder().blockItems(blockItem).build();
 
             // Calling onNext() as Helidon does with each block item for
             // the first producer.
@@ -235,7 +236,7 @@ public class BlockStreamServiceIntegrationTest {
                 .onNext(fromPbj(buildSubscribeStreamResponse(blockItems.get(9))));
 
         // Only 1 response is expected per block sent
-        final Acknowledgement itemAck = buildAck(blockItems.get(9));
+        final Acknowledgement itemAck = buildAck(List.of(blockItems.get(9)));
         final PublishStreamResponse publishStreamResponse =
                 PublishStreamResponse.newBuilder().acknowledgement(itemAck).build();
 
@@ -295,7 +296,9 @@ public class BlockStreamServiceIntegrationTest {
         // Build the BlockItem
         final List<BlockItem> blockItems = generateBlockItems(1);
         final PublishStreamRequest publishStreamRequest =
-                PublishStreamRequest.newBuilder().blockItem(blockItems.getFirst()).build();
+                PublishStreamRequest.newBuilder()
+                        .blockItems(List.of(blockItems.getFirst()))
+                        .build();
 
         // Calling onNext() with a BlockItem
         streamObserver.onNext(fromPbj(publishStreamRequest));
@@ -303,10 +306,14 @@ public class BlockStreamServiceIntegrationTest {
         // Verify the counter was incremented
         assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
 
-        verify(blockWriter, timeout(testTimeout).times(1)).write(blockItems.getFirst());
+        verify(blockWriter, timeout(testTimeout).times(1)).write(List.of(blockItems.getFirst()));
 
+        final SubscribeStreamResponseSet subscribeStreamResponseSet =
+                SubscribeStreamResponseSet.newBuilder()
+                        .blockItems(List.of(blockItems.getFirst()))
+                        .build();
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().blockItem(blockItems.getFirst()).build();
+                SubscribeStreamResponse.newBuilder().blockItems(subscribeStreamResponseSet).build();
 
         verify(subscribeStreamObserver1, timeout(testTimeout).times(1))
                 .onNext(fromPbj(subscribeStreamResponse));
@@ -320,7 +327,7 @@ public class BlockStreamServiceIntegrationTest {
     public void testFullHappyPath() throws IOException {
         int numberOfBlocks = 100;
 
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         final BlockStreamService blockStreamService = buildBlockStreamService(blockWriter);
 
@@ -338,7 +345,7 @@ public class BlockStreamServiceIntegrationTest {
         final List<BlockItem> blockItems = generateBlockItems(numberOfBlocks);
         for (BlockItem blockItem : blockItems) {
             final PublishStreamRequest publishStreamRequest =
-                    PublishStreamRequest.newBuilder().blockItem(blockItem).build();
+                    PublishStreamRequest.newBuilder().blockItems(blockItem).build();
             streamObserver.onNext(fromPbj(publishStreamRequest));
         }
 
@@ -377,7 +384,7 @@ public class BlockStreamServiceIntegrationTest {
 
         for (int i = 0; i < blockItems.size(); i++) {
             final PublishStreamRequest publishStreamRequest =
-                    PublishStreamRequest.newBuilder().blockItem(blockItems.get(i)).build();
+                    PublishStreamRequest.newBuilder().blockItems(blockItems.get(i)).build();
 
             // Add a new subscriber
             if (i == 51) {
@@ -467,7 +474,7 @@ public class BlockStreamServiceIntegrationTest {
             streamObserver.onNext(
                     fromPbj(
                             PublishStreamRequest.newBuilder()
-                                    .blockItem(blockItems.get(i))
+                                    .blockItems(blockItems.get(i))
                                     .build()));
 
             // Remove 1st subscriber
@@ -553,9 +560,9 @@ public class BlockStreamServiceIntegrationTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         // Use a spy to make sure the write() method throws an IOException
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build());
-        doThrow(IOException.class).when(blockWriter).write(blockItems.getFirst());
+        doThrow(IOException.class).when(blockWriter).write(blockItems);
 
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);
         final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
@@ -585,7 +592,7 @@ public class BlockStreamServiceIntegrationTest {
 
         // Transmit a BlockItem
         final PublishStreamRequest publishStreamRequest =
-                PublishStreamRequest.newBuilder().blockItem(blockItems.getFirst()).build();
+                PublishStreamRequest.newBuilder().blockItems(blockItems).build();
         streamObserver.onNext(fromPbj(publishStreamRequest));
 
         // Use verify to make sure the serviceStatus.stopRunning() method is called
@@ -620,8 +627,11 @@ public class BlockStreamServiceIntegrationTest {
 
         // The BlockItem expected to pass through since it was published
         // before the IOException was thrown.
+        final SubscribeStreamResponseSet subscribeStreamResponseSet =
+                SubscribeStreamResponseSet.newBuilder().blockItems(blockItems).build();
+
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().blockItem(blockItems.getFirst()).build();
+                SubscribeStreamResponse.newBuilder().blockItems(subscribeStreamResponseSet).build();
         verify(subscribeStreamObserver1, timeout(testTimeout).times(1))
                 .onNext(fromPbj(subscribeStreamResponse));
         verify(subscribeStreamObserver2, timeout(testTimeout).times(1))
@@ -709,7 +719,9 @@ public class BlockStreamServiceIntegrationTest {
     }
 
     private static SubscribeStreamResponse buildSubscribeStreamResponse(BlockItem blockItem) {
-        return SubscribeStreamResponse.newBuilder().blockItem(blockItem).build();
+        final SubscribeStreamResponseSet subscribeStreamResponseSet =
+                SubscribeStreamResponseSet.newBuilder().blockItems(blockItem).build();
+        return SubscribeStreamResponse.newBuilder().blockItems(subscribeStreamResponseSet).build();
     }
 
     private static PublishStreamResponse buildEndOfStreamResponse() {
@@ -720,7 +732,8 @@ public class BlockStreamServiceIntegrationTest {
         return PublishStreamResponse.newBuilder().status(endOfStream).build();
     }
 
-    private BlockStreamService buildBlockStreamService(final BlockWriter<BlockItem> blockWriter) {
+    private BlockStreamService buildBlockStreamService(
+            final BlockWriter<List<BlockItem>> blockWriter) {
 
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);
@@ -752,11 +765,11 @@ public class BlockStreamServiceIntegrationTest {
                 .build();
     }
 
-    public static Acknowledgement buildAck(@NonNull final BlockItem blockItem)
+    public static Acknowledgement buildAck(@NonNull final List<BlockItem> blockItems)
             throws NoSuchAlgorithmException {
         ItemAcknowledgement itemAck =
                 ItemAcknowledgement.newBuilder()
-                        .itemHash(Bytes.wrap(getFakeHash(blockItem)))
+                        .itemsHash(Bytes.wrap(getFakeHash(blockItems)))
                         .build();
 
         return Acknowledgement.newBuilder().itemAck(itemAck).build();

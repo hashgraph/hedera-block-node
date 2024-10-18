@@ -66,10 +66,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -83,7 +85,7 @@ public class BlockStreamServiceTest {
 
     @Mock private BlockReader<Block> blockReader;
 
-    @Mock private BlockWriter<BlockItem> blockWriter;
+    @Mock private BlockWriter<List<BlockItem>> blockWriter;
 
     @Mock private ServiceStatus serviceStatus;
 
@@ -129,10 +131,10 @@ public class BlockStreamServiceTest {
                         blockNodeContext);
 
         // Verify the service name
-        assertEquals(Constants.SERVICE_NAME, blockStreamService.serviceName());
+        assertEquals(Constants.SERVICE_NAME_BLOCK_STREAM, blockStreamService.serviceName());
 
         // Verify other methods not invoked
-        verify(streamMediator, timeout(testTimeout).times(0)).publish(any(BlockItem.class));
+        verify(streamMediator, timeout(testTimeout).times(0)).publish(any());
     }
 
     @Test
@@ -151,11 +153,37 @@ public class BlockStreamServiceTest {
                         blockNodeContext);
         Descriptors.FileDescriptor fileDescriptor = blockStreamService.proto();
 
-        // Verify the current rpc methods
-        assertEquals(5, fileDescriptor.getServices().getFirst().getMethods().size());
+        // Verify the current rpc methods on
+        Descriptors.ServiceDescriptor blockStreamServiceDescriptor =
+                fileDescriptor.getServices().stream()
+                        .filter(
+                                service ->
+                                        service.getName()
+                                                .equals(Constants.SERVICE_NAME_BLOCK_STREAM))
+                        .findFirst()
+                        .orElse(null);
+
+        Assertions.assertNotNull(
+                blockStreamServiceDescriptor,
+                "Service descriptor not found for: " + Constants.SERVICE_NAME_BLOCK_STREAM);
+        assertEquals(2, blockStreamServiceDescriptor.getMethods().size());
+
+        Descriptors.ServiceDescriptor blockAccessServiceDescriptor =
+                fileDescriptor.getServices().stream()
+                        .filter(
+                                service ->
+                                        service.getName()
+                                                .equals(Constants.SERVICE_NAME_BLOCK_ACCESS))
+                        .findFirst()
+                        .orElse(null);
+        Assertions.assertNotNull(
+                blockAccessServiceDescriptor,
+                "Service descriptor not found for: " + Constants.SERVICE_NAME_BLOCK_ACCESS);
+        assertEquals(1, blockAccessServiceDescriptor.getMethods().size());
 
         // Verify other methods not invoked
-        verify(streamMediator, timeout(testTimeout).times(0)).publish(any(BlockItem.class));
+        verify(streamMediator, timeout(testTimeout).times(0))
+                .publish(Mockito.<List<BlockItem>>any());
     }
 
     @Test
@@ -178,12 +206,10 @@ public class BlockStreamServiceTest {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         // Generate and persist a block
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         final List<BlockItem> blockItems = generateBlockItems(1);
-        for (BlockItem blockItem : blockItems) {
-            blockWriter.write(blockItem);
-        }
+        blockWriter.write(blockItems);
 
         // Get the block so we can verify the response payload
         final Optional<Block> blockOpt = blockReader.read(1);

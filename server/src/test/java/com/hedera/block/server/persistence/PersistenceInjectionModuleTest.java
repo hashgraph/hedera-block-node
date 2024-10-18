@@ -35,6 +35,7 @@ import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.swirlds.config.api.Configuration;
 import java.io.IOException;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +49,7 @@ class PersistenceInjectionModuleTest {
     @Mock private PersistenceStorageConfig persistenceStorageConfig;
     @Mock private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
     @Mock private Notifier notifier;
-    @Mock private BlockWriter<BlockItem> blockWriter;
+    @Mock private BlockWriter<List<BlockItem>> blockWriter;
     @Mock private ServiceStatus serviceStatus;
 
     @BeforeEach
@@ -62,7 +63,7 @@ class PersistenceInjectionModuleTest {
     @Test
     void testProvidesBlockWriter() {
 
-        BlockWriter<BlockItem> blockWriter =
+        BlockWriter<List<BlockItem>> blockWriter =
                 PersistenceInjectionModule.providesBlockWriter(blockNodeContext);
 
         assertNotNull(blockWriter);

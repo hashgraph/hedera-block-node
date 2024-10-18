@@ -35,6 +35,7 @@ import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.SubscribeStreamResponseSet;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.OneOf;
 import java.io.IOException;
@@ -49,7 +50,7 @@ public class StreamPersistenceHandlerImplTest {
 
     @Mock private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
 
-    @Mock private BlockWriter<BlockItem> blockWriter;
+    @Mock private BlockWriter<List<BlockItem>> blockWriter;
 
     @Mock private Notifier notifier;
 
@@ -76,8 +77,10 @@ public class StreamPersistenceHandlerImplTest {
                         serviceStatus);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
+        final SubscribeStreamResponseSet subscribeStreamResponseSet =
+                SubscribeStreamResponseSet.newBuilder().blockItems(blockItems).build();
         final var subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().blockItem(blockItems.getFirst()).build();
+                SubscribeStreamResponse.newBuilder().blockItems(subscribeStreamResponseSet).build();
         final ObjectEvent<SubscribeStreamResponse> event = new ObjectEvent<>();
         event.set(subscribeStreamResponse);
 
@@ -85,7 +88,7 @@ public class StreamPersistenceHandlerImplTest {
 
         // Indirectly confirm the branch we're in by verifying
         // these methods were not called.
-        verify(notifier, never()).publish(blockItems.getFirst());
+        verify(notifier, never()).publish(blockItems);
         verify(metricsService, never()).get(StreamPersistenceHandlerError);
     }
 
@@ -104,11 +107,16 @@ public class StreamPersistenceHandlerImplTest {
                         serviceStatus);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
+        final SubscribeStreamResponseSet subscribeStreamResponseSet =
+                SubscribeStreamResponseSet.newBuilder().blockItems(blockItems).build();
         final var subscribeStreamResponse =
-                spy(SubscribeStreamResponse.newBuilder().blockItem(blockItems.getFirst()).build());
+                spy(
+                        SubscribeStreamResponse.newBuilder()
+                                .blockItems(subscribeStreamResponseSet)
+                                .build());
 
         // Force the block item to be null
-        when(subscribeStreamResponse.blockItem()).thenReturn(null);
+        when(subscribeStreamResponse.blockItems()).thenReturn(null);
         final ObjectEvent<SubscribeStreamResponse> event = new ObjectEvent<>();
         event.set(subscribeStreamResponse);
 
@@ -133,8 +141,13 @@ public class StreamPersistenceHandlerImplTest {
                         serviceStatus);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
+        final SubscribeStreamResponseSet subscribeStreamResponseSet =
+                SubscribeStreamResponseSet.newBuilder().blockItems(blockItems).build();
         final var subscribeStreamResponse =
-                spy(SubscribeStreamResponse.newBuilder().blockItem(blockItems.getFirst()).build());
+                spy(
+                        SubscribeStreamResponse.newBuilder()
+                                .blockItems(subscribeStreamResponseSet)
+                                .build());
 
         // Force the block item to be UNSET
         final OneOf<SubscribeStreamResponse.ResponseOneOfType> illegalOneOf =

@@ -69,10 +69,10 @@ public class BlockAsDirRemoverTest {
         // Write a block
         final var blockItems = PersistTestUtils.generateBlockItems(1);
 
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         for (final BlockItem blockItem : blockItems) {
-            blockWriter.write(blockItem);
+            blockWriter.write(List.of(blockItem));
         }
 
         // Remove a block that does not exist
@@ -102,11 +102,10 @@ public class BlockAsDirRemoverTest {
         // Write a block
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-        for (final BlockItem blockItem : blockItems) {
-            blockWriter.write(blockItem);
-        }
+
+        blockWriter.write(blockItems);
 
         // Set up the BlockRemover with permissions that will prevent the block from being removed
         BlockRemover blockRemover = new BlockAsDirRemover(testPath, TestUtils.getNoPerms());

@@ -18,7 +18,7 @@ package com.hedera.block.server;
 
 import static com.hedera.block.server.Constants.CLIENT_STREAMING_METHOD_NAME;
 import static com.hedera.block.server.Constants.SERVER_STREAMING_METHOD_NAME;
-import static com.hedera.block.server.Constants.SERVICE_NAME;
+import static com.hedera.block.server.Constants.SERVICE_NAME_BLOCK_STREAM;
 import static com.hedera.block.server.Constants.SINGLE_BLOCK_METHOD_NAME;
 import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.Translator.toPbj;
@@ -126,7 +126,7 @@ public class BlockStreamService implements GrpcService {
     @NonNull
     @Override
     public String serviceName() {
-        return SERVICE_NAME;
+        return SERVICE_NAME_BLOCK_STREAM;
     }
 
     /**
