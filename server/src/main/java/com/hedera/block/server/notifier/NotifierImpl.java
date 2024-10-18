@@ -34,6 +34,7 @@ import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -104,18 +105,18 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
     /**
      * Publishes the given block item to all subscribed producers.
      *
-     * @param blockItem the block item from the persistence layer to publish a response to upstream
-     *     producers
+     * @param blockItems the block items from the persistence layer to publish a response to
+     *     upstream producers
      */
     @Override
-    public void publish(@NonNull BlockItem blockItem) {
+    public void publish(@NonNull List<BlockItem> blockItems) {
 
         try {
             if (serviceStatus.isRunning()) {
                 // Publish the block item to the subscribers
                 final var publishStreamResponse =
                         PublishStreamResponse.newBuilder()
-                                .acknowledgement(buildAck(blockItem))
+                                .acknowledgement(buildAck(blockItems))
                                 .build();
                 ringBuffer.publishEvent((event, sequence) -> event.set(publishStreamResponse));
 
@@ -150,16 +151,17 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
     /**
      * Protected method meant for testing. Builds an Acknowledgement for the block item.
      *
-     * @param blockItem the block item to build the Acknowledgement for
+     * @param blockItems the block items to build the Acknowledgement for
      * @return the Acknowledgement for the block item
      * @throws NoSuchAlgorithmException if the hash algorithm is not supported
      */
     @NonNull
-    Acknowledgement buildAck(@NonNull final BlockItem blockItem) throws NoSuchAlgorithmException {
+    Acknowledgement buildAck(@NonNull final List<BlockItem> blockItems)
+            throws NoSuchAlgorithmException {
         final ItemAcknowledgement itemAck =
                 ItemAcknowledgement.newBuilder()
                         // TODO: Replace this with a real hash generator
-                        .itemHash(Bytes.wrap(getFakeHash(blockItem)))
+                        .itemsHash(Bytes.wrap(getFakeHash(blockItems)))
                         .build();
 
         return Acknowledgement.newBuilder().itemAck(itemAck).build();

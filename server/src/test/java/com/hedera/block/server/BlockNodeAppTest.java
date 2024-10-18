@@ -20,6 +20,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.server.grpc.BlockStreamService;
 import com.hedera.block.server.health.HealthService;
 import com.hedera.block.server.service.ServiceStatus;
 import io.helidon.webserver.WebServer;
