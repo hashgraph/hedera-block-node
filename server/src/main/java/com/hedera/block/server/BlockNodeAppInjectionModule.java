@@ -17,6 +17,7 @@
 package com.hedera.block.server;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.grpc.BlockStreamService;
 import com.hedera.block.server.metrics.MetricsService;
 import com.swirlds.config.api.Configuration;
 import dagger.Binds;

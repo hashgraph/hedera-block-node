@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server;
+package com.hedera.block.server.grpc;
 
 import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItems;
@@ -578,6 +578,10 @@ public class BlockStreamServiceIntegrationTest {
                         notifier,
                         blockNodeContext);
 
+        final BlockAccessService blockAccessService =
+                new BlockAccessService(
+                        serviceStatus, blockReader, blockNodeContext.metricsService());
+
         // Subscribe the consumers
         blockStreamService.protocSubscribeBlockStream(
                 subscribeStreamRequest, subscribeStreamObserver1);
@@ -616,7 +620,7 @@ public class BlockStreamServiceIntegrationTest {
                         .build();
 
         // Simulate a consumer attempting to connect to the Block Node after the exception.
-        blockStreamService.protocSingleBlock(singleBlockRequest, singleBlockResponseStreamObserver);
+        blockAccessService.protocSingleBlock(singleBlockRequest, singleBlockResponseStreamObserver);
 
         // Build a request to invoke the subscribeBlockStream service
         final SubscribeStreamRequest subscribeStreamRequest =

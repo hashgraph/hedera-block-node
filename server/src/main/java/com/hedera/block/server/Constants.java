@@ -31,9 +31,10 @@ public final class Constants {
      */
     @NonNull public static final String LOGGING_PROPERTIES = "logging.properties";
 
-    /** Constant mapped to the name of the service in the .proto file */
+    /** Constant mapped to the name of the BlockStream service in the .proto file */
     @NonNull public static final String SERVICE_NAME_BLOCK_STREAM = "BlockStreamService";
 
+    /** Constant mapped to the name of the BlockAccess service in the .proto file */
     @NonNull public static final String SERVICE_NAME_BLOCK_ACCESS = "BlockAccessService";
 
     /** Constant mapped to the publishBlockStream service method name in the .proto file */

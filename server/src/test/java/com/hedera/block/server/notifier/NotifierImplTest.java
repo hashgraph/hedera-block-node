@@ -16,8 +16,8 @@
 
 package com.hedera.block.server.notifier;
 
-import static com.hedera.block.server.BlockStreamServiceIntegrationTest.buildAck;
 import static com.hedera.block.server.Translator.fromPbj;
+import static com.hedera.block.server.grpc.BlockStreamServiceIntegrationTest.buildAck;
 import static com.hedera.block.server.notifier.NotifierImpl.buildErrorStreamResponse;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.assertFalse;
