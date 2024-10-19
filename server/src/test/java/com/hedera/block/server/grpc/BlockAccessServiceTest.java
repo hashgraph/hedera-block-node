@@ -22,6 +22,8 @@ import static com.hedera.block.server.grpc.BlockAccessService.buildSingleBlockNo
 import static com.hedera.block.server.grpc.BlockAccessService.fromPbjSingleBlockSuccessResponse;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static java.lang.System.Logger.Level.INFO;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -31,6 +33,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.protobuf.Descriptors;
+import com.hedera.block.server.Constants;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.notifier.Notifier;
@@ -56,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -101,6 +106,39 @@ class BlockAccessServiceTest {
     @AfterEach
     public void tearDown() {
         TestUtils.deleteDirectory(testPath.toFile());
+    }
+
+    @Test
+    void testProto() {
+        BlockAccessService blockAccessService =
+                new BlockAccessService(
+                        serviceStatus, blockReader, blockNodeContext.metricsService());
+        Descriptors.FileDescriptor fileDescriptor = blockAccessService.proto();
+        // Verify the current rpc methods on
+        Descriptors.ServiceDescriptor blockAccessServiceDescriptor =
+                fileDescriptor.getServices().stream()
+                        .filter(
+                                service ->
+                                        service.getName()
+                                                .equals(Constants.SERVICE_NAME_BLOCK_ACCESS))
+                        .findFirst()
+                        .orElse(null);
+
+        Assertions.assertNotNull(
+                blockAccessServiceDescriptor,
+                "Service descriptor not found for: " + Constants.SERVICE_NAME_BLOCK_ACCESS);
+        assertEquals(1, blockAccessServiceDescriptor.getMethods().size());
+
+        assertNotNull(blockAccessServiceDescriptor.getName(), blockAccessService.serviceName());
+
+        // Verify the current rpc methods on the service
+        Descriptors.MethodDescriptor singleBlockMethod =
+                blockAccessServiceDescriptor.getMethods().stream()
+                        .filter(method -> method.getName().equals(SINGLE_BLOCK_METHOD_NAME))
+                        .findFirst()
+                        .orElse(null);
+
+        assertEquals(SINGLE_BLOCK_METHOD_NAME, singleBlockMethod.getName());
     }
 
     @Test
