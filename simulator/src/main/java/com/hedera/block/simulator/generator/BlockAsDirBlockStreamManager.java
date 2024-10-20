@@ -21,7 +21,7 @@ import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 
-import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -57,11 +57,11 @@ public class BlockAsDirBlockStreamManager implements BlockStreamManager {
      * Constructor to initialize the BlockAsDirBlockStreamManager with the block stream
      * configuration.
      *
-     * @param blockStreamConfig the block stream configuration
+     * @param blockGeneratorConfig the block stream configuration
      */
     @Inject
-    public BlockAsDirBlockStreamManager(@NonNull BlockStreamConfig blockStreamConfig) {
-        this.rootFolder = blockStreamConfig.folderRootPath();
+    public BlockAsDirBlockStreamManager(@NonNull BlockGeneratorConfig blockGeneratorConfig) {
+        this.rootFolder = blockGeneratorConfig.folderRootPath();
         try {
             this.loadBlocks();
         } catch (IOException | ParseException | IllegalArgumentException e) {

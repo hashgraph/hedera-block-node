@@ -80,23 +80,33 @@ class BlockStreamSimulatorTest {
     }
 
     @Test
-    void start_exitByBlockNull()
+    void start_constantRateStreaming()
             throws InterruptedException, BlockSimulatorParsingException, IOException {
 
+        BlockItem blockItem =
+                BlockItem.newBuilder()
+                        .blockHeader(BlockHeader.newBuilder().number(1L).build())
+                        .build();
+
+        Block block1 = Block.newBuilder().items(blockItem).build();
+        Block block2 = Block.newBuilder().items(blockItem, blockItem, blockItem).build();
+
         BlockStreamManager blockStreamManager = Mockito.mock(BlockStreamManager.class);
-        when(blockStreamManager.getNextBlockItem()).thenReturn(BlockItem.newBuilder().build());
+        when(blockStreamManager.getNextBlock()).thenReturn(block1, block2, null);
 
         Configuration configuration =
                 TestUtils.getTestConfiguration(
                         Map.of(
                                 "blockStream.maxBlockItemsToStream",
                                 "2",
-                                "blockStream.BlockAsFileBlockStreamManager",
+                                "generator.managerImplementation",
                                 "BlockAsFileLargeDataSets",
-                                "blockStream.rootPath",
+                                "generator.rootPath",
                                 getAbsoluteFolder("src/test/resources/block-0.0.3-blk/"),
                                 "blockStream.streamingMode",
-                                "CONSTANT_RATE"));
+                                "CONSTANT_RATE",
+                                "blockStream.blockItemsBatchSize",
+                                "2"));
 
         BlockStreamSimulatorApp blockStreamSimulator =
                 new BlockStreamSimulatorApp(
@@ -116,7 +126,7 @@ class BlockStreamSimulatorTest {
     }
 
     @Test
-    void start_millisPerSecond()
+    void start_millisPerBlockStreaming()
             throws InterruptedException, IOException, BlockSimulatorParsingException {
         BlockStreamManager blockStreamManager = Mockito.mock(BlockStreamManager.class);
         BlockItem blockItem =
@@ -131,9 +141,9 @@ class BlockStreamSimulatorTest {
                         Map.of(
                                 "blockStream.maxBlockItemsToStream",
                                 "2",
-                                "blockStream.BlockAsFileBlockStreamManager",
+                                "generator.managerImplementation",
                                 "BlockAsFileLargeDataSets",
-                                "blockStream.rootPath",
+                                "generator.rootPath",
                                 getAbsoluteFolder("src/test/resources/block-0.0.3-blk/"),
                                 "blockStream.streamingMode",
                                 "MILLIS_PER_BLOCK"));
@@ -176,14 +186,16 @@ class BlockStreamSimulatorTest {
                         Map.of(
                                 "blockStream.maxBlockItemsToStream",
                                 "2",
-                                "blockStream.BlockAsFileBlockStreamManager",
+                                "generator.managerImplementation",
                                 "BlockAsFileLargeDataSets",
-                                "blockStream.rootPath",
+                                "generator.rootPath",
                                 getAbsoluteFolder("src/test/resources/block-0.0.3-blk/"),
                                 "blockStream.streamingMode",
                                 "MILLIS_PER_BLOCK",
                                 "blockStream.millisecondsPerBlock",
-                                "10"));
+                                "10",
+                                "blockStream.blockItemsBatchSize",
+                                "1"));
 
         BlockStreamSimulatorApp blockStreamSimulator =
                 new BlockStreamSimulatorApp(
