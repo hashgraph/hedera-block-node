@@ -16,6 +16,7 @@
 
 package com.hedera.block.simulator.config;
 
+import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.swirlds.config.api.Configuration;
@@ -49,5 +50,17 @@ public interface ConfigInjectionModule {
     @Provides
     static GrpcConfig provideGrpcConfig(Configuration configuration) {
         return configuration.getConfigData(GrpcConfig.class);
+    }
+
+    /**
+     * Provides the block generator configuration.
+     *
+     * @param configuration the configuration to be used by the block generator
+     * @return the block generator configuration
+     */
+    @Singleton
+    @Provides
+    static BlockGeneratorConfig provideBlockGeneratorConfig(Configuration configuration) {
+        return configuration.getConfigData(BlockGeneratorConfig.class);
     }
 }

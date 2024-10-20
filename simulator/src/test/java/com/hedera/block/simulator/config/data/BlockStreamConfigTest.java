@@ -27,16 +27,45 @@ import org.junit.jupiter.api.Test;
 
 class BlockStreamConfigTest {
 
-    private final int delayBetweenBlockItems = 1_500_000;
-    private final String blockStreamManagerImplementation = "BlockAsFileBlockStreamManager";
-    private final int maxBlockItemsToStream = 10_000;
-    private final int paddedLength = 36;
-    private final String fileExtension = ".blk";
-    private final StreamingMode streamingMode = StreamingMode.CONSTANT_RATE;
-    private final int millisPerBlock = 1000;
-
     private String getAbsoluteFolder(String relativePath) {
         return Paths.get(relativePath).toAbsolutePath().toString();
+    }
+
+    private BlockStreamConfig.Builder getBlockStreamConfigBuilder() {
+        final StreamingMode streamingMode = StreamingMode.CONSTANT_RATE;
+        final int delayBetweenBlockItems = 1_500_000;
+        final int maxBlockItemsToStream = 10_000;
+        final int millisPerBlock = 1000;
+        final int blockItemsBatchSize = 1000;
+
+        return BlockStreamConfig.builder()
+                .delayBetweenBlockItems(delayBetweenBlockItems)
+                .maxBlockItemsToStream(maxBlockItemsToStream)
+                .streamingMode(streamingMode)
+                .millisecondsPerBlock(millisPerBlock)
+                .blockItemsBatchSize(blockItemsBatchSize);
+    }
+
+    private BlockGeneratorConfig.Builder getBlockGeneratorConfigBuilder() {
+        String folderRootPath = "src/main/resources/block-0.0.3/";
+        GenerationMode generationMode = GenerationMode.DIR;
+
+        String blockStreamManagerImplementation = "BlockAsFileBlockStreamManager";
+        int paddedLength = 36;
+        String fileExtension = ".blk";
+        return BlockGeneratorConfig.builder()
+                .generationMode(generationMode)
+                .folderRootPath(folderRootPath)
+                .managerImplementation(blockStreamManagerImplementation)
+                .paddedLength(paddedLength)
+                .fileExtension(fileExtension);
+    }
+
+    @Test
+    void testStreamConfigBuilder() {
+        BlockStreamConfig config = getBlockStreamConfigBuilder().build();
+        // assert
+        assertEquals(StreamingMode.CONSTANT_RATE, config.streamingMode());
     }
 
     @Test
@@ -51,17 +80,11 @@ class BlockStreamConfigTest {
         assertTrue(Files.exists(path), "The folder must exist for this test.");
 
         // No exception should be thrown
-        BlockStreamConfig config =
-                new BlockStreamConfig(
-                        generationMode,
-                        folderRootPath,
-                        delayBetweenBlockItems,
-                        blockStreamManagerImplementation,
-                        maxBlockItemsToStream,
-                        paddedLength,
-                        fileExtension,
-                        streamingMode,
-                        millisPerBlock);
+        BlockGeneratorConfig config =
+                getBlockGeneratorConfigBuilder()
+                        .folderRootPath(folderRootPath)
+                        .generationMode(generationMode)
+                        .build();
 
         assertEquals(folderRootPath, config.folderRootPath());
         assertEquals(GenerationMode.DIR, config.generationMode());
@@ -72,19 +95,12 @@ class BlockStreamConfigTest {
         // Setup empty folder root path and generation mode
         String folderRootPath = "";
         GenerationMode generationMode = GenerationMode.DIR;
+        BlockGeneratorConfig.Builder builder =
+                getBlockGeneratorConfigBuilder()
+                        .folderRootPath(folderRootPath)
+                        .generationMode(generationMode);
 
-        // No exception should be thrown, and the default folder should be used
-        BlockStreamConfig config =
-                new BlockStreamConfig(
-                        generationMode,
-                        folderRootPath,
-                        delayBetweenBlockItems,
-                        blockStreamManagerImplementation,
-                        maxBlockItemsToStream,
-                        paddedLength,
-                        fileExtension,
-                        streamingMode,
-                        millisPerBlock);
+        BlockGeneratorConfig config = builder.build();
 
         // Verify that the path is set to the default
         Path expectedPath = Paths.get("src/main/resources/block-0.0.3/").toAbsolutePath();
@@ -103,16 +119,10 @@ class BlockStreamConfigTest {
                 assertThrows(
                         IllegalArgumentException.class,
                         () ->
-                                new BlockStreamConfig(
-                                        generationMode,
-                                        relativeFolderPath,
-                                        delayBetweenBlockItems,
-                                        blockStreamManagerImplementation,
-                                        maxBlockItemsToStream,
-                                        paddedLength,
-                                        fileExtension,
-                                        streamingMode,
-                                        millisPerBlock));
+                                getBlockGeneratorConfigBuilder()
+                                        .folderRootPath(relativeFolderPath)
+                                        .generationMode(generationMode)
+                                        .build());
 
         // Verify the exception message
         assertEquals(relativeFolderPath + " Root path must be absolute", exception.getMessage());
@@ -133,16 +143,10 @@ class BlockStreamConfigTest {
                 assertThrows(
                         IllegalArgumentException.class,
                         () ->
-                                new BlockStreamConfig(
-                                        generationMode,
-                                        folderRootPath,
-                                        delayBetweenBlockItems,
-                                        blockStreamManagerImplementation,
-                                        maxBlockItemsToStream,
-                                        paddedLength,
-                                        fileExtension,
-                                        streamingMode,
-                                        millisPerBlock));
+                                getBlockGeneratorConfigBuilder()
+                                        .folderRootPath(folderRootPath)
+                                        .generationMode(generationMode)
+                                        .build());
 
         // Verify the exception message
         assertEquals("Folder does not exist: " + path, exception.getMessage());
@@ -155,17 +159,11 @@ class BlockStreamConfigTest {
         GenerationMode generationMode = GenerationMode.ADHOC;
 
         // No exception should be thrown because generation mode is not DIR
-        BlockStreamConfig config =
-                new BlockStreamConfig(
-                        generationMode,
-                        folderRootPath,
-                        delayBetweenBlockItems,
-                        blockStreamManagerImplementation,
-                        maxBlockItemsToStream,
-                        paddedLength,
-                        fileExtension,
-                        streamingMode,
-                        millisPerBlock);
+        BlockGeneratorConfig config =
+                getBlockGeneratorConfigBuilder()
+                        .folderRootPath(folderRootPath)
+                        .generationMode(generationMode)
+                        .build();
 
         // Verify that the configuration was created successfully
         assertEquals(folderRootPath, config.folderRootPath());

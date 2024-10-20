@@ -121,18 +121,18 @@ public class BlockStreamSimulatorApp {
         int blockItemsStreamed = 0;
 
         while (streamBlockItem) {
-            // get block item
-            BlockItem blockItem = blockStreamManager.getNextBlockItem();
+            // get block
+            Block block = blockStreamManager.getNextBlock();
 
-            if (blockItem == null) {
+            if (block == null) {
                 LOGGER.log(
                         System.Logger.Level.INFO,
                         "Block Stream Simulator has reached the end of the block items");
                 break;
             }
 
-            publishStreamGrpcClient.streamBlockItem(List.of(blockItem));
-            blockItemsStreamed++;
+            streamInBatches(block);
+            blockItemsStreamed += block.items().size();
 
             Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);
 
@@ -143,6 +143,24 @@ public class BlockStreamSimulatorApp {
                                 + " stream");
                 streamBlockItem = false;
             }
+        }
+    }
+
+    private void streamInBatches(Block block) {
+        final int blockItemsNumberOfBatches =
+                block.items().size() % blockStreamConfig.blockItemsBatchSize();
+        for (int i = 0; i < blockItemsNumberOfBatches; i++) {
+
+            int blockItemsBatchSize = blockStreamConfig.blockItemsBatchSize();
+            int startIndexOfBlockItems = i * blockItemsBatchSize;
+            int endIndexOfBlockItems = (i + 1) * blockItemsBatchSize;
+            if (endIndexOfBlockItems > block.items().size()) {
+                endIndexOfBlockItems = block.items().size();
+            }
+
+            List<BlockItem> blockItems =
+                    block.items().subList(startIndexOfBlockItems, endIndexOfBlockItems);
+            publishStreamGrpcClient.streamBlockItem(blockItems);
         }
     }
 

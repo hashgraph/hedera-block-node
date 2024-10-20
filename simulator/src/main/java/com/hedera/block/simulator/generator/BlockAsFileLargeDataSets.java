@@ -19,7 +19,7 @@ package com.hedera.block.simulator.generator;
 import static com.hedera.block.simulator.generator.Utils.readFileBytes;
 import static java.lang.System.Logger.Level.INFO;
 
-import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.hapi.block.stream.Block;
@@ -49,7 +49,7 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
      * @param config the block stream configuration
      */
     @Inject
-    public BlockAsFileLargeDataSets(@NonNull BlockStreamConfig config) {
+    public BlockAsFileLargeDataSets(@NonNull BlockGeneratorConfig config) {
         this.blockstreamPath = config.folderRootPath();
         this.formatString = "%0" + config.paddedLength() + "d" + config.fileExtension();
     }

@@ -19,7 +19,7 @@ package com.hedera.block.simulator.generator;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.simulator.TestUtils;
-import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import java.io.IOException;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -29,15 +29,15 @@ class GeneratorInjectionModuleTest {
     @Test
     void providesBlockStreamManager_AsFileLargeDataSets() throws IOException {
 
-        BlockStreamConfig blockStreamConfig =
+        BlockGeneratorConfig blockGeneratorConfig =
                 TestUtils.getTestConfiguration(
                                 Map.of(
-                                        "blockStream.managerImplementation",
+                                        "generator.managerImplementation",
                                         "BlockAsFileLargeDataSets"))
-                        .getConfigData(BlockStreamConfig.class);
+                        .getConfigData(BlockGeneratorConfig.class);
 
         BlockStreamManager blockStreamManager =
-                GeneratorInjectionModule.providesBlockStreamManager(blockStreamConfig);
+                GeneratorInjectionModule.providesBlockStreamManager(blockGeneratorConfig);
 
         assertEquals(
                 blockStreamManager.getClass().getName(), BlockAsFileLargeDataSets.class.getName());
@@ -45,11 +45,11 @@ class GeneratorInjectionModuleTest {
 
     @Test
     void providesBlockStreamManager_AsFile() throws IOException {
-        BlockStreamConfig blockStreamConfig =
-                TestUtils.getTestConfiguration().getConfigData(BlockStreamConfig.class);
+        BlockGeneratorConfig blockGeneratorConfig =
+                TestUtils.getTestConfiguration().getConfigData(BlockGeneratorConfig.class);
 
         BlockStreamManager blockStreamManager =
-                GeneratorInjectionModule.providesBlockStreamManager(blockStreamConfig);
+                GeneratorInjectionModule.providesBlockStreamManager(blockGeneratorConfig);
 
         assertEquals(
                 blockStreamManager.getClass().getName(),
@@ -58,29 +58,29 @@ class GeneratorInjectionModuleTest {
 
     @Test
     void providesBlockStreamManager_AsDir() throws IOException {
-        BlockStreamConfig blockStreamConfig =
+        BlockGeneratorConfig blockGeneratorConfig =
                 TestUtils.getTestConfiguration(
                                 Map.of(
-                                        "blockStream.managerImplementation",
+                                        "generator.managerImplementation",
                                         "BlockAsDirBlockStreamManager"))
-                        .getConfigData(BlockStreamConfig.class);
+                        .getConfigData(BlockGeneratorConfig.class);
 
         BlockStreamManager blockStreamManager =
-                GeneratorInjectionModule.providesBlockStreamManager(blockStreamConfig);
+                GeneratorInjectionModule.providesBlockStreamManager(blockGeneratorConfig);
 
         assertEquals(
-                blockStreamManager.getClass().getName(),
-                BlockAsDirBlockStreamManager.class.getName());
+                BlockAsDirBlockStreamManager.class.getName(),
+                blockStreamManager.getClass().getName());
     }
 
     @Test
     void providesBlockStreamManager_default() throws IOException {
-        BlockStreamConfig blockStreamConfig =
-                TestUtils.getTestConfiguration(Map.of("blockStream.managerImplementation", ""))
-                        .getConfigData(BlockStreamConfig.class);
+        BlockGeneratorConfig blockGeneratorConfig =
+                TestUtils.getTestConfiguration(Map.of("generator.managerImplementation", ""))
+                        .getConfigData(BlockGeneratorConfig.class);
 
         BlockStreamManager blockStreamManager =
-                GeneratorInjectionModule.providesBlockStreamManager(blockStreamConfig);
+                GeneratorInjectionModule.providesBlockStreamManager(blockGeneratorConfig);
 
         assertEquals(
                 blockStreamManager.getClass().getName(),

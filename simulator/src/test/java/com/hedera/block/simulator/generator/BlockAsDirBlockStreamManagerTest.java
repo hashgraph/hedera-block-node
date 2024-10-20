@@ -20,9 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
-import com.hedera.block.simulator.config.types.StreamingMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -75,17 +74,10 @@ class BlockAsDirBlockStreamManagerTest {
     }
 
     private BlockStreamManager getBlockAsDirBlockStreamManager(String rootFolder) {
-        BlockStreamConfig blockStreamConfig =
-                new BlockStreamConfig(
-                        GenerationMode.DIR,
-                        rootFolder,
-                        1_500_000,
-                        "BlockAsDirBlockStreamManager",
-                        10_000,
-                        36,
-                        ".blk",
-                        StreamingMode.CONSTANT_RATE,
-                        1000);
-        return new BlockAsDirBlockStreamManager(blockStreamConfig);
+        final BlockGeneratorConfig blockGeneratorConfig =
+                new BlockGeneratorConfig(
+                        GenerationMode.DIR, rootFolder, "BlockAsDirBlockStreamManager", 36, ".blk");
+
+        return new BlockAsDirBlockStreamManager(blockGeneratorConfig);
     }
 }

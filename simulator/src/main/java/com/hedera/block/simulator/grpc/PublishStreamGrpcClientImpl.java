@@ -17,6 +17,7 @@
 package com.hedera.block.simulator.grpc;
 
 import com.hedera.block.simulator.Translator;
+import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.hapi.block.protoc.BlockStreamServiceGrpc;
 import com.hedera.hapi.block.protoc.PublishStreamRequest;
@@ -37,14 +38,17 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
     private final BlockStreamServiceGrpc.BlockStreamServiceStub stub;
     private final StreamObserver<PublishStreamRequest> requestStreamObserver;
+    private final BlockStreamConfig blockStreamConfig;
 
     /**
      * Creates a new PublishStreamGrpcClientImpl instance.
      *
      * @param grpcConfig the gRPC configuration
+     * @param blockStreamConfig the block stream configuration
      */
     @Inject
-    public PublishStreamGrpcClientImpl(@NonNull GrpcConfig grpcConfig) {
+    public PublishStreamGrpcClientImpl(
+            @NonNull GrpcConfig grpcConfig, @NonNull BlockStreamConfig blockStreamConfig) {
         ManagedChannel channel =
                 ManagedChannelBuilder.forAddress(grpcConfig.serverAddress(), grpcConfig.port())
                         .usePlaintext()
@@ -52,6 +56,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
         stub = BlockStreamServiceGrpc.newStub(channel);
         PublishStreamObserver publishStreamObserver = new PublishStreamObserver();
         requestStreamObserver = stub.publishBlockStream(publishStreamObserver);
+        this.blockStreamConfig = blockStreamConfig;
     }
 
     /**
@@ -83,8 +88,23 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
             blockItemsProtoc.add(Translator.fromPbj(blockItem));
         }
 
-        requestStreamObserver.onNext(
-                PublishStreamRequest.newBuilder().addAllBlockItems(blockItemsProtoc).build());
+        final int blockItemsNumberOfBatches =
+                block.items().size() % blockStreamConfig.blockItemsBatchSize();
+        for (int i = 0; i < blockItemsNumberOfBatches; i++) {
+
+            int blockItemsBatchSize = blockStreamConfig.blockItemsBatchSize();
+            int startIndexOfBlockItems = i * blockItemsBatchSize;
+            int endIndexOfBlockItems = (i + 1) * blockItemsBatchSize;
+            if (endIndexOfBlockItems > block.items().size()) {
+                endIndexOfBlockItems = block.items().size();
+            }
+
+            List<com.hedera.hapi.block.stream.protoc.BlockItem> streamingBatch =
+                    blockItemsProtoc.subList(startIndexOfBlockItems, endIndexOfBlockItems);
+
+            requestStreamObserver.onNext(
+                    PublishStreamRequest.newBuilder().addAllBlockItems(streamingBatch).build());
+        }
 
         return true;
     }
