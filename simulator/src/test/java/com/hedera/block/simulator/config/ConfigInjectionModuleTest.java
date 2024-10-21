@@ -16,6 +16,7 @@
 
 package com.hedera.block.simulator.config;
 
+import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.swirlds.config.api.Configuration;
@@ -61,5 +62,15 @@ class ConfigInjectionModuleTest {
         Assertions.assertNotNull(grpcConfig);
         Assertions.assertEquals("localhost", grpcConfig.serverAddress());
         Assertions.assertEquals(8080, grpcConfig.port());
+    }
+
+    @Test
+    void provideBlockGeneratorConfig() {
+        BlockGeneratorConfig blockGeneratorConfig =
+                ConfigInjectionModule.provideBlockGeneratorConfig(configuration);
+
+        Assertions.assertNotNull(blockGeneratorConfig);
+        Assertions.assertEquals(
+                "BlockAsFileBlockStreamManager", blockGeneratorConfig.managerImplementation());
     }
 }
