@@ -21,7 +21,6 @@ import static com.hedera.block.server.Constants.SERVER_STREAMING_METHOD_NAME;
 import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
 import static java.lang.System.Logger;
-import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.eq;
@@ -52,7 +51,6 @@ import io.grpc.stub.ServerCalls;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +59,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -82,19 +81,14 @@ public class BlockStreamServiceTest {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
-    private static final String TEMP_DIR = "block-node-unit-test-dir";
-
     private static final int testTimeout = 1000;
 
-    private Path testPath;
+    @TempDir private Path testPath;
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig config;
 
     @BeforeEach
     public void setUp() throws IOException {
-        testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
-
         blockNodeContext =
                 TestConfigUtil.getTestBlockNodeContext(
                         Map.of("persistence.storage.rootPath", testPath.toString()));
@@ -115,7 +109,6 @@ public class BlockStreamServiceTest {
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
-                        blockReader,
                         serviceStatus,
                         blockNodeEventHandler,
                         notifier,
@@ -138,7 +131,6 @@ public class BlockStreamServiceTest {
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
-                        blockReader,
                         serviceStatus,
                         blockNodeEventHandler,
                         notifier,
@@ -201,7 +193,6 @@ public class BlockStreamServiceTest {
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
-                        blockReader,
                         serviceStatus,
                         blockNodeEventHandler,
                         notifier,

@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.grpc;
 
+import static com.hedera.block.server.Constants.SERVICE_NAME_BLOCK_ACCESS;
 import static com.hedera.block.server.Constants.SINGLE_BLOCK_METHOD_NAME;
 import static com.hedera.block.server.Translator.fromPbj;
 import static com.hedera.block.server.Translator.toPbj;
@@ -26,7 +27,6 @@ import static java.lang.System.Logger.Level.ERROR;
 
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.hedera.block.server.Constants;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.service.ServiceStatus;
@@ -79,7 +79,7 @@ public class BlockAccessService implements GrpcService {
 
     @Override
     public String serviceName() {
-        return Constants.SERVICE_NAME_BLOCK_ACCESS;
+        return SERVICE_NAME_BLOCK_ACCESS;
     }
 
     @Override

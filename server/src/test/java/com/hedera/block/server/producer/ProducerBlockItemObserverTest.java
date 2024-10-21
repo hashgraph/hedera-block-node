@@ -151,7 +151,8 @@ public class ProducerBlockItemObserverTest {
         // verify the ProducerBlockItemObserver has sent an error response
         verify(
                         publishStreamResponseObserver,
-                        timeout(testTimeout).atLeast(1)) // It fixes if set it to 2, but why???
+                        timeout(testTimeout)
+                                .atLeast(1)) // TODO: it calls more than 1 usually 2, but why?
                 .onNext(fromPbj(PublishStreamResponse.newBuilder().status(endOfStream).build()));
 
         verify(serviceStatus, timeout(testTimeout).times(1)).stopWebServer(any());

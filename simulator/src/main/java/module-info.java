@@ -8,6 +8,7 @@ module com.hedera.block.simulator {
 
     requires static com.github.spotbugs.annotations;
     requires static com.google.auto.service;
+    requires com.hedera.block.common;
     requires com.hedera.block.stream;
     requires com.google.protobuf;
     requires com.hedera.pbj.runtime;

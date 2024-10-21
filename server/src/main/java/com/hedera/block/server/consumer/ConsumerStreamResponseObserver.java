@@ -31,12 +31,12 @@ import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.OneOf;
-import com.swirlds.metrics.api.Counter;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import java.time.InstantSource;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -214,22 +214,22 @@ public class ConsumerStreamResponseObserver
                 throw new IllegalArgumentException(message);
             }
 
-            final List<BlockItem> blockItems = subscribeStreamResponse.blockItems().blockItems();
+            final List<BlockItem> blockItems =
+                    Objects.requireNonNull(subscribeStreamResponse.blockItems()).blockItems();
             // Only start sending BlockItems after we've reached
             // the beginning of a block.
             if (!streamStarted && blockItems.getFirst().hasBlockHeader()) {
+                LOGGER.log(
+                        DEBUG,
+                        "Sending BlockItem Batch downstream for block: "
+                                + blockItems.getFirst().blockHeader().number());
                 streamStarted = true;
             }
 
             if (streamStarted) {
-                LOGGER.log(DEBUG, "Sending BlockItem Batch downstream");
-
-                final Counter liveBlockItemsConsumed =
-                        metricsService.get(BlockNodeMetricTypes.Counter.LiveBlockItemsConsumed);
-                // Increment counter manually
-                for (int i = 0; i < blockItems.size(); i++) {
-                    liveBlockItemsConsumed.increment();
-                }
+                metricsService
+                        .get(BlockNodeMetricTypes.Counter.LiveBlockItemsReceived)
+                        .add(blockItems.size());
                 subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
             }
         }

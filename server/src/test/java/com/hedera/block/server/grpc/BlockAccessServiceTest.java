@@ -21,7 +21,6 @@ import static com.hedera.block.server.grpc.BlockAccessService.buildSingleBlockNo
 import static com.hedera.block.server.grpc.BlockAccessService.buildSingleBlockNotFoundResponse;
 import static com.hedera.block.server.grpc.BlockAccessService.fromPbjSingleBlockSuccessResponse;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
-import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -36,8 +35,6 @@ import static org.mockito.Mockito.when;
 import com.google.protobuf.Descriptors;
 import com.hedera.block.server.Constants;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.mediator.LiveStreamMediator;
-import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
@@ -54,7 +51,6 @@ import io.grpc.stub.ServerCalls;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -64,17 +60,14 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class BlockAccessServiceTest {
 
-    @Mock private Notifier notifier;
-
     @Mock private StreamObserver<SingleBlockResponse> responseObserver;
-
-    @Mock private LiveStreamMediator streamMediator;
 
     @Mock private BlockReader<Block> blockReader;
 
@@ -82,20 +75,14 @@ class BlockAccessServiceTest {
 
     @Mock private ServiceStatus serviceStatus;
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
-
-    private static final String TEMP_DIR = "block-node-unit-test-dir";
-
     private static final int testTimeout = 1000;
 
-    private Path testPath;
+    @TempDir private Path testPath;
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig config;
 
     @BeforeEach
     public void setUp() throws IOException {
-        testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
 
         blockNodeContext =
                 TestConfigUtil.getTestBlockNodeContext(

@@ -16,6 +16,7 @@
 
 package com.hedera.block.simulator.grpc;
 
+import com.hedera.block.common.utils.ChunkUtils;
 import com.hedera.block.simulator.Translator;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
@@ -88,20 +89,10 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
             blockItemsProtoc.add(Translator.fromPbj(blockItem));
         }
 
-        final int blockItemsNumberOfBatches =
-                block.items().size() / blockStreamConfig.blockItemsBatchSize();
-        for (int i = 0; i <= blockItemsNumberOfBatches; i++) {
-
-            int blockItemsBatchSize = blockStreamConfig.blockItemsBatchSize();
-            int startIndexOfBlockItems = i * blockItemsBatchSize;
-            int endIndexOfBlockItems = (i + 1) * blockItemsBatchSize;
-            if (endIndexOfBlockItems > block.items().size()) {
-                endIndexOfBlockItems = block.items().size();
-            }
-
-            List<com.hedera.hapi.block.stream.protoc.BlockItem> streamingBatch =
-                    blockItemsProtoc.subList(startIndexOfBlockItems, endIndexOfBlockItems);
-
+        List<List<com.hedera.hapi.block.stream.protoc.BlockItem>> streamingBatches =
+                ChunkUtils.chunkify(blockItemsProtoc, blockStreamConfig.blockItemsBatchSize());
+        for (List<com.hedera.hapi.block.stream.protoc.BlockItem> streamingBatch :
+                streamingBatches) {
             requestStreamObserver.onNext(
                     PublishStreamRequest.newBuilder().addAllBlockItems(streamingBatch).build());
         }

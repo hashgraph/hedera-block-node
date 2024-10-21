@@ -16,16 +16,16 @@
 
 package com.hedera.block.simulator.config;
 
+import com.hedera.block.simulator.TestUtils;
 import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
-import com.swirlds.config.extensions.sources.SystemEnvironmentConfigSource;
-import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -38,11 +38,12 @@ class ConfigInjectionModuleTest {
     static void setUpAll() throws IOException {
         configuration =
                 ConfigurationBuilder.create()
-                        .withSource(SystemEnvironmentConfigSource.getInstance())
-                        .withSource(SystemPropertiesConfigSource.getInstance())
                         .withSource(new ClasspathFileConfigSource(Path.of("app.properties")))
                         .autoDiscoverExtensions()
                         .build();
+        configuration =
+                TestUtils.getTestConfiguration(
+                        Map.of("generator.managerImplementation", "BlockAsFileBlockStreamManager"));
     }
 
     @Test

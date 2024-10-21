@@ -162,8 +162,10 @@ public class ProducerBlockItemObserver
 
         LOGGER.log(DEBUG, "Received PublishStreamRequest from producer");
         final List<BlockItem> blockItemsPbj = new ArrayList<>();
+
         final Counter liveBlockItemsReceived = metricsService.get(LiveBlockItemsReceived);
-        for (final var blockItemProtoc : publishStreamRequest.getBlockItemsList()) {
+        for (final com.hedera.hapi.block.stream.protoc.BlockItem blockItemProtoc :
+                publishStreamRequest.getBlockItemsList()) {
             try {
                 final BlockItem blockItem =
                         toPbj(BlockItem.PROTOBUF, blockItemProtoc.toByteArray());
@@ -182,7 +184,6 @@ public class ProducerBlockItemObserver
             liveBlockItemsReceived.increment();
         }
 
-        // is this log just too much? see below log for proposed...
         LOGGER.log(DEBUG, "Received block item batch with {} items.", blockItemsPbj.size());
 
         // Publish the block to all the subscribers unless

@@ -173,7 +173,6 @@ public class BlockStreamServiceIntegrationTest {
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
-                        blockReader,
                         serviceStatus,
                         blockNodeEventHandler,
                         notifier,
@@ -275,7 +274,6 @@ public class BlockStreamServiceIntegrationTest {
         final BlockStreamService blockStreamService =
                 new BlockStreamService(
                         streamMediator,
-                        blockReader,
                         serviceStatus,
                         blockNodeEventHandler,
                         notifier,
@@ -449,7 +447,6 @@ public class BlockStreamServiceIntegrationTest {
         final var blockStreamService =
                 new BlockStreamService(
                         streamMediator,
-                        blockReader,
                         serviceStatus,
                         blockNodeEventHandler,
                         notifier,
@@ -572,7 +569,6 @@ public class BlockStreamServiceIntegrationTest {
         final var blockStreamService =
                 new BlockStreamService(
                         streamMediator,
-                        blockReader,
                         serviceStatus,
                         blockNodeEventHandler,
                         notifier,
@@ -747,12 +743,7 @@ public class BlockStreamServiceIntegrationTest {
                         streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
 
         return new BlockStreamService(
-                streamMediator,
-                blockReader,
-                serviceStatus,
-                blockNodeEventHandler,
-                notifier,
-                blockNodeContext);
+                streamMediator, serviceStatus, blockNodeEventHandler, notifier, blockNodeContext);
     }
 
     private LiveStreamMediator buildStreamMediator(

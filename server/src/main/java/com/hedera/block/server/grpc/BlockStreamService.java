@@ -30,15 +30,12 @@ import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediator;
-import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
-import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.protoc.BlockService;
-import com.hedera.hapi.block.stream.Block;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.StreamObserver;
 import io.helidon.webserver.grpc.GrpcService;
@@ -55,10 +52,7 @@ public class BlockStreamService implements GrpcService {
 
     private final LiveStreamMediator streamMediator;
     private final ServiceStatus serviceStatus;
-    private final BlockReader<Block> blockReader;
-
     private final BlockNodeContext blockNodeContext;
-    private final MetricsService metricsService;
 
     private final Notifier notifier;
 
@@ -68,26 +62,21 @@ public class BlockStreamService implements GrpcService {
      *
      * @param streamMediator the stream mediator to proxy block items from the producer to the
      *     subscribers and manage the subscription lifecycle for subscribers
-     * @param blockReader the block reader to fetch blocks from storage for unary singleBlock
-     *     service calls
      * @param serviceStatus the service status provides methods to check service availability and to
      *     stop the service and web server in the event of an unrecoverable exception
      */
     @Inject
     BlockStreamService(
             @NonNull final LiveStreamMediator streamMediator,
-            @NonNull final BlockReader<Block> blockReader,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull
                     final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>
                             streamPersistenceHandler,
             @NonNull final Notifier notifier,
             @NonNull final BlockNodeContext blockNodeContext) {
-        this.blockReader = blockReader;
         this.serviceStatus = serviceStatus;
         this.notifier = notifier;
         this.blockNodeContext = blockNodeContext;
-        this.metricsService = blockNodeContext.metricsService();
 
         streamMediator.subscribe(streamPersistenceHandler);
         this.streamMediator = streamMediator;

@@ -33,7 +33,6 @@ import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.SubscribeStreamResponseSet;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.BatchEventProcessor;
-import com.swirlds.metrics.api.Counter;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Map;
@@ -109,11 +108,8 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
                     SubscribeStreamResponse.newBuilder().blockItems(blockItemsSet).build();
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
 
-            // Increment the block item counter
-            Counter liveBlockItems = metricsService.get(LiveBlockItems);
-            for (int i = 0; i < blockItems.size(); i++) {
-                liveBlockItems.increment();
-            }
+            // Increment the block item counter by all block items published
+            metricsService.get(LiveBlockItems).add(blockItems.size());
 
         } else {
             LOGGER.log(ERROR, "StreamMediator is not accepting BlockItems");
