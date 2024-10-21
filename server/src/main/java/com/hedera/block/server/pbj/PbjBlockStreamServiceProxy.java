@@ -43,6 +43,7 @@ import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.pbj.runtime.ParseException;
+import com.hedera.pbj.runtime.grpc.Pipeline;
 import com.hedera.pbj.runtime.grpc.Pipelines;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -87,7 +88,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
 
     @Override
     @NonNull
-    public Flow.Subscriber<? super Bytes> open(
+    public Pipeline<? super Bytes> open(
             final @NonNull Method method,
             final @NonNull RequestOptions options,
             final @NonNull Flow.Subscriber<? super Bytes> replies) {
