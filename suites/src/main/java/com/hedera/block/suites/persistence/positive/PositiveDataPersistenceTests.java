@@ -30,6 +30,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.Container;
 
+/**
+ * Test class for verifying the positive scenarios for data persistence.
+ *
+ * <p>Inherits from {@link BaseSuite} to reuse the container setup and teardown logic for the Block
+ * Node.
+ */
 @DisplayName("Positive Data Persistence Tests")
 public class PositiveDataPersistenceTests extends BaseSuite {
     private final String[] GET_BLOCKS_COMMAND = new String[] {"ls", "data", "-1"};

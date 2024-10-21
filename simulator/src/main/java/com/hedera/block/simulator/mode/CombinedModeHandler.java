@@ -22,16 +22,38 @@ import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
+/**
+ * The {@code CombinedModeHandler} class implements the {@link SimulatorModeHandler} interface
+ * and provides the behavior for a mode where both consuming and publishing of block data
+ * occur simultaneously.
+ *
+ * <p>This mode handles dual operations in the block streaming process, utilizing the
+ * {@link BlockStreamConfig} for configuration settings. It is designed for scenarios where
+ * the simulator needs to handle both the consumption and publication of blocks in parallel.
+ *
+ * <p>For now, the actual start behavior is not implemented, as indicated by the
+ * {@link UnsupportedOperationException}.
+ */
 public class CombinedModeHandler implements SimulatorModeHandler {
     private final BlockStreamConfig blockStreamConfig;
 
+    /**
+     * Constructs a new {@code CombinedModeHandler} with the specified block stream configuration.
+     *
+     * @param blockStreamConfig the configuration data for managing block streams
+     */
     public CombinedModeHandler(@NonNull final BlockStreamConfig blockStreamConfig) {
         requireNonNull(blockStreamConfig);
         this.blockStreamConfig = blockStreamConfig;
     }
 
     /**
-     * Starts the simulator and initiate streaming, depending on the working mode.
+     * Starts the simulator in combined mode, handling both consumption and publication
+     * of block stream. However, this method is currently not implemented, and will throw
+     * an {@link UnsupportedOperationException}.
+     *
+     * @param blockStreamManager the {@link BlockStreamManager} responsible for managing block streams
+     * @throws UnsupportedOperationException as the method is not yet implemented
      */
     @Override
     public void start(@NonNull BlockStreamManager blockStreamManager) {
