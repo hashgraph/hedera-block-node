@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
+import com.hedera.block.simulator.mode.PublisherModeHandler;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.output.BlockHeader;
@@ -208,7 +209,7 @@ class BlockStreamSimulatorTest {
 
     private List<LogRecord> captureLogs() {
         // Capture logs
-        Logger logger = Logger.getLogger(BlockStreamSimulatorApp.class.getName());
+        Logger logger = Logger.getLogger(PublisherModeHandler.class.getName());
         final List<LogRecord> logRecords = new ArrayList<>();
 
         // Custom handler to capture logs

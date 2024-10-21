@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.block.simulator.config.types.SimulatorMode;
 import com.hedera.block.simulator.config.types.StreamingMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.io.TempDir;
 class BlockAsFileLargeDataSetsTest {
 
     private static final String rootFolder = "src/test/resources/block-0.0.3-blk/";
+    private final SimulatorMode simulatorMode = SimulatorMode.PUBLISHER;
     private static int filesInFolder;
 
     @BeforeAll
@@ -98,6 +100,7 @@ class BlockAsFileLargeDataSetsTest {
 
         BlockStreamConfig blockStreamConfig =
                 new BlockStreamConfig(
+                        simulatorMode,
                         GenerationMode.DIR,
                         blockDirPath.toString(),
                         1_500_000,
@@ -120,6 +123,7 @@ class BlockAsFileLargeDataSetsTest {
             String rootFolder) {
         BlockStreamConfig blockStreamConfig =
                 new BlockStreamConfig(
+                        simulatorMode,
                         GenerationMode.DIR,
                         rootFolder,
                         1_500_000,

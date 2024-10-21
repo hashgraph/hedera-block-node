@@ -33,8 +33,9 @@ import javax.inject.Inject;
  */
 public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
-    private final BlockStreamServiceGrpc.BlockStreamServiceStub stub;
-    private final StreamObserver<PublishStreamRequest> requestStreamObserver;
+    private final GrpcConfig grpcConfig;
+    private ManagedChannel channel;
+    private StreamObserver<PublishStreamRequest> requestStreamObserver;
 
     /**
      * Creates a new PublishStreamGrpcClientImpl instance.
@@ -43,11 +44,20 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Inject
     public PublishStreamGrpcClientImpl(@NonNull GrpcConfig grpcConfig) {
-        ManagedChannel channel =
+        this.grpcConfig = grpcConfig;
+    }
+
+    /**
+     * Initialize the channel and stub for publishBlockStream with the desired configuration.
+     */
+    @Override
+    public void init() {
+        channel =
                 ManagedChannelBuilder.forAddress(grpcConfig.serverAddress(), grpcConfig.port())
                         .usePlaintext()
                         .build();
-        stub = BlockStreamServiceGrpc.newStub(channel);
+        BlockStreamServiceGrpc.BlockStreamServiceStub stub =
+                BlockStreamServiceGrpc.newStub(channel);
         PublishStreamObserver publishStreamObserver = new PublishStreamObserver();
         requestStreamObserver = stub.publishBlockStream(publishStreamObserver);
     }
@@ -80,5 +90,10 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
         // if and when the ack is received return true
 
         return true;
+    }
+
+    @Override
+    public void shutdown() {
+        channel.shutdown();
     }
 }

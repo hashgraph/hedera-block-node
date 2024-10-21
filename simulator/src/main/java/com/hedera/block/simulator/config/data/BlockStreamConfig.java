@@ -17,6 +17,7 @@
 package com.hedera.block.simulator.config.data;
 
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.block.simulator.config.types.SimulatorMode;
 import com.hedera.block.simulator.config.types.StreamingMode;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
@@ -27,6 +28,7 @@ import java.nio.file.Paths;
 /**
  * The BlockStreamConfig class defines the configuration data for the block stream.
  *
+ * @param simulatorMode the working mode of the simulator
  * @param generationMode the mode of generation for the block stream
  * @param folderRootPath the root path of the folder containing the block stream
  * @param delayBetweenBlockItems the delay between block items
@@ -39,6 +41,7 @@ import java.nio.file.Paths;
  */
 @ConfigData("blockStream")
 public record BlockStreamConfig(
+        @ConfigProperty(defaultValue = "PUBLISHER") SimulatorMode simulatorMode,
         @ConfigProperty(defaultValue = "DIR") GenerationMode generationMode,
         @ConfigProperty(defaultValue = "") String folderRootPath,
         @ConfigProperty(defaultValue = "1_500_000") int delayBetweenBlockItems,
