@@ -16,7 +16,9 @@
 
 package com.hedera.block.simulator;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
@@ -173,7 +175,7 @@ class BlockStreamSimulatorTest {
 
         // simulate that the first block takes 15ms to stream, when the limit is 10, to force to go
         // over WARN Path.
-        when(publishStreamGrpcClient.streamBlock(block))
+        when(publishStreamGrpcClient.streamBlock(any()))
                 .thenAnswer(
                         invocation -> {
                             Thread.sleep(15);
@@ -184,12 +186,12 @@ class BlockStreamSimulatorTest {
         Configuration configuration =
                 TestUtils.getTestConfiguration(
                         Map.of(
-                                "blockStream.maxBlockItemsToStream",
-                                "2",
                                 "generator.managerImplementation",
-                                "BlockAsFileLargeDataSets",
+                                "BlockAsFileBlockStreamManager",
                                 "generator.rootPath",
                                 getAbsoluteFolder("src/test/resources/block-0.0.3-blk/"),
+                                "blockStream.maxBlockItemsToStream",
+                                "2",
                                 "blockStream.streamingMode",
                                 "MILLIS_PER_BLOCK",
                                 "blockStream.millisecondsPerBlock",
@@ -211,10 +213,7 @@ class BlockStreamSimulatorTest {
                                 logRecord ->
                                         logRecord
                                                 .getMessage()
-                                                .contains(
-                                                        "Block Server is running behind, Streaming"
-                                                            + " took longer than max expected: 10"
-                                                            + " milliseconds"));
+                                                .contains("Block Server is running behind"));
         assertTrue(found_log);
     }
 

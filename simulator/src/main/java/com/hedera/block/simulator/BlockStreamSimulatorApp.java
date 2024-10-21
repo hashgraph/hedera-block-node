@@ -22,11 +22,9 @@ import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
 import com.swirlds.config.api.Configuration;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
@@ -104,7 +102,9 @@ public class BlockStreamSimulatorApp {
             } else {
                 LOGGER.log(
                         System.Logger.Level.WARNING,
-                        "Block Server is running behind, Streaming took longer than max expected: "
+                        "Block Server is running behind. Streaming took: "
+                                + (elapsedTime / 1_000_000)
+                                + "ms - Longer than max expected of: "
                                 + millisecondsPerBlock
                                 + " milliseconds");
             }
@@ -131,7 +131,7 @@ public class BlockStreamSimulatorApp {
                 break;
             }
 
-            streamInBatches(block);
+            publishStreamGrpcClient.streamBlock(block);
             blockItemsStreamed += block.items().size();
 
             Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);
@@ -143,24 +143,6 @@ public class BlockStreamSimulatorApp {
                                 + " stream");
                 streamBlockItem = false;
             }
-        }
-    }
-
-    private void streamInBatches(Block block) {
-        final int blockItemsNumberOfBatches =
-                block.items().size() % blockStreamConfig.blockItemsBatchSize();
-        for (int i = 0; i < blockItemsNumberOfBatches; i++) {
-
-            int blockItemsBatchSize = blockStreamConfig.blockItemsBatchSize();
-            int startIndexOfBlockItems = i * blockItemsBatchSize;
-            int endIndexOfBlockItems = (i + 1) * blockItemsBatchSize;
-            if (endIndexOfBlockItems > block.items().size()) {
-                endIndexOfBlockItems = block.items().size();
-            }
-
-            List<BlockItem> blockItems =
-                    block.items().subList(startIndexOfBlockItems, endIndexOfBlockItems);
-            publishStreamGrpcClient.streamBlockItem(blockItems);
         }
     }
 

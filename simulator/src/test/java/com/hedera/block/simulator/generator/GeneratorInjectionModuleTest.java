@@ -46,7 +46,13 @@ class GeneratorInjectionModuleTest {
     @Test
     void providesBlockStreamManager_AsFile() throws IOException {
         BlockGeneratorConfig blockGeneratorConfig =
-                TestUtils.getTestConfiguration().getConfigData(BlockGeneratorConfig.class);
+                TestUtils.getTestConfiguration(
+                                Map.of(
+                                        "generator.managerImplementation",
+                                        "BlockAsFileBlockStreamManager",
+                                        "generator.folderRootPath",
+                                        ""))
+                        .getConfigData(BlockGeneratorConfig.class);
 
         BlockStreamManager blockStreamManager =
                 GeneratorInjectionModule.providesBlockStreamManager(blockGeneratorConfig);
@@ -76,7 +82,12 @@ class GeneratorInjectionModuleTest {
     @Test
     void providesBlockStreamManager_default() throws IOException {
         BlockGeneratorConfig blockGeneratorConfig =
-                TestUtils.getTestConfiguration(Map.of("generator.managerImplementation", ""))
+                TestUtils.getTestConfiguration(
+                                Map.of(
+                                        "generator.managerImplementation",
+                                        "",
+                                        "generator.folderRootPath",
+                                        ""))
                         .getConfigData(BlockGeneratorConfig.class);
 
         BlockStreamManager blockStreamManager =

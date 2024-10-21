@@ -41,6 +41,7 @@ public class PublishStreamObserver implements StreamObserver<PublishStreamRespon
     @Override
     public void onError(Throwable throwable) {
         logger.log(Logger.Level.ERROR, "Error: " + throwable.toString());
+        // TODO: Stop the stream, retry, or stop simulation
     }
 
     /** what will the stream observer do when the stream is completed */
