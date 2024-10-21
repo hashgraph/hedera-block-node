@@ -132,10 +132,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         notifier.unsubscribeAllExpired();
 
         final String observerClassType =
-                blockNodeContext
-                        .configuration()
-                        .getConfigData(ProducerConfig.class)
-                        .observerClassType();
+                blockNodeContext.configuration().getConfigData(ProducerConfig.class).observerType();
 
         if ("NOOP".equalsIgnoreCase(observerClassType)) {
             // No need to register with the notifier for NOOP
@@ -238,9 +235,8 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     private SingleBlockRequest parseSingleBlockRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options)
             throws ParseException {
-
-        byte[] b = message.toByteArray();
-        return SingleBlockRequest.PROTOBUF.parse(Bytes.wrap(b));
+        // Copying bytes to avoid using references passed from Helidon
+        return SingleBlockRequest.PROTOBUF.parse(Bytes.wrap(message.toByteArray()));
     }
 
     @NonNull
@@ -253,16 +249,14 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     private SubscribeStreamRequest parseSubscribeStreamRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options)
             throws ParseException {
-
-        byte[] b = message.toByteArray();
-        return SubscribeStreamRequest.PROTOBUF.parse(Bytes.wrap(b));
+        // Copying bytes to avoid using references passed from Helidon
+        return SubscribeStreamRequest.PROTOBUF.parse(Bytes.wrap(message.toByteArray()));
     }
 
     @NonNull
     private Bytes createSubscribeStreamResponse(
             @NonNull final SubscribeStreamResponse subscribeStreamResponse,
             @NonNull final RequestOptions options) {
-
         return SubscribeStreamResponse.PROTOBUF.toBytes(subscribeStreamResponse);
     }
 
@@ -270,16 +264,14 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     private PublishStreamRequest parsePublishStreamRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options)
             throws ParseException {
-
-        byte[] b = message.toByteArray();
-        return PublishStreamRequest.PROTOBUF.parse(Bytes.wrap(b));
+        // Copying bytes to avoid using references from Helidon
+        return PublishStreamRequest.PROTOBUF.parse(Bytes.wrap(message.toByteArray()));
     }
 
     @NonNull
     private Bytes createPublishStreamResponse(
             @NonNull final PublishStreamResponse publishStreamResponse,
             @NonNull final RequestOptions options) {
-
         return PublishStreamResponse.PROTOBUF.toBytes(publishStreamResponse);
     }
 }
