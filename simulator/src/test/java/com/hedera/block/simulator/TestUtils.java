@@ -17,10 +17,9 @@
 package com.hedera.block.simulator;
 
 import com.hedera.block.simulator.config.TestConfigBuilder;
-import com.hedera.block.simulator.config.data.BlockStreamConfig;
-import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
+import com.swirlds.config.extensions.sources.SimpleConfigSource;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -41,11 +40,10 @@ public class TestUtils {
         for (Map.Entry<String, String> entry : customProperties.entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue();
-            testConfigBuilder = testConfigBuilder.withValue(key, value);
+            testConfigBuilder =
+                    testConfigBuilder.withSource(
+                            new SimpleConfigSource(key, value).withOrdinal(500));
         }
-
-        testConfigBuilder = testConfigBuilder.withConfigDataType(BlockStreamConfig.class);
-        testConfigBuilder = testConfigBuilder.withConfigDataType(GrpcConfig.class);
 
         return testConfigBuilder.getOrCreateConfig();
     }

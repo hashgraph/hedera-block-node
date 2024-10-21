@@ -89,8 +89,8 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
         }
 
         final int blockItemsNumberOfBatches =
-                block.items().size() % blockStreamConfig.blockItemsBatchSize();
-        for (int i = 0; i < blockItemsNumberOfBatches; i++) {
+                block.items().size() / blockStreamConfig.blockItemsBatchSize();
+        for (int i = 0; i <= blockItemsNumberOfBatches; i++) {
 
             int blockItemsBatchSize = blockStreamConfig.blockItemsBatchSize();
             int startIndexOfBlockItems = i * blockItemsBatchSize;

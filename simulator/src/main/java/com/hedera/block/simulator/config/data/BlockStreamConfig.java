@@ -32,7 +32,7 @@ import com.swirlds.config.api.ConfigProperty;
 @ConfigData("blockStream")
 public record BlockStreamConfig(
         @ConfigProperty(defaultValue = "1_500_000") int delayBetweenBlockItems,
-        @ConfigProperty(defaultValue = "10_000") int maxBlockItemsToStream,
+        @ConfigProperty(defaultValue = "100_000") int maxBlockItemsToStream,
         @ConfigProperty(defaultValue = "MILLIS_PER_BLOCK") StreamingMode streamingMode,
         @ConfigProperty(defaultValue = "1000") int millisecondsPerBlock,
         @ConfigProperty(defaultValue = "1000") int blockItemsBatchSize) {
