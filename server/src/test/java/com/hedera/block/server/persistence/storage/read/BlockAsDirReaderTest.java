@@ -93,10 +93,10 @@ public class BlockAsDirReaderTest {
     public void testReadPermsRepairSucceeded() throws IOException, ParseException {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         for (BlockItem blockItem : blockItems) {
-            blockWriter.write(blockItem);
+            blockWriter.write(List.of(blockItem));
         }
 
         // Make the block unreadable
@@ -113,11 +113,12 @@ public class BlockAsDirReaderTest {
     public void testRemoveBlockReadPermsRepairFailed() throws IOException, ParseException {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-        for (BlockItem blockItem : blockItems) {
-            blockWriter.write(blockItem);
-        }
+        //        for (BlockItem blockItem : blockItems) {
+        //            blockWriter.write(blockItem);
+        //        }
+        blockWriter.write(blockItems);
 
         // Make the block unreadable
         removeBlockReadPerms(1, config);
@@ -136,11 +137,12 @@ public class BlockAsDirReaderTest {
     public void testRemoveBlockItemReadPerms() throws IOException {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-        for (BlockItem blockItem : blockItems) {
-            blockWriter.write(blockItem);
-        }
+        //        for (BlockItem blockItem : blockItems) {
+        //            blockWriter.write(blockItem);
+        //        }
+        blockWriter.write(blockItems);
 
         removeBlockItemReadPerms(1, 1, config);
 
@@ -168,11 +170,12 @@ public class BlockAsDirReaderTest {
 
         final List<BlockItem> blockItems = generateBlockItems(1);
 
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-        for (final BlockItem blockItem : blockItems) {
-            blockWriter.write(blockItem);
-        }
+        //        for (final BlockItem blockItem : blockItems) {
+        //            blockWriter.write(blockItem);
+        //        }
+        blockWriter.write(blockItems);
 
         removeBlockReadPerms(1, config);
 
@@ -206,11 +209,12 @@ public class BlockAsDirReaderTest {
     public void testParseExceptionHandling() throws IOException, ParseException {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-        for (final BlockItem blockItem : blockItems) {
-            blockWriter.write(blockItem);
-        }
+        //        for (final BlockItem blockItem : blockItems) {
+        //            blockWriter.write(blockItem);
+        //        }
+        blockWriter.write(blockItems);
 
         // Read the block back and confirm it's read successfully
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();

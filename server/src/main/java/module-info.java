@@ -17,6 +17,7 @@ module com.hedera.block.server {
     exports com.hedera.block.server.persistence;
     exports com.hedera.block.server.notifier;
     exports com.hedera.block.server.service;
+    exports com.hedera.block.server.grpc;
 
     requires com.hedera.block.stream;
     requires com.google.protobuf;

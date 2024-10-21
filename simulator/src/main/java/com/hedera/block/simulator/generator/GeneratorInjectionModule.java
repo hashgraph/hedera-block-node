@@ -16,7 +16,7 @@
 
 package com.hedera.block.simulator.generator;
 
-import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import dagger.Module;
 import dagger.Provides;
 import javax.inject.Singleton;
@@ -35,7 +35,7 @@ public interface GeneratorInjectionModule {
      */
     @Singleton
     @Provides
-    static BlockStreamManager providesBlockStreamManager(BlockStreamConfig config) {
+    static BlockStreamManager providesBlockStreamManager(BlockGeneratorConfig config) {
 
         if ("BlockAsDirBlockStreamManager".equalsIgnoreCase(config.managerImplementation())) {
             return new BlockAsDirBlockStreamManager(config);

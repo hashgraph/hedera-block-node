@@ -34,6 +34,7 @@ import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.OneOf;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -53,7 +54,7 @@ public class StreamPersistenceHandlerImpl
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
-    private final BlockWriter<BlockItem> blockWriter;
+    private final BlockWriter<List<BlockItem>> blockWriter;
     private final Notifier notifier;
     private final MetricsService metricsService;
     private final ServiceStatus serviceStatus;
@@ -78,7 +79,7 @@ public class StreamPersistenceHandlerImpl
     public StreamPersistenceHandlerImpl(
             @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler,
             @NonNull final Notifier notifier,
-            @NonNull final BlockWriter<BlockItem> blockWriter,
+            @NonNull final BlockWriter<List<BlockItem>> blockWriter,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
         this.subscriptionHandler = subscriptionHandler;
@@ -105,9 +106,8 @@ public class StreamPersistenceHandlerImpl
                 final OneOf<SubscribeStreamResponse.ResponseOneOfType> oneOfTypeOneOf =
                         subscribeStreamResponse.response();
                 switch (oneOfTypeOneOf.kind()) {
-                    case BLOCK_ITEM -> {
-                        final BlockItem blockItem = subscribeStreamResponse.blockItem();
-                        if (blockItem == null) {
+                    case BLOCK_ITEMS -> {
+                        if (subscribeStreamResponse.blockItems() == null) {
                             final String message =
                                     PROTOCOL_VIOLATION_MESSAGE.formatted(
                                             "SubscribeStreamResponse",
@@ -118,12 +118,14 @@ public class StreamPersistenceHandlerImpl
                             metricsService.get(StreamPersistenceHandlerError).increment();
                             throw new BlockStreamProtocolException(message);
                         } else {
-                            // Persist the BlockItem
-                            Optional<BlockItem> result = blockWriter.write(blockItem);
+                            // Persist the BlockItems
+                            List<BlockItem> blockItems =
+                                    subscribeStreamResponse.blockItems().blockItems();
+                            Optional<List<BlockItem>> result = blockWriter.write(blockItems);
                             if (result.isPresent()) {
                                 // Publish the block item back upstream to the notifier
                                 // to send responses to producers.
-                                notifier.publish(blockItem);
+                                notifier.publish(blockItems);
                             }
                         }
                     }
