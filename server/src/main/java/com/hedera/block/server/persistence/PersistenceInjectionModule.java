@@ -24,6 +24,7 @@ import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.persistence.storage.write.MockNoOpBlockWriter;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -46,6 +47,15 @@ public interface PersistenceInjectionModule {
     @Provides
     @Singleton
     static BlockWriter<BlockItem> providesBlockWriter(BlockNodeContext blockNodeContext) {
+
+        final String persistenceType =
+                blockNodeContext
+                        .configuration()
+                        .getConfigData(PersistenceStorageConfig.class)
+                        .persistenceType();
+        if ("NOOP".equalsIgnoreCase(persistenceType)) {
+            return new MockNoOpBlockWriter(blockNodeContext);
+        }
         try {
             return BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         } catch (IOException e) {

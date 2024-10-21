@@ -14,47 +14,50 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.producer;
+package com.hedera.block.server.mediator;
 
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItemsReceived;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItems;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.hapi.block.PublishStreamRequest;
-import com.hedera.hapi.block.PublishStreamResponse;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.util.concurrent.Flow;
 
-public class MockNoOpProducerObserver
-        implements Flow.Subscriber<PublishStreamRequest>,
-                BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>> {
+public class MockNoOpLiveStreamMediator implements LiveStreamMediator {
 
     private final MetricsService metricsService;
 
-    public MockNoOpProducerObserver(@NonNull final BlockNodeContext blockNodeContext) {
-        System.getLogger(getClass().getName()).log(INFO, "Using " + getClass().getName());
+    public MockNoOpLiveStreamMediator(@NonNull final BlockNodeContext blockNodeContext) {
+        System.getLogger(getClass().getName()).log(INFO, "Using " + getClass().getSimpleName());
         this.metricsService = blockNodeContext.metricsService();
     }
 
     @Override
-    public void onNext(PublishStreamRequest item) {
-        metricsService.get(LiveBlockItemsReceived).increment();
+    public void publish(@NonNull BlockItem data) {
+        metricsService.get(LiveBlockItems).increment();
     }
 
     @Override
-    public void onEvent(
-            ObjectEvent<PublishStreamResponse> publishStreamResponseObjectEvent, long l, boolean b)
-            throws Exception {}
+    public void subscribe(
+            @NonNull BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> handler) {}
 
     @Override
-    public void onSubscribe(Flow.Subscription subscription) {}
+    public void unsubscribe(
+            @NonNull BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> handler) {}
 
     @Override
-    public void onError(Throwable throwable) {}
+    public boolean isSubscribed(
+            @NonNull BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> handler) {
+        return false;
+    }
 
     @Override
-    public void onComplete() {}
+    public void unsubscribeAllExpired() {}
+
+    @Override
+    public void notifyUnrecoverableError() {}
 }

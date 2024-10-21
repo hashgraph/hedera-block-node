@@ -30,7 +30,9 @@ import com.swirlds.config.api.ConfigProperty;
  */
 // 131072 works but not with persistence
 @ConfigData("mediator")
-public record MediatorConfig(@ConfigProperty(defaultValue = "262144") int ringBufferSize) {
+public record MediatorConfig(
+        @ConfigProperty(defaultValue = "262144") int ringBufferSize,
+        @ConfigProperty(defaultValue = "PRODUCTION") String mediatorType) {
     private static final System.Logger LOGGER = System.getLogger(MediatorConfig.class.getName());
 
     /**
@@ -48,5 +50,6 @@ public record MediatorConfig(@ConfigProperty(defaultValue = "262144") int ringBu
         }
 
         LOGGER.log(INFO, "Mediator configuration mediator.ringBufferSize: " + ringBufferSize);
+        LOGGER.log(INFO, "Mediator configuration mediator.mediatorType: " + mediatorType);
     }
 }

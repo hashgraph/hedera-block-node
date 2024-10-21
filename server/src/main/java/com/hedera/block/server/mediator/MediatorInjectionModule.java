@@ -41,6 +41,12 @@ public interface MediatorInjectionModule {
     @Singleton
     static LiveStreamMediator providesLiveStreamMediator(
             @NonNull BlockNodeContext blockNodeContext, @NonNull ServiceStatus serviceStatus) {
+        final String mediatorType =
+                blockNodeContext.configuration().getConfigData(MediatorConfig.class).mediatorType();
+        if ("NOOP".equals(mediatorType)) {
+            return new MockNoOpLiveStreamMediator(blockNodeContext);
+        }
+
         return LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
     }
 

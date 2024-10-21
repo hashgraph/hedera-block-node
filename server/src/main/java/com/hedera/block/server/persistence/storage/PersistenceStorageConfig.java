@@ -33,7 +33,9 @@ import java.nio.file.Paths;
  *     set it as persistence.storage.rootPath
  */
 @ConfigData("persistence.storage")
-public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String rootPath) {
+public record PersistenceStorageConfig(
+        @ConfigProperty(defaultValue = "") String rootPath,
+        @ConfigProperty(defaultValue = "PRODUCTION") String persistenceType) {
     private static final System.Logger LOGGER =
             System.getLogger(PersistenceStorageConfig.class.getName());
 
@@ -62,5 +64,9 @@ public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String
 
         LOGGER.log(INFO, "Persistence Storage configuration persistence.storage.rootPath: " + path);
         rootPath = path.toString();
+        LOGGER.log(
+                INFO,
+                "Persistence configuration persistence.storage.persistenceType: "
+                        + persistenceType);
     }
 }

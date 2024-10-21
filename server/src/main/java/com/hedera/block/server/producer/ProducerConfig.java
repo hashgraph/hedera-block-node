@@ -22,10 +22,10 @@ import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 
 @ConfigData("producer")
-public record ProducerConfig(@ConfigProperty(defaultValue = "NOOP") String observerClassType) {
+public record ProducerConfig(@ConfigProperty(defaultValue = "PRODUCTION") String observerType) {
     private static final System.Logger LOGGER = System.getLogger(ProducerConfig.class.getName());
 
     public ProducerConfig {
-        LOGGER.log(INFO, "Producer configuration producer.observerClassType: " + observerClassType);
+        LOGGER.log(INFO, "Producer configuration producer.observerType: " + observerType);
     }
 }
