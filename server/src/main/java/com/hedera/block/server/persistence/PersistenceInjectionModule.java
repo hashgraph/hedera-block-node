@@ -31,6 +31,7 @@ import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import java.io.IOException;
+import java.util.List;
 import javax.inject.Singleton;
 
 /** A Dagger module for providing dependencies for Persistence Module. */
@@ -45,7 +46,7 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static BlockWriter<BlockItem> providesBlockWriter(BlockNodeContext blockNodeContext) {
+    static BlockWriter<List<BlockItem>> providesBlockWriter(BlockNodeContext blockNodeContext) {
         try {
             return BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         } catch (IOException e) {

@@ -38,10 +38,13 @@ import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
+import com.swirlds.metrics.api.Counter;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import java.time.InstantSource;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -59,7 +62,7 @@ public class ProducerBlockItemObserver
     private final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
             publishStreamResponseObserver;
     private final SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
-    private final Publisher<BlockItem> publisher;
+    private final Publisher<List<BlockItem>> publisher;
     private final ServiceStatus serviceStatus;
     private final MetricsService metricsService;
 
@@ -85,8 +88,8 @@ public class ProducerBlockItemObserver
      * to the upstream producer via the responseStreamObserver.
      *
      * @param producerLivenessClock the clock used to calculate the producer liveness.
-     * @param publisher the block item publisher to used to pass block items to consumers as they
-     *     arrive from the upstream producer.
+     * @param publisher the block item list publisher to used to pass block item lists to consumers
+     *     as they arrive from the upstream producer.
      * @param subscriptionHandler the subscription handler used to
      * @param publishStreamResponseObserver the response stream observer to send responses back to
      *     the upstream producer for each block item processed.
@@ -97,7 +100,7 @@ public class ProducerBlockItemObserver
      */
     public ProducerBlockItemObserver(
             @NonNull final InstantSource producerLivenessClock,
-            @NonNull final Publisher<BlockItem> publisher,
+            @NonNull final Publisher<List<BlockItem>> publisher,
             @NonNull final SubscriptionHandler<PublishStreamResponse> subscriptionHandler,
             @NonNull
                     final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
@@ -157,42 +160,48 @@ public class ProducerBlockItemObserver
     public void onNext(
             @NonNull final com.hedera.hapi.block.protoc.PublishStreamRequest publishStreamRequest) {
 
-        try {
-            LOGGER.log(DEBUG, "Received PublishStreamRequest from producer");
-            final BlockItem blockItem =
-                    toPbj(BlockItem.PROTOBUF, publishStreamRequest.getBlockItem().toByteArray());
-            LOGGER.log(DEBUG, "Received block item: " + blockItem);
+        LOGGER.log(DEBUG, "Received PublishStreamRequest from producer");
+        final List<BlockItem> blockItemsPbj = new ArrayList<>();
 
-            metricsService.get(LiveBlockItemsReceived).increment();
-
-            // Publish the block to all the subscribers unless
-            // there's an issue with the StreamMediator.
-            if (serviceStatus.isRunning()) {
-                // Refresh the producer liveness
-                livenessCalculator.refresh();
-
-                // Publish the block to the mediator
-                publisher.publish(blockItem);
-
-            } else {
-                LOGGER.log(ERROR, getClass().getName() + " is not accepting BlockItems");
-
-                // Close the upstream connection to the producer(s)
+        final Counter liveBlockItemsReceived = metricsService.get(LiveBlockItemsReceived);
+        for (final com.hedera.hapi.block.stream.protoc.BlockItem blockItemProtoc :
+                publishStreamRequest.getBlockItemsList()) {
+            try {
+                final BlockItem blockItem =
+                        toPbj(BlockItem.PROTOBUF, blockItemProtoc.toByteArray());
+                blockItemsPbj.add(blockItem);
+            } catch (ParseException e) {
                 final var errorResponse = buildErrorStreamResponse();
                 publishStreamResponseObserver.onNext(errorResponse);
-                LOGGER.log(ERROR, "Error PublishStreamResponse sent to upstream producer");
+                LOGGER.log(
+                        ERROR,
+                        "Error parsing inbound block item from a producer: " + blockItemProtoc,
+                        e);
+
+                // Stop the server
+                serviceStatus.stopWebServer(getClass().getName());
             }
-        } catch (ParseException e) {
+            liveBlockItemsReceived.increment();
+        }
+
+        LOGGER.log(DEBUG, "Received block item batch with {} items.", blockItemsPbj.size());
+
+        // Publish the block to all the subscribers unless
+        // there's an issue with the StreamMediator.
+        if (serviceStatus.isRunning()) {
+            // Refresh the producer liveness
+            livenessCalculator.refresh();
+
+            // Publish the block to the mediator
+            publisher.publish(blockItemsPbj);
+
+        } else {
+            LOGGER.log(ERROR, getClass().getName() + " is not accepting BlockItems");
+
+            // Close the upstream connection to the producer(s)
             final var errorResponse = buildErrorStreamResponse();
             publishStreamResponseObserver.onNext(errorResponse);
-            LOGGER.log(
-                    ERROR,
-                    "Error parsing inbound block item from a producer: "
-                            + publishStreamRequest.getBlockItem(),
-                    e);
-
-            // Stop the server
-            serviceStatus.stopWebServer(getClass().getName());
+            LOGGER.log(ERROR, "Error PublishStreamResponse sent to upstream producer");
         }
     }
 

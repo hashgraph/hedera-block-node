@@ -22,7 +22,6 @@ import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
 import com.swirlds.config.api.Configuration;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
@@ -103,7 +102,9 @@ public class BlockStreamSimulatorApp {
             } else {
                 LOGGER.log(
                         System.Logger.Level.WARNING,
-                        "Block Server is running behind, Streaming took longer than max expected: "
+                        "Block Server is running behind. Streaming took: "
+                                + (elapsedTime / 1_000_000)
+                                + "ms - Longer than max expected of: "
                                 + millisecondsPerBlock
                                 + " milliseconds");
             }
@@ -120,18 +121,18 @@ public class BlockStreamSimulatorApp {
         int blockItemsStreamed = 0;
 
         while (streamBlockItem) {
-            // get block item
-            BlockItem blockItem = blockStreamManager.getNextBlockItem();
+            // get block
+            Block block = blockStreamManager.getNextBlock();
 
-            if (blockItem == null) {
+            if (block == null) {
                 LOGGER.log(
                         System.Logger.Level.INFO,
                         "Block Stream Simulator has reached the end of the block items");
                 break;
             }
 
-            publishStreamGrpcClient.streamBlockItem(blockItem);
-            blockItemsStreamed++;
+            publishStreamGrpcClient.streamBlock(block);
+            blockItemsStreamed += block.items().size();
 
             Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);
 

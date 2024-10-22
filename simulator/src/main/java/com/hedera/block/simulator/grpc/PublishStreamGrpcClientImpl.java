@@ -16,7 +16,9 @@
 
 package com.hedera.block.simulator.grpc;
 
+import com.hedera.block.common.utils.ChunkUtils;
 import com.hedera.block.simulator.Translator;
+import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.hapi.block.protoc.BlockStreamServiceGrpc;
 import com.hedera.hapi.block.protoc.PublishStreamRequest;
@@ -26,6 +28,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
+import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
 
 /**
@@ -35,14 +39,17 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
     private final BlockStreamServiceGrpc.BlockStreamServiceStub stub;
     private final StreamObserver<PublishStreamRequest> requestStreamObserver;
+    private final BlockStreamConfig blockStreamConfig;
 
     /**
      * Creates a new PublishStreamGrpcClientImpl instance.
      *
      * @param grpcConfig the gRPC configuration
+     * @param blockStreamConfig the block stream configuration
      */
     @Inject
-    public PublishStreamGrpcClientImpl(@NonNull GrpcConfig grpcConfig) {
+    public PublishStreamGrpcClientImpl(
+            @NonNull GrpcConfig grpcConfig, @NonNull BlockStreamConfig blockStreamConfig) {
         ManagedChannel channel =
                 ManagedChannelBuilder.forAddress(grpcConfig.serverAddress(), grpcConfig.port())
                         .usePlaintext()
@@ -50,6 +57,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
         stub = BlockStreamServiceGrpc.newStub(channel);
         PublishStreamObserver publishStreamObserver = new PublishStreamObserver();
         requestStreamObserver = stub.publishBlockStream(publishStreamObserver);
+        this.blockStreamConfig = blockStreamConfig;
     }
 
     /**
@@ -57,11 +65,15 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      * stream.
      */
     @Override
-    public boolean streamBlockItem(BlockItem blockItem) {
+    public boolean streamBlockItem(List<BlockItem> blockItems) {
+
+        List<com.hedera.hapi.block.stream.protoc.BlockItem> blockItemsProtoc = new ArrayList<>();
+        for (BlockItem blockItem : blockItems) {
+            blockItemsProtoc.add(Translator.fromPbj(blockItem));
+        }
+
         requestStreamObserver.onNext(
-                PublishStreamRequest.newBuilder()
-                        .setBlockItem(Translator.fromPbj(blockItem))
-                        .build());
+                PublishStreamRequest.newBuilder().addAllBlockItems(blockItemsProtoc).build());
 
         return true;
     }
@@ -72,12 +84,18 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Override
     public boolean streamBlock(Block block) {
+        List<com.hedera.hapi.block.stream.protoc.BlockItem> blockItemsProtoc = new ArrayList<>();
         for (BlockItem blockItem : block.items()) {
-            streamBlockItem(blockItem);
+            blockItemsProtoc.add(Translator.fromPbj(blockItem));
         }
 
-        // wait for ack on the block
-        // if and when the ack is received return true
+        List<List<com.hedera.hapi.block.stream.protoc.BlockItem>> streamingBatches =
+                ChunkUtils.chunkify(blockItemsProtoc, blockStreamConfig.blockItemsBatchSize());
+        for (List<com.hedera.hapi.block.stream.protoc.BlockItem> streamingBatch :
+                streamingBatches) {
+            requestStreamObserver.onNext(
+                    PublishStreamRequest.newBuilder().addAllBlockItems(streamingBatch).build());
+        }
 
         return true;
     }

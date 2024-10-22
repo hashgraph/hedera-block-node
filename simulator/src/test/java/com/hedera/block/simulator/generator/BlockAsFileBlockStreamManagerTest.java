@@ -18,9 +18,8 @@ package com.hedera.block.simulator.generator;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
-import com.hedera.block.simulator.config.types.StreamingMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -77,17 +76,16 @@ class BlockAsFileBlockStreamManagerTest {
     }
 
     private BlockAsFileBlockStreamManager getBlockAsFileBlockStreamManager(String rootFolder) {
-        BlockStreamConfig blockStreamConfig =
-                new BlockStreamConfig(
-                        GenerationMode.DIR,
-                        rootFolder,
-                        1_500_000,
-                        "BlockAsFileBlockStreamManager",
-                        10_000,
-                        36,
-                        ".blk",
-                        StreamingMode.CONSTANT_RATE,
-                        1000);
-        return new BlockAsFileBlockStreamManager(blockStreamConfig);
+
+        BlockGeneratorConfig blockGeneratorConfig =
+                BlockGeneratorConfig.builder()
+                        .generationMode(GenerationMode.DIR)
+                        .folderRootPath(rootFolder)
+                        .managerImplementation("BlockAsFileBlockStreamManager")
+                        .paddedLength(36)
+                        .fileExtension(".blk")
+                        .build();
+
+        return new BlockAsFileBlockStreamManager(blockGeneratorConfig);
     }
 }

@@ -126,10 +126,13 @@ enum SubscribeStreamResponseCode {
 
 service BlockStreamService {
 //    rpc serverStatus(ServerStatusRequest) returns (ServerStatusResponse);
-    rpc singleBlock(SingleBlockRequest) returns (SingleBlockResponse);
 //    rpc stateSnapshot(StateSnapshotRequest) returns (StateSnapshotResponse);
     rpc publishBlockStream (stream PublishStreamRequest) returns (stream PublishStreamResponse);
     rpc subscribeBlockStream(SubscribeStreamRequest) returns (stream SubscribeStreamResponse);
+}
+
+service BlockAccessService {
+    rpc singleBlock(SingleBlockRequest) returns (SingleBlockResponse);
 }
 
 // block.proto

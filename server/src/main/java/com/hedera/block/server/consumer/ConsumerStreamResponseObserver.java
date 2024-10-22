@@ -17,7 +17,6 @@
 package com.hedera.block.server.consumer;
 
 import static com.hedera.block.server.Translator.fromPbj;
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItemsConsumed;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -27,6 +26,7 @@ import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.LivenessCalculator;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
+import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -35,6 +35,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import java.time.InstantSource;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -55,7 +57,7 @@ public class ConsumerStreamResponseObserver
 
     private final AtomicBoolean isResponsePermitted = new AtomicBoolean(true);
     private final ResponseSender statusResponseSender = new StatusResponseSender();
-    private final ResponseSender blockItemResponseSender = new BlockItemResponseSender();
+    private final ResponseSender blockItemsResponseSender = new BlockItemsResponseSender();
 
     private static final String PROTOCOL_VIOLATION_MESSAGE =
             "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
@@ -186,7 +188,7 @@ public class ConsumerStreamResponseObserver
                 subscribeStreamResponse.response();
         return switch (oneOfTypeOneOf.kind()) {
             case STATUS -> statusResponseSender;
-            case BLOCK_ITEM -> blockItemResponseSender;
+            case BLOCK_ITEMS -> blockItemsResponseSender;
             default -> throw new IllegalArgumentException(
                     "Unknown response type: " + oneOfTypeOneOf.kind());
         };
@@ -196,35 +198,39 @@ public class ConsumerStreamResponseObserver
         void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse);
     }
 
-    private final class BlockItemResponseSender implements ResponseSender {
+    private final class BlockItemsResponseSender implements ResponseSender {
         private boolean streamStarted = false;
 
         public void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse) {
 
-            // Only start sending BlockItems after we've reached
-            // the beginning of a block.
-            final BlockItem blockItem = subscribeStreamResponse.blockItem();
-            if (blockItem == null) {
+            if (subscribeStreamResponse.blockItems() == null) {
                 final String message =
                         PROTOCOL_VIOLATION_MESSAGE.formatted(
                                 "SubscribeStreamResponse",
-                                "BLOCK_ITEM",
-                                "block_item",
+                                "BLOCK_ITEMS",
+                                "block_items",
                                 subscribeStreamResponse);
                 LOGGER.log(ERROR, message);
                 throw new IllegalArgumentException(message);
-            } else {
-                if (!streamStarted && blockItem.hasBlockHeader()) {
-                    streamStarted = true;
-                }
+            }
 
-                if (streamStarted) {
-                    LOGGER.log(DEBUG, "Sending BlockItem downstream: " + blockItem);
+            final List<BlockItem> blockItems =
+                    Objects.requireNonNull(subscribeStreamResponse.blockItems()).blockItems();
+            // Only start sending BlockItems after we've reached
+            // the beginning of a block.
+            if (!streamStarted && blockItems.getFirst().hasBlockHeader()) {
+                LOGGER.log(
+                        DEBUG,
+                        "Sending BlockItem Batch downstream for block: "
+                                + blockItems.getFirst().blockHeader().number());
+                streamStarted = true;
+            }
 
-                    // Increment counter
-                    metricsService.get(LiveBlockItemsConsumed).increment();
-                    subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
-                }
+            if (streamStarted) {
+                metricsService
+                        .get(BlockNodeMetricTypes.Counter.LiveBlockItemsReceived)
+                        .add(blockItems.size());
+                subscribeStreamResponseObserver.onNext(fromPbj(subscribeStreamResponse));
             }
         }
     }

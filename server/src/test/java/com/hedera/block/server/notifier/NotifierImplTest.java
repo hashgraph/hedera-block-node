@@ -16,8 +16,8 @@
 
 package com.hedera.block.server.notifier;
 
-import static com.hedera.block.server.BlockStreamServiceIntegrationTest.buildAck;
 import static com.hedera.block.server.Translator.fromPbj;
+import static com.hedera.block.server.grpc.BlockStreamServiceIntegrationTest.buildAck;
 import static com.hedera.block.server.notifier.NotifierImpl.buildErrorStreamResponse;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -54,7 +54,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class NotifierImplTest {
 
     @Mock private Notifiable mediator;
-    @Mock private Publisher<BlockItem> publisher;
+    @Mock private Publisher<List<BlockItem>> publisher;
     @Mock private ServiceStatus serviceStatus;
     @Mock private SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
 
@@ -132,13 +132,11 @@ public class NotifierImplTest {
                 "Expected the notifier to have observer3 subscribed");
 
         List<BlockItem> blockItems = generateBlockItems(1);
-        notifier.publish(blockItems.getFirst());
+        notifier.publish(blockItems);
 
         // Verify the response was received by all observers
         final var publishStreamResponse =
-                PublishStreamResponse.newBuilder()
-                        .acknowledgement(buildAck(blockItems.getFirst()))
-                        .build();
+                PublishStreamResponse.newBuilder().acknowledgement(buildAck(blockItems)).build();
         verify(streamObserver1, timeout(testTimeout).times(1))
                 .onNext(fromPbj(publishStreamResponse));
         verify(streamObserver2, timeout(testTimeout).times(1))
@@ -222,7 +220,7 @@ public class NotifierImplTest {
                 "Expected the notifier to have observer3 subscribed");
 
         List<BlockItem> blockItems = generateBlockItems(1);
-        notifier.publish(blockItems.getFirst());
+        notifier.publish(blockItems);
 
         Thread.sleep(testTimeout);
 
@@ -284,7 +282,7 @@ public class NotifierImplTest {
                 "Expected the notifier to have observer3 subscribed");
 
         List<BlockItem> blockItems = generateBlockItems(1);
-        notifier.publish(blockItems.getFirst());
+        notifier.publish(blockItems);
 
         final PublishStreamResponse errorResponse = buildErrorStreamResponse();
         verify(streamObserver1, timeout(testTimeout).times(1)).onNext(fromPbj(errorResponse));
@@ -340,13 +338,11 @@ public class NotifierImplTest {
                 "Expected the notifier to have observer3 subscribed");
 
         final List<BlockItem> blockItems = generateBlockItems(1);
-        notifier.publish(blockItems.getFirst());
+        notifier.publish(blockItems);
 
         // Verify once the serviceStatus is not running that we do not publish the responses
         final var publishStreamResponse =
-                PublishStreamResponse.newBuilder()
-                        .acknowledgement(buildAck(blockItems.getFirst()))
-                        .build();
+                PublishStreamResponse.newBuilder().acknowledgement(buildAck(blockItems)).build();
         verify(streamObserver1, timeout(testTimeout).times(0))
                 .onNext(fromPbj(publishStreamResponse));
         verify(streamObserver2, timeout(testTimeout).times(0))
@@ -365,7 +361,7 @@ public class NotifierImplTest {
 
         @Override
         @NonNull
-        Acknowledgement buildAck(@NonNull final BlockItem blockItem)
+        Acknowledgement buildAck(@NonNull final List<BlockItem> blockItems)
                 throws NoSuchAlgorithmException {
             throw new NoSuchAlgorithmException("Test exception");
         }

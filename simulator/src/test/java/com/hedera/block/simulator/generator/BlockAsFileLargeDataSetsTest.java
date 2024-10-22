@@ -18,9 +18,8 @@ package com.hedera.block.simulator.generator;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
-import com.hedera.block.simulator.config.types.StreamingMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.hapi.block.stream.BlockItem;
 import java.io.File;
@@ -96,19 +95,17 @@ class BlockAsFileLargeDataSetsTest {
         byte[] invalidData = "invalid block data".getBytes();
         Files.write(currentBlockFilePath, invalidData);
 
-        BlockStreamConfig blockStreamConfig =
-                new BlockStreamConfig(
-                        GenerationMode.DIR,
-                        blockDirPath.toString(),
-                        1_500_000,
-                        "BlockAsFileBlockStreamManager",
-                        10_000,
-                        36,
-                        ".blk",
-                        StreamingMode.CONSTANT_RATE,
-                        1000);
+        final BlockGeneratorConfig blockGeneratorConfig =
+                BlockGeneratorConfig.builder()
+                        .generationMode(GenerationMode.DIR)
+                        .folderRootPath(blockDirPath.toString())
+                        .managerImplementation("BlockAsFileBlockStreamManager")
+                        .paddedLength(36)
+                        .fileExtension(".blk")
+                        .build();
+
         BlockAsFileLargeDataSets blockStreamManager =
-                new BlockAsFileLargeDataSets(blockStreamConfig);
+                new BlockAsFileLargeDataSets(blockGeneratorConfig);
 
         assertThrows(
                 BlockSimulatorParsingException.class,
@@ -118,18 +115,17 @@ class BlockAsFileLargeDataSetsTest {
 
     private BlockAsFileLargeDataSets getBlockAsFileLargeDatasetsBlockStreamManager(
             String rootFolder) {
-        BlockStreamConfig blockStreamConfig =
-                new BlockStreamConfig(
-                        GenerationMode.DIR,
-                        rootFolder,
-                        1_500_000,
-                        "BlockAsFileBlockStreamManager",
-                        10_000,
-                        36,
-                        ".blk",
-                        StreamingMode.CONSTANT_RATE,
-                        1000);
-        return new BlockAsFileLargeDataSets(blockStreamConfig);
+
+        final BlockGeneratorConfig blockGeneratorConfig =
+                BlockGeneratorConfig.builder()
+                        .generationMode(GenerationMode.DIR)
+                        .folderRootPath(rootFolder)
+                        .managerImplementation("BlockAsFileBlockStreamManager")
+                        .paddedLength(36)
+                        .fileExtension(".blk")
+                        .build();
+
+        return new BlockAsFileLargeDataSets(blockGeneratorConfig);
     }
 
     private static String getAbsoluteFolder(String relativePath) {

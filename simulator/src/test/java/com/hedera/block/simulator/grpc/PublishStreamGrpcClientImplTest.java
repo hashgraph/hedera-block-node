@@ -19,10 +19,13 @@ package com.hedera.block.simulator.grpc;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.simulator.TestUtils;
+import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,11 +33,15 @@ import org.junit.jupiter.api.Test;
 class PublishStreamGrpcClientImplTest {
 
     GrpcConfig grpcConfig;
+    BlockStreamConfig blockStreamConfig;
 
     @BeforeEach
     void setUp() throws IOException {
 
         grpcConfig = TestUtils.getTestConfiguration().getConfigData(GrpcConfig.class);
+        blockStreamConfig =
+                TestUtils.getTestConfiguration(Map.of("blockStream.blockItemsBatchSize", "2"))
+                        .getConfigData(BlockStreamConfig.class);
     }
 
     @AfterEach
@@ -44,8 +51,8 @@ class PublishStreamGrpcClientImplTest {
     void streamBlockItem() {
         BlockItem blockItem = BlockItem.newBuilder().build();
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
-                new PublishStreamGrpcClientImpl(grpcConfig);
-        boolean result = publishStreamGrpcClient.streamBlockItem(blockItem);
+                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig);
+        boolean result = publishStreamGrpcClient.streamBlockItem(List.of(blockItem));
         assertTrue(result);
     }
 
@@ -54,9 +61,15 @@ class PublishStreamGrpcClientImplTest {
         BlockItem blockItem = BlockItem.newBuilder().build();
         Block block = Block.newBuilder().items(blockItem).build();
 
+        Block block1 = Block.newBuilder().items(blockItem, blockItem, blockItem).build();
+
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
-                new PublishStreamGrpcClientImpl(grpcConfig);
+                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig);
+
         boolean result = publishStreamGrpcClient.streamBlock(block);
         assertTrue(result);
+
+        boolean result1 = publishStreamGrpcClient.streamBlock(block1);
+        assertTrue(result1);
     }
 }
