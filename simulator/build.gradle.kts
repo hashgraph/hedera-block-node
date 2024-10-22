@@ -19,7 +19,7 @@ plugins {
     id("com.hedera.block.simulator")
 }
 
-dependencies { implementation(project(":common")) }
+// dependencies { implementation(project(":common")) }
 
 description = "Hedera Block Stream Simulator"
 

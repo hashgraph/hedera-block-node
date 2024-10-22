@@ -42,7 +42,6 @@ import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
-import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.protoc.SingleBlockResponse;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -55,7 +54,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,11 +86,6 @@ class BlockAccessServiceTest {
                 TestConfigUtil.getTestBlockNodeContext(
                         Map.of("persistence.storage.rootPath", testPath.toString()));
         config = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
-    }
-
-    @AfterEach
-    public void tearDown() {
-        TestUtils.deleteDirectory(testPath.toFile());
     }
 
     @Test

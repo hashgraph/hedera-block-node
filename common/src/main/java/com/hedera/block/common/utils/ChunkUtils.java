@@ -16,6 +16,7 @@
 
 package com.hedera.block.common.utils;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -23,8 +24,14 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/** Utility class for chunking collections. */
 public final class ChunkUtils {
-    public static <T> List<List<T>> chunkify(final Collection<T> collection, final int chunkSize) {
+    /** Chunks a collection into a list of lists of the specified size.
+     * @param collection the collection to chunk, if the collection is empty, an empty list is returned.
+     * @param chunkSize the size of each chunk
+     *  */
+    public static <T> List<List<T>> chunkify(
+            @NonNull final Collection<T> collection, final int chunkSize) {
         Objects.requireNonNull(collection);
         if (chunkSize <= 0) {
             throw new IllegalArgumentException("Chunk size must be greater than 0");

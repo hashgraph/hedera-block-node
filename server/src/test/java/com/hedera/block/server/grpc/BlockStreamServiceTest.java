@@ -42,7 +42,6 @@ import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
-import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.SingleBlockResponse;
 import com.hedera.hapi.block.SingleBlockResponseCode;
 import com.hedera.hapi.block.stream.Block;
@@ -54,7 +53,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,11 +91,6 @@ public class BlockStreamServiceTest {
                 TestConfigUtil.getTestBlockNodeContext(
                         Map.of("persistence.storage.rootPath", testPath.toString()));
         config = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
-    }
-
-    @AfterEach
-    public void tearDown() {
-        TestUtils.deleteDirectory(testPath.toFile());
     }
 
     @Test
