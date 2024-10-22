@@ -29,6 +29,8 @@ public final class ChunkUtils {
     /** Chunks a collection into a list of lists of the specified size.
      * @param collection the collection to chunk, if the collection is empty, an empty list is returned.
      * @param chunkSize the size of each chunk
+     * @param <T> the type of the collection
+     * @return a list of lists of the specified size
      *  */
     public static <T> List<List<T>> chunkify(
             @NonNull final Collection<T> collection, final int chunkSize) {

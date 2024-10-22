@@ -19,6 +19,7 @@ package com.hedera.block.suites.persistence.positive;
 import com.hedera.block.suites.BaseSuite;
 import org.junit.jupiter.api.DisplayName;
 
+/** Positive Data Persistence Tests */
 @DisplayName("Positive Data Persistence Tests")
 public class PositiveDataPersistenceTests extends BaseSuite {
     /** Default constructor for the {@link PositiveDataPersistenceTests} class. */
