@@ -39,6 +39,7 @@ import com.hedera.hapi.block.ItemAcknowledgement;
 import com.hedera.hapi.block.PublishStreamRequest;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
+import com.hedera.hapi.block.protoc.BlockItemSet;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -135,7 +136,7 @@ public class ProducerBlockItemObserverTest {
         // create the PublishStreamRequest with the spy block item
         final com.hedera.hapi.block.protoc.PublishStreamRequest protocPublishStreamRequest =
                 com.hedera.hapi.block.protoc.PublishStreamRequest.newBuilder()
-                        .addBlockItems(protocBlockItem)
+                        .setBlockItems(BlockItemSet.newBuilder().addBlockItems(protocBlockItem))
                         .build();
 
         // call the producerBlockItemObserver
@@ -248,7 +249,9 @@ public class ProducerBlockItemObserverTest {
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final PublishStreamRequest publishStreamRequest =
-                PublishStreamRequest.newBuilder().blockItems(blockItems).build();
+                PublishStreamRequest.newBuilder()
+                        .blockItems(new com.hedera.hapi.block.BlockItemSet(blockItems))
+                        .build();
 
         // Confirm that the observer is called with the first BlockItem
         producerBlockItemObserver.onNext(fromPbj(publishStreamRequest));

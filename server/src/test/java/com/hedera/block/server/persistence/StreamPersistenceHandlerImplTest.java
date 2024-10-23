@@ -34,8 +34,8 @@ import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.hapi.block.BlockItemSet;
 import com.hedera.hapi.block.SubscribeStreamResponse;
-import com.hedera.hapi.block.SubscribeStreamResponseSet;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.OneOf;
 import java.io.IOException;
@@ -77,10 +77,9 @@ public class StreamPersistenceHandlerImplTest {
                         serviceStatus);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
-        final SubscribeStreamResponseSet subscribeStreamResponseSet =
-                SubscribeStreamResponseSet.newBuilder().blockItems(blockItems).build();
+        final BlockItemSet blockItemSet = BlockItemSet.newBuilder().blockItems(blockItems).build();
         final var subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().blockItems(subscribeStreamResponseSet).build();
+                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build();
         final ObjectEvent<SubscribeStreamResponse> event = new ObjectEvent<>();
         event.set(subscribeStreamResponse);
 
@@ -107,13 +106,9 @@ public class StreamPersistenceHandlerImplTest {
                         serviceStatus);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
-        final SubscribeStreamResponseSet subscribeStreamResponseSet =
-                SubscribeStreamResponseSet.newBuilder().blockItems(blockItems).build();
+        final BlockItemSet blockItemSet = BlockItemSet.newBuilder().blockItems(blockItems).build();
         final var subscribeStreamResponse =
-                spy(
-                        SubscribeStreamResponse.newBuilder()
-                                .blockItems(subscribeStreamResponseSet)
-                                .build());
+                spy(SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build());
 
         // Force the block item to be null
         when(subscribeStreamResponse.blockItems()).thenReturn(null);
@@ -141,13 +136,9 @@ public class StreamPersistenceHandlerImplTest {
                         serviceStatus);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
-        final SubscribeStreamResponseSet subscribeStreamResponseSet =
-                SubscribeStreamResponseSet.newBuilder().blockItems(blockItems).build();
+        final BlockItemSet blockItemSet = BlockItemSet.newBuilder().blockItems(blockItems).build();
         final var subscribeStreamResponse =
-                spy(
-                        SubscribeStreamResponse.newBuilder()
-                                .blockItems(subscribeStreamResponseSet)
-                                .build());
+                spy(SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build());
 
         // Force the block item to be UNSET
         final OneOf<SubscribeStreamResponse.ResponseOneOfType> illegalOneOf =

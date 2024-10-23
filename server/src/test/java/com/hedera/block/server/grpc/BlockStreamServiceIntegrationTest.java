@@ -47,6 +47,7 @@ import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.Acknowledgement;
+import com.hedera.hapi.block.BlockItemSet;
 import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.ItemAcknowledgement;
 import com.hedera.hapi.block.PublishStreamRequest;
@@ -57,7 +58,6 @@ import com.hedera.hapi.block.SingleBlockResponseCode;
 import com.hedera.hapi.block.SubscribeStreamRequest;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
-import com.hedera.hapi.block.SubscribeStreamResponseSet;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
@@ -205,7 +205,9 @@ public class BlockStreamServiceIntegrationTest {
 
         for (BlockItem blockItem : blockItems) {
             final PublishStreamRequest publishStreamRequest =
-                    PublishStreamRequest.newBuilder().blockItems(blockItem).build();
+                    PublishStreamRequest.newBuilder()
+                            .blockItems(new BlockItemSet(List.of(blockItem)))
+                            .build();
 
             // Calling onNext() as Helidon does with each block item for
             // the first producer.
@@ -295,7 +297,7 @@ public class BlockStreamServiceIntegrationTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
         final PublishStreamRequest publishStreamRequest =
                 PublishStreamRequest.newBuilder()
-                        .blockItems(List.of(blockItems.getFirst()))
+                        .blockItems(new BlockItemSet(List.of(blockItems.getFirst())))
                         .build();
 
         // Calling onNext() with a BlockItem
@@ -306,12 +308,10 @@ public class BlockStreamServiceIntegrationTest {
 
         verify(blockWriter, timeout(testTimeout).times(1)).write(List.of(blockItems.getFirst()));
 
-        final SubscribeStreamResponseSet subscribeStreamResponseSet =
-                SubscribeStreamResponseSet.newBuilder()
-                        .blockItems(List.of(blockItems.getFirst()))
-                        .build();
+        final BlockItemSet blockItemSet =
+                BlockItemSet.newBuilder().blockItems(List.of(blockItems.getFirst())).build();
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().blockItems(subscribeStreamResponseSet).build();
+                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build();
 
         verify(subscribeStreamObserver1, timeout(testTimeout).times(1))
                 .onNext(fromPbj(subscribeStreamResponse));
@@ -343,7 +343,9 @@ public class BlockStreamServiceIntegrationTest {
         final List<BlockItem> blockItems = generateBlockItems(numberOfBlocks);
         for (BlockItem blockItem : blockItems) {
             final PublishStreamRequest publishStreamRequest =
-                    PublishStreamRequest.newBuilder().blockItems(blockItem).build();
+                    PublishStreamRequest.newBuilder()
+                            .blockItems(new BlockItemSet(List.of(blockItem)))
+                            .build();
             streamObserver.onNext(fromPbj(publishStreamRequest));
         }
 
@@ -382,7 +384,9 @@ public class BlockStreamServiceIntegrationTest {
 
         for (int i = 0; i < blockItems.size(); i++) {
             final PublishStreamRequest publishStreamRequest =
-                    PublishStreamRequest.newBuilder().blockItems(blockItems.get(i)).build();
+                    PublishStreamRequest.newBuilder()
+                            .blockItems(new BlockItemSet(List.of(blockItems.get(i))))
+                            .build();
 
             // Add a new subscriber
             if (i == 51) {
@@ -471,7 +475,7 @@ public class BlockStreamServiceIntegrationTest {
             streamObserver.onNext(
                     fromPbj(
                             PublishStreamRequest.newBuilder()
-                                    .blockItems(blockItems.get(i))
+                                    .blockItems(new BlockItemSet(List.of(blockItems.get(i))))
                                     .build()));
 
             // Remove 1st subscriber
@@ -592,7 +596,7 @@ public class BlockStreamServiceIntegrationTest {
 
         // Transmit a BlockItem
         final PublishStreamRequest publishStreamRequest =
-                PublishStreamRequest.newBuilder().blockItems(blockItems).build();
+                PublishStreamRequest.newBuilder().blockItems(new BlockItemSet(blockItems)).build();
         streamObserver.onNext(fromPbj(publishStreamRequest));
 
         // Use verify to make sure the serviceStatus.stopRunning() method is called
@@ -627,11 +631,10 @@ public class BlockStreamServiceIntegrationTest {
 
         // The BlockItem expected to pass through since it was published
         // before the IOException was thrown.
-        final SubscribeStreamResponseSet subscribeStreamResponseSet =
-                SubscribeStreamResponseSet.newBuilder().blockItems(blockItems).build();
+        final BlockItemSet blockItemSet = BlockItemSet.newBuilder().blockItems(blockItems).build();
 
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().blockItems(subscribeStreamResponseSet).build();
+                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build();
         verify(subscribeStreamObserver1, timeout(testTimeout).times(1))
                 .onNext(fromPbj(subscribeStreamResponse));
         verify(subscribeStreamObserver2, timeout(testTimeout).times(1))
@@ -719,8 +722,8 @@ public class BlockStreamServiceIntegrationTest {
     }
 
     private static SubscribeStreamResponse buildSubscribeStreamResponse(BlockItem blockItem) {
-        final SubscribeStreamResponseSet subscribeStreamResponseSet =
-                SubscribeStreamResponseSet.newBuilder().blockItems(blockItem).build();
+        final BlockItemSet subscribeStreamResponseSet =
+                BlockItemSet.newBuilder().blockItems(blockItem).build();
         return SubscribeStreamResponse.newBuilder().blockItems(subscribeStreamResponseSet).build();
     }
 

@@ -41,9 +41,9 @@ import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.hapi.block.BlockItemSet;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
-import com.hedera.hapi.block.SubscribeStreamResponseSet;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.swirlds.metrics.api.LongGauge;
@@ -214,10 +214,9 @@ public class LiveStreamMediatorImplTest {
 
         final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
         final BlockItem blockItem = BlockItem.newBuilder().blockHeader(blockHeader).build();
-        final SubscribeStreamResponseSet subscribeStreamResponseSet =
-                SubscribeStreamResponseSet.newBuilder().blockItems(blockItem).build();
+        final BlockItemSet blockItemSet = BlockItemSet.newBuilder().blockItems(blockItem).build();
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().blockItems(subscribeStreamResponseSet).build();
+                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build();
 
         // register the stream validator
         when(blockWriter.write(List.of(blockItem))).thenReturn(Optional.empty());
@@ -461,10 +460,10 @@ public class LiveStreamMediatorImplTest {
 
         // Send another block item after the exception
         streamMediator.publish(List.of(blockItems.get(1)));
-        final SubscribeStreamResponseSet subscribeStreamResponseSet =
-                SubscribeStreamResponseSet.newBuilder().blockItems(firstBlockItem).build();
+        final BlockItemSet blockItemSet =
+                BlockItemSet.newBuilder().blockItems(firstBlockItem).build();
         final var subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().blockItems(subscribeStreamResponseSet).build();
+                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build();
         verify(streamObserver1, timeout(testTimeout).times(1))
                 .onNext(fromPbj(subscribeStreamResponse));
         verify(streamObserver2, timeout(testTimeout).times(1))
