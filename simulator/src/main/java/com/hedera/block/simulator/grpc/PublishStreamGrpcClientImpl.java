@@ -16,6 +16,8 @@
 
 package com.hedera.block.simulator.grpc;
 
+import static java.lang.System.Logger.Level.ERROR;
+
 import com.hedera.block.simulator.Translator;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.hapi.block.protoc.BlockStreamServiceGrpc;
@@ -26,6 +28,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
 /**
@@ -33,8 +36,11 @@ import javax.inject.Inject;
  */
 public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+
     private final BlockStreamServiceGrpc.BlockStreamServiceStub stub;
     private final StreamObserver<PublishStreamRequest> requestStreamObserver;
+    private final AtomicBoolean allowNext = new AtomicBoolean(true);
 
     /**
      * Creates a new PublishStreamGrpcClientImpl instance.
@@ -47,8 +53,13 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
                 ManagedChannelBuilder.forAddress(grpcConfig.serverAddress(), grpcConfig.port())
                         .usePlaintext()
                         .build();
+        // SEVERE: Error: io.grpc.StatusRuntimeException: CANCELLED: Failed to stream message
+        //        stub = BlockStreamServiceGrpc.newStub(channel).withMaxOutboundMessageSize(100000);
+        //        stub =
+        // BlockStreamServiceGrpc.newStub(channel).withMaxOutboundMessageSize(16777202);
         stub = BlockStreamServiceGrpc.newStub(channel);
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver();
+
+        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(allowNext);
         requestStreamObserver = stub.publishBlockStream(publishStreamObserver);
     }
 
@@ -58,12 +69,25 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Override
     public boolean streamBlockItem(BlockItem blockItem) {
-        requestStreamObserver.onNext(
-                PublishStreamRequest.newBuilder()
-                        .setBlockItem(Translator.fromPbj(blockItem))
-                        .build());
+        //        try {
+        // worked for 30 mins but failed after that
+        //            Duration nanosDuration = Duration.ofNanos(150000);
+        //            Duration nanosDuration = Duration.ofNanos(1000);
+        //            Thread.sleep(nanosDuration);
+        //        } catch (InterruptedException e) {
+        //            throw new RuntimeException(e);
+        //        }
 
-        return true;
+        if (allowNext.get()) {
+            requestStreamObserver.onNext(
+                    PublishStreamRequest.newBuilder()
+                            .setBlockItem(Translator.fromPbj(blockItem))
+                            .build());
+        } else {
+            LOGGER.log(ERROR, "Not allowed to send next block item");
+        }
+
+        return allowNext.get();
     }
 
     /**
@@ -72,12 +96,18 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Override
     public boolean streamBlock(Block block) {
-        for (BlockItem blockItem : block.items()) {
-            streamBlockItem(blockItem);
-        }
+        for (int count = 0; count < block.items().size(); count++) {
+            if (!streamBlockItem(block.items().get(count))) {
+                LOGGER.log(ERROR, "Count was: " + count);
 
-        // wait for ack on the block
-        // if and when the ack is received return true
+                if (count == 0) {
+                    LOGGER.log(ERROR, "First block item: " + block.items().get(count));
+                } else {
+                    LOGGER.log(ERROR, "Previous block item: " + block.items().get(count - 1));
+                }
+                return false;
+            }
+        }
 
         return true;
     }

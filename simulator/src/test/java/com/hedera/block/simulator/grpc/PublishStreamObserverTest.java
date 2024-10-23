@@ -17,6 +17,7 @@
 package com.hedera.block.simulator.grpc;
 
 import com.hedera.hapi.block.protoc.PublishStreamResponse;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 class PublishStreamObserverTest {
@@ -24,19 +25,22 @@ class PublishStreamObserverTest {
     @Test
     void onNext() {
         PublishStreamResponse response = PublishStreamResponse.newBuilder().build();
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver();
+        PublishStreamObserver publishStreamObserver =
+                new PublishStreamObserver(new AtomicBoolean(true));
         publishStreamObserver.onNext(response);
     }
 
     @Test
     void onError() {
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver();
+        PublishStreamObserver publishStreamObserver =
+                new PublishStreamObserver(new AtomicBoolean(true));
         publishStreamObserver.onError(new Throwable());
     }
 
     @Test
     void onCompleted() {
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver();
+        PublishStreamObserver publishStreamObserver =
+                new PublishStreamObserver(new AtomicBoolean(true));
         publishStreamObserver.onCompleted();
     }
 }

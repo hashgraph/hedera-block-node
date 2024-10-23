@@ -19,6 +19,7 @@ package com.hedera.block.simulator.grpc;
 import com.hedera.hapi.block.protoc.PublishStreamResponse;
 import io.grpc.stub.StreamObserver;
 import java.lang.System.Logger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The PublishStreamObserver class provides the methods to observe the stream of the published
@@ -27,21 +28,24 @@ import java.lang.System.Logger;
 public class PublishStreamObserver implements StreamObserver<PublishStreamResponse> {
 
     private final Logger logger = System.getLogger(getClass().getName());
+    private final AtomicBoolean allowNext;
 
     /** Creates a new PublishStreamObserver instance. */
-    public PublishStreamObserver() {}
+    public PublishStreamObserver(final AtomicBoolean allowNext) {
+        this.allowNext = allowNext;
+    }
 
     /** what will the stream observer do with the response from the server */
     @Override
     public void onNext(PublishStreamResponse publishStreamResponse) {
-        //        logger.log(Logger.Level.INFO, "Received Response: " +
-        // publishStreamResponse.toString());
+        logger.log(Logger.Level.INFO, "Received Response: " + publishStreamResponse.toString());
     }
 
     /** what will the stream observer do when an error occurs */
     @Override
     public void onError(Throwable throwable) {
         logger.log(Logger.Level.ERROR, "Error: " + throwable.toString());
+        allowNext.set(false);
     }
 
     /** what will the stream observer do when the stream is completed */

@@ -31,6 +31,7 @@ module com.hedera.block.server {
     requires dagger;
     requires io.helidon.common;
     requires io.helidon.config;
+    requires io.helidon.webserver.http2;
     requires io.helidon.webserver;
     requires javax.inject;
     requires static com.github.spotbugs.annotations;

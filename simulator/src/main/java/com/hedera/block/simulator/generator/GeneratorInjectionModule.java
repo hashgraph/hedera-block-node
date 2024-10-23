@@ -42,6 +42,8 @@ public interface GeneratorInjectionModule {
             return new BlockAsDirBlockStreamManager(config);
         } else if ("BlockAsFileLargeDataSets".equalsIgnoreCase(managerImpl)) {
             return new BlockAsFileLargeDataSets(config);
+        } else if ("BlockAsFileLargeDataRange".equalsIgnoreCase(managerImpl)) {
+            return new BlockAsFileLargeDataRange(config);
         } else if ("DynamicBlockItemGenerator".equalsIgnoreCase(managerImpl)) {
             return new DynamicBlockItemGenerator(40000);
         }

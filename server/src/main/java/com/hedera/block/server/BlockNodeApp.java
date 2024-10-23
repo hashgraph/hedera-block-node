@@ -27,6 +27,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.WebServerConfig;
 import io.helidon.webserver.http.HttpRouting;
+import io.helidon.webserver.http2.Http2Config;
 import java.io.IOException;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -79,6 +80,14 @@ public class BlockNodeApp {
         final WebServer webServer =
                 webServerBuilder
                         .port(8080)
+                        //                        .receiveBufferSize(5242880)
+                        //
+                        // .addProtocol(Http2Config.builder().maxFrameSize(16777202).build())
+                        .addProtocol(
+                                Http2Config.builder()
+                                        .maxFrameSize(16777202)
+                                        .sendErrorDetails(true)
+                                        .build())
                         .addRouting(PbjRouting.builder().service(pbjBlockStreamService))
                         .addRouting(httpRouting)
                         .build();
