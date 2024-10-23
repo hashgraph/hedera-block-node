@@ -25,6 +25,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+/**
+ * Command line command that converts binary block stream files to JSON
+ */
 @SuppressWarnings({"DataFlowIssue", "unused", "DuplicatedCode", "ConstantValue"})
 @Command(name = "json", description = "Converts a binary block stream to JSON")
 public class ConvertToJson implements Runnable {
@@ -70,6 +73,11 @@ public class ConvertToJson implements Runnable {
         }
     }
 
+    /**
+     * Converts a binary block stream to JSON
+     *
+     * @param blockProtoFile the binary block stream file
+     */
     private void convert(Path blockProtoFile) {
         final String fileName = blockProtoFile.getFileName().toString();
         final String fileNameNoExt = fileName.substring(0, fileName.lastIndexOf('.'));
@@ -96,6 +104,13 @@ public class ConvertToJson implements Runnable {
         }
     }
 
+    /**
+     * Converts a parsed block to JSON
+     *
+     * @param block the block to convert
+     * @param expandTransactions whether to expand transactions
+     * @return the JSON representation of the block
+     */
     public static String toJson(Block block, boolean expandTransactions) {
         if (expandTransactions) {
             String blockJson = Block.JSON.toJSON(block);
@@ -128,6 +143,13 @@ public class ConvertToJson implements Runnable {
         }
     }
 
+    /**
+     * Writes a block to a JSON file
+     *
+     * @param block the block to write
+     * @param outputFile the file to write to
+     * @throws IOException if an I/O error occurs
+     */
     private void writeJsonBlock(Block block, Path outputFile) throws IOException {
         if (expandTransactions) {
             Files.writeString(outputFile, toJson(block, expandTransactions));
