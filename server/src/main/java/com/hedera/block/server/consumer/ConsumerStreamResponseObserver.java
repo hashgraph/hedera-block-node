@@ -184,13 +184,13 @@ public class ConsumerStreamResponseObserver
     private ResponseSender getResponseSender(
             @NonNull final SubscribeStreamResponse subscribeStreamResponse) {
 
-        final OneOf<SubscribeStreamResponse.ResponseOneOfType> oneOfTypeOneOf =
+        final OneOf<SubscribeStreamResponse.ResponseOneOfType> responseType =
                 subscribeStreamResponse.response();
-        return switch (oneOfTypeOneOf.kind()) {
+        return switch (responseType.kind()) {
             case STATUS -> statusResponseSender;
             case BLOCK_ITEMS -> blockItemsResponseSender;
             default -> throw new IllegalArgumentException(
-                    "Unknown response type: " + oneOfTypeOneOf.kind());
+                    "Unknown response type: " + responseType.kind());
         };
     }
 
