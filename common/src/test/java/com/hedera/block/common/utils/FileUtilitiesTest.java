@@ -144,9 +144,9 @@ class FileUtilitiesTest {
 
     @ParameterizedTest
     @MethodSource({"validGzipFiles", "validBlkFiles"})
-    void test_readFileBytesUnsafe_ReturnsByteArrayWithValidContentForValidFile(
-            final Path filePath, final String expectedContent) throws IOException {
-        final byte[] actualContent = FileUtilities.readFileBytesUnsafe(filePath);
+    void test_readFileBytesUnsafe_ReturnsByteArrayWithValidContentForValidPath(
+            final Path pathToTest, final String expectedContent) throws IOException {
+        final byte[] actualContent = FileUtilities.readFileBytesUnsafe(pathToTest);
         assertThat(actualContent)
                 .isNotNull()
                 .isNotEmpty()
@@ -158,8 +158,28 @@ class FileUtilitiesTest {
 
     @ParameterizedTest
     @MethodSource("invalidFiles")
-    void test_readFileBytesUnsafe_ThrowsIOExceptionForInvalidGzipFile(final Path filePath) {
-        assertThatIOException().isThrownBy(() -> FileUtilities.readFileBytesUnsafe(filePath));
+    void test_readFileBytesUnsafe_ThrowsIOExceptionForInvalidPath(final Path pathToTest) {
+        assertThatIOException().isThrownBy(() -> FileUtilities.readFileBytesUnsafe(pathToTest));
+    }
+
+    @ParameterizedTest
+    @MethodSource({"validGzipFiles", "validBlkFiles"})
+    void test_readFileBytesUnsafe_ReturnsByteArrayWithValidContentForValidFile(
+            final File fileToTest, final String expectedContent) throws IOException {
+        final byte[] actualContent = FileUtilities.readFileBytesUnsafe(fileToTest);
+        assertThat(actualContent)
+                .isNotNull()
+                .isNotEmpty()
+                .asString()
+                .isNotNull()
+                .isNotBlank()
+                .isEqualTo(expectedContent);
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidFiles")
+    void test_readFileBytesUnsafe_ThrowsIOExceptionForInvalidFile(final File fileToTest) {
+        assertThatIOException().isThrownBy(() -> FileUtilities.readFileBytesUnsafe(fileToTest));
     }
 
     private static Stream<Arguments> validGzipFiles() {
