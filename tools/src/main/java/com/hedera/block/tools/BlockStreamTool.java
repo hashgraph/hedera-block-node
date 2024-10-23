@@ -5,6 +5,9 @@ import com.hedera.block.tools.commands.ConvertToJson;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
+/**
+ * Command line tool for working with Hedera block stream files
+ */
 @SuppressWarnings("InstantiationOfUtilityClass")
 @Command(name = "subcommands", mixinStandardHelpOptions = true, version = "BlockStreamTool 0.1",
         subcommands = {
@@ -20,5 +23,4 @@ public class BlockStreamTool {
         int exitCode = new CommandLine(new BlockStreamTool()).execute(args);
         System.exit(exitCode);
     }
-
 }
