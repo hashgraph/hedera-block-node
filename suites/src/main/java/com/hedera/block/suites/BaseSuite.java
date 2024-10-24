@@ -114,7 +114,7 @@ public abstract class BaseSuite {
         portBindings.add(String.format("%d:%2d", blockNodePort, blockNodePort));
         blockNodeContainer =
                 new GenericContainer<>(
-                        DockerImageName.parse("block-node-server:" + blockNodeVersion))
+                                DockerImageName.parse("block-node-server:" + blockNodeVersion))
                         .withExposedPorts(blockNodePort)
                         .withEnv("VERSION", blockNodeVersion)
                         .waitingFor(Wait.forListeningPort())

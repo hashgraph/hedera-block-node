@@ -54,7 +54,6 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
             @NonNull GrpcConfig grpcConfig, @NonNull BlockStreamConfig blockStreamConfig) {
         this.grpcConfig = grpcConfig;
         this.blockStreamConfig = blockStreamConfig;
-
     }
 
     /**
@@ -62,7 +61,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Override
     public void init() {
-         channel =
+        channel =
                 ManagedChannelBuilder.forAddress(grpcConfig.serverAddress(), grpcConfig.port())
                         .usePlaintext()
                         .build();
