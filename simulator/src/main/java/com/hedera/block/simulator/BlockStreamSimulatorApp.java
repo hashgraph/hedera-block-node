@@ -17,11 +17,14 @@
 package com.hedera.block.simulator;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
-import com.hedera.block.simulator.config.types.StreamingMode;
+import com.hedera.block.simulator.config.types.SimulatorMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
-import com.hedera.hapi.block.stream.Block;
+import com.hedera.block.simulator.mode.CombinedModeHandler;
+import com.hedera.block.simulator.mode.ConsumerModeHandler;
+import com.hedera.block.simulator.mode.PublisherModeHandler;
+import com.hedera.block.simulator.mode.SimulatorModeHandler;
 import com.swirlds.config.api.Configuration;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
@@ -37,10 +40,7 @@ public class BlockStreamSimulatorApp {
     private final BlockStreamManager blockStreamManager;
     private final PublishStreamGrpcClient publishStreamGrpcClient;
     private final BlockStreamConfig blockStreamConfig;
-    private final StreamingMode streamingMode;
-
-    private final int delayBetweenBlockItems;
-    private final int millisecondsPerBlock;
+    private final SimulatorModeHandler simulatorModeHandler;
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
     /**
@@ -60,9 +60,15 @@ public class BlockStreamSimulatorApp {
 
         blockStreamConfig = configuration.getConfigData(BlockStreamConfig.class);
 
-        streamingMode = blockStreamConfig.streamingMode();
-        millisecondsPerBlock = blockStreamConfig.millisecondsPerBlock();
-        delayBetweenBlockItems = blockStreamConfig.delayBetweenBlockItems();
+        SimulatorMode simulatorMode = blockStreamConfig.simulatorMode();
+        if (simulatorMode == SimulatorMode.PUBLISHER) {
+            simulatorModeHandler =
+                    new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient);
+        } else if (simulatorMode == SimulatorMode.CONSUMER) {
+            simulatorModeHandler = new ConsumerModeHandler(blockStreamConfig);
+        } else {
+            simulatorModeHandler = new CombinedModeHandler(blockStreamConfig);
+        }
     }
 
     /**
@@ -73,77 +79,13 @@ public class BlockStreamSimulatorApp {
      * @throws IOException if an I/O error occurs
      */
     public void start() throws InterruptedException, BlockSimulatorParsingException, IOException {
-
+        LOGGER.log(
+                System.Logger.Level.INFO,
+                "Block Stream Simulator started initializing components...");
+        publishStreamGrpcClient.init();
         isRunning.set(true);
-        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has started");
 
-        if (streamingMode == StreamingMode.MILLIS_PER_BLOCK) {
-            millisPerBlockStreaming();
-        } else {
-            constantRateStreaming();
-        }
-
-        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
-    }
-
-    private void millisPerBlockStreaming()
-            throws IOException, InterruptedException, BlockSimulatorParsingException {
-
-        final long secondsPerBlockNanos = millisecondsPerBlock * 1_000_000L;
-
-        Block nextBlock = blockStreamManager.getNextBlock();
-        while (nextBlock != null) {
-            long startTime = System.nanoTime();
-            publishStreamGrpcClient.streamBlock(nextBlock);
-            long elapsedTime = System.nanoTime() - startTime;
-            long timeToDelay = secondsPerBlockNanos - elapsedTime;
-            if (timeToDelay > 0) {
-                Thread.sleep(timeToDelay / 1_000_000, (int) (timeToDelay % 1_000_000));
-            } else {
-                LOGGER.log(
-                        System.Logger.Level.WARNING,
-                        "Block Server is running behind. Streaming took: "
-                                + (elapsedTime / 1_000_000)
-                                + "ms - Longer than max expected of: "
-                                + millisecondsPerBlock
-                                + " milliseconds");
-            }
-            nextBlock = blockStreamManager.getNextBlock();
-        }
-        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
-    }
-
-    private void constantRateStreaming()
-            throws InterruptedException, IOException, BlockSimulatorParsingException {
-        int delayMSBetweenBlockItems = delayBetweenBlockItems / 1_000_000;
-        int delayNSBetweenBlockItems = delayBetweenBlockItems % 1_000_000;
-        boolean streamBlockItem = true;
-        int blockItemsStreamed = 0;
-
-        while (streamBlockItem) {
-            // get block
-            Block block = blockStreamManager.getNextBlock();
-
-            if (block == null) {
-                LOGGER.log(
-                        System.Logger.Level.INFO,
-                        "Block Stream Simulator has reached the end of the block items");
-                break;
-            }
-
-            publishStreamGrpcClient.streamBlock(block);
-            blockItemsStreamed += block.items().size();
-
-            Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);
-
-            if (blockItemsStreamed >= blockStreamConfig.maxBlockItemsToStream()) {
-                LOGGER.log(
-                        System.Logger.Level.INFO,
-                        "Block Stream Simulator has reached the maximum number of block items to"
-                                + " stream");
-                streamBlockItem = false;
-            }
-        }
+        simulatorModeHandler.start(this.blockStreamManager);
     }
 
     /**
@@ -155,8 +97,9 @@ public class BlockStreamSimulatorApp {
         return isRunning.get();
     }
 
-    /** Stops the block stream simulator. */
+    /** Stops the Block Stream Simulator and closes off all grpc channels. */
     public void stop() {
+        publishStreamGrpcClient.shutdown();
         isRunning.set(false);
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
     }
