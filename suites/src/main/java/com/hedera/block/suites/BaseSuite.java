@@ -17,8 +17,6 @@
 package com.hedera.block.suites;
 
 import com.hedera.block.simulator.BlockStreamSimulatorApp;
-import com.hedera.block.simulator.BlockStreamSimulatorInjectionComponent;
-import com.hedera.block.simulator.DaggerBlockStreamSimulatorInjectionComponent;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
@@ -27,6 +25,8 @@ import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.GenericContainer;
@@ -71,20 +71,11 @@ public abstract class BaseSuite {
      * Setup method to be executed before all tests.
      *
      * <p>This method initializes the Block Node server container using Testcontainers.
-     *
-     * @throws IOException if an I/O error occurs
      */
     @BeforeAll
-    public static void setup() throws IOException {
-        blockNodeContainer = getConfiguration();
+    public static void setup() {
+        blockNodeContainer = getContainer();
         blockNodeContainer.start();
-
-        // TODO remove in the next PR which adds tests
-        BlockStreamSimulatorInjectionComponent DIComponent =
-                DaggerBlockStreamSimulatorInjectionComponent.factory()
-                        .create(loadDefaultConfiguration());
-
-        BlockStreamSimulatorApp blockStreamSimulatorApp = DIComponent.getBlockStreamSimulatorApp();
     }
 
     /**
@@ -101,7 +92,7 @@ public abstract class BaseSuite {
     }
 
     /**
-     * Retrieves the configuration for the Block Node server container.
+     * Initialize container with the default configuration and returns it.
      *
      * <p>This method initializes the Block Node container with the version retrieved from the .env
      * file. It configures the container and returns it.
@@ -116,16 +107,19 @@ public abstract class BaseSuite {
      *
      * @return a configured {@link GenericContainer} instance for the Block Node server
      */
-    public static GenericContainer<?> getConfiguration() {
+    protected static GenericContainer<?> getContainer() {
         String blockNodeVersion = BaseSuite.getBlockNodeVersion();
         blockNodePort = 8080;
+        List<String> portBindings = new ArrayList<>();
+        portBindings.add(String.format("%d:%2d", blockNodePort, blockNodePort));
         blockNodeContainer =
                 new GenericContainer<>(
-                                DockerImageName.parse("block-node-server:" + blockNodeVersion))
+                        DockerImageName.parse("block-node-server:" + blockNodeVersion))
                         .withExposedPorts(blockNodePort)
                         .withEnv("VERSION", blockNodeVersion)
                         .waitingFor(Wait.forListeningPort())
                         .waitingFor(Wait.forHealthcheck());
+        blockNodeContainer.setPortBindings(portBindings);
         return blockNodeContainer;
     }
 
@@ -135,7 +129,7 @@ public abstract class BaseSuite {
      * @return default block simulator configuration
      * @throws IOException if an I/O error occurs
      */
-    protected static Configuration loadDefaultConfiguration() throws IOException {
+    protected static Configuration loadSimulatorDefaultConfiguration() throws IOException {
         ConfigurationBuilder configurationBuilder =
                 ConfigurationBuilder.create()
                         .withSource(SystemEnvironmentConfigSource.getInstance())
