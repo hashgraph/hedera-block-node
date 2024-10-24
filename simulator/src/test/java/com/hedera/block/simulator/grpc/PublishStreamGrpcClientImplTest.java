@@ -52,6 +52,7 @@ class PublishStreamGrpcClientImplTest {
         BlockItem blockItem = BlockItem.newBuilder().build();
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
                 new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig);
+        publishStreamGrpcClient.init();
         boolean result = publishStreamGrpcClient.streamBlockItem(List.of(blockItem));
         assertTrue(result);
     }
@@ -65,7 +66,7 @@ class PublishStreamGrpcClientImplTest {
 
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
                 new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig);
-
+        publishStreamGrpcClient.init();
         boolean result = publishStreamGrpcClient.streamBlock(block);
         assertTrue(result);
 

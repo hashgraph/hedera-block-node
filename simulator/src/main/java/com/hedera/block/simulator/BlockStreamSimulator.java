@@ -47,7 +47,7 @@ public class BlockStreamSimulator {
     public static void main(final String[] args)
             throws IOException, InterruptedException, BlockSimulatorParsingException {
 
-        LOGGER.log(INFO, "Starting Block Stream Simulator");
+        LOGGER.log(INFO, "Starting Block Stream Simulator!");
 
         final ConfigurationBuilder configurationBuilder = ConfigurationBuilder.create()
                 .withSource(SystemEnvironmentConfigSource.getInstance())

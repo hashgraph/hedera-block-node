@@ -25,6 +25,11 @@ import java.util.List;
  */
 public interface PublishStreamGrpcClient {
     /**
+     * Initialize, opens a gRPC channel and creates the needed stubs with the passed configuration.
+     */
+    void init();
+
+    /**
      * Streams the block item.
      *
      * @param blockItems list of the block item to be streamed
@@ -39,4 +44,9 @@ public interface PublishStreamGrpcClient {
      * @return true if the block is streamed successfully, false otherwise
      */
     boolean streamBlock(Block block);
+
+    /**
+     * Shutdowns the channel.
+     */
+    void shutdown();
 }
