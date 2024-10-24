@@ -165,7 +165,7 @@ public class ProducerBlockItemObserver
 
         final Counter liveBlockItemsReceived = metricsService.get(LiveBlockItemsReceived);
         for (final com.hedera.hapi.block.stream.protoc.BlockItem blockItemProtoc :
-                publishStreamRequest.getBlockItemsList()) {
+                publishStreamRequest.getBlockItems().getBlockItemsList()) {
             try {
                 final BlockItem blockItem =
                         toPbj(BlockItem.PROTOBUF, blockItemProtoc.toByteArray());

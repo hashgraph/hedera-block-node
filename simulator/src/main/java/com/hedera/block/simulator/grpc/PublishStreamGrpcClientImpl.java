@@ -20,6 +20,7 @@ import com.hedera.block.common.utils.ChunkUtils;
 import com.hedera.block.simulator.Translator;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
+import com.hedera.hapi.block.protoc.BlockItemSet;
 import com.hedera.hapi.block.protoc.BlockStreamServiceGrpc;
 import com.hedera.hapi.block.protoc.PublishStreamRequest;
 import com.hedera.hapi.block.stream.Block;
@@ -73,7 +74,12 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
         }
 
         requestStreamObserver.onNext(
-                PublishStreamRequest.newBuilder().addAllBlockItems(blockItemsProtoc).build());
+                PublishStreamRequest.newBuilder()
+                        .setBlockItems(
+                                BlockItemSet.newBuilder()
+                                        .addAllBlockItems(blockItemsProtoc)
+                                        .build())
+                        .build());
 
         return true;
     }
@@ -94,7 +100,12 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
         for (List<com.hedera.hapi.block.stream.protoc.BlockItem> streamingBatch :
                 streamingBatches) {
             requestStreamObserver.onNext(
-                    PublishStreamRequest.newBuilder().addAllBlockItems(streamingBatch).build());
+                    PublishStreamRequest.newBuilder()
+                            .setBlockItems(
+                                    BlockItemSet.newBuilder()
+                                            .addAllBlockItems(streamingBatch)
+                                            .build())
+                            .build());
         }
 
         return true;
