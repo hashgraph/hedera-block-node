@@ -16,12 +16,12 @@
 
 package com.hedera.block.server.persistence.storage.remove;
 
+import static com.hedera.block.common.utils.FileUtilities.DEFAULT_DIR_PERMISSIONS;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
@@ -76,7 +76,7 @@ public class BlockAsDirRemoverTest {
         }
 
         // Remove a block that does not exist
-        final BlockRemover blockRemover = new BlockAsDirRemover(testPath, FileUtils.defaultPerms);
+        final BlockRemover blockRemover = new BlockAsDirRemover(testPath, DEFAULT_DIR_PERMISSIONS);
         blockRemover.remove(2);
 
         // Verify the block was not removed
@@ -121,7 +121,7 @@ public class BlockAsDirRemoverTest {
                 blockOpt.get().items().getFirst().blockHeader());
 
         // Now remove the block
-        blockRemover = new BlockAsDirRemover(testPath, FileUtils.defaultPerms);
+        blockRemover = new BlockAsDirRemover(testPath, DEFAULT_DIR_PERMISSIONS);
         blockRemover.remove(1);
 
         // Verify the block is removed

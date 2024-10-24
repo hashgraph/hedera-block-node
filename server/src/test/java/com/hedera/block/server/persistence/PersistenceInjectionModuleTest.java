@@ -73,7 +73,7 @@ class PersistenceInjectionModuleTest {
     void testProvidesBlockWriter_IOException() {
         BlockNodeContext blockNodeContext = mock(BlockNodeContext.class);
         PersistenceStorageConfig persistenceStorageConfig = mock(PersistenceStorageConfig.class);
-        when(persistenceStorageConfig.rootPath()).thenReturn("invalid-path*9/////+>");
+        when(persistenceStorageConfig.rootPath()).thenReturn("/invalid_path/:invalid_directory");
         Configuration configuration = mock(Configuration.class);
         when(blockNodeContext.configuration()).thenReturn(configuration);
         when(configuration.getConfigData(PersistenceStorageConfig.class))

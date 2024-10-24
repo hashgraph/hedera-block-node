@@ -16,8 +16,9 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
+import static com.hedera.block.common.utils.FileUtilities.DEFAULT_DIR_PERMISSIONS;
+
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
@@ -28,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -35,31 +37,29 @@ import java.util.Set;
  *
  * <p>When a block writer is created, it will provide access to write blocks to storage.
  */
-public class BlockAsDirWriterBuilder {
-
+public final class BlockAsDirWriterBuilder {
     private final BlockNodeContext blockNodeContext;
-    private FileAttribute<Set<PosixFilePermission>> filePerms = FileUtils.defaultPerms;
+    private FileAttribute<Set<PosixFilePermission>> filePerms = DEFAULT_DIR_PERMISSIONS;
     private BlockRemover blockRemover;
 
     private BlockAsDirWriterBuilder(@NonNull final BlockNodeContext blockNodeContext) {
-        this.blockNodeContext = blockNodeContext;
-        PersistenceStorageConfig config =
+        this.blockNodeContext = Objects.requireNonNull(blockNodeContext);
+        final PersistenceStorageConfig config =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
-
         this.blockRemover =
-                new BlockAsDirRemover(Path.of(config.rootPath()), FileUtils.defaultPerms);
+                new BlockAsDirRemover(Path.of(config.rootPath()), DEFAULT_DIR_PERMISSIONS);
     }
 
     /**
      * Creates a new block writer builder using the minimum required parameters.
      *
      * @param blockNodeContext is required to provide metrics reporting mechanisms .
+     *
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
     public static BlockAsDirWriterBuilder newBuilder(
             @NonNull final BlockNodeContext blockNodeContext) {
-
         return new BlockAsDirWriterBuilder(blockNodeContext);
     }
 
@@ -68,16 +68,17 @@ public class BlockAsDirWriterBuilder {
      * and directories.
      *
      * <p>By default, the block writer will use the permissions defined in {@link
-     * FileUtils#defaultPerms}. This method is primarily used for testing purposes. Default values
-     * should be sufficient for production use.
+     * com.hedera.block.common.utils.FileUtilities#DEFAULT_DIR_PERMISSIONS}. This method is
+     * primarily used for testing purposes. Default values should be sufficient for production use.
      *
      * @param filePerms the file permissions to use when managing block files and directories.
+     *
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
     public BlockAsDirWriterBuilder filePerms(
-            @NonNull FileAttribute<Set<PosixFilePermission>> filePerms) {
-        this.filePerms = filePerms;
+            @NonNull final FileAttribute<Set<PosixFilePermission>> filePerms) {
+        this.filePerms = Objects.requireNonNull(filePerms);
         return this;
     }
 
@@ -89,11 +90,12 @@ public class BlockAsDirWriterBuilder {
      * be sufficient for production use.
      *
      * @param blockRemover the block remover to use when removing blocks from storage.
+     *
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
-    public BlockAsDirWriterBuilder blockRemover(@NonNull BlockRemover blockRemover) {
-        this.blockRemover = blockRemover;
+    public BlockAsDirWriterBuilder blockRemover(@NonNull final BlockRemover blockRemover) {
+        this.blockRemover = Objects.requireNonNull(blockRemover);
         return this;
     }
 
@@ -101,6 +103,7 @@ public class BlockAsDirWriterBuilder {
      * Use the build method to construct a block writer to write blocks to storage.
      *
      * @return a new block writer configured with the parameters provided to the builder.
+     *
      * @throws IOException when an error occurs while persisting block items to storage.
      */
     @NonNull

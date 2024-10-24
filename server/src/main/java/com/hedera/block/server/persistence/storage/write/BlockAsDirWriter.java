@@ -16,7 +16,9 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
+import static com.hedera.block.common.utils.FileUtilities.createPathIfNotExists;
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
+import static com.hedera.block.server.Constants.BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
@@ -25,7 +27,6 @@ import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -87,7 +88,8 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
         this.filePerms = filePerms;
 
         // Initialize the block node root directory if it does not exist
-        FileUtils.createPathIfNotExists(blockNodeRootPath, INFO, filePerms);
+        createPathIfNotExists(
+                blockNodeRootPath, INFO, filePerms, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME, true);
 
         this.metricsService = blockNodeContext.metricsService();
     }
@@ -169,7 +171,12 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
         repairPermissions(blockNodeRootPath);
 
         // Construct the path to the block directory
-        FileUtils.createPathIfNotExists(calculateBlockPath(), DEBUG, filePerms);
+        createPathIfNotExists(
+                calculateBlockPath(),
+                DEBUG,
+                filePerms,
+                BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME,
+                true);
 
         // Reset
         blockNodeFileNameIndex = 0;
