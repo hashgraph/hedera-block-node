@@ -87,3 +87,31 @@ blockNode:
       endpoint: "/healthz/readyz"
     liveness:
       endpoint: "/healthz/livez"
+
+kube-prometheus-stack:
+  prometheusOperator:
+    namespaces:
+      releaseNamespace: true
+
+  prometheus:
+    prometheusSpec:
+      serviceMonitorSelector:
+        matchLabels:
+          release: prometheus
+
+  grafana:
+    replicaCount: 1
+    enabled: true
+    defaultDashboardsEnabled: false
+    adminPassword: "admin"
+    datasources:
+      datasources.yaml: {}
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+      datasources:
+        enabled: true
+        label: grafana_datasource
+
+

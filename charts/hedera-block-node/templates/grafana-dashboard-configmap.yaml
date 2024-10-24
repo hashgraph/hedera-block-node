@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-dashboard-configmap
+  labels:
+    grafana_dashboard: "1"
+data:
+  my-dashboard.json: {{ .Files.Get "dashboards/block-node-server.json" | quote }}
