@@ -27,9 +27,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * and provides the behavior for a mode where only consumption of block data
  * occurs.
  *
- * <p>This mode handles dual operations in the block streaming process, utilizing the
+ * <p>This mode handles single operation in the block streaming process, utilizing the
  * {@link BlockStreamConfig} for configuration settings. It is designed for scenarios where
- * the simulator needs to handle both the consumption and publication of blocks in parallel.
+ * the simulator needs to handle the consumption of blocks.
  *
  * <p>For now, the actual start behavior is not implemented, as indicated by the
  * {@link UnsupportedOperationException}.

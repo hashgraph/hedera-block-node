@@ -27,6 +27,15 @@ import com.hedera.hapi.block.stream.Block;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 
+/**
+ * The {@code PublisherModeHandler} class implements the {@link SimulatorModeHandler} interface
+ * and provides the behavior for a mode where only publishing of block data
+ * occurs.
+ *
+ * <p>This mode handles single operation in the block streaming process, utilizing the
+ * {@link BlockStreamConfig} for configuration settings. It is designed for scenarios where
+ * the simulator needs to handle publication of blocks.
+ */
 public class PublisherModeHandler implements SimulatorModeHandler {
     private static final System.Logger LOGGER =
             System.getLogger(PublisherModeHandler.class.getName());
@@ -38,6 +47,11 @@ public class PublisherModeHandler implements SimulatorModeHandler {
     private final int millisecondsPerBlock;
     private final int NANOS_PER_MILLI = 1_000_000;
 
+    /**
+     * Constructs a new {@code PublisherModeHandler} with the specified block stream configuration and publisher client.
+     *
+     * @param blockStreamConfig the configuration data for managing block streams
+     */
     public PublisherModeHandler(
             @NonNull final BlockStreamConfig blockStreamConfig,
             @NonNull PublishStreamGrpcClient publishStreamGrpcClient) {

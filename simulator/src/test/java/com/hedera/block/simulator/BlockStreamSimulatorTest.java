@@ -17,6 +17,8 @@
 package com.hedera.block.simulator;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -126,6 +128,7 @@ class BlockStreamSimulatorTest {
     @Test
     void stop_doesNotThrowException() {
         assertDoesNotThrow(() -> blockStreamSimulator.stop());
+        assertFalse(blockStreamSimulator.isRunning());
     }
 
     @Test
@@ -216,6 +219,26 @@ class BlockStreamSimulatorTest {
                                                 .getMessage()
                                                 .contains("Block Server is running behind"));
         assertTrue(found_log);
+    }
+
+    @Test
+    void start_withBothMode_throwsUnsupportedOperationException() throws Exception {
+        Configuration configuration =
+                TestUtils.getTestConfiguration(Map.of("blockStream.simulatorMode", "BOTH"));
+        blockStreamSimulator =
+                new BlockStreamSimulatorApp(
+                        configuration, blockStreamManager, publishStreamGrpcClient);
+        assertThrows(UnsupportedOperationException.class, () -> blockStreamSimulator.start());
+    }
+
+    @Test
+    void start_withConsumerMode_throwsUnsupportedOperationException() throws Exception {
+        Configuration configuration =
+                TestUtils.getTestConfiguration(Map.of("blockStream.simulatorMode", "CONSUMER"));
+        blockStreamSimulator =
+                new BlockStreamSimulatorApp(
+                        configuration, blockStreamManager, publishStreamGrpcClient);
+        assertThrows(UnsupportedOperationException.class, () -> blockStreamSimulator.start());
     }
 
     private List<LogRecord> captureLogs() {
