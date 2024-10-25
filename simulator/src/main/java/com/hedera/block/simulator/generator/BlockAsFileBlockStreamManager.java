@@ -16,11 +16,11 @@
 
 package com.hedera.block.simulator.generator;
 
-import static com.hedera.block.common.utils.FileUtilities.readFileBytesUnsafe;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 
+import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.hapi.block.stream.Block;
@@ -109,7 +109,7 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
 
             for (final Path blockPath : sortedBlockFiles) {
 
-                final byte[] blockBytes = readFileBytesUnsafe(blockPath);
+                final byte[] blockBytes = FileUtilities.readFileBytesUnsafe(blockPath);
                 // skip if block is null, usually due to SO files like .DS_STORE
                 if (blockBytes == null) {
                     continue;

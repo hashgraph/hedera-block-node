@@ -29,9 +29,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
-/**
- * A utility class that deals with logic related to dealing with files.
- */
+/** A utility class that deals with logic related to dealing with files. */
 public final class FileUtilities {
     private static final Logger LOGGER = System.getLogger(FileUtilities.class.getName());
 
@@ -65,22 +63,21 @@ public final class FileUtilities {
                             PosixFilePermission.OTHERS_EXECUTE));
 
     /**
-     * Log message template used when a path is not created because a file or folder already exists
-     * at the requested path.
+     * Log message template used when a path is not created because a file
+     * or folder already exists at the requested path.
      */
     private static final String PRE_EXISTING_FOLDER_MESSAGE =
             "Requested %s [%s] not created because %s already exists at %s";
 
     /**
-     * Create a new path (folder or file) if it does not exist. Any folders or files created will
-     * use default permissions.
+     * Create a new path (folder or file) if it does not exist.
+     * Any folders or files created will use default permissions.
      *
-     * @param toCreate         valid, non-null instance of {@link Path} to be created
-     * @param logLevel         valid, non-null instance of {@link System.Logger.Level} to use
+     * @param toCreate valid, non-null instance of {@link Path} to be created
+     * @param logLevel valid, non-null instance of {@link System.Logger.Level} to use
      * @param semanticPathName valid, non-blank {@link String} used for logging that represents the
-     *                         desired path semantically
-     * @param createDir        {@link Boolean} value if we should create a directory or a file
-     *
+     *     desired path semantically
+     * @param createDir {@link Boolean} value if we should create a directory or a file
      * @throws IOException if the path cannot be created
      */
     public static void createPathIfNotExists(
@@ -101,15 +98,16 @@ public final class FileUtilities {
     /**
      * Create a new path (folder or file) if it does not exist.
      *
-     * @param toCreate          The path to be created.
-     * @param logLevel          The logging level to use when logging this event.
-     * @param filePermissions   Permissions to use when creating a new file.
+     * @param toCreate The path to be created.
+     * @param logLevel The logging level to use when logging this event.
+     * @param filePermissions Permissions to use when creating a new file.
      * @param folderPermissions Permissions to use when creating a new folder.
-     * @param semanticPathName  A name to represent the path in a logging statement.
-     * @param createDir         A flag indicating we should create a directory (true) or a file
-     *                          (false)
-     *
-     * @throws IOException if the path cannot be created due to a filesystem error.
+     * @param semanticPathName A name to represent the path in a logging
+     *     statement.
+     * @param createDir A flag indicating we should create a directory
+     *     (true) or a file (false)
+     * @throws IOException if the path cannot be created due to a filesystem
+     *     error.
      */
     public static void createPathIfNotExists(
             @NonNull final Path toCreate,
@@ -146,22 +144,20 @@ public final class FileUtilities {
     /**
      * Read a GZIP file and return the content as a byte array.
      * <p>
-     * This method is _unsafe_ because it reads the entire file content into a single byte array,
-     * which can cause memory issues, and may fail if the file contains a large amount of data.
+     * This method is _unsafe_ because it reads the entire file content into
+     * a single byte array, which can cause memory issues, and may fail if the
+     * file contains a large amount of data.
      *
      * @param filePath Path to the GZIP file.
-     *
      * @return byte array containing the _uncompressed_ content of the GZIP file.
-     *
-     * @throws IOException      if unable to read the file.
-     * @throws OutOfMemoryError if a byte array large enough to contain the file contents cannot be
-     *                          allocated (either because it exceeds MAX_INT bytes or exceeds
-     *                          available heap memory).
+     * @throws IOException if unable to read the file.
+     * @throws OutOfMemoryError if a byte array large enough to contain the
+     *     file contents cannot be allocated (either because it exceeds MAX_INT
+     *     bytes or exceeds available heap memory).
      */
     public static byte[] readGzipFileUnsafe(@NonNull final Path filePath) throws IOException {
         Objects.requireNonNull(filePath);
-        try (final GZIPInputStream gzipInputStream =
-                new GZIPInputStream(Files.newInputStream(filePath))) {
+        try (final var gzipInputStream = new GZIPInputStream(Files.newInputStream(filePath))) {
             return gzipInputStream.readAllBytes();
         }
     }
@@ -171,17 +167,17 @@ public final class FileUtilities {
      * <p>
      * This method uses default extensions for gzip and block files.
      * <p>
-     * This method is _unsafe_ because it reads the entire file content into a single byte array,
-     * which can cause memory issues, and may fail if the file contains a large amount of data.
+     * This method is _unsafe_ because it reads the entire file content into
+     * a single byte array, which can cause memory issues, and may fail if the
+     * file contains a large amount of data.
      *
      * @param file to read bytes from
-     *
-     * @return byte array of the content of the file or null if the file extension is not supported
-     *
-     * @throws IOException      if unable to read the file.
-     * @throws OutOfMemoryError if a byte array large enough to contain the file contents cannot be
-     *                          allocated (either because it exceeds MAX_INT bytes or exceeds
-     *                          available heap memory).
+     * @return byte array of the content of the file or null if the file extension is not
+     *     supported
+     * @throws IOException if unable to read the file.
+     * @throws OutOfMemoryError if a byte array large enough to contain the
+     *     file contents cannot be allocated (either because it exceeds MAX_INT
+     *     bytes or exceeds available heap memory).
      */
     public static byte[] readFileBytesUnsafe(@NonNull final File file) throws IOException {
         return readFileBytesUnsafe(file.toPath());
@@ -192,17 +188,17 @@ public final class FileUtilities {
      * <p>
      * This method uses default extensions for gzip and block files.
      * <p>
-     * This method is _unsafe_ because it reads the entire file content into a single byte array,
-     * which can cause memory issues, and may fail if the file contains a large amount of data.
+     * This method is _unsafe_ because it reads the entire file content into
+     * a single byte array, which can cause memory issues, and may fail if the
+     * file contains a large amount of data.
      *
      * @param filePath Path to the file
-     *
-     * @return byte array of the content of the file or null if the file extension is not supported
-     *
-     * @throws IOException      if unable to read the file.
-     * @throws OutOfMemoryError if a byte array large enough to contain the file contents cannot be
-     *                          allocated (either because it exceeds MAX_INT bytes or exceeds
-     *                          available heap memory).
+     * @return byte array of the content of the file or null if the file extension is not
+     *     supported
+     * @throws IOException if unable to read the file.
+     * @throws OutOfMemoryError if a byte array large enough to contain the
+     *     file contents cannot be allocated (either because it exceeds MAX_INT
+     *     bytes or exceeds available heap memory).
      */
     public static byte[] readFileBytesUnsafe(@NonNull final Path filePath) throws IOException {
         return readFileBytesUnsafe(filePath, ".blk", ".gz");
@@ -211,20 +207,20 @@ public final class FileUtilities {
     /**
      * Read a file and return the content as a byte array.
      * <p>
-     * This method is _unsafe_ because it reads the entire file content into a single byte array,
-     * which can cause memory issues, and may fail if the file contains a large amount of data.
+     * This method is _unsafe_ because it reads the entire file content into
+     * a single byte array, which can cause memory issues, and may fail if the
+     * file contains a large amount of data.
      *
-     * @param filePath           Path to the file to read.
+     * @param filePath Path to the file to read.
      * @param blockFileExtension A file extension for block files.
-     * @param gzipFileExtension  A file extension for gzip files.
-     *
-     * @return A byte array with the full contents of the file, or null if the file extension
-     * requested does not match at least one of the extensions provided (GZip or Block).
-     *
-     * @throws IOException      if unable to read the file.
-     * @throws OutOfMemoryError if a byte array large enough to contain the file contents cannot be
-     *                          allocated (either because it exceeds MAX_INT bytes or exceeds
-     *                          available heap memory).
+     * @param gzipFileExtension A file extension for gzip files.
+     * @return A byte array with the full contents of the file, or null if the
+     *     file extension requested does not match at least one of the
+     *     extensions provided (GZip or Block).
+     * @throws IOException if unable to read the file.
+     * @throws OutOfMemoryError if a byte array large enough to contain the
+     *     file contents cannot be allocated (either because it exceeds MAX_INT
+     *     bytes or exceeds available heap memory).
      */
     public static byte[] readFileBytesUnsafe(
             @NonNull final Path filePath,

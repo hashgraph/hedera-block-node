@@ -16,11 +16,11 @@
 
 package com.hedera.block.simulator.generator;
 
-import static com.hedera.block.common.utils.FileUtilities.readFileBytesUnsafe;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 
+import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.hapi.block.stream.Block;
@@ -117,16 +117,14 @@ public class BlockAsDirBlockStreamManager implements BlockStreamManager {
 
                 try (final Stream<Path> blockItems =
                         Files.list(blockDirPath).filter(Files::isRegularFile)) {
-                    final List<Path> sortedBlockItems =
-                            blockItems
-                                    .sorted(
-                                            Comparator.comparing(
-                                                    BlockAsDirBlockStreamManager
-                                                            ::extractNumberFromPath))
-                                    .toList();
+                    final Comparator<Path> comparator =
+                            Comparator.comparing(
+                                    BlockAsDirBlockStreamManager::extractNumberFromPath);
+                    final List<Path> sortedBlockItems = blockItems.sorted(comparator).toList();
 
                     for (final Path pathBlockItem : sortedBlockItems) {
-                        final byte[] blockItemBytes = readFileBytesUnsafe(pathBlockItem);
+                        final byte[] blockItemBytes =
+                                FileUtilities.readFileBytesUnsafe(pathBlockItem);
                         // if null means the file is not a block item and we can skip the file.
                         if (blockItemBytes == null) {
                             continue;
