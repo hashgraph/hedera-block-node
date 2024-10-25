@@ -22,12 +22,12 @@ spotless {
         // Enables the spotless:on and spotless:off comments
         toggleOffOn()
         // don't need to set target, it is inferred from java
-        // apply a specific flavor of google-java-format
-        // also reflow long strings, and do not format javadoc
-        // because the default setup is _very_ bad for javadoc
-        // We need to figure out a "correct" _separate_ setup for that.
-        googleJavaFormat("1.17.0").aosp().reflowLongStrings().formatJavadoc(false)
-        // Fix some left-out items from the google plugin
+        // apply a specific flavor of palantir-java-format
+        // and do not format javadoc because the default setup
+        // is _very_ bad for javadoc. We need to figure out a
+        // "correct" _separate_ setup for that.
+        palantirJavaFormat("2.50.0").formatJavadoc(false)
+        // Fix some left-out items from the palantir plugin
         indentWithSpaces(4)
         trimTrailingWhitespace()
         endWithNewline()
