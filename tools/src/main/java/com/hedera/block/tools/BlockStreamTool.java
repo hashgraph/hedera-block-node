@@ -13,7 +13,12 @@ import picocli.CommandLine.Command;
         subcommands = {
             ConvertToJson.class, BlockInfo.class
         })
-public class BlockStreamTool {
+public final class BlockStreamTool {
+
+    /**
+     * Empty Default constructor to remove JavaDoc warning
+     */
+    public BlockStreamTool() {}
 
     /**
      * Main entry point for the app

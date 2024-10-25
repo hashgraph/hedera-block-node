@@ -57,6 +57,14 @@ public class BlockInfo implements Runnable {
     private final AtomicLong totalBytesCompressed = new AtomicLong(0);
     private final AtomicLong totalBytesUncompressed = new AtomicLong(0);
 
+    /**
+     * Empty Default constructor to remove JavaDoc warning
+     */
+    public BlockInfo() {}
+
+    /**
+     * Main method to run the command
+     */
     @Override
     public void run() {
         System.out.println("csvMode = " + csvMode);
@@ -179,6 +187,8 @@ public class BlockInfo implements Runnable {
      * Print progress bar to console
      *
      * @param progress the progress percentage between 0 and 1
+     * @param totalBlockFiles the total number of block files
+     * @param completedBlockFiles the number of block files completed
      */
     public void printProgress(double progress, int totalBlockFiles, int completedBlockFiles) {
         final int width = 50;
