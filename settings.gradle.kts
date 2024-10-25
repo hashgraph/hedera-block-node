@@ -24,6 +24,7 @@ include(":suites")
 include(":stream")
 include(":server")
 include(":simulator")
+include(":tools")
 
 includeBuild(".") // https://github.com/gradle/gradle/issues/21490#issuecomment-1458887481
 
@@ -62,6 +63,7 @@ dependencyResolutionManagement {
             version("com.google.auto.service.processor", "1.1.1")
             version("com.google.auto.service", "1.1.1")
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
+            version("info.picocli", "4.7.6")
 
             // gRPC dependencies
             version("io.grpc", "1.65.1")
