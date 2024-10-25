@@ -18,8 +18,10 @@ package com.hedera.block.simulator.generator;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
+import java.io.IOException;
 import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
 
@@ -39,7 +41,7 @@ class BlockAsFileBlockStreamManagerTest {
     }
 
     @Test
-    void getNextBlock() {
+    void getNextBlock() throws IOException, BlockSimulatorParsingException {
         BlockStreamManager blockStreamManager =
                 getBlockAsFileBlockStreamManager(getAbsoluteFolder(gzRootFolder));
         for (int i = 0; i < 3000; i++) {
@@ -48,7 +50,7 @@ class BlockAsFileBlockStreamManagerTest {
     }
 
     @Test
-    void getNextBlockItem() {
+    void getNextBlockItem() throws IOException, BlockSimulatorParsingException {
         BlockStreamManager blockStreamManager =
                 getBlockAsFileBlockStreamManager(getAbsoluteFolder(gzRootFolder));
         for (int i = 0; i < 35000; i++) {
@@ -57,7 +59,7 @@ class BlockAsFileBlockStreamManagerTest {
     }
 
     @Test
-    void loadBlockBlk() {
+    void loadBlockBlk() throws IOException, BlockSimulatorParsingException {
         String blkRootFolder = "src/test/resources/block-0.0.3-blk/";
         BlockStreamManager blockStreamManager =
                 getBlockAsFileBlockStreamManager(getAbsoluteFolder(blkRootFolder));
@@ -66,17 +68,24 @@ class BlockAsFileBlockStreamManagerTest {
 
     @Test
     void BlockAsFileBlockStreamManagerInvalidRootPath() {
-        assertThrows(RuntimeException.class, () -> getBlockAsFileBlockStreamManager("/etc"));
+        assertThrows(
+                RuntimeException.class,
+                () ->
+                        getBlockAsFileBlockStreamManager(
+                                getAbsoluteFolder("src/test/resources/BlockAsDirException/1/")));
     }
 
     private BlockAsFileBlockStreamManager getBlockAsFileBlockStreamManager(String rootFolder) {
-        BlockStreamConfig blockStreamConfig =
-                new BlockStreamConfig(
-                        GenerationMode.DIR,
-                        rootFolder,
-                        1_500_000,
-                        "BlockAsFileBlockStreamManager",
-                        10_000);
-        return new BlockAsFileBlockStreamManager(blockStreamConfig);
+
+        BlockGeneratorConfig blockGeneratorConfig =
+                BlockGeneratorConfig.builder()
+                        .generationMode(GenerationMode.DIR)
+                        .folderRootPath(rootFolder)
+                        .managerImplementation("BlockAsFileBlockStreamManager")
+                        .paddedLength(36)
+                        .fileExtension(".blk")
+                        .build();
+
+        return new BlockAsFileBlockStreamManager(blockGeneratorConfig);
     }
 }

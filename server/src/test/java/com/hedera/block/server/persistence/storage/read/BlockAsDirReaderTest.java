@@ -20,8 +20,6 @@ import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
 import static java.lang.System.Logger;
-import static java.lang.System.Logger.Level.ERROR;
-import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -49,37 +47,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class BlockAsDirReaderTest {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
-    private static final String TEMP_DIR = "block-node-unit-test-dir";
-
-    private Path testPath;
+    @TempDir private Path testPath;
 
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig config;
 
     @BeforeEach
     public void setUp() throws IOException {
-        testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
-
         blockNodeContext =
                 TestConfigUtil.getTestBlockNodeContext(
                         Map.of("persistence.storage.rootPath", testPath.toString()));
         config = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
-    }
-
-    @AfterEach
-    public void tearDown() {
-        if (!TestUtils.deleteDirectory(testPath.toFile())) {
-            LOGGER.log(ERROR, "Failed to delete temp directory: " + testPath.toString());
-        }
     }
 
     @Test
@@ -93,10 +79,10 @@ public class BlockAsDirReaderTest {
     public void testReadPermsRepairSucceeded() throws IOException, ParseException {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         for (BlockItem blockItem : blockItems) {
-            blockWriter.write(blockItem);
+            blockWriter.write(List.of(blockItem));
         }
 
         // Make the block unreadable
@@ -113,11 +99,9 @@ public class BlockAsDirReaderTest {
     public void testRemoveBlockReadPermsRepairFailed() throws IOException, ParseException {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-        for (BlockItem blockItem : blockItems) {
-            blockWriter.write(blockItem);
-        }
+        blockWriter.write(blockItems);
 
         // Make the block unreadable
         removeBlockReadPerms(1, config);
@@ -136,11 +120,9 @@ public class BlockAsDirReaderTest {
     public void testRemoveBlockItemReadPerms() throws IOException {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-        for (BlockItem blockItem : blockItems) {
-            blockWriter.write(blockItem);
-        }
+        blockWriter.write(blockItems);
 
         removeBlockItemReadPerms(1, 1, config);
 
@@ -168,11 +150,9 @@ public class BlockAsDirReaderTest {
 
         final List<BlockItem> blockItems = generateBlockItems(1);
 
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-        for (final BlockItem blockItem : blockItems) {
-            blockWriter.write(blockItem);
-        }
+        blockWriter.write(blockItems);
 
         removeBlockReadPerms(1, config);
 
@@ -206,11 +186,9 @@ public class BlockAsDirReaderTest {
     public void testParseExceptionHandling() throws IOException, ParseException {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
-        final BlockWriter<BlockItem> blockWriter =
+        final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-        for (final BlockItem blockItem : blockItems) {
-            blockWriter.write(blockItem);
-        }
+        blockWriter.write(blockItems);
 
         // Read the block back and confirm it's read successfully
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();

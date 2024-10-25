@@ -34,12 +34,13 @@ Please do not file a public ticket mentioning the vulnerability. Refer to the se
 
 ## Configuration
 
-| Environment Variable            | Description                                                                                                   | Default Value |
-|---------------------------------|---------------------------------------------------------------------------------------------------------------|---------------|
-| persistence.storage.rootPath    | The root path for the storage, if not provided will attempt to create a `data` on the working dir of the app. | ./data        |
-| consumer.timeoutThresholdMillis | Time to wait for subscribers before disconnecting in milliseconds                                             | 1500          |
-
-
+| Environment Variable              | Description                                                                                                   | Default Value |
+|-----------------------------------|---------------------------------------------------------------------------------------------------------------|---------------|
+| PERSISTENCE_STORAGE_ROOT_PATH     | The root path for the storage, if not provided will attempt to create a `data` on the working dir of the app. |               |
+| CONSUMER_TIMEOUT_THRESHOLD_MILLIS | Time to wait for subscribers before disconnecting in milliseconds                                             | 1500          |
+| SERVICE_DELAY_MILLIS              | Service shutdown delay in milliseconds                                                                        | 500           |
+| MEDIATOR_RING_BUFFER_SIZE         | Size of the ring buffer used by the mediator (must be a power of 2)                                           | 67108864      |
+| NOTIFIER_RING_BUFFER_SIZE         | Size of the ring buffer used by the notifier (must be a power of 2)                                           | 2048          |
 
 # Starting locally:
 ```bash

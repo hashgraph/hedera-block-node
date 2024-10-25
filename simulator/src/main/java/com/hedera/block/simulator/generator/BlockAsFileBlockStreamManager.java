@@ -16,11 +16,12 @@
 
 package com.hedera.block.simulator.generator;
 
+import static com.hedera.block.simulator.generator.Utils.readFileBytes;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 
-import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -55,7 +56,7 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
      * @param blockStreamConfig the block stream config
      */
     @Inject
-    public BlockAsFileBlockStreamManager(@NonNull BlockStreamConfig blockStreamConfig) {
+    public BlockAsFileBlockStreamManager(@NonNull BlockGeneratorConfig blockStreamConfig) {
         this.rootFolder = blockStreamConfig.folderRootPath();
         try {
             this.loadBlocks();
@@ -108,13 +109,10 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
 
             for (Path blockPath : sortedBlockFiles) {
 
-                byte[] blockBytes;
-                if (blockPath.toString().endsWith(".gz")) {
-                    blockBytes = Utils.readGzFile(blockPath);
-                } else if (blockPath.toString().endsWith(".blk")) {
-                    blockBytes = Files.readAllBytes(blockPath);
-                } else {
-                    throw new IllegalArgumentException("Invalid file format: " + blockPath);
+                byte[] blockBytes = readFileBytes(blockPath);
+                // skip if block is null, usually due to SO files like .DS_STORE
+                if (blockBytes == null) {
+                    continue;
                 }
 
                 Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));

@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -103,7 +104,7 @@ public class BlockAsDirWriterBuilder {
      * @throws IOException when an error occurs while persisting block items to storage.
      */
     @NonNull
-    public BlockWriter<BlockItem> build() throws IOException {
+    public BlockWriter<List<BlockItem>> build() throws IOException {
         return new BlockAsDirWriter(blockRemover, filePerms, blockNodeContext);
     }
 }

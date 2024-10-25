@@ -28,9 +28,8 @@ import com.swirlds.config.api.ConfigProperty;
  *
  * @param ringBufferSize the size of the ring buffer used by the notifier
  */
-// TODO: defaultValue here should be 2048
 @ConfigData("notifier")
-public record NotifierConfig(@ConfigProperty(defaultValue = "1024") int ringBufferSize) {
+public record NotifierConfig(@ConfigProperty(defaultValue = "2048") int ringBufferSize) {
     private static final System.Logger LOGGER = System.getLogger(NotifierConfig.class.getName());
 
     /**

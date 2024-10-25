@@ -16,16 +16,16 @@
 
 package com.hedera.block.simulator.config;
 
+import com.hedera.block.simulator.TestUtils;
+import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
-import com.hedera.block.simulator.config.types.GenerationMode;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
-import com.swirlds.config.extensions.sources.SystemEnvironmentConfigSource;
-import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -38,11 +38,12 @@ class ConfigInjectionModuleTest {
     static void setUpAll() throws IOException {
         configuration =
                 ConfigurationBuilder.create()
-                        .withSource(SystemEnvironmentConfigSource.getInstance())
-                        .withSource(SystemPropertiesConfigSource.getInstance())
                         .withSource(new ClasspathFileConfigSource(Path.of("app.properties")))
                         .autoDiscoverExtensions()
                         .build();
+        configuration =
+                TestUtils.getTestConfiguration(
+                        Map.of("generator.managerImplementation", "BlockAsFileBlockStreamManager"));
     }
 
     @Test
@@ -52,7 +53,7 @@ class ConfigInjectionModuleTest {
                 ConfigInjectionModule.provideBlockStreamConfig(configuration);
 
         Assertions.assertNotNull(blockStreamConfig);
-        Assertions.assertEquals(GenerationMode.DIR, blockStreamConfig.generationMode());
+        Assertions.assertEquals(1000, blockStreamConfig.blockItemsBatchSize());
     }
 
     @Test
@@ -62,5 +63,15 @@ class ConfigInjectionModuleTest {
         Assertions.assertNotNull(grpcConfig);
         Assertions.assertEquals("localhost", grpcConfig.serverAddress());
         Assertions.assertEquals(8080, grpcConfig.port());
+    }
+
+    @Test
+    void provideBlockGeneratorConfig() {
+        BlockGeneratorConfig blockGeneratorConfig =
+                ConfigInjectionModule.provideBlockGeneratorConfig(configuration);
+
+        Assertions.assertNotNull(blockGeneratorConfig);
+        Assertions.assertEquals(
+                "BlockAsFileBlockStreamManager", blockGeneratorConfig.managerImplementation());
     }
 }

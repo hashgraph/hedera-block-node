@@ -19,13 +19,14 @@ package com.hedera.block.server;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 
+import com.hedera.block.server.grpc.BlockAccessService;
+import com.hedera.block.server.grpc.BlockStreamService;
 import com.hedera.block.server.health.HealthService;
 import com.hedera.block.server.service.ServiceStatus;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.WebServerConfig;
 import io.helidon.webserver.grpc.GrpcRouting;
-import io.helidon.webserver.grpc.GrpcService;
 import io.helidon.webserver.http.HttpRouting;
 import java.io.IOException;
 import javax.inject.Inject;
@@ -42,7 +43,8 @@ public class BlockNodeApp {
 
     private final ServiceStatus serviceStatus;
     private final HealthService healthService;
-    private final GrpcService blockStreamService;
+    private final BlockStreamService blockStreamService;
+    private final BlockAccessService blockAccessService;
     private final WebServerConfig.Builder webServerBuilder;
 
     /**
@@ -50,19 +52,22 @@ public class BlockNodeApp {
      *
      * @param serviceStatus has the status of the service
      * @param healthService handles the health API requests
-     * @param blockStreamService handles the GRPC API requests
+     * @param blockStreamService handles the block stream requests
      * @param webServerBuilder used to build the web server and start it
+     * @param blockAccessService grpc service for block access
      */
     @Inject
     public BlockNodeApp(
             @NonNull ServiceStatus serviceStatus,
             @NonNull HealthService healthService,
-            @NonNull GrpcService blockStreamService,
-            @NonNull WebServerConfig.Builder webServerBuilder) {
+            @NonNull BlockStreamService blockStreamService,
+            @NonNull WebServerConfig.Builder webServerBuilder,
+            @NonNull BlockAccessService blockAccessService) {
         this.serviceStatus = serviceStatus;
         this.healthService = healthService;
         this.blockStreamService = blockStreamService;
         this.webServerBuilder = webServerBuilder;
+        this.blockAccessService = blockAccessService;
     }
 
     /**
@@ -72,7 +77,8 @@ public class BlockNodeApp {
      */
     public void start() throws IOException {
 
-        final GrpcRouting.Builder grpcRouting = GrpcRouting.builder().service(blockStreamService);
+        final GrpcRouting.Builder grpcRouting =
+                GrpcRouting.builder().service(blockStreamService).service(blockAccessService);
 
         final HttpRouting.Builder httpRouting =
                 HttpRouting.builder().register(healthService.getHealthRootPath(), healthService);

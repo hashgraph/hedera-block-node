@@ -3,9 +3,12 @@ import com.hedera.block.simulator.config.SimulatorConfigExtension;
 /** Runtime module of the simulator. */
 module com.hedera.block.simulator {
     exports com.hedera.block.simulator.config.data;
+    exports com.hedera.block.simulator.exception;
+    exports com.hedera.block.simulator;
 
     requires static com.github.spotbugs.annotations;
     requires static com.google.auto.service;
+    requires com.hedera.block.common;
     requires com.hedera.block.stream;
     requires com.google.protobuf;
     requires com.hedera.pbj.runtime;

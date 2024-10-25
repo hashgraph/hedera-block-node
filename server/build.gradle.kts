@@ -71,7 +71,7 @@ var updateDockerEnv =
         group = "docker"
 
         workingDir(layout.projectDirectory.dir("docker"))
-        commandLine("./update-env.sh", project.version)
+        commandLine("sh", "-c", "./update-env.sh ${project.version} false false")
     }
 
 tasks.register<Exec>("createDockerImage") {
@@ -101,7 +101,7 @@ tasks.register<Exec>("startDockerDebugContainer") {
     commandLine(
         "sh",
         "-c",
-        "./update-env.sh ${project.version} true && docker compose -p block-node up -d"
+        "./update-env.sh ${project.version} true false && docker compose -p block-node up -d"
     )
 }
 
@@ -112,4 +112,29 @@ tasks.register<Exec>("stopDockerContainer") {
     dependsOn(updateDockerEnv)
     workingDir(layout.projectDirectory.dir("docker"))
     commandLine("sh", "-c", "docker-compose -p block-node stop")
+}
+
+tasks.register("buildAndRunSmokeTestsContainer") {
+    doFirst {
+        // ensure smoke test .env properties before creating the container
+        exec {
+            workingDir(layout.projectDirectory.dir("docker"))
+            commandLine("sh", "-c", "./update-env.sh ${project.version} false true")
+        }
+    }
+
+    // build the project
+    dependsOn(tasks.build)
+
+    doLast {
+        // build and start smoke test container
+        exec {
+            workingDir(layout.projectDirectory.dir("docker"))
+            commandLine(
+                "sh",
+                "-c",
+                "./docker-build.sh ${project.version} && docker compose -p block-node up -d"
+            )
+        }
+    }
 }

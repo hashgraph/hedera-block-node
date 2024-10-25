@@ -1,4 +1,6 @@
 #!/bin/bash
+# set -x
+
 
 usage_error() {
   echo "Usage: $0 <integer> [positive-integer]"
@@ -100,7 +102,7 @@ event_template=$(cat "templates/event_template.json")
       sleep 0.01
     done
 
-    if [ $iter -eq $2 ]; then
+    if [ "$iter" -eq "$2" ]; then
       exit 0
     fi
     ((iter++))

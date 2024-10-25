@@ -30,13 +30,16 @@ defaults:
 env:
   GRADLE_EXEC: ./gradlew
 
+permissions:
+  contents: read
+
 jobs:
   smoke-test:
     name: "Smoke Tests"
     runs-on: block-node-linux-medium
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           egress-policy: audit
 
@@ -65,7 +68,6 @@ jobs:
           sudo tar -xzf grpcurl.tar.gz -C /usr/local/bin grpcurl
           rm grpcurl.tar.gz
 
-
       - name: Cache Gradle packages
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
@@ -76,18 +78,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build application
-        run: ${{ env.GRADLE_EXEC }} build
+      - name: Build And Run Smoke Tests Container
+        run: ${{ env.GRADLE_EXEC }} buildAndRunSmokeTestsContainer -x test
 
-      - name: Run application in background, capture logs in app.log
-        run: |
-          ${{ env.GRADLE_EXEC }} run -x :suites:run 2> server/src/test/resources/app.log < /dev/null &
-          echo "Application started with PID $APP_PID"
-          sleep 10
-
-      - name: Print App Logs
-        run: cat server/src/test/resources/app.log
-
-      - name: Smoke Test
+      - name: Run Smoke Test
         working-directory: server/src/test/resources/
-        run: ./smoke-test.sh app.log
+        run: ./smoke-test.sh
+
+      - name: Stop Smoke Tests Container
+        run: docker compose -p block-node stop

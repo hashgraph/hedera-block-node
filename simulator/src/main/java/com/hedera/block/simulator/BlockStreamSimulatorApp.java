@@ -17,11 +17,15 @@
 package com.hedera.block.simulator;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.types.StreamingMode;
+import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.Block;
 import com.swirlds.config.api.Configuration;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
 /** BlockStream Simulator App */
@@ -30,14 +34,14 @@ public class BlockStreamSimulatorApp {
     private static final System.Logger LOGGER =
             System.getLogger(BlockStreamSimulatorApp.class.getName());
 
-    Configuration configuration;
-    BlockStreamManager blockStreamManager;
-    PublishStreamGrpcClient publishStreamGrpcClient;
-    BlockStreamConfig blockStreamConfig;
+    private final BlockStreamManager blockStreamManager;
+    private final PublishStreamGrpcClient publishStreamGrpcClient;
+    private final BlockStreamConfig blockStreamConfig;
+    private final StreamingMode streamingMode;
 
     private final int delayBetweenBlockItems;
-
-    boolean isRunning = false;
+    private final int millisecondsPerBlock;
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
     /**
      * Creates a new BlockStreamSimulatorApp instance.
@@ -51,12 +55,13 @@ public class BlockStreamSimulatorApp {
             @NonNull Configuration configuration,
             @NonNull BlockStreamManager blockStreamManager,
             @NonNull PublishStreamGrpcClient publishStreamGrpcClient) {
-        this.configuration = configuration;
         this.blockStreamManager = blockStreamManager;
         this.publishStreamGrpcClient = publishStreamGrpcClient;
 
         blockStreamConfig = configuration.getConfigData(BlockStreamConfig.class);
 
+        streamingMode = blockStreamConfig.streamingMode();
+        millisecondsPerBlock = blockStreamConfig.millisecondsPerBlock();
         delayBetweenBlockItems = blockStreamConfig.delayBetweenBlockItems();
     }
 
@@ -64,31 +69,81 @@ public class BlockStreamSimulatorApp {
      * Starts the block stream simulator.
      *
      * @throws InterruptedException if the thread is interrupted
+     * @throws BlockSimulatorParsingException if a parse error occurs
+     * @throws IOException if an I/O error occurs
      */
-    public void start() throws InterruptedException {
-        int delayMSBetweenBlockItems = delayBetweenBlockItems / 1_000_000;
-        int delayNSBetweenBlockItems = delayBetweenBlockItems % 1_000_000;
+    public void start() throws InterruptedException, BlockSimulatorParsingException, IOException {
 
-        isRunning = true;
+        isRunning.set(true);
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has started");
 
+        if (streamingMode == StreamingMode.MILLIS_PER_BLOCK) {
+            millisPerBlockStreaming();
+        } else {
+            constantRateStreaming();
+        }
+
+        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
+    }
+
+    private void millisPerBlockStreaming()
+            throws IOException, InterruptedException, BlockSimulatorParsingException {
+
+        final long secondsPerBlockNanos = millisecondsPerBlock * 1_000_000L;
+
+        Block nextBlock = blockStreamManager.getNextBlock();
+        while (nextBlock != null) {
+            long startTime = System.nanoTime();
+            publishStreamGrpcClient.streamBlock(nextBlock);
+            long elapsedTime = System.nanoTime() - startTime;
+            long timeToDelay = secondsPerBlockNanos - elapsedTime;
+            if (timeToDelay > 0) {
+                Thread.sleep(timeToDelay / 1_000_000, (int) (timeToDelay % 1_000_000));
+            } else {
+                LOGGER.log(
+                        System.Logger.Level.WARNING,
+                        "Block Server is running behind. Streaming took: "
+                                + (elapsedTime / 1_000_000)
+                                + "ms - Longer than max expected of: "
+                                + millisecondsPerBlock
+                                + " milliseconds");
+            }
+            nextBlock = blockStreamManager.getNextBlock();
+        }
+        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
+    }
+
+    private void constantRateStreaming()
+            throws InterruptedException, IOException, BlockSimulatorParsingException {
+        int delayMSBetweenBlockItems = delayBetweenBlockItems / 1_000_000;
+        int delayNSBetweenBlockItems = delayBetweenBlockItems % 1_000_000;
         boolean streamBlockItem = true;
         int blockItemsStreamed = 0;
 
         while (streamBlockItem) {
-            // get block item
-            BlockItem blockItem = blockStreamManager.getNextBlockItem();
-            publishStreamGrpcClient.streamBlockItem(blockItem);
-            blockItemsStreamed++;
+            // get block
+            Block block = blockStreamManager.getNextBlock();
+
+            if (block == null) {
+                LOGGER.log(
+                        System.Logger.Level.INFO,
+                        "Block Stream Simulator has reached the end of the block items");
+                break;
+            }
+
+            publishStreamGrpcClient.streamBlock(block);
+            blockItemsStreamed += block.items().size();
 
             Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);
 
             if (blockItemsStreamed >= blockStreamConfig.maxBlockItemsToStream()) {
+                LOGGER.log(
+                        System.Logger.Level.INFO,
+                        "Block Stream Simulator has reached the maximum number of block items to"
+                                + " stream");
                 streamBlockItem = false;
             }
         }
-
-        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
     }
 
     /**
@@ -97,12 +152,12 @@ public class BlockStreamSimulatorApp {
      * @return true if the block stream simulator is running, false otherwise
      */
     public boolean isRunning() {
-        return isRunning;
+        return isRunning.get();
     }
 
     /** Stops the block stream simulator. */
     public void stop() {
-        isRunning = false;
+        isRunning.set(false);
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
     }
 }
