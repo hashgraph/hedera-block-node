@@ -40,5 +40,8 @@ public final class Constants {
     /** Constant defining the block file extension */
     public static final String BLOCK_FILE_EXTENSION = ".blk";
 
+    /** Constant defining the compressed file extension */
+    public static final String COMPRESSED_FILE_EXTENSION = ".zstd";
+
     private Constants() {}
 }

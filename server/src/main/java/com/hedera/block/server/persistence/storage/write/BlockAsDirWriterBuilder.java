@@ -54,7 +54,6 @@ public final class BlockAsDirWriterBuilder {
      * Creates a new block writer builder using the minimum required parameters.
      *
      * @param blockNodeContext is required to provide metrics reporting mechanisms .
-     *
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
@@ -67,12 +66,7 @@ public final class BlockAsDirWriterBuilder {
      * Optionally, provide file permissions for the block writer to use when managing block files
      * and directories.
      *
-     * <p>By default, the block writer will use the permissions defined in {@link
-     * com.hedera.block.common.utils.FileUtilities#DEFAULT_DIR_PERMISSIONS}. This method is
-     * primarily used for testing purposes. Default values should be sufficient for production use.
-     *
      * @param filePerms the file permissions to use when managing block files and directories.
-     *
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
@@ -90,7 +84,6 @@ public final class BlockAsDirWriterBuilder {
      * be sufficient for production use.
      *
      * @param blockRemover the block remover to use when removing blocks from storage.
-     *
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
@@ -103,7 +96,6 @@ public final class BlockAsDirWriterBuilder {
      * Use the build method to construct a block writer to write blocks to storage.
      *
      * @return a new block writer configured with the parameters provided to the builder.
-     *
      * @throws IOException when an error occurs while persisting block items to storage.
      */
     @NonNull

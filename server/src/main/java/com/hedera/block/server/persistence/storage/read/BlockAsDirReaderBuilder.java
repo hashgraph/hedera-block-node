@@ -43,8 +43,7 @@ public final class BlockAsDirReaderBuilder {
      * Creates a new block reader builder using the minimum required parameters.
      *
      * @param config is required to supply pertinent configuration info for the block reader to
-     *               access storage.
-     *
+     *     access storage.
      * @return a block reader builder configured with required parameters.
      */
     @NonNull
@@ -57,12 +56,7 @@ public final class BlockAsDirReaderBuilder {
      * Optionally, provide file permissions for the block reader to use when managing block files
      * and directories.
      *
-     * <p>By default, the block reader will use the permissions defined in {@link
-     * com.hedera.block.common.utils.FileUtilities#DEFAULT_DIR_PERMISSIONS}. This method is
-     * primarily used for testing purposes. Default values should be sufficient for production use.
-     *
      * @param filePerms the file permissions to use when managing block files and directories.
-     *
      * @return a block reader builder configured with required parameters.
      */
     @NonNull

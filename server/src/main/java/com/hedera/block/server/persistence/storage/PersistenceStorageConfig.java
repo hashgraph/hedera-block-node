@@ -16,11 +16,11 @@
 
 package com.hedera.block.server.persistence.storage;
 
-import static com.hedera.block.common.utils.FileUtilities.createPathIfNotExists;
 import static com.hedera.block.server.Constants.BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 
+import com.hedera.block.common.utils.FileUtilities;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 import java.io.IOException;
@@ -31,7 +31,7 @@ import java.nio.file.Paths;
  * Use this configuration across the persistent storage package
  *
  * @param rootPath provides the root path for saving block data, if you want to override it need to
- *                 set it as persistence.storage.rootPath
+ *     set it as persistence.storage.rootPath
  */
 @ConfigData("persistence.storage")
 public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String rootPath) {
@@ -54,7 +54,8 @@ public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String
         }
         // Create Directory if it does not exist
         try {
-            createPathIfNotExists(path, ERROR, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME, true);
+            FileUtilities.createPathIfNotExists(
+                    path, ERROR, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME, true);
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
