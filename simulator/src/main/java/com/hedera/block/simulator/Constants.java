@@ -26,4 +26,8 @@ public final class Constants {
 
     /** Constructor to prevent instantiation. this is only a utility class */
     private Constants() {}
+    /**
+     * Used for converting nanoseconds to milliseconds and vice versa
+     */
+    public static final int NANOS_PER_MILLI = 1_000_000;
 }

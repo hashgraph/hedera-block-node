@@ -37,7 +37,6 @@ import javax.inject.Inject;
  */
 public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
-    private BlockStreamServiceGrpc.BlockStreamServiceStub stub;
     private StreamObserver<PublishStreamRequest> requestStreamObserver;
     private final BlockStreamConfig blockStreamConfig;
     private final GrpcConfig grpcConfig;
@@ -65,7 +64,8 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
                 ManagedChannelBuilder.forAddress(grpcConfig.serverAddress(), grpcConfig.port())
                         .usePlaintext()
                         .build();
-        stub = BlockStreamServiceGrpc.newStub(channel);
+        BlockStreamServiceGrpc.BlockStreamServiceStub stub =
+                BlockStreamServiceGrpc.newStub(channel);
         PublishStreamObserver publishStreamObserver = new PublishStreamObserver();
         requestStreamObserver = stub.publishBlockStream(publishStreamObserver);
     }

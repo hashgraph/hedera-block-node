@@ -21,8 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
@@ -44,7 +46,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -96,7 +97,7 @@ class BlockStreamSimulatorTest {
         Block block1 = Block.newBuilder().items(blockItem).build();
         Block block2 = Block.newBuilder().items(blockItem, blockItem, blockItem).build();
 
-        BlockStreamManager blockStreamManager = Mockito.mock(BlockStreamManager.class);
+        BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
         when(blockStreamManager.getNextBlock()).thenReturn(block1, block2, null);
 
         Configuration configuration =
@@ -134,7 +135,7 @@ class BlockStreamSimulatorTest {
     @Test
     void start_millisPerBlockStreaming()
             throws InterruptedException, IOException, BlockSimulatorParsingException {
-        BlockStreamManager blockStreamManager = Mockito.mock(BlockStreamManager.class);
+        BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
         BlockItem blockItem =
                 BlockItem.newBuilder()
                         .blockHeader(BlockHeader.newBuilder().number(1L).build())
@@ -167,15 +168,14 @@ class BlockStreamSimulatorTest {
             throws InterruptedException, IOException, BlockSimulatorParsingException {
         List<LogRecord> logRecords = captureLogs();
 
-        BlockStreamManager blockStreamManager = Mockito.mock(BlockStreamManager.class);
+        BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
         BlockItem blockItem =
                 BlockItem.newBuilder()
                         .blockHeader(BlockHeader.newBuilder().number(1L).build())
                         .build();
         Block block = Block.newBuilder().items(blockItem).build();
         when(blockStreamManager.getNextBlock()).thenReturn(block, block, null);
-        PublishStreamGrpcClient publishStreamGrpcClient =
-                Mockito.mock(PublishStreamGrpcClient.class);
+        PublishStreamGrpcClient publishStreamGrpcClient = mock(PublishStreamGrpcClient.class);
 
         // simulate that the first block takes 15ms to stream, when the limit is 10, to force to go
         // over WARN Path.
@@ -239,6 +239,22 @@ class BlockStreamSimulatorTest {
                 new BlockStreamSimulatorApp(
                         configuration, blockStreamManager, publishStreamGrpcClient);
         assertThrows(UnsupportedOperationException.class, () -> blockStreamSimulator.start());
+    }
+
+    @Test
+    void constructor_throwsExceptionForNullSimulatorMode() {
+        Configuration configuration = mock(Configuration.class);
+        BlockStreamConfig blockStreamConfig = mock(BlockStreamConfig.class);
+
+        when(configuration.getConfigData(BlockStreamConfig.class)).thenReturn(blockStreamConfig);
+        when(blockStreamConfig.simulatorMode()).thenReturn(null);
+
+        assertThrows(
+                NullPointerException.class,
+                () -> {
+                    new BlockStreamSimulatorApp(
+                            configuration, blockStreamManager, publishStreamGrpcClient);
+                });
     }
 
     private List<LogRecord> captureLogs() {

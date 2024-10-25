@@ -19,6 +19,7 @@ package com.hedera.block.simulator.config.data;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.simulator.config.types.GenerationMode;
+import com.hedera.block.simulator.config.types.SimulatorMode;
 import com.hedera.block.simulator.config.types.StreamingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -66,6 +67,14 @@ class BlockStreamConfigTest {
         BlockStreamConfig config = getBlockStreamConfigBuilder().build();
         // assert
         assertEquals(StreamingMode.CONSTANT_RATE, config.streamingMode());
+    }
+
+    @Test
+    void testSimulatorMode() {
+        BlockStreamConfig config =
+                getBlockStreamConfigBuilder().simulatorMode(SimulatorMode.PUBLISHER).build();
+
+        assertEquals(SimulatorMode.PUBLISHER, config.simulatorMode());
     }
 
     @Test

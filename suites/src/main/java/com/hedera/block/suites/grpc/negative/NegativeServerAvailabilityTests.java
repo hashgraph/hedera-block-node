@@ -45,13 +45,13 @@ public class NegativeServerAvailabilityTests extends BaseSuite {
      * Clean up method executed after each test.
      *
      * <p>This method stops the running container, resets the container configuration by retrieving
-     * a new one through {@link BaseSuite#getContainer()} ()}, and then starts the Block Node
+     * a new one through {@link BaseSuite#createContainer()}, and then starts the Block Node
      * container again.
      */
     @AfterEach
     public void cleanUp() {
         blockNodeContainer.stop();
-        blockNodeContainer = getContainer();
+        blockNodeContainer = createContainer();
         blockNodeContainer.start();
     }
 

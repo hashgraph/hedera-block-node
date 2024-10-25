@@ -16,14 +16,18 @@
 
 package com.hedera.block.simulator.grpc;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import com.hedera.block.simulator.TestUtils;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import io.grpc.ManagedChannel;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
@@ -72,5 +76,22 @@ class PublishStreamGrpcClientImplTest {
 
         boolean result1 = publishStreamGrpcClient.streamBlock(block1);
         assertTrue(result1);
+    }
+
+    @Test
+    void testShutdown() throws Exception {
+        PublishStreamGrpcClientImpl publishStreamGrpcClient =
+                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig);
+        publishStreamGrpcClient.init();
+
+        Field channelField = PublishStreamGrpcClientImpl.class.getDeclaredField("channel");
+        channelField.setAccessible(true);
+
+        ManagedChannel mockChannel = mock(ManagedChannel.class);
+        channelField.set(publishStreamGrpcClient, mockChannel);
+        publishStreamGrpcClient.shutdown();
+
+        // Verify that channel.shutdown() was called
+        verify(mockChannel).shutdown();
     }
 }

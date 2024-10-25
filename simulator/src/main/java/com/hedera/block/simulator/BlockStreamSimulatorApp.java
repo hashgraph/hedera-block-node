@@ -34,9 +34,7 @@ import javax.inject.Inject;
 /** BlockStream Simulator App */
 public class BlockStreamSimulatorApp {
 
-    private static final System.Logger LOGGER =
-            System.getLogger(BlockStreamSimulatorApp.class.getName());
-
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
     private final BlockStreamManager blockStreamManager;
     private final PublishStreamGrpcClient publishStreamGrpcClient;
     private final BlockStreamConfig blockStreamConfig;
@@ -61,13 +59,19 @@ public class BlockStreamSimulatorApp {
         blockStreamConfig = configuration.getConfigData(BlockStreamConfig.class);
 
         SimulatorMode simulatorMode = blockStreamConfig.simulatorMode();
-        if (simulatorMode == SimulatorMode.PUBLISHER) {
-            simulatorModeHandler =
-                    new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient);
-        } else if (simulatorMode == SimulatorMode.CONSUMER) {
-            simulatorModeHandler = new ConsumerModeHandler(blockStreamConfig);
-        } else {
-            simulatorModeHandler = new CombinedModeHandler(blockStreamConfig);
+        switch (simulatorMode) {
+            case PUBLISHER:
+                simulatorModeHandler =
+                        new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient);
+                break;
+            case CONSUMER:
+                simulatorModeHandler = new ConsumerModeHandler(blockStreamConfig);
+                break;
+            case BOTH:
+                simulatorModeHandler = new CombinedModeHandler(blockStreamConfig);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown SimulatorMode: " + simulatorMode);
         }
     }
 

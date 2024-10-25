@@ -73,7 +73,7 @@ public record BlockStreamConfig(
          * @param simulatorMode the {@link SimulatorMode} to use
          * @return this {@code Builder} instance
          */
-        public Builder streamingMode(SimulatorMode simulatorMode) {
+        public Builder simulatorMode(SimulatorMode simulatorMode) {
             this.simulatorMode = simulatorMode;
             return this;
         }

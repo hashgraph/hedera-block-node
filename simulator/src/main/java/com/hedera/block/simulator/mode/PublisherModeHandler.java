@@ -16,6 +16,7 @@
 
 package com.hedera.block.simulator.mode;
 
+import static com.hedera.block.simulator.Constants.NANOS_PER_MILLI;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
@@ -37,20 +38,18 @@ import java.io.IOException;
  * the simulator needs to handle publication of blocks.
  */
 public class PublisherModeHandler implements SimulatorModeHandler {
-    private static final System.Logger LOGGER =
-            System.getLogger(PublisherModeHandler.class.getName());
-
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
     private final BlockStreamConfig blockStreamConfig;
     private final PublishStreamGrpcClient publishStreamGrpcClient;
     private final StreamingMode streamingMode;
     private final int delayBetweenBlockItems;
     private final int millisecondsPerBlock;
-    private final int NANOS_PER_MILLI = 1_000_000;
 
     /**
      * Constructs a new {@code PublisherModeHandler} with the specified block stream configuration and publisher client.
      *
      * @param blockStreamConfig the configuration data for managing block streams
+     * @param publishStreamGrpcClient the grpc client used for streaming blocks
      */
     public PublisherModeHandler(
             @NonNull final BlockStreamConfig blockStreamConfig,

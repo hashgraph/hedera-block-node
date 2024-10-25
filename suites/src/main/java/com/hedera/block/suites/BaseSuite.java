@@ -74,7 +74,7 @@ public abstract class BaseSuite {
      */
     @BeforeAll
     public static void setup() {
-        blockNodeContainer = getContainer();
+        blockNodeContainer = createContainer();
         blockNodeContainer.start();
     }
 
@@ -107,7 +107,7 @@ public abstract class BaseSuite {
      *
      * @return a configured {@link GenericContainer} instance for the Block Node server
      */
-    protected static GenericContainer<?> getContainer() {
+    protected static GenericContainer<?> createContainer() {
         String blockNodeVersion = BaseSuite.getBlockNodeVersion();
         blockNodePort = 8080;
         List<String> portBindings = new ArrayList<>();
