@@ -6,10 +6,7 @@ module com.hedera.block.tools {
 
     requires static com.github.spotbugs.annotations;
     requires static com.google.auto.service;
-    requires info.picocli;
     requires com.hedera.block.stream;
-    requires com.google.protobuf;
     requires com.hedera.pbj.runtime;
-    requires com.swirlds.config.api;
-    requires com.swirlds.config.extensions;
+    requires info.picocli;
 }

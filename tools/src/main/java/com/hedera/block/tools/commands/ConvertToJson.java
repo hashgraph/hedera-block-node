@@ -43,6 +43,14 @@ public class ConvertToJson implements Runnable {
     @Option(names = {"-ms", "--min-size"}, description = "minimum file size in megabytes")
     private double minSizeMb = Double.MAX_VALUE;
 
+    /**
+     * Empty Default constructor to remove JavaDoc warning
+     */
+    public ConvertToJson() {}
+
+    /**
+     * Main method to run the command
+     */
     @Override
     public void run() {
         if (files == null || files.length == 0) {
