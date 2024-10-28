@@ -35,8 +35,7 @@ import java.nio.file.Paths;
  */
 @ConfigData("persistence.storage")
 public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String rootPath) {
-    private static final System.Logger LOGGER =
-            System.getLogger(PersistenceStorageConfig.class.getName());
+    private static final System.Logger LOGGER = System.getLogger(PersistenceStorageConfig.class.getName());
 
     /**
      * Constructor to set the default root path if not provided, it will be set to the data
@@ -54,10 +53,12 @@ public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String
         }
         // Create Directory if it does not exist
         try {
-            FileUtilities.createPathIfNotExists(
-                    path, ERROR, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME, true);
+            FileUtilities.createPathIfNotExists(path, ERROR, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME, true);
         } catch (final IOException e) {
-            throw new RuntimeException(e);
+            final String message =
+                    "Unable to instantiate [%s]! Unable to create the root directory for the block storage [%s]"
+                            .formatted(this.getClass().getName(), path);
+            throw new RuntimeException(message, e);
         }
 
         LOGGER.log(INFO, "Persistence Storage configuration persistence.storage.rootPath: " + path);
