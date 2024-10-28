@@ -53,7 +53,7 @@ public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String
         }
         // Create Directory if it does not exist
         try {
-            FileUtilities.createPathIfNotExists(path, ERROR, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME, true);
+            FileUtilities.createFolderPathIfNotExists(path, ERROR, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME);
         } catch (final IOException e) {
             final String message =
                     "Unable to instantiate [%s]! Unable to create the root directory for the block storage [%s]"

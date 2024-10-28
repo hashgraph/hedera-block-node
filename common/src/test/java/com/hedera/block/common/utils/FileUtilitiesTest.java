@@ -35,7 +35,7 @@ class FileUtilitiesTest {
     private static final String FILE_WITH_UNRECOGNIZED_EXTENSION = "src/test/resources/nonexistent.unrecognized";
 
     @Test
-    void test_createPathIfNotExists_CreatesDirIfDoesNotExist(@TempDir final Path tempDir) throws IOException {
+    void test_createFolderPathIfNotExists_CreatesDirIfDoesNotExist(@TempDir final Path tempDir) throws IOException {
         final String newDir = "newDir";
         final Path toCreate = tempDir.resolve(newDir);
 
@@ -44,7 +44,7 @@ class FileUtilitiesTest {
         assertThat(toCreate).doesNotExist();
 
         // run actual
-        FileUtilities.createPathIfNotExists(toCreate, Level.ERROR, "test dir 1", true);
+        FileUtilities.createFolderPathIfNotExists(toCreate, Level.ERROR, "test dir 1");
 
         // assert
         assertThat(toCreate).exists().isDirectory();
@@ -52,7 +52,7 @@ class FileUtilitiesTest {
     }
 
     @Test
-    void test_createPathIfNotExists_DoesNotCreateDirIfExists(@TempDir final Path tempDir) throws IOException {
+    void test_createFolderPathIfNotExists_DoesNotCreateFolderDirIfExists(@TempDir final Path tempDir) throws IOException {
         final String newDir = "newDir";
         final Path toCreate = tempDir.resolve(newDir);
 
@@ -70,53 +70,10 @@ class FileUtilitiesTest {
         assertThat(toCreate).exists().isDirectory();
 
         // run actual
-        FileUtilities.createPathIfNotExists(toCreate, Level.ERROR, "test dir 1", true);
+        FileUtilities.createFolderPathIfNotExists(toCreate, Level.ERROR, "test dir 1");
 
         // assert
         assertThat(toCreate).exists().isDirectory();
-        assertThat(tempDirAsFile.listFiles()).hasSize(1).contains(toCreateAsFile);
-    }
-
-    @Test
-    void test_createPathIfNotExists_CreatesFileIfDoesNotExist(@TempDir final Path tempDir) throws IOException {
-        final String newFile = "newFile";
-        final Path toCreate = tempDir.resolve(newFile);
-
-        // ensure the temp directory is empty in the beginning
-        assertThat(tempDir).isEmptyDirectory();
-        assertThat(toCreate).doesNotExist();
-
-        // run actual
-        FileUtilities.createPathIfNotExists(toCreate, Level.ERROR, "test file 1", false);
-
-        // assert
-        assertThat(toCreate).exists().isEmptyFile();
-        assertThat(tempDir.toFile().listFiles()).hasSize(1).contains(toCreate.toFile());
-    }
-
-    @Test
-    void test_createPathIfNotExists_DoesNotCreateFileIfExists(@TempDir final Path tempDir) throws IOException {
-        final String newFile = "newFile";
-        final Path toCreate = tempDir.resolve(newFile);
-
-        // ensure the temp directory is empty in the beginning
-        assertThat(tempDir).isEmptyDirectory();
-        assertThat(toCreate).doesNotExist();
-
-        // create 'newFile'
-        Files.createFile(toCreate);
-
-        // ensure the temp directory contains only 'newFile' before running actual
-        final File tempDirAsFile = tempDir.toFile();
-        final File toCreateAsFile = toCreate.toFile();
-        assertThat(tempDirAsFile.listFiles()).hasSize(1).contains(toCreateAsFile);
-        assertThat(toCreate).exists().isEmptyFile();
-
-        // run actual
-        FileUtilities.createPathIfNotExists(toCreate, Level.ERROR, "test file 1", false);
-
-        // assert
-        assertThat(toCreate).exists().isEmptyFile();
         assertThat(tempDirAsFile.listFiles()).hasSize(1).contains(toCreateAsFile);
     }
 

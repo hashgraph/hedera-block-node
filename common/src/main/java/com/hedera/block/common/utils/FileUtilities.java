@@ -37,7 +37,7 @@ public final class FileUtilities {
      * <p>
      * Default permissions are set to: rw-r--r--
      */
-    public static final FileAttribute<Set<PosixFilePermission>> DEFAULT_FILE_PERMISSIONS =
+    private static final FileAttribute<Set<PosixFilePermission>> DEFAULT_FILE_PERMISSIONS =
             PosixFilePermissions.asFileAttribute(
                     Set.of(
                             PosixFilePermission.OWNER_READ,
@@ -50,7 +50,7 @@ public final class FileUtilities {
      * <p>
      * Default permissions are set to: rwxr-xr-x
      */
-    public static final FileAttribute<Set<PosixFilePermission>> DEFAULT_DIR_PERMISSIONS =
+    private static final FileAttribute<Set<PosixFilePermission>> DEFAULT_FOLDER_PERMISSIONS =
             PosixFilePermissions.asFileAttribute(
                     Set.of(
                             PosixFilePermission.OWNER_READ,
@@ -62,76 +62,56 @@ public final class FileUtilities {
                             PosixFilePermission.OTHERS_EXECUTE));
 
     /**
-     * Log message template used when a path is not created because a file
-     * or folder already exists at the requested path.
-     */
-    private static final String PRE_EXISTING_FOLDER_MESSAGE =
-            "Requested %s [%s] not created because %s already exists at %s";
-
-    /**
-     * Create a new path (folder or file) if it does not exist.
-     * Any folders or files created will use default permissions.
+     * Create a new path (folder) if it does not exist.
+     * Any folders created will use default permissions.
      *
      * @param toCreate valid, non-null instance of {@link Path} to be created
      * @param logLevel valid, non-null instance of {@link System.Logger.Level} to use
      * @param semanticPathName valid, non-blank {@link String} used for logging that represents the
      *     desired path semantically
-     * @param createDir {@link Boolean} value if we should create a directory or a file
      * @throws IOException if the path cannot be created
      */
-    public static void createPathIfNotExists(
+    public static void createFolderPathIfNotExists(
             @NonNull final Path toCreate,
             @NonNull final System.Logger.Level logLevel,
-            @NonNull final String semanticPathName,
-            final boolean createDir)
+            @NonNull final String semanticPathName)
             throws IOException {
-        createPathIfNotExists(
+        createFolderPathIfNotExists(
                 toCreate,
                 logLevel,
-                createDir ? DEFAULT_DIR_PERMISSIONS : DEFAULT_FILE_PERMISSIONS,
-                semanticPathName,
-                createDir);
+                DEFAULT_FOLDER_PERMISSIONS,
+                semanticPathName);
     }
 
     /**
-     * Create a new path (folder or file) if it does not exist.
+     * Create a new path (folder) if it does not exist.
      *
      * @param toCreate The path to be created.
      * @param logLevel The logging level to use when logging this event.
      * @param permissions Permissions to use when creating the path.
-     * @param semanticPathName A name to represent the path in a logging
+     * @param semanticPathName A name (non-blank) to represent the path in a logging
      *     statement.
-     * @param createDir A flag indicating we should create a directory
-     *     (true) or a file (false)
      * @throws IOException if the path cannot be created due to a filesystem
      *     error.
      */
-    public static void createPathIfNotExists(
+    public static void createFolderPathIfNotExists(
             @NonNull final Path toCreate,
             @NonNull final System.Logger.Level logLevel,
             @NonNull final FileAttribute<Set<PosixFilePermission>> permissions,
-            @NonNull final String semanticPathName,
-            final boolean createDir)
+            @NonNull final String semanticPathName)
             throws IOException {
         Objects.requireNonNull(toCreate);
         Objects.requireNonNull(logLevel);
         Objects.requireNonNull(permissions);
         StringUtilities.requireNotBlank(semanticPathName);
-        final String requestedType = createDir ? "directory" : "file";
         if (Files.notExists(toCreate)) {
-            if (createDir) {
-                Files.createDirectories(toCreate, permissions);
-            } else {
-                Files.createFile(toCreate, permissions);
-            }
-            final String logMessage =
-                    "Created %s [%s] at %s".formatted(requestedType, semanticPathName, toCreate);
+            Files.createDirectories(toCreate, permissions);
+            final String logMessage = "Created [%s] at '%s'".formatted(semanticPathName, toCreate);
             LOGGER.log(logLevel, logMessage);
         } else {
-            final String actualType = Files.isDirectory(toCreate) ? "directory" : "file";
             final String logMessage =
-                    PRE_EXISTING_FOLDER_MESSAGE.formatted(
-                            requestedType, semanticPathName, actualType, toCreate);
+                "Requested [%s] not created because the directory already exists at '%s'"
+                    .formatted(semanticPathName, toCreate);
             LOGGER.log(logLevel, logMessage);
         }
     }
