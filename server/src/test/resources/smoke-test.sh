@@ -42,6 +42,7 @@ shutdown() {
 # Trap any exit signal to ensure everything is cleaned up
 trap "shutdown; exit 1" ERR SIGINT SIGTERM
 
+
 # 1. Verify that the logs have the startup pattern (only if log file is provided)
 LOG_FILE=$1
 STARTUP_PATTERN="Block Node Server started at port"
@@ -54,7 +55,7 @@ if [[ -n "$LOG_FILE" ]]; then
         exit 1
     fi
 else
-    echo "No log file provided, skipping startup pattern check."
+    echo "No log file provided, skipping startup pattern check. LOG_FILE is: $LOG_FILE"
 fi
 
 # 2. Start the consumer script with parameters 1 1000 and save logs to consumer.log
