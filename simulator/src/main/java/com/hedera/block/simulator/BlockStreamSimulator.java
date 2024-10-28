@@ -16,6 +16,7 @@
 
 package com.hedera.block.simulator;
 
+import static com.hedera.block.common.constants.StringsConstants.APPLICATION_PROPERTIES;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
@@ -43,24 +44,23 @@ public class BlockStreamSimulator {
      * @throws InterruptedException if the thread is interrupted
      * @throws BlockSimulatorParsingException if a parse error occurs
      */
-    public static void main(String[] args)
+    public static void main(final String[] args)
             throws IOException, InterruptedException, BlockSimulatorParsingException {
 
         LOGGER.log(INFO, "Starting Block Stream Simulator");
 
-        ConfigurationBuilder configurationBuilder =
-                ConfigurationBuilder.create()
-                        .withSource(SystemEnvironmentConfigSource.getInstance())
-                        .withSource(SystemPropertiesConfigSource.getInstance())
-                        .withSource(new ClasspathFileConfigSource(Path.of("app.properties")))
-                        .autoDiscoverExtensions();
+        final ConfigurationBuilder configurationBuilder = ConfigurationBuilder.create()
+                .withSource(SystemEnvironmentConfigSource.getInstance())
+                .withSource(SystemPropertiesConfigSource.getInstance())
+                .withSource(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES)))
+                .autoDiscoverExtensions();
 
-        Configuration configuration = configurationBuilder.build();
+        final Configuration configuration = configurationBuilder.build();
 
-        BlockStreamSimulatorInjectionComponent DIComponent =
+        final BlockStreamSimulatorInjectionComponent DIComponent =
                 DaggerBlockStreamSimulatorInjectionComponent.factory().create(configuration);
 
-        BlockStreamSimulatorApp blockStreamSimulatorApp = DIComponent.getBlockStreamSimulatorApp();
+        final BlockStreamSimulatorApp blockStreamSimulatorApp = DIComponent.getBlockStreamSimulatorApp();
         blockStreamSimulatorApp.start();
     }
 }

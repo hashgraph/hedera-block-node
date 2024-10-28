@@ -32,9 +32,10 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class FileUtilitiesTest {
+    private static final String FILE_WITH_UNRECOGNIZED_EXTENSION = "src/test/resources/nonexistent.unrecognized";
+
     @Test
-    void test_createPathIfNotExists_CreatesDirIfDoesNotExist(@TempDir final Path tempDir)
-            throws IOException {
+    void test_createPathIfNotExists_CreatesDirIfDoesNotExist(@TempDir final Path tempDir) throws IOException {
         final String newDir = "newDir";
         final Path toCreate = tempDir.resolve(newDir);
 
@@ -51,8 +52,7 @@ class FileUtilitiesTest {
     }
 
     @Test
-    void test_createPathIfNotExists_DoesNotCreateDirIfExists(@TempDir final Path tempDir)
-            throws IOException {
+    void test_createPathIfNotExists_DoesNotCreateDirIfExists(@TempDir final Path tempDir) throws IOException {
         final String newDir = "newDir";
         final Path toCreate = tempDir.resolve(newDir);
 
@@ -78,8 +78,7 @@ class FileUtilitiesTest {
     }
 
     @Test
-    void test_createPathIfNotExists_CreatesFileIfDoesNotExist(@TempDir final Path tempDir)
-            throws IOException {
+    void test_createPathIfNotExists_CreatesFileIfDoesNotExist(@TempDir final Path tempDir) throws IOException {
         final String newFile = "newFile";
         final Path toCreate = tempDir.resolve(newFile);
 
@@ -96,8 +95,7 @@ class FileUtilitiesTest {
     }
 
     @Test
-    void test_createPathIfNotExists_DoesNotCreateFileIfExists(@TempDir final Path tempDir)
-            throws IOException {
+    void test_createPathIfNotExists_DoesNotCreateFileIfExists(@TempDir final Path tempDir) throws IOException {
         final String newFile = "newFile";
         final Path toCreate = tempDir.resolve(newFile);
 
@@ -156,10 +154,44 @@ class FileUtilitiesTest {
                 .isEqualTo(expectedContent);
     }
 
+    @Test
+    void test_readFileBytesUnsafe_ReturnsNullByteArrayWhenExtensionIsNotRecognized() throws IOException {
+        final byte[] actualContent = FileUtilities.readFileBytesUnsafe(Path.of(FILE_WITH_UNRECOGNIZED_EXTENSION));
+        assertThat(actualContent).isNull();
+    }
+
     @ParameterizedTest
     @MethodSource("invalidFiles")
     void test_readFileBytesUnsafe_ThrowsIOExceptionForInvalidGzipFile(final Path filePath) {
         assertThatIOException().isThrownBy(() -> FileUtilities.readFileBytesUnsafe(filePath));
+    }
+
+    @ParameterizedTest
+    @MethodSource({"validGzipFiles", "validBlkFiles"})
+    void test_readFileBytesUnsafe_ReturnsByteArrayWithValidContentForValidFileWithGivenExtension(
+            final Path filePath, final String expectedContent) throws IOException {
+        final byte[] actualContent = FileUtilities.readFileBytesUnsafe(filePath, ".blk", ".gz");
+        assertThat(actualContent)
+                .isNotNull()
+                .isNotEmpty()
+                .asString()
+                .isNotNull()
+                .isNotBlank()
+                .isEqualTo(expectedContent);
+    }
+
+    @Test
+    void test_readFileBytesUnsafe_ReturnsNullByteArrayWhenExtensionIsNotRecognizedWithGivenExtension()
+            throws IOException {
+        final byte[] actualContent =
+                FileUtilities.readFileBytesUnsafe(Path.of(FILE_WITH_UNRECOGNIZED_EXTENSION), ".blk", ".gz");
+        assertThat(actualContent).isNull();
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidFiles")
+    void test_readFileBytesUnsafe_ThrowsIOExceptionForInvalidGzipFileWithGivenExtension(final Path filePath) {
+        assertThatIOException().isThrownBy(() -> FileUtilities.readFileBytesUnsafe(filePath, ".blk", ".gz"));
     }
 
     private static Stream<Arguments> validGzipFiles() {
@@ -176,7 +208,6 @@ class FileUtilitiesTest {
 
     private static Stream<Arguments> invalidFiles() {
         return Stream.of(
-                Arguments.of("src/test/resources/invalid1.gz"),
-                Arguments.of("src/test/resources/nonexistent.gz"));
+                Arguments.of("src/test/resources/invalid1.gz"), Arguments.of("src/test/resources/nonexistent.gz"));
     }
 }

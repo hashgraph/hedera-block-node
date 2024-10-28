@@ -17,14 +17,13 @@
 package com.hedera.block.simulator;
 
 /** The Constants class defines the constants for the block simulator. */
-public class Constants {
-
-    /** Constructor to prevent instantiation. this is only a utility class */
-    private Constants() {}
-
+public final class Constants {
     /** The file extension for block files. */
-    public static final String RECORD_EXTENSION = "blk";
+    public static final String RECORD_EXTENSION = ".blk";
 
     /** postfix for gzip files */
     public static final String GZ_EXTENSION = ".gz";
+
+    /** Constructor to prevent instantiation. this is only a utility class */
+    private Constants() {}
 }

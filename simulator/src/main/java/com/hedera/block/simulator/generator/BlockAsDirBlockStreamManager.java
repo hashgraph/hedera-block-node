@@ -16,11 +16,13 @@
 
 package com.hedera.block.simulator.generator;
 
-import static com.hedera.block.simulator.generator.Utils.readFileBytes;
+import static com.hedera.block.simulator.Constants.GZ_EXTENSION;
+import static com.hedera.block.simulator.Constants.RECORD_EXTENSION;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 
+import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.hapi.block.stream.Block;
@@ -106,32 +108,29 @@ public class BlockAsDirBlockStreamManager implements BlockStreamManager {
     }
 
     private void loadBlocks() throws IOException, ParseException {
-        Path rootPath = Path.of(rootFolder);
+        final Path rootPath = Path.of(rootFolder);
 
-        try (Stream<Path> blockDirs = Files.list(rootPath).filter(Files::isDirectory)) {
-            List<Path> sortedBlockDirs =
+        try (final Stream<Path> blockDirs = Files.list(rootPath).filter(Files::isDirectory)) {
+            final List<Path> sortedBlockDirs =
                     blockDirs.sorted(Comparator.comparing(Path::getFileName)).toList();
 
-            for (Path blockDirPath : sortedBlockDirs) {
-                List<BlockItem> parsedBlockItems = new ArrayList<>();
+            for (final Path blockDirPath : sortedBlockDirs) {
+                final List<BlockItem> parsedBlockItems = new ArrayList<>();
 
-                try (Stream<Path> blockItems =
-                        Files.list(blockDirPath).filter(Files::isRegularFile)) {
-                    List<Path> sortedBlockItems =
-                            blockItems
-                                    .sorted(
-                                            Comparator.comparing(
-                                                    BlockAsDirBlockStreamManager
-                                                            ::extractNumberFromPath))
-                                    .toList();
+                try (final Stream<Path> blockItems = Files.list(blockDirPath).filter(Files::isRegularFile)) {
+                    final Comparator<Path> comparator =
+                            Comparator.comparing(BlockAsDirBlockStreamManager::extractNumberFromPath);
+                    final List<Path> sortedBlockItems =
+                            blockItems.sorted(comparator).toList();
 
-                    for (Path pathBlockItem : sortedBlockItems) {
-                        byte[] blockItemBytes = readFileBytes(pathBlockItem);
+                    for (final Path pathBlockItem : sortedBlockItems) {
+                        final byte[] blockItemBytes =
+                                FileUtilities.readFileBytesUnsafe(pathBlockItem, RECORD_EXTENSION, GZ_EXTENSION);
                         // if null means the file is not a block item and we can skip the file.
                         if (blockItemBytes == null) {
                             continue;
                         }
-                        BlockItem blockItem = BlockItem.PROTOBUF.parse(Bytes.wrap(blockItemBytes));
+                        final BlockItem blockItem = BlockItem.PROTOBUF.parse(Bytes.wrap(blockItemBytes));
                         parsedBlockItems.add(blockItem);
                     }
                 }

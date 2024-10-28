@@ -16,9 +16,11 @@
 
 package com.hedera.block.simulator.generator;
 
-import static com.hedera.block.simulator.generator.Utils.readFileBytes;
+import static com.hedera.block.simulator.Constants.GZ_EXTENSION;
+import static com.hedera.block.simulator.Constants.RECORD_EXTENSION;
 import static java.lang.System.Logger.Level.INFO;
 
+import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
@@ -27,8 +29,10 @@ import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Objects;
 import javax.inject.Inject;
 
 /** A block stream manager that reads blocks from files in a directory. */
@@ -78,22 +82,27 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
     public Block getNextBlock() throws IOException, BlockSimulatorParsingException {
         currentBlockIndex++;
 
-        String nextBlockFileName = String.format(formatString, currentBlockIndex);
-        File blockFile = new File(blockstreamPath, nextBlockFileName);
-
-        if (!blockFile.exists()) {
+        final String nextBlockFileName = String.format(formatString, currentBlockIndex);
+        final Path localBlockStreamPath = Path.of(blockstreamPath).resolve(nextBlockFileName);
+        if (!Files.exists(localBlockStreamPath)) {
             return null;
         }
-
         try {
-            byte[] blockBytes = readFileBytes(blockFile.toPath());
+            final byte[] blockBytes =
+                    FileUtilities.readFileBytesUnsafe(localBlockStreamPath, RECORD_EXTENSION, GZ_EXTENSION);
 
-            LOGGER.log(INFO, "Loading block: " + blockFile.getName());
+            if (Objects.isNull(blockBytes)) {
+                throw new NullPointerException(
+                        "Unable to read block file [%s]! Most likely not found with the extensions '%s' or '%s'"
+                                .formatted(localBlockStreamPath, RECORD_EXTENSION, GZ_EXTENSION));
+            }
 
-            Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
+            LOGGER.log(INFO, "Loading block: " + localBlockStreamPath.getFileName());
+
+            final Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
             LOGGER.log(INFO, "block loaded with items size= " + block.items().size());
             return block;
-        } catch (ParseException e) {
+        } catch (final ParseException e) {
             throw new BlockSimulatorParsingException(e.getMessage());
         }
     }
