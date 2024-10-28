@@ -63,14 +63,14 @@ SERVER_URL="http://localhost:8080"
 LIVENESS_ENDPOINT="/healthz/livez"
 READINESS_ENDPOINT="/healthz/readyz"
 
-if ! curl --retry 5 --retry-delay 10 -f $SERVER_URL$LIVENESS_ENDPOINT; then
+if ! curl -v --connect-timeout 5 --max-time 10 --retry 5 --retry-delay 0 $SERVER_URL$LIVENESS_ENDPOINT; then
     echo "$LIVENESS_ENDPOINT failed."
     shutdown
     exit 1
 fi
 echo "$LIVENESS_ENDPOINT endpoint is healthy."
 
-if ! curl --retry 5 --retry-delay 10 -f $SERVER_URL$READINESS_ENDPOINT; then
+if ! curl -v --connect-timeout 5 --max-time 10 --retry 5 --retry-delay 0 $SERVER_URL$READINESS_ENDPOINT; then
     echo "$READINESS_ENDPOINT endpoint failed."
     shutdown
     exit 1
