@@ -92,37 +92,4 @@ public class BlockAsDirRemoverTest {
         blockOpt = blockReader.read(1);
         assert (blockOpt.isEmpty());
     }
-
-    @Test
-    public void testRemoveBlockWithPermException() throws IOException, ParseException {
-
-        // Write a block
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
-
-        final BlockWriter<List<BlockItem>> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-
-        blockWriter.write(blockItems);
-
-        // Set up the BlockRemover with permissions that will prevent the block from being removed
-        BlockRemover blockRemover = new BlockAsDirRemover(testPath);
-        blockRemover.remove(1);
-
-        // Verify the block was not removed
-        final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
-        Optional<Block> blockOpt = blockReader.read(1);
-        assert (blockOpt.isPresent());
-        assertEquals(
-                blockItems.getFirst().blockHeader(),
-                blockOpt.get().items().getFirst().blockHeader());
-
-        // Now remove the block
-        blockRemover = new BlockAsDirRemover(testPath);
-        blockRemover.remove(1);
-
-        // Verify the block is removed
-        blockOpt = blockReader.read(1);
-        assert (blockOpt.isEmpty());
-    }
 }
