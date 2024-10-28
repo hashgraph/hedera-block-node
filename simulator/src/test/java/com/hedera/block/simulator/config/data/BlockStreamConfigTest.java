@@ -71,8 +71,9 @@ class BlockStreamConfigTest {
 
     @Test
     void testSimulatorMode() {
-        BlockStreamConfig config =
-                getBlockStreamConfigBuilder().simulatorMode(SimulatorMode.PUBLISHER).build();
+        BlockStreamConfig config = getBlockStreamConfigBuilder()
+                .simulatorMode(SimulatorMode.PUBLISHER)
+                .build();
 
         assertEquals(SimulatorMode.PUBLISHER, config.simulatorMode());
     }
@@ -89,11 +90,10 @@ class BlockStreamConfigTest {
         assertTrue(Files.exists(path), "The folder must exist for this test.");
 
         // No exception should be thrown
-        BlockGeneratorConfig config =
-                getBlockGeneratorConfigBuilder()
-                        .folderRootPath(folderRootPath)
-                        .generationMode(generationMode)
-                        .build();
+        BlockGeneratorConfig config = getBlockGeneratorConfigBuilder()
+                .folderRootPath(folderRootPath)
+                .generationMode(generationMode)
+                .build();
 
         assertEquals(folderRootPath, config.folderRootPath());
         assertEquals(GenerationMode.DIR, config.generationMode());
@@ -105,9 +105,7 @@ class BlockStreamConfigTest {
         String folderRootPath = "";
         GenerationMode generationMode = GenerationMode.DIR;
         BlockGeneratorConfig.Builder builder =
-                getBlockGeneratorConfigBuilder()
-                        .folderRootPath(folderRootPath)
-                        .generationMode(generationMode);
+                getBlockGeneratorConfigBuilder().folderRootPath(folderRootPath).generationMode(generationMode);
 
         BlockGeneratorConfig config = builder.build();
 
@@ -125,13 +123,10 @@ class BlockStreamConfigTest {
 
         // An exception should be thrown because the path is not absolute
         IllegalArgumentException exception =
-                assertThrows(
-                        IllegalArgumentException.class,
-                        () ->
-                                getBlockGeneratorConfigBuilder()
-                                        .folderRootPath(relativeFolderPath)
-                                        .generationMode(generationMode)
-                                        .build());
+                assertThrows(IllegalArgumentException.class, () -> getBlockGeneratorConfigBuilder()
+                        .folderRootPath(relativeFolderPath)
+                        .generationMode(generationMode)
+                        .build());
 
         // Verify the exception message
         assertEquals(relativeFolderPath + " Root path must be absolute", exception.getMessage());
@@ -149,13 +144,10 @@ class BlockStreamConfigTest {
 
         // An exception should be thrown because the folder does not exist
         IllegalArgumentException exception =
-                assertThrows(
-                        IllegalArgumentException.class,
-                        () ->
-                                getBlockGeneratorConfigBuilder()
-                                        .folderRootPath(folderRootPath)
-                                        .generationMode(generationMode)
-                                        .build());
+                assertThrows(IllegalArgumentException.class, () -> getBlockGeneratorConfigBuilder()
+                        .folderRootPath(folderRootPath)
+                        .generationMode(generationMode)
+                        .build());
 
         // Verify the exception message
         assertEquals("Folder does not exist: " + path, exception.getMessage());
@@ -168,11 +160,10 @@ class BlockStreamConfigTest {
         GenerationMode generationMode = GenerationMode.ADHOC;
 
         // No exception should be thrown because generation mode is not DIR
-        BlockGeneratorConfig config =
-                getBlockGeneratorConfigBuilder()
-                        .folderRootPath(folderRootPath)
-                        .generationMode(generationMode)
-                        .build();
+        BlockGeneratorConfig config = getBlockGeneratorConfigBuilder()
+                .folderRootPath(folderRootPath)
+                .generationMode(generationMode)
+                .build();
 
         // Verify that the configuration was created successfully
         assertEquals(folderRootPath, config.folderRootPath());

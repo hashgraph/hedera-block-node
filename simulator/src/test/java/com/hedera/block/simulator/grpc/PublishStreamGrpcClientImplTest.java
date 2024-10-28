@@ -43,9 +43,8 @@ class PublishStreamGrpcClientImplTest {
     void setUp() throws IOException {
 
         grpcConfig = TestUtils.getTestConfiguration().getConfigData(GrpcConfig.class);
-        blockStreamConfig =
-                TestUtils.getTestConfiguration(Map.of("blockStream.blockItemsBatchSize", "2"))
-                        .getConfigData(BlockStreamConfig.class);
+        blockStreamConfig = TestUtils.getTestConfiguration(Map.of("blockStream.blockItemsBatchSize", "2"))
+                .getConfigData(BlockStreamConfig.class);
     }
 
     @AfterEach

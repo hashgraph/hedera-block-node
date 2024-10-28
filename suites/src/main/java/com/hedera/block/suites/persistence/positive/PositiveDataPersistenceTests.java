@@ -85,20 +85,18 @@ public class PositiveDataPersistenceTests extends BaseSuite {
 
     private BlockStreamSimulatorApp createBlockSimulator() throws IOException {
         BlockStreamSimulatorInjectionComponent DIComponent =
-                DaggerBlockStreamSimulatorInjectionComponent.factory()
-                        .create(loadSimulatorDefaultConfiguration());
+                DaggerBlockStreamSimulatorInjectionComponent.factory().create(loadSimulatorDefaultConfiguration());
         return DIComponent.getBlockStreamSimulatorApp();
     }
 
     private void startSimulatorThread(BlockStreamSimulatorApp blockStreamSimulatorAppInstance) {
-        executorService.submit(
-                () -> {
-                    try {
-                        blockStreamSimulatorAppInstance.start();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        executorService.submit(() -> {
+            try {
+                blockStreamSimulatorAppInstance.start();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     private int getSavedBlocksCount(String blocksFolders) {
@@ -106,8 +104,7 @@ public class PositiveDataPersistenceTests extends BaseSuite {
         return blocksArray.length;
     }
 
-    private String getContainerCommandResult(String[] command)
-            throws IOException, InterruptedException {
+    private String getContainerCommandResult(String[] command) throws IOException, InterruptedException {
         Container.ExecResult result = blockNodeContainer.execInContainer(command);
         return result.getStdout();
     }

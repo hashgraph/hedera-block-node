@@ -119,9 +119,7 @@ public class PublisherModeHandler implements SimulatorModeHandler {
             Block block = blockStreamManager.getNextBlock();
 
             if (block == null) {
-                LOGGER.log(
-                        System.Logger.Level.INFO,
-                        "Block Stream Simulator has reached the end of the block items");
+                LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has reached the end of the block items");
                 break;
             }
 
@@ -133,8 +131,7 @@ public class PublisherModeHandler implements SimulatorModeHandler {
             if (blockItemsStreamed >= blockStreamConfig.maxBlockItemsToStream()) {
                 LOGGER.log(
                         System.Logger.Level.INFO,
-                        "Block Stream Simulator has reached the maximum number of block items to"
-                                + " stream");
+                        "Block Stream Simulator has reached the maximum number of block items to" + " stream");
                 streamBlockItem = false;
             }
         }

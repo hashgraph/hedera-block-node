@@ -112,13 +112,11 @@ public abstract class BaseSuite {
         blockNodePort = 8080;
         List<String> portBindings = new ArrayList<>();
         portBindings.add(String.format("%d:%2d", blockNodePort, blockNodePort));
-        blockNodeContainer =
-                new GenericContainer<>(
-                                DockerImageName.parse("block-node-server:" + blockNodeVersion))
-                        .withExposedPorts(blockNodePort)
-                        .withEnv("VERSION", blockNodeVersion)
-                        .waitingFor(Wait.forListeningPort())
-                        .waitingFor(Wait.forHealthcheck());
+        blockNodeContainer = new GenericContainer<>(DockerImageName.parse("block-node-server:" + blockNodeVersion))
+                .withExposedPorts(blockNodePort)
+                .withEnv("VERSION", blockNodeVersion)
+                .waitingFor(Wait.forListeningPort())
+                .waitingFor(Wait.forHealthcheck());
         blockNodeContainer.setPortBindings(portBindings);
         return blockNodeContainer;
     }
@@ -130,12 +128,11 @@ public abstract class BaseSuite {
      * @throws IOException if an I/O error occurs
      */
     protected static Configuration loadSimulatorDefaultConfiguration() throws IOException {
-        ConfigurationBuilder configurationBuilder =
-                ConfigurationBuilder.create()
-                        .withSource(SystemEnvironmentConfigSource.getInstance())
-                        .withSource(SystemPropertiesConfigSource.getInstance())
-                        .withSource(new ClasspathFileConfigSource(Path.of("app.properties")))
-                        .autoDiscoverExtensions();
+        ConfigurationBuilder configurationBuilder = ConfigurationBuilder.create()
+                .withSource(SystemEnvironmentConfigSource.getInstance())
+                .withSource(SystemPropertiesConfigSource.getInstance())
+                .withSource(new ClasspathFileConfigSource(Path.of("app.properties")))
+                .autoDiscoverExtensions();
 
         return configurationBuilder.build();
     }
@@ -150,7 +147,10 @@ public abstract class BaseSuite {
      * @return the version of the Block Node server as a string
      */
     private static String getBlockNodeVersion() {
-        Dotenv dotenv = Dotenv.configure().directory("../server/docker").filename(".env").load();
+        Dotenv dotenv = Dotenv.configure()
+                .directory("../server/docker")
+                .filename(".env")
+                .load();
 
         return dotenv.get("VERSION");
     }

@@ -33,11 +33,14 @@ import org.mockito.*;
 
 public class PublisherModeHandlerTest {
 
-    @Mock private BlockStreamConfig blockStreamConfig;
+    @Mock
+    private BlockStreamConfig blockStreamConfig;
 
-    @Mock private PublishStreamGrpcClient publishStreamGrpcClient;
+    @Mock
+    private PublishStreamGrpcClient publishStreamGrpcClient;
 
-    @Mock private BlockStreamManager blockStreamManager;
+    @Mock
+    private BlockStreamManager blockStreamManager;
 
     private PublisherModeHandler publisherModeHandler;
 

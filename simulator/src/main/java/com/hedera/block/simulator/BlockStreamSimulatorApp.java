@@ -61,8 +61,7 @@ public class BlockStreamSimulatorApp {
         SimulatorMode simulatorMode = blockStreamConfig.simulatorMode();
         switch (simulatorMode) {
             case PUBLISHER:
-                simulatorModeHandler =
-                        new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient);
+                simulatorModeHandler = new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient);
                 break;
             case CONSUMER:
                 simulatorModeHandler = new ConsumerModeHandler(blockStreamConfig);
@@ -83,9 +82,7 @@ public class BlockStreamSimulatorApp {
      * @throws IOException if an I/O error occurs
      */
     public void start() throws InterruptedException, BlockSimulatorParsingException, IOException {
-        LOGGER.log(
-                System.Logger.Level.INFO,
-                "Block Stream Simulator started initializing components...");
+        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator started initializing components...");
         publishStreamGrpcClient.init();
         isRunning.set(true);
 

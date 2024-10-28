@@ -27,7 +27,8 @@ import org.mockito.MockitoAnnotations;
 
 public class ConsumerModeHandlerTest {
 
-    @Mock private BlockStreamConfig blockStreamConfig;
+    @Mock
+    private BlockStreamConfig blockStreamConfig;
 
     private ConsumerModeHandler consumerModeHandler;
 
@@ -37,8 +38,6 @@ public class ConsumerModeHandlerTest {
         consumerModeHandler = new ConsumerModeHandler(blockStreamConfig);
         BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
 
-        assertThrows(
-                UnsupportedOperationException.class,
-                () -> consumerModeHandler.start(blockStreamManager));
+        assertThrows(UnsupportedOperationException.class, () -> consumerModeHandler.start(blockStreamManager));
     }
 }

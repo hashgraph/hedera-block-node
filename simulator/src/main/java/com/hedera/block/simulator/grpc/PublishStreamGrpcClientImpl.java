@@ -49,8 +49,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      * @param blockStreamConfig the block stream configuration
      */
     @Inject
-    public PublishStreamGrpcClientImpl(
-            @NonNull GrpcConfig grpcConfig, @NonNull BlockStreamConfig blockStreamConfig) {
+    public PublishStreamGrpcClientImpl(@NonNull GrpcConfig grpcConfig, @NonNull BlockStreamConfig blockStreamConfig) {
         this.grpcConfig = grpcConfig;
         this.blockStreamConfig = blockStreamConfig;
     }
@@ -60,12 +59,10 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Override
     public void init() {
-        channel =
-                ManagedChannelBuilder.forAddress(grpcConfig.serverAddress(), grpcConfig.port())
-                        .usePlaintext()
-                        .build();
-        BlockStreamServiceGrpc.BlockStreamServiceStub stub =
-                BlockStreamServiceGrpc.newStub(channel);
+        channel = ManagedChannelBuilder.forAddress(grpcConfig.serverAddress(), grpcConfig.port())
+                .usePlaintext()
+                .build();
+        BlockStreamServiceGrpc.BlockStreamServiceStub stub = BlockStreamServiceGrpc.newStub(channel);
         PublishStreamObserver publishStreamObserver = new PublishStreamObserver();
         requestStreamObserver = stub.publishBlockStream(publishStreamObserver);
     }
@@ -82,8 +79,9 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
             blockItemsProtoc.add(Translator.fromPbj(blockItem));
         }
 
-        requestStreamObserver.onNext(
-                PublishStreamRequest.newBuilder().addAllBlockItems(blockItemsProtoc).build());
+        requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
+                .addAllBlockItems(blockItemsProtoc)
+                .build());
 
         return true;
     }
@@ -101,10 +99,10 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
         List<List<com.hedera.hapi.block.stream.protoc.BlockItem>> streamingBatches =
                 ChunkUtils.chunkify(blockItemsProtoc, blockStreamConfig.blockItemsBatchSize());
-        for (List<com.hedera.hapi.block.stream.protoc.BlockItem> streamingBatch :
-                streamingBatches) {
-            requestStreamObserver.onNext(
-                    PublishStreamRequest.newBuilder().addAllBlockItems(streamingBatch).build());
+        for (List<com.hedera.hapi.block.stream.protoc.BlockItem> streamingBatch : streamingBatches) {
+            requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
+                    .addAllBlockItems(streamingBatch)
+                    .build());
         }
 
         return true;

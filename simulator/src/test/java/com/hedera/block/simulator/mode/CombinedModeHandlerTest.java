@@ -27,7 +27,8 @@ import org.mockito.MockitoAnnotations;
 
 public class CombinedModeHandlerTest {
 
-    @Mock private BlockStreamConfig blockStreamConfig;
+    @Mock
+    private BlockStreamConfig blockStreamConfig;
 
     private CombinedModeHandler combinedModeHandler;
 
@@ -37,8 +38,6 @@ public class CombinedModeHandlerTest {
         combinedModeHandler = new CombinedModeHandler(blockStreamConfig);
         BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
 
-        assertThrows(
-                UnsupportedOperationException.class,
-                () -> combinedModeHandler.start(blockStreamManager));
+        assertThrows(UnsupportedOperationException.class, () -> combinedModeHandler.start(blockStreamManager));
     }
 }
