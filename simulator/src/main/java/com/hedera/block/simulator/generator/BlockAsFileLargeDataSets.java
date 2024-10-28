@@ -16,6 +16,8 @@
 
 package com.hedera.block.simulator.generator;
 
+import static com.hedera.block.simulator.Constants.GZ_EXTENSION;
+import static com.hedera.block.simulator.Constants.RECORD_EXTENSION;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.common.utils.FileUtilities;
@@ -27,8 +29,9 @@ import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import javax.inject.Inject;
 
 /** A block stream manager that reads blocks from files in a directory. */
@@ -79,17 +82,19 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
         currentBlockIndex++;
 
         final String nextBlockFileName = String.format(formatString, currentBlockIndex);
-        final File blockFile = new File(blockstreamPath, nextBlockFileName);
-
-        if (!blockFile.exists()) {
+        final Path localBlockStreamPath = Path.of(blockstreamPath).resolve(nextBlockFileName);
+        if (!Files.exists(localBlockStreamPath)) {
             return null;
         }
-
         try {
-            final byte[] blockBytes = FileUtilities.readFileBytesUnsafe(blockFile);
+            final byte[] blockBytes =
+                    FileUtilities.readFileBytesUnsafe(
+                            localBlockStreamPath, RECORD_EXTENSION, GZ_EXTENSION);
 
-            LOGGER.log(INFO, "Loading block: " + blockFile.getName());
+            LOGGER.log(INFO, "Loading block: " + localBlockStreamPath.getFileName());
 
+            // todo blockBytes could be null, should we hande in some way or we need this method to
+            // fail here?
             final Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
             LOGGER.log(INFO, "block loaded with items size= " + block.items().size());
             return block;

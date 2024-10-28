@@ -17,7 +17,6 @@
 package com.hedera.block.common.utils;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.File;
 import java.io.IOException;
 import java.lang.System.Logger;
 import java.nio.file.Files;
@@ -160,27 +159,6 @@ public final class FileUtilities {
         try (final var gzipInputStream = new GZIPInputStream(Files.newInputStream(filePath))) {
             return gzipInputStream.readAllBytes();
         }
-    }
-
-    /**
-     * Read a file and return the content as a byte array.
-     * <p>
-     * This method uses default extensions for gzip and block files.
-     * <p>
-     * This method is _unsafe_ because it reads the entire file content into
-     * a single byte array, which can cause memory issues, and may fail if the
-     * file contains a large amount of data.
-     *
-     * @param file to read bytes from
-     * @return byte array of the content of the file or null if the file extension is not
-     *     supported
-     * @throws IOException if unable to read the file.
-     * @throws OutOfMemoryError if a byte array large enough to contain the
-     *     file contents cannot be allocated (either because it exceeds MAX_INT
-     *     bytes or exceeds available heap memory).
-     */
-    public static byte[] readFileBytesUnsafe(@NonNull final File file) throws IOException {
-        return readFileBytesUnsafe(file.toPath());
     }
 
     /**

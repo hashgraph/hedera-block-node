@@ -32,6 +32,9 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class FileUtilitiesTest {
+    private static final String FILE_WITH_UNRECOGNIZED_EXTENSION =
+            "src/test/resources/nonexistent.unrecognized";
+
     @Test
     void test_createPathIfNotExists_CreatesDirIfDoesNotExist(@TempDir final Path tempDir)
             throws IOException {
@@ -144,9 +147,9 @@ class FileUtilitiesTest {
 
     @ParameterizedTest
     @MethodSource({"validGzipFiles", "validBlkFiles"})
-    void test_readFileBytesUnsafe_ReturnsByteArrayWithValidContentForValidPath(
-            final Path pathToTest, final String expectedContent) throws IOException {
-        final byte[] actualContent = FileUtilities.readFileBytesUnsafe(pathToTest);
+    void test_readFileBytesUnsafe_ReturnsByteArrayWithValidContentForValidFile(
+            final Path filePath, final String expectedContent) throws IOException {
+        final byte[] actualContent = FileUtilities.readFileBytesUnsafe(filePath);
         assertThat(actualContent)
                 .isNotNull()
                 .isNotEmpty()
@@ -156,17 +159,25 @@ class FileUtilitiesTest {
                 .isEqualTo(expectedContent);
     }
 
+    @Test
+    void test_readFileBytesUnsafe_ReturnsNullByteArrayWhenExtensionIsNotRecognized()
+            throws IOException {
+        final byte[] actualContent =
+                FileUtilities.readFileBytesUnsafe(Path.of(FILE_WITH_UNRECOGNIZED_EXTENSION));
+        assertThat(actualContent).isNull();
+    }
+
     @ParameterizedTest
     @MethodSource("invalidFiles")
-    void test_readFileBytesUnsafe_ThrowsIOExceptionForInvalidPath(final Path pathToTest) {
-        assertThatIOException().isThrownBy(() -> FileUtilities.readFileBytesUnsafe(pathToTest));
+    void test_readFileBytesUnsafe_ThrowsIOExceptionForInvalidGzipFile(final Path filePath) {
+        assertThatIOException().isThrownBy(() -> FileUtilities.readFileBytesUnsafe(filePath));
     }
 
     @ParameterizedTest
     @MethodSource({"validGzipFiles", "validBlkFiles"})
-    void test_readFileBytesUnsafe_ReturnsByteArrayWithValidContentForValidFile(
-            final File fileToTest, final String expectedContent) throws IOException {
-        final byte[] actualContent = FileUtilities.readFileBytesUnsafe(fileToTest);
+    void test_readFileBytesUnsafe_ReturnsByteArrayWithValidContentForValidFileWithGivenExtension(
+            final Path filePath, final String expectedContent) throws IOException {
+        final byte[] actualContent = FileUtilities.readFileBytesUnsafe(filePath, ".blk", ".gz");
         assertThat(actualContent)
                 .isNotNull()
                 .isNotEmpty()
@@ -176,10 +187,22 @@ class FileUtilitiesTest {
                 .isEqualTo(expectedContent);
     }
 
+    @Test
+    void
+            test_readFileBytesUnsafe_ReturnsNullByteArrayWhenExtensionIsNotRecognizedWithGivenExtension()
+                    throws IOException {
+        final byte[] actualContent =
+                FileUtilities.readFileBytesUnsafe(
+                        Path.of(FILE_WITH_UNRECOGNIZED_EXTENSION), ".blk", ".gz");
+        assertThat(actualContent).isNull();
+    }
+
     @ParameterizedTest
     @MethodSource("invalidFiles")
-    void test_readFileBytesUnsafe_ThrowsIOExceptionForInvalidFile(final File fileToTest) {
-        assertThatIOException().isThrownBy(() -> FileUtilities.readFileBytesUnsafe(fileToTest));
+    void test_readFileBytesUnsafe_ThrowsIOExceptionForInvalidGzipFileWithGivenExtension(
+            final Path filePath) {
+        assertThatIOException()
+                .isThrownBy(() -> FileUtilities.readFileBytesUnsafe(filePath, ".blk", ".gz"));
     }
 
     private static Stream<Arguments> validGzipFiles() {

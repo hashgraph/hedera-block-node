@@ -16,6 +16,8 @@
 
 package com.hedera.block.simulator.generator;
 
+import static com.hedera.block.simulator.Constants.GZ_EXTENSION;
+import static com.hedera.block.simulator.Constants.RECORD_EXTENSION;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
@@ -124,7 +126,8 @@ public class BlockAsDirBlockStreamManager implements BlockStreamManager {
 
                     for (final Path pathBlockItem : sortedBlockItems) {
                         final byte[] blockItemBytes =
-                                FileUtilities.readFileBytesUnsafe(pathBlockItem);
+                                FileUtilities.readFileBytesUnsafe(
+                                        pathBlockItem, RECORD_EXTENSION, GZ_EXTENSION);
                         // if null means the file is not a block item and we can skip the file.
                         if (blockItemBytes == null) {
                             continue;
