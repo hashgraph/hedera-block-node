@@ -16,6 +16,7 @@
 
 package com.hedera.block.simulator;
 
+import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
@@ -23,6 +24,7 @@ import com.hedera.block.simulator.config.types.SimulatorMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
+import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.block.simulator.mode.CombinedModeHandler;
 import com.hedera.block.simulator.mode.ConsumerModeHandler;
 import com.hedera.block.simulator.mode.PublisherModeHandler;
@@ -37,9 +39,11 @@ import javax.inject.Inject;
 public class BlockStreamSimulatorApp {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
+
     private final PublishStreamGrpcClient publishStreamGrpcClient;
     private final SimulatorModeHandler simulatorModeHandler;
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
+    private final MetricsService metricsService;
 
     /**
      * Creates a new BlockStreamSimulatorApp instance.
@@ -47,14 +51,18 @@ public class BlockStreamSimulatorApp {
      * @param configuration the configuration to be used by the block stream simulator
      * @param blockStreamManager the block stream manager to be used by the block stream simulator
      * @param publishStreamGrpcClient the gRPC client to be used by the block stream simulator
+     * @param metricsService the metrics service to be used by the block stream simulator
      */
     @Inject
     public BlockStreamSimulatorApp(
             @NonNull Configuration configuration,
             @NonNull BlockStreamManager blockStreamManager,
-            @NonNull PublishStreamGrpcClient publishStreamGrpcClient) {
-        requireNonNull(blockStreamManager);
+            @NonNull PublishStreamGrpcClient publishStreamGrpcClient,
+            @NonNull MetricsService metricsService) {
 
+        requireNonNull(configuration);
+        requireNonNull(blockStreamManager);
+        this.metricsService = requireNonNull(metricsService);
         this.publishStreamGrpcClient = requireNonNull(publishStreamGrpcClient);
         final BlockStreamConfig blockStreamConfig =
                 requireNonNull(configuration.getConfigData(BlockStreamConfig.class));
@@ -97,6 +105,6 @@ public class BlockStreamSimulatorApp {
     public void stop() {
         publishStreamGrpcClient.shutdown();
         isRunning.set(false);
-        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
+        LOGGER.log(INFO, "Block Stream Simulator has stopped");
     }
 }

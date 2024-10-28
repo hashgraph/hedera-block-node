@@ -5,6 +5,11 @@ module com.hedera.block.simulator {
     exports com.hedera.block.simulator.config.data;
     exports com.hedera.block.simulator.exception;
     exports com.hedera.block.simulator;
+    exports com.hedera.block.simulator.config.types;
+    exports com.hedera.block.simulator.config;
+    exports com.hedera.block.simulator.grpc;
+    exports com.hedera.block.simulator.generator;
+    exports com.hedera.block.simulator.metrics;
 
     requires static com.github.spotbugs.annotations;
     requires static com.google.auto.service;
@@ -12,8 +17,10 @@ module com.hedera.block.simulator {
     requires com.hedera.block.stream;
     requires com.google.protobuf;
     requires com.hedera.pbj.runtime;
+    requires com.swirlds.common;
     requires com.swirlds.config.api;
     requires com.swirlds.config.extensions;
+    requires com.swirlds.metrics.api;
     requires dagger;
     requires io.grpc.stub;
     requires io.grpc;

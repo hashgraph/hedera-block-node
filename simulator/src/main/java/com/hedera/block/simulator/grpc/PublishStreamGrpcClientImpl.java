@@ -16,12 +16,14 @@
 
 package com.hedera.block.simulator.grpc;
 
+import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlockItemsSent;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.common.utils.ChunkUtils;
 import com.hedera.block.simulator.Translator;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
+import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.hapi.block.protoc.BlockStreamServiceGrpc;
 import com.hedera.hapi.block.protoc.PublishStreamRequest;
 import com.hedera.hapi.block.stream.Block;
@@ -43,18 +45,23 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
     private final BlockStreamConfig blockStreamConfig;
     private final GrpcConfig grpcConfig;
     private ManagedChannel channel;
+    private final MetricsService metricsService;
 
     /**
      * Creates a new PublishStreamGrpcClientImpl instance.
      *
      * @param grpcConfig the gRPC configuration
      * @param blockStreamConfig the block stream configuration
+     * @param metricsService the metrics service
      */
     @Inject
     public PublishStreamGrpcClientImpl(
-            @NonNull final GrpcConfig grpcConfig, @NonNull final BlockStreamConfig blockStreamConfig) {
+            @NonNull final GrpcConfig grpcConfig,
+            @NonNull final BlockStreamConfig blockStreamConfig,
+            @NonNull final MetricsService metricsService) {
         this.grpcConfig = requireNonNull(grpcConfig);
         this.blockStreamConfig = requireNonNull(blockStreamConfig);
+        this.metricsService = requireNonNull(metricsService);
     }
 
     /**
@@ -80,6 +87,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
         List<com.hedera.hapi.block.stream.protoc.BlockItem> blockItemsProtoc = new ArrayList<>();
         for (BlockItem blockItem : blockItems) {
             blockItemsProtoc.add(Translator.fromPbj(blockItem));
+            metricsService.get(LiveBlockItemsSent).increment();
         }
 
         requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
@@ -106,6 +114,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
             requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
                     .addAllBlockItems(streamingBatch)
                     .build());
+            metricsService.get(LiveBlockItemsSent).increment();
         }
 
         return true;

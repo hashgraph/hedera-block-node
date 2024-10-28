@@ -20,6 +20,8 @@ import com.google.auto.service.AutoService;
 import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
+import com.swirlds.common.metrics.config.MetricsConfig;
+import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.ConfigurationExtension;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Set;
@@ -36,6 +38,11 @@ public class SimulatorConfigExtension implements ConfigurationExtension {
     @NonNull
     @Override
     public Set<Class<? extends Record>> getConfigDataTypes() {
-        return Set.of(BlockStreamConfig.class, GrpcConfig.class, BlockGeneratorConfig.class);
+        return Set.of(
+                BlockStreamConfig.class,
+                GrpcConfig.class,
+                BlockGeneratorConfig.class,
+                MetricsConfig.class,
+                PrometheusConfig.class);
     }
 }

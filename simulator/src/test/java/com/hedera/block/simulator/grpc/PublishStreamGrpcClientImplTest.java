@@ -16,6 +16,7 @@
 
 package com.hedera.block.simulator.grpc;
 
+import static com.hedera.block.simulator.TestUtils.getTestMetrics;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -23,8 +24,11 @@ import static org.mockito.Mockito.verify;
 import com.hedera.block.simulator.TestUtils;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
+import com.hedera.block.simulator.metrics.MetricsService;
+import com.hedera.block.simulator.metrics.MetricsServiceImpl;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.swirlds.config.api.Configuration;
 import io.grpc.ManagedChannel;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -33,11 +37,15 @@ import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class PublishStreamGrpcClientImplTest {
 
     GrpcConfig grpcConfig;
     BlockStreamConfig blockStreamConfig;
+    MetricsService metricsService;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -45,6 +53,9 @@ class PublishStreamGrpcClientImplTest {
         grpcConfig = TestUtils.getTestConfiguration().getConfigData(GrpcConfig.class);
         blockStreamConfig = TestUtils.getTestConfiguration(Map.of("blockStream.blockItemsBatchSize", "2"))
                 .getConfigData(BlockStreamConfig.class);
+
+        Configuration config = TestUtils.getTestConfiguration();
+        metricsService = new MetricsServiceImpl(getTestMetrics(config));
     }
 
     @AfterEach
@@ -54,7 +65,7 @@ class PublishStreamGrpcClientImplTest {
     void streamBlockItem() {
         BlockItem blockItem = BlockItem.newBuilder().build();
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
-                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig);
+                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService);
         publishStreamGrpcClient.init();
         boolean result = publishStreamGrpcClient.streamBlockItem(List.of(blockItem));
         assertTrue(result);
@@ -68,7 +79,7 @@ class PublishStreamGrpcClientImplTest {
         Block block1 = Block.newBuilder().items(blockItem, blockItem, blockItem).build();
 
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
-                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig);
+                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService);
         publishStreamGrpcClient.init();
         boolean result = publishStreamGrpcClient.streamBlock(block);
         assertTrue(result);
@@ -80,7 +91,7 @@ class PublishStreamGrpcClientImplTest {
     @Test
     void testShutdown() throws Exception {
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
-                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig);
+                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService);
         publishStreamGrpcClient.init();
 
         Field channelField = PublishStreamGrpcClientImpl.class.getDeclaredField("channel");
