@@ -16,7 +16,6 @@
 
 package com.hedera.block.server.persistence.storage.remove;
 
-import static com.hedera.block.common.utils.FileUtilities.DEFAULT_DIR_PERMISSIONS;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,7 +28,6 @@ import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
-import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
@@ -76,7 +74,7 @@ public class BlockAsDirRemoverTest {
         }
 
         // Remove a block that does not exist
-        final BlockRemover blockRemover = new BlockAsDirRemover(testPath, DEFAULT_DIR_PERMISSIONS);
+        final BlockRemover blockRemover = new BlockAsDirRemover(testPath);
         blockRemover.remove(2);
 
         // Verify the block was not removed
@@ -108,7 +106,7 @@ public class BlockAsDirRemoverTest {
         blockWriter.write(blockItems);
 
         // Set up the BlockRemover with permissions that will prevent the block from being removed
-        BlockRemover blockRemover = new BlockAsDirRemover(testPath, TestUtils.getNoPerms());
+        BlockRemover blockRemover = new BlockAsDirRemover(testPath);
         blockRemover.remove(1);
 
         // Verify the block was not removed
@@ -121,7 +119,7 @@ public class BlockAsDirRemoverTest {
                 blockOpt.get().items().getFirst().blockHeader());
 
         // Now remove the block
-        blockRemover = new BlockAsDirRemover(testPath, DEFAULT_DIR_PERMISSIONS);
+        blockRemover = new BlockAsDirRemover(testPath);
         blockRemover.remove(1);
 
         // Verify the block is removed

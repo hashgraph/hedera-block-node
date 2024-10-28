@@ -24,32 +24,23 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.Set;
+import java.util.Objects;
 
 /**
  * The BlockAsDirRemover class removes a block from the file system. The block is stored as a
  * directory containing block items. The block items are stored as files within the block directory.
  */
 public class BlockAsDirRemover implements BlockRemover {
-
     private final Logger LOGGER = System.getLogger(getClass().getName());
-
     private final Path blockNodeRootPath;
-    private final FileAttribute<Set<PosixFilePermission>> filePerms;
 
     /**
      * Create a block remover to manage removing blocks from storage.
      *
      * @param blockNodeRootPath the root path where blocks are stored.
-     * @param filePerms the file permissions used to manage removing blocks.
      */
-    public BlockAsDirRemover(
-            @NonNull final Path blockNodeRootPath,
-            @NonNull final FileAttribute<Set<PosixFilePermission>> filePerms) {
-        this.blockNodeRootPath = blockNodeRootPath;
-        this.filePerms = filePerms;
+    public BlockAsDirRemover(@NonNull final Path blockNodeRootPath) {
+        this.blockNodeRootPath = Objects.requireNonNull(blockNodeRootPath);
     }
 
     /**
@@ -60,7 +51,6 @@ public class BlockAsDirRemover implements BlockRemover {
      */
     @Override
     public void remove(final long id) throws IOException {
-
         // Calculate the block path and proactively set the permissions
         // for removal
         final Path blockPath = blockNodeRootPath.resolve(String.valueOf(id));
@@ -68,9 +58,6 @@ public class BlockAsDirRemover implements BlockRemover {
             LOGGER.log(ERROR, "Block does not exist: {0}", id);
             return;
         }
-
-        Files.setPosixFilePermissions(blockPath, filePerms.value());
-
         // Best effort to delete the block
         if (!delete(blockPath.toFile())) {
             LOGGER.log(ERROR, "Failed to delete block: {0}", id);
@@ -78,7 +65,6 @@ public class BlockAsDirRemover implements BlockRemover {
     }
 
     private static boolean delete(@NonNull final File file) {
-
         // Recursively delete the contents
         // of the directory
         if (file.isDirectory()) {
@@ -89,7 +75,6 @@ public class BlockAsDirRemover implements BlockRemover {
                 }
             }
         }
-
         return file.delete();
     }
 }

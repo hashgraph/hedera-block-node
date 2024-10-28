@@ -190,7 +190,7 @@ public class BlockAsDirWriterTest {
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         final BlockRemover blockRemover =
-                new BlockAsDirRemover(Path.of(testConfig.rootPath()), DEFAULT_DIR_PERMISSIONS);
+                new BlockAsDirRemover(Path.of(testConfig.rootPath()));
 
         // Use a spy to simulate an IOException when the first block item is written
         final BlockWriter<List<BlockItem>> blockWriter =
@@ -245,7 +245,7 @@ public class BlockAsDirWriterTest {
     public void testPartialBlockRemoval() throws IOException, ParseException {
         final List<BlockItem> blockItems = generateBlockItems(3);
         final BlockRemover blockRemover =
-                new BlockAsDirRemover(Path.of(testConfig.rootPath()), DEFAULT_DIR_PERMISSIONS);
+                new BlockAsDirRemover(Path.of(testConfig.rootPath()));
 
         // Use a spy of TestBlockAsDirWriter to proxy block items to the real writer
         // for the first 22 block items.  Then simulate an IOException on the 23rd block item

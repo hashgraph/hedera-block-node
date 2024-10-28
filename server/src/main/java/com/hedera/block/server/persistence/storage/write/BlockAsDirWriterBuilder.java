@@ -47,7 +47,7 @@ public final class BlockAsDirWriterBuilder {
         final PersistenceStorageConfig config =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
         this.blockRemover =
-                new BlockAsDirRemover(Path.of(config.rootPath()), DEFAULT_DIR_PERMISSIONS);
+                new BlockAsDirRemover(Path.of(config.rootPath()));
     }
 
     /**
