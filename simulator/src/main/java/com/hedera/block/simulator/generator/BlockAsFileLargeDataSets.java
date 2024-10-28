@@ -88,8 +88,7 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
         }
         try {
             final byte[] blockBytes =
-                    FileUtilities.readFileBytesUnsafe(
-                            localBlockStreamPath, RECORD_EXTENSION, GZ_EXTENSION);
+                    FileUtilities.readFileBytesUnsafe(localBlockStreamPath, RECORD_EXTENSION, GZ_EXTENSION);
 
             LOGGER.log(INFO, "Loading block: " + localBlockStreamPath.getFileName());
 

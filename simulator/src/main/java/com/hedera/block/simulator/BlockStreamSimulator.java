@@ -49,20 +49,18 @@ public class BlockStreamSimulator {
 
         LOGGER.log(INFO, "Starting Block Stream Simulator");
 
-        final ConfigurationBuilder configurationBuilder =
-                ConfigurationBuilder.create()
-                        .withSource(SystemEnvironmentConfigSource.getInstance())
-                        .withSource(SystemPropertiesConfigSource.getInstance())
-                        .withSource(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES)))
-                        .autoDiscoverExtensions();
+        final ConfigurationBuilder configurationBuilder = ConfigurationBuilder.create()
+                .withSource(SystemEnvironmentConfigSource.getInstance())
+                .withSource(SystemPropertiesConfigSource.getInstance())
+                .withSource(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES)))
+                .autoDiscoverExtensions();
 
         final Configuration configuration = configurationBuilder.build();
 
         final BlockStreamSimulatorInjectionComponent DIComponent =
                 DaggerBlockStreamSimulatorInjectionComponent.factory().create(configuration);
 
-        final BlockStreamSimulatorApp blockStreamSimulatorApp =
-                DIComponent.getBlockStreamSimulatorApp();
+        final BlockStreamSimulatorApp blockStreamSimulatorApp = DIComponent.getBlockStreamSimulatorApp();
         blockStreamSimulatorApp.start();
     }
 }

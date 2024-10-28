@@ -117,23 +117,20 @@ public class BlockAsDirBlockStreamManager implements BlockStreamManager {
             for (final Path blockDirPath : sortedBlockDirs) {
                 final List<BlockItem> parsedBlockItems = new ArrayList<>();
 
-                try (final Stream<Path> blockItems =
-                        Files.list(blockDirPath).filter(Files::isRegularFile)) {
+                try (final Stream<Path> blockItems = Files.list(blockDirPath).filter(Files::isRegularFile)) {
                     final Comparator<Path> comparator =
-                            Comparator.comparing(
-                                    BlockAsDirBlockStreamManager::extractNumberFromPath);
-                    final List<Path> sortedBlockItems = blockItems.sorted(comparator).toList();
+                            Comparator.comparing(BlockAsDirBlockStreamManager::extractNumberFromPath);
+                    final List<Path> sortedBlockItems =
+                            blockItems.sorted(comparator).toList();
 
                     for (final Path pathBlockItem : sortedBlockItems) {
                         final byte[] blockItemBytes =
-                                FileUtilities.readFileBytesUnsafe(
-                                        pathBlockItem, RECORD_EXTENSION, GZ_EXTENSION);
+                                FileUtilities.readFileBytesUnsafe(pathBlockItem, RECORD_EXTENSION, GZ_EXTENSION);
                         // if null means the file is not a block item and we can skip the file.
                         if (blockItemBytes == null) {
                             continue;
                         }
-                        final BlockItem blockItem =
-                                BlockItem.PROTOBUF.parse(Bytes.wrap(blockItemBytes));
+                        final BlockItem blockItem = BlockItem.PROTOBUF.parse(Bytes.wrap(blockItemBytes));
                         parsedBlockItems.add(blockItem);
                     }
                 }

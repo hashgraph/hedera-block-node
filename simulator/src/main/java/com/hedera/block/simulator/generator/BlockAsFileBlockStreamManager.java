@@ -111,9 +111,7 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
 
             for (final Path blockPath : sortedBlockFiles) {
 
-                final byte[] blockBytes =
-                        FileUtilities.readFileBytesUnsafe(
-                                blockPath, RECORD_EXTENSION, GZ_EXTENSION);
+                final byte[] blockBytes = FileUtilities.readFileBytesUnsafe(blockPath, RECORD_EXTENSION, GZ_EXTENSION);
                 // skip if block is null, usually due to SO files like .DS_STORE
                 if (blockBytes == null) {
                     continue;
