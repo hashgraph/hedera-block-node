@@ -37,7 +37,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -51,47 +53,53 @@ import java.util.Set;
  * caller.
  */
 class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
-
     private final Logger LOGGER = System.getLogger(getClass().getName());
-
     private final Path blockNodeRootPath;
-    private long blockNodeFileNameIndex;
-    private Path currentBlockDir;
     private final FileAttribute<Set<PosixFilePermission>> filePerms;
     private final BlockRemover blockRemover;
     private final MetricsService metricsService;
+    private long blockNodeFileNameIndex;
+    private Path currentBlockDir;
 
     /**
      * Use the corresponding builder to construct a new BlockAsDirWriter with the given parameters.
      *
      * @param blockRemover the block remover to use for removing blocks
-     * @param filePerms the file permissions to use for writing blocks
+     * @param filePerms the file permissions to use for writing blocks, if null provided then defaults will be used
      * @param blockNodeContext the block node context to use for writing blocks
      * @throws IOException if an error occurs while initializing the BlockAsDirWriter
      */
     BlockAsDirWriter(
             @NonNull final BlockRemover blockRemover,
-            @NonNull final FileAttribute<Set<PosixFilePermission>> filePerms,
+            final FileAttribute<Set<PosixFilePermission>> filePerms,
             @NonNull final BlockNodeContext blockNodeContext)
             throws IOException {
-
         LOGGER.log(INFO, "Initializing FileSystemBlockStorage");
 
-        PersistenceStorageConfig config =
+        final PersistenceStorageConfig config =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
-        final Path blockNodeRootPath = Path.of(config.rootPath());
 
+        final Path blockNodeRootPath = Path.of(config.rootPath());
         LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);
 
         this.blockNodeRootPath = blockNodeRootPath;
         this.blockRemover = blockRemover;
-        this.filePerms = filePerms;
+        this.metricsService = blockNodeContext.metricsService();
+
+        this.filePerms = Objects.nonNull(filePerms) ? filePerms :
+            // default permissions for folders
+            PosixFilePermissions.asFileAttribute(Set.of(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+                PosixFilePermission.GROUP_READ,
+                PosixFilePermission.GROUP_EXECUTE,
+                PosixFilePermission.OTHERS_READ,
+                PosixFilePermission.OTHERS_EXECUTE));
 
         // Initialize the block node root directory if it does not exist
-        FileUtilities.createPathIfNotExists(
-                blockNodeRootPath, INFO, filePerms, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME, true);
-
-        this.metricsService = blockNodeContext.metricsService();
+        FileUtilities.createFolderPathIfNotExists(
+                blockNodeRootPath, INFO, this.filePerms, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME);
     }
 
     /**
@@ -171,12 +179,11 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
         repairPermissions(blockNodeRootPath);
 
         // Construct the path to the block directory
-        FileUtilities.createPathIfNotExists(
+        FileUtilities.createFolderPathIfNotExists(
                 calculateBlockPath(),
                 DEBUG,
                 filePerms,
-                BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME,
-                true);
+                BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME);
 
         // Reset
         blockNodeFileNameIndex = 0;

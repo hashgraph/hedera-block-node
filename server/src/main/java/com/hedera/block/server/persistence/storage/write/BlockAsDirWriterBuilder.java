@@ -16,8 +16,6 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import static com.hedera.block.common.utils.FileUtilities.DEFAULT_DIR_PERMISSIONS;
-
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
@@ -39,7 +37,7 @@ import java.util.Set;
  */
 public final class BlockAsDirWriterBuilder {
     private final BlockNodeContext blockNodeContext;
-    private FileAttribute<Set<PosixFilePermission>> filePerms = DEFAULT_DIR_PERMISSIONS;
+    private FileAttribute<Set<PosixFilePermission>> filePerms;
     private BlockRemover blockRemover;
 
     private BlockAsDirWriterBuilder(@NonNull final BlockNodeContext blockNodeContext) {

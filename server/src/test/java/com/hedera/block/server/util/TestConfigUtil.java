@@ -28,13 +28,26 @@ import com.swirlds.metrics.api.Metrics;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 public class TestConfigUtil {
-
     public static final String CONSUMER_TIMEOUT_THRESHOLD_KEY = "consumer.timeoutThresholdMillis";
     public static final String MEDIATOR_RING_BUFFER_SIZE_KEY = "mediator.ringBufferSize";
+    public static final FileAttribute<Set<PosixFilePermission>> DEFAULT_TEST_FOLDER_PERMISSIONS =
+        PosixFilePermissions.asFileAttribute(
+            Set.of(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+                PosixFilePermission.GROUP_READ,
+                PosixFilePermission.GROUP_EXECUTE,
+                PosixFilePermission.OTHERS_READ,
+                PosixFilePermission.OTHERS_EXECUTE));
 
     private static final String TEST_APP_PROPERTIES_FILE = "app.properties";
 

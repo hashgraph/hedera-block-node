@@ -16,9 +16,9 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import static com.hedera.block.common.utils.FileUtilities.DEFAULT_DIR_PERMISSIONS;
 import static com.hedera.block.server.persistence.storage.read.BlockAsDirReaderTest.removeBlockReadPerms;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
+import static com.hedera.block.server.util.TestConfigUtil.DEFAULT_TEST_FOLDER_PERMISSIONS;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
@@ -95,7 +95,7 @@ public class BlockAsDirWriterTest {
 
         final BlockWriter<List<BlockItem>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext)
-                        .filePerms(DEFAULT_DIR_PERMISSIONS)
+                        .filePerms(DEFAULT_TEST_FOLDER_PERMISSIONS)
                         .build();
         for (int i = 0; i < 10; i++) {
             if (i == 9) {
@@ -254,7 +254,7 @@ public class BlockAsDirWriterTest {
         final TestBlockAsDirWriter blockWriter =
                 spy(
                         new TestBlockAsDirWriter(
-                                blockRemover, DEFAULT_DIR_PERMISSIONS, blockNodeContext));
+                                blockRemover, null, blockNodeContext));
 
         for (int i = 0; i < 23; i++) {
             // Prepare the block writer to call the actual write method
