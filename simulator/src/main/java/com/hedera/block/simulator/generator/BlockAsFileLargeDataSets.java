@@ -32,6 +32,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import javax.inject.Inject;
 
 /** A block stream manager that reads blocks from files in a directory. */
@@ -90,10 +91,14 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
             final byte[] blockBytes =
                     FileUtilities.readFileBytesUnsafe(localBlockStreamPath, RECORD_EXTENSION, GZ_EXTENSION);
 
+            if (Objects.isNull(blockBytes)) {
+                throw new NullPointerException(
+                        "Unable to read block file [%s]! Most likely not found with the extensions '%s' or '%s'"
+                                .formatted(localBlockStreamPath, RECORD_EXTENSION, GZ_EXTENSION));
+            }
+
             LOGGER.log(INFO, "Loading block: " + localBlockStreamPath.getFileName());
 
-            // todo blockBytes could be null, should we hande in some way or we need this method to
-            // fail here?
             final Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
             LOGGER.log(INFO, "block loaded with items size= " + block.items().size());
             return block;
