@@ -60,8 +60,7 @@ class BlockAsDirReader implements BlockReader<Block> {
      * @param filePerms the file permissions to set on the block node root path, default  will be used if null provided
      */
     BlockAsDirReader(
-            @NonNull final PersistenceStorageConfig config,
-            final FileAttribute<Set<PosixFilePermission>> filePerms) {
+            @NonNull final PersistenceStorageConfig config, final FileAttribute<Set<PosixFilePermission>> filePerms) {
         LOGGER.log(INFO, "Initializing FileSystemBlockReader");
 
         final Path blockNodeRootPath = Path.of(config.rootPath());
@@ -71,16 +70,19 @@ class BlockAsDirReader implements BlockReader<Block> {
 
         this.blockNodeRootPath = blockNodeRootPath;
 
-        this.filePerms = Objects.nonNull(filePerms) ? filePerms :
+        if (Objects.nonNull(filePerms)) {
+            this.filePerms = filePerms;
+        } else {
             // default permissions for folders
-            PosixFilePermissions.asFileAttribute(Set.of(
-                PosixFilePermission.OWNER_READ,
-                PosixFilePermission.OWNER_WRITE,
-                PosixFilePermission.OWNER_EXECUTE,
-                PosixFilePermission.GROUP_READ,
-                PosixFilePermission.GROUP_EXECUTE,
-                PosixFilePermission.OTHERS_READ,
-                PosixFilePermission.OTHERS_EXECUTE));
+            this.filePerms = PosixFilePermissions.asFileAttribute(Set.of(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ,
+                    PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ,
+                    PosixFilePermission.OTHERS_EXECUTE));
+        }
     }
 
     /**
@@ -142,8 +144,7 @@ class BlockAsDirReader implements BlockReader<Block> {
     }
 
     @NonNull
-    private Optional<BlockItem> readBlockItem(@NonNull final String blockItemPath)
-            throws IOException, ParseException {
+    private Optional<BlockItem> readBlockItem(@NonNull final String blockItemPath) throws IOException, ParseException {
 
         try (final FileInputStream fis = new FileInputStream(blockItemPath)) {
 
@@ -211,8 +212,7 @@ class BlockAsDirReader implements BlockReader<Block> {
      * @param perms the permissions to set on the path
      * @throws IOException if an I/O error occurs
      */
-    protected void setPerm(@NonNull final Path path, @NonNull final Set<PosixFilePermission> perms)
-            throws IOException {
+    protected void setPerm(@NonNull final Path path, @NonNull final Set<PosixFilePermission> perms) throws IOException {
         Files.setPosixFilePermissions(path, perms);
     }
 }

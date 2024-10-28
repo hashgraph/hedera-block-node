@@ -54,7 +54,8 @@ public class BlockAsDirReaderTest {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
-    @TempDir private Path testPath;
+    @TempDir
+    private Path testPath;
 
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig config;
@@ -62,14 +63,14 @@ public class BlockAsDirReaderTest {
     @BeforeEach
     public void setUp() throws IOException {
         blockNodeContext =
-                TestConfigUtil.getTestBlockNodeContext(
-                        Map.of("persistence.storage.rootPath", testPath.toString()));
+                TestConfigUtil.getTestBlockNodeContext(Map.of("persistence.storage.rootPath", testPath.toString()));
         config = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
     }
 
     @Test
     public void testReadBlockDoesNotExist() throws IOException, ParseException {
-        final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
+        final BlockReader<Block> blockReader =
+                BlockAsDirReaderBuilder.newBuilder(config).build();
         final Optional<Block> blockOpt = blockReader.read(10000);
         assertTrue(blockOpt.isEmpty());
     }
@@ -88,7 +89,8 @@ public class BlockAsDirReaderTest {
         removeBlockReadPerms(1, config);
 
         // The default BlockReader will attempt to repair the permissions and should succeed
-        final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
+        final BlockReader<Block> blockReader =
+                BlockAsDirReaderBuilder.newBuilder(config).build();
         final Optional<Block> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
         assertEquals(10, blockOpt.get().items().size());
@@ -107,10 +109,9 @@ public class BlockAsDirReaderTest {
 
         // For this test, build the Reader with ineffective repair permissions to
         // simulate a failed repair (root changed the perms, etc.)
-        final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(config)
-                        .filePerms(TestUtils.getNoPerms())
-                        .build();
+        final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config)
+                .filePerms(TestUtils.getNoPerms())
+                .build();
         final Optional<Block> blockOpt = blockReader.read(1);
         assertTrue(blockOpt.isEmpty());
     }
@@ -125,7 +126,8 @@ public class BlockAsDirReaderTest {
 
         removeBlockItemReadPerms(1, 1, config);
 
-        final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
+        final BlockReader<Block> blockReader =
+                BlockAsDirReaderBuilder.newBuilder(config).build();
         assertThrows(IOException.class, () -> blockReader.read(1));
     }
 
@@ -135,11 +137,11 @@ public class BlockAsDirReaderTest {
         final Path blockNodeRootPath = Path.of(config.rootPath());
 
         // Write a file named "1" where a directory should be
-        PersistTestUtils.writeBlockItemToPath(
-                blockNodeRootPath.resolve(Path.of("1")), blockItems.getFirst());
+        PersistTestUtils.writeBlockItemToPath(blockNodeRootPath.resolve(Path.of("1")), blockItems.getFirst());
 
         // Should return empty because the path is not a directory
-        final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
+        final BlockReader<Block> blockReader =
+                BlockAsDirReaderBuilder.newBuilder(config).build();
         final Optional<Block> blockOpt = blockReader.read(1);
         assertTrue(blockOpt.isEmpty());
     }
@@ -190,7 +192,8 @@ public class BlockAsDirReaderTest {
         blockWriter.write(blockItems);
 
         // Read the block back and confirm it's read successfully
-        final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
+        final BlockReader<Block> blockReader =
+                BlockAsDirReaderBuilder.newBuilder(config).build();
         final Optional<Block> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
 
@@ -200,14 +203,14 @@ public class BlockAsDirReaderTest {
         Path blockPath = blockNodeRootPath.resolve(String.valueOf(1));
 
         byte[] bytes;
-        try (final FileInputStream fis =
-                new FileInputStream(blockPath.resolve("1" + BLOCK_FILE_EXTENSION).toFile())) {
+        try (final FileInputStream fis = new FileInputStream(
+                blockPath.resolve("1" + BLOCK_FILE_EXTENSION).toFile())) {
             bytes = fis.readAllBytes();
         }
 
         // Corrupt the block item file by reversing the bytes
-        try (final FileOutputStream fos =
-                new FileOutputStream(blockPath.resolve("1" + BLOCK_FILE_EXTENSION).toFile())) {
+        try (final FileOutputStream fos = new FileOutputStream(
+                blockPath.resolve("1" + BLOCK_FILE_EXTENSION).toFile())) {
             byte[] reversedBytes = reverseByteArray(bytes);
             fos.write(reversedBytes);
         }
@@ -217,8 +220,7 @@ public class BlockAsDirReaderTest {
         assertThrows(ParseException.class, () -> blockReader.read(1));
     }
 
-    public static void removeBlockReadPerms(int blockNumber, final PersistenceStorageConfig config)
-            throws IOException {
+    public static void removeBlockReadPerms(int blockNumber, final PersistenceStorageConfig config) throws IOException {
         final Path blockNodeRootPath = Path.of(config.rootPath());
         final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
         removePathReadPerms(blockPath);
@@ -228,8 +230,8 @@ public class BlockAsDirReaderTest {
         Files.setPosixFilePermissions(path, TestUtils.getNoRead().value());
     }
 
-    private void removeBlockItemReadPerms(
-            int blockNumber, int blockItem, PersistenceStorageConfig config) throws IOException {
+    private void removeBlockItemReadPerms(int blockNumber, int blockItem, PersistenceStorageConfig config)
+            throws IOException {
         final Path blockNodeRootPath = Path.of(config.rootPath());
         final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
         final Path blockItemPath = blockPath.resolve(blockItem + BLOCK_FILE_EXTENSION);

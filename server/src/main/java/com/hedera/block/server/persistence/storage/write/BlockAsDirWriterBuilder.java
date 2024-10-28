@@ -44,8 +44,7 @@ public final class BlockAsDirWriterBuilder {
         this.blockNodeContext = Objects.requireNonNull(blockNodeContext);
         final PersistenceStorageConfig config =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
-        this.blockRemover =
-                new BlockAsDirRemover(Path.of(config.rootPath()));
+        this.blockRemover = new BlockAsDirRemover(Path.of(config.rootPath()));
     }
 
     /**
@@ -55,8 +54,7 @@ public final class BlockAsDirWriterBuilder {
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
-    public static BlockAsDirWriterBuilder newBuilder(
-            @NonNull final BlockNodeContext blockNodeContext) {
+    public static BlockAsDirWriterBuilder newBuilder(@NonNull final BlockNodeContext blockNodeContext) {
         return new BlockAsDirWriterBuilder(blockNodeContext);
     }
 
@@ -68,8 +66,7 @@ public final class BlockAsDirWriterBuilder {
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
-    public BlockAsDirWriterBuilder filePerms(
-            @NonNull final FileAttribute<Set<PosixFilePermission>> filePerms) {
+    public BlockAsDirWriterBuilder filePerms(@NonNull final FileAttribute<Set<PosixFilePermission>> filePerms) {
         this.filePerms = Objects.requireNonNull(filePerms);
         return this;
     }

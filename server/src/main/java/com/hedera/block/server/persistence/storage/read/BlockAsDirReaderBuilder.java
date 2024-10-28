@@ -45,8 +45,7 @@ public final class BlockAsDirReaderBuilder {
      * @return a block reader builder configured with required parameters.
      */
     @NonNull
-    public static BlockAsDirReaderBuilder newBuilder(
-            @NonNull final PersistenceStorageConfig config) {
+    public static BlockAsDirReaderBuilder newBuilder(@NonNull final PersistenceStorageConfig config) {
         return new BlockAsDirReaderBuilder(config);
     }
 
@@ -58,8 +57,7 @@ public final class BlockAsDirReaderBuilder {
      * @return a block reader builder configured with required parameters.
      */
     @NonNull
-    public BlockAsDirReaderBuilder filePerms(
-            @NonNull final FileAttribute<Set<PosixFilePermission>> filePerms) {
+    public BlockAsDirReaderBuilder filePerms(@NonNull final FileAttribute<Set<PosixFilePermission>> filePerms) {
         this.filePerms = Objects.requireNonNull(filePerms);
         return this;
     }

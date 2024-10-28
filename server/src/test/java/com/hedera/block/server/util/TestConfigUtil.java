@@ -39,29 +39,26 @@ public class TestConfigUtil {
     public static final String CONSUMER_TIMEOUT_THRESHOLD_KEY = "consumer.timeoutThresholdMillis";
     public static final String MEDIATOR_RING_BUFFER_SIZE_KEY = "mediator.ringBufferSize";
     public static final FileAttribute<Set<PosixFilePermission>> DEFAULT_TEST_FOLDER_PERMISSIONS =
-        PosixFilePermissions.asFileAttribute(
-            Set.of(
-                PosixFilePermission.OWNER_READ,
-                PosixFilePermission.OWNER_WRITE,
-                PosixFilePermission.OWNER_EXECUTE,
-                PosixFilePermission.GROUP_READ,
-                PosixFilePermission.GROUP_EXECUTE,
-                PosixFilePermission.OTHERS_READ,
-                PosixFilePermission.OTHERS_EXECUTE));
+            PosixFilePermissions.asFileAttribute(Set.of(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ,
+                    PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ,
+                    PosixFilePermission.OTHERS_EXECUTE));
 
     private static final String TEST_APP_PROPERTIES_FILE = "app.properties";
 
     private TestConfigUtil() {}
 
     @NonNull
-    public static BlockNodeContext getTestBlockNodeContext(
-            @NonNull Map<String, String> customProperties) throws IOException {
+    public static BlockNodeContext getTestBlockNodeContext(@NonNull Map<String, String> customProperties)
+            throws IOException {
 
         // create test configuration
-        TestConfigBuilder testConfigBuilder =
-                new TestConfigBuilder(true)
-                        .withSource(
-                                new ClasspathFileConfigSource(Path.of(TEST_APP_PROPERTIES_FILE)));
+        TestConfigBuilder testConfigBuilder = new TestConfigBuilder(true)
+                .withSource(new ClasspathFileConfigSource(Path.of(TEST_APP_PROPERTIES_FILE)));
 
         for (Map.Entry<String, String> entry : customProperties.entrySet()) {
             String key = entry.getKey();

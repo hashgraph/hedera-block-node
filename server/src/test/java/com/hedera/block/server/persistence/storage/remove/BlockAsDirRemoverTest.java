@@ -56,8 +56,7 @@ public class BlockAsDirRemoverTest {
         LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
 
         blockNodeContext =
-                TestConfigUtil.getTestBlockNodeContext(
-                        Map.of("persistence.storage.rootPath", testPath.toString()));
+                TestConfigUtil.getTestBlockNodeContext(Map.of("persistence.storage.rootPath", testPath.toString()));
         testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
     }
 

@@ -86,16 +86,19 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
         this.blockRemover = blockRemover;
         this.metricsService = blockNodeContext.metricsService();
 
-        this.filePerms = Objects.nonNull(filePerms) ? filePerms :
+        if (Objects.nonNull(filePerms)) {
+            this.filePerms = filePerms;
+        } else {
             // default permissions for folders
-            PosixFilePermissions.asFileAttribute(Set.of(
-                PosixFilePermission.OWNER_READ,
-                PosixFilePermission.OWNER_WRITE,
-                PosixFilePermission.OWNER_EXECUTE,
-                PosixFilePermission.GROUP_READ,
-                PosixFilePermission.GROUP_EXECUTE,
-                PosixFilePermission.OTHERS_READ,
-                PosixFilePermission.OTHERS_EXECUTE));
+            this.filePerms = PosixFilePermissions.asFileAttribute(Set.of(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ,
+                    PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ,
+                    PosixFilePermission.OTHERS_EXECUTE));
+        }
 
         // Initialize the block node root directory if it does not exist
         FileUtilities.createFolderPathIfNotExists(
@@ -109,8 +112,7 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
      * @throws IOException if an error occurs while writing the block item
      */
     @Override
-    public Optional<List<BlockItem>> write(@NonNull final List<BlockItem> blockItems)
-            throws IOException {
+    public Optional<List<BlockItem>> write(@NonNull final List<BlockItem> blockItems) throws IOException {
 
         if (blockItems.getFirst().hasBlockHeader()) {
             resetState(blockItems.getFirst());
@@ -157,8 +159,7 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
      * @param blockItem the block item to write
      * @throws IOException if an error occurs while writing the block item
      */
-    protected void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItem blockItem)
-            throws IOException {
+    protected void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItem blockItem) throws IOException {
         try (final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
 
             BlockItem.PROTOBUF.toBytes(blockItem).writeTo(fos);
@@ -180,10 +181,7 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
 
         // Construct the path to the block directory
         FileUtilities.createFolderPathIfNotExists(
-                calculateBlockPath(),
-                DEBUG,
-                filePerms,
-                BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME);
+                calculateBlockPath(), DEBUG, filePerms, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME);
 
         // Reset
         blockNodeFileNameIndex = 0;
@@ -192,10 +190,7 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
     private void repairPermissions(@NonNull final Path path) throws IOException {
         final boolean isWritable = Files.isWritable(path);
         if (!isWritable) {
-            LOGGER.log(
-                    ERROR,
-                    "Block node root directory is not writable. Attempting to change the"
-                            + " permissions.");
+            LOGGER.log(ERROR, "Block node root directory is not writable. Attempting to change the" + " permissions.");
 
             // Attempt to restore the permissions on the block node root directory
             Files.setPosixFilePermissions(path, filePerms.value());

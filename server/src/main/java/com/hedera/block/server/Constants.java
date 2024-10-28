@@ -19,8 +19,7 @@ package com.hedera.block.server;
 /** Constants used in the BlockNode service. */
 public final class Constants {
     /** Constant mapped to the semantic name of the Block Node root directory */
-    public static final String BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME =
-            "Block Node Root Directory";
+    public static final String BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME = "Block Node Root Directory";
 
     /** Constant mapped to the name of the BlockStream service in the .proto file */
     public static final String SERVICE_NAME_BLOCK_STREAM = "BlockStreamService";

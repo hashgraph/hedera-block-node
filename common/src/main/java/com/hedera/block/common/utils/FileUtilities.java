@@ -38,12 +38,11 @@ public final class FileUtilities {
      * Default permissions are set to: rw-r--r--
      */
     private static final FileAttribute<Set<PosixFilePermission>> DEFAULT_FILE_PERMISSIONS =
-            PosixFilePermissions.asFileAttribute(
-                    Set.of(
-                            PosixFilePermission.OWNER_READ,
-                            PosixFilePermission.OWNER_WRITE,
-                            PosixFilePermission.GROUP_READ,
-                            PosixFilePermission.OTHERS_READ));
+            PosixFilePermissions.asFileAttribute(Set.of(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.GROUP_READ,
+                    PosixFilePermission.OTHERS_READ));
 
     /**
      * Default folder permissions for new folders.
@@ -51,15 +50,14 @@ public final class FileUtilities {
      * Default permissions are set to: rwxr-xr-x
      */
     private static final FileAttribute<Set<PosixFilePermission>> DEFAULT_FOLDER_PERMISSIONS =
-            PosixFilePermissions.asFileAttribute(
-                    Set.of(
-                            PosixFilePermission.OWNER_READ,
-                            PosixFilePermission.OWNER_WRITE,
-                            PosixFilePermission.OWNER_EXECUTE,
-                            PosixFilePermission.GROUP_READ,
-                            PosixFilePermission.GROUP_EXECUTE,
-                            PosixFilePermission.OTHERS_READ,
-                            PosixFilePermission.OTHERS_EXECUTE));
+            PosixFilePermissions.asFileAttribute(Set.of(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ,
+                    PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ,
+                    PosixFilePermission.OTHERS_EXECUTE));
 
     /**
      * Create a new path (folder) if it does not exist.
@@ -76,11 +74,7 @@ public final class FileUtilities {
             @NonNull final System.Logger.Level logLevel,
             @NonNull final String semanticPathName)
             throws IOException {
-        createFolderPathIfNotExists(
-                toCreate,
-                logLevel,
-                DEFAULT_FOLDER_PERMISSIONS,
-                semanticPathName);
+        createFolderPathIfNotExists(toCreate, logLevel, DEFAULT_FOLDER_PERMISSIONS, semanticPathName);
     }
 
     /**
@@ -109,8 +103,7 @@ public final class FileUtilities {
             final String logMessage = "Created [%s] at '%s'".formatted(semanticPathName, toCreate);
             LOGGER.log(logLevel, logMessage);
         } else {
-            final String logMessage =
-                "Requested [%s] not created because the directory already exists at '%s'"
+            final String logMessage = "Requested [%s] not created because the directory already exists at '%s'"
                     .formatted(semanticPathName, toCreate);
             LOGGER.log(logLevel, logMessage);
         }
