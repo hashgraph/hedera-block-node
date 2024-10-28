@@ -16,8 +16,6 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
-import static com.hedera.block.common.utils.FileUtilities.DEFAULT_DIR_PERMISSIONS;
-
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.hapi.block.stream.Block;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -33,7 +31,7 @@ import java.util.Set;
  */
 public final class BlockAsDirReaderBuilder {
     private final PersistenceStorageConfig config;
-    private FileAttribute<Set<PosixFilePermission>> filePerms = DEFAULT_DIR_PERMISSIONS;
+    private FileAttribute<Set<PosixFilePermission>> filePerms;
 
     private BlockAsDirReaderBuilder(@NonNull final PersistenceStorageConfig config) {
         this.config = Objects.requireNonNull(config);

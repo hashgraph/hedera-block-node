@@ -36,8 +36,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -46,9 +48,7 @@ import java.util.Set;
  * containing block items. The block items are stored as files within the block directory.
  */
 class BlockAsDirReader implements BlockReader<Block> {
-
     private final Logger LOGGER = System.getLogger(getClass().getName());
-
     private final Path blockNodeRootPath;
     private final FileAttribute<Set<PosixFilePermission>> filePerms;
 
@@ -57,12 +57,11 @@ class BlockAsDirReader implements BlockReader<Block> {
      * given parameters.
      *
      * @param config the configuration to retrieve the block node root path
-     * @param filePerms the file permissions to set on the block node root path
+     * @param filePerms the file permissions to set on the block node root path, default  will be used if null provided
      */
     BlockAsDirReader(
             @NonNull final PersistenceStorageConfig config,
-            @NonNull final FileAttribute<Set<PosixFilePermission>> filePerms) {
-
+            final FileAttribute<Set<PosixFilePermission>> filePerms) {
         LOGGER.log(INFO, "Initializing FileSystemBlockReader");
 
         final Path blockNodeRootPath = Path.of(config.rootPath());
@@ -71,7 +70,17 @@ class BlockAsDirReader implements BlockReader<Block> {
         LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);
 
         this.blockNodeRootPath = blockNodeRootPath;
-        this.filePerms = filePerms;
+
+        this.filePerms = Objects.nonNull(filePerms) ? filePerms :
+            // default permissions for folders
+            PosixFilePermissions.asFileAttribute(Set.of(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+                PosixFilePermission.GROUP_READ,
+                PosixFilePermission.GROUP_EXECUTE,
+                PosixFilePermission.OTHERS_READ,
+                PosixFilePermission.OTHERS_EXECUTE));
     }
 
     /**
