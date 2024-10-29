@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.lang.System.Logger.Level;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -31,11 +32,21 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+/**
+ * Tests for {@link FileUtilities} functionality.
+ */
 class FileUtilitiesTest {
-    private static final String FILE_WITH_UNRECOGNIZED_EXTENSION = "src/test/resources/nonexistent.unrecognized";
-
+    /**
+     * This test aims to verify that a folder path will be created for a given
+     * path if it does not exist. First we assert that the path we want to make
+     * does not exist, then we run the actual method and assert that the path
+     * was created and is an empty folder.
+     *
+     * @param tempDir junit temp dir
+     * @throws IOException propagated from {@link FileUtilities#createFolderPathIfNotExists(Path, Level, String)}
+     */
     @Test
-    void test_createFolderPathIfNotExists_CreatesDirIfDoesNotExist(@TempDir final Path tempDir) throws IOException {
+    void testCreateFolderPathIfNotExists(@TempDir final Path tempDir) throws IOException {
         final String newDir = "newDir";
         final Path toCreate = tempDir.resolve(newDir);
 
@@ -51,9 +62,17 @@ class FileUtilitiesTest {
         assertThat(tempDir.toFile().listFiles()).hasSize(1).contains(toCreate.toFile());
     }
 
+    /**
+     * This test aims to verify that a folder path will not be created for a
+     * given path if it already exists. First we assert that the path we want to
+     * make already exists, then we run the actual method and assert that the
+     * path was unchanged and is an empty folder and nothing else was created.
+     *
+     * @param tempDir junit temp dir
+     * @throws IOException propagated from {@link FileUtilities#createFolderPathIfNotExists(Path, Level, String)}
+     */
     @Test
-    void test_createFolderPathIfNotExists_DoesNotCreateFolderDirIfExists(@TempDir final Path tempDir)
-            throws IOException {
+    void testSkipFolderCreationIfPathExists(@TempDir final Path tempDir) throws IOException {
         final String newDir = "newDir";
         final Path toCreate = tempDir.resolve(newDir);
 
@@ -78,10 +97,17 @@ class FileUtilitiesTest {
         assertThat(tempDirAsFile.listFiles()).hasSize(1).contains(toCreateAsFile);
     }
 
+    /**
+     * This test aims to verify that reading a gzip file that exists and is
+     * valid, will return a byte array with the expected content.
+     *
+     * @param filePath parameterized, to read gzip files from
+     * @param expectedContent parameterized, expected content after reading the file
+     * @throws IOException propagated from {@link FileUtilities#readGzipFileUnsafe(Path)}
+     */
     @ParameterizedTest
     @MethodSource("validGzipFiles")
-    void test_readGzipFileUnsafe_ReturnsByteArrayWithValidContentForValidGzipFile(
-            final Path filePath, final String expectedContent) throws IOException {
+    void testReadGzipFileUnsafe(final Path filePath, final String expectedContent) throws IOException {
         final byte[] actualContent = FileUtilities.readGzipFileUnsafe(filePath);
         assertThat(actualContent)
                 .isNotNull()
@@ -92,63 +118,77 @@ class FileUtilitiesTest {
                 .isEqualTo(expectedContent);
     }
 
+    /**
+     * This test aims to verify that reading an invalid gzip file throws an
+     * {@link IOException}.
+     *
+     * @param filePath parameterized, to read gzip files from
+     */
     @ParameterizedTest
     @MethodSource("invalidFiles")
-    void test_readGzipFileUnsafe_ThrowsIOExceptionForInvalidGzipFile(final Path filePath) {
+    void testReadGzipFileUnsafeThrows(final Path filePath) {
         assertThatIOException().isThrownBy(() -> FileUtilities.readGzipFileUnsafe(filePath));
     }
 
+    /**
+     * This test aims to verify that reading a file that exists and is valid and
+     * is found by the extension parameter, will return a byte array with the
+     * expected content.
+     *
+     * @param filePath parameterized, to read files from
+     * @param expectedContent parameterized, expected content after reading the file
+     * @throws IOException propagated from {@link FileUtilities#readFileBytesUnsafe(Path)}
+     * and {@link FileUtilities#readFileBytesUnsafe(Path, String, String)}
+     */
     @ParameterizedTest
     @MethodSource({"validGzipFiles", "validBlkFiles"})
-    void test_readFileBytesUnsafe_ReturnsByteArrayWithValidContentForValidFile(
-            final Path filePath, final String expectedContent) throws IOException {
-        final byte[] actualContent = FileUtilities.readFileBytesUnsafe(filePath);
-        assertThat(actualContent)
-                .isNotNull()
-                .isNotEmpty()
-                .asString()
-                .isNotNull()
-                .isNotBlank()
-                .isEqualTo(expectedContent);
-    }
+    void testReadFileBytesUnsafe(final Path filePath, final String expectedContent) throws IOException {
+        final Consumer<byte[]> asserts = actual -> {
+            assertThat(actual)
+                    .isNotNull()
+                    .isNotEmpty()
+                    .asString()
+                    .isNotNull()
+                    .isNotBlank()
+                    .isEqualTo(expectedContent);
+        };
 
-    @Test
-    void test_readFileBytesUnsafe_ReturnsNullByteArrayWhenExtensionIsNotRecognized() throws IOException {
-        final byte[] actualContent = FileUtilities.readFileBytesUnsafe(Path.of(FILE_WITH_UNRECOGNIZED_EXTENSION));
-        assertThat(actualContent).isNull();
-    }
-
-    @ParameterizedTest
-    @MethodSource("invalidFiles")
-    void test_readFileBytesUnsafe_ThrowsIOExceptionForInvalidGzipFile(final Path filePath) {
-        assertThatIOException().isThrownBy(() -> FileUtilities.readFileBytesUnsafe(filePath));
-    }
-
-    @ParameterizedTest
-    @MethodSource({"validGzipFiles", "validBlkFiles"})
-    void test_readFileBytesUnsafe_ReturnsByteArrayWithValidContentForValidFileWithGivenExtension(
-            final Path filePath, final String expectedContent) throws IOException {
         final byte[] actualContent = FileUtilities.readFileBytesUnsafe(filePath, ".blk", ".gz");
-        assertThat(actualContent)
-                .isNotNull()
-                .isNotEmpty()
-                .asString()
-                .isNotNull()
-                .isNotBlank()
-                .isEqualTo(expectedContent);
+        assertThat(actualContent).satisfies(asserts);
+
+        // overloaded has same extensions as above
+        final byte[] actualContentOverloaded = FileUtilities.readFileBytesUnsafe(filePath);
+        assertThat(actualContentOverloaded).satisfies(asserts);
     }
 
+    /**
+     * This test aims to verify that reading a file that is not recognized by
+     * the block file extension we provide, will return null.
+     *
+     * @throws IOException propagated from {@link FileUtilities#readFileBytesUnsafe(Path)}
+     * and {@link FileUtilities#readFileBytesUnsafe(Path, String, String)}
+     */
     @Test
-    void test_readFileBytesUnsafe_ReturnsNullByteArrayWhenExtensionIsNotRecognizedWithGivenExtension()
-            throws IOException {
-        final byte[] actualContent =
-                FileUtilities.readFileBytesUnsafe(Path.of(FILE_WITH_UNRECOGNIZED_EXTENSION), ".blk", ".gz");
+    void testReadFileBytesUnsafeReturnsNull() throws IOException {
+        final Path path = Path.of("src/test/resources/nonexistent.unrecognized");
+
+        final byte[] actualContent = FileUtilities.readFileBytesUnsafe(path, ".blk", ".gz");
         assertThat(actualContent).isNull();
+
+        final byte[] actualContentOverloaded = FileUtilities.readFileBytesUnsafe(path);
+        assertThat(actualContentOverloaded).isNull();
     }
 
+    /**
+     * This test aims to verify that reading an invalid file, be that it is
+     * in some way corrupted or nonexistent, will throw an {@link IOException}.
+     *
+     * @param filePath parameterized, to read block files from
+     */
     @ParameterizedTest
     @MethodSource("invalidFiles")
-    void test_readFileBytesUnsafe_ThrowsIOExceptionForInvalidGzipFileWithGivenExtension(final Path filePath) {
+    void testReadFileBytesUnsafeThrows(final Path filePath) {
+        assertThatIOException().isThrownBy(() -> FileUtilities.readFileBytesUnsafe(filePath));
         assertThatIOException().isThrownBy(() -> FileUtilities.readFileBytesUnsafe(filePath, ".blk", ".gz"));
     }
 
@@ -166,6 +206,8 @@ class FileUtilitiesTest {
 
     private static Stream<Arguments> invalidFiles() {
         return Stream.of(
-                Arguments.of("src/test/resources/invalid1.gz"), Arguments.of("src/test/resources/nonexistent.gz"));
+                Arguments.of("src/test/resources/invalid1.gz"),
+                Arguments.of("src/test/resources/nonexistent.gz"),
+                Arguments.of("src/test/resources/nonexistent.blk"));
     }
 }
