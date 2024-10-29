@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-package com.hedera.block.simulator;
+package com.hedera.block.simulator.config.types;
 
-/** The Constants class defines the constants for the block simulator. */
-public final class Constants {
-    /** The file extension for block files. */
-    public static final String RECORD_EXTENSION = ".blk";
-
-    /** postfix for gzip files */
-    public static final String GZ_EXTENSION = ".gz";
-
+/** The SimulatorMode enum defines the work modes of the block stream simulator. */
+public enum SimulatorMode {
     /**
-     * Used for converting nanoseconds to milliseconds and vice versa
+     * Indicates a work mode in which the simulator is working as both consumer and publisher.
      */
-    public static final int NANOS_PER_MILLI = 1_000_000;
-
-    /** Constructor to prevent instantiation. this is only a utility class */
-    private Constants() {}
+    BOTH,
+    /**
+     * Indicates a work mode in which the simulator is working in consumer mode.
+     */
+    CONSUMER,
+    /**
+     * Indicates a work mode in which the simulator is working in publisher mode.
+     */
+    PUBLISHER
 }

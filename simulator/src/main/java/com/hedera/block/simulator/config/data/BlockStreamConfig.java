@@ -16,6 +16,7 @@
 
 package com.hedera.block.simulator.config.data;
 
+import com.hedera.block.simulator.config.types.SimulatorMode;
 import com.hedera.block.simulator.config.types.StreamingMode;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
@@ -23,6 +24,7 @@ import com.swirlds.config.api.ConfigProperty;
 /**
  * Defines the configuration data for the block stream in the Hedera Block Simulator.
  *
+ * @param simulatorMode the mode of the simulator, in terms of publishing, consuming or both
  * @param delayBetweenBlockItems the delay in microseconds between streaming each block item
  * @param maxBlockItemsToStream the maximum number of block items to stream before stopping
  * @param streamingMode the mode of streaming for the block stream (e.g., time-based, count-based)
@@ -31,6 +33,7 @@ import com.swirlds.config.api.ConfigProperty;
  */
 @ConfigData("blockStream")
 public record BlockStreamConfig(
+        @ConfigProperty(defaultValue = "PUBLISHER") SimulatorMode simulatorMode,
         @ConfigProperty(defaultValue = "1_500_000") int delayBetweenBlockItems,
         @ConfigProperty(defaultValue = "100_000") int maxBlockItemsToStream,
         @ConfigProperty(defaultValue = "MILLIS_PER_BLOCK") StreamingMode streamingMode,
@@ -50,6 +53,7 @@ public record BlockStreamConfig(
      * A builder for creating instances of {@link BlockStreamConfig}.
      */
     public static class Builder {
+        private SimulatorMode simulatorMode = SimulatorMode.PUBLISHER;
         private int delayBetweenBlockItems = 1_500_000;
         private int maxBlockItemsToStream = 10_000;
         private StreamingMode streamingMode = StreamingMode.MILLIS_PER_BLOCK;
@@ -61,6 +65,17 @@ public record BlockStreamConfig(
          */
         public Builder() {
             // Default constructor
+        }
+
+        /**
+         * Sets the simulator mode for the block stream.
+         *
+         * @param simulatorMode the {@link SimulatorMode} to use
+         * @return this {@code Builder} instance
+         */
+        public Builder simulatorMode(SimulatorMode simulatorMode) {
+            this.simulatorMode = simulatorMode;
+            return this;
         }
 
         /**
@@ -125,6 +140,7 @@ public record BlockStreamConfig(
          */
         public BlockStreamConfig build() {
             return new BlockStreamConfig(
+                    simulatorMode,
                     delayBetweenBlockItems,
                     maxBlockItemsToStream,
                     streamingMode,

@@ -16,6 +16,8 @@
 
 package com.hedera.block.simulator.grpc;
 
+import static java.util.Objects.requireNonNull;
+
 import com.hedera.block.common.utils.ChunkUtils;
 import com.hedera.block.simulator.Translator;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
@@ -37,9 +39,10 @@ import javax.inject.Inject;
  */
 public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
-    private final BlockStreamServiceGrpc.BlockStreamServiceStub stub;
-    private final StreamObserver<PublishStreamRequest> requestStreamObserver;
+    private StreamObserver<PublishStreamRequest> requestStreamObserver;
     private final BlockStreamConfig blockStreamConfig;
+    private final GrpcConfig grpcConfig;
+    private ManagedChannel channel;
 
     /**
      * Creates a new PublishStreamGrpcClientImpl instance.
@@ -49,15 +52,22 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Inject
     public PublishStreamGrpcClientImpl(
-            @NonNull GrpcConfig grpcConfig, @NonNull BlockStreamConfig blockStreamConfig) {
-        ManagedChannel channel =
-                ManagedChannelBuilder.forAddress(grpcConfig.serverAddress(), grpcConfig.port())
-                        .usePlaintext()
-                        .build();
-        stub = BlockStreamServiceGrpc.newStub(channel);
+            @NonNull final GrpcConfig grpcConfig, @NonNull final BlockStreamConfig blockStreamConfig) {
+        this.grpcConfig = requireNonNull(grpcConfig);
+        this.blockStreamConfig = requireNonNull(blockStreamConfig);
+    }
+
+    /**
+     * Initialize the channel and stub for publishBlockStream with the desired configuration.
+     */
+    @Override
+    public void init() {
+        channel = ManagedChannelBuilder.forAddress(grpcConfig.serverAddress(), grpcConfig.port())
+                .usePlaintext()
+                .build();
+        BlockStreamServiceGrpc.BlockStreamServiceStub stub = BlockStreamServiceGrpc.newStub(channel);
         PublishStreamObserver publishStreamObserver = new PublishStreamObserver();
         requestStreamObserver = stub.publishBlockStream(publishStreamObserver);
-        this.blockStreamConfig = blockStreamConfig;
     }
 
     /**
@@ -72,8 +82,9 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
             blockItemsProtoc.add(Translator.fromPbj(blockItem));
         }
 
-        requestStreamObserver.onNext(
-                PublishStreamRequest.newBuilder().addAllBlockItems(blockItemsProtoc).build());
+        requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
+                .addAllBlockItems(blockItemsProtoc)
+                .build());
 
         return true;
     }
@@ -91,12 +102,17 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
         List<List<com.hedera.hapi.block.stream.protoc.BlockItem>> streamingBatches =
                 ChunkUtils.chunkify(blockItemsProtoc, blockStreamConfig.blockItemsBatchSize());
-        for (List<com.hedera.hapi.block.stream.protoc.BlockItem> streamingBatch :
-                streamingBatches) {
-            requestStreamObserver.onNext(
-                    PublishStreamRequest.newBuilder().addAllBlockItems(streamingBatch).build());
+        for (List<com.hedera.hapi.block.stream.protoc.BlockItem> streamingBatch : streamingBatches) {
+            requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
+                    .addAllBlockItems(streamingBatch)
+                    .build());
         }
 
         return true;
+    }
+
+    @Override
+    public void shutdown() {
+        channel.shutdown();
     }
 }
