@@ -37,9 +37,7 @@ import javax.inject.Inject;
 public class BlockStreamSimulatorApp {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
-    private final BlockStreamManager blockStreamManager;
     private final PublishStreamGrpcClient publishStreamGrpcClient;
-    private final BlockStreamConfig blockStreamConfig;
     private final SimulatorModeHandler simulatorModeHandler;
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
@@ -55,12 +53,13 @@ public class BlockStreamSimulatorApp {
             @NonNull Configuration configuration,
             @NonNull BlockStreamManager blockStreamManager,
             @NonNull PublishStreamGrpcClient publishStreamGrpcClient) {
-        this.blockStreamManager = requireNonNull(blockStreamManager);
+        requireNonNull(blockStreamManager);
+
         this.publishStreamGrpcClient = requireNonNull(publishStreamGrpcClient);
+        final BlockStreamConfig blockStreamConfig =
+                requireNonNull(configuration.getConfigData(BlockStreamConfig.class));
 
-        blockStreamConfig = requireNonNull(configuration.getConfigData(BlockStreamConfig.class));
-
-        SimulatorMode simulatorMode = blockStreamConfig.simulatorMode();
+        final SimulatorMode simulatorMode = blockStreamConfig.simulatorMode();
         switch (simulatorMode) {
             case PUBLISHER -> simulatorModeHandler =
                     new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient, blockStreamManager);
