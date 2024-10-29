@@ -51,6 +51,7 @@ public class PublisherModeHandler implements SimulatorModeHandler {
      *
      * @param blockStreamConfig the configuration data for managing block streams
      * @param publishStreamGrpcClient the grpc client used for streaming blocks
+     * @param blockStreamManager the block stream manager, responsible for generating blocks
      */
     public PublisherModeHandler(
             @NonNull final BlockStreamConfig blockStreamConfig,
