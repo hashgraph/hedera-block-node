@@ -39,6 +39,7 @@ import java.io.IOException;
  */
 public class PublisherModeHandler implements SimulatorModeHandler {
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final BlockStreamManager blockStreamManager;
     private final BlockStreamConfig blockStreamConfig;
     private final PublishStreamGrpcClient publishStreamGrpcClient;
     private final StreamingMode streamingMode;
@@ -53,11 +54,11 @@ public class PublisherModeHandler implements SimulatorModeHandler {
      */
     public PublisherModeHandler(
             @NonNull final BlockStreamConfig blockStreamConfig,
-            @NonNull PublishStreamGrpcClient publishStreamGrpcClient) {
-        requireNonNull(blockStreamConfig);
-        requireNonNull(publishStreamGrpcClient);
-        this.blockStreamConfig = blockStreamConfig;
-        this.publishStreamGrpcClient = publishStreamGrpcClient;
+            @NonNull final PublishStreamGrpcClient publishStreamGrpcClient,
+            @NonNull final BlockStreamManager blockStreamManager) {
+        this.blockStreamConfig = requireNonNull(blockStreamConfig);
+        this.publishStreamGrpcClient = requireNonNull(publishStreamGrpcClient);
+        this.blockStreamManager = requireNonNull(blockStreamManager);
 
         streamingMode = blockStreamConfig.streamingMode();
         delayBetweenBlockItems = blockStreamConfig.delayBetweenBlockItems();
@@ -68,20 +69,16 @@ public class PublisherModeHandler implements SimulatorModeHandler {
      * Starts the simulator and initiate streaming, depending on the working mode.
      */
     @Override
-    public void start(@NonNull BlockStreamManager blockStreamManager)
-            throws BlockSimulatorParsingException, IOException, InterruptedException {
-        requireNonNull(blockStreamManager);
-
+    public void start() throws BlockSimulatorParsingException, IOException, InterruptedException {
         if (streamingMode == StreamingMode.MILLIS_PER_BLOCK) {
-            millisPerBlockStreaming(blockStreamManager);
+            millisPerBlockStreaming();
         } else {
-            constantRateStreaming(blockStreamManager);
+            constantRateStreaming();
         }
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped streaming.");
     }
 
-    private void millisPerBlockStreaming(@NonNull BlockStreamManager blockStreamManager)
-            throws IOException, InterruptedException, BlockSimulatorParsingException {
+    private void millisPerBlockStreaming() throws IOException, InterruptedException, BlockSimulatorParsingException {
 
         final long secondsPerBlockNanos = (long) millisecondsPerBlock * NANOS_PER_MILLI;
 
@@ -107,8 +104,7 @@ public class PublisherModeHandler implements SimulatorModeHandler {
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
     }
 
-    private void constantRateStreaming(@NonNull BlockStreamManager blockStreamManager)
-            throws InterruptedException, IOException, BlockSimulatorParsingException {
+    private void constantRateStreaming() throws InterruptedException, IOException, BlockSimulatorParsingException {
         int delayMSBetweenBlockItems = delayBetweenBlockItems / NANOS_PER_MILLI;
         int delayNSBetweenBlockItems = delayBetweenBlockItems % NANOS_PER_MILLI;
         boolean streamBlockItem = true;

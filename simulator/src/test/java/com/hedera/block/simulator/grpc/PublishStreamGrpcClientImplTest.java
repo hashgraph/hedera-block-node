@@ -84,10 +84,14 @@ class PublishStreamGrpcClientImplTest {
         publishStreamGrpcClient.init();
 
         Field channelField = PublishStreamGrpcClientImpl.class.getDeclaredField("channel");
-        channelField.setAccessible(true);
-
         ManagedChannel mockChannel = mock(ManagedChannel.class);
-        channelField.set(publishStreamGrpcClient, mockChannel);
+
+        try {
+            channelField.setAccessible(true);
+            channelField.set(publishStreamGrpcClient, mockChannel);
+        } finally {
+            channelField.setAccessible(false);
+        }
         publishStreamGrpcClient.shutdown();
 
         // Verify that channel.shutdown() was called

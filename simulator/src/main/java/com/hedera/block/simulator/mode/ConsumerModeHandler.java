@@ -19,7 +19,6 @@ package com.hedera.block.simulator.mode;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
-import com.hedera.block.simulator.generator.BlockStreamManager;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
@@ -44,15 +43,14 @@ public class ConsumerModeHandler implements SimulatorModeHandler {
      * @param blockStreamConfig the configuration data for managing block streams
      */
     public ConsumerModeHandler(@NonNull final BlockStreamConfig blockStreamConfig) {
-        requireNonNull(blockStreamConfig);
-        this.blockStreamConfig = blockStreamConfig;
+        this.blockStreamConfig = requireNonNull(blockStreamConfig);
     }
 
     /**
      * Starts the simulator and initiate streaming, depending on the working mode.
      */
     @Override
-    public void start(@NonNull BlockStreamManager blockStreamManager) {
+    public void start() {
         throw new UnsupportedOperationException();
     }
 }

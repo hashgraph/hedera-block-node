@@ -16,6 +16,8 @@
 
 package com.hedera.block.simulator;
 
+import static java.util.Objects.requireNonNull;
+
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.types.SimulatorMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
@@ -53,24 +55,18 @@ public class BlockStreamSimulatorApp {
             @NonNull Configuration configuration,
             @NonNull BlockStreamManager blockStreamManager,
             @NonNull PublishStreamGrpcClient publishStreamGrpcClient) {
-        this.blockStreamManager = blockStreamManager;
-        this.publishStreamGrpcClient = publishStreamGrpcClient;
+        this.blockStreamManager = requireNonNull(blockStreamManager);
+        this.publishStreamGrpcClient = requireNonNull(publishStreamGrpcClient);
 
-        blockStreamConfig = configuration.getConfigData(BlockStreamConfig.class);
+        blockStreamConfig = requireNonNull(configuration.getConfigData(BlockStreamConfig.class));
 
         SimulatorMode simulatorMode = blockStreamConfig.simulatorMode();
         switch (simulatorMode) {
-            case PUBLISHER:
-                simulatorModeHandler = new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient);
-                break;
-            case CONSUMER:
-                simulatorModeHandler = new ConsumerModeHandler(blockStreamConfig);
-                break;
-            case BOTH:
-                simulatorModeHandler = new CombinedModeHandler(blockStreamConfig);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown SimulatorMode: " + simulatorMode);
+            case PUBLISHER -> simulatorModeHandler =
+                    new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient, blockStreamManager);
+            case CONSUMER -> simulatorModeHandler = new ConsumerModeHandler(blockStreamConfig);
+            case BOTH -> simulatorModeHandler = new CombinedModeHandler(blockStreamConfig);
+            default -> throw new IllegalArgumentException("Unknown SimulatorMode: " + simulatorMode);
         }
     }
 
@@ -86,7 +82,7 @@ public class BlockStreamSimulatorApp {
         publishStreamGrpcClient.init();
         isRunning.set(true);
 
-        simulatorModeHandler.start(this.blockStreamManager);
+        simulatorModeHandler.start();
     }
 
     /**

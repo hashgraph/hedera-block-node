@@ -17,10 +17,8 @@
 package com.hedera.block.simulator.mode;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
-import com.hedera.block.simulator.generator.BlockStreamManager;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -36,8 +34,7 @@ public class CombinedModeHandlerTest {
     void testStartThrowsUnsupportedOperationException() {
         MockitoAnnotations.openMocks(this);
         combinedModeHandler = new CombinedModeHandler(blockStreamConfig);
-        BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
 
-        assertThrows(UnsupportedOperationException.class, () -> combinedModeHandler.start(blockStreamManager));
+        assertThrows(UnsupportedOperationException.class, () -> combinedModeHandler.start());
     }
 }

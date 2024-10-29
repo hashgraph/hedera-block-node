@@ -17,8 +17,6 @@
 package com.hedera.block.simulator.mode;
 
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
-import com.hedera.block.simulator.generator.BlockStreamManager;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 
 /**
@@ -45,11 +43,9 @@ public interface SimulatorModeHandler {
      * configuration. The behavior
      * of this method depends on the specific working mode (e.g., consumer, publisher, both).
      *
-     * @param blockStreamManager the {@link BlockStreamManager} responsible for handling the block stream
      * @throws BlockSimulatorParsingException if an error occurs while parsing blocks
      * @throws IOException if an I/O error occurs during block streaming
      * @throws InterruptedException if the thread running the simulator is interrupted
      */
-    void start(@NonNull BlockStreamManager blockStreamManager)
-            throws BlockSimulatorParsingException, IOException, InterruptedException;
+    void start() throws BlockSimulatorParsingException, IOException, InterruptedException;
 }

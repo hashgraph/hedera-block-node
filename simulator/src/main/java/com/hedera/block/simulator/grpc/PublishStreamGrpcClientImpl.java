@@ -16,6 +16,8 @@
 
 package com.hedera.block.simulator.grpc;
 
+import static java.util.Objects.requireNonNull;
+
 import com.hedera.block.common.utils.ChunkUtils;
 import com.hedera.block.simulator.Translator;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
@@ -49,9 +51,10 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      * @param blockStreamConfig the block stream configuration
      */
     @Inject
-    public PublishStreamGrpcClientImpl(@NonNull GrpcConfig grpcConfig, @NonNull BlockStreamConfig blockStreamConfig) {
-        this.grpcConfig = grpcConfig;
-        this.blockStreamConfig = blockStreamConfig;
+    public PublishStreamGrpcClientImpl(
+            @NonNull final GrpcConfig grpcConfig, @NonNull final BlockStreamConfig blockStreamConfig) {
+        this.grpcConfig = requireNonNull(grpcConfig);
+        this.blockStreamConfig = requireNonNull(blockStreamConfig);
     }
 
     /**

@@ -17,10 +17,8 @@
 package com.hedera.block.simulator.mode;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
-import com.hedera.block.simulator.generator.BlockStreamManager;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -36,8 +34,7 @@ public class ConsumerModeHandlerTest {
     void testStartThrowsUnsupportedOperationException() {
         MockitoAnnotations.openMocks(this);
         consumerModeHandler = new ConsumerModeHandler(blockStreamConfig);
-        BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
 
-        assertThrows(UnsupportedOperationException.class, () -> consumerModeHandler.start(blockStreamManager));
+        assertThrows(UnsupportedOperationException.class, () -> consumerModeHandler.start());
     }
 }

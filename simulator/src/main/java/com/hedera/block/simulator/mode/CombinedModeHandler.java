@@ -19,7 +19,6 @@ package com.hedera.block.simulator.mode;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
-import com.hedera.block.simulator.generator.BlockStreamManager;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
@@ -43,8 +42,7 @@ public class CombinedModeHandler implements SimulatorModeHandler {
      * @param blockStreamConfig the configuration data for managing block streams
      */
     public CombinedModeHandler(@NonNull final BlockStreamConfig blockStreamConfig) {
-        requireNonNull(blockStreamConfig);
-        this.blockStreamConfig = blockStreamConfig;
+        this.blockStreamConfig = requireNonNull(blockStreamConfig);
     }
 
     /**
@@ -52,11 +50,10 @@ public class CombinedModeHandler implements SimulatorModeHandler {
      * of block stream. However, this method is currently not implemented, and will throw
      * an {@link UnsupportedOperationException}.
      *
-     * @param blockStreamManager the {@link BlockStreamManager} responsible for managing block streams
      * @throws UnsupportedOperationException as the method is not yet implemented
      */
     @Override
-    public void start(@NonNull BlockStreamManager blockStreamManager) {
+    public void start() {
         throw new UnsupportedOperationException();
     }
 }

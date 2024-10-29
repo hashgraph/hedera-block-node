@@ -16,8 +16,14 @@
 
 package com.hedera.block.simulator.mode;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.types.StreamingMode;
@@ -29,7 +35,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 public class PublisherModeHandlerTest {
 
@@ -55,7 +62,7 @@ public class PublisherModeHandlerTest {
         when(blockStreamConfig.streamingMode()).thenReturn(StreamingMode.MILLIS_PER_BLOCK);
         when(blockStreamConfig.millisecondsPerBlock()).thenReturn(0); // No delay for testing
 
-        publisherModeHandler = new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient);
+        publisherModeHandler = new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient, blockStreamManager);
 
         Block block1 = mock(Block.class);
         Block block2 = mock(Block.class);
@@ -65,7 +72,7 @@ public class PublisherModeHandlerTest {
                 .thenReturn(block2)
                 .thenReturn(null);
 
-        publisherModeHandler.start(blockStreamManager);
+        publisherModeHandler.start();
 
         verify(publishStreamGrpcClient).streamBlock(block1);
         verify(publishStreamGrpcClient).streamBlock(block2);
@@ -77,11 +84,11 @@ public class PublisherModeHandlerTest {
     void testStartWithMillisPerBlockStreaming_NoBlocks() throws Exception {
         when(blockStreamConfig.streamingMode()).thenReturn(StreamingMode.MILLIS_PER_BLOCK);
 
-        publisherModeHandler = new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient);
+        publisherModeHandler = new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient, blockStreamManager);
 
         when(blockStreamManager.getNextBlock()).thenReturn(null);
 
-        publisherModeHandler.start(blockStreamManager);
+        publisherModeHandler.start();
 
         verify(publishStreamGrpcClient, never()).streamBlock(any(Block.class));
         verify(blockStreamManager).getNextBlock();
@@ -93,7 +100,7 @@ public class PublisherModeHandlerTest {
         when(blockStreamConfig.delayBetweenBlockItems()).thenReturn(0);
         when(blockStreamConfig.maxBlockItemsToStream()).thenReturn(5);
 
-        publisherModeHandler = new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient);
+        publisherModeHandler = new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient, blockStreamManager);
 
         Block block1 = mock(Block.class);
         Block block2 = mock(Block.class);
@@ -111,7 +118,7 @@ public class PublisherModeHandlerTest {
                 .thenReturn(block2)
                 .thenReturn(null);
 
-        publisherModeHandler.start(blockStreamManager);
+        publisherModeHandler.start();
 
         verify(publishStreamGrpcClient).streamBlock(block1);
         verify(publishStreamGrpcClient).streamBlock(block2);
@@ -122,11 +129,11 @@ public class PublisherModeHandlerTest {
     @Test
     void testStartWithConstantRateStreaming_NoBlocks() throws Exception {
         when(blockStreamConfig.streamingMode()).thenReturn(StreamingMode.CONSTANT_RATE);
-        publisherModeHandler = new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient);
+        publisherModeHandler = new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient, blockStreamManager);
 
         when(blockStreamManager.getNextBlock()).thenReturn(null);
 
-        publisherModeHandler.start(blockStreamManager);
+        publisherModeHandler.start();
 
         verify(publishStreamGrpcClient, never()).streamBlock(any(Block.class));
         verify(blockStreamManager).getNextBlock();
@@ -136,11 +143,11 @@ public class PublisherModeHandlerTest {
     void testStartWithExceptionDuringStreaming() throws Exception {
         when(blockStreamConfig.streamingMode()).thenReturn(StreamingMode.MILLIS_PER_BLOCK);
 
-        publisherModeHandler = new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient);
+        publisherModeHandler = new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient, blockStreamManager);
 
         when(blockStreamManager.getNextBlock()).thenThrow(new IOException("Test exception"));
 
-        assertThrows(IOException.class, () -> publisherModeHandler.start(blockStreamManager));
+        assertThrows(IOException.class, () -> publisherModeHandler.start());
 
         verify(publishStreamGrpcClient, never()).streamBlock(any(Block.class));
         verify(blockStreamManager).getNextBlock();
