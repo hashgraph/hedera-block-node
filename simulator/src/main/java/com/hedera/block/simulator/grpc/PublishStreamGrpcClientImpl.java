@@ -17,6 +17,7 @@
 package com.hedera.block.simulator.grpc;
 
 import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlockItemsSent;
+import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.common.utils.ChunkUtils;
@@ -40,6 +41,8 @@ import javax.inject.Inject;
  * The PublishStreamGrpcClientImpl class provides the methods to stream the block and block item.
  */
 public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
+
+    private System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private StreamObserver<PublishStreamRequest> requestStreamObserver;
     private final BlockStreamConfig blockStreamConfig;
@@ -87,12 +90,16 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
         List<com.hedera.hapi.block.stream.protoc.BlockItem> blockItemsProtoc = new ArrayList<>();
         for (BlockItem blockItem : blockItems) {
             blockItemsProtoc.add(Translator.fromPbj(blockItem));
-            metricsService.get(LiveBlockItemsSent).increment();
         }
 
         requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
                 .addAllBlockItems(blockItemsProtoc)
                 .build());
+        metricsService.get(LiveBlockItemsSent).add(blockItemsProtoc.size());
+        LOGGER.log(
+                INFO,
+                "Total Block items sent: {0}",
+                metricsService.get(LiveBlockItemsSent).get());
 
         return true;
     }
@@ -114,7 +121,11 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
             requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
                     .addAllBlockItems(streamingBatch)
                     .build());
-            metricsService.get(LiveBlockItemsSent).increment();
+            metricsService.get(LiveBlockItemsSent).add(streamingBatch.size());
+            LOGGER.log(
+                    INFO,
+                    "Total Block items sent: {0}",
+                    metricsService.get(LiveBlockItemsSent).get());
         }
 
         return true;
