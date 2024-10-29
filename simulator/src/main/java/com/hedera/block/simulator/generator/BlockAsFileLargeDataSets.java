@@ -103,7 +103,7 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
             LOGGER.log(INFO, "block loaded with items size= " + block.items().size());
             return block;
         } catch (final ParseException e) {
-            throw new BlockSimulatorParsingException(e.getMessage());
+            throw new BlockSimulatorParsingException(e);
         }
     }
 }

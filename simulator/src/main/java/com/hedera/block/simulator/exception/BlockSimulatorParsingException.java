@@ -23,7 +23,16 @@ public class BlockSimulatorParsingException extends Exception {
      *
      * @param message the detail message
      */
-    public BlockSimulatorParsingException(String message) {
+    public BlockSimulatorParsingException(final String message) {
         super(message);
+    }
+
+    /**
+     * Constructs a new parsing exception with the specified cause.
+     *
+     * @param cause the cause of the exception, could be null, see super javadoc
+     */
+    public BlockSimulatorParsingException(final Throwable cause) {
+        super(cause);
     }
 }
