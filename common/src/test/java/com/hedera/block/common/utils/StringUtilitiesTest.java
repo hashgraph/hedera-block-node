@@ -26,30 +26,47 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+/**
+ * Tests for {@link StringUtilities} functionality.
+ */
 class StringUtilitiesTest {
+    /**
+     * This test aims to verify that the {@link StringUtilities#requireNotBlank(String)} will return the input
+     * 'toTest' parameter if the non-blank check passes.
+     *
+     * @param toTest parameterized, the string to test
+     */
     @ParameterizedTest
     @MethodSource("nonBlankStrings")
-    void test_requireNotBlank_ReturnsInputStringIfItIsNotBlankOrNull(final String toTest) {
+    void testRequireNotBlankPass(final String toTest) {
         final String actual = StringUtilities.requireNotBlank(toTest);
         assertThat(actual).isNotNull().isNotBlank().isEqualTo(toTest);
     }
 
+    /**
+     * This test aims to verify that the {@link StringUtilities#requireNotBlank(String)} will throw an
+     * {@link IllegalArgumentException} if the non-blank check fails.
+     *
+     * @param toTest parameterized, the string to test
+     */
     @ParameterizedTest
     @MethodSource("blankStrings")
-    void test_requireNotBlank_ThrowsIllegalArgumentExceptionIfInputStringIsBlank(
-            final String toTest) {
+    void testRequireNotBlankFail(final String toTest) {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> StringUtilities.requireNotBlank(toTest));
     }
 
+    /**
+     * This test aims to verify that the {@link StringUtilities#requireNotBlank(String)} will throw a
+     * {@link NullPointerException} if the input string to test is null.
+     */
     @Test
     void test_requireNotBlank_ThrowsNullPointerExceptionIfInputStringIsNull() {
         assertThatNullPointerException().isThrownBy(() -> StringUtilities.requireNotBlank(null));
     }
 
     /**
-     * Some simple non-blank strings only with spaces and new lines and tabs (there are more
-     * whitespace chars).
+     * Some simple non-blank strings only with spaces and new lines and tabs (there are more whitespace chars).
      */
     private static Stream<Arguments> nonBlankStrings() {
         return Stream.of(
