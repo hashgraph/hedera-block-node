@@ -93,7 +93,7 @@ public class BlockAsDirWriterTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(blockNodeContext)
-                .filePerms(DEFAULT_TEST_FOLDER_PERMISSIONS)
+                .folderPermissions(DEFAULT_TEST_FOLDER_PERMISSIONS)
                 .build();
         for (int i = 0; i < 10; i++) {
             if (i == 9) {

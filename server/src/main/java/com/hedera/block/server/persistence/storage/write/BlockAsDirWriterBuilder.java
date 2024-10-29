@@ -37,7 +37,7 @@ import java.util.Set;
  */
 public final class BlockAsDirWriterBuilder {
     private final BlockNodeContext blockNodeContext;
-    private FileAttribute<Set<PosixFilePermission>> filePerms;
+    private FileAttribute<Set<PosixFilePermission>> folderPermissions;
     private BlockRemover blockRemover;
 
     private BlockAsDirWriterBuilder(@NonNull final BlockNodeContext blockNodeContext) {
@@ -62,12 +62,13 @@ public final class BlockAsDirWriterBuilder {
      * Optionally, provide file permissions for the block writer to use when managing block files
      * and directories.
      *
-     * @param filePerms the file permissions to use when managing block files and directories.
+     * @param folderPermissions the folder permissions to use when managing block files as directories.
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
-    public BlockAsDirWriterBuilder filePerms(@NonNull final FileAttribute<Set<PosixFilePermission>> filePerms) {
-        this.filePerms = Objects.requireNonNull(filePerms);
+    public BlockAsDirWriterBuilder folderPermissions(
+            @NonNull final FileAttribute<Set<PosixFilePermission>> folderPermissions) {
+        this.folderPermissions = Objects.requireNonNull(folderPermissions);
         return this;
     }
 
@@ -95,6 +96,6 @@ public final class BlockAsDirWriterBuilder {
      */
     @NonNull
     public BlockWriter<List<BlockItem>> build() throws IOException {
-        return new BlockAsDirWriter(blockRemover, filePerms, blockNodeContext);
+        return new BlockAsDirWriter(blockRemover, folderPermissions, blockNodeContext);
     }
 }

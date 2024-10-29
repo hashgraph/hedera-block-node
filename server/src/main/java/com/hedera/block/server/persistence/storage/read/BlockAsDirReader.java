@@ -50,17 +50,18 @@ import java.util.Set;
 class BlockAsDirReader implements BlockReader<Block> {
     private final Logger LOGGER = System.getLogger(getClass().getName());
     private final Path blockNodeRootPath;
-    private final FileAttribute<Set<PosixFilePermission>> filePerms;
+    private final FileAttribute<Set<PosixFilePermission>> folderPermissions;
 
     /**
      * Constructor for the BlockAsDirReader class. It initializes the BlockAsDirReader with the
      * given parameters.
      *
      * @param config the configuration to retrieve the block node root path
-     * @param filePerms the file permissions to set on the block node root path, default  will be used if null provided
+     * @param folderPermissions the folder permissions to set on the block node root path, default  will be used if null provided
      */
     BlockAsDirReader(
-            @NonNull final PersistenceStorageConfig config, final FileAttribute<Set<PosixFilePermission>> filePerms) {
+            @NonNull final PersistenceStorageConfig config,
+            final FileAttribute<Set<PosixFilePermission>> folderPermissions) {
         LOGGER.log(INFO, "Initializing FileSystemBlockReader");
 
         final Path blockNodeRootPath = Path.of(config.rootPath());
@@ -70,11 +71,11 @@ class BlockAsDirReader implements BlockReader<Block> {
 
         this.blockNodeRootPath = blockNodeRootPath;
 
-        if (Objects.nonNull(filePerms)) {
-            this.filePerms = filePerms;
+        if (Objects.nonNull(folderPermissions)) {
+            this.folderPermissions = folderPermissions;
         } else {
             // default permissions for folders
-            this.filePerms = PosixFilePermissions.asFileAttribute(Set.of(
+            this.folderPermissions = PosixFilePermissions.asFileAttribute(Set.of(
                     PosixFilePermission.OWNER_READ,
                     PosixFilePermission.OWNER_WRITE,
                     PosixFilePermission.OWNER_EXECUTE,
@@ -187,7 +188,7 @@ class BlockAsDirReader implements BlockReader<Block> {
             try {
                 // If resetting the permissions fails or
                 // if the path is still unreadable, return true.
-                setPerm(path, filePerms.value());
+                setPerm(path, folderPermissions.value());
                 if (!path.toFile().canRead()) {
                     return true;
                 }

@@ -52,7 +52,8 @@ class FileUtilitiesTest {
     }
 
     @Test
-    void test_createFolderPathIfNotExists_DoesNotCreateFolderDirIfExists(@TempDir final Path tempDir) throws IOException {
+    void test_createFolderPathIfNotExists_DoesNotCreateFolderDirIfExists(@TempDir final Path tempDir)
+            throws IOException {
         final String newDir = "newDir";
         final Path toCreate = tempDir.resolve(newDir);
 

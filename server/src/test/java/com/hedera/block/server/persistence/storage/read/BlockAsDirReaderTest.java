@@ -110,7 +110,7 @@ public class BlockAsDirReaderTest {
         // For this test, build the Reader with ineffective repair permissions to
         // simulate a failed repair (root changed the perms, etc.)
         final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config)
-                .filePerms(TestUtils.getNoPerms())
+                .folderPermissions(TestUtils.getNoPerms())
                 .build();
         final Optional<Block> blockOpt = blockReader.read(1);
         assertTrue(blockOpt.isEmpty());
