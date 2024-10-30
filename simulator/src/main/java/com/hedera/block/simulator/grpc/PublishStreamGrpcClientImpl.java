@@ -35,6 +35,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
 /**
@@ -47,6 +48,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
     private StreamObserver<PublishStreamRequest> requestStreamObserver;
     private final BlockStreamConfig blockStreamConfig;
     private final GrpcConfig grpcConfig;
+    private final AtomicBoolean allowNext = new AtomicBoolean(true);
     private ManagedChannel channel;
     private final MetricsService metricsService;
 
@@ -76,7 +78,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
                 .usePlaintext()
                 .build();
         BlockStreamServiceGrpc.BlockStreamServiceStub stub = BlockStreamServiceGrpc.newStub(channel);
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver();
+        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(allowNext);
         requestStreamObserver = stub.publishBlockStream(publishStreamObserver);
     }
 
@@ -110,6 +112,9 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Override
     public boolean streamBlock(Block block) {
+        if (!allowNext.get()) {
+            return false;
+        }
         List<com.hedera.hapi.block.stream.protoc.BlockItem> blockItemsProtoc = new ArrayList<>();
         for (BlockItem blockItem : block.items()) {
             blockItemsProtoc.add(Translator.fromPbj(blockItem));

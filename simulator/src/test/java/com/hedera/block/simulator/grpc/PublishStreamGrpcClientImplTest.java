@@ -17,6 +17,7 @@
 package com.hedera.block.simulator.grpc;
 
 import static com.hedera.block.simulator.TestUtils.getTestMetrics;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -86,6 +88,28 @@ class PublishStreamGrpcClientImplTest {
 
         boolean result1 = publishStreamGrpcClient.streamBlock(block1);
         assertTrue(result1);
+    }
+
+    @Test
+    void streamBlockReturnsFalse() throws NoSuchFieldException, IllegalAccessException {
+        BlockItem blockItem = BlockItem.newBuilder().build();
+        Block block = Block.newBuilder().items(blockItem).build();
+
+        PublishStreamGrpcClientImpl publishStreamGrpcClient =
+                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig);
+        publishStreamGrpcClient.init();
+        Field allowNextField = PublishStreamGrpcClientImpl.class.getDeclaredField("allowNext");
+
+        try {
+            allowNextField.setAccessible(true);
+            AtomicBoolean allowNext = (AtomicBoolean) allowNextField.get(publishStreamGrpcClient);
+            allowNext.set(false);
+        } finally {
+            allowNextField.setAccessible(false);
+        }
+
+        boolean result = publishStreamGrpcClient.streamBlock(block);
+        assertFalse(result);
     }
 
     @Test

@@ -16,7 +16,11 @@
 
 package com.hedera.block.simulator.grpc;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.hedera.hapi.block.protoc.PublishStreamResponse;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 class PublishStreamObserverTest {
@@ -24,19 +28,28 @@ class PublishStreamObserverTest {
     @Test
     void onNext() {
         PublishStreamResponse response = PublishStreamResponse.newBuilder().build();
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver();
+        AtomicBoolean allowNext = new AtomicBoolean(true);
+
+        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(allowNext);
         publishStreamObserver.onNext(response);
+        assertTrue(allowNext.get(), "allowNext should remain true after onCompleted");
     }
 
     @Test
     void onError() {
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver();
+        AtomicBoolean allowNext = new AtomicBoolean(true);
+        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(allowNext);
+
         publishStreamObserver.onError(new Throwable());
+        assertFalse(allowNext.get(), "allowNext should be set to false after onError");
     }
 
     @Test
     void onCompleted() {
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver();
+        AtomicBoolean allowNext = new AtomicBoolean(true);
+        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(allowNext);
+
         publishStreamObserver.onCompleted();
+        assertTrue(allowNext.get(), "allowNext should remain true after onCompleted");
     }
 }

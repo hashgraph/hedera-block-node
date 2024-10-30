@@ -80,13 +80,17 @@ public class PublisherModeHandler implements SimulatorModeHandler {
     }
 
     private void millisPerBlockStreaming() throws IOException, InterruptedException, BlockSimulatorParsingException {
-
         final long secondsPerBlockNanos = (long) millisecondsPerBlock * NANOS_PER_MILLI;
 
         Block nextBlock = blockStreamManager.getNextBlock();
         while (nextBlock != null) {
             long startTime = System.nanoTime();
-            publishStreamGrpcClient.streamBlock(nextBlock);
+            final boolean streamSuccess = publishStreamGrpcClient.streamBlock(nextBlock);
+            if (!streamSuccess) {
+                LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator stopped streaming due to errors.");
+                break;
+            }
+
             long elapsedTime = System.nanoTime() - startTime;
             long timeToDelay = secondsPerBlockNanos - elapsedTime;
             if (timeToDelay > 0) {
@@ -102,7 +106,6 @@ public class PublisherModeHandler implements SimulatorModeHandler {
             }
             nextBlock = blockStreamManager.getNextBlock();
         }
-        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped");
     }
 
     private void constantRateStreaming() throws InterruptedException, IOException, BlockSimulatorParsingException {
@@ -120,7 +123,11 @@ public class PublisherModeHandler implements SimulatorModeHandler {
                 break;
             }
 
-            publishStreamGrpcClient.streamBlock(block);
+            final boolean streamSuccess = publishStreamGrpcClient.streamBlock(block);
+            if (!streamSuccess) {
+                LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator stopped streaming due to errors.");
+                break;
+            }
             blockItemsStreamed += block.items().size();
 
             Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);
