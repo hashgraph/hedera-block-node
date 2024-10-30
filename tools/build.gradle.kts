@@ -32,6 +32,4 @@ mainModuleInfo {
     runtimeOnly("io.grpc.netty.shaded")
 }
 
-testModuleInfo {
-    requiresStatic("com.github.spotbugs.annotations")
-}
+testModuleInfo { requiresStatic("com.github.spotbugs.annotations") }

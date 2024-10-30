@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hedera.block.tools.commands;
 
 import com.hedera.hapi.block.stream.Block;
@@ -36,11 +52,15 @@ public class ConvertToJson implements Runnable {
     private File[] files;
 
     @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal"})
-    @Option(names = {"-t", "--transactions"}, description = "expand transactions")
+    @Option(
+            names = {"-t", "--transactions"},
+            description = "expand transactions")
     private boolean expandTransactions = false;
 
     @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal"})
-    @Option(names = {"-ms", "--min-size"}, description = "minimum file size in megabytes")
+    @Option(
+            names = {"-ms", "--min-size"},
+            description = "minimum file size in megabytes")
     private double minSizeMb = Double.MAX_VALUE;
 
     /**
@@ -66,15 +86,17 @@ public class ConvertToJson implements Runnable {
                         }
                     })
                     .filter(Files::isRegularFile)
-                    .filter(file -> file.getFileName().toString().endsWith(".blk") || file.getFileName().toString()
-                            .endsWith(".blk.gz"))
-                    .filter(file -> { // handle min file size
-                        try {
-                            return minSizeMb == Double.MAX_VALUE || Files.size(file) / 1024.0 / 1024.0 >= minSizeMb;
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
+                    .filter(file -> file.getFileName().toString().endsWith(".blk")
+                            || file.getFileName().toString().endsWith(".blk.gz"))
+                    .filter(
+                            file -> { // handle min file size
+                                try {
+                                    return minSizeMb == Double.MAX_VALUE
+                                            || Files.size(file) / 1024.0 / 1024.0 >= minSizeMb;
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            })
                     .sorted(Comparator.comparing(file -> file.getFileName().toString()))
                     .parallel()
                     .forEach(this::convert);
@@ -99,11 +121,15 @@ public class ConvertToJson implements Runnable {
             }
             final Block block = Block.PROTOBUF.parse(Bytes.wrap(uncompressedData));
             writeJsonBlock(block, outputFile);
-            final long numOfTransactions = block.items().stream().filter(BlockItem::hasEventTransaction)
+            final long numOfTransactions = block.items().stream()
+                    .filter(BlockItem::hasEventTransaction)
                     .count();
-            final String blockNumber = block.items().size() > 1 && block.items().getFirst().hasBlockHeader() ?
-                    String.valueOf(Objects.requireNonNull(block.items().getFirst().blockHeader()).number())
-                    : "unknown";
+            final String blockNumber =
+                    block.items().size() > 1 && block.items().getFirst().hasBlockHeader()
+                            ? String.valueOf(Objects.requireNonNull(
+                                            block.items().getFirst().blockHeader())
+                                    .number())
+                            : "unknown";
             System.out.println("Converted \"" + blockProtoFile.getFileName() + "\" "
                     + "Block [" + blockNumber + "] "
                     + "contains = " + block.items().size() + " items, " + numOfTransactions + " transactions");
@@ -128,16 +154,17 @@ public class ConvertToJson implements Runnable {
                     .filter(item -> item.eventTransaction().hasApplicationTransaction())
                     .map(item -> {
                         try {
-                            return "          " + TransactionBody.JSON.toJSON(
-                                            TransactionBody.PROTOBUF.parse(
-                                                    SignedTransaction.PROTOBUF.parse(
-                                                                    Transaction.PROTOBUF.parse(
-                                                                                    item.eventTransaction().applicationTransaction())
-                                                                            .signedTransactionBytes())
-                                                            .bodyBytes()))
-                                    .replaceAll("\n", "\n          ");
+                            return "          "
+                                    + TransactionBody.JSON
+                                            .toJSON(TransactionBody.PROTOBUF.parse(SignedTransaction.PROTOBUF
+                                                    .parse(Transaction.PROTOBUF
+                                                            .parse(item.eventTransaction()
+                                                                    .applicationTransaction())
+                                                            .signedTransactionBytes())
+                                                    .bodyBytes()))
+                                            .replaceAll("\n", "\n          ");
                         } catch (ParseException e) {
-                            System.err.println("Error parsing transaction body : "+e.getMessage());
+                            System.err.println("Error parsing transaction body : " + e.getMessage());
                             throw new RuntimeException(e);
                         }
                     })

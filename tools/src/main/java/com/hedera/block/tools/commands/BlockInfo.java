@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hedera.block.tools.commands;
 
 import com.hedera.hapi.block.stream.Block;
@@ -30,23 +46,31 @@ import picocli.CommandLine.Parameters;
 /**
  * Command line command that prints info for block files
  */
-@SuppressWarnings({"DataFlowIssue", "unused", "StringConcatenationInsideStringBufferAppend", "DuplicatedCode",
-        "FieldMayBeFinal"})
+@SuppressWarnings({
+    "DataFlowIssue",
+    "unused",
+    "StringConcatenationInsideStringBufferAppend",
+    "DuplicatedCode",
+    "FieldMayBeFinal"
+})
 @Command(name = "info", description = "Prints info for block files")
 public class BlockInfo implements Runnable {
 
     @Parameters(index = "0..*")
     private File[] files;
 
-    @Option(names = {"-ms", "--min-size"},
+    @Option(
+            names = {"-ms", "--min-size"},
             description = "Filter to only files bigger than this minimum file size in megabytes")
     private double minSizeMb = Double.MAX_VALUE;
 
-    @Option(names = {"-c", "--csv"},
+    @Option(
+            names = {"-c", "--csv"},
             description = "Enable CSV output mode (default: ${DEFAULT-VALUE})")
     private boolean csvMode = false;
 
-    @Option(names = {"-o", "--output-file"},
+    @Option(
+            names = {"-o", "--output-file"},
             description = "Output to file rather than stdout")
     private File outputFile;
 
@@ -83,14 +107,15 @@ public class BlockInfo implements Runnable {
             }
             // collect all the block file paths sorted by file name
             final List<Path> blockFiles = Arrays.stream(files)
-                    .filter(f -> { // filter out non existent files
-                        if (!f.exists()) {
-                            System.err.println("File not found : " + f);
-                            return false;
-                        } else {
-                            return true;
-                        }
-                    })
+                    .filter(
+                            f -> { // filter out non existent files
+                                if (!f.exists()) {
+                                    System.err.println("File not found : " + f);
+                                    return false;
+                                } else {
+                                    return true;
+                                }
+                            })
                     .map(File::toPath)
                     .flatMap(path -> {
                         try {
@@ -100,21 +125,21 @@ public class BlockInfo implements Runnable {
                         }
                     })
                     .filter(Files::isRegularFile)
-                    .filter(file -> file.getFileName().toString().endsWith(".blk") || file.getFileName().toString()
-                            .endsWith(".blk.gz"))
-                    .filter(file -> { // handle min file size
-                        try {
-                            return minSizeMb == Double.MAX_VALUE || Files.size(file) / 1024.0 / 1024.0 >= minSizeMb;
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
+                    .filter(file -> file.getFileName().toString().endsWith(".blk")
+                            || file.getFileName().toString().endsWith(".blk.gz"))
+                    .filter(
+                            file -> { // handle min file size
+                                try {
+                                    return minSizeMb == Double.MAX_VALUE
+                                            || Files.size(file) / 1024.0 / 1024.0 >= minSizeMb;
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            })
                     .sorted(Comparator.comparing(file -> file.getFileName().toString()))
                     .toList();
             // create stream of block info strings
-            final var blockInfoStream = blockFiles.stream()
-                    .parallel()
-                    .map(this::blockInfo);
+            final var blockInfoStream = blockFiles.stream().parallel().map(this::blockInfo);
             // create CSV header line
             final String csvHeader = "\"Block\",\"Items\",\"Transactions\",\"Java Objects\","
                     + "\"Original Size (MB)\",\"Uncompressed Size(MB)\",\"Compression\"";
@@ -125,15 +150,17 @@ public class BlockInfo implements Runnable {
                     System.exit(1);
                 }
                 AtomicInteger completedFileCount = new AtomicInteger(0);
-                try(var writer = Files.newBufferedWriter(outputFile.toPath())) {
+                try (var writer = Files.newBufferedWriter(outputFile.toPath())) {
                     if (csvMode) {
                         writer.write(csvHeader);
                         writer.newLine();
                     }
                     printProgress(0, blockFiles.size(), 0);
                     blockInfoStream.forEachOrdered(line -> {
-                        printProgress((double) completedFileCount.incrementAndGet() / blockFiles.size(),
-                                blockFiles.size(), completedFileCount.get());
+                        printProgress(
+                                (double) completedFileCount.incrementAndGet() / blockFiles.size(),
+                                blockFiles.size(),
+                                completedFileCount.get());
                         try {
                             writer.write(line);
                             writer.newLine();
@@ -162,21 +189,29 @@ public class BlockInfo implements Runnable {
                 System.out.printf("    Total Blocks                               = %,d \n", totalBlocks.get());
                 System.out.printf("    Total Transactions                         = %,d \n", totalTransactions.get());
                 System.out.printf("    Total Items                                = %,d \n", totalItems.get());
-                System.out.printf("    Total Bytes Compressed                     = %,.2f MB\n",
+                System.out.printf(
+                        "    Total Bytes Compressed                     = %,.2f MB\n",
                         totalBytesCompressed.get() / 1024.0 / 1024.0);
-                System.out.printf("    Total Bytes Uncompressed                   = %,.2f MB\n",
+                System.out.printf(
+                        "    Total Bytes Uncompressed                   = %,.2f MB\n",
                         totalBytesUncompressed.get() / 1024.0 / 1024.0);
-                System.out.printf("    Average transactions per block             = %,.2f \n",
+                System.out.printf(
+                        "    Average transactions per block             = %,.2f \n",
                         totalTransactions.get() / (double) totalBlocks.get());
-                System.out.printf("    Average items per transaction              = %,.2f \n",
+                System.out.printf(
+                        "    Average items per transaction              = %,.2f \n",
                         totalItems.get() / (double) totalTransactions.get());
-                System.out.printf("    Average uncompressed bytes per transaction = %,d \n",
+                System.out.printf(
+                        "    Average uncompressed bytes per transaction = %,d \n",
                         totalTransactions.get() == 0 ? 0 : (totalBytesUncompressed.get() / totalTransactions.get()));
-                System.out.printf("    Average compressed bytes per transaction   = %,d \n",
+                System.out.printf(
+                        "    Average compressed bytes per transaction   = %,d \n",
                         totalTransactions.get() == 0 ? 0 : totalBytesCompressed.get() / totalTransactions.get());
-                System.out.printf("    Average uncompressed bytes per item        = %,d \n",
+                System.out.printf(
+                        "    Average uncompressed bytes per item        = %,d \n",
                         totalItems.get() == 0 ? 0 : totalBytesUncompressed.get() / totalItems.get());
-                System.out.printf("    Average compressed bytes per item          = %,d \n",
+                System.out.printf(
+                        "    Average compressed bytes per item          = %,d \n",
                         totalItems.get() == 0 ? 0 : totalBytesCompressed.get() / totalItems.get());
                 System.out.println("=========================================================");
             }
@@ -200,7 +235,8 @@ public class BlockInfo implements Runnable {
         for (; i < width; i++) {
             System.out.print(" ");
         }
-        System.out.printf("] %.0f%% completed %,d of %,d block files", progress * 100, completedBlockFiles, totalBlockFiles);
+        System.out.printf(
+                "] %.0f%% completed %,d of %,d block files", progress * 100, completedBlockFiles, totalBlockFiles);
     }
 
     /**
@@ -220,13 +256,10 @@ public class BlockInfo implements Runnable {
             long start = System.currentTimeMillis();
             final Block block = Block.PROTOBUF.parse(Bytes.wrap(uncompressedData));
             long end = System.currentTimeMillis();
-            return blockInfo(block,
-                    end - start,
-                    Files.size(blockProtoFile),
-                    uncompressedData.length);
+            return blockInfo(block, end - start, Files.size(blockProtoFile), uncompressedData.length);
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
-            sw.append("Error processing file : "+blockProtoFile+"\n");
+            sw.append("Error processing file : " + blockProtoFile + "\n");
             e.printStackTrace(new java.io.PrintWriter(sw));
             return sw.toString();
         }
@@ -243,7 +276,8 @@ public class BlockInfo implements Runnable {
      */
     public String blockInfo(Block block, long parseTimeMs, long originalFileSizeBytes, long uncompressedFileSizeBytes) {
         final StringBuffer output = new StringBuffer();
-        long numOfTransactions = block.items().stream().filter(BlockItem::hasEventTransaction).count();
+        long numOfTransactions =
+                block.items().stream().filter(BlockItem::hasEventTransaction).count();
         totalBlocks.incrementAndGet();
         totalTransactions.addAndGet(numOfTransactions);
         totalItems.addAndGet(block.items().size());
@@ -270,35 +304,38 @@ public class BlockInfo implements Runnable {
                     "    Original File Size = %,.2f MB, Uncompressed File Size = %,.2f MB, Compression = %.2f%%\n",
                     originalFileSizeMb, uncompressedFileSizeMb, compressionPercent));
         }
-        Map<String,Long> transactionTypeCounts = new HashMap<>();
+        Map<String, Long> transactionTypeCounts = new HashMap<>();
         List<String> unknownTransactionInfo = new ArrayList<>();
         long numOfSystemTransactions = block.items().stream()
                 .filter(BlockItem::hasEventTransaction)
                 .filter(item -> item.eventTransaction().hasStateSignatureTransaction())
                 .count();
         if (numOfSystemTransactions > 0) {
-            transactionTypeCounts.put("SystemSignature",numOfTransactions);
+            transactionTypeCounts.put("SystemSignature", numOfTransactions);
         }
         block.items().stream()
                 .filter(BlockItem::hasEventTransaction)
                 .map(item -> {
-                    if(item.eventTransaction().hasStateSignatureTransaction()) {
+                    if (item.eventTransaction().hasStateSignatureTransaction()) {
                         return "SystemSignature";
                     } else if (item.eventTransaction().hasApplicationTransaction()) {
                         try {
-                            final Transaction transaction = Transaction.PROTOBUF.parse(item.eventTransaction().applicationTransaction());
+                            final Transaction transaction = Transaction.PROTOBUF.parse(
+                                    item.eventTransaction().applicationTransaction());
                             final TransactionBody transactionBody;
                             if (transaction.signedTransactionBytes().length() > 0) {
-                                transactionBody = TransactionBody.PROTOBUF.parse(
-                                        SignedTransaction.PROTOBUF.parse(transaction.signedTransactionBytes())
-                                                .bodyBytes());
+                                transactionBody = TransactionBody.PROTOBUF.parse(SignedTransaction.PROTOBUF
+                                        .parse(transaction.signedTransactionBytes())
+                                        .bodyBytes());
                             } else {
                                 transactionBody = TransactionBody.PROTOBUF.parse(transaction.bodyBytes());
                             }
                             final DataOneOfType kind = transactionBody.data().kind();
                             if (kind == DataOneOfType.UNSET) { // should never happen, unless there is a bug somewhere
                                 unknownTransactionInfo.add("    " + TransactionBody.JSON.toJSON(transactionBody));
-                                unknownTransactionInfo.add("    " + Transaction.JSON.toJSON(Transaction.PROTOBUF.parse(item.eventTransaction().applicationTransaction())));
+                                unknownTransactionInfo.add("    "
+                                        + Transaction.JSON.toJSON(Transaction.PROTOBUF.parse(
+                                                item.eventTransaction().applicationTransaction())));
                                 unknownTransactionInfo.add("    " + BlockItem.JSON.toJSON(item));
                             }
                             return kind.toString();
@@ -311,19 +348,21 @@ public class BlockInfo implements Runnable {
                         return "Unknown";
                     }
                 })
-                .forEach(kind -> transactionTypeCounts.put(kind, transactionTypeCounts.getOrDefault(kind, 0L)+1));
+                .forEach(kind -> transactionTypeCounts.put(kind, transactionTypeCounts.getOrDefault(kind, 0L) + 1));
         if (!csvMode) {
             transactionTypeCounts.forEach((k, v) -> output.append(String.format("    %s = %,d transactions\n", k, v)));
             if (!unknownTransactionInfo.isEmpty()) {
                 output.append("------------------------------------------\n");
                 output.append("    Unknown Transactions : \n");
-                unknownTransactionInfo.forEach(info -> output.append("    " + info).append("\n"));
+                unknownTransactionInfo.forEach(
+                        info -> output.append("    " + info).append("\n"));
                 output.append("------------------------------------------\n");
             }
         } else {
 
             // print CSV column headers
-            output.append(String.format("\"%d\",\"%d\",\"%d\",\"%d\",\"%.2f\",\"%.2f\",\"%.2f\"",
+            output.append(String.format(
+                    "\"%d\",\"%d\",\"%d\",\"%d\",\"%.2f\",\"%.2f\",\"%.2f\"",
                     block.items().getFirst().blockHeader().number(),
                     block.items().size(),
                     numOfTransactions,

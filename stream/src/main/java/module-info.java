@@ -5,7 +5,6 @@ module com.hedera.block.stream {
     exports com.hedera.hapi.block.stream;
     exports com.hedera.hapi.block.stream.input;
     exports com.hedera.hapi.block.stream.output;
-
     exports com.hedera.hapi.node.base;
     exports com.hedera.hapi.node.base.codec;
     exports com.hedera.hapi.node.base.schema;
