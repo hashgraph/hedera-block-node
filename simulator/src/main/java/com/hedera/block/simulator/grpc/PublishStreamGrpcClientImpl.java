@@ -48,7 +48,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
     private StreamObserver<PublishStreamRequest> requestStreamObserver;
     private final BlockStreamConfig blockStreamConfig;
     private final GrpcConfig grpcConfig;
-    private final AtomicBoolean allowNext = new AtomicBoolean(true);
+    private final AtomicBoolean streamEnabled;
     private ManagedChannel channel;
     private final MetricsService metricsService;
 
@@ -58,15 +58,18 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      * @param grpcConfig the gRPC configuration
      * @param blockStreamConfig the block stream configuration
      * @param metricsService the metrics service
+     * @param streamEnabled the flag responsible for enabling and disabling of the streaming
      */
     @Inject
     public PublishStreamGrpcClientImpl(
             @NonNull final GrpcConfig grpcConfig,
             @NonNull final BlockStreamConfig blockStreamConfig,
-            @NonNull final MetricsService metricsService) {
+            @NonNull final MetricsService metricsService,
+            @NonNull final AtomicBoolean streamEnabled) {
         this.grpcConfig = requireNonNull(grpcConfig);
         this.blockStreamConfig = requireNonNull(blockStreamConfig);
         this.metricsService = requireNonNull(metricsService);
+        this.streamEnabled = requireNonNull(streamEnabled);
     }
 
     /**
@@ -78,7 +81,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
                 .usePlaintext()
                 .build();
         BlockStreamServiceGrpc.BlockStreamServiceStub stub = BlockStreamServiceGrpc.newStub(channel);
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(allowNext);
+        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled);
         requestStreamObserver = stub.publishBlockStream(publishStreamObserver);
     }
 
@@ -112,7 +115,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Override
     public boolean streamBlock(Block block) {
-        if (!allowNext.get()) {
+        if (!streamEnabled.get()) {
             return false;
         }
         List<com.hedera.hapi.block.stream.protoc.BlockItem> blockItemsProtoc = new ArrayList<>();

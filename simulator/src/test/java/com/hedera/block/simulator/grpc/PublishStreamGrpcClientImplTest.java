@@ -48,6 +48,7 @@ class PublishStreamGrpcClientImplTest {
     GrpcConfig grpcConfig;
     BlockStreamConfig blockStreamConfig;
     MetricsService metricsService;
+    AtomicBoolean streamEnabled;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -58,6 +59,7 @@ class PublishStreamGrpcClientImplTest {
 
         Configuration config = TestUtils.getTestConfiguration();
         metricsService = new MetricsServiceImpl(getTestMetrics(config));
+        streamEnabled = new AtomicBoolean(true);
     }
 
     @AfterEach
@@ -67,7 +69,7 @@ class PublishStreamGrpcClientImplTest {
     void streamBlockItem() {
         BlockItem blockItem = BlockItem.newBuilder().build();
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
-                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService);
+                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService, streamEnabled);
         publishStreamGrpcClient.init();
         boolean result = publishStreamGrpcClient.streamBlockItem(List.of(blockItem));
         assertTrue(result);
@@ -81,7 +83,8 @@ class PublishStreamGrpcClientImplTest {
         Block block1 = Block.newBuilder().items(blockItem, blockItem, blockItem).build();
 
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
-                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService);
+        new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService, streamEnabled);
+
         publishStreamGrpcClient.init();
         boolean result = publishStreamGrpcClient.streamBlock(block);
         assertTrue(result);
@@ -94,19 +97,10 @@ class PublishStreamGrpcClientImplTest {
     void streamBlockReturnsFalse() throws NoSuchFieldException, IllegalAccessException {
         BlockItem blockItem = BlockItem.newBuilder().build();
         Block block = Block.newBuilder().items(blockItem).build();
-
+        streamEnabled.set(false);
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
-                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig);
+                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, streamEnabled);
         publishStreamGrpcClient.init();
-        Field allowNextField = PublishStreamGrpcClientImpl.class.getDeclaredField("allowNext");
-
-        try {
-            allowNextField.setAccessible(true);
-            AtomicBoolean allowNext = (AtomicBoolean) allowNextField.get(publishStreamGrpcClient);
-            allowNext.set(false);
-        } finally {
-            allowNextField.setAccessible(false);
-        }
 
         boolean result = publishStreamGrpcClient.streamBlock(block);
         assertFalse(result);
@@ -115,7 +109,7 @@ class PublishStreamGrpcClientImplTest {
     @Test
     void testShutdown() throws Exception {
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
-                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService);
+        new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService, streamEnabled);
         publishStreamGrpcClient.init();
 
         Field channelField = PublishStreamGrpcClientImpl.class.getDeclaredField("channel");

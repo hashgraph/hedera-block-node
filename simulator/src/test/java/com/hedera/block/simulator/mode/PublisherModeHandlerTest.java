@@ -72,6 +72,9 @@ public class PublisherModeHandlerTest {
                 .thenReturn(block2)
                 .thenReturn(null);
 
+        when(publishStreamGrpcClient.streamBlock(block1)).thenReturn(true);
+        when(publishStreamGrpcClient.streamBlock(block2)).thenReturn(true);
+
         publisherModeHandler.start();
 
         verify(publishStreamGrpcClient).streamBlock(block1);
@@ -117,6 +120,9 @@ public class PublisherModeHandlerTest {
                 .thenReturn(block1)
                 .thenReturn(block2)
                 .thenReturn(null);
+
+        when(publishStreamGrpcClient.streamBlock(block1)).thenReturn(true);
+        when(publishStreamGrpcClient.streamBlock(block2)).thenReturn(true);
 
         publisherModeHandler.start();
 

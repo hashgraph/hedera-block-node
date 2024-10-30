@@ -28,28 +28,28 @@ class PublishStreamObserverTest {
     @Test
     void onNext() {
         PublishStreamResponse response = PublishStreamResponse.newBuilder().build();
-        AtomicBoolean allowNext = new AtomicBoolean(true);
+        AtomicBoolean streamEnabled = new AtomicBoolean(true);
 
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(allowNext);
+        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled);
         publishStreamObserver.onNext(response);
-        assertTrue(allowNext.get(), "allowNext should remain true after onCompleted");
+        assertTrue(streamEnabled.get(), "allowNext should remain true after onCompleted");
     }
 
     @Test
     void onError() {
-        AtomicBoolean allowNext = new AtomicBoolean(true);
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(allowNext);
+        AtomicBoolean streamEnabled = new AtomicBoolean(true);
+        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled);
 
         publishStreamObserver.onError(new Throwable());
-        assertFalse(allowNext.get(), "allowNext should be set to false after onError");
+        assertFalse(streamEnabled.get(), "allowNext should be set to false after onError");
     }
 
     @Test
     void onCompleted() {
-        AtomicBoolean allowNext = new AtomicBoolean(true);
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(allowNext);
+        AtomicBoolean streamEnabled = new AtomicBoolean(true);
+        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled);
 
         publishStreamObserver.onCompleted();
-        assertTrue(allowNext.get(), "allowNext should remain true after onCompleted");
+        assertTrue(streamEnabled.get(), "allowNext should remain true after onCompleted");
     }
 }

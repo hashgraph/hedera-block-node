@@ -85,8 +85,7 @@ public class PublisherModeHandler implements SimulatorModeHandler {
         Block nextBlock = blockStreamManager.getNextBlock();
         while (nextBlock != null) {
             long startTime = System.nanoTime();
-            final boolean streamSuccess = publishStreamGrpcClient.streamBlock(nextBlock);
-            if (!streamSuccess) {
+            if (!publishStreamGrpcClient.streamBlock(nextBlock)) {
                 LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator stopped streaming due to errors.");
                 break;
             }
@@ -122,12 +121,11 @@ public class PublisherModeHandler implements SimulatorModeHandler {
                 LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has reached the end of the block items");
                 break;
             }
-
-            final boolean streamSuccess = publishStreamGrpcClient.streamBlock(block);
-            if (!streamSuccess) {
+            if (!publishStreamGrpcClient.streamBlock(block)) {
                 LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator stopped streaming due to errors.");
                 break;
             }
+
             blockItemsStreamed += block.items().size();
 
             Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);

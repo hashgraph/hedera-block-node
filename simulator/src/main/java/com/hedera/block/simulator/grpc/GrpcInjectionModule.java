@@ -18,6 +18,8 @@ package com.hedera.block.simulator.grpc;
 
 import dagger.Binds;
 import dagger.Module;
+import dagger.Provides;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Singleton;
 
 /** The module used to inject the gRPC client. */
@@ -32,6 +34,16 @@ public interface GrpcInjectionModule {
      */
     @Singleton
     @Binds
-    PublishStreamGrpcClient bindPublishStreamGrpcClient(
-            PublishStreamGrpcClientImpl publishStreamGrpcClient);
+    PublishStreamGrpcClient bindPublishStreamGrpcClient(PublishStreamGrpcClientImpl publishStreamGrpcClient);
+
+    /**
+     * Provides the stream enabled flag
+     *
+     * @return the stream enabled flag
+     */
+    @Singleton
+    @Provides
+    static AtomicBoolean provideStreamEnabledFlag() {
+        return new AtomicBoolean(true);
+    }
 }
