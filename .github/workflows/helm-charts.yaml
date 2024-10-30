@@ -23,7 +23,7 @@ permissions:
 jobs:
   lint-install-test:
     name: Lint and Install Charts
-    runs-on: ubuntu-latest
+    runs-on: block-node-linux-medium
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
@@ -40,7 +40,8 @@ jobs:
         with:
           version: v3.14.4
 
-      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      - name: Setup Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           python-version: '3.x'
           check-latest: true
