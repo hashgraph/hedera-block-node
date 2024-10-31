@@ -16,36 +16,31 @@
 
 package com.hedera.block.server;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 /** Constants used in the BlockNode service. */
 public final class Constants {
-    private Constants() {}
-
-    /** Constant mapped to the application.properties file in resources with default values */
-    @NonNull public static final String APPLICATION_PROPERTIES = "app.properties";
-
-    /**
-     * Constant mapped to the Helidon logging.properties file in the docker directory with default
-     * values.
-     */
-    @NonNull public static final String LOGGING_PROPERTIES = "logging.properties";
+    /** Constant mapped to the semantic name of the Block Node root directory */
+    public static final String BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME = "Block Node Root Directory";
 
     /** Constant mapped to the name of the BlockStream service in the .proto file */
-    @NonNull public static final String SERVICE_NAME_BLOCK_STREAM = "BlockStreamService";
+    public static final String SERVICE_NAME_BLOCK_STREAM = "BlockStreamService";
 
     /** Constant mapped to the name of the BlockAccess service in the .proto file */
-    @NonNull public static final String SERVICE_NAME_BLOCK_ACCESS = "BlockAccessService";
+    public static final String SERVICE_NAME_BLOCK_ACCESS = "BlockAccessService";
 
     /** Constant mapped to the publishBlockStream service method name in the .proto file */
-    @NonNull public static final String CLIENT_STREAMING_METHOD_NAME = "publishBlockStream";
+    public static final String CLIENT_STREAMING_METHOD_NAME = "publishBlockStream";
 
     /** Constant mapped to the subscribeBlockStream service method name in the .proto file */
-    @NonNull public static final String SERVER_STREAMING_METHOD_NAME = "subscribeBlockStream";
+    public static final String SERVER_STREAMING_METHOD_NAME = "subscribeBlockStream";
 
     /** Constant mapped to the singleBlock service method name in the .proto file */
-    @NonNull public static final String SINGLE_BLOCK_METHOD_NAME = "singleBlock";
+    public static final String SINGLE_BLOCK_METHOD_NAME = "singleBlock";
 
     /** Constant defining the block file extension */
-    @NonNull public static final String BLOCK_FILE_EXTENSION = ".blk";
+    public static final String BLOCK_FILE_EXTENSION = ".blk";
+
+    /** Constant defining the compressed file extension */
+    public static final String COMPRESSED_FILE_EXTENSION = ".zstd";
+
+    private Constants() {}
 }

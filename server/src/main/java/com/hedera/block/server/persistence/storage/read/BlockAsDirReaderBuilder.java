@@ -16,12 +16,12 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
-import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.hapi.block.stream.Block;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -29,13 +29,12 @@ import java.util.Set;
  *
  * <p>When a block reader is created, it will provide access to read blocks from storage.
  */
-public class BlockAsDirReaderBuilder {
-
-    private FileAttribute<Set<PosixFilePermission>> filePerms = FileUtils.defaultPerms;
+public final class BlockAsDirReaderBuilder {
     private final PersistenceStorageConfig config;
+    private FileAttribute<Set<PosixFilePermission>> folderPermissions;
 
-    private BlockAsDirReaderBuilder(@NonNull PersistenceStorageConfig config) {
-        this.config = config;
+    private BlockAsDirReaderBuilder(@NonNull final PersistenceStorageConfig config) {
+        this.config = Objects.requireNonNull(config);
     }
 
     /**
@@ -46,7 +45,7 @@ public class BlockAsDirReaderBuilder {
      * @return a block reader builder configured with required parameters.
      */
     @NonNull
-    public static BlockAsDirReaderBuilder newBuilder(@NonNull PersistenceStorageConfig config) {
+    public static BlockAsDirReaderBuilder newBuilder(@NonNull final PersistenceStorageConfig config) {
         return new BlockAsDirReaderBuilder(config);
     }
 
@@ -54,17 +53,13 @@ public class BlockAsDirReaderBuilder {
      * Optionally, provide file permissions for the block reader to use when managing block files
      * and directories.
      *
-     * <p>By default, the block reader will use the permissions defined in {@link
-     * FileUtils#defaultPerms}. This method is primarily used for testing purposes. Default values
-     * should be sufficient for production use.
-     *
-     * @param filePerms the file permissions to use when managing block files and directories.
+     * @param folderPermissions the folder permissions to use when managing block files as directories.
      * @return a block reader builder configured with required parameters.
      */
     @NonNull
-    public BlockAsDirReaderBuilder filePerms(
-            @NonNull final FileAttribute<Set<PosixFilePermission>> filePerms) {
-        this.filePerms = filePerms;
+    public BlockAsDirReaderBuilder folderPermissions(
+            @NonNull final FileAttribute<Set<PosixFilePermission>> folderPermissions) {
+        this.folderPermissions = Objects.requireNonNull(folderPermissions);
         return this;
     }
 
@@ -75,6 +70,6 @@ public class BlockAsDirReaderBuilder {
      */
     @NonNull
     public BlockReader<Block> build() {
-        return new BlockAsDirReader(config, filePerms);
+        return new BlockAsDirReader(config, folderPermissions);
     }
 }

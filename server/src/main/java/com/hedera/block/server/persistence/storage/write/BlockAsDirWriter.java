@@ -17,15 +17,16 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
+import static com.hedera.block.server.Constants.BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 
+import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -36,7 +37,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -50,46 +53,56 @@ import java.util.Set;
  * caller.
  */
 class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
-
     private final Logger LOGGER = System.getLogger(getClass().getName());
-
     private final Path blockNodeRootPath;
-    private long blockNodeFileNameIndex;
-    private Path currentBlockDir;
-    private final FileAttribute<Set<PosixFilePermission>> filePerms;
+    private final FileAttribute<Set<PosixFilePermission>> folderPermissions;
     private final BlockRemover blockRemover;
     private final MetricsService metricsService;
+    private long blockNodeFileNameIndex;
+    private Path currentBlockDir;
 
     /**
      * Use the corresponding builder to construct a new BlockAsDirWriter with the given parameters.
      *
      * @param blockRemover the block remover to use for removing blocks
-     * @param filePerms the file permissions to use for writing blocks
+     * @param folderPermissions the folder permissions to use for writing blocks, if null provided then defaults will be used
      * @param blockNodeContext the block node context to use for writing blocks
      * @throws IOException if an error occurs while initializing the BlockAsDirWriter
      */
     BlockAsDirWriter(
             @NonNull final BlockRemover blockRemover,
-            @NonNull final FileAttribute<Set<PosixFilePermission>> filePerms,
+            final FileAttribute<Set<PosixFilePermission>> folderPermissions,
             @NonNull final BlockNodeContext blockNodeContext)
             throws IOException {
-
         LOGGER.log(INFO, "Initializing FileSystemBlockStorage");
 
-        PersistenceStorageConfig config =
+        final PersistenceStorageConfig config =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
-        final Path blockNodeRootPath = Path.of(config.rootPath());
 
+        final Path blockNodeRootPath = Path.of(config.rootPath());
         LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);
 
         this.blockNodeRootPath = blockNodeRootPath;
         this.blockRemover = blockRemover;
-        this.filePerms = filePerms;
+        this.metricsService = blockNodeContext.metricsService();
+
+        if (Objects.nonNull(folderPermissions)) {
+            this.folderPermissions = folderPermissions;
+        } else {
+            // default permissions for folders
+            this.folderPermissions = PosixFilePermissions.asFileAttribute(Set.of(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ,
+                    PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ,
+                    PosixFilePermission.OTHERS_EXECUTE));
+        }
 
         // Initialize the block node root directory if it does not exist
-        FileUtils.createPathIfNotExists(blockNodeRootPath, INFO, filePerms);
-
-        this.metricsService = blockNodeContext.metricsService();
+        FileUtilities.createFolderPathIfNotExists(
+                blockNodeRootPath, INFO, this.folderPermissions, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME);
     }
 
     /**
@@ -99,8 +112,7 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
      * @throws IOException if an error occurs while writing the block item
      */
     @Override
-    public Optional<List<BlockItem>> write(@NonNull final List<BlockItem> blockItems)
-            throws IOException {
+    public Optional<List<BlockItem>> write(@NonNull final List<BlockItem> blockItems) throws IOException {
 
         if (blockItems.getFirst().hasBlockHeader()) {
             resetState(blockItems.getFirst());
@@ -147,8 +159,7 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
      * @param blockItem the block item to write
      * @throws IOException if an error occurs while writing the block item
      */
-    protected void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItem blockItem)
-            throws IOException {
+    protected void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItem blockItem) throws IOException {
         try (final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
 
             BlockItem.PROTOBUF.toBytes(blockItem).writeTo(fos);
@@ -169,7 +180,8 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
         repairPermissions(blockNodeRootPath);
 
         // Construct the path to the block directory
-        FileUtils.createPathIfNotExists(calculateBlockPath(), DEBUG, filePerms);
+        FileUtilities.createFolderPathIfNotExists(
+                calculateBlockPath(), DEBUG, folderPermissions, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME);
 
         // Reset
         blockNodeFileNameIndex = 0;
@@ -178,13 +190,10 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
     private void repairPermissions(@NonNull final Path path) throws IOException {
         final boolean isWritable = Files.isWritable(path);
         if (!isWritable) {
-            LOGGER.log(
-                    ERROR,
-                    "Block node root directory is not writable. Attempting to change the"
-                            + " permissions.");
+            LOGGER.log(ERROR, "Block node root directory is not writable. Attempting to change the" + " permissions.");
 
             // Attempt to restore the permissions on the block node root directory
-            Files.setPosixFilePermissions(path, filePerms.value());
+            Files.setPosixFilePermissions(path, folderPermissions.value());
         }
     }
 

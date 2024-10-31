@@ -16,8 +16,8 @@
 
 package com.hedera.block.server;
 
-import static com.hedera.block.server.Constants.APPLICATION_PROPERTIES;
-import static com.hedera.block.server.Constants.LOGGING_PROPERTIES;
+import static com.hedera.block.common.constants.StringsConstants.APPLICATION_PROPERTIES;
+import static com.hedera.block.common.constants.StringsConstants.LOGGING_PROPERTIES;
 import static io.helidon.config.ConfigSources.file;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
@@ -49,21 +49,19 @@ public class Server {
         LOGGER.log(INFO, "Starting BlockNode Server");
 
         // Set the global configuration
-        final Config config =
-                Config.builder()
-                        .sources(file(Paths.get("/app", LOGGING_PROPERTIES)).optional())
-                        .build();
+        final Config config = Config.builder()
+                .sources(file(Paths.get("/app", LOGGING_PROPERTIES)).optional())
+                .build();
 
         Config.global(config);
 
         // Init BlockNode Configuration
-        final Configuration configuration =
-                ConfigurationBuilder.create()
-                        .withSource(ServerMappedConfigSourceInitializer.getMappedConfigSource())
-                        .withSource(SystemPropertiesConfigSource.getInstance())
-                        .withSources(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES)))
-                        .autoDiscoverExtensions()
-                        .build();
+        final Configuration configuration = ConfigurationBuilder.create()
+                .withSource(ServerMappedConfigSourceInitializer.getMappedConfigSource())
+                .withSource(SystemPropertiesConfigSource.getInstance())
+                .withSources(new ClasspathFileConfigSource(Path.of(APPLICATION_PROPERTIES)))
+                .autoDiscoverExtensions()
+                .build();
 
         // Init Dagger DI Component, passing in the configuration.
         // this is where all the dependencies are wired up (magic happens)

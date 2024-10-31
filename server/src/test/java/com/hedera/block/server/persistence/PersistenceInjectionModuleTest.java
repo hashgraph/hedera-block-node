@@ -45,26 +45,35 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class PersistenceInjectionModuleTest {
 
-    @Mock private BlockNodeContext blockNodeContext;
-    @Mock private PersistenceStorageConfig persistenceStorageConfig;
-    @Mock private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
-    @Mock private Notifier notifier;
-    @Mock private BlockWriter<List<BlockItem>> blockWriter;
-    @Mock private ServiceStatus serviceStatus;
+    @Mock
+    private BlockNodeContext blockNodeContext;
+
+    @Mock
+    private PersistenceStorageConfig persistenceStorageConfig;
+
+    @Mock
+    private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
+
+    @Mock
+    private Notifier notifier;
+
+    @Mock
+    private BlockWriter<List<BlockItem>> blockWriter;
+
+    @Mock
+    private ServiceStatus serviceStatus;
 
     @BeforeEach
     void setup() throws IOException {
         // Setup any necessary mocks before each test
         blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
-        persistenceStorageConfig =
-                blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
+        persistenceStorageConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
     }
 
     @Test
     void testProvidesBlockWriter() {
 
-        BlockWriter<List<BlockItem>> blockWriter =
-                PersistenceInjectionModule.providesBlockWriter(blockNodeContext);
+        BlockWriter<List<BlockItem>> blockWriter = PersistenceInjectionModule.providesBlockWriter(blockNodeContext);
 
         assertNotNull(blockWriter);
     }
@@ -73,17 +82,14 @@ class PersistenceInjectionModuleTest {
     void testProvidesBlockWriter_IOException() {
         BlockNodeContext blockNodeContext = mock(BlockNodeContext.class);
         PersistenceStorageConfig persistenceStorageConfig = mock(PersistenceStorageConfig.class);
-        when(persistenceStorageConfig.rootPath()).thenReturn("invalid-path*9/////+>");
+        when(persistenceStorageConfig.rootPath()).thenReturn("/invalid_path/:invalid_directory");
         Configuration configuration = mock(Configuration.class);
         when(blockNodeContext.configuration()).thenReturn(configuration);
-        when(configuration.getConfigData(PersistenceStorageConfig.class))
-                .thenReturn(persistenceStorageConfig);
+        when(configuration.getConfigData(PersistenceStorageConfig.class)).thenReturn(persistenceStorageConfig);
 
         // Expect a RuntimeException due to the IOException
-        RuntimeException exception =
-                assertThrows(
-                        RuntimeException.class,
-                        () -> PersistenceInjectionModule.providesBlockWriter(blockNodeContext));
+        RuntimeException exception = assertThrows(
+                RuntimeException.class, () -> PersistenceInjectionModule.providesBlockWriter(blockNodeContext));
 
         // Verify the exception message
         assertTrue(exception.getMessage().contains("Failed to create block writer"));
@@ -92,8 +98,7 @@ class PersistenceInjectionModuleTest {
     @Test
     void testProvidesBlockReader() {
 
-        BlockReader<Block> blockReader =
-                PersistenceInjectionModule.providesBlockReader(persistenceStorageConfig);
+        BlockReader<Block> blockReader = PersistenceInjectionModule.providesBlockReader(persistenceStorageConfig);
 
         assertNotNull(blockReader);
     }
@@ -104,13 +109,8 @@ class PersistenceInjectionModuleTest {
         BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         // Call the method under test
-        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> streamVerifier =
-                new StreamPersistenceHandlerImpl(
-                        subscriptionHandler,
-                        notifier,
-                        blockWriter,
-                        blockNodeContext,
-                        serviceStatus);
+        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> streamVerifier = new StreamPersistenceHandlerImpl(
+                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus);
 
         assertNotNull(streamVerifier);
     }

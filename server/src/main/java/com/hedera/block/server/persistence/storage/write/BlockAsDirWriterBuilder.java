@@ -17,7 +17,6 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
@@ -28,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -35,19 +35,16 @@ import java.util.Set;
  *
  * <p>When a block writer is created, it will provide access to write blocks to storage.
  */
-public class BlockAsDirWriterBuilder {
-
+public final class BlockAsDirWriterBuilder {
     private final BlockNodeContext blockNodeContext;
-    private FileAttribute<Set<PosixFilePermission>> filePerms = FileUtils.defaultPerms;
+    private FileAttribute<Set<PosixFilePermission>> folderPermissions;
     private BlockRemover blockRemover;
 
     private BlockAsDirWriterBuilder(@NonNull final BlockNodeContext blockNodeContext) {
-        this.blockNodeContext = blockNodeContext;
-        PersistenceStorageConfig config =
+        this.blockNodeContext = Objects.requireNonNull(blockNodeContext);
+        final PersistenceStorageConfig config =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
-
-        this.blockRemover =
-                new BlockAsDirRemover(Path.of(config.rootPath()), FileUtils.defaultPerms);
+        this.blockRemover = new BlockAsDirRemover(Path.of(config.rootPath()));
     }
 
     /**
@@ -57,9 +54,7 @@ public class BlockAsDirWriterBuilder {
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
-    public static BlockAsDirWriterBuilder newBuilder(
-            @NonNull final BlockNodeContext blockNodeContext) {
-
+    public static BlockAsDirWriterBuilder newBuilder(@NonNull final BlockNodeContext blockNodeContext) {
         return new BlockAsDirWriterBuilder(blockNodeContext);
     }
 
@@ -67,17 +62,13 @@ public class BlockAsDirWriterBuilder {
      * Optionally, provide file permissions for the block writer to use when managing block files
      * and directories.
      *
-     * <p>By default, the block writer will use the permissions defined in {@link
-     * FileUtils#defaultPerms}. This method is primarily used for testing purposes. Default values
-     * should be sufficient for production use.
-     *
-     * @param filePerms the file permissions to use when managing block files and directories.
+     * @param folderPermissions the folder permissions to use when managing block files as directories.
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
-    public BlockAsDirWriterBuilder filePerms(
-            @NonNull FileAttribute<Set<PosixFilePermission>> filePerms) {
-        this.filePerms = filePerms;
+    public BlockAsDirWriterBuilder folderPermissions(
+            @NonNull final FileAttribute<Set<PosixFilePermission>> folderPermissions) {
+        this.folderPermissions = Objects.requireNonNull(folderPermissions);
         return this;
     }
 
@@ -92,8 +83,8 @@ public class BlockAsDirWriterBuilder {
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
-    public BlockAsDirWriterBuilder blockRemover(@NonNull BlockRemover blockRemover) {
-        this.blockRemover = blockRemover;
+    public BlockAsDirWriterBuilder blockRemover(@NonNull final BlockRemover blockRemover) {
+        this.blockRemover = Objects.requireNonNull(blockRemover);
         return this;
     }
 
@@ -105,6 +96,6 @@ public class BlockAsDirWriterBuilder {
      */
     @NonNull
     public BlockWriter<List<BlockItem>> build() throws IOException {
-        return new BlockAsDirWriter(blockRemover, filePerms, blockNodeContext);
+        return new BlockAsDirWriter(blockRemover, folderPermissions, blockNodeContext);
     }
 }

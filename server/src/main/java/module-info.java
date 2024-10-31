@@ -19,6 +19,7 @@ module com.hedera.block.server {
     exports com.hedera.block.server.service;
     exports com.hedera.block.server.grpc;
 
+    requires com.hedera.block.common;
     requires com.hedera.block.stream;
     requires com.google.protobuf;
     requires com.hedera.pbj.runtime;

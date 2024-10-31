@@ -36,8 +36,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -46,23 +48,20 @@ import java.util.Set;
  * containing block items. The block items are stored as files within the block directory.
  */
 class BlockAsDirReader implements BlockReader<Block> {
-
     private final Logger LOGGER = System.getLogger(getClass().getName());
-
     private final Path blockNodeRootPath;
-    private final FileAttribute<Set<PosixFilePermission>> filePerms;
+    private final FileAttribute<Set<PosixFilePermission>> folderPermissions;
 
     /**
      * Constructor for the BlockAsDirReader class. It initializes the BlockAsDirReader with the
      * given parameters.
      *
      * @param config the configuration to retrieve the block node root path
-     * @param filePerms the file permissions to set on the block node root path
+     * @param folderPermissions the folder permissions to set on the block node root path, default  will be used if null provided
      */
     BlockAsDirReader(
             @NonNull final PersistenceStorageConfig config,
-            @NonNull final FileAttribute<Set<PosixFilePermission>> filePerms) {
-
+            final FileAttribute<Set<PosixFilePermission>> folderPermissions) {
         LOGGER.log(INFO, "Initializing FileSystemBlockReader");
 
         final Path blockNodeRootPath = Path.of(config.rootPath());
@@ -71,7 +70,20 @@ class BlockAsDirReader implements BlockReader<Block> {
         LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);
 
         this.blockNodeRootPath = blockNodeRootPath;
-        this.filePerms = filePerms;
+
+        if (Objects.nonNull(folderPermissions)) {
+            this.folderPermissions = folderPermissions;
+        } else {
+            // default permissions for folders
+            this.folderPermissions = PosixFilePermissions.asFileAttribute(Set.of(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ,
+                    PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ,
+                    PosixFilePermission.OTHERS_EXECUTE));
+        }
     }
 
     /**
@@ -133,8 +145,7 @@ class BlockAsDirReader implements BlockReader<Block> {
     }
 
     @NonNull
-    private Optional<BlockItem> readBlockItem(@NonNull final String blockItemPath)
-            throws IOException, ParseException {
+    private Optional<BlockItem> readBlockItem(@NonNull final String blockItemPath) throws IOException, ParseException {
 
         try (final FileInputStream fis = new FileInputStream(blockItemPath)) {
 
@@ -177,7 +188,7 @@ class BlockAsDirReader implements BlockReader<Block> {
             try {
                 // If resetting the permissions fails or
                 // if the path is still unreadable, return true.
-                setPerm(path, filePerms.value());
+                setPerm(path, folderPermissions.value());
                 if (!path.toFile().canRead()) {
                     return true;
                 }
@@ -202,8 +213,7 @@ class BlockAsDirReader implements BlockReader<Block> {
      * @param perms the permissions to set on the path
      * @throws IOException if an I/O error occurs
      */
-    protected void setPerm(@NonNull final Path path, @NonNull final Set<PosixFilePermission> perms)
-            throws IOException {
+    protected void setPerm(@NonNull final Path path, @NonNull final Set<PosixFilePermission> perms) throws IOException {
         Files.setPosixFilePermissions(path, perms);
     }
 }

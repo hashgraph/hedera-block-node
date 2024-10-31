@@ -21,7 +21,6 @@ import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.persistence.storage.FileUtils;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
@@ -29,7 +28,6 @@ import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
-import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
@@ -58,8 +56,7 @@ public class BlockAsDirRemoverTest {
         LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
 
         blockNodeContext =
-                TestConfigUtil.getTestBlockNodeContext(
-                        Map.of("persistence.storage.rootPath", testPath.toString()));
+                TestConfigUtil.getTestBlockNodeContext(Map.of("persistence.storage.rootPath", testPath.toString()));
         testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
     }
 
@@ -76,7 +73,7 @@ public class BlockAsDirRemoverTest {
         }
 
         // Remove a block that does not exist
-        final BlockRemover blockRemover = new BlockAsDirRemover(testPath, FileUtils.defaultPerms);
+        final BlockRemover blockRemover = new BlockAsDirRemover(testPath);
         blockRemover.remove(2);
 
         // Verify the block was not removed
@@ -89,39 +86,6 @@ public class BlockAsDirRemoverTest {
                 blockOpt.get().items().getFirst().blockHeader());
 
         // Now remove the block
-        blockRemover.remove(1);
-
-        // Verify the block is removed
-        blockOpt = blockReader.read(1);
-        assert (blockOpt.isEmpty());
-    }
-
-    @Test
-    public void testRemoveBlockWithPermException() throws IOException, ParseException {
-
-        // Write a block
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
-
-        final BlockWriter<List<BlockItem>> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-
-        blockWriter.write(blockItems);
-
-        // Set up the BlockRemover with permissions that will prevent the block from being removed
-        BlockRemover blockRemover = new BlockAsDirRemover(testPath, TestUtils.getNoPerms());
-        blockRemover.remove(1);
-
-        // Verify the block was not removed
-        final BlockReader<Block> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
-        Optional<Block> blockOpt = blockReader.read(1);
-        assert (blockOpt.isPresent());
-        assertEquals(
-                blockItems.getFirst().blockHeader(),
-                blockOpt.get().items().getFirst().blockHeader());
-
-        // Now remove the block
-        blockRemover = new BlockAsDirRemover(testPath, FileUtils.defaultPerms);
         blockRemover.remove(1);
 
         // Verify the block is removed
