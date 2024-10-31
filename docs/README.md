@@ -1,26 +1,17 @@
-# Quickstart Guide
+# Hedera Block Node Documentation Overview
 
-This guide will help you get started with the Hedera Block Node.
-## Configuration
+This document will outline the structure and content of Block Node documentation.
 
-Refer to the [Configuration](docs/configuration.md) for more information on the configuration options.
+## Table of Contents
 
-## Starting locally:
-```bash
-./gradlew run
-```
+1. Introduction
+2. Concepts
 
-In debug mode, you can attach a debugger to the port 5005.
-```bash
-./gradlew run --debug-jvm
-```
+## Introduction
 
-Also you can run on docker locally:
-```bash
-./gradlew startDockerContainer
-```
+- [Hedera Block Node](../server/README.md): Provides an introduction to Hedera Block Node, its purpose and how it can be used.
+- [Simulator](../simulator/README.md): Offers instructions on how the Simulator can be utilized.
 
-## Running Tests
-```bash
-./gradlew build
-```
+## Concepts
+
+- [Hedera Block Node Protocol](Protocol/README.md): Overview of the Hedera Block Node Protocol
