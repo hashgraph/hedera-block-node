@@ -16,12 +16,15 @@
 
 package com.hedera.block.simulator.grpc;
 
+import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlockItemsSent;
+import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.common.utils.ChunkUtils;
 import com.hedera.block.simulator.Translator;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
+import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.hapi.block.protoc.BlockStreamServiceGrpc;
 import com.hedera.hapi.block.protoc.PublishStreamRequest;
 import com.hedera.hapi.block.stream.Block;
@@ -39,22 +42,29 @@ import javax.inject.Inject;
  */
 public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
+    private System.Logger LOGGER = System.getLogger(getClass().getName());
+
     private StreamObserver<PublishStreamRequest> requestStreamObserver;
     private final BlockStreamConfig blockStreamConfig;
     private final GrpcConfig grpcConfig;
     private ManagedChannel channel;
+    private final MetricsService metricsService;
 
     /**
      * Creates a new PublishStreamGrpcClientImpl instance.
      *
      * @param grpcConfig the gRPC configuration
      * @param blockStreamConfig the block stream configuration
+     * @param metricsService the metrics service
      */
     @Inject
     public PublishStreamGrpcClientImpl(
-            @NonNull final GrpcConfig grpcConfig, @NonNull final BlockStreamConfig blockStreamConfig) {
+            @NonNull final GrpcConfig grpcConfig,
+            @NonNull final BlockStreamConfig blockStreamConfig,
+            @NonNull final MetricsService metricsService) {
         this.grpcConfig = requireNonNull(grpcConfig);
         this.blockStreamConfig = requireNonNull(blockStreamConfig);
+        this.metricsService = requireNonNull(metricsService);
     }
 
     /**
@@ -85,6 +95,11 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
         requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
                 .addAllBlockItems(blockItemsProtoc)
                 .build());
+        metricsService.get(LiveBlockItemsSent).add(blockItemsProtoc.size());
+        LOGGER.log(
+                INFO,
+                "Total Block items sent: {0}",
+                metricsService.get(LiveBlockItemsSent).get());
 
         return true;
     }
@@ -106,6 +121,11 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
             requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
                     .addAllBlockItems(streamingBatch)
                     .build());
+            metricsService.get(LiveBlockItemsSent).add(streamingBatch.size());
+            LOGGER.log(
+                    INFO,
+                    "Total Block items sent: {0}",
+                    metricsService.get(LiveBlockItemsSent).get());
         }
 
         return true;

@@ -16,6 +16,7 @@
 
 package com.hedera.block.simulator;
 
+import static com.hedera.block.simulator.TestUtils.getTestMetrics;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -28,6 +29,8 @@ import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
+import com.hedera.block.simulator.metrics.MetricsService;
+import com.hedera.block.simulator.metrics.MetricsServiceImpl;
 import com.hedera.block.simulator.mode.PublisherModeHandler;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -58,6 +61,7 @@ class BlockStreamSimulatorTest {
     private PublishStreamGrpcClient publishStreamGrpcClient;
 
     private BlockStreamSimulatorApp blockStreamSimulator;
+    private MetricsService metricsService;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -65,7 +69,11 @@ class BlockStreamSimulatorTest {
         Configuration configuration = TestUtils.getTestConfiguration(
                 Map.of("blockStream.maxBlockItemsToStream", "100", "blockStream.streamingMode", "CONSTANT_RATE"));
 
-        blockStreamSimulator = new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient);
+        Configuration config = TestUtils.getTestConfiguration();
+        metricsService = new MetricsServiceImpl(getTestMetrics(config));
+
+        blockStreamSimulator =
+                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
     }
 
     @AfterEach
@@ -105,7 +113,7 @@ class BlockStreamSimulatorTest {
                 "2"));
 
         BlockStreamSimulatorApp blockStreamSimulator =
-                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient);
+                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
 
         blockStreamSimulator.start();
         assertTrue(blockStreamSimulator.isRunning());
@@ -141,7 +149,7 @@ class BlockStreamSimulatorTest {
                 "MILLIS_PER_BLOCK"));
 
         BlockStreamSimulatorApp blockStreamSimulator =
-                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient);
+                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
 
         blockStreamSimulator.start();
         assertTrue(blockStreamSimulator.isRunning());
@@ -184,7 +192,7 @@ class BlockStreamSimulatorTest {
                 "1"));
 
         BlockStreamSimulatorApp blockStreamSimulator =
-                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient);
+                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
 
         blockStreamSimulator.start();
         assertTrue(blockStreamSimulator.isRunning());
@@ -198,14 +206,16 @@ class BlockStreamSimulatorTest {
     @Test
     void start_withBothMode_throwsUnsupportedOperationException() throws Exception {
         Configuration configuration = TestUtils.getTestConfiguration(Map.of("blockStream.simulatorMode", "BOTH"));
-        blockStreamSimulator = new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient);
+        blockStreamSimulator =
+                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
         assertThrows(UnsupportedOperationException.class, () -> blockStreamSimulator.start());
     }
 
     @Test
     void start_withConsumerMode_throwsUnsupportedOperationException() throws Exception {
         Configuration configuration = TestUtils.getTestConfiguration(Map.of("blockStream.simulatorMode", "CONSUMER"));
-        blockStreamSimulator = new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient);
+        blockStreamSimulator =
+                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
         assertThrows(UnsupportedOperationException.class, () -> blockStreamSimulator.start());
     }
 
@@ -218,7 +228,7 @@ class BlockStreamSimulatorTest {
         when(blockStreamConfig.simulatorMode()).thenReturn(null);
 
         assertThrows(NullPointerException.class, () -> {
-            new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient);
+            new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
         });
     }
 

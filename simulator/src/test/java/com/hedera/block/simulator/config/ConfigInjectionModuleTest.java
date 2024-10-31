@@ -16,17 +16,21 @@
 
 package com.hedera.block.simulator.config;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import com.hedera.block.simulator.TestUtils;
 import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
+import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -36,42 +40,46 @@ class ConfigInjectionModuleTest {
 
     @BeforeAll
     static void setUpAll() throws IOException {
-        configuration =
-                ConfigurationBuilder.create()
-                        .withSource(new ClasspathFileConfigSource(Path.of("app.properties")))
-                        .autoDiscoverExtensions()
-                        .build();
-        configuration =
-                TestUtils.getTestConfiguration(
-                        Map.of("generator.managerImplementation", "BlockAsFileBlockStreamManager"));
+        configuration = ConfigurationBuilder.create()
+                .withSource(new ClasspathFileConfigSource(Path.of("app.properties")))
+                .autoDiscoverExtensions()
+                .build();
+        configuration = TestUtils.getTestConfiguration(
+                Map.of("generator.managerImplementation", "BlockAsFileBlockStreamManager"));
     }
 
     @Test
     void provideBlockStreamConfig() {
 
-        BlockStreamConfig blockStreamConfig =
-                ConfigInjectionModule.provideBlockStreamConfig(configuration);
+        BlockStreamConfig blockStreamConfig = ConfigInjectionModule.provideBlockStreamConfig(configuration);
 
-        Assertions.assertNotNull(blockStreamConfig);
-        Assertions.assertEquals(1000, blockStreamConfig.blockItemsBatchSize());
+        assertNotNull(blockStreamConfig);
+        assertEquals(1000, blockStreamConfig.blockItemsBatchSize());
     }
 
     @Test
     void provideGrpcConfig() {
         GrpcConfig grpcConfig = ConfigInjectionModule.provideGrpcConfig(configuration);
 
-        Assertions.assertNotNull(grpcConfig);
-        Assertions.assertEquals("localhost", grpcConfig.serverAddress());
-        Assertions.assertEquals(8080, grpcConfig.port());
+        assertNotNull(grpcConfig);
+        assertEquals("localhost", grpcConfig.serverAddress());
+        assertEquals(8080, grpcConfig.port());
     }
 
     @Test
     void provideBlockGeneratorConfig() {
-        BlockGeneratorConfig blockGeneratorConfig =
-                ConfigInjectionModule.provideBlockGeneratorConfig(configuration);
+        BlockGeneratorConfig blockGeneratorConfig = ConfigInjectionModule.provideBlockGeneratorConfig(configuration);
 
-        Assertions.assertNotNull(blockGeneratorConfig);
-        Assertions.assertEquals(
-                "BlockAsFileBlockStreamManager", blockGeneratorConfig.managerImplementation());
+        assertNotNull(blockGeneratorConfig);
+        assertEquals("BlockAsFileBlockStreamManager", blockGeneratorConfig.managerImplementation());
+    }
+
+    @Test
+    void providePrometheusConfig() {
+        PrometheusConfig prometheusConfig = ConfigInjectionModule.providePrometheusConfig(configuration);
+
+        assertNotNull(prometheusConfig);
+        assertFalse(prometheusConfig.endpointEnabled());
+        assertEquals(9999, prometheusConfig.endpointPortNumber());
     }
 }

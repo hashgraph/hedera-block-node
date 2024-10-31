@@ -17,9 +17,11 @@
 package com.hedera.block.simulator;
 
 import com.hedera.block.simulator.config.TestConfigBuilder;
+import com.swirlds.common.metrics.platform.DefaultMetricsProvider;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
 import com.swirlds.config.extensions.sources.SimpleConfigSource;
+import com.swirlds.metrics.api.Metrics;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -29,20 +31,15 @@ public class TestUtils {
 
     private static final String TEST_APP_PROPERTIES_FILE = "app.properties";
 
-    public static Configuration getTestConfiguration(@NonNull Map<String, String> customProperties)
-            throws IOException {
+    public static Configuration getTestConfiguration(@NonNull Map<String, String> customProperties) throws IOException {
         // create test configuration
-        TestConfigBuilder testConfigBuilder =
-                new TestConfigBuilder(true)
-                        .withSource(
-                                new ClasspathFileConfigSource(Path.of(TEST_APP_PROPERTIES_FILE)));
+        TestConfigBuilder testConfigBuilder = new TestConfigBuilder(true)
+                .withSource(new ClasspathFileConfigSource(Path.of(TEST_APP_PROPERTIES_FILE)));
 
         for (Map.Entry<String, String> entry : customProperties.entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue();
-            testConfigBuilder =
-                    testConfigBuilder.withSource(
-                            new SimpleConfigSource(key, value).withOrdinal(500));
+            testConfigBuilder = testConfigBuilder.withSource(new SimpleConfigSource(key, value).withOrdinal(500));
         }
 
         return testConfigBuilder.getOrCreateConfig();
@@ -50,5 +47,12 @@ public class TestUtils {
 
     public static Configuration getTestConfiguration() throws IOException {
         return getTestConfiguration(Map.of());
+    }
+
+    public static Metrics getTestMetrics(@NonNull Configuration configuration) {
+        final DefaultMetricsProvider metricsProvider = new DefaultMetricsProvider(configuration);
+        final Metrics metrics = metricsProvider.createGlobalMetrics();
+        metricsProvider.start();
+        return metrics;
     }
 }
