@@ -83,7 +83,7 @@ class PublishStreamGrpcClientImplTest {
         Block block1 = Block.newBuilder().items(blockItem, blockItem, blockItem).build();
 
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
-        new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService, streamEnabled);
+                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService, streamEnabled);
 
         publishStreamGrpcClient.init();
         boolean result = publishStreamGrpcClient.streamBlock(block);
@@ -94,12 +94,12 @@ class PublishStreamGrpcClientImplTest {
     }
 
     @Test
-    void streamBlockReturnsFalse() throws NoSuchFieldException, IllegalAccessException {
+    void streamBlockReturnsFalse() {
         BlockItem blockItem = BlockItem.newBuilder().build();
         Block block = Block.newBuilder().items(blockItem).build();
         streamEnabled.set(false);
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
-                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, streamEnabled);
+                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService, streamEnabled);
         publishStreamGrpcClient.init();
 
         boolean result = publishStreamGrpcClient.streamBlock(block);
@@ -109,7 +109,7 @@ class PublishStreamGrpcClientImplTest {
     @Test
     void testShutdown() throws Exception {
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
-        new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService, streamEnabled);
+                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService, streamEnabled);
         publishStreamGrpcClient.init();
 
         Field channelField = PublishStreamGrpcClientImpl.class.getDeclaredField("channel");
