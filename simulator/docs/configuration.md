@@ -1,10 +1,11 @@
-## Configuration
+# Configuration
 
-There are 2 configuration sets:
-1. BlockStreamConfig: contains the configuration for the Block Stream Simulator logic and the generation module.
-2. GrpcConfig: contains the configuration for the gRPC communication with the Block-Node.
+There are 3 configuration sets:
+1. [BlockStreamConfig](#blockstreamconfig): contains the configuration for the Block Stream Simulator logic.
+1. [GeneratorConfig](#generatorconfig): contains the configuration for the Block Stream Simulator generation module.
+1. [GrpcConfig](#grpcconfig): contains the configuration for the gRPC communication with the Block-Node.
 
-### BlockStreamConfig
+## BlockStreamConfig
 Uses the prefix `blockStream` so all properties should start with `blockStream.`
 
 | Key                       | Description                                                                                                                         | Default Value   |
@@ -15,7 +16,7 @@ Uses the prefix `blockStream` so all properties should start with `blockStream.`
 | `millisecondsPerBlock`    | if streamingMode is `MILLIS_PER_BLOCK` this will be the time to wait between blocks in milliseconds                                 | `1_000`         |
 | `blockItemsBatchSize`     | the number of block items to send in a single batch, however if a block has less block items, it will send all the items in a block | `1_000`         |
 
-### GeneratorConfig
+## GeneratorConfig
 Uses the prefix `generator` so all properties should start with `generator.`
 | Key                      | Description                                                                                                                                                               | Default Value                   |
 |--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------|
@@ -25,9 +26,7 @@ Uses the prefix `generator` so all properties should start with `generator.`
 | `paddedLength`           | on the `BlockAsFileLargeDataSets` implementation, the length of the padded left zeroes `000001.blk.gz`                                                                    | 36                              |
 | `fileExtension`          | on the `BlockAsFileLargeDataSets` implementation, the extension of the files to be streamed                                                                               | `.blk.gz`                       |
 
-
-
-### GrpcConfig
+## GrpcConfig
 Uses the prefix `grpc` so all properties should start with `grpc.`
 
 | Key             | Description                | Default Value |

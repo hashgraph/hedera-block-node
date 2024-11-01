@@ -1,15 +1,15 @@
 # Block Stream Simulator
 
+## Table of Contents
+1. [Overview](#overview)
+1. [Project Design Structure](#project-design-structure)
+1. [Configuration](#configuration)
+1. [Quickstart](#quickstart)
+
 ## Overview
 
 The Block Stream Simulator is designed to simulate block streaming for Hedera Hashgraph.
 It uses various configuration sources and dependency injection to manage its components.
-
-## Prerequisites
-
-- Java 21
-- Gradle
-- IntelliJ IDEA (recommended for development)
 
 ## Project Design Structure
 
@@ -33,28 +33,6 @@ The BlockStreamSimulatorApp consumes other services that are injected using Dagg
 
 Refer to the [Configuration](docs/configuration.md) for configuration options.
 
-## Building the Project
+## Quickstart
 
-To build the project, run the following command:
-
-```sh
-./gradlew :simulator:build
-```
-
-## Running the Project
-
-Usually you will want to run a Block-Node server before the simulator, for that you can use the following commnad:
-
-```sh
-    ./gradlew :server:run
-```
-However we recommend running the block-node server as a docker container:
-```sh
-./gradlew :server:build :server:createDockerImage :server:startDockerContainer
-```
-
-Once the project is built, you can run it using the following command:
-
-```sh
-./gradlew :simulator:run
-```
+Refer to the [Quickstart](docs/quickstart.md) for a quick guide on how to get started with the application.
