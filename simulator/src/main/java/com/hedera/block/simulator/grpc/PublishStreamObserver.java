@@ -16,6 +16,8 @@
 
 package com.hedera.block.simulator.grpc;
 
+import static java.util.Objects.requireNonNull;
+
 import com.hedera.hapi.block.protoc.PublishStreamResponse;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.Status;
@@ -36,8 +38,8 @@ public class PublishStreamObserver implements StreamObserver<PublishStreamRespon
      *
      * @param streamEnabled is responsible for signaling, whether streaming should continue
      */
-    public PublishStreamObserver(final AtomicBoolean streamEnabled) {
-        this.streamEnabled = streamEnabled;
+    public PublishStreamObserver(@NonNull final AtomicBoolean streamEnabled) {
+        this.streamEnabled = requireNonNull(streamEnabled);
     }
 
     /** what will the stream observer do with the response from the server */
@@ -51,10 +53,7 @@ public class PublishStreamObserver implements StreamObserver<PublishStreamRespon
     public void onError(@NonNull final Throwable streamError) {
         streamEnabled.set(false);
         Status status = Status.fromThrowable(streamError);
-        logger.log(
-                Logger.Level.ERROR,
-                "Error %s with status code %s.".formatted(status.getCode(), streamError),
-                streamError);
+        logger.log(Logger.Level.ERROR, "Error %s with status %s.".formatted(streamError, status), streamError);
     }
 
     /** what will the stream observer do when the stream is completed */
