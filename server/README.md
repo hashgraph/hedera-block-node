@@ -1,5 +1,15 @@
 # Block Node Application
 
+## Table of Contents
+
+1. [Overview](#overview)
+1. [Prerequisites](#prerequisites)
+1. [Configuration](#configuration)
+1. [Metrics](#metrics)
+1. [Design](#design)
+    1. [Block Persistence](#block-persistence)
+    1. [Bi-directional Producer/Consumer Streaming with gRPC](#bi-directional-producerconsumer-streaming-with-grpc)
+
 ## Overview
 
 The Block Stream Application is designed handle the output of a Hedera Node, which would be in form of Block Stream.
@@ -15,3 +25,17 @@ It uses various configuration sources and dependency injection to manage its com
 ## Configuration
 
 Refer to the [Configuration](docs/configuration.md) for configuration options.
+
+## Metrics
+
+Refer to the [Metrics](docs/metrics.md) for metrics available in the system.
+
+## Design
+
+### Block Persistence
+
+Refer to the [Block Persistence](docs/design/block-persistence.md) for details on how blocks are persisted.
+
+### Bi-directional Producer/Consumer Streaming with gRPC
+
+Refer to the [Bi-directional Producer/Consumer Streaming with gRPC](docs/design/bidi-producer-consumers-streaming.md) for details on how the gRPC streaming is implemented.

@@ -1,6 +1,17 @@
-
 # Hedera Block Node
+
 Implementation of the Hedera Block Node, which is responsible for consuming the block streams, maintaining state and exposing additional targeted value adding APIs to the Hedera community.
+
+## Table of Contents
+
+1. [Overview of child modules](#overview-of-child-modules)
+1. [Project Links](#project-links)
+1. [Getting Started](#getting-started)
+1. [Support](#support)
+1. [Contributing](#contributing)
+1. [Code of Conduct](#code-of-conduct)
+1. [Security](#-security)
+1. [License](#license)
 
 ## Overview of child modules
 
@@ -11,6 +22,7 @@ Implementation of the Hedera Block Node, which is responsible for consuming the 
 - `tools`: A set of command line tools for working with block stream files.
 
 ## Project Links
+
 [![Build Application](https://github.com/hashgraph/hedera-block-node/actions/workflows/build-application.yaml/badge.svg?branch=main)](https://github.com/hashgraph/hedera-block-node/actions/workflows/build-application.yaml)
 [![E2E Test Suites](https://github.com/hashgraph/hedera-block-node/actions/workflows/e2e-tests.yaml/badge.svg?branch=main)](https://github.com/hashgraph/hedera-block-node/actions/workflows/e2e-tests.yaml)
 [![codecov](https://codecov.io/github/hashgraph/hedera-block-node/graph/badge.svg?token=OF6T6E8V7U)](https://codecov.io/github/hashgraph/hedera-block-node)
@@ -42,7 +54,7 @@ This project is governed by the
 participating, you are expected to uphold this code of conduct. Please report unacceptable behavior
 to [oss@hedera.com](mailto:oss@hedera.com).
 
-# 🔐 Security
+## 🔐 Security
 
 Please do not file a public ticket mentioning the vulnerability. Refer to the security policy defined in the [SECURITY.md](https://github.com/hashgraph/hedera-block-node/blob/main/SECURITY.md).
 

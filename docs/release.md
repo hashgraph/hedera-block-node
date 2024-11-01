@@ -1,10 +1,21 @@
-## Release Process Documentation
+# Release Process Documentation
 
-### Overview
+## Table of Contents
+
+1. [Overview](#overview)
+1. [Kickstart Release Process](#kickstart-release-process)
+1. [Release Automation Workflow](#release-automation-workflow)
+    1. [Steps](#steps)
+1. [Publish Release Workflow](#publish-release-workflow)
+1. [Mermaid Diagram](#mermaid-diagram)
+1. [Release Meta Process](#release-meta-process)
+1. [Conclusion](#conclusion)
+
+## Overview
 
 This document outlines the release process for our project, detailing the steps involved in creating a new release, tagging, and publishing artifacts.
 
-### Kickstart Release Process
+## Kickstart Release Process
 
 1. **Milestone and Label Check**:
     - Ensure all Pull Requests (PRs) have a milestone set and appropriate labels. This is important for generating accurate release notes.
@@ -17,14 +28,14 @@ This document outlines the release process for our project, detailing the steps 
     - If the release branch already exists, the workflow should be triggered using the branch release, and the version should be bumped accordingly.
       - for example: if `release/0.1` exists, and you want to release `0.1.1`, trigger the workflow with `0.1.1` as the semver input and select `release/0.1` on "Use workflow from" dropdown.
 
-### Release Automation Workflow
+## Release Automation Workflow
 
 The release process is automated using a GitHub Actions workflow (`release-automation.yaml`). The workflow must be triggered manually with a SemVer version input, which specifies the version to be released. The input can be:
 - `x.n.0-rc1` for release candidates
 - `x.n.0` for general availability (GA) versions
 - `x.n.p` for patch versions, including hot-fixes
 
-#### Steps:
+### Steps:
 
 1. **Create or Update Release Branch**:
     - Create a new release branch `release/0.n` if it doesn't exist.
@@ -41,7 +52,7 @@ The release process is automated using a GitHub Actions workflow (`release-autom
     - Upload distribution artifacts to the release.
     - Publish the artifacts to Sonatype Nexus / Maven Central.
 
-### Publish Release Workflow
+## Publish Release Workflow
 
 The `Publish Release Workflow` (`publish-release.yaml`) is triggered by the Tag pushed in the previous step. This workflow performs the following tasks:
 
@@ -51,7 +62,7 @@ The `Publish Release Workflow` (`publish-release.yaml`) is triggered by the Tag 
 2. **Helm Chart Publishing**:
     - Publish a new Helm chart with the same version to the custom GitHub Pages of the repo in the `Charts` folder.
 
-### Mermaid Diagram
+## Mermaid Diagram
 
 ```mermaid
 graph TD
@@ -84,7 +95,7 @@ graph TD
     end
 ```
 
-### Release Meta Process
+## Release Meta Process
 
 The meta process typically follows these steps:
 
@@ -116,4 +127,3 @@ graph TD
 ## Conclusion
 
 This release process ensures that all steps are automated, from checking PR milestones and labels to creating branches, tagging releases, and publishing Docker images and Helm charts. By following this documentation, you can streamline the release workflow and maintain consistency across all releases.
-

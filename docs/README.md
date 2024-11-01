@@ -4,8 +4,9 @@ This document will outline the structure and content of Block Node documentation
 
 ## Table of Contents
 
-1. Introduction
-2. Concepts
+1. [Introduction](#introduction)
+1. [Concepts](#concepts)
+1. [Release](#release)
 
 ## Introduction
 
@@ -15,3 +16,7 @@ This document will outline the structure and content of Block Node documentation
 ## Concepts
 
 - [Hedera Block Node Protocol](Protocol/README.md): Overview of the Hedera Block Node Protocol
+
+## Release
+
+- [Release Process Documentation](release.md): Details the steps involved in creating a new release, tagging, and publishing artifacts.

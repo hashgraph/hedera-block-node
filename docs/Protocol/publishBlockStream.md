@@ -1,5 +1,14 @@
 # Block Node Connect Protocol for `publishBlockStream`
 
+## Table of Contents
+1. [Abstract](#abstract)
+   1. [Reliability note](#reliability-note)
+1. [Definitions](#definitions)
+1. [Base Protocol](#base-protocol)
+   1. [Base Protocol Diagram](#base-protocol-diagram)
+1. [Error Handling](#error-handling)
+   1. [Error Handling Diagram](#error-handling-diagram)
+
 ## Abstract
 This protocol describes how a Publisher and Block Node SHALL interact for
 the `publishBlockStream` API. The protocol provides for either side of the
