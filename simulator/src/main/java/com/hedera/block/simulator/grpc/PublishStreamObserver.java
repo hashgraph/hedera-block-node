@@ -16,9 +16,14 @@
 
 package com.hedera.block.simulator.grpc;
 
+import static java.util.Objects.requireNonNull;
+
 import com.hedera.hapi.block.protoc.PublishStreamResponse;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import java.lang.System.Logger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The PublishStreamObserver class provides the methods to observe the stream of the published
@@ -27,9 +32,15 @@ import java.lang.System.Logger;
 public class PublishStreamObserver implements StreamObserver<PublishStreamResponse> {
 
     private final Logger logger = System.getLogger(getClass().getName());
+    private final AtomicBoolean streamEnabled;
 
-    /** Creates a new PublishStreamObserver instance. */
-    public PublishStreamObserver() {}
+    /** Creates a new PublishStreamObserver instance.
+     *
+     * @param streamEnabled is responsible for signaling, whether streaming should continue
+     */
+    public PublishStreamObserver(@NonNull final AtomicBoolean streamEnabled) {
+        this.streamEnabled = requireNonNull(streamEnabled);
+    }
 
     /** what will the stream observer do with the response from the server */
     @Override
@@ -37,11 +48,12 @@ public class PublishStreamObserver implements StreamObserver<PublishStreamRespon
         logger.log(Logger.Level.INFO, "Received Response: " + publishStreamResponse.toString());
     }
 
-    /** what will the stream observer do when an error occurs */
+    /** Responsible for stream observer behaviour, in case of error. For now, we will stop the stream for every error. In the future we'd want to have a retry mechanism depending on the error. */
     @Override
-    public void onError(Throwable throwable) {
-        logger.log(Logger.Level.ERROR, "Error: " + throwable.toString());
-        // @todo(286) - handle the error
+    public void onError(@NonNull final Throwable streamError) {
+        streamEnabled.set(false);
+        Status status = Status.fromThrowable(streamError);
+        logger.log(Logger.Level.ERROR, "Error %s with status %s.".formatted(streamError, status), streamError);
     }
 
     /** what will the stream observer do when the stream is completed */
