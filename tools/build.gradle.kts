@@ -16,7 +16,7 @@
 
 plugins {
     id("application")
-    id("com.hedera.block.tools")
+    id("org.hiero.gradle.module.library")
 }
 
 description = "Hedera Block Stream Tools"
@@ -29,7 +29,7 @@ application {
 mainModuleInfo {
     runtimeOnly("com.swirlds.config.impl")
     runtimeOnly("org.apache.logging.log4j.slf4j2.impl")
-    runtimeOnly("io.grpc.netty.shaded")
+    runtimeOnly("io.grpc.netty")
 }
 
 testModuleInfo { requiresStatic("com.github.spotbugs.annotations") }
