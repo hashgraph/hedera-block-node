@@ -27,9 +27,14 @@ import com.swirlds.config.api.ConfigProperty;
  * <p>MediatorConfig will set the ring buffer size for the mediator.
  *
  * @param ringBufferSize the size of the ring buffer used by the mediator
+ * @param type use a predefined type string to replace the mediator component implementation.
+ *  Non-PRODUCTION values should only be used for troubleshooting and development purposes.
  */
+// 131072 works but not with persistence
 @ConfigData("mediator")
-public record MediatorConfig(@ConfigProperty(defaultValue = "67108864") int ringBufferSize) {
+public record MediatorConfig(
+        @ConfigProperty(defaultValue = "4194304") int ringBufferSize,
+        @ConfigProperty(defaultValue = "PRODUCTION") String type) {
     private static final System.Logger LOGGER = System.getLogger(MediatorConfig.class.getName());
 
     /**
@@ -47,5 +52,6 @@ public record MediatorConfig(@ConfigProperty(defaultValue = "67108864") int ring
         }
 
         LOGGER.log(INFO, "Mediator configuration mediator.ringBufferSize: " + ringBufferSize);
+        LOGGER.log(INFO, "Mediator configuration mediator.type: " + type);
     }
 }

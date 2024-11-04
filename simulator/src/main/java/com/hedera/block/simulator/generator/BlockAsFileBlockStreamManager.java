@@ -25,10 +25,9 @@ import static java.lang.System.Logger.Level.INFO;
 import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.protoc.Block;
+import com.hedera.hapi.block.stream.protoc.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
-import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -77,9 +76,10 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
 
     @Override
     public BlockItem getNextBlockItem() {
-        BlockItem nextBlockItem = blocks.get(currentBlockIndex).items().get(currentBlockItemIndex);
+        BlockItem nextBlockItem = blocks.get(currentBlockIndex).getItemsList().get(currentBlockItemIndex);
         currentBlockItemIndex++;
-        if (currentBlockItemIndex >= blocks.get(currentBlockIndex).items().size()) {
+        if (currentBlockItemIndex
+                >= blocks.get(currentBlockIndex).getItemsList().size()) {
             currentBlockItemIndex = 0;
             currentBlockIndex++;
             if (currentBlockIndex >= blocks.size()) {
@@ -117,7 +117,7 @@ public class BlockAsFileBlockStreamManager implements BlockStreamManager {
                     continue;
                 }
 
-                final Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
+                final Block block = Block.parseFrom(blockBytes);
                 blocks.add(block);
                 LOGGER.log(DEBUG, "Loaded block: " + blockPath);
             }

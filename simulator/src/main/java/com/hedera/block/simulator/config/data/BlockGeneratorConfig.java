@@ -19,6 +19,7 @@ package com.hedera.block.simulator.config.data;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
+import com.swirlds.config.api.validation.annotation.Min;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,15 +32,19 @@ import java.nio.file.Paths;
  * @param managerImplementation the implementation class name of the block stream manager
  * @param paddedLength the length to which block identifiers are padded
  * @param fileExtension the file extension used for block files
+ * @param startBlockNumber the optional start block number for the BlockAsFileLargeDataSets manager
+ * @param endBlockNumber the optional end block number for the BlockAsFileLargeDataSets manager
  */
 @ConfigData("generator")
 public record BlockGeneratorConfig(
         @ConfigProperty(defaultValue = "DIR") GenerationMode generationMode,
         @ConfigProperty(defaultValue = "") String folderRootPath,
-        @ConfigProperty(defaultValue = "BlockAsFileBlockStreamManager")
-                String managerImplementation,
+        @ConfigProperty(defaultValue = "BlockAsFileBlockStreamManager") String managerImplementation,
         @ConfigProperty(defaultValue = "36") int paddedLength,
-        @ConfigProperty(defaultValue = ".blk.gz") String fileExtension) {
+        @ConfigProperty(defaultValue = ".blk.gz") String fileExtension,
+        // Optional block number range for the BlockAsFileLargeDataSets manager
+        @ConfigProperty(defaultValue = "1") @Min(1) int startBlockNumber,
+        @ConfigProperty(defaultValue = "-1") int endBlockNumber) {
 
     /**
      * Constructs a new {@code BlockGeneratorConfig} instance with validation.
@@ -64,6 +69,10 @@ public record BlockGeneratorConfig(
         }
 
         folderRootPath = path.toString();
+
+        if (endBlockNumber > -1 && endBlockNumber < startBlockNumber) {
+            throw new IllegalArgumentException("endBlockNumber must be greater than or equal to startBlockNumber");
+        }
     }
 
     /**
@@ -84,6 +93,8 @@ public record BlockGeneratorConfig(
         private String managerImplementation = "BlockAsFileBlockStreamManager";
         private int paddedLength = 36;
         private String fileExtension = ".blk.gz";
+        private int startBlockNumber;
+        private int endBlockNumber;
 
         /**
          * Creates a new instance of the {@code Builder} class with default configuration values.
@@ -148,6 +159,30 @@ public record BlockGeneratorConfig(
         }
 
         /**
+         * Sets the start block number for the BlockAsFileLargeDataSets manager to
+         * begin reading blocks.
+         *
+         * @param startBlockNumber the start block number
+         * @return this {@code Builder} instance
+         */
+        public Builder startBlockNumber(int startBlockNumber) {
+            this.startBlockNumber = startBlockNumber;
+            return this;
+        }
+
+        /**
+         * Sets the end block number for the BlockAsFileLargeDataSets manager to
+         * stop reading blocks.
+         *
+         * @param endBlockNumber the end block number
+         * @return this {@code Builder} instance
+         */
+        public Builder endBlockNumber(int endBlockNumber) {
+            this.endBlockNumber = endBlockNumber;
+            return this;
+        }
+
+        /**
          * Builds a new {@link BlockGeneratorConfig} instance with the configured values.
          *
          * @return a new {@code BlockGeneratorConfig}
@@ -158,7 +193,9 @@ public record BlockGeneratorConfig(
                     folderRootPath,
                     managerImplementation,
                     paddedLength,
-                    fileExtension);
+                    fileExtension,
+                    startBlockNumber,
+                    endBlockNumber);
         }
     }
 }

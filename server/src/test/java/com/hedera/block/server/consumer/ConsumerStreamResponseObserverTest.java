@@ -16,10 +16,7 @@
 
 package com.hedera.block.server.consumer;
 
-import static com.hedera.block.server.Translator.fromPbj;
-import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -36,12 +33,9 @@ import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.hapi.block.stream.input.EventHeader;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.hapi.platform.event.EventCore;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import io.grpc.stub.ServerCallStreamObserver;
-import io.grpc.stub.StreamObserver;
+import com.hedera.pbj.runtime.grpc.Pipeline;
 import java.io.IOException;
 import java.time.InstantSource;
-import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -60,13 +54,10 @@ public class ConsumerStreamResponseObserverTest {
     private StreamMediator<BlockItem, SubscribeStreamResponse> streamMediator;
 
     @Mock
-    private StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse> responseStreamObserver;
+    private Pipeline<SubscribeStreamResponse> responseStreamObserver;
 
     @Mock
     private ObjectEvent<SubscribeStreamResponse> objectEvent;
-
-    @Mock
-    private ServerCallStreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse> serverCallStreamObserver;
 
     @Mock
     private InstantSource testClock;
@@ -99,7 +90,7 @@ public class ConsumerStreamResponseObserverTest {
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         // verify the observer is called with the next BlockItem
-        verify(responseStreamObserver).onNext(fromPbj(subscribeStreamResponse));
+        verify(responseStreamObserver).onNext(subscribeStreamResponse);
 
         // verify the mediator is NOT called to unsubscribe the observer
         verify(streamMediator, timeout(testTimeout).times(0)).unsubscribe(consumerBlockItemObserver);
@@ -117,73 +108,6 @@ public class ConsumerStreamResponseObserverTest {
 
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
         verify(streamMediator).unsubscribe(consumerBlockItemObserver);
-    }
-
-    @Test
-    public void testHandlersSetOnObserver() throws InterruptedException {
-
-        // Mock a clock with 2 different return values in response to anticipated
-        // millis() calls. Here the second call will always be inside the timeout window.
-        when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
-
-        new ConsumerStreamResponseObserver(testClock, streamMediator, serverCallStreamObserver, testContext);
-
-        verify(serverCallStreamObserver, timeout(testTimeout).times(1)).setOnCloseHandler(any());
-        verify(serverCallStreamObserver, timeout(testTimeout).times(1)).setOnCancelHandler(any());
-    }
-
-    @Test
-    public void testResponseNotPermittedAfterCancel() {
-
-        final TestConsumerStreamResponseObserver consumerStreamResponseObserver =
-                new TestConsumerStreamResponseObserver(
-                        testClock, streamMediator, serverCallStreamObserver, testContext);
-
-        final List<BlockItem> blockItems = generateBlockItems(1);
-        final BlockItemSet blockItemSet =
-                BlockItemSet.newBuilder().blockItems(blockItems).build();
-        final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build();
-        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
-
-        // Confirm that the observer is called with the first BlockItem
-        consumerStreamResponseObserver.onEvent(objectEvent, 0, true);
-
-        // Cancel the observer
-        consumerStreamResponseObserver.cancel();
-
-        // Attempt to send another BlockItem
-        consumerStreamResponseObserver.onEvent(objectEvent, 0, true);
-
-        // Confirm that canceling the observer allowed only 1 response to be sent.
-        verify(serverCallStreamObserver, timeout(testTimeout).times(1)).onNext(fromPbj(subscribeStreamResponse));
-    }
-
-    @Test
-    public void testResponseNotPermittedAfterClose() {
-
-        final TestConsumerStreamResponseObserver consumerStreamResponseObserver =
-                new TestConsumerStreamResponseObserver(
-                        testClock, streamMediator, serverCallStreamObserver, testContext);
-
-        final List<BlockItem> blockItems = generateBlockItems(1);
-        final BlockItemSet blockItemSet =
-                BlockItemSet.newBuilder().blockItems(blockItems).build();
-        final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build();
-        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
-
-        // Confirm that the observer is called with the first BlockItem
-        consumerStreamResponseObserver.onEvent(objectEvent, 0, true);
-
-        // Close the observer
-        consumerStreamResponseObserver.close();
-
-        // Attempt to send another BlockItem
-        consumerStreamResponseObserver.onEvent(objectEvent, 0, true);
-
-        // Confirm that closing the observer allowed only 1 response to be sent.
-        verify(serverCallStreamObserver, timeout(testTimeout).times(1)).onNext(fromPbj(subscribeStreamResponse));
     }
 
     @Test
@@ -234,7 +158,7 @@ public class ConsumerStreamResponseObserverTest {
 
         // Confirm that the observer was called with the next BlockItem
         // since we never send a BlockItem with a Header to start the stream.
-        verify(responseStreamObserver, timeout(testTimeout).times(0)).onNext(fromPbj(subscribeStreamResponse));
+        verify(responseStreamObserver, timeout(testTimeout).times(0)).onNext(subscribeStreamResponse);
     }
 
     @Test
@@ -268,26 +192,5 @@ public class ConsumerStreamResponseObserverTest {
                 new ConsumerStreamResponseObserver(testClock, streamMediator, responseStreamObserver, testContext);
 
         assertThrows(IllegalArgumentException.class, () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
-    }
-
-    private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
-
-        public TestConsumerStreamResponseObserver(
-                @NonNull final InstantSource producerLivenessClock,
-                @NonNull final StreamMediator<BlockItem, SubscribeStreamResponse> subscriptionHandler,
-                @NonNull
-                        final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
-                                subscribeStreamResponseObserver,
-                @NonNull final BlockNodeContext blockNodeContext) {
-            super(producerLivenessClock, subscriptionHandler, subscribeStreamResponseObserver, blockNodeContext);
-        }
-
-        public void cancel() {
-            onCancel.run();
-        }
-
-        public void close() {
-            onClose.run();
-        }
     }
 }

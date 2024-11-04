@@ -16,6 +16,7 @@
 
 package com.hedera.block.simulator.grpc;
 
+import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.hapi.block.protoc.PublishStreamResponse;
@@ -45,7 +46,7 @@ public class PublishStreamObserver implements StreamObserver<PublishStreamRespon
     /** what will the stream observer do with the response from the server */
     @Override
     public void onNext(PublishStreamResponse publishStreamResponse) {
-        logger.log(Logger.Level.INFO, "Received Response: " + publishStreamResponse.toString());
+        logger.log(INFO, "Received Response: " + publishStreamResponse.toString());
     }
 
     /** Responsible for stream observer behaviour, in case of error. For now, we will stop the stream for every error. In the future we'd want to have a retry mechanism depending on the error. */
@@ -59,6 +60,6 @@ public class PublishStreamObserver implements StreamObserver<PublishStreamRespon
     /** what will the stream observer do when the stream is completed */
     @Override
     public void onCompleted() {
-        logger.log(Logger.Level.DEBUG, "Completed");
+        logger.log(INFO, "Completed");
     }
 }

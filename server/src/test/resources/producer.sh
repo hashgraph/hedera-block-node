@@ -28,7 +28,7 @@ generate_header() {
 
     # Interpolate the integer parameter into the JSON template
     local result
-    result=$(echo "$header_template" | jq --argjson number "$block_header_number" ".block_item.block_header.number = $block_header_number")
+    result=$(echo "$header_template" | jq --argjson number "$block_header_number" ".block_header.number = $block_header_number")
 
     echo "$result"
 }
@@ -38,7 +38,7 @@ generate_event() {
 
     # Interpolate the integer parameter into the JSON template
     local result
-    result=$(echo "$event_template" | jq --argjson creator_id "$creator_node_id" ".block_item.event_header.event_core.creator_node_id = $creator_node_id")
+    result=$(echo "$event_template" | jq --argjson creator_id "$creator_node_id" ".event_header.event_core.creator_node_id = $creator_node_id")
 
     echo "$result"
 }
@@ -48,7 +48,7 @@ generate_block_proof() {
 
     # Interpolate the integer parameter into the JSON template
     local result
-    result=$(echo "$block_proof_template" | jq --argjson block "$block_number" ".block_item.block_proof.block = $block_number")
+    result=$(echo "$block_proof_template" | jq --argjson block "$block_number" ".block_proof.block = $block_number")
 
     echo "$result"
 }
@@ -85,22 +85,28 @@ event_template=$(cat "templates/event_template.json")
   block_items=10
   while true; do
 
+    # Start the BlockItems array
+    echo "{"
+    echo "\"block_items\": ["
     # Generate 10 BlockItems per Block
     for ((i=1; i<=$block_items; i++))
     do
       if [[ $i -eq 1 ]]; then
         result=$(generate_header $iter)
-        echo "$result"
+        echo "$result,"
       elif [[ $i -eq $block_items ]]; then
         result=$(generate_block_proof $iter)
         echo "$result"
       else
         result=$(generate_event $i)
-        echo "$result"
+        echo "$result,"
       fi
 
       sleep 0.01
     done
+
+    echo "]"
+    echo "}"
 
     if [ "$iter" -eq "$2" ]; then
       exit 0

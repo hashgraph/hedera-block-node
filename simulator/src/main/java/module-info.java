@@ -15,7 +15,6 @@ module com.hedera.block.simulator {
     requires static com.google.auto.service;
     requires com.hedera.block.common;
     requires com.hedera.block.stream;
-    requires com.google.protobuf;
     requires com.hedera.pbj.runtime;
     requires com.swirlds.common;
     requires com.swirlds.config.api;

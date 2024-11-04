@@ -20,46 +20,77 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.hedera.block.server.grpc.BlockAccessService;
-import com.hedera.block.server.grpc.BlockStreamService;
+import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.events.BlockNodeEventHandler;
+import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.health.HealthService;
+import com.hedera.block.server.mediator.LiveStreamMediator;
+import com.hedera.block.server.notifier.Notifier;
+import com.hedera.block.server.pbj.PbjBlockAccessServiceProxy;
+import com.hedera.block.server.pbj.PbjBlockStreamServiceProxy;
+import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.stream.Block;
+import com.hedera.pbj.grpc.helidon.PbjRouting;
+import com.hedera.pbj.grpc.helidon.config.PbjConfig;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.WebServerConfig;
-import io.helidon.webserver.grpc.GrpcRouting;
 import io.helidon.webserver.http.HttpRouting;
 import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class BlockNodeAppTest {
 
-    @Mock private ServiceStatus serviceStatus;
+    @Mock
+    private ServiceStatus serviceStatus;
 
-    @Mock private HealthService healthService;
+    @Mock
+    private HealthService healthService;
 
-    @Mock private BlockStreamService blockStreamService;
+    @Mock
+    private WebServerConfig.Builder webServerBuilder;
 
-    @Mock private BlockAccessService blockAccessService;
+    @Mock
+    private WebServer webServer;
 
-    @Mock private WebServerConfig.Builder webServerBuilder;
+    @Mock
+    private LiveStreamMediator liveStreamMediator;
 
-    @Mock private WebServer webServer;
+    @Mock
+    private BlockReader<Block> blockReader;
 
-    @InjectMocks private BlockNodeApp blockNodeApp;
+    @Mock
+    private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> blockNodeEventHandler;
+
+    @Mock
+    private Notifier notifier;
+
+    @Mock
+    private BlockNodeContext blockNodeContext;
+
+    private BlockNodeApp blockNodeApp;
 
     @BeforeEach
     void setup() {
+
+        blockNodeApp = new BlockNodeApp(
+                serviceStatus,
+                healthService,
+                new PbjBlockStreamServiceProxy(
+                        liveStreamMediator, serviceStatus, blockNodeEventHandler, notifier, blockNodeContext),
+                new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext),
+                webServerBuilder);
+
         when(webServerBuilder.port(8080)).thenReturn(webServerBuilder);
-        when(webServerBuilder.addRouting(any(GrpcRouting.Builder.class)))
-                .thenReturn(webServerBuilder);
-        when(webServerBuilder.addRouting(any(HttpRouting.Builder.class)))
-                .thenReturn(webServerBuilder);
+        when(webServerBuilder.addProtocol(any(PbjConfig.class))).thenReturn(webServerBuilder);
+        when(webServerBuilder.addRouting(any(PbjRouting.Builder.class))).thenReturn(webServerBuilder);
+        when(webServerBuilder.addRouting(any(HttpRouting.Builder.class))).thenReturn(webServerBuilder);
         when(webServerBuilder.build()).thenReturn(webServer);
         when(healthService.getHealthRootPath()).thenReturn("/health");
     }
@@ -74,8 +105,9 @@ class BlockNodeAppTest {
         verify(webServer).start();
         verify(healthService).getHealthRootPath();
         verify(webServerBuilder).port(8080);
-        verify(webServerBuilder).addRouting(any(GrpcRouting.Builder.class));
+        verify(webServerBuilder).addRouting(any(PbjRouting.Builder.class));
         verify(webServerBuilder).addRouting(any(HttpRouting.Builder.class));
+        verify(webServerBuilder).addProtocol(any(PbjConfig.class));
         verify(webServerBuilder).build();
     }
 }

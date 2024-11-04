@@ -35,7 +35,8 @@ class PersistenceStorageConfigTest {
 
         Path testPath = Files.createTempDirectory(TEMP_DIR);
 
-        PersistenceStorageConfig persistenceStorageConfig = new PersistenceStorageConfig(testPath.toString());
+        PersistenceStorageConfig persistenceStorageConfig =
+                new PersistenceStorageConfig(testPath.toString(), "PRODUCTION");
         assertEquals(testPath.toString(), persistenceStorageConfig.rootPath());
     }
 
@@ -47,14 +48,14 @@ class PersistenceStorageConfigTest {
         deleteDirectory(Paths.get(expectedDefaultRootPath));
 
         PersistenceStorageConfig persistenceStorageConfig =
-                new PersistenceStorageConfig(getAbsoluteFolder("data_empty"));
+                new PersistenceStorageConfig(getAbsoluteFolder("data_empty"), "PRODUCTION");
         assertEquals(expectedDefaultRootPath, persistenceStorageConfig.rootPath());
     }
 
     @Test
     void persistenceStorageConfig_throwsExceptionForRelativePath() {
-        IllegalArgumentException exception =
-                assertThrows(IllegalArgumentException.class, () -> new PersistenceStorageConfig("relative/path"));
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class, () -> new PersistenceStorageConfig("relative/path", "PRODUCTION"));
         assertEquals("relative/path Root path must be absolute", exception.getMessage());
     }
 
@@ -62,8 +63,8 @@ class PersistenceStorageConfigTest {
     void persistenceStorageConfig_throwsRuntimeExceptionOnIOException() {
         Path invalidPath = Paths.get("/invalid/path");
 
-        RuntimeException exception =
-                assertThrows(RuntimeException.class, () -> new PersistenceStorageConfig(invalidPath.toString()));
+        RuntimeException exception = assertThrows(
+                RuntimeException.class, () -> new PersistenceStorageConfig(invalidPath.toString(), "PRODUCTION"));
         assertInstanceOf(IOException.class, exception.getCause());
     }
 

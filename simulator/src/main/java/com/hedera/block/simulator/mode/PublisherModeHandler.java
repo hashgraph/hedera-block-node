@@ -17,6 +17,8 @@
 package com.hedera.block.simulator.mode;
 
 import static com.hedera.block.simulator.Constants.NANOS_PER_MILLI;
+import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlockItemsSent;
+import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
@@ -24,7 +26,8 @@ import com.hedera.block.simulator.config.types.StreamingMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
-import com.hedera.hapi.block.stream.Block;
+import com.hedera.block.simulator.metrics.MetricsService;
+import com.hedera.hapi.block.stream.protoc.Block;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 
@@ -45,6 +48,7 @@ public class PublisherModeHandler implements SimulatorModeHandler {
     private final StreamingMode streamingMode;
     private final int delayBetweenBlockItems;
     private final int millisecondsPerBlock;
+    private final MetricsService metricsService;
 
     /**
      * Constructs a new {@code PublisherModeHandler} with the specified block stream configuration and publisher client.
@@ -52,14 +56,17 @@ public class PublisherModeHandler implements SimulatorModeHandler {
      * @param blockStreamConfig the configuration data for managing block streams
      * @param publishStreamGrpcClient the grpc client used for streaming blocks
      * @param blockStreamManager the block stream manager, responsible for generating blocks
+     * @param metricsService the metrics service to record and report usage statistics
      */
     public PublisherModeHandler(
             @NonNull final BlockStreamConfig blockStreamConfig,
             @NonNull final PublishStreamGrpcClient publishStreamGrpcClient,
-            @NonNull final BlockStreamManager blockStreamManager) {
+            @NonNull final BlockStreamManager blockStreamManager,
+            @NonNull final MetricsService metricsService) {
         this.blockStreamConfig = requireNonNull(blockStreamConfig);
         this.publishStreamGrpcClient = requireNonNull(publishStreamGrpcClient);
         this.blockStreamManager = requireNonNull(blockStreamManager);
+        this.metricsService = requireNonNull(metricsService);
 
         streamingMode = blockStreamConfig.streamingMode();
         delayBetweenBlockItems = blockStreamConfig.delayBetweenBlockItems();
@@ -76,7 +83,7 @@ public class PublisherModeHandler implements SimulatorModeHandler {
         } else {
             constantRateStreaming();
         }
-        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has stopped streaming.");
+        LOGGER.log(INFO, "Block Stream Simulator has stopped streaming.");
     }
 
     private void millisPerBlockStreaming() throws IOException, InterruptedException, BlockSimulatorParsingException {
@@ -105,6 +112,11 @@ public class PublisherModeHandler implements SimulatorModeHandler {
             }
             nextBlock = blockStreamManager.getNextBlock();
         }
+        LOGGER.log(INFO, "Block Stream Simulator has stopped");
+        LOGGER.log(
+                INFO,
+                "Number of BlockItems sent by the Block Stream Simulator: "
+                        + metricsService.get(LiveBlockItemsSent).get());
     }
 
     private void constantRateStreaming() throws InterruptedException, IOException, BlockSimulatorParsingException {
@@ -118,22 +130,20 @@ public class PublisherModeHandler implements SimulatorModeHandler {
             Block block = blockStreamManager.getNextBlock();
 
             if (block == null) {
-                LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has reached the end of the block items");
+                LOGGER.log(INFO, "Block Stream Simulator has reached the end of the block items");
                 break;
             }
             if (!publishStreamGrpcClient.streamBlock(block)) {
-                LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator stopped streaming due to errors.");
+                LOGGER.log(INFO, "Block Stream Simulator stopped streaming due to errors.");
                 break;
             }
 
-            blockItemsStreamed += block.items().size();
+            blockItemsStreamed += block.getItemsList().size();
 
             Thread.sleep(delayMSBetweenBlockItems, delayNSBetweenBlockItems);
 
             if (blockItemsStreamed >= blockStreamConfig.maxBlockItemsToStream()) {
-                LOGGER.log(
-                        System.Logger.Level.INFO,
-                        "Block Stream Simulator has reached the maximum number of block items to" + " stream");
+                LOGGER.log(INFO, "Block Stream Simulator has reached the maximum number of block items to" + " stream");
                 streamBlockItem = false;
             }
         }

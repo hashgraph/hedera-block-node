@@ -2,9 +2,13 @@ module com.hedera.block.stream {
     exports com.hedera.hapi.block;
     exports com.hedera.hapi.block.protoc;
     exports com.hedera.hapi.block.stream.protoc;
+    exports com.hedera.hapi.block.stream.input.protoc;
+    exports com.hedera.hapi.block.stream.output.protoc;
+    exports com.hedera.hapi.platform.event.legacy;
     exports com.hedera.hapi.block.stream;
     exports com.hedera.hapi.block.stream.input;
     exports com.hedera.hapi.block.stream.output;
+    exports com.hedera.hapi.platform.event;
     exports com.hedera.hapi.node.base;
     exports com.hedera.hapi.node.base.codec;
     exports com.hedera.hapi.node.base.schema;
@@ -57,7 +61,6 @@ module com.hedera.block.stream {
     exports com.hedera.hapi.node.state.primitives;
     exports com.hedera.hapi.node.state.throttles;
     exports com.hedera.hapi.node.state.congestion;
-    exports com.hedera.hapi.platform.event;
     exports com.hedera.services.stream.proto;
     exports com.hederahashgraph.api.proto.java;
     exports com.hederahashgraph.service.proto.java;

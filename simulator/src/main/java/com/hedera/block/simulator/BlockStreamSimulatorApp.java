@@ -69,8 +69,8 @@ public class BlockStreamSimulatorApp {
 
         final SimulatorMode simulatorMode = blockStreamConfig.simulatorMode();
         switch (simulatorMode) {
-            case PUBLISHER -> simulatorModeHandler =
-                    new PublisherModeHandler(blockStreamConfig, publishStreamGrpcClient, blockStreamManager);
+            case PUBLISHER -> simulatorModeHandler = new PublisherModeHandler(
+                    blockStreamConfig, publishStreamGrpcClient, blockStreamManager, metricsService);
             case CONSUMER -> simulatorModeHandler = new ConsumerModeHandler(blockStreamConfig);
             case BOTH -> simulatorModeHandler = new CombinedModeHandler(blockStreamConfig);
             default -> throw new IllegalArgumentException("Unknown SimulatorMode: " + simulatorMode);

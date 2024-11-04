@@ -10,7 +10,7 @@ option java_multiple_files = true;
 //import "stream/block_item.proto";
 
 message PublishStreamRequest {
-    BlockItem block_item = 1;
+    repeated BlockItem block_items = 1;
 }
 
 message PublishStreamResponse {
@@ -81,7 +81,19 @@ message SubscribeStreamRequest {
 message SubscribeStreamResponse {
     oneof response {
         SubscribeStreamResponseCode status = 1;
-        BlockItem block_item = 2;
+        SubscribeStreamResponseSet block_items = 2;
+    }
+
+    message SubscribeStreamResponseSet {
+        /**
+         * An ordered list of `BlockItem`s.<br/>
+         * This list supports sending block items to subscribers in batches
+         * for greater channel efficiency.
+         * <p>
+         * The full response SHALL consist of many of these collections
+         * followed by a single `status` message.
+         */
+        repeated BlockItem block_items = 1;
     }
 }
 

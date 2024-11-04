@@ -37,9 +37,10 @@ public interface GeneratorInjectionModule {
     @Provides
     static BlockStreamManager providesBlockStreamManager(BlockGeneratorConfig config) {
 
-        if ("BlockAsDirBlockStreamManager".equalsIgnoreCase(config.managerImplementation())) {
+        final String managerImpl = config.managerImplementation();
+        if ("BlockAsDirBlockStreamManager".equalsIgnoreCase(managerImpl)) {
             return new BlockAsDirBlockStreamManager(config);
-        } else if ("BlockAsFileLargeDataSets".equalsIgnoreCase(config.managerImplementation())) {
+        } else if ("BlockAsFileLargeDataSets".equalsIgnoreCase(managerImpl)) {
             return new BlockAsFileLargeDataSets(config);
         }
 

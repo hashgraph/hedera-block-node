@@ -16,12 +16,15 @@
 
 package com.hedera.block.simulator.generator;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.protoc.BlockItem;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -65,6 +68,33 @@ class BlockAsFileLargeDataSetsTest {
     }
 
     @Test
+    void getNextBlockInRange() throws IOException, BlockSimulatorParsingException {
+
+        final BlockGeneratorConfig blockGeneratorConfig = BlockGeneratorConfig.builder()
+                .generationMode(GenerationMode.DIR)
+                .folderRootPath(getAbsoluteFolder(rootFolder))
+                .managerImplementation("BlockAsFileBlockStreamManager")
+                .paddedLength(36)
+                .fileExtension(".blk")
+                .startBlockNumber(2)
+                .endBlockNumber(4)
+                .build();
+
+        final BlockStreamManager blockStreamManager =
+                getBlockAsFileLargeDatasetsBlockStreamManager(blockGeneratorConfig);
+
+        // The startBlockNumber and endBlockNumber signal to the manager
+        // that it should only return blocks within the specified range.
+        // Here, the first 3 should succeed (blocks 2, 3 and 4) but the 4th should
+        // return null.
+        for (int i = 0; i < 3; i++) {
+            assertNotNull(blockStreamManager.getNextBlock());
+        }
+
+        assertNull(blockStreamManager.getNextBlock());
+    }
+
+    @Test
     void getNextBlockItem() throws IOException, BlockSimulatorParsingException {
         BlockStreamManager blockStreamManager =
                 getBlockAsFileLargeDatasetsBlockStreamManager(getAbsoluteFolder(rootFolder));
@@ -95,36 +125,37 @@ class BlockAsFileLargeDataSetsTest {
         byte[] invalidData = "invalid block data".getBytes();
         Files.write(currentBlockFilePath, invalidData);
 
-        final BlockGeneratorConfig blockGeneratorConfig =
-                BlockGeneratorConfig.builder()
-                        .generationMode(GenerationMode.DIR)
-                        .folderRootPath(blockDirPath.toString())
-                        .managerImplementation("BlockAsFileBlockStreamManager")
-                        .paddedLength(36)
-                        .fileExtension(".blk")
-                        .build();
+        final BlockGeneratorConfig blockGeneratorConfig = BlockGeneratorConfig.builder()
+                .generationMode(GenerationMode.DIR)
+                .folderRootPath(blockDirPath.toString())
+                .managerImplementation("BlockAsFileBlockStreamManager")
+                .paddedLength(36)
+                .fileExtension(".blk")
+                .build();
 
-        BlockAsFileLargeDataSets blockStreamManager =
-                new BlockAsFileLargeDataSets(blockGeneratorConfig);
+        BlockAsFileLargeDataSets blockStreamManager = new BlockAsFileLargeDataSets(blockGeneratorConfig);
 
         assertThrows(
-                BlockSimulatorParsingException.class,
+                com.google.protobuf.InvalidProtocolBufferException.class,
                 blockStreamManager::getNextBlock,
-                "Expected getNextBlock() to throw BlockSimulatorParsingException");
+                "com.google.protobuf.InvalidProtocolBufferException: Protocol message end-group tag did not match expected tag.");
+    }
+
+    private BlockAsFileLargeDataSets getBlockAsFileLargeDatasetsBlockStreamManager(String rootFolder) {
+
+        final BlockGeneratorConfig blockGeneratorConfig = BlockGeneratorConfig.builder()
+                .generationMode(GenerationMode.DIR)
+                .folderRootPath(rootFolder)
+                .managerImplementation("BlockAsFileBlockStreamManager")
+                .paddedLength(36)
+                .fileExtension(".blk")
+                .build();
+
+        return getBlockAsFileLargeDatasetsBlockStreamManager(blockGeneratorConfig);
     }
 
     private BlockAsFileLargeDataSets getBlockAsFileLargeDatasetsBlockStreamManager(
-            String rootFolder) {
-
-        final BlockGeneratorConfig blockGeneratorConfig =
-                BlockGeneratorConfig.builder()
-                        .generationMode(GenerationMode.DIR)
-                        .folderRootPath(rootFolder)
-                        .managerImplementation("BlockAsFileBlockStreamManager")
-                        .paddedLength(36)
-                        .fileExtension(".blk")
-                        .build();
-
+            BlockGeneratorConfig blockGeneratorConfig) {
         return new BlockAsFileLargeDataSets(blockGeneratorConfig);
     }
 
@@ -134,12 +165,8 @@ class BlockAsFileLargeDataSetsTest {
 
     private static int getFilesInFolder(String absolutePath) {
         File folder = new File(absolutePath);
-        File[] blkFiles =
-                folder.listFiles(
-                        file ->
-                                file.isFile()
-                                        && (file.getName().endsWith(".blk")
-                                                || file.getName().endsWith(".blk.gz")));
+        File[] blkFiles = folder.listFiles(file -> file.isFile()
+                && (file.getName().endsWith(".blk") || file.getName().endsWith(".blk.gz")));
         return blkFiles.length;
     }
 }

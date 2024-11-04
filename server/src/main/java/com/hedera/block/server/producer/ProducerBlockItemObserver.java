@@ -16,8 +16,6 @@
 
 package com.hedera.block.server.producer;
 
-import static com.hedera.block.server.Translator.fromPbj;
-import static com.hedera.block.server.Translator.toPbj;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItemsReceived;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.SuccessfulPubStreamRespSent;
 import static java.lang.System.Logger;
@@ -33,18 +31,17 @@ import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.hapi.block.BlockItemSet;
 import com.hedera.hapi.block.EndOfStream;
+import com.hedera.hapi.block.PublishStreamRequest;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.hapi.block.stream.BlockItem;
-import com.hedera.pbj.runtime.ParseException;
-import com.swirlds.metrics.api.Counter;
+import com.hedera.pbj.runtime.grpc.Pipeline;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.grpc.stub.ServerCallStreamObserver;
-import io.grpc.stub.StreamObserver;
 import java.time.InstantSource;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -54,32 +51,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * server).
  */
 public class ProducerBlockItemObserver
-        implements StreamObserver<com.hedera.hapi.block.protoc.PublishStreamRequest>,
-                BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>> {
+        implements Pipeline<PublishStreamRequest>, BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>> {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse> publishStreamResponseObserver;
     private final SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
     private final Publisher<List<BlockItem>> publisher;
     private final ServiceStatus serviceStatus;
     private final MetricsService metricsService;
+    private final Flow.Subscriber<? super PublishStreamResponse> publishStreamResponseObserver;
 
     private final AtomicBoolean isResponsePermitted = new AtomicBoolean(true);
 
     private final LivenessCalculator livenessCalculator;
-
-    /**
-     * The onCancel handler to execute when the producer cancels the stream. This handler is
-     * protected to facilitate testing.
-     */
-    protected Runnable onCancel;
-
-    /**
-     * The onClose handler to execute when the producer closes the stream. This handler is protected
-     * to facilitate testing.
-     */
-    protected Runnable onClose;
 
     /**
      * Constructor for the ProducerBlockStreamObserver class. It is responsible for calling the
@@ -101,9 +85,7 @@ public class ProducerBlockItemObserver
             @NonNull final InstantSource producerLivenessClock,
             @NonNull final Publisher<List<BlockItem>> publisher,
             @NonNull final SubscriptionHandler<PublishStreamResponse> subscriptionHandler,
-            @NonNull
-                    final StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
-                            publishStreamResponseObserver,
+            @NonNull final Flow.Subscriber<? super PublishStreamResponse> publishStreamResponseObserver,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
 
@@ -119,30 +101,11 @@ public class ProducerBlockItemObserver
         this.subscriptionHandler = subscriptionHandler;
         this.metricsService = blockNodeContext.metricsService();
         this.serviceStatus = serviceStatus;
+    }
 
-        if (publishStreamResponseObserver
-                instanceof
-                ServerCallStreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
-                serverCallStreamObserver) {
-
-            onCancel = () -> {
-                // The producer has cancelled the stream.
-                // Do not allow additional responses to be sent.
-                isResponsePermitted.set(false);
-                subscriptionHandler.unsubscribe(this);
-                LOGGER.log(DEBUG, "Producer cancelled the stream. Observer unsubscribed.");
-            };
-            serverCallStreamObserver.setOnCancelHandler(onCancel);
-
-            onClose = () -> {
-                // The producer has closed the stream.
-                // Do not allow additional responses to be sent.
-                isResponsePermitted.set(false);
-                subscriptionHandler.unsubscribe(this);
-                LOGGER.log(DEBUG, "Producer completed the stream. Observer unsubscribed.");
-            };
-            serverCallStreamObserver.setOnCloseHandler(onClose);
-        }
+    @Override
+    public void onSubscribe(Flow.Subscription subscription) {
+        LOGGER.log(DEBUG, "onSubscribe called");
     }
 
     /**
@@ -153,29 +116,14 @@ public class ProducerBlockItemObserver
      * @param publishStreamRequest the PublishStreamRequest received from the upstream producer
      */
     @Override
-    public void onNext(@NonNull final com.hedera.hapi.block.protoc.PublishStreamRequest publishStreamRequest) {
+    public void onNext(@NonNull final PublishStreamRequest publishStreamRequest) {
 
-        LOGGER.log(DEBUG, "Received PublishStreamRequest from producer");
-        final List<BlockItem> blockItemsPbj = new ArrayList<>();
-
-        final Counter liveBlockItemsReceived = metricsService.get(LiveBlockItemsReceived);
-        for (final com.hedera.hapi.block.stream.protoc.BlockItem blockItemProtoc :
-                publishStreamRequest.getBlockItems().getBlockItemsList()) {
-            try {
-                final BlockItem blockItem = toPbj(BlockItem.PROTOBUF, blockItemProtoc.toByteArray());
-                blockItemsPbj.add(blockItem);
-            } catch (ParseException e) {
-                final var errorResponse = buildErrorStreamResponse();
-                publishStreamResponseObserver.onNext(errorResponse);
-                LOGGER.log(ERROR, "Error parsing inbound block item from a producer: " + blockItemProtoc, e);
-
-                // Stop the server
-                serviceStatus.stopWebServer(getClass().getName());
-            }
-            liveBlockItemsReceived.increment();
-        }
-
-        LOGGER.log(DEBUG, "Received block item batch with {} items.", blockItemsPbj.size());
+        final BlockItemSet blockItemSet = publishStreamRequest.blockItems();
+        LOGGER.log(
+                DEBUG,
+                "Received PublishStreamRequest from producer with "
+                        + blockItemSet.blockItems().size() + " BlockItems.");
+        metricsService.get(LiveBlockItemsReceived).add(blockItemSet.blockItems().size());
 
         // Publish the block to all the subscribers unless
         // there's an issue with the StreamMediator.
@@ -184,13 +132,16 @@ public class ProducerBlockItemObserver
             livenessCalculator.refresh();
 
             // Publish the block to the mediator
-            publisher.publish(blockItemsPbj);
+            publisher.publish(blockItemSet.blockItems());
 
         } else {
             LOGGER.log(ERROR, getClass().getName() + " is not accepting BlockItems");
 
             // Close the upstream connection to the producer(s)
             final var errorResponse = buildErrorStreamResponse();
+
+            isResponsePermitted.set(false);
+            subscriptionHandler.unsubscribe(this);
             publishStreamResponseObserver.onNext(errorResponse);
             LOGGER.log(ERROR, "Error PublishStreamResponse sent to upstream producer");
         }
@@ -204,20 +155,20 @@ public class ProducerBlockItemObserver
                 subscriptionHandler.unsubscribe(this);
                 LOGGER.log(DEBUG, "Producer liveness timeout. Unsubscribed ProducerBlockItemObserver.");
             } else {
-                LOGGER.log(DEBUG, "Publishing response to upstream producer: " + this);
-                publishStreamResponseObserver.onNext(fromPbj(event.get()));
+                LOGGER.log(DEBUG, "Publishing response to upstream producer: " + publishStreamResponseObserver);
+                publishStreamResponseObserver.onNext(event.get());
                 metricsService.get(SuccessfulPubStreamRespSent).increment();
             }
         }
     }
 
     @NonNull
-    private static com.hedera.hapi.block.protoc.PublishStreamResponse buildErrorStreamResponse() {
+    private static PublishStreamResponse buildErrorStreamResponse() {
         // TODO: Replace this with a real error enum.
         final EndOfStream endOfStream = EndOfStream.newBuilder()
                 .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
                 .build();
-        return fromPbj(PublishStreamResponse.newBuilder().status(endOfStream).build());
+        return PublishStreamResponse.newBuilder().status(endOfStream).build();
     }
 
     /**
@@ -229,7 +180,10 @@ public class ProducerBlockItemObserver
     @Override
     public void onError(@NonNull final Throwable t) {
         LOGGER.log(ERROR, "onError method invoked with an exception: ", t);
-        publishStreamResponseObserver.onError(t);
+
+        isResponsePermitted.set(false);
+        subscriptionHandler.unsubscribe(this);
+        LOGGER.log(ERROR, "Producer cancelled the stream. Observer unsubscribed.");
     }
 
     /**
@@ -237,13 +191,23 @@ public class ProducerBlockItemObserver
      * completed. Unsubscribe all the observers from the mediator.
      */
     @Override
-    public void onCompleted() {
-        LOGGER.log(DEBUG, "ProducerBlockStreamObserver completed");
-        publishStreamResponseObserver.onCompleted();
+    public void onComplete() {
+        isResponsePermitted.set(false);
+        subscriptionHandler.unsubscribe(this);
+        LOGGER.log(DEBUG, "Producer completed the stream. Observer unsubscribed.");
+
+        publishStreamResponseObserver.onComplete();
     }
 
     @Override
     public boolean isTimeoutExpired() {
         return livenessCalculator.isTimeoutExpired();
+    }
+
+    @Override
+    public void clientEndStreamReceived() {
+        isResponsePermitted.set(false);
+        subscriptionHandler.unsubscribe(this);
+        LOGGER.log(DEBUG, "Producer cancelled the stream. Observer unsubscribed.");
     }
 }

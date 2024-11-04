@@ -18,7 +18,7 @@ echo "VERSION=$project_version" > .env
 echo "REGISTRY_PREFIX=" >> .env
 # Storage root path, this is temporary until we have a proper .properties file for all configs
 echo "BLOCKNODE_STORAGE_ROOT_PATH=/app/storage" >> .env
-echo "JAVA_OPTS='-Xms8G -Xmx16G'" >> .env
+echo "JAVA_OPTS='-Xms16G -Xmx16G'" >> .env
 
 if [ true = "$is_debug" ]; then
   # wait for debugger to attach

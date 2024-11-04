@@ -32,9 +32,9 @@ import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.block.simulator.metrics.MetricsServiceImpl;
 import com.hedera.block.simulator.mode.PublisherModeHandler;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
-import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.hapi.block.stream.output.protoc.BlockHeader;
+import com.hedera.hapi.block.stream.protoc.Block;
+import com.hedera.hapi.block.stream.protoc.BlockItem;
 import com.swirlds.config.api.Configuration;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -69,9 +69,7 @@ class BlockStreamSimulatorTest {
         Configuration configuration = TestUtils.getTestConfiguration(
                 Map.of("blockStream.maxBlockItemsToStream", "100", "blockStream.streamingMode", "CONSTANT_RATE"));
 
-        Configuration config = TestUtils.getTestConfiguration();
-        metricsService = new MetricsServiceImpl(getTestMetrics(config));
-
+        metricsService = new MetricsServiceImpl(getTestMetrics(configuration));
         blockStreamSimulator =
                 new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
     }
@@ -91,11 +89,15 @@ class BlockStreamSimulatorTest {
     void start_constantRateStreaming() throws InterruptedException, BlockSimulatorParsingException, IOException {
 
         BlockItem blockItem = BlockItem.newBuilder()
-                .blockHeader(BlockHeader.newBuilder().number(1L).build())
+                .setBlockHeader(BlockHeader.newBuilder().setNumber(1L).build())
                 .build();
 
-        Block block1 = Block.newBuilder().items(blockItem).build();
-        Block block2 = Block.newBuilder().items(blockItem, blockItem, blockItem).build();
+        Block block1 = Block.newBuilder().addItems(blockItem).build();
+        Block block2 = Block.newBuilder()
+                .addItems(blockItem)
+                .addItems(blockItem)
+                .addItems(blockItem)
+                .build();
 
         BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
         when(blockStreamManager.getNextBlock()).thenReturn(block1, block2, null);
@@ -133,9 +135,9 @@ class BlockStreamSimulatorTest {
     void start_millisPerBlockStreaming() throws InterruptedException, IOException, BlockSimulatorParsingException {
         BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
         BlockItem blockItem = BlockItem.newBuilder()
-                .blockHeader(BlockHeader.newBuilder().number(1L).build())
+                .setBlockHeader(BlockHeader.newBuilder().setNumber(1L).build())
                 .build();
-        Block block = Block.newBuilder().items(blockItem).build();
+        Block block = Block.newBuilder().addItems(blockItem).build();
         when(blockStreamManager.getNextBlock()).thenReturn(block, block, null);
 
         Configuration configuration = TestUtils.getTestConfiguration(Map.of(
@@ -162,9 +164,9 @@ class BlockStreamSimulatorTest {
 
         BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
         BlockItem blockItem = BlockItem.newBuilder()
-                .blockHeader(BlockHeader.newBuilder().number(1L).build())
+                .setBlockHeader(BlockHeader.newBuilder().setNumber(1L).build())
                 .build();
-        Block block = Block.newBuilder().items(blockItem).build();
+        Block block = Block.newBuilder().addItems(blockItem).build();
         when(blockStreamManager.getNextBlock()).thenReturn(block, block, null);
         PublishStreamGrpcClient publishStreamGrpcClient = mock(PublishStreamGrpcClient.class);
 

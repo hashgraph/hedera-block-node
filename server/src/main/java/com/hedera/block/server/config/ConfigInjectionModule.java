@@ -20,6 +20,7 @@ import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.mediator.MediatorConfig;
 import com.hedera.block.server.notifier.NotifierConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.producer.ProducerConfig;
 import com.swirlds.common.metrics.config.MetricsConfig;
 import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.Configuration;
@@ -104,5 +105,17 @@ public interface ConfigInjectionModule {
     @Provides
     static NotifierConfig provideNotifierConfig(Configuration configuration) {
         return configuration.getConfigData(NotifierConfig.class);
+    }
+
+    /**
+     * Provides a producer configuration singleton using the configuration.
+     *
+     * @param configuration is the configuration singleton
+     * @return a producer configuration singleton
+     */
+    @Singleton
+    @Provides
+    static ProducerConfig provideProducerConfig(Configuration configuration) {
+        return configuration.getConfigData(ProducerConfig.class);
     }
 }

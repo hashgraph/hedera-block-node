@@ -17,24 +17,24 @@
 package com.hedera.block.simulator.grpc;
 
 import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlockItemsSent;
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.common.utils.ChunkUtils;
-import com.hedera.block.simulator.Translator;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.hapi.block.protoc.BlockItemSet;
 import com.hedera.hapi.block.protoc.BlockStreamServiceGrpc;
 import com.hedera.hapi.block.protoc.PublishStreamRequest;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.protoc.Block;
+import com.hedera.hapi.block.stream.protoc.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
@@ -44,7 +44,7 @@ import javax.inject.Inject;
  */
 public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
-    private System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private StreamObserver<PublishStreamRequest> requestStreamObserver;
     private final BlockStreamConfig blockStreamConfig;
@@ -93,23 +93,23 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
     @Override
     public boolean streamBlockItem(List<BlockItem> blockItems) {
 
-        List<com.hedera.hapi.block.stream.protoc.BlockItem> blockItemsProtoc = new ArrayList<>();
-        for (BlockItem blockItem : blockItems) {
-            blockItemsProtoc.add(Translator.fromPbj(blockItem));
+        if (streamEnabled.get()) {
+            requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
+                    .setBlockItems(BlockItemSet.newBuilder()
+                            .addAllBlockItems(blockItems)
+                            .build())
+                    .build());
+
+            metricsService.get(LiveBlockItemsSent).add(blockItems.size());
+            LOGGER.log(
+                    INFO,
+                    "Number of block items sent: "
+                            + metricsService.get(LiveBlockItemsSent).get());
+        } else {
+            LOGGER.log(ERROR, "Not allowed to send next batch of block items");
         }
 
-        requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
-                .setBlockItems(BlockItemSet.newBuilder()
-                        .addAllBlockItems(blockItemsProtoc)
-                        .build())
-                .build());
-        metricsService.get(LiveBlockItemsSent).add(blockItemsProtoc.size());
-        LOGGER.log(
-                INFO,
-                "Total Block items sent: {0}",
-                metricsService.get(LiveBlockItemsSent).get());
-
-        return true;
+        return streamEnabled.get();
     }
 
     /**
@@ -118,30 +118,28 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Override
     public boolean streamBlock(Block block) {
-        if (!streamEnabled.get()) {
-            return false;
-        }
-        List<com.hedera.hapi.block.stream.protoc.BlockItem> blockItemsProtoc = new ArrayList<>();
-        for (BlockItem blockItem : block.items()) {
-            blockItemsProtoc.add(Translator.fromPbj(blockItem));
+
+        List<List<BlockItem>> streamingBatches =
+                ChunkUtils.chunkify(block.getItemsList(), blockStreamConfig.blockItemsBatchSize());
+        for (List<BlockItem> streamingBatch : streamingBatches) {
+            if (streamEnabled.get()) {
+                requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
+                        .setBlockItems(BlockItemSet.newBuilder()
+                                .addAllBlockItems(streamingBatch)
+                                .build())
+                        .build());
+                metricsService.get(LiveBlockItemsSent).add(streamingBatch.size());
+                LOGGER.log(
+                        DEBUG,
+                        "Number of block items sent: "
+                                + metricsService.get(LiveBlockItemsSent).get());
+            } else {
+                LOGGER.log(ERROR, "Not allowed to send next batch of block items");
+                break;
+            }
         }
 
-        List<List<com.hedera.hapi.block.stream.protoc.BlockItem>> streamingBatches =
-                ChunkUtils.chunkify(blockItemsProtoc, blockStreamConfig.blockItemsBatchSize());
-        for (List<com.hedera.hapi.block.stream.protoc.BlockItem> streamingBatch : streamingBatches) {
-            requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
-                    .setBlockItems(BlockItemSet.newBuilder()
-                            .addAllBlockItems(streamingBatch)
-                            .build())
-                    .build());
-            metricsService.get(LiveBlockItemsSent).add(streamingBatch.size());
-            LOGGER.log(
-                    INFO,
-                    "Total Block items sent: {0}",
-                    metricsService.get(LiveBlockItemsSent).get());
-        }
-
-        return true;
+        return streamEnabled.get();
     }
 
     @Override
