@@ -18,9 +18,11 @@ Refer to the [Configuration](configuration.md) for configuration options.
 - Server subproject qualifier: `:server`
 - Assuming your working directory is the repo root
 
-> **NOTE:** using the `-p` flag for `./gradlew` so not to specify the target subproject
-> on each task when running multiple tasks, but using the qualifier `:server:` when
-> we have only one task to run.
+> **NOTE:** one may use the `-p` flag for `./gradlew` in order to avoid
+> specifying the target subproject repeatedly on each task when running
+> multiple tasks. When running only a single task, however, it is
+> recommended to use the project qualifier (i.e. `:server:`) for
+> both simplicity and clarity.
 
 ### Build the Server
 
