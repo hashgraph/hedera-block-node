@@ -16,40 +16,53 @@
 
 package com.hedera.block.simulator.grpc;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.hedera.hapi.block.protoc.PublishStreamResponse;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 class PublishStreamObserverTest {
 
-    @Test
-    void onNext() {
-        PublishStreamResponse response = PublishStreamResponse.newBuilder().build();
-        AtomicBoolean streamEnabled = new AtomicBoolean(true);
+        @Test
+        void onNext() {
+                PublishStreamResponse response = PublishStreamResponse.newBuilder().build();
+                AtomicBoolean streamEnabled = new AtomicBoolean(true);
+                List<String> lastKnownStatuses = new ArrayList<>();
+                PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled,
+                                lastKnownStatuses);
 
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled);
-        publishStreamObserver.onNext(response);
-        assertTrue(streamEnabled.get(), "streamEnabled should remain true after onCompleted");
-    }
+                publishStreamObserver.onNext(response);
+                assertTrue(streamEnabled.get(), "streamEnabled should remain true after onCompleted");
+                assertEquals(1, lastKnownStatuses.size(), "lastKnownStatuses should have one element after onNext");
+        }
 
-    @Test
-    void onError() {
-        AtomicBoolean streamEnabled = new AtomicBoolean(true);
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled);
+        @Test
+        void onError() {
+                AtomicBoolean streamEnabled = new AtomicBoolean(true);
+                List<String> lastKnownStatuses = new ArrayList<>();
+                PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled,
+                                lastKnownStatuses);
 
-        publishStreamObserver.onError(new Throwable());
-        assertFalse(streamEnabled.get(), "streamEnabled should be set to false after onError");
-    }
+                publishStreamObserver.onError(new Throwable());
+                assertFalse(streamEnabled.get(), "streamEnabled should be set to false after onError");
+                assertEquals(1, lastKnownStatuses.size(), "lastKnownStatuses should have one element after onError");
+        }
 
-    @Test
-    void onCompleted() {
-        AtomicBoolean streamEnabled = new AtomicBoolean(true);
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled);
+        @Test
+        void onCompleted() {
+                AtomicBoolean streamEnabled = new AtomicBoolean(true);
+                List<String> lastKnownStatuses = new ArrayList<>();
+                PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled,
+                                lastKnownStatuses);
 
-        publishStreamObserver.onCompleted();
-        assertTrue(streamEnabled.get(), "streamEnabled should remain true after onCompleted");
-    }
+                publishStreamObserver.onCompleted();
+                assertTrue(streamEnabled.get(), "streamEnabled should remain true after onCompleted");
+                assertEquals(0, lastKnownStatuses.size(),
+                                "lastKnownStatuses should not have elements after onCompleted");
+        }
 }

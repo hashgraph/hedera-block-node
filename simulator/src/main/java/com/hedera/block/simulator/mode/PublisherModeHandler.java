@@ -30,14 +30,19 @@ import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.hapi.block.stream.protoc.Block;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * The {@code PublisherModeHandler} class implements the {@link SimulatorModeHandler} interface
+ * The {@code PublisherModeHandler} class implements the
+ * {@link SimulatorModeHandler} interface
  * and provides the behavior for a mode where only publishing of block data
  * occurs.
  *
- * <p>This mode handles single operation in the block streaming process, utilizing the
- * {@link BlockStreamConfig} for configuration settings. It is designed for scenarios where
+ * <p>
+ * This mode handles single operation in the block streaming process, utilizing
+ * the
+ * {@link BlockStreamConfig} for configuration settings. It is designed for
+ * scenarios where
  * the simulator needs to handle publication of blocks.
  */
 public class PublisherModeHandler implements SimulatorModeHandler {
@@ -49,14 +54,19 @@ public class PublisherModeHandler implements SimulatorModeHandler {
     private final int delayBetweenBlockItems;
     private final int millisecondsPerBlock;
     private final MetricsService metricsService;
+    private final AtomicBoolean shouldPublish = new AtomicBoolean(true);
 
     /**
-     * Constructs a new {@code PublisherModeHandler} with the specified block stream configuration and publisher client.
+     * Constructs a new {@code PublisherModeHandler} with the specified block stream
+     * configuration and publisher client.
      *
-     * @param blockStreamConfig the configuration data for managing block streams
+     * @param blockStreamConfig       the configuration data for managing block
+     *                                streams
      * @param publishStreamGrpcClient the grpc client used for streaming blocks
-     * @param blockStreamManager the block stream manager, responsible for generating blocks
-     * @param metricsService the metrics service to record and report usage statistics
+     * @param blockStreamManager      the block stream manager, responsible for
+     *                                generating blocks
+     * @param metricsService          the metrics service to record and report usage
+     *                                statistics
      */
     public PublisherModeHandler(
             @NonNull final BlockStreamConfig blockStreamConfig,
@@ -75,9 +85,17 @@ public class PublisherModeHandler implements SimulatorModeHandler {
 
     /**
      * Starts the simulator and initiate streaming, depending on the working mode.
+     *
+     * @throws BlockSimulatorParsingException if an error occurs while parsing
+     *                                        blocks
+     * @throws IOException                    if an I/O error occurs during block
+     *                                        streaming
+     * @throws InterruptedException           if the thread running the simulator is
+     *                                        interrupted
      */
     @Override
     public void start() throws BlockSimulatorParsingException, IOException, InterruptedException {
+        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has started streaming.");
         if (streamingMode == StreamingMode.MILLIS_PER_BLOCK) {
             millisPerBlockStreaming();
         } else {
@@ -90,7 +108,7 @@ public class PublisherModeHandler implements SimulatorModeHandler {
         final long secondsPerBlockNanos = (long) millisecondsPerBlock * NANOS_PER_MILLI;
 
         Block nextBlock = blockStreamManager.getNextBlock();
-        while (nextBlock != null) {
+        while (nextBlock != null && shouldPublish.get()) {
             long startTime = System.nanoTime();
             if (!publishStreamGrpcClient.streamBlock(nextBlock)) {
                 LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator stopped streaming due to errors.");
@@ -125,7 +143,7 @@ public class PublisherModeHandler implements SimulatorModeHandler {
         boolean streamBlockItem = true;
         int blockItemsStreamed = 0;
 
-        while (streamBlockItem) {
+        while (streamBlockItem && shouldPublish.get()) {
             // get block
             Block block = blockStreamManager.getNextBlock();
 
@@ -147,5 +165,13 @@ public class PublisherModeHandler implements SimulatorModeHandler {
                 streamBlockItem = false;
             }
         }
+    }
+
+    /**
+     * Stops the handler and manager from streaming.
+     */
+    @Override
+    public void stop() {
+        shouldPublish.set(false);
     }
 }

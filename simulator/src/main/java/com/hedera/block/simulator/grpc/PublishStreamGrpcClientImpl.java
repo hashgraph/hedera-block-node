@@ -40,110 +40,156 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
 /**
- * The PublishStreamGrpcClientImpl class provides the methods to stream the block and block item.
+ * The PublishStreamGrpcClientImpl class provides the methods to stream the
+ * block and block item.
  */
 public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+        private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
-    private StreamObserver<PublishStreamRequest> requestStreamObserver;
-    private final BlockStreamConfig blockStreamConfig;
-    private final GrpcConfig grpcConfig;
-    private final AtomicBoolean streamEnabled;
-    private ManagedChannel channel;
-    private final MetricsService metricsService;
+        private StreamObserver<PublishStreamRequest> requestStreamObserver;
+        private final BlockStreamConfig blockStreamConfig;
+        private final GrpcConfig grpcConfig;
+        private final AtomicBoolean streamEnabled;
+        private ManagedChannel channel;
+        private final MetricsService metricsService;
+        private final List<String> lastKnownStatuses;
+        private int publishedBlocks;
 
-    /**
-     * Creates a new PublishStreamGrpcClientImpl instance.
-     *
-     * @param grpcConfig the gRPC configuration
-     * @param blockStreamConfig the block stream configuration
-     * @param metricsService the metrics service
-     * @param streamEnabled the flag responsible for enabling and disabling of the streaming
-     */
-    @Inject
-    public PublishStreamGrpcClientImpl(
-            @NonNull final GrpcConfig grpcConfig,
-            @NonNull final BlockStreamConfig blockStreamConfig,
-            @NonNull final MetricsService metricsService,
-            @NonNull final AtomicBoolean streamEnabled) {
-        this.grpcConfig = requireNonNull(grpcConfig);
-        this.blockStreamConfig = requireNonNull(blockStreamConfig);
-        this.metricsService = requireNonNull(metricsService);
-        this.streamEnabled = requireNonNull(streamEnabled);
-    }
+        /**
+         * Creates a new PublishStreamGrpcClientImpl instance.
+         *
+         * @param grpcConfig        the gRPC configuration
+         * @param blockStreamConfig the block stream configuration
+         * @param metricsService    the metrics service
+         * @param streamEnabled     the flag responsible for enabling and disabling of
+         *                          the streaming
+         */
+        @Inject
+        public PublishStreamGrpcClientImpl(
+                        @NonNull final GrpcConfig grpcConfig,
+                        @NonNull final BlockStreamConfig blockStreamConfig,
+                        @NonNull final MetricsService metricsService,
+                        @NonNull final AtomicBoolean streamEnabled) {
+                this.grpcConfig = requireNonNull(grpcConfig);
+                this.blockStreamConfig = requireNonNull(blockStreamConfig);
+                this.metricsService = requireNonNull(metricsService);
+                this.streamEnabled = requireNonNull(streamEnabled);
 
-    /**
-     * Initialize the channel and stub for publishBlockStream with the desired configuration.
-     */
-    @Override
-    public void init() {
-        channel = ManagedChannelBuilder.forAddress(grpcConfig.serverAddress(), grpcConfig.port())
-                .usePlaintext()
-                .build();
-        BlockStreamServiceGrpc.BlockStreamServiceStub stub = BlockStreamServiceGrpc.newStub(channel);
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled);
-        requestStreamObserver = stub.publishBlockStream(publishStreamObserver);
-    }
-
-    /**
-     * The PublishStreamObserver class implements the StreamObserver interface to observe the
-     * stream.
-     */
-    @Override
-    public boolean streamBlockItem(List<BlockItem> blockItems) {
-
-        if (streamEnabled.get()) {
-            requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
-                    .setBlockItems(BlockItemSet.newBuilder()
-                            .addAllBlockItems(blockItems)
-                            .build())
-                    .build());
-
-            metricsService.get(LiveBlockItemsSent).add(blockItems.size());
-            LOGGER.log(
-                    INFO,
-                    "Number of block items sent: "
-                            + metricsService.get(LiveBlockItemsSent).get());
-        } else {
-            LOGGER.log(ERROR, "Not allowed to send next batch of block items");
+                lastKnownStatuses = new ArrayList<>();
+                publishedBlocks = 0;
         }
 
-        return streamEnabled.get();
-    }
-
-    /**
-     * The PublishStreamObserver class implements the StreamObserver interface to observe the
-     * stream.
-     */
-    @Override
-    public boolean streamBlock(Block block) {
-
-        List<List<BlockItem>> streamingBatches =
-                ChunkUtils.chunkify(block.getItemsList(), blockStreamConfig.blockItemsBatchSize());
-        for (List<BlockItem> streamingBatch : streamingBatches) {
-            if (streamEnabled.get()) {
-                requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
-                        .setBlockItems(BlockItemSet.newBuilder()
-                                .addAllBlockItems(streamingBatch)
-                                .build())
-                        .build());
-                metricsService.get(LiveBlockItemsSent).add(streamingBatch.size());
-                LOGGER.log(
-                        DEBUG,
-                        "Number of block items sent: "
-                                + metricsService.get(LiveBlockItemsSent).get());
-            } else {
-                LOGGER.log(ERROR, "Not allowed to send next batch of block items");
-                break;
-            }
+        /**
+         * Initialize the channel and stub for publishBlockStream with the desired
+         * configuration.
+         */
+        @Override
+        public void init() {
+                channel = ManagedChannelBuilder.forAddress(grpcConfig.serverAddress(), grpcConfig.port())
+                                .usePlaintext()
+                                .build();
+                BlockStreamServiceGrpc.BlockStreamServiceStub stub = BlockStreamServiceGrpc.newStub(channel);
+                PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled,
+                                lastKnownStatuses);
+                requestStreamObserver = stub.publishBlockStream(publishStreamObserver);
         }
 
-        return streamEnabled.get();
-    }
+        /**
+         * The PublishStreamObserver class implements the StreamObserver interface to
+         * observe the
+         * stream.
+         */
+        @Override
+        public boolean streamBlockItem(List<BlockItem> blockItems) {
 
-    @Override
-    public void shutdown() {
-        channel.shutdown();
-    }
+                if (streamEnabled.get()) {
+                        requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
+                                        .setBlockItems(BlockItemSet.newBuilder()
+                                                        .addAllBlockItems(blockItems)
+                                                        .build())
+                                        .build());
+
+                        metricsService.get(LiveBlockItemsSent).add(blockItems.size());
+                        LOGGER.log(
+                                        INFO,
+                                        "Number of block items sent: "
+                                                        + metricsService.get(LiveBlockItemsSent).get());
+                } else {
+                        LOGGER.log(ERROR, "Not allowed to send next batch of block items");
+                }
+
+                return streamEnabled.get();
+        }
+
+        /**
+         * The PublishStreamObserver class implements the StreamObserver interface to
+         * observe the
+         * stream.
+         */
+        @Override
+        public boolean streamBlock(Block block) {
+
+                List<List<BlockItem>> streamingBatches = ChunkUtils.chunkify(block.getItemsList(),
+                                blockStreamConfig.blockItemsBatchSize());
+                for (List<BlockItem> streamingBatch : streamingBatches) {
+                        if (streamEnabled.get()) {
+                                requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
+                                                .setBlockItems(BlockItemSet.newBuilder()
+                                                                .addAllBlockItems(streamingBatch)
+                                                                .build())
+                                                .build());
+                                metricsService.get(LiveBlockItemsSent).add(streamingBatch.size());
+                                LOGGER.log(
+                                                DEBUG,
+                                                "Number of block items sent: "
+                                                                + metricsService.get(LiveBlockItemsSent).get());
+                        } else {
+                                LOGGER.log(ERROR, "Not allowed to send next batch of block items");
+                                break;
+                        }
+                }
+                publishedBlocks++;
+                return streamEnabled.get();
+        }
+
+        /**
+         * Sends a onCompleted message to the server and waits for a short period of
+         * time to ensure the message is sent.
+         *
+         * @throws InterruptedException if the thread is interrupted
+         */
+        @Override
+        public void completeStreaming() throws InterruptedException {
+                requestStreamObserver.onCompleted();
+                Thread.sleep(100);
+        }
+
+        /**
+         * Gets the number of published blocks.
+         *
+         * @return the number of published blocks
+         */
+        @Override
+        public int getPublishedBlocks() {
+                return publishedBlocks;
+        }
+
+        /**
+         * Gets the last known statuses.
+         *
+         * @return the last known statuses
+         */
+        @Override
+        public List<String> getLastKnownStatuses() {
+                return lastKnownStatuses;
+        }
+
+        /**
+         * Shutdowns the channel.
+         */
+        @Override
+        public void shutdown() {
+                channel.shutdown();
+        }
 }

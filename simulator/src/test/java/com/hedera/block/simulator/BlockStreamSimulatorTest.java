@@ -75,8 +75,12 @@ class BlockStreamSimulatorTest {
     }
 
     @AfterEach
-    void tearDown() {
-        blockStreamSimulator.stop();
+    void tearDown() throws InterruptedException {
+        try {
+            blockStreamSimulator.stop();
+        } catch (UnsupportedOperationException e) {
+            // ignore for now, temporary until consumer mode in simulator is added
+        }
     }
 
     @Test

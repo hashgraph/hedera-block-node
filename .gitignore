@@ -58,3 +58,8 @@ server/src/test/resources/test_output/
 
 # simulator files, this files are un-tarred before build
 /simulator/src/main/resources/block-0.0.3/
+/common/bin
+/server/bin
+/simulator/bin
+/stream/bin
+/suites/bin

@@ -20,14 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.hedera.block.simulator.BlockStreamSimulatorApp;
-import com.hedera.block.simulator.BlockStreamSimulatorInjectionComponent;
-import com.hedera.block.simulator.DaggerBlockStreamSimulatorInjectionComponent;
 import com.hedera.block.suites.BaseSuite;
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.Container;
@@ -41,19 +37,19 @@ import org.testcontainers.containers.Container;
 @DisplayName("Positive Data Persistence Tests")
 public class PositiveDataPersistenceTests extends BaseSuite {
     private final String[] GET_BLOCKS_COMMAND = new String[] {"ls", "data", "-1"};
-    private ExecutorService executorService;
+
+    private BlockStreamSimulatorApp blockStreamSimulatorApp;
+
+    private Future<?> simulatorThread;
 
     /** Default constructor for the {@link PositiveDataPersistenceTests} class. */
     public PositiveDataPersistenceTests() {}
 
-    @BeforeEach
-    void setupEnvironment() {
-        executorService = Executors.newFixedThreadPool(2);
-    }
-
     @AfterEach
     void teardownEnvironment() {
-        executorService.shutdownNow();
+        if (simulatorThread != null && !simulatorThread.isCancelled()) {
+            simulatorThread.cancel(true);
+        }
     }
 
     /**
@@ -70,8 +66,8 @@ public class PositiveDataPersistenceTests extends BaseSuite {
         String savedBlocksFolderBefore = getContainerCommandResult(GET_BLOCKS_COMMAND);
         int savedBlocksCountBefore = getSavedBlocksCount(savedBlocksFolderBefore);
 
-        BlockStreamSimulatorApp blockStreamSimulatorApp = createBlockSimulator();
-        startSimulatorThread(blockStreamSimulatorApp);
+        blockStreamSimulatorApp = createBlockSimulator();
+        simulatorThread = startSimulatorInThread(blockStreamSimulatorApp);
         Thread.sleep(5000);
         blockStreamSimulatorApp.stop();
 
@@ -81,22 +77,7 @@ public class PositiveDataPersistenceTests extends BaseSuite {
         assertTrue(savedBlocksFolderBefore.isEmpty());
         assertFalse(savedBlocksFolderAfter.isEmpty());
         assertTrue(savedBlocksCountAfter > savedBlocksCountBefore);
-    }
-
-    private BlockStreamSimulatorApp createBlockSimulator() throws IOException {
-        BlockStreamSimulatorInjectionComponent DIComponent =
-                DaggerBlockStreamSimulatorInjectionComponent.factory().create(loadSimulatorDefaultConfiguration());
-        return DIComponent.getBlockStreamSimulatorApp();
-    }
-
-    private void startSimulatorThread(BlockStreamSimulatorApp blockStreamSimulatorAppInstance) {
-        executorService.submit(() -> {
-            try {
-                blockStreamSimulatorAppInstance.start();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
+        assertTrue(blockStreamSimulatorApp.getStreamStatus().publishedBlocks() > 0);
     }
 
     private int getSavedBlocksCount(String blocksFolders) {

@@ -24,36 +24,50 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import java.lang.System.Logger;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * The PublishStreamObserver class provides the methods to observe the stream of the published
+ * The PublishStreamObserver class provides the methods to observe the stream of
+ * the published
  * stream.
  */
 public class PublishStreamObserver implements StreamObserver<PublishStreamResponse> {
 
     private final Logger logger = System.getLogger(getClass().getName());
     private final AtomicBoolean streamEnabled;
+    private final List<String> lastKnownStatuses;
 
-    /** Creates a new PublishStreamObserver instance.
+    /**
+     * Creates a new PublishStreamObserver instance.
      *
-     * @param streamEnabled is responsible for signaling, whether streaming should continue
+     * @param streamEnabled     is responsible for signaling, whether streaming
+     *                          should continue
+     * @param lastKnownStatuses the last known statuses
      */
-    public PublishStreamObserver(@NonNull final AtomicBoolean streamEnabled) {
+    public PublishStreamObserver(
+            @NonNull final AtomicBoolean streamEnabled, @NonNull final List<String> lastKnownStatuses) {
         this.streamEnabled = requireNonNull(streamEnabled);
+        this.lastKnownStatuses = requireNonNull(lastKnownStatuses);
     }
 
     /** what will the stream observer do with the response from the server */
     @Override
     public void onNext(PublishStreamResponse publishStreamResponse) {
+        lastKnownStatuses.add(publishStreamResponse.toString());
         logger.log(INFO, "Received Response: " + publishStreamResponse.toString());
     }
 
-    /** Responsible for stream observer behaviour, in case of error. For now, we will stop the stream for every error. In the future we'd want to have a retry mechanism depending on the error. */
+    /**
+     * Responsible for stream observer behaviour, in case of error. For now, we will
+     * stop the stream for every error. In the future we'd want to have a retry
+     * mechanism depending on the error.
+     */
     @Override
     public void onError(@NonNull final Throwable streamError) {
         streamEnabled.set(false);
         Status status = Status.fromThrowable(streamError);
+        lastKnownStatuses.add(status.toString());
         logger.log(Logger.Level.ERROR, "Error %s with status %s.".formatted(streamError, status), streamError);
     }
 

@@ -17,6 +17,8 @@
 package com.hedera.block.suites;
 
 import com.hedera.block.simulator.BlockStreamSimulatorApp;
+import com.hedera.block.simulator.BlockStreamSimulatorInjectionComponent;
+import com.hedera.block.simulator.DaggerBlockStreamSimulatorInjectionComponent;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
@@ -27,6 +29,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.GenericContainer;
@@ -54,8 +59,8 @@ public abstract class BaseSuite {
     /** Port that is used by the Block Node Application */
     protected static int blockNodePort;
 
-    /** Block Simulator Application instance */
-    protected static BlockStreamSimulatorApp blockStreamSimulatorApp;
+    /** Executor service for managing threads */
+    protected static ExecutorService executorService;
 
     /**
      * Default constructor for the BaseSuite class.
@@ -76,6 +81,7 @@ public abstract class BaseSuite {
     public static void setup() {
         blockNodeContainer = createContainer();
         blockNodeContainer.start();
+        executorService = Executors.newFixedThreadPool(8);
     }
 
     /**
@@ -88,6 +94,9 @@ public abstract class BaseSuite {
     public static void teardown() {
         if (blockNodeContainer != null) {
             blockNodeContainer.stop();
+        }
+        if (executorService != null) {
+            executorService.shutdownNow();
         }
     }
 
@@ -119,6 +128,34 @@ public abstract class BaseSuite {
                 .waitingFor(Wait.forHealthcheck());
         blockNodeContainer.setPortBindings(portBindings);
         return blockNodeContainer;
+    }
+
+    /**
+     * Starts the block stream simulator in a separate thread.
+     *
+     * @param blockStreamSimulatorAppInstance the block stream simulator app instance
+     * @return a {@link Future} representing the asynchronous execution of the block stream simulator
+     */
+    protected Future<?> startSimulatorInThread(BlockStreamSimulatorApp blockStreamSimulatorAppInstance) {
+        return executorService.submit(() -> {
+            try {
+                blockStreamSimulatorAppInstance.start();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    /**
+     * Creates a new instance of the block stream simulator.
+     *
+     * @return a new instance of the block stream simulator
+     * @throws IOException if an I/O error occurs
+     */
+    protected BlockStreamSimulatorApp createBlockSimulator() throws IOException {
+        BlockStreamSimulatorInjectionComponent DIComponent =
+                DaggerBlockStreamSimulatorInjectionComponent.factory().create(loadSimulatorDefaultConfiguration());
+        return DIComponent.getBlockStreamSimulatorApp();
     }
 
     /**
