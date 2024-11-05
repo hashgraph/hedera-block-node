@@ -86,4 +86,5 @@ jobs:
         run: ./smoke-test.sh
 
       - name: Stop Smoke Tests Container
+        if: always()
         run: docker compose -p block-node stop
