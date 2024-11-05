@@ -88,3 +88,7 @@ jobs:
       - name: Stop Smoke Tests Container
         if: always()
         run: docker compose -p block-node stop
+
+      - name: Print Server Container Logs
+        if: always()
+        run: docker logs block-node-server
