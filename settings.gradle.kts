@@ -80,8 +80,8 @@ dependencyResolutionManagement {
             version("com.google.protobuf.util", protobufVersion)
 
             // PBJ dependencies
-            plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.9.2")
-            version("com.hedera.pbj.runtime", "0.9.2")
+            plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.9.8")
+            version("com.hedera.pbj.runtime", "0.9.8")
             version("org.antlr.antlr4.runtime", "4.13.1")
 
             version("java.annotation", "1.3.2")

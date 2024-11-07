@@ -25,6 +25,7 @@ import com.hedera.block.simulator.Translator;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.block.simulator.metrics.MetricsService;
+import com.hedera.hapi.block.protoc.BlockItemSet;
 import com.hedera.hapi.block.protoc.BlockStreamServiceGrpc;
 import com.hedera.hapi.block.protoc.PublishStreamRequest;
 import com.hedera.hapi.block.stream.Block;
@@ -98,7 +99,9 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
         }
 
         requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
-                .addAllBlockItems(blockItemsProtoc)
+                .setBlockItems(BlockItemSet.newBuilder()
+                        .addAllBlockItems(blockItemsProtoc)
+                        .build())
                 .build());
         metricsService.get(LiveBlockItemsSent).add(blockItemsProtoc.size());
         LOGGER.log(
@@ -127,7 +130,9 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
                 ChunkUtils.chunkify(blockItemsProtoc, blockStreamConfig.blockItemsBatchSize());
         for (List<com.hedera.hapi.block.stream.protoc.BlockItem> streamingBatch : streamingBatches) {
             requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
-                    .addAllBlockItems(streamingBatch)
+                    .setBlockItems(BlockItemSet.newBuilder()
+                            .addAllBlockItems(streamingBatch)
+                            .build())
                     .build());
             metricsService.get(LiveBlockItemsSent).add(streamingBatch.size());
             LOGGER.log(

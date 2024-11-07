@@ -41,9 +41,9 @@ import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.hapi.block.BlockItemSet;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
-import com.hedera.hapi.block.SubscribeStreamResponseSet;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.swirlds.metrics.api.LongGauge;
@@ -64,12 +64,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class LiveStreamMediatorImplTest {
 
-    @Mock private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> observer1;
-    @Mock private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> observer2;
-    @Mock private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> observer3;
+    @Mock
+    private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> observer1;
 
-    @Mock private BlockWriter<List<BlockItem>> blockWriter;
-    @Mock private Notifier notifier;
+    @Mock
+    private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> observer2;
+
+    @Mock
+    private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> observer3;
+
+    @Mock
+    private BlockWriter<List<BlockItem>> blockWriter;
+
+    @Mock
+    private Notifier notifier;
 
     @Mock
     private StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse> streamObserver1;
@@ -81,10 +89,10 @@ public class LiveStreamMediatorImplTest {
     private StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse> streamObserver3;
 
     @Mock
-    private ServerCallStreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
-            serverCallStreamObserver;
+    private ServerCallStreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse> serverCallStreamObserver;
 
-    @Mock private InstantSource testClock;
+    @Mock
+    private InstantSource testClock;
 
     private final long TIMEOUT_THRESHOLD_MILLIS = 100L;
     private final long TEST_TIME = 1_719_427_664_950L;
@@ -95,9 +103,7 @@ public class LiveStreamMediatorImplTest {
 
     public LiveStreamMediatorImplTest() throws IOException {
         Map<String, String> properties = new HashMap<>();
-        properties.put(
-                TestConfigUtil.CONSUMER_TIMEOUT_THRESHOLD_KEY,
-                String.valueOf(TIMEOUT_THRESHOLD_MILLIS));
+        properties.put(TestConfigUtil.CONSUMER_TIMEOUT_THRESHOLD_KEY, String.valueOf(TIMEOUT_THRESHOLD_MILLIS));
         properties.put(TestConfigUtil.MEDIATOR_RING_BUFFER_SIZE_KEY, String.valueOf(1024));
 
         this.testContext = TestConfigUtil.getTestBlockNodeContext(properties);
@@ -108,8 +114,7 @@ public class LiveStreamMediatorImplTest {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final var streamMediatorBuilder =
-                LiveStreamMediatorBuilder.newBuilder(
-                        blockNodeContext, new ServiceStatusImpl(blockNodeContext));
+                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, new ServiceStatusImpl(blockNodeContext));
         final var streamMediator = streamMediatorBuilder.build();
 
         // Set up the subscribers
@@ -117,32 +122,20 @@ public class LiveStreamMediatorImplTest {
         streamMediator.subscribe(observer2);
         streamMediator.subscribe(observer3);
 
-        assertTrue(
-                streamMediator.isSubscribed(observer1),
-                "Expected the mediator to have observer1 subscribed");
-        assertTrue(
-                streamMediator.isSubscribed(observer2),
-                "Expected the mediator to have observer2 subscribed");
-        assertTrue(
-                streamMediator.isSubscribed(observer3),
-                "Expected the mediator to have observer3 subscribed");
+        assertTrue(streamMediator.isSubscribed(observer1), "Expected the mediator to have observer1 subscribed");
+        assertTrue(streamMediator.isSubscribed(observer2), "Expected the mediator to have observer2 subscribed");
+        assertTrue(streamMediator.isSubscribed(observer3), "Expected the mediator to have observer3 subscribed");
 
         Thread.sleep(100);
 
         streamMediator.unsubscribe(observer1);
-        assertFalse(
-                streamMediator.isSubscribed(observer1),
-                "Expected the mediator to have unsubscribed observer1");
+        assertFalse(streamMediator.isSubscribed(observer1), "Expected the mediator to have unsubscribed observer1");
 
         streamMediator.unsubscribe(observer2);
-        assertFalse(
-                streamMediator.isSubscribed(observer2),
-                "Expected the mediator to have unsubscribed observer2");
+        assertFalse(streamMediator.isSubscribed(observer2), "Expected the mediator to have unsubscribed observer2");
 
         streamMediator.unsubscribe(observer3);
-        assertFalse(
-                streamMediator.isSubscribed(observer3),
-                "Expected the mediator to have unsubscribed observer3");
+        assertFalse(streamMediator.isSubscribed(observer3), "Expected the mediator to have unsubscribed observer3");
 
         // Confirm the counter was never incremented
         assertEquals(0, blockNodeContext.metricsService().get(LiveBlockItems).get());
@@ -153,15 +146,14 @@ public class LiveStreamMediatorImplTest {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
-        final var streamMediator =
-                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
+        final var streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
+                .build();
         final BlockItem blockItem = BlockItem.newBuilder().build();
 
         // register the stream validator
         when(blockWriter.write(List.of(blockItem))).thenReturn(Optional.empty());
-        final var streamValidator =
-                new StreamPersistenceHandlerImpl(
-                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+        final var streamValidator = new StreamPersistenceHandlerImpl(
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         streamMediator.subscribe(streamValidator);
 
         // Acting as a producer, notify the mediator of a new block
@@ -180,22 +172,19 @@ public class LiveStreamMediatorImplTest {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
-        final var streamMediator =
-                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
+        final var streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
+                .build();
 
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
         final var concreteObserver1 =
-                new ConsumerStreamResponseObserver(
-                        testClock, streamMediator, streamObserver1, testContext);
+                new ConsumerStreamResponseObserver(testClock, streamMediator, streamObserver1, testContext);
 
         final var concreteObserver2 =
-                new ConsumerStreamResponseObserver(
-                        testClock, streamMediator, streamObserver2, testContext);
+                new ConsumerStreamResponseObserver(testClock, streamMediator, streamObserver2, testContext);
 
         final var concreteObserver3 =
-                new ConsumerStreamResponseObserver(
-                        testClock, streamMediator, streamObserver3, testContext);
+                new ConsumerStreamResponseObserver(testClock, streamMediator, streamObserver3, testContext);
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -203,27 +192,24 @@ public class LiveStreamMediatorImplTest {
         streamMediator.subscribe(concreteObserver3);
 
         assertTrue(
-                streamMediator.isSubscribed(concreteObserver1),
-                "Expected the mediator to have observer1 subscribed");
+                streamMediator.isSubscribed(concreteObserver1), "Expected the mediator to have observer1 subscribed");
         assertTrue(
-                streamMediator.isSubscribed(concreteObserver2),
-                "Expected the mediator to have observer2 subscribed");
+                streamMediator.isSubscribed(concreteObserver2), "Expected the mediator to have observer2 subscribed");
         assertTrue(
-                streamMediator.isSubscribed(concreteObserver3),
-                "Expected the mediator to have observer3 subscribed");
+                streamMediator.isSubscribed(concreteObserver3), "Expected the mediator to have observer3 subscribed");
 
         final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
-        final BlockItem blockItem = BlockItem.newBuilder().blockHeader(blockHeader).build();
-        final SubscribeStreamResponseSet subscribeStreamResponseSet =
-                SubscribeStreamResponseSet.newBuilder().blockItems(blockItem).build();
+        final BlockItem blockItem =
+                BlockItem.newBuilder().blockHeader(blockHeader).build();
+        final BlockItemSet blockItemSet =
+                BlockItemSet.newBuilder().blockItems(blockItem).build();
         final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().blockItems(subscribeStreamResponseSet).build();
+                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build();
 
         // register the stream validator
         when(blockWriter.write(List.of(blockItem))).thenReturn(Optional.empty());
-        final var streamValidator =
-                new StreamPersistenceHandlerImpl(
-                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+        final var streamValidator = new StreamPersistenceHandlerImpl(
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         streamMediator.subscribe(streamValidator);
 
         // Acting as a producer, notify the mediator of a new block
@@ -232,12 +218,9 @@ public class LiveStreamMediatorImplTest {
         assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
 
         // Confirm each subscriber was notified of the new block
-        verify(streamObserver1, timeout(testTimeout).times(1))
-                .onNext(fromPbj(subscribeStreamResponse));
-        verify(streamObserver2, timeout(testTimeout).times(1))
-                .onNext(fromPbj(subscribeStreamResponse));
-        verify(streamObserver3, timeout(testTimeout).times(1))
-                .onNext(fromPbj(subscribeStreamResponse));
+        verify(streamObserver1, timeout(testTimeout).times(1)).onNext(fromPbj(subscribeStreamResponse));
+        verify(streamObserver2, timeout(testTimeout).times(1)).onNext(fromPbj(subscribeStreamResponse));
+        verify(streamObserver3, timeout(testTimeout).times(1)).onNext(fromPbj(subscribeStreamResponse));
 
         // Confirm the BlockStorage write method was called
         verify(blockWriter, timeout(testTimeout).times(1)).write(List.of(blockItem));
@@ -248,22 +231,19 @@ public class LiveStreamMediatorImplTest {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
-        final var streamMediator =
-                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
+        final var streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
+                .build();
 
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
         final var concreteObserver1 =
-                new ConsumerStreamResponseObserver(
-                        testClock, streamMediator, streamObserver1, testContext);
+                new ConsumerStreamResponseObserver(testClock, streamMediator, streamObserver1, testContext);
 
         final var concreteObserver2 =
-                new ConsumerStreamResponseObserver(
-                        testClock, streamMediator, streamObserver2, testContext);
+                new ConsumerStreamResponseObserver(testClock, streamMediator, streamObserver2, testContext);
 
         final var concreteObserver3 =
-                new ConsumerStreamResponseObserver(
-                        testClock, streamMediator, streamObserver3, testContext);
+                new ConsumerStreamResponseObserver(testClock, streamMediator, streamObserver3, testContext);
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -281,15 +261,13 @@ public class LiveStreamMediatorImplTest {
     @Test
     public void testSubscribeWhenHandlerAlreadySubscribed() throws IOException {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
-        final LongGauge consumersGauge =
-                blockNodeContext.metricsService().get(BlockNodeMetricTypes.Gauge.Consumers);
+        final LongGauge consumersGauge = blockNodeContext.metricsService().get(BlockNodeMetricTypes.Gauge.Consumers);
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
-        final var streamMediator =
-                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
+        final var streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
+                .build();
 
         final var concreteObserver1 =
-                new ConsumerStreamResponseObserver(
-                        testClock, streamMediator, streamObserver1, testContext);
+                new ConsumerStreamResponseObserver(testClock, streamMediator, streamObserver1, testContext);
 
         streamMediator.subscribe(concreteObserver1);
         assertTrue(streamMediator.isSubscribed(concreteObserver1));
@@ -313,8 +291,8 @@ public class LiveStreamMediatorImplTest {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
-        final var streamMediator =
-                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
+        final var streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
+                .build();
 
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
@@ -322,15 +300,13 @@ public class LiveStreamMediatorImplTest {
 
         // register the stream validator
         when(blockWriter.write(List.of(blockItems.getFirst()))).thenReturn(Optional.empty());
-        final var streamValidator =
-                new StreamPersistenceHandlerImpl(
-                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+        final var streamValidator = new StreamPersistenceHandlerImpl(
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         streamMediator.subscribe(streamValidator);
 
         // register the test observer
-        final var testConsumerBlockItemObserver =
-                new TestConsumerStreamResponseObserver(
-                        testClock, streamMediator, serverCallStreamObserver, testContext);
+        final var testConsumerBlockItemObserver = new TestConsumerStreamResponseObserver(
+                testClock, streamMediator, serverCallStreamObserver, testContext);
 
         streamMediator.subscribe(testConsumerBlockItemObserver);
         assertTrue(streamMediator.isSubscribed(testConsumerBlockItemObserver));
@@ -362,8 +338,8 @@ public class LiveStreamMediatorImplTest {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
-        final var streamMediator =
-                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
+        final var streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
+                .build();
 
         // testClock configured to be outside the timeout window
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS + 1);
@@ -372,14 +348,12 @@ public class LiveStreamMediatorImplTest {
 
         // register the stream validator
         when(blockWriter.write(List.of(blockItems.getFirst()))).thenReturn(Optional.empty());
-        final var streamValidator =
-                new StreamPersistenceHandlerImpl(
-                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+        final var streamValidator = new StreamPersistenceHandlerImpl(
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         streamMediator.subscribe(streamValidator);
 
-        final var testConsumerBlockItemObserver =
-                new TestConsumerStreamResponseObserver(
-                        testClock, streamMediator, serverCallStreamObserver, testContext);
+        final var testConsumerBlockItemObserver = new TestConsumerStreamResponseObserver(
+                testClock, streamMediator, serverCallStreamObserver, testContext);
 
         streamMediator.subscribe(testConsumerBlockItemObserver);
         assertTrue(streamMediator.isSubscribed(testConsumerBlockItemObserver));
@@ -411,20 +385,17 @@ public class LiveStreamMediatorImplTest {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
-        final var streamMediator =
-                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
+        final var streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
+                .build();
 
         final var concreteObserver1 =
-                new ConsumerStreamResponseObserver(
-                        testClock, streamMediator, streamObserver1, testContext);
+                new ConsumerStreamResponseObserver(testClock, streamMediator, streamObserver1, testContext);
 
         final var concreteObserver2 =
-                new ConsumerStreamResponseObserver(
-                        testClock, streamMediator, streamObserver2, testContext);
+                new ConsumerStreamResponseObserver(testClock, streamMediator, streamObserver2, testContext);
 
         final var concreteObserver3 =
-                new ConsumerStreamResponseObserver(
-                        testClock, streamMediator, streamObserver3, testContext);
+                new ConsumerStreamResponseObserver(testClock, streamMediator, streamObserver3, testContext);
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -432,9 +403,8 @@ public class LiveStreamMediatorImplTest {
         streamMediator.subscribe(concreteObserver3);
 
         final Notifier notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
-        final var streamValidator =
-                new StreamPersistenceHandlerImpl(
-                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+        final var streamValidator = new StreamPersistenceHandlerImpl(
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
 
         // Set up the stream verifier
         streamMediator.subscribe(streamValidator);
@@ -457,26 +427,27 @@ public class LiveStreamMediatorImplTest {
         assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
 
         // Confirm the error counter was incremented
-        assertEquals(1, blockNodeContext.metricsService().get(LiveBlockStreamMediatorError).get());
+        assertEquals(
+                1,
+                blockNodeContext
+                        .metricsService()
+                        .get(LiveBlockStreamMediatorError)
+                        .get());
 
         // Send another block item after the exception
         streamMediator.publish(List.of(blockItems.get(1)));
-        final SubscribeStreamResponseSet subscribeStreamResponseSet =
-                SubscribeStreamResponseSet.newBuilder().blockItems(firstBlockItem).build();
+        final BlockItemSet blockItemSet =
+                BlockItemSet.newBuilder().blockItems(firstBlockItem).build();
         final var subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().blockItems(subscribeStreamResponseSet).build();
-        verify(streamObserver1, timeout(testTimeout).times(1))
-                .onNext(fromPbj(subscribeStreamResponse));
-        verify(streamObserver2, timeout(testTimeout).times(1))
-                .onNext(fromPbj(subscribeStreamResponse));
-        verify(streamObserver3, timeout(testTimeout).times(1))
-                .onNext(fromPbj(subscribeStreamResponse));
+                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build();
+        verify(streamObserver1, timeout(testTimeout).times(1)).onNext(fromPbj(subscribeStreamResponse));
+        verify(streamObserver2, timeout(testTimeout).times(1)).onNext(fromPbj(subscribeStreamResponse));
+        verify(streamObserver3, timeout(testTimeout).times(1)).onNext(fromPbj(subscribeStreamResponse));
 
         // TODO: Replace READ_STREAM_SUCCESS (2) with a generic error code?
-        final SubscribeStreamResponse endOfStreamResponse =
-                SubscribeStreamResponse.newBuilder()
-                        .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
-                        .build();
+        final SubscribeStreamResponse endOfStreamResponse = SubscribeStreamResponse.newBuilder()
+                .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
+                .build();
         verify(streamObserver1, timeout(testTimeout).times(1)).onNext(fromPbj(endOfStreamResponse));
         verify(streamObserver2, timeout(testTimeout).times(1)).onNext(fromPbj(endOfStreamResponse));
         verify(streamObserver3, timeout(testTimeout).times(1)).onNext(fromPbj(endOfStreamResponse));
@@ -490,18 +461,16 @@ public class LiveStreamMediatorImplTest {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
-        final var streamMediator =
-                LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus).build();
+        final var streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
+                .build();
 
         // register the stream validator
-        final var streamValidator =
-                new StreamPersistenceHandlerImpl(
-                        streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+        final var streamValidator = new StreamPersistenceHandlerImpl(
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
         streamMediator.subscribe(streamValidator);
 
-        final var testConsumerBlockItemObserver =
-                new TestConsumerStreamResponseObserver(
-                        testClock, streamMediator, serverCallStreamObserver, testContext);
+        final var testConsumerBlockItemObserver = new TestConsumerStreamResponseObserver(
+                testClock, streamMediator, serverCallStreamObserver, testContext);
 
         // Confirm the observer is not subscribed
         assertFalse(streamMediator.isSubscribed(testConsumerBlockItemObserver));
@@ -519,9 +488,7 @@ public class LiveStreamMediatorImplTest {
     private static class TestConsumerStreamResponseObserver extends ConsumerStreamResponseObserver {
         public TestConsumerStreamResponseObserver(
                 @NonNull final InstantSource producerLivenessClock,
-                @NonNull
-                        final StreamMediator<List<BlockItem>, SubscribeStreamResponse>
-                                streamMediator,
+                @NonNull final StreamMediator<List<BlockItem>, SubscribeStreamResponse> streamMediator,
                 @NonNull
                         final StreamObserver<com.hedera.hapi.block.protoc.SubscribeStreamResponse>
                                 responseStreamObserver,

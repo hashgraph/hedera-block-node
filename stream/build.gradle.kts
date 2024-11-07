@@ -33,10 +33,10 @@ tasks.withType<JavaCompile>().configureEach {
 tasks.cloneHederaProtobufs {
     // uncomment below to use a specific tag
     // tag = "v0.53.0" or a specific commit like "0047255"
-    // tag = "d5e6988"
+    tag = "1033f10"
 
     // uncomment below to use a specific branch
-    branch = "block-repeated-fix-tss-message"
+    // branch = "main"
 }
 
 sourceSets {

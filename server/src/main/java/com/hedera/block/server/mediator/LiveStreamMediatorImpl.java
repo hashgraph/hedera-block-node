@@ -28,9 +28,9 @@ import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.hapi.block.BlockItemSet;
 import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
-import com.hedera.hapi.block.SubscribeStreamResponseSet;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.lmax.disruptor.BatchEventProcessor;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -45,8 +45,7 @@ import java.util.Map;
  * subscribers as they arrive via a RingBuffer maintained in the base class and persists the block
  * items to a store.
  */
-class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResponse>
-        implements LiveStreamMediator {
+class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResponse> implements LiveStreamMediator {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -102,10 +101,11 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
 
             // Publish the block for all subscribers to receive
             LOGGER.log(DEBUG, "Publishing BlockItem");
-            final SubscribeStreamResponseSet blockItemsSet =
-                    SubscribeStreamResponseSet.newBuilder().blockItems(blockItems).build();
-            final var subscribeStreamResponse =
-                    SubscribeStreamResponse.newBuilder().blockItems(blockItemsSet).build();
+            final BlockItemSet blockItemsSet =
+                    BlockItemSet.newBuilder().blockItems(blockItems).build();
+            final var subscribeStreamResponse = SubscribeStreamResponse.newBuilder()
+                    .blockItems(blockItemsSet)
+                    .build();
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
 
             // Increment the block item counter by all block items published
