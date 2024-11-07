@@ -22,7 +22,7 @@ Implementation of the Hedera Block Node, which is responsible for consuming the 
 
 [![Latest Version](https://img.shields.io/github/v/tag/hashgraph/hedera-block-node?sort=semver&label=version)](README.md)
 [![Made With](https://img.shields.io/badge/made_with-java-blue)](https://github.com/hashgraph/hedera-block-node/)
-[![Development Branch](https://img.shields.io/badge/docs-quickstart-green.svg)](docs/README.md)
+[![Development Branch](https://img.shields.io/badge/docs-quickstart-green.svg)](docs/overview.md)
 [![License](https://img.shields.io/badge/license-apache2-blue.svg)](LICENSE)
 
 ## Prerequisites
@@ -40,10 +40,9 @@ Implementation of the Hedera Block Node, which is responsible for consuming the 
 - `suites`: A set of e2e tests that can be used to verify the correctness of the block node.
 - `tools`: A set of command line tools for working with block stream files.
 
-
 ## Getting Started
 
-Refer to the [Hedera Block Node Documentation Overview](docs/README.md) for more information about the project, design and guides.
+Refer to the [Hedera Block Node Documentation Overview](docs/overview.md) for more information about the project, design and guides.
 
 ## Support
 
