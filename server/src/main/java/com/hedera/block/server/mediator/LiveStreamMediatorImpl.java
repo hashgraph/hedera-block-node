@@ -45,8 +45,7 @@ import java.util.Map;
  * subscribers as they arrive via a RingBuffer maintained in the base class and persists the block
  * items to a store.
  */
-class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResponse>
-        implements LiveStreamMediator {
+class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResponse> implements LiveStreamMediator {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -104,8 +103,9 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
             LOGGER.log(DEBUG, "Publishing BlockItem");
             final BlockItemSet blockItemsSet =
                     BlockItemSet.newBuilder().blockItems(blockItems).build();
-            final var subscribeStreamResponse =
-                    SubscribeStreamResponse.newBuilder().blockItems(blockItemsSet).build();
+            final var subscribeStreamResponse = SubscribeStreamResponse.newBuilder()
+                    .blockItems(blockItemsSet)
+                    .build();
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
 
             // Increment the block item counter by all block items published

@@ -59,20 +59,26 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class ProducerBlockItemObserverTest {
 
-    @Mock private InstantSource testClock;
-    @Mock private Publisher<List<BlockItem>> publisher;
-    @Mock private SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
+    @Mock
+    private InstantSource testClock;
 
     @Mock
-    private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
-            publishStreamResponseObserver;
+    private Publisher<List<BlockItem>> publisher;
 
     @Mock
-    private ServerCallStreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse>
-            serverCallStreamObserver;
+    private SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
 
-    @Mock private ServiceStatus serviceStatus;
-    @Mock private ObjectEvent<PublishStreamResponse> objectEvent;
+    @Mock
+    private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse> publishStreamResponseObserver;
+
+    @Mock
+    private ServerCallStreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse> serverCallStreamObserver;
+
+    @Mock
+    private ServiceStatus serviceStatus;
+
+    @Mock
+    private ObjectEvent<PublishStreamResponse> objectEvent;
 
     private final long TIMEOUT_THRESHOLD_MILLIS = 50L;
     private static final int testTimeout = 1000;
@@ -81,25 +87,21 @@ public class ProducerBlockItemObserverTest {
 
     @BeforeEach
     public void setUp() throws IOException {
-        this.testContext =
-                TestConfigUtil.getTestBlockNodeContext(
-                        Map.of(
-                                TestConfigUtil.CONSUMER_TIMEOUT_THRESHOLD_KEY,
-                                String.valueOf(TIMEOUT_THRESHOLD_MILLIS)));
+        this.testContext = TestConfigUtil.getTestBlockNodeContext(
+                Map.of(TestConfigUtil.CONSUMER_TIMEOUT_THRESHOLD_KEY, String.valueOf(TIMEOUT_THRESHOLD_MILLIS)));
     }
 
     @Test
     public void testOnError() throws IOException {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
-        final ProducerBlockItemObserver producerBlockItemObserver =
-                new ProducerBlockItemObserver(
-                        testClock,
-                        publisher,
-                        subscriptionHandler,
-                        publishStreamResponseObserver,
-                        blockNodeContext,
-                        serviceStatus);
+        final ProducerBlockItemObserver producerBlockItemObserver = new ProducerBlockItemObserver(
+                testClock,
+                publisher,
+                subscriptionHandler,
+                publishStreamResponseObserver,
+                blockNodeContext,
+                serviceStatus);
 
         final Throwable t = new Throwable("Test error");
         producerBlockItemObserver.onError(t);
@@ -110,14 +112,13 @@ public class ProducerBlockItemObserverTest {
     public void testBlockItemThrowsParseException() throws IOException {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
-        final ProducerBlockItemObserver producerBlockItemObserver =
-                new ProducerBlockItemObserver(
-                        testClock,
-                        publisher,
-                        subscriptionHandler,
-                        publishStreamResponseObserver,
-                        blockNodeContext,
-                        serviceStatus);
+        final ProducerBlockItemObserver producerBlockItemObserver = new ProducerBlockItemObserver(
+                testClock,
+                publisher,
+                subscriptionHandler,
+                publishStreamResponseObserver,
+                blockNodeContext,
+                serviceStatus);
 
         // Create a pbj block item
         final List<BlockItem> blockItems = generateBlockItems(1);
@@ -143,18 +144,17 @@ public class ProducerBlockItemObserverTest {
         producerBlockItemObserver.onNext(protocPublishStreamRequest);
 
         // TODO: Replace this with a real error enum.
-        final EndOfStream endOfStream =
-                EndOfStream.newBuilder()
-                        .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
-                        .build();
+        final EndOfStream endOfStream = EndOfStream.newBuilder()
+                .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
+                .build();
         fromPbj(PublishStreamResponse.newBuilder().status(endOfStream).build());
 
         // verify the ProducerBlockItemObserver has sent an error response
         verify(
                         publishStreamResponseObserver,
-                        timeout(testTimeout)
-                                .atLeast(1)) // TODO: it calls more than 1 usually 2, but why?
-                .onNext(fromPbj(PublishStreamResponse.newBuilder().status(endOfStream).build()));
+                        timeout(testTimeout).atLeast(1)) // TODO: it calls more than 1 usually 2, but why?
+                .onNext(fromPbj(
+                        PublishStreamResponse.newBuilder().status(endOfStream).build()));
 
         verify(serviceStatus, timeout(testTimeout).times(1)).stopWebServer(any());
     }
@@ -162,24 +162,16 @@ public class ProducerBlockItemObserverTest {
     @Test
     public void testResponseNotPermittedAfterCancel() throws NoSuchAlgorithmException {
 
-        final TestProducerBlockItemObserver producerStreamResponseObserver =
-                new TestProducerBlockItemObserver(
-                        testClock,
-                        publisher,
-                        subscriptionHandler,
-                        serverCallStreamObserver,
-                        testContext,
-                        serviceStatus);
+        final TestProducerBlockItemObserver producerStreamResponseObserver = new TestProducerBlockItemObserver(
+                testClock, publisher, subscriptionHandler, serverCallStreamObserver, testContext, serviceStatus);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
-        final ItemAcknowledgement itemAck =
-                ItemAcknowledgement.newBuilder()
-                        .itemsHash(Bytes.wrap(getFakeHash(blockItems)))
-                        .build();
-        final PublishStreamResponse publishStreamResponse =
-                PublishStreamResponse.newBuilder()
-                        .acknowledgement(Acknowledgement.newBuilder().itemAck(itemAck).build())
-                        .build();
+        final ItemAcknowledgement itemAck = ItemAcknowledgement.newBuilder()
+                .itemsHash(Bytes.wrap(getFakeHash(blockItems)))
+                .build();
+        final PublishStreamResponse publishStreamResponse = PublishStreamResponse.newBuilder()
+                .acknowledgement(Acknowledgement.newBuilder().itemAck(itemAck).build())
+                .build();
         when(objectEvent.get()).thenReturn(publishStreamResponse);
 
         // Confirm that the observer is called with the first BlockItem
@@ -192,31 +184,22 @@ public class ProducerBlockItemObserverTest {
         producerStreamResponseObserver.onEvent(objectEvent, 0, true);
 
         // Confirm that canceling the observer allowed only 1 response to be sent.
-        verify(serverCallStreamObserver, timeout(testTimeout).times(1))
-                .onNext(fromPbj(publishStreamResponse));
+        verify(serverCallStreamObserver, timeout(testTimeout).times(1)).onNext(fromPbj(publishStreamResponse));
     }
 
     @Test
     public void testResponseNotPermittedAfterClose() throws NoSuchAlgorithmException {
 
-        final TestProducerBlockItemObserver producerBlockItemObserver =
-                new TestProducerBlockItemObserver(
-                        testClock,
-                        publisher,
-                        subscriptionHandler,
-                        serverCallStreamObserver,
-                        testContext,
-                        serviceStatus);
+        final TestProducerBlockItemObserver producerBlockItemObserver = new TestProducerBlockItemObserver(
+                testClock, publisher, subscriptionHandler, serverCallStreamObserver, testContext, serviceStatus);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
-        final ItemAcknowledgement itemAck =
-                ItemAcknowledgement.newBuilder()
-                        .itemsHash(Bytes.wrap(getFakeHash(blockItems)))
-                        .build();
-        final PublishStreamResponse publishStreamResponse =
-                PublishStreamResponse.newBuilder()
-                        .acknowledgement(Acknowledgement.newBuilder().itemAck(itemAck).build())
-                        .build();
+        final ItemAcknowledgement itemAck = ItemAcknowledgement.newBuilder()
+                .itemsHash(Bytes.wrap(getFakeHash(blockItems)))
+                .build();
+        final PublishStreamResponse publishStreamResponse = PublishStreamResponse.newBuilder()
+                .acknowledgement(Acknowledgement.newBuilder().itemAck(itemAck).build())
+                .build();
         when(objectEvent.get()).thenReturn(publishStreamResponse);
 
         // Confirm that the observer is called with the first BlockItem
@@ -229,8 +212,7 @@ public class ProducerBlockItemObserverTest {
         producerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         // Confirm that closing the observer allowed only 1 response to be sent.
-        verify(serverCallStreamObserver, timeout(testTimeout).times(1))
-                .onNext(fromPbj(publishStreamResponse));
+        verify(serverCallStreamObserver, timeout(testTimeout).times(1)).onNext(fromPbj(publishStreamResponse));
     }
 
     @Test
@@ -238,20 +220,13 @@ public class ProducerBlockItemObserverTest {
 
         final ServiceStatus serviceStatus = new ServiceStatusImpl(testContext);
 
-        final ProducerBlockItemObserver producerBlockItemObserver =
-                new ProducerBlockItemObserver(
-                        testClock,
-                        publisher,
-                        subscriptionHandler,
-                        serverCallStreamObserver,
-                        testContext,
-                        serviceStatus);
+        final ProducerBlockItemObserver producerBlockItemObserver = new ProducerBlockItemObserver(
+                testClock, publisher, subscriptionHandler, serverCallStreamObserver, testContext, serviceStatus);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
-        final PublishStreamRequest publishStreamRequest =
-                PublishStreamRequest.newBuilder()
-                        .blockItems(new com.hedera.hapi.block.BlockItemSet(blockItems))
-                        .build();
+        final PublishStreamRequest publishStreamRequest = PublishStreamRequest.newBuilder()
+                .blockItems(new com.hedera.hapi.block.BlockItemSet(blockItems))
+                .build();
 
         // Confirm that the observer is called with the first BlockItem
         producerBlockItemObserver.onNext(fromPbj(publishStreamRequest));

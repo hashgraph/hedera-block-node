@@ -48,17 +48,23 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class StreamPersistenceHandlerImplTest {
 
-    @Mock private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
+    @Mock
+    private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
 
-    @Mock private BlockWriter<List<BlockItem>> blockWriter;
+    @Mock
+    private BlockWriter<List<BlockItem>> blockWriter;
 
-    @Mock private Notifier notifier;
+    @Mock
+    private Notifier notifier;
 
-    @Mock private BlockNodeContext blockNodeContext;
+    @Mock
+    private BlockNodeContext blockNodeContext;
 
-    @Mock private ServiceStatus serviceStatus;
+    @Mock
+    private ServiceStatus serviceStatus;
 
-    @Mock private MetricsService metricsService;
+    @Mock
+    private MetricsService metricsService;
 
     private static final int testTimeout = 0;
 
@@ -68,16 +74,12 @@ public class StreamPersistenceHandlerImplTest {
         when(blockNodeContext.metricsService()).thenReturn(metricsService);
         when(serviceStatus.isRunning()).thenReturn(false);
 
-        final var streamPersistenceHandler =
-                new StreamPersistenceHandlerImpl(
-                        subscriptionHandler,
-                        notifier,
-                        blockWriter,
-                        blockNodeContext,
-                        serviceStatus);
+        final var streamPersistenceHandler = new StreamPersistenceHandlerImpl(
+                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
-        final BlockItemSet blockItemSet = BlockItemSet.newBuilder().blockItems(blockItems).build();
+        final BlockItemSet blockItemSet =
+                BlockItemSet.newBuilder().blockItems(blockItems).build();
         final var subscribeStreamResponse =
                 SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build();
         final ObjectEvent<SubscribeStreamResponse> event = new ObjectEvent<>();
@@ -97,18 +99,14 @@ public class StreamPersistenceHandlerImplTest {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         when(serviceStatus.isRunning()).thenReturn(true);
 
-        final var streamPersistenceHandler =
-                new StreamPersistenceHandlerImpl(
-                        subscriptionHandler,
-                        notifier,
-                        blockWriter,
-                        blockNodeContext,
-                        serviceStatus);
+        final var streamPersistenceHandler = new StreamPersistenceHandlerImpl(
+                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
-        final BlockItemSet blockItemSet = BlockItemSet.newBuilder().blockItems(blockItems).build();
-        final var subscribeStreamResponse =
-                spy(SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build());
+        final BlockItemSet blockItemSet =
+                BlockItemSet.newBuilder().blockItems(blockItems).build();
+        final var subscribeStreamResponse = spy(
+                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build());
 
         // Force the block item to be null
         when(subscribeStreamResponse.blockItems()).thenReturn(null);
@@ -127,18 +125,14 @@ public class StreamPersistenceHandlerImplTest {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         when(serviceStatus.isRunning()).thenReturn(true);
 
-        final var streamPersistenceHandler =
-                new StreamPersistenceHandlerImpl(
-                        subscriptionHandler,
-                        notifier,
-                        blockWriter,
-                        blockNodeContext,
-                        serviceStatus);
+        final var streamPersistenceHandler = new StreamPersistenceHandlerImpl(
+                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus);
 
         final List<BlockItem> blockItems = generateBlockItems(1);
-        final BlockItemSet blockItemSet = BlockItemSet.newBuilder().blockItems(blockItems).build();
-        final var subscribeStreamResponse =
-                spy(SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build());
+        final BlockItemSet blockItemSet =
+                BlockItemSet.newBuilder().blockItems(blockItems).build();
+        final var subscribeStreamResponse = spy(
+                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build());
 
         // Force the block item to be UNSET
         final OneOf<SubscribeStreamResponse.ResponseOneOfType> illegalOneOf =
@@ -160,16 +154,11 @@ public class StreamPersistenceHandlerImplTest {
         when(blockNodeContext.metricsService()).thenReturn(metricsService);
         when(serviceStatus.isRunning()).thenReturn(true);
 
-        final var streamPersistenceHandler =
-                new StreamPersistenceHandlerImpl(
-                        subscriptionHandler,
-                        notifier,
-                        blockWriter,
-                        blockNodeContext,
-                        serviceStatus);
+        final var streamPersistenceHandler = new StreamPersistenceHandlerImpl(
+                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus);
 
-        final SubscribeStreamResponse subscribeStreamResponse =
-                spy(SubscribeStreamResponse.newBuilder().status(READ_STREAM_SUCCESS).build());
+        final SubscribeStreamResponse subscribeStreamResponse = spy(
+                SubscribeStreamResponse.newBuilder().status(READ_STREAM_SUCCESS).build());
         final ObjectEvent<SubscribeStreamResponse> event = new ObjectEvent<>();
         event.set(subscribeStreamResponse);
 
