@@ -5,7 +5,7 @@ if [[ $# -lt 1 ]]; then
   exit 1
 fi
 
-VERSION=${1}
+VERSION=$1
 
 echo "CREATING CONTAINER FOR VERSION ${VERSION}"
 echo "Using project directory: ${2}"
@@ -13,4 +13,4 @@ echo
 
 # run docker build
 echo "Building container:"
-docker buildx build --load -t "block-node-server:${1}" --build-context distributions=../build/distributions --build-arg VERSION="${VERSION}" . || exit "${?}"
+docker buildx build --load -t "block-node-server:${VERSION}" --build-context distributions=../build/distributions --build-arg VERSION="${VERSION}" . || exit "${?}"

@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   block-node-server:
+    container_name: block-node-server
     image: block-node-server:${VERSION}
     env_file:
       - .env
