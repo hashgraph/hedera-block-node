@@ -25,11 +25,11 @@ The purpose of metrics is to provide a way to measure the performance of the sys
 
 Prefix: prometheus, ie. `prometheus.configKey`
 
-| ConfigKey                  | Description                                                                           | Default     |
-|----------------------------|---------------------------------------------------------------------------------------|-------------|
-| enableEndpoint             | either `true` or `false`. Enables or disables the endpoint for metrics                | true        |
-| endpointPortNumber         | Port of the Prometheus endpoint                                                       | 9999        |
-| endpointMaxBacklogAllowed  | The maximum number of incoming TCP connections which the system will queue internally | 1           |
+| ConfigKey | Description | Default |
+|:---|:---|---:|
+| enableEndpoint | either `true` or `false`. Enables or disables the endpoint for metrics | true |
+| endpointPortNumber | Port of the Prometheus endpoint | 9999 |
+| endpointMaxBacklogAllowed | The maximum number of incoming TCP connections which the system will queue internally | 1 |
 
 ## Usage
 
@@ -54,9 +54,9 @@ If needed to create another dashboard is possible to include it by adding it to 
 
 All metrics have `hedera_block_node` prefix.
 
-| Metric Name                     | Description                           | Type      |
-|---------------------------------|---------------------------------------|-----------|
-| live_block_items                | The number of block items received    | Counter   |
-| blocks_persisted                | the number of blocks persisted        | Counter   |
-| subscribers                     | The number of subscribers             | Gauge     |
-| single_blocks_retrieved         | the number of single blocks requested | Counter   |
+| Metric Name | Description | Type |
+|:---|:---|---:|
+| live_block_items | The number of block items received | Counter |
+| blocks_persisted | the number of blocks persisted | Counter |
+| subscribers | The number of subscribers | Gauge |
+| single_blocks_retrieved | the number of single blocks requested | Counter |

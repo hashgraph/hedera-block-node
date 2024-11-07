@@ -33,34 +33,34 @@ Refer to the [Configuration](configuration.md) for configuration options.
 > ```
 
 1. To quickly build the Server sources (without running tests), do the following:
-    ```bash
-    ./gradlew -p server clean build -x test
-    ```
+   ```bash
+   ./gradlew -p server clean build -x test
+   ```
 
 1. To build the Server docker image, do the following:
-    ```bash
-    ./gradlew :server:createDockerImage
-    ```
+   ```bash
+   ./gradlew :server:createDockerImage
+   ```
 
 ### Run the Server
 
 1. To start the Server, do the following:
-    ```bash
-    ./gradlew :server:startDockerContainer
-    ```
+   ```bash
+   ./gradlew :server:startDockerContainer
+   ```
 
 ### Run the Server with Debug
 
 1. To start the Server with debug enabled, do the following:
-    ```bash
-    ./gradlew :server:startDockerDebugContainer
-    ```
+   ```bash
+   ./gradlew :server:startDockerDebugContainer
+   ```
 
 1. Attach your remote jvm debugger to port 5005.
 
 ### Stop the Server
 
 1. To stop the Server do the following:
-    ```bash
-    ./gradlew :server:stopDockerContainer
-    ```
+   ```bash
+   ./gradlew :server:stopDockerContainer
+   ```

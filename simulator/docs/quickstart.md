@@ -33,9 +33,9 @@ Refer to the [Configuration](configuration.md) for configuration options.
 > ```
 
 1. To quickly build the Simulator sources (without running tests), do the following:
-    ```bash
-    ./gradlew -p simulator clean build -x test
-    ```
+   ```bash
+   ./gradlew -p simulator clean build -x test
+   ```
 
 ### Run the Server first
 
@@ -46,15 +46,15 @@ get started with the application.
 ### Run the Simulator
 
 1. To start the Simulator, do the following:
-    ```bash
-    ./gradlew :simulator:run
-    ```
+   ```bash
+   ./gradlew :simulator:run
+   ```
 
 ### Run the Simulator with Debug
 
 1. To start the Simulator with debug enabled, do the following:
-    ```bash
-    ./gradlew :simulator:run --debug-jvm
-    ```
+   ```bash
+   ./gradlew :simulator:run --debug-jvm
+   ```
 
 1. Attach your remote jvm debugger to port 5005.

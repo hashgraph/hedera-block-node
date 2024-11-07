@@ -7,8 +7,8 @@
 1. [Configuration](#configuration)
 1. [Metrics](#metrics)
 1. [Design](#design)
-    1. [Block Persistence](#block-persistence)
-    1. [Bi-directional Producer/Consumer Streaming with gRPC](#bi-directional-producerconsumer-streaming-with-grpc)
+   1. [Block Persistence](#block-persistence)
+   1. [Bi-directional Producer/Consumer Streaming with gRPC](#bi-directional-producerconsumer-streaming-with-grpc)
 
 ## Overview
 

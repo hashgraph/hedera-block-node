@@ -26,16 +26,16 @@
 > ```
 
 1. To quickly build the Tools sources (without running tests), do the following:
-    ```bash
-    ./gradlew -p tools clean build -x test
-    ```
+   ```bash
+   ./gradlew -p tools clean build -x test
+   ```
 
 ### Run the Tools
 
 1. To run the Tools, do the following:
-    ```bash
-    # Here is an example of running the info command with the help option, simply
-    # replace `info --help` with the desired command and options to run the tools
-    # quickly using the `./gradlew run` task.
-    ./gradlew -q :tools:run --args="info --help"
-    ```
+   ```bash
+   # Here is an example of running the info command with the help option, simply
+   # replace `info --help` with the desired command and options to run the tools
+   # quickly using the `./gradlew run` task.
+   ./gradlew -q :tools:run --args="info --help"
+   ```
