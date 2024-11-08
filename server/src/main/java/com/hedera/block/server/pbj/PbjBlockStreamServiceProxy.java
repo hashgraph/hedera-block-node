@@ -178,7 +178,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     @NonNull
     private SubscribeStreamRequest parseSubscribeStreamRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options) throws ParseException {
-        // Copying bytes to avoid using references passed from Helidon
+        // TODO: Copying bytes to avoid using references passed from Helidon. Investigate if this is necessary.
         return SubscribeStreamRequest.PROTOBUF.parse(Bytes.wrap(message.toByteArray()));
     }
 
@@ -191,7 +191,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     @NonNull
     private PublishStreamRequest parsePublishStreamRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options) throws ParseException {
-        // Copying bytes to avoid using references from Helidon
+        // TODO: Copying bytes to avoid using references passed from Helidon. Investigate if this is necessary.
         return PublishStreamRequest.PROTOBUF.parse(Bytes.wrap(message.toByteArray()));
     }
 

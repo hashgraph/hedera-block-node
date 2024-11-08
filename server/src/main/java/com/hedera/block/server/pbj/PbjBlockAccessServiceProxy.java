@@ -145,7 +145,7 @@ public class PbjBlockAccessServiceProxy implements PbjBlockAccessService {
     @NonNull
     private SingleBlockRequest parseSingleBlockRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options) throws ParseException {
-        // Copying bytes to avoid using references passed from Helidon
+        // TODO: Copying bytes to avoid using references passed from Helidon. Investigate if this is necessary.
         return SingleBlockRequest.PROTOBUF.parse(Bytes.wrap(message.toByteArray()));
     }
 

@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.pbj;
 
+import static com.hedera.block.server.Constants.FULL_SERVICE_NAME_BLOCK_ACCESS;
 import static com.hedera.block.server.Constants.SERVICE_NAME_BLOCK_ACCESS;
 
 import com.hedera.pbj.runtime.grpc.ServiceInterface;
@@ -57,7 +58,7 @@ public interface PbjBlockAccessService extends ServiceInterface {
      */
     @NonNull
     default String fullName() {
-        return "com.hedera.hapi.block." + SERVICE_NAME_BLOCK_ACCESS;
+        return FULL_SERVICE_NAME_BLOCK_ACCESS;
     }
 
     /**
