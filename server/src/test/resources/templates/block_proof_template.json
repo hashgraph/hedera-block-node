@@ -1,7 +1,5 @@
 {
-  "block_item": {
-    "block_proof": {
-      "block": -1
-    }
+  "block_proof": {
+    "block": -1
   }
 }

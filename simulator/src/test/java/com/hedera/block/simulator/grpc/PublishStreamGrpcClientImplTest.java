@@ -27,8 +27,8 @@ import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.block.simulator.metrics.MetricsServiceImpl;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.protoc.Block;
+import com.hedera.hapi.block.stream.protoc.BlockItem;
 import com.swirlds.config.api.Configuration;
 import io.grpc.ManagedChannel;
 import java.io.IOException;
@@ -45,9 +45,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class PublishStreamGrpcClientImplTest {
 
+    private MetricsService metricsService;
+
     GrpcConfig grpcConfig;
     BlockStreamConfig blockStreamConfig;
-    MetricsService metricsService;
     AtomicBoolean streamEnabled;
 
     @BeforeEach
@@ -78,9 +79,13 @@ class PublishStreamGrpcClientImplTest {
     @Test
     void streamBlock() {
         BlockItem blockItem = BlockItem.newBuilder().build();
-        Block block = Block.newBuilder().items(blockItem).build();
+        Block block = Block.newBuilder().addItems(blockItem).build();
 
-        Block block1 = Block.newBuilder().items(blockItem, blockItem, blockItem).build();
+        Block block1 = Block.newBuilder()
+                .addItems(blockItem)
+                .addItems(blockItem)
+                .addItems(blockItem)
+                .build();
 
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
                 new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService, streamEnabled);
@@ -96,7 +101,7 @@ class PublishStreamGrpcClientImplTest {
     @Test
     void streamBlockReturnsFalse() {
         BlockItem blockItem = BlockItem.newBuilder().build();
-        Block block = Block.newBuilder().items(blockItem).build();
+        Block block = Block.newBuilder().addItems(blockItem).build();
         streamEnabled.set(false);
         PublishStreamGrpcClientImpl publishStreamGrpcClient =
                 new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService, streamEnabled);

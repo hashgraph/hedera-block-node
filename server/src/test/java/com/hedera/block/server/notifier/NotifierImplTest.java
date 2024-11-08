@@ -16,9 +16,8 @@
 
 package com.hedera.block.server.notifier;
 
-import static com.hedera.block.server.Translator.fromPbj;
-import static com.hedera.block.server.grpc.BlockStreamServiceIntegrationTest.buildAck;
 import static com.hedera.block.server.notifier.NotifierImpl.buildErrorStreamResponse;
+import static com.hedera.block.server.pbj.PbjBlockStreamServiceIntegrationTest.buildAck;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,8 +36,8 @@ import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.pbj.runtime.grpc.Pipeline;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.time.InstantSource;
@@ -53,21 +52,29 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class NotifierImplTest {
 
-    @Mock private Notifiable mediator;
-    @Mock private Publisher<List<BlockItem>> publisher;
-    @Mock private ServiceStatus serviceStatus;
-    @Mock private SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
+    @Mock
+    private Notifiable mediator;
 
     @Mock
-    private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse> streamObserver1;
+    private Publisher<List<BlockItem>> publisher;
 
     @Mock
-    private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse> streamObserver2;
+    private ServiceStatus serviceStatus;
 
     @Mock
-    private StreamObserver<com.hedera.hapi.block.protoc.PublishStreamResponse> streamObserver3;
+    private SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
 
-    @Mock private InstantSource testClock;
+    @Mock
+    private Pipeline<PublishStreamResponse> streamObserver1;
+
+    @Mock
+    private Pipeline<PublishStreamResponse> streamObserver2;
+
+    @Mock
+    private Pipeline<PublishStreamResponse> streamObserver3;
+
+    @Mock
+    private InstantSource testClock;
 
     private final long TIMEOUT_THRESHOLD_MILLIS = 100L;
     private final long TEST_TIME = 1_719_427_664_950L;
@@ -90,75 +97,43 @@ public class NotifierImplTest {
 
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
-        final var concreteObserver1 =
-                new ProducerBlockItemObserver(
-                        testClock,
-                        publisher,
-                        subscriptionHandler,
-                        streamObserver1,
-                        testContext,
-                        serviceStatus);
+        final var concreteObserver1 = new ProducerBlockItemObserver(
+                testClock, publisher, subscriptionHandler, streamObserver1, testContext, serviceStatus);
 
-        final var concreteObserver2 =
-                new ProducerBlockItemObserver(
-                        testClock,
-                        publisher,
-                        subscriptionHandler,
-                        streamObserver2,
-                        testContext,
-                        serviceStatus);
+        final var concreteObserver2 = new ProducerBlockItemObserver(
+                testClock, publisher, subscriptionHandler, streamObserver2, testContext, serviceStatus);
 
-        final var concreteObserver3 =
-                new ProducerBlockItemObserver(
-                        testClock,
-                        publisher,
-                        subscriptionHandler,
-                        streamObserver3,
-                        testContext,
-                        serviceStatus);
+        final var concreteObserver3 = new ProducerBlockItemObserver(
+                testClock, publisher, subscriptionHandler, streamObserver3, testContext, serviceStatus);
 
         notifier.subscribe(concreteObserver1);
         notifier.subscribe(concreteObserver2);
         notifier.subscribe(concreteObserver3);
 
-        assertTrue(
-                notifier.isSubscribed(concreteObserver1),
-                "Expected the notifier to have observer1 subscribed");
-        assertTrue(
-                notifier.isSubscribed(concreteObserver2),
-                "Expected the notifier to have observer2 subscribed");
-        assertTrue(
-                notifier.isSubscribed(concreteObserver3),
-                "Expected the notifier to have observer3 subscribed");
+        assertTrue(notifier.isSubscribed(concreteObserver1), "Expected the notifier to have observer1 subscribed");
+        assertTrue(notifier.isSubscribed(concreteObserver2), "Expected the notifier to have observer2 subscribed");
+        assertTrue(notifier.isSubscribed(concreteObserver3), "Expected the notifier to have observer3 subscribed");
 
         List<BlockItem> blockItems = generateBlockItems(1);
         notifier.publish(blockItems);
 
         // Verify the response was received by all observers
-        final var publishStreamResponse =
-                PublishStreamResponse.newBuilder().acknowledgement(buildAck(blockItems)).build();
-        verify(streamObserver1, timeout(testTimeout).times(1))
-                .onNext(fromPbj(publishStreamResponse));
-        verify(streamObserver2, timeout(testTimeout).times(1))
-                .onNext(fromPbj(publishStreamResponse));
-        verify(streamObserver3, timeout(testTimeout).times(1))
-                .onNext(fromPbj(publishStreamResponse));
+        final var publishStreamResponse = PublishStreamResponse.newBuilder()
+                .acknowledgement(buildAck(blockItems))
+                .build();
+        verify(streamObserver1, timeout(testTimeout).times(1)).onNext(publishStreamResponse);
+        verify(streamObserver2, timeout(testTimeout).times(1)).onNext(publishStreamResponse);
+        verify(streamObserver3, timeout(testTimeout).times(1)).onNext(publishStreamResponse);
 
         // Unsubscribe the observers
         notifier.unsubscribe(concreteObserver1);
-        assertFalse(
-                notifier.isSubscribed(concreteObserver1),
-                "Expected the notifier to have unsubscribed observer1");
+        assertFalse(notifier.isSubscribed(concreteObserver1), "Expected the notifier to have unsubscribed observer1");
 
         notifier.unsubscribe(concreteObserver2);
-        assertFalse(
-                notifier.isSubscribed(concreteObserver2),
-                "Expected the notifier to have unsubscribed observer2");
+        assertFalse(notifier.isSubscribed(concreteObserver2), "Expected the notifier to have unsubscribed observer2");
 
         notifier.unsubscribe(concreteObserver3);
-        assertFalse(
-                notifier.isSubscribed(concreteObserver3),
-                "Expected the notifier to have unsubscribed observer3");
+        assertFalse(notifier.isSubscribed(concreteObserver3), "Expected the notifier to have unsubscribed observer3");
     }
 
     @Test
@@ -178,61 +153,31 @@ public class NotifierImplTest {
         final InstantSource testClock3 = mock(InstantSource.class);
         when(testClock3.millis()).thenReturn(TEST_TIME, TEST_TIME + 1501L);
 
-        final var concreteObserver1 =
-                new ProducerBlockItemObserver(
-                        testClock1,
-                        publisher,
-                        notifier,
-                        streamObserver1,
-                        testContext,
-                        serviceStatus);
+        final var concreteObserver1 = new ProducerBlockItemObserver(
+                testClock1, publisher, notifier, streamObserver1, testContext, serviceStatus);
 
-        final var concreteObserver2 =
-                new ProducerBlockItemObserver(
-                        testClock2,
-                        publisher,
-                        notifier,
-                        streamObserver2,
-                        testContext,
-                        serviceStatus);
+        final var concreteObserver2 = new ProducerBlockItemObserver(
+                testClock2, publisher, notifier, streamObserver2, testContext, serviceStatus);
 
-        final var concreteObserver3 =
-                new ProducerBlockItemObserver(
-                        testClock3,
-                        publisher,
-                        notifier,
-                        streamObserver3,
-                        testContext,
-                        serviceStatus);
+        final var concreteObserver3 = new ProducerBlockItemObserver(
+                testClock3, publisher, notifier, streamObserver3, testContext, serviceStatus);
 
         notifier.subscribe(concreteObserver1);
         notifier.subscribe(concreteObserver2);
         notifier.subscribe(concreteObserver3);
 
-        assertTrue(
-                notifier.isSubscribed(concreteObserver1),
-                "Expected the notifier to have observer1 subscribed");
-        assertTrue(
-                notifier.isSubscribed(concreteObserver2),
-                "Expected the notifier to have observer2 subscribed");
-        assertTrue(
-                notifier.isSubscribed(concreteObserver3),
-                "Expected the notifier to have observer3 subscribed");
+        assertTrue(notifier.isSubscribed(concreteObserver1), "Expected the notifier to have observer1 subscribed");
+        assertTrue(notifier.isSubscribed(concreteObserver2), "Expected the notifier to have observer2 subscribed");
+        assertTrue(notifier.isSubscribed(concreteObserver3), "Expected the notifier to have observer3 subscribed");
 
         List<BlockItem> blockItems = generateBlockItems(1);
         notifier.publish(blockItems);
 
         Thread.sleep(testTimeout);
 
-        assertFalse(
-                notifier.isSubscribed(concreteObserver1),
-                "Expected the notifier to have observer1 unsubscribed");
-        assertFalse(
-                notifier.isSubscribed(concreteObserver2),
-                "Expected the notifier to have observer2 unsubscribed");
-        assertFalse(
-                notifier.isSubscribed(concreteObserver3),
-                "Expected the notifier to have observer3 unsubscribed");
+        assertFalse(notifier.isSubscribed(concreteObserver1), "Expected the notifier to have observer1 unsubscribed");
+        assertFalse(notifier.isSubscribed(concreteObserver2), "Expected the notifier to have observer2 unsubscribed");
+        assertFalse(notifier.isSubscribed(concreteObserver3), "Expected the notifier to have observer3 unsubscribed");
     }
 
     @Test
@@ -240,54 +185,30 @@ public class NotifierImplTest {
 
         when(serviceStatus.isRunning()).thenReturn(true);
         final var notifier = new TestNotifier(mediator, testContext, serviceStatus);
-        final var concreteObserver1 =
-                new ProducerBlockItemObserver(
-                        testClock,
-                        publisher,
-                        subscriptionHandler,
-                        streamObserver1,
-                        testContext,
-                        serviceStatus);
+        final var concreteObserver1 = new ProducerBlockItemObserver(
+                testClock, publisher, subscriptionHandler, streamObserver1, testContext, serviceStatus);
 
-        final var concreteObserver2 =
-                new ProducerBlockItemObserver(
-                        testClock,
-                        publisher,
-                        subscriptionHandler,
-                        streamObserver2,
-                        testContext,
-                        serviceStatus);
+        final var concreteObserver2 = new ProducerBlockItemObserver(
+                testClock, publisher, subscriptionHandler, streamObserver2, testContext, serviceStatus);
 
-        final var concreteObserver3 =
-                new ProducerBlockItemObserver(
-                        testClock,
-                        publisher,
-                        subscriptionHandler,
-                        streamObserver3,
-                        testContext,
-                        serviceStatus);
+        final var concreteObserver3 = new ProducerBlockItemObserver(
+                testClock, publisher, subscriptionHandler, streamObserver3, testContext, serviceStatus);
 
         notifier.subscribe(concreteObserver1);
         notifier.subscribe(concreteObserver2);
         notifier.subscribe(concreteObserver3);
 
-        assertTrue(
-                notifier.isSubscribed(concreteObserver1),
-                "Expected the notifier to have observer1 subscribed");
-        assertTrue(
-                notifier.isSubscribed(concreteObserver2),
-                "Expected the notifier to have observer2 subscribed");
-        assertTrue(
-                notifier.isSubscribed(concreteObserver3),
-                "Expected the notifier to have observer3 subscribed");
+        assertTrue(notifier.isSubscribed(concreteObserver1), "Expected the notifier to have observer1 subscribed");
+        assertTrue(notifier.isSubscribed(concreteObserver2), "Expected the notifier to have observer2 subscribed");
+        assertTrue(notifier.isSubscribed(concreteObserver3), "Expected the notifier to have observer3 subscribed");
 
         List<BlockItem> blockItems = generateBlockItems(1);
         notifier.publish(blockItems);
 
         final PublishStreamResponse errorResponse = buildErrorStreamResponse();
-        verify(streamObserver1, timeout(testTimeout).times(1)).onNext(fromPbj(errorResponse));
-        verify(streamObserver2, timeout(testTimeout).times(1)).onNext(fromPbj(errorResponse));
-        verify(streamObserver3, timeout(testTimeout).times(1)).onNext(fromPbj(errorResponse));
+        verify(streamObserver1, timeout(testTimeout).times(1)).onNext(errorResponse);
+        verify(streamObserver2, timeout(testTimeout).times(1)).onNext(errorResponse);
+        verify(streamObserver3, timeout(testTimeout).times(1)).onNext(errorResponse);
     }
 
     @Test
@@ -296,59 +217,33 @@ public class NotifierImplTest {
         // Set the serviceStatus to not running
         when(serviceStatus.isRunning()).thenReturn(false);
         final var notifier = new TestNotifier(mediator, testContext, serviceStatus);
-        final var concreteObserver1 =
-                new ProducerBlockItemObserver(
-                        testClock,
-                        publisher,
-                        subscriptionHandler,
-                        streamObserver1,
-                        testContext,
-                        serviceStatus);
+        final var concreteObserver1 = new ProducerBlockItemObserver(
+                testClock, publisher, subscriptionHandler, streamObserver1, testContext, serviceStatus);
 
-        final var concreteObserver2 =
-                new ProducerBlockItemObserver(
-                        testClock,
-                        publisher,
-                        subscriptionHandler,
-                        streamObserver2,
-                        testContext,
-                        serviceStatus);
+        final var concreteObserver2 = new ProducerBlockItemObserver(
+                testClock, publisher, subscriptionHandler, streamObserver2, testContext, serviceStatus);
 
-        final var concreteObserver3 =
-                new ProducerBlockItemObserver(
-                        testClock,
-                        publisher,
-                        subscriptionHandler,
-                        streamObserver3,
-                        testContext,
-                        serviceStatus);
+        final var concreteObserver3 = new ProducerBlockItemObserver(
+                testClock, publisher, subscriptionHandler, streamObserver3, testContext, serviceStatus);
 
         notifier.subscribe(concreteObserver1);
         notifier.subscribe(concreteObserver2);
         notifier.subscribe(concreteObserver3);
 
-        assertTrue(
-                notifier.isSubscribed(concreteObserver1),
-                "Expected the notifier to have observer1 subscribed");
-        assertTrue(
-                notifier.isSubscribed(concreteObserver2),
-                "Expected the notifier to have observer2 subscribed");
-        assertTrue(
-                notifier.isSubscribed(concreteObserver3),
-                "Expected the notifier to have observer3 subscribed");
+        assertTrue(notifier.isSubscribed(concreteObserver1), "Expected the notifier to have observer1 subscribed");
+        assertTrue(notifier.isSubscribed(concreteObserver2), "Expected the notifier to have observer2 subscribed");
+        assertTrue(notifier.isSubscribed(concreteObserver3), "Expected the notifier to have observer3 subscribed");
 
         final List<BlockItem> blockItems = generateBlockItems(1);
         notifier.publish(blockItems);
 
         // Verify once the serviceStatus is not running that we do not publish the responses
-        final var publishStreamResponse =
-                PublishStreamResponse.newBuilder().acknowledgement(buildAck(blockItems)).build();
-        verify(streamObserver1, timeout(testTimeout).times(0))
-                .onNext(fromPbj(publishStreamResponse));
-        verify(streamObserver2, timeout(testTimeout).times(0))
-                .onNext(fromPbj(publishStreamResponse));
-        verify(streamObserver3, timeout(testTimeout).times(0))
-                .onNext(fromPbj(publishStreamResponse));
+        final var publishStreamResponse = PublishStreamResponse.newBuilder()
+                .acknowledgement(buildAck(blockItems))
+                .build();
+        verify(streamObserver1, timeout(testTimeout).times(0)).onNext(publishStreamResponse);
+        verify(streamObserver2, timeout(testTimeout).times(0)).onNext(publishStreamResponse);
+        verify(streamObserver3, timeout(testTimeout).times(0)).onNext(publishStreamResponse);
     }
 
     private static final class TestNotifier extends NotifierImpl {
@@ -361,8 +256,7 @@ public class NotifierImplTest {
 
         @Override
         @NonNull
-        Acknowledgement buildAck(@NonNull final List<BlockItem> blockItems)
-                throws NoSuchAlgorithmException {
+        Acknowledgement buildAck(@NonNull final List<BlockItem> blockItems) throws NoSuchAlgorithmException {
             throw new NoSuchAlgorithmException("Test exception");
         }
     }

@@ -17,6 +17,7 @@
 package com.hedera.block.server.notifier;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.SuccessfulPubStreamResp;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.NotifierRingBufferRemainingCapacity;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Producers;
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static java.lang.System.Logger.Level.ERROR;
@@ -49,8 +50,7 @@ import javax.inject.Singleton;
  * will stop the server in the event of an unrecoverable error.
  */
 @Singleton
-public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
-        implements Notifier {
+public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse> implements Notifier {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -114,12 +114,12 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
         try {
             if (serviceStatus.isRunning()) {
                 // Publish the block item to the subscribers
-                final var publishStreamResponse =
-                        PublishStreamResponse.newBuilder()
-                                .acknowledgement(buildAck(blockItems))
-                                .build();
+                final var publishStreamResponse = PublishStreamResponse.newBuilder()
+                        .acknowledgement(buildAck(blockItems))
+                        .build();
                 ringBuffer.publishEvent((event, sequence) -> event.set(publishStreamResponse));
 
+                metricsService.get(NotifierRingBufferRemainingCapacity).set(ringBuffer.remainingCapacity());
                 metricsService.get(SuccessfulPubStreamResp).increment();
             } else {
                 LOGGER.log(ERROR, "Notifier is not running.");
@@ -141,10 +141,9 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
     @NonNull
     static PublishStreamResponse buildErrorStreamResponse() {
         // TODO: Replace this with a real error enum.
-        final EndOfStream endOfStream =
-                EndOfStream.newBuilder()
-                        .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
-                        .build();
+        final EndOfStream endOfStream = EndOfStream.newBuilder()
+                .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
+                .build();
         return PublishStreamResponse.newBuilder().status(endOfStream).build();
     }
 
@@ -156,13 +155,11 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
      * @throws NoSuchAlgorithmException if the hash algorithm is not supported
      */
     @NonNull
-    Acknowledgement buildAck(@NonNull final List<BlockItem> blockItems)
-            throws NoSuchAlgorithmException {
-        final ItemAcknowledgement itemAck =
-                ItemAcknowledgement.newBuilder()
-                        // TODO: Replace this with a real hash generator
-                        .itemsHash(Bytes.wrap(getFakeHash(blockItems)))
-                        .build();
+    Acknowledgement buildAck(@NonNull final List<BlockItem> blockItems) throws NoSuchAlgorithmException {
+        final ItemAcknowledgement itemAck = ItemAcknowledgement.newBuilder()
+                // TODO: Replace this with a real hash generator
+                .itemsHash(Bytes.wrap(getFakeHash(blockItems)))
+                .build();
 
         return Acknowledgement.newBuilder().itemAck(itemAck).build();
     }

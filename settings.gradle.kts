@@ -40,7 +40,7 @@ dependencyResolutionManagement {
         create("libs") {
             // Define a constant for the platform SDK version.
             // Platform SDK modules are all released together with matching versions.
-            val swirldsVersion = "0.51.5"
+            val swirldsVersion = "0.54.1"
 
             // Define a constant for the Dagger version.
             val daggerVersion = "2.42"
@@ -48,10 +48,13 @@ dependencyResolutionManagement {
             // Define a constant for protobuf version.
             val protobufVersion = "4.28.2"
 
+            val helidonVersion = "4.1.1"
+
             // Compile time dependencies
-            version("io.helidon.webserver.http2", "4.1.0")
-            version("io.helidon.webserver.grpc", "4.1.0")
-            version("io.helidon.logging", "4.1.0")
+            version("io.helidon.webserver.http2", helidonVersion)
+            version("io.helidon.webserver", helidonVersion)
+            version("io.helidon.logging", helidonVersion)
+
             version("com.lmax.disruptor", "4.0.0")
             version("com.github.spotbugs.annotations", "4.7.3")
             version("com.swirlds.metrics.api", swirldsVersion)
@@ -65,10 +68,12 @@ dependencyResolutionManagement {
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
             version("info.picocli", "4.7.6")
 
-            // gRPC dependencies
+            // gRPC dependencies for the stream subproject
             version("io.grpc", "1.65.1")
             version("io.grpc.protobuf", "1.65.1")
             version("io.grpc.stub", "1.65.1")
+
+            // netty dependency for the simulator subproject
             version("io.grpc.netty.shaded", "1.65.1")
 
             // Reference from the protobuf plugin
@@ -79,9 +84,13 @@ dependencyResolutionManagement {
             version("com.google.protobuf", protobufVersion)
             version("com.google.protobuf.util", protobufVersion)
 
+            var pbjVersion = "0.9.10"
+
             // PBJ dependencies
-            plugin("pbj", "com.hedera.pbj.pbj-compiler").version("0.9.8")
-            version("com.hedera.pbj.runtime", "0.9.8")
+            plugin("pbj", "com.hedera.pbj.pbj-compiler").version(pbjVersion)
+            version("com.hedera.pbj.runtime", pbjVersion)
+            version("com.hedera.pbj.grpc.helidon", pbjVersion)
+            version("com.hedera.pbj.grpc.helidon.config", pbjVersion)
             version("org.antlr.antlr4.runtime", "4.13.1")
 
             version("java.annotation", "1.3.2")

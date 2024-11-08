@@ -17,11 +17,13 @@ module com.hedera.block.server {
     exports com.hedera.block.server.persistence;
     exports com.hedera.block.server.notifier;
     exports com.hedera.block.server.service;
-    exports com.hedera.block.server.grpc;
+    exports com.hedera.block.server.pbj;
+    exports com.hedera.block.server.producer;
 
     requires com.hedera.block.common;
     requires com.hedera.block.stream;
-    requires com.google.protobuf;
+    requires com.hedera.pbj.grpc.helidon.config;
+    requires com.hedera.pbj.grpc.helidon;
     requires com.hedera.pbj.runtime;
     requires com.lmax.disruptor;
     requires com.swirlds.common;
@@ -29,10 +31,8 @@ module com.hedera.block.server {
     requires com.swirlds.config.extensions;
     requires com.swirlds.metrics.api;
     requires dagger;
-    requires io.grpc.stub;
     requires io.helidon.common;
     requires io.helidon.config;
-    requires io.helidon.webserver.grpc;
     requires io.helidon.webserver;
     requires javax.inject;
     requires static com.github.spotbugs.annotations;

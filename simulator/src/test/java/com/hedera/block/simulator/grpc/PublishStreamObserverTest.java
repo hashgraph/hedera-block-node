@@ -32,7 +32,7 @@ class PublishStreamObserverTest {
 
         PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled);
         publishStreamObserver.onNext(response);
-        assertTrue(streamEnabled.get(), "allowNext should remain true after onCompleted");
+        assertTrue(streamEnabled.get(), "streamEnabled should remain true after onCompleted");
     }
 
     @Test
@@ -41,7 +41,7 @@ class PublishStreamObserverTest {
         PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled);
 
         publishStreamObserver.onError(new Throwable());
-        assertFalse(streamEnabled.get(), "allowNext should be set to false after onError");
+        assertFalse(streamEnabled.get(), "streamEnabled should be set to false after onError");
     }
 
     @Test
@@ -50,6 +50,6 @@ class PublishStreamObserverTest {
         PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled);
 
         publishStreamObserver.onCompleted();
-        assertTrue(streamEnabled.get(), "allowNext should remain true after onCompleted");
+        assertTrue(streamEnabled.get(), "streamEnabled should remain true after onCompleted");
     }
 }

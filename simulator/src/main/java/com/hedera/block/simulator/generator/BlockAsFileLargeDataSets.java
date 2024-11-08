@@ -24,10 +24,8 @@ import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
-import com.hedera.pbj.runtime.ParseException;
-import com.hedera.pbj.runtime.io.buffer.Bytes;
+import com.hedera.hapi.block.stream.protoc.Block;
+import com.hedera.hapi.block.stream.protoc.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,11 +38,14 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final String blockstreamPath;
-    private int currentBlockIndex = 0;
-    private int currentBlockItemIndex = 0;
+    // State for getNextBlock()
+    private final String blockStreamPath;
+    private int currentBlockIndex;
+    private final int endBlockNumber;
 
-    private Block currentBlock = null;
+    // State for getNextBlockItem()
+    private int currentBlockItemIndex;
+    private Block currentBlock;
     private final String formatString;
 
     /**
@@ -54,7 +55,13 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
      */
     @Inject
     public BlockAsFileLargeDataSets(@NonNull BlockGeneratorConfig config) {
-        this.blockstreamPath = config.folderRootPath();
+
+        this.blockStreamPath = config.folderRootPath();
+        this.endBlockNumber = config.endBlockNumber();
+
+        // Override if startBlockNumber is set
+        this.currentBlockIndex = (config.startBlockNumber() > 1) ? config.startBlockNumber() : 1;
+
         this.formatString = "%0" + config.paddedLength() + "d" + config.fileExtension();
     }
 
@@ -65,8 +72,8 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
 
     @Override
     public BlockItem getNextBlockItem() throws IOException, BlockSimulatorParsingException {
-        if (currentBlock != null && currentBlock.items().size() > currentBlockItemIndex) {
-            return currentBlock.items().get(currentBlockItemIndex++);
+        if (currentBlock != null && currentBlock.getItemsList().size() > currentBlockItemIndex) {
+            return currentBlock.getItemsList().get(currentBlockItemIndex++);
         } else {
             currentBlock = getNextBlock();
             if (currentBlock != null) {
@@ -80,30 +87,34 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
 
     @Override
     public Block getNextBlock() throws IOException, BlockSimulatorParsingException {
-        currentBlockIndex++;
+
+        // If endBlockNumber is set, evaluate if we've exceeded the
+        // range. If so, then return null.
+        if (endBlockNumber > 0 && currentBlockIndex > endBlockNumber) {
+            return null;
+        }
 
         final String nextBlockFileName = String.format(formatString, currentBlockIndex);
-        final Path localBlockStreamPath = Path.of(blockstreamPath).resolve(nextBlockFileName);
+        final Path localBlockStreamPath = Path.of(blockStreamPath).resolve(nextBlockFileName);
         if (!Files.exists(localBlockStreamPath)) {
             return null;
         }
-        try {
-            final byte[] blockBytes =
-                    FileUtilities.readFileBytesUnsafe(localBlockStreamPath, RECORD_EXTENSION, GZ_EXTENSION);
+        final byte[] blockBytes =
+                FileUtilities.readFileBytesUnsafe(localBlockStreamPath, RECORD_EXTENSION, GZ_EXTENSION);
 
-            if (Objects.isNull(blockBytes)) {
-                throw new NullPointerException(
-                        "Unable to read block file [%s]! Most likely not found with the extensions '%s' or '%s'"
-                                .formatted(localBlockStreamPath, RECORD_EXTENSION, GZ_EXTENSION));
-            }
-
-            LOGGER.log(INFO, "Loading block: " + localBlockStreamPath.getFileName());
-
-            final Block block = Block.PROTOBUF.parse(Bytes.wrap(blockBytes));
-            LOGGER.log(INFO, "block loaded with items size= " + block.items().size());
-            return block;
-        } catch (final ParseException e) {
-            throw new BlockSimulatorParsingException(e);
+        if (Objects.isNull(blockBytes)) {
+            throw new NullPointerException(
+                    "Unable to read block file [%s]! Most likely not found with the extensions '%s' or '%s'"
+                            .formatted(localBlockStreamPath, RECORD_EXTENSION, GZ_EXTENSION));
         }
+
+        LOGGER.log(INFO, "Loading block: " + localBlockStreamPath.getFileName());
+
+        final Block block = Block.parseFrom(blockBytes);
+        LOGGER.log(INFO, "block loaded with items size= " + block.getItemsList().size());
+
+        currentBlockIndex++;
+
+        return block;
     }
 }

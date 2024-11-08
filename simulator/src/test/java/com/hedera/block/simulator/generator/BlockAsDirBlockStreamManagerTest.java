@@ -37,8 +37,7 @@ class BlockAsDirBlockStreamManagerTest {
 
     @Test
     void getGenerationMode() {
-        BlockStreamManager blockStreamManager =
-                getBlockAsDirBlockStreamManager(getAbsoluteFolder(rootFolder));
+        BlockStreamManager blockStreamManager = getBlockAsDirBlockStreamManager(getAbsoluteFolder(rootFolder));
         assertEquals(GenerationMode.DIR, blockStreamManager.getGenerationMode());
 
         assertEquals(GenerationMode.DIR, blockStreamManager.getGenerationMode());
@@ -46,8 +45,7 @@ class BlockAsDirBlockStreamManagerTest {
 
     @Test
     void getNextBlockItem() throws IOException, BlockSimulatorParsingException {
-        BlockStreamManager blockStreamManager =
-                getBlockAsDirBlockStreamManager(getAbsoluteFolder(rootFolder));
+        BlockStreamManager blockStreamManager = getBlockAsDirBlockStreamManager(getAbsoluteFolder(rootFolder));
 
         for (int i = 0; i < 1000; i++) {
             assertNotNull(blockStreamManager.getNextBlockItem());
@@ -56,8 +54,7 @@ class BlockAsDirBlockStreamManagerTest {
 
     @Test
     void getNextBlock() throws IOException, BlockSimulatorParsingException {
-        BlockStreamManager blockStreamManager =
-                getBlockAsDirBlockStreamManager(getAbsoluteFolder(rootFolder));
+        BlockStreamManager blockStreamManager = getBlockAsDirBlockStreamManager(getAbsoluteFolder(rootFolder));
 
         for (int i = 0; i < 3000; i++) {
             assertNotNull(blockStreamManager.getNextBlock());
@@ -68,15 +65,12 @@ class BlockAsDirBlockStreamManagerTest {
     void BlockAsFileBlockStreamManagerInvalidRootPath() {
         assertThrows(
                 RuntimeException.class,
-                () ->
-                        getBlockAsDirBlockStreamManager(
-                                getAbsoluteFolder("src/test/resources/BlockAsDirException/")));
+                () -> getBlockAsDirBlockStreamManager(getAbsoluteFolder("src/test/resources/BlockAsDirException/")));
     }
 
     private BlockStreamManager getBlockAsDirBlockStreamManager(String rootFolder) {
-        final BlockGeneratorConfig blockGeneratorConfig =
-                new BlockGeneratorConfig(
-                        GenerationMode.DIR, rootFolder, "BlockAsDirBlockStreamManager", 36, ".blk");
+        final BlockGeneratorConfig blockGeneratorConfig = new BlockGeneratorConfig(
+                GenerationMode.DIR, rootFolder, "BlockAsDirBlockStreamManager", 36, ".blk", 0, 0);
 
         return new BlockAsDirBlockStreamManager(blockGeneratorConfig);
     }

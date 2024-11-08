@@ -18,8 +18,8 @@ package com.hedera.block.simulator.generator;
 
 import com.hedera.block.simulator.config.types.GenerationMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.protoc.Block;
+import com.hedera.hapi.block.stream.protoc.BlockItem;
 import java.io.IOException;
 
 /** The block stream manager interface. */

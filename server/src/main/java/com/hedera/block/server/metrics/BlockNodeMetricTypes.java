@@ -42,12 +42,10 @@ public final class BlockNodeMetricTypes {
         LiveBlockItems("live_block_items", "Live BlockItems"),
 
         /** The number of PublishStreamResponses generated and published to the subscribers. */
-        SuccessfulPubStreamResp(
-                "successful_pub_stream_resp", "Successful Publish Stream Responses"),
+        SuccessfulPubStreamResp("successful_pub_stream_resp", "Successful Publish Stream Responses"),
 
         /** The number of PublishStreamResponses sent to the producers. */
-        SuccessfulPubStreamRespSent(
-                "successful_pub_stream_resp_sent", "Successful Publish Stream Responses Sent"),
+        SuccessfulPubStreamRespSent("successful_pub_stream_resp_sent", "Successful Publish Stream Responses Sent"),
 
         /** The number of blocks persisted to storage. */
         BlocksPersisted("blocks_persisted", "Blocks Persisted"),
@@ -64,12 +62,10 @@ public final class BlockNodeMetricTypes {
         // Error counters
 
         /** The number of errors encountered by the live block stream mediator. */
-        LiveBlockStreamMediatorError(
-                "live_block_stream_mediator_error", "Live Block Stream Mediator Error"),
+        LiveBlockStreamMediatorError("live_block_stream_mediator_error", "Live Block Stream Mediator Error"),
 
         /** The number of errors encountered by the stream persistence handler. */
-        StreamPersistenceHandlerError(
-                "stream_persistence_handler_error", "Stream Persistence Handler Error");
+        StreamPersistenceHandlerError("stream_persistence_handler_error", "Stream Persistence Handler Error");
 
         private final String grafanaLabel;
         private final String description;
@@ -104,7 +100,15 @@ public final class BlockNodeMetricTypes {
         Consumers("consumers", "Consumers"),
 
         /** The number of producers publishing block items. */
-        Producers("producers", "Producers");
+        Producers("producers", "Producers"),
+
+        /** The amount of capacity remaining in the mediator ring buffer. */
+        MediatorRingBufferRemainingCapacity(
+                "mediator_ring_buffer_remaining_capacity", "Mediator Ring Buffer Remaining Capacity"),
+
+        /** The amount of capacity remaining in the notifier ring buffer. */
+        NotifierRingBufferRemainingCapacity(
+                "notifier_ring_buffer_remaining_capacity", "Notifier Ring Buffer Remaining Capacity");
 
         private final String grafanaLabel;
         private final String description;

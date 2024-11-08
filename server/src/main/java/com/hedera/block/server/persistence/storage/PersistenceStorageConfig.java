@@ -32,9 +32,12 @@ import java.nio.file.Paths;
  *
  * @param rootPath provides the root path for saving block data, if you want to override it need to
  *     set it as persistence.storage.rootPath
+ * @param type use a predefined type string to replace the persistence component implementation.
+ *     Non-PRODUCTION values should only be used for troubleshooting and development purposes.
  */
 @ConfigData("persistence.storage")
-public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String rootPath) {
+public record PersistenceStorageConfig(
+        @ConfigProperty(defaultValue = "") String rootPath, @ConfigProperty(defaultValue = "PRODUCTION") String type) {
     private static final System.Logger LOGGER = System.getLogger(PersistenceStorageConfig.class.getName());
 
     /**
@@ -63,5 +66,6 @@ public record PersistenceStorageConfig(@ConfigProperty(defaultValue = "") String
 
         LOGGER.log(INFO, "Persistence Storage configuration persistence.storage.rootPath: " + path);
         rootPath = path.toString();
+        LOGGER.log(INFO, "Persistence configuration persistence.storage.type: " + type);
     }
 }

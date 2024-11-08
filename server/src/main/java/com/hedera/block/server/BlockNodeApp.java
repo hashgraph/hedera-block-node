@@ -16,17 +16,19 @@
 
 package com.hedera.block.server;
 
+import static com.hedera.block.server.Constants.PBJ_PROTOCOL_PROVIDER_CONFIG_NAME;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 
-import com.hedera.block.server.grpc.BlockAccessService;
-import com.hedera.block.server.grpc.BlockStreamService;
 import com.hedera.block.server.health.HealthService;
+import com.hedera.block.server.pbj.PbjBlockAccessService;
+import com.hedera.block.server.pbj.PbjBlockStreamService;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.pbj.grpc.helidon.PbjRouting;
+import com.hedera.pbj.grpc.helidon.config.PbjConfig;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.WebServerConfig;
-import io.helidon.webserver.grpc.GrpcRouting;
 import io.helidon.webserver.http.HttpRouting;
 import java.io.IOException;
 import javax.inject.Inject;
@@ -43,31 +45,31 @@ public class BlockNodeApp {
 
     private final ServiceStatus serviceStatus;
     private final HealthService healthService;
-    private final BlockStreamService blockStreamService;
-    private final BlockAccessService blockAccessService;
     private final WebServerConfig.Builder webServerBuilder;
+    private final PbjBlockStreamService pbjBlockStreamService;
+    private final PbjBlockAccessService pbjBlockAccessService;
 
     /**
      * Constructs a new BlockNodeApp with the specified dependencies.
      *
      * @param serviceStatus has the status of the service
      * @param healthService handles the health API requests
-     * @param blockStreamService handles the block stream requests
+     * @param pbjBlockStreamService defines the Block Stream services
+     * @param pbjBlockAccessService defines the Block Access services
      * @param webServerBuilder used to build the web server and start it
-     * @param blockAccessService grpc service for block access
      */
     @Inject
     public BlockNodeApp(
             @NonNull ServiceStatus serviceStatus,
             @NonNull HealthService healthService,
-            @NonNull BlockStreamService blockStreamService,
-            @NonNull WebServerConfig.Builder webServerBuilder,
-            @NonNull BlockAccessService blockAccessService) {
+            @NonNull PbjBlockStreamService pbjBlockStreamService,
+            @NonNull PbjBlockAccessService pbjBlockAccessService,
+            @NonNull WebServerConfig.Builder webServerBuilder) {
         this.serviceStatus = serviceStatus;
         this.healthService = healthService;
-        this.blockStreamService = blockStreamService;
+        this.pbjBlockStreamService = pbjBlockStreamService;
+        this.pbjBlockAccessService = pbjBlockAccessService;
         this.webServerBuilder = webServerBuilder;
-        this.blockAccessService = blockAccessService;
     }
 
     /**
@@ -77,16 +79,26 @@ public class BlockNodeApp {
      */
     public void start() throws IOException {
 
-        final GrpcRouting.Builder grpcRouting =
-                GrpcRouting.builder().service(blockStreamService).service(blockAccessService);
-
         final HttpRouting.Builder httpRouting =
                 HttpRouting.builder().register(healthService.getHealthRootPath(), healthService);
 
+        final PbjRouting.Builder pbjRouting =
+                PbjRouting.builder().service(pbjBlockStreamService).service(pbjBlockAccessService);
+
+        // Override the default message size
+        final PbjConfig pbjConfig = PbjConfig.builder()
+                .name(PBJ_PROTOCOL_PROVIDER_CONFIG_NAME)
+                .maxMessageSizeBytes(1024 * 4096)
+                .build();
+
         // Build the web server
         // TODO: make port server a configurable value.
-        final WebServer webServer =
-                webServerBuilder.port(8080).addRouting(grpcRouting).addRouting(httpRouting).build();
+        final WebServer webServer = webServerBuilder
+                .port(8080)
+                .addProtocol(pbjConfig)
+                .addRouting(pbjRouting)
+                .addRouting(httpRouting)
+                .build();
 
         // Update the serviceStatus with the web server
         serviceStatus.setWebServer(webServer);

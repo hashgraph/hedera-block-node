@@ -33,7 +33,7 @@ public final class SimulatorMetricTypes {
      * <p>Each enum value should have a unique grafana label and meaningful description. These
      * counters can capture data on standard operations or errors.
      */
-    public enum Counter implements MetricMetadata {
+    public enum Counter implements SimulatorMetricMetadata {
         // Standard counters
         /** The number of live block items sent by the simulator . */
         LiveBlockItemsSent("live_block_items_sent", "Live Block Items Sent");
@@ -59,7 +59,7 @@ public final class SimulatorMetricTypes {
         }
     }
 
-    private interface MetricMetadata {
+    private interface SimulatorMetricMetadata {
         String grafanaLabel();
 
         String description();

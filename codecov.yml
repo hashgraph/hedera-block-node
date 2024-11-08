@@ -20,6 +20,7 @@ coverage:
 
 ignore:
   - "server/src/main/java/com/hedera/block/server/Server.java"
-  - "server/src/main/java/com/hedera/block/server/Translator.java"
+  - "server/src/main/java/com/hedera/block/server/mediator/NoOpLiveStreamMediator.java"
+  - "server/src/main/java/com/hedera/block/server/producer/NoOpProducerObserver.java"
+  - "server/src/main/java/com/hedera/block/server/persistence/storage/write/NoOpBlockWriter.java"
   - "simulator/src/main/java/com/hedera/block/simulator/BlockStreamSimulator.java"
-  - "simulator/src/main/java/com/hedera/block/simulator/Translator.java"

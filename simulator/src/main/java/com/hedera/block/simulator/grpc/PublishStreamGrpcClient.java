@@ -16,8 +16,8 @@
 
 package com.hedera.block.simulator.grpc;
 
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.stream.protoc.Block;
+import com.hedera.hapi.block.stream.protoc.BlockItem;
 import java.util.List;
 
 /**

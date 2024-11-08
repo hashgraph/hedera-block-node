@@ -14,35 +14,35 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.grpc;
+package com.hedera.block.server.pbj;
 
 import dagger.Binds;
 import dagger.Module;
 import javax.inject.Singleton;
 
 /**
- * A Dagger Module for GRPC services that are at the BlockNode Services.
+ * A Dagger module for providing PBJ dependencies, any specific PBJ should be part of this module.
  */
 @Module
-public interface GrpcServiceInjectionModule {
+public interface PbjInjectionModule {
 
     /**
      * Provides a block stream service singleton using DI.
      *
-     * @param blockStreamService should come from DI
+     * @param pbjBlockStreamServiceProxy should come from DI
      * @return a block stream service singleton
      */
     @Singleton
     @Binds
-    BlockStreamService bindBlockStreamService(BlockStreamService blockStreamService);
+    PbjBlockStreamService bindPbjBlockStreamService(PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy);
 
     /**
      * Provides a block access service singleton using DI.
      *
-     * @param blockAccessService should come from DI
+     * @param pbjBlockAccessServiceProxy should come from DI
      * @return a block access service singleton
      */
     @Singleton
     @Binds
-    BlockAccessService bindBlockAccessService(BlockAccessService blockAccessService);
+    PbjBlockAccessService bindPbjBlockAccessService(PbjBlockAccessServiceProxy pbjBlockAccessServiceProxy);
 }
