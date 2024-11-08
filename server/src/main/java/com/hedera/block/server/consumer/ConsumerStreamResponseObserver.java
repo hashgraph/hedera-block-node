@@ -87,15 +87,6 @@ public class ConsumerStreamResponseObserver implements BlockNodeEventHandler<Obj
 
         this.subscriptionHandler = subscriptionHandler;
         this.metricsService = blockNodeContext.metricsService();
-
-        //        subscribeStreamResponseObserver.registerCallbackHandler(() -> {
-        // The consumer has cancelled the stream.
-        // Do not allow additional responses to be sent.
-        //            isResponsePermitted.set(false);
-        //            subscriptionHandler.unsubscribe(this);
-        //            LOGGER.log(DEBUG, "Consumer cancelled the stream. Observer unsubscribed.");
-        //        });
-
         this.subscribeStreamResponseObserver = subscribeStreamResponseObserver;
     }
 
