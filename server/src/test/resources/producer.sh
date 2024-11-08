@@ -87,6 +87,7 @@ event_template=$(cat "templates/event_template.json")
 
     # Start the BlockItems array
     echo "{"
+    echo "\"block_items\": {"
     echo "\"block_items\": ["
     # Generate 10 BlockItems per Block
     for ((i=1; i<=$block_items; i++))
@@ -106,6 +107,7 @@ event_template=$(cat "templates/event_template.json")
     done
 
     echo "]"
+    echo "}"
     echo "}"
 
     if [ "$iter" -eq "$2" ]; then

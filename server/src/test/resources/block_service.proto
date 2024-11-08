@@ -10,6 +10,12 @@ option java_multiple_files = true;
 //import "stream/block_item.proto";
 
 message PublishStreamRequest {
+    oneof request {
+        BlockItemSet block_items = 1;
+    }
+}
+
+message BlockItemSet {
     repeated BlockItem block_items = 1;
 }
 
