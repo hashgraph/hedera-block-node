@@ -19,6 +19,8 @@ package com.hedera.block.simulator.config.data;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Represents the status of the stream.
  *
@@ -87,7 +89,8 @@ public record StreamStatus(
          * @return the builder instance
          */
         public Builder lastKnownPublisherStatuses(List<String> lastKnownPublisherStatuses) {
-            this.lastKnownPublisherStatuses = lastKnownPublisherStatuses;
+            requireNonNull(lastKnownPublisherStatuses);
+            this.lastKnownPublisherStatuses = new ArrayList<>(lastKnownPublisherStatuses);
             return this;
         }
 
@@ -98,7 +101,8 @@ public record StreamStatus(
          * @return the builder instance
          */
         public Builder lastKnownConsumersStatuses(List<String> lastKnownConsumersStatuses) {
-            this.lastKnownConsumersStatuses = lastKnownConsumersStatuses;
+            requireNonNull(lastKnownConsumersStatuses);
+            this.lastKnownConsumersStatuses = new ArrayList<>(lastKnownConsumersStatuses);
             return this;
         }
 

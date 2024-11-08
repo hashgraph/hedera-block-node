@@ -152,6 +152,51 @@ public class PublisherModeHandlerTest {
     }
 
     @Test
+    void testStartWithConstantRateStreaming_ExceedingMaxItems() throws Exception {
+        when(blockStreamConfig.streamingMode()).thenReturn(StreamingMode.CONSTANT_RATE);
+        when(blockStreamConfig.delayBetweenBlockItems()).thenReturn(0);
+        when(blockStreamConfig.maxBlockItemsToStream()).thenReturn(5);
+
+        publisherModeHandler = new PublisherModeHandler(
+                blockStreamConfig, publishStreamGrpcClient, blockStreamManager, metricsService);
+        when(publishStreamGrpcClient.streamBlock(any(Block.class))).thenReturn(true);
+
+        Block block1 = mock(Block.class);
+        Block block2 = mock(Block.class);
+        Block block3 = mock(Block.class);
+        Block block4 = mock(Block.class);
+
+        BlockItem blockItem1 = mock(BlockItem.class);
+        BlockItem blockItem2 = mock(BlockItem.class);
+        BlockItem blockItem3 = mock(BlockItem.class);
+        BlockItem blockItem4 = mock(BlockItem.class);
+
+        when(block1.getItemsList()).thenReturn(Arrays.asList(blockItem1, blockItem2));
+        when(block2.getItemsList()).thenReturn(Arrays.asList(blockItem3, blockItem4));
+        when(block3.getItemsList()).thenReturn(Arrays.asList(blockItem1, blockItem2));
+        when(block4.getItemsList()).thenReturn(Arrays.asList(blockItem3, blockItem4));
+
+        when(blockStreamManager.getNextBlock())
+                .thenReturn(block1)
+                .thenReturn(block2)
+                .thenReturn(block3)
+                .thenReturn(block4);
+
+        when(publishStreamGrpcClient.streamBlock(block1)).thenReturn(true);
+        when(publishStreamGrpcClient.streamBlock(block2)).thenReturn(true);
+        when(publishStreamGrpcClient.streamBlock(block3)).thenReturn(true);
+        when(publishStreamGrpcClient.streamBlock(block4)).thenReturn(true);
+
+        publisherModeHandler.start();
+
+        verify(publishStreamGrpcClient).streamBlock(block1);
+        verify(publishStreamGrpcClient).streamBlock(block2);
+        verify(publishStreamGrpcClient).streamBlock(block3);
+        verifyNoMoreInteractions(publishStreamGrpcClient);
+        verify(blockStreamManager, times(3)).getNextBlock();
+    }
+
+    @Test
     void testStartWithConstantRateStreaming_NoBlocks() throws Exception {
         when(blockStreamConfig.streamingMode()).thenReturn(StreamingMode.CONSTANT_RATE);
         publisherModeHandler = new PublisherModeHandler(

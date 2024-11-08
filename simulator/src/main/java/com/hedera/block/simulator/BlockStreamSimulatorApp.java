@@ -102,7 +102,11 @@ public class BlockStreamSimulatorApp {
         return isRunning.get();
     }
 
-    /** Stops the Block Stream Simulator and closes off all grpc channels. */
+    /**
+     * Stops the Block Stream Simulator and closes off all grpc channels.
+     *
+     * @throws InterruptedException if the thread is interrupted
+     */
     public void stop() throws InterruptedException {
         simulatorModeHandler.stop();
         publishStreamGrpcClient.completeStreaming();

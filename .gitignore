@@ -9,6 +9,7 @@
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
+bin/
 
 # Package Files #
 *.jar
@@ -58,8 +59,3 @@ server/src/test/resources/test_output/
 
 # simulator files, this files are un-tarred before build
 /simulator/src/main/resources/block-0.0.3/
-/common/bin
-/server/bin
-/simulator/bin
-/stream/bin
-/suites/bin

@@ -140,10 +140,9 @@ public class PublisherModeHandler implements SimulatorModeHandler {
     private void constantRateStreaming() throws InterruptedException, IOException, BlockSimulatorParsingException {
         int delayMSBetweenBlockItems = delayBetweenBlockItems / NANOS_PER_MILLI;
         int delayNSBetweenBlockItems = delayBetweenBlockItems % NANOS_PER_MILLI;
-        boolean streamBlockItem = true;
         int blockItemsStreamed = 0;
 
-        while (streamBlockItem && shouldPublish.get()) {
+        while (shouldPublish.get()) {
             // get block
             Block block = blockStreamManager.getNextBlock();
 
@@ -162,7 +161,7 @@ public class PublisherModeHandler implements SimulatorModeHandler {
 
             if (blockItemsStreamed >= blockStreamConfig.maxBlockItemsToStream()) {
                 LOGGER.log(INFO, "Block Stream Simulator has reached the maximum number of block items to" + " stream");
-                streamBlockItem = false;
+                shouldPublish.set(false);
             }
         }
     }
