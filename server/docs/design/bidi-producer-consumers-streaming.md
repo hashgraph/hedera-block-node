@@ -1,5 +1,29 @@
 # Bi-directional Producer/Consumer Streaming with gRPC
 
+## Table of Contents
+
+1. [Purpose](#purpose)
+1. [Goals](#goals)
+1. [Terms](#terms)
+1. [Block Node gRPC Streaming Services API](#block-node-grpc-streaming-services-api)
+1. [Approaches](#approaches)
+   1. [Approach 1: Directly passing BlockItems from `ProducerBlockItemObserver` to N `ConsumerBlockItemObserver`s](#approach-1-directly-passing-blockitems-from-producerblockitemobserver-to-n-consumerblockitemobservers)
+   1. [Approach 2: Use a shared data structure between `ProducerBlockItemObserver` and `ConsumerBlockItemObserver`s. Consumers busy-wait for new BlockItems](#approach-2-use-a-shared-data-structure-between-producerblockitemobserver-and-consumerblockitemobservers-consumers-busy-wait-for-new-blockitems)
+   1. [Approach 3: Use a shared data structure between `ProducerBlockItemObserver` and `ConsumerBlockItemObserver`s. Use downstream consumer BlockItemResponses to drive the process of sending new BlockItems](#approach-3-use-a-shared-data-structure-between-producerblockitemobserver-and-consumerblockitemobservers-use-downstream-consumer-blockitemresponses-to-drive-the-process-of-sending-new-blockitems)
+   1. [Approach 4: Shared data structure between producer and consumer services. Leveraging the LMAX Disruptor library to manage inter-process pub/sub message-passing between producer and consumers via RingBuffer](#approach-4-shared-data-structure-between-producer-and-consumer-services-leveraging-the-lmax-disruptor-library-to-manage-inter-process-pubsub-message-passing-between-producer-and-consumers-via-ringbuffer)
+1. [Design](#design)
+   1. [Producer Registration Flow](#producer-registration-flow)
+   1. [Consumer Registration Flow](#consumer-registration-flow)
+   1. [Runtime Streaming](#runtime-streaming)
+   1. [Entities](#entities)
+1. [Diagrams](#diagrams)
+   1. [Producer Registration Flow](#producer-registration-flow-1)
+   1. [Consumer Registration Flow](#consumer-registration-flow-1)
+   1. [Class Diagram of all Entities and their Relationships](#class-diagram-of-all-entities-and-their-relationships)
+   1. [Runtime Stream of BlockItems from Producer to Consumers](#runtime-stream-of-blockitems-from-producer-to-consumers)
+
+---
+
 ## Purpose
 
 A primary use case of the `hedera-block-node` is to stream live BlockItems (see Terms section) from a producer 
@@ -17,15 +41,15 @@ point for custom logic is an implementation of `GrpcService`.
 ## Goals
 
 1) Consumers must be able to dynamically subscribe and unsubscribe from the live stream of BlockItems emitted by the
-    producer.  When a consumer subscribes to the stream, they will begin receiving BlockItems at the start of the next Block.
-    BlockItems transiting before the start of the next Block will not be sent to that downstream consumer.
+   producer.  When a consumer subscribes to the stream, they will begin receiving BlockItems at the start of the next Block.
+   BlockItems transiting before the start of the next Block will not be sent to that downstream consumer.
 2) Correct, in-order streaming delivery of BlockItems from a producer to all registered consumers.
 3) Minimize latency between the producer and consumers.
 4) Minimize CPU resources consumed by the producer and consumers.
 
 ---
 
-### Terms
+## Terms
 
 **BlockItem** - The BlockItem is the primary data structure passed between the producer, the `hedera-block-node`
 and consumers. A defined sequence of BlockItems represent a Block when stored on the `hedera-block-node`.
@@ -51,13 +75,12 @@ unsubscribed from a producer so that internal objects can be cleaned up and reso
 
 ---
 
-### Block Node gRPC Streaming Services API
+## Block Node gRPC Streaming Services API
 
 The Block Node gRPC Streaming Services API is now aligned with the names and simplified types defined in the 
 [`hedera-protobufs` repository on the `continue-block-node` branch](https://github.com/hashgraph/hedera-protobufs/blob/25783427575ded59d06d6bf1ed253fd24ef3c437/block/block_service.proto#L701-L742).
 
 ---
-
 
 ## Approaches:
 
@@ -80,7 +103,7 @@ BlockItem to the downstream consumer. Helidon invokes `ConsumerBlockItemObserver
 from the consumer in receipt of BlockItems.
 
 
-### Approach 1: Directly passing BlockItems from `ProducerBlockItemObserver` to N `ConsumerBlockItemObserver`s. 
+### Approach 1: Directly passing BlockItems from `ProducerBlockItemObserver` to N `ConsumerBlockItemObserver`s.
 
 Directly passing BlockItems from the `ProducerBlockItemObserver` to N `ConsumerBlockItemObserver`s without storing 
 BlockItems in an intermediate data structure. This approach was the basis for one of the first implementations of gRPC 
@@ -89,8 +112,8 @@ Live Streaming (see [BlockNode Issue 21](https://github.com/hashgraph/hedera-blo
 Drawbacks:
 1) Each `ProducerBlockItemObserver` must iterate over the list of subscribed consumers to pass the BlockItem to each
    `ConsumerBlockItemObserver` before saving the BlockItem to disk and issuing a BlockItemResponse back to the producer.
-    The linear scaling of consumers will aggregate latency resulting in the last consumer in the list to be penalized 
-    with the sum of the latencies of all consumers before it.
+   The linear scaling of consumers will aggregate latency resulting in the last consumer in the list to be penalized 
+   with the sum of the latencies of all consumers before it.
 2) Dynamically subscribing/unsubscribing `ConsumerBlockItemObserver`s while deterministically broadcasting BlockItems 
    to each consumer in the correct order complicates and slows down the process. It requires thread-safe data 
    structures and synchronization on all reads and writes to ensure new/removed subscribers do not disrupt the 
@@ -116,7 +139,6 @@ Drawbacks:
    BlockItems impaired the ability of the Helidon Virtual Thread instance to process the inbound responses from the 
    downstream consumer in a timely way. The aggressive behavior of the busy-wait could complicate future use cases 
    requiring downstream consumer response processing.
-
 
 ### Approach 3: Use a shared data structure between `ProducerBlockItemObserver` and `ConsumerBlockItemObserver`s. Use downstream consumer BlockItemResponses to drive the process of sending new BlockItems.
 
@@ -159,7 +181,7 @@ Advantages:
 
 Drawbacks:
 1) The Disruptor library is a third-party library requiring ramp-up time and integration effort to use it correctly and
-    effectively.
+   effectively.
 2) Leveraging the Disruptor library requires the communication between the `ProducerBlockItemObserver` and 
    `ConsumerBlockItemObserver`s to be affiliated by subscribing/unsubscribing the downstream consumers to receive the 
    latest BlockItems from the producer via the Disruptor RingBuffer. The process of managing these subscriptions to 
@@ -192,7 +214,6 @@ downstream consumer. The `ConsumerBlockItemObserver` is constructed with a refer
 the `ResponseStreamObserver` managed by Helidon for transmitting BlockItemResponses to the downstream consumer. The 
 `BlockItemStreamService` will also subscribe the `ConsumerBlockItemObserver` to the `StreamMediator` to receive the
 streaming BlockItems from the producer.
-
 
 ### Runtime Streaming
 
@@ -250,20 +271,18 @@ the latest BlockItem to the ConsumerBlockItemObserver when it is available in th
 **BlockPersistenceHandler** - The BlockPersistenceHandler is responsible for writing the latest BlockItem to disk.
 
 ---
-## Diagrams
 
+## Diagrams
 
 ### Producer Registration Flow
 
 ![Producer Registration](assets/00036-producer-registration.png)
 
-
 ### Consumer Registration Flow
 
 ![Consumer Registration](assets/00036-consumer-registration.png)
 
-
-### Class Diagram of all Entities and their Relationships 
+### Class Diagram of all Entities and their Relationships
 
 ![Class Diagram](assets/00036-demo-disruptor-class-diagram.png)
 
@@ -271,6 +290,4 @@ the latest BlockItem to the ConsumerBlockItemObserver when it is available in th
 
 ![Sequence Diagram](assets/00036-refactor-demo-disruptor.png)
 
-
 ---
-

@@ -1,5 +1,15 @@
 # Block Persistence
 
+## Table of Contents
+
+1. [Purpose](#purpose)
+1. [Goals](#goals)
+1. [Terms](#terms)
+1. [Entities](#entities)
+1. [Design](#design)
+
+---
+
 ## Purpose
 
 The main objective of the `hedera-block-node` project is to replace the storage of Consensus Node artifacts (e.g.
@@ -9,7 +19,7 @@ when they arise.
 
 ---
 
-### Goals
+## Goals
 
 1) BlockItems streamed from a producer (e.g. Consensus Node) must be collated and persisted as a Block.  Per the
    specification, a Block is an ordered list of BlockItems. How the Block is persisted is an implementation detail.
@@ -17,7 +27,7 @@ when they arise.
 
 ---
 
-### Terms
+## Terms
 
 **BlockItem** - A BlockItem is the primary data structure passed between the producer, the `hedera-block-node`
 and consumers. The BlockItem description and protobuf definition are maintained in the `hedera-protobuf`
@@ -29,7 +39,7 @@ BlockItems. The Block description and protobuf definition are maintained in the 
 
 ---
 
-### Entities
+## Entities
 
 **BlockReader** - An interface defining methods used to read a Block from storage. It represents a lower-level
 component whose implementation is directly responsible for reading a Block from storage.
@@ -42,7 +52,7 @@ component whose implementation is directly responsible for removing a Block from
 
 ---
 
-### Design
+## Design
 
 The design for `Block` persistence is fairly straightforward. Block server objects should use the persistence entity 
 interfaces to read, write and remove `Block`s from storage. `BlockItem`s streamed from a producer are read off the wire 
