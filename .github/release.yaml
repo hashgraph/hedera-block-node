@@ -1,0 +1,73 @@
+changelog:
+  exclude:
+    labels: ['wontfix', 'question', 'duplicate', 'invalid']
+  categories:
+    - title: '🚀 Enhancements'
+      labels: ['Feature Enhancement', 'New Feature']
+    - title: '🐛 Bug Fixes'
+      labels: ['Bug']
+    - title: '🔨 Tests'
+      labels: ['Tests']
+    - title: '📝 Documentation'
+      labels: ['Documentation', 'Design']
+    - title: '🔒 Security'
+      labels: ['Security']
+    - title: '🔧 Improvements'
+      labels: ['Improvement']
+    - title: '🔥 Breaking Changes'
+      labels: ['Breaking Change']
+    - title: '⬆️ Dependency Upgrades'
+      labels: ['dependencies']
+  sort: 'desc'
+  transformers:
+    - pattern: '^feat: (.*)$'
+      target: 'Feature: $1'
+    - pattern: '^fix: (.*)$'
+      target: 'Fix: $1'
+    - pattern: '^docs: (.*)$'
+      target: 'Docs: $1'
+    - pattern: '^style: (.*)$'
+      target: 'Style: $1'
+    - pattern: '^refactor: (.*)$'
+      target: 'Refactor: $1'
+    - pattern: '^perf: (.*)$'
+      target: 'Performance: $1'
+    - pattern: '^test: (.*)$'
+      target: 'Test: $1'
+    - pattern: '^chore: (.*)$'
+      target: 'Chore: $1'
+    - pattern: '^revert: (.*)$'
+      target: 'Revert: $1'
+    - pattern: '^security: (.*)$'
+      target: 'Security: $1'
+    - pattern: '^build: (.*)$'
+      target: 'Build: $1'
+    - pattern: '^ci: (.*)$'
+      target: 'CI: $1'
+  template: |
+    # $RELEASE_TITLE
+
+    **Release Date:** $RELEASE_DATE
+
+    $HIGHLIGHTS
+
+    ## Table of Contents
+    $CATEGORY_TITLES
+
+    $CHANGES_BY_CATEGORY
+
+    ## 📊 Stats
+
+    - **$NUM_COMMITS** commits
+    - **$NUM_PR** pull requests
+    - **$NUM_CONTRIBUTORS** contributors
+
+    ## 👥 Contributors
+
+    $CONTRIBUTORS
+    
+    ---
+    
+    ## 📜 Full Changelog
+      
+    [View the full changelog]($COMPARE_URL)
