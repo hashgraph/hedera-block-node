@@ -49,25 +49,16 @@ changelog:
 
     **Release Date:** $RELEASE_DATE
 
-    $HIGHLIGHTS
+    ## Changes
 
-    ## Table of Contents
-    $CATEGORY_TITLES
-
-    $CHANGES_BY_CATEGORY
-
-    ## 📊 Stats
-
-    - **$NUM_COMMITS** commits
-    - **$NUM_PR** pull requests
-    - **$NUM_CONTRIBUTORS** contributors
+    $CHANGES
 
     ## 👥 Contributors
 
     $CONTRIBUTORS
-    
+
     ---
-    
+
     ## 📜 Full Changelog
-      
+
     [View the full changelog]($COMPARE_URL)
