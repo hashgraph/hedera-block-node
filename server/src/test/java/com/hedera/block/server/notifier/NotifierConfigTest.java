@@ -34,7 +34,7 @@ public class NotifierConfigTest {
     public void testNotifierConfig_negativeRingBufferSize() {
         IllegalArgumentException exception =
                 assertThrows(IllegalArgumentException.class, () -> new NotifierConfig(-1));
-        assertEquals("Ring buffer size must be greater than 0", exception.getMessage());
+        assertEquals("Notifier Ring Buffer Size must be positive!", exception.getMessage());
     }
 
     @Test
@@ -53,7 +53,7 @@ public class NotifierConfigTest {
                     assertThrows(
                             IllegalArgumentException.class,
                             () -> new NotifierConfig(powerOf2Value + 1));
-            assertEquals("Ring buffer size must be a power of 2", exception.getMessage());
+            assertEquals("Notifier Ring Buffer Size must be a power of 2!", exception.getMessage());
         }
     }
 }
