@@ -33,4 +33,6 @@ public final class MathUtilities {
         // by short-circuiting the logical AND operation
         return (0 < toCheck) && ((toCheck & (toCheck - 1)) == 0);
     }
+
+    private MathUtilities() {}
 }
