@@ -65,5 +65,126 @@ public final class CommonsTestUtility {
                 );
     }
 
+    public static Stream<Arguments> powerOfTwoIntegers() {
+        return Stream.of(
+                Arguments.of(1),
+                Arguments.of(2),
+                Arguments.of(4),
+                Arguments.of(8),
+                Arguments.of(16),
+                Arguments.of(32),
+                Arguments.of(64),
+                Arguments.of(128),
+                Arguments.of(256),
+                Arguments.of(512),
+                Arguments.of(1_024),
+                Arguments.of(2_048),
+                Arguments.of(4_096),
+                Arguments.of(8_192),
+                Arguments.of(16_384),
+                Arguments.of(32_768),
+                Arguments.of(65_536),
+                Arguments.of(131_072),
+                Arguments.of(262_144),
+                Arguments.of(524_288),
+                Arguments.of(1_048_576),
+                Arguments.of(2_097_152),
+                Arguments.of(4_194_304),
+                Arguments.of(8_388_608),
+                Arguments.of(16_777_216),
+                Arguments.of(33_554_432),
+                Arguments.of(67_108_864),
+                Arguments.of(134_217_728),
+                Arguments.of(268_435_456),
+                Arguments.of(536_870_912),
+                Arguments.of(1_073_741_824));
+    }
+
+    public static Stream<Arguments> negativePowerOfTwoIntegers() {
+        return Stream.of(
+                Arguments.of(-1),
+                Arguments.of(-2),
+                Arguments.of(-4),
+                Arguments.of(-8),
+                Arguments.of(-16),
+                Arguments.of(-32),
+                Arguments.of(-64),
+                Arguments.of(-128),
+                Arguments.of(-256),
+                Arguments.of(-512),
+                Arguments.of(-1_024),
+                Arguments.of(-2_048),
+                Arguments.of(-4_096),
+                Arguments.of(-8_192),
+                Arguments.of(-16_384),
+                Arguments.of(-32_768),
+                Arguments.of(-65_536),
+                Arguments.of(-131_072),
+                Arguments.of(-262_144),
+                Arguments.of(-524_288),
+                Arguments.of(-1_048_576),
+                Arguments.of(-2_097_152),
+                Arguments.of(-4_194_304),
+                Arguments.of(-8_388_608),
+                Arguments.of(-16_777_216),
+                Arguments.of(-33_554_432),
+                Arguments.of(-67_108_864),
+                Arguments.of(-134_217_728),
+                Arguments.of(-268_435_456),
+                Arguments.of(-536_870_912),
+                Arguments.of(-1_073_741_824));
+    }
+
+    public static Stream<Arguments> nonPowerOfTwoIntegers() {
+        return Stream.of(
+                Arguments.of(0),
+                Arguments.of(3),
+                Arguments.of(5),
+                Arguments.of(6),
+                Arguments.of(7),
+                Arguments.of(9),
+                Arguments.of(10),
+                Arguments.of(11),
+                Arguments.of(511),
+                Arguments.of(1_023),
+                Arguments.of(4_097),
+                Arguments.of(16_381),
+                Arguments.of(65_535),
+                Arguments.of(524_287),
+                Arguments.of(33_554_431),
+                Arguments.of(1_073_741_825));
+    }
+
+    public static Stream<Arguments> positiveIntegers() {
+        return Stream.of(
+                Arguments.of(1),
+                Arguments.of(2),
+                Arguments.of(3),
+                Arguments.of(4),
+                Arguments.of(5),
+                Arguments.of(100),
+                Arguments.of(1_000),
+                Arguments.of(10_000),
+                Arguments.of(100_000),
+                Arguments.of(1_000_000),
+                Arguments.of(10_000_000));
+    }
+
+    public static Stream<Arguments> zeroAndNegativeIntegers() {
+        return Stream.of(
+                Arguments.of(0),
+                Arguments.of(-1),
+                Arguments.of(-2),
+                Arguments.of(-3),
+                Arguments.of(-4),
+                Arguments.of(-5),
+                Arguments.of(-100),
+                Arguments.of(-1_000),
+                Arguments.of(-10_000),
+                Arguments.of(-100_000),
+                Arguments.of(-1_000_000),
+                Arguments.of(-10_000_000));
+    }
+
     private CommonsTestUtility() {}
 }

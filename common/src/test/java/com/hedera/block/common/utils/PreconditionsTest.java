@@ -17,7 +17,7 @@
 package com.hedera.block.common.utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -50,7 +50,33 @@ class PreconditionsTest {
     @ParameterizedTest
     @MethodSource("com.hedera.block.common.CommonsTestUtility#blankStrings")
     void testRequireNotBlankFail(final String toTest) {
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> Preconditions.requireNotBlank(toTest));
+        assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requireNotBlank(toTest));
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link Preconditions#requirePositive(int)} will return the input 'toTest'
+     * parameter if the positive check passes.
+     *
+     * @param toTest parameterized, the number to test
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#positiveIntegers")
+    void testRequirePositivePass(final int toTest) {
+        final int actual = Preconditions.requirePositive(toTest);
+        assertThat(actual).isPositive().isEqualTo(toTest);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link Preconditions#requirePositive(int)} will throw an
+     * {@link IllegalArgumentException} if the positive check fails.
+     *
+     * @param toTest parameterized, the number to test
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#zeroAndNegativeIntegers")
+    void testRequirePositiveFail(final int toTest) {
+        assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requirePositive(toTest));
     }
 }

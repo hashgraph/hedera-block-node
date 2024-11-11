@@ -39,5 +39,21 @@ public final class Preconditions {
         }
     }
 
+    /**
+     * This method asserts a given number is a positive. A number is positive if
+     * it is NOT equal to zero and is greater than zero.
+     *
+     * @param toCheck the number to check if it is a positive power of two
+     * @return the number to check if it is positive
+     * @throws IllegalArgumentException if the input number to check is not
+     * positive
+     */
+    public static int requirePositive(final int toCheck) {
+        if (0 >= toCheck) {
+            throw new IllegalArgumentException("The input number [%d] is required be positive.".formatted(toCheck));
+        }
+        return toCheck;
+    }
+
     private Preconditions() {}
 }
