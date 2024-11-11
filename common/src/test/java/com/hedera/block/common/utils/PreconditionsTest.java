@@ -17,35 +17,40 @@
 package com.hedera.block.common.utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /**
- * Tests for {@link StringUtilities} functionality.
+ * Tests for {@link Preconditions} functionality.
  */
-class StringUtilitiesTest {
+class PreconditionsTest {
     /**
-     * This test aims to verify that the {@link StringUtilities#isBlank(String)}
-     * returns {@code true} if the input string is blank.
-     *
-     * @param toTest parameterized, the String to test
-     */
-    @ParameterizedTest
-    @MethodSource("com.hedera.block.common.CommonsTestUtility#blankStrings")
-    void testRequireNotBlankPass(final String toTest) {
-        assertThat(StringUtilities.isBlank(toTest)).isTrue();
-    }
-
-    /**
-     * This test aims to verify that the {@link StringUtilities#isBlank(String)}
-     * returns {@code false} if the input string is not blank.
+     * This test aims to verify that the
+     * {@link Preconditions#requireNotBlank(String)} will return the input
+     * 'toTest' parameter if the non-blank check passes.
      *
      * @param toTest parameterized, the string to test
      */
     @ParameterizedTest
     @MethodSource("com.hedera.block.common.CommonsTestUtility#nonBlankStrings")
+    void testRequireNotBlankPass(final String toTest) {
+        final String actual = Preconditions.requireNotBlank(toTest);
+        assertThat(actual).isNotNull().isNotBlank().isEqualTo(toTest);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link Preconditions#requireNotBlank(String)} will throw an
+     * {@link IllegalArgumentException} if the non-blank check fails.
+     *
+     * @param toTest parameterized, the string to test
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#blankStrings")
     void testRequireNotBlankFail(final String toTest) {
-        assertThat(StringUtilities.isBlank(toTest)).isFalse();
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> Preconditions.requireNotBlank(toTest));
     }
 }

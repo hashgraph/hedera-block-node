@@ -16,26 +16,23 @@
 
 package com.hedera.block.common.utils;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 
 /** A utility class that deals with logic related to Strings. */
 public final class StringUtilities {
     /**
-     * This method checks if a given {@link String} is blank, meaning if it is {@code null} or
-     * contains only whitespaces as defined by {@link String#isBlank()}. If the given {@link String}
-     * is not blank, then we return it, else we throw {@link IllegalArgumentException}.
+     * This method takes an input {@link String} and checks if it is blank.
+     * A {@link String} is considered blank if it is either {@code null} or
+     * contains only whitespace characters as defined by
+     * {@link String#isBlank()}.
      *
-     * @param toCheck a {@link String} to be checked if is blank as defined above
-     * @return the {@link String} to be checked if it is not blank as defined above
-     * @throws IllegalArgumentException if the input {@link String} to be checked is blank
+     * @param toCheck a {@link String} to check if it is blank
+     * @return {@code true} if the given {@link String} to check is either
+     * {@code null} or contains only whitespace characters, {@code false}
+     * otherwise
      */
-    public static String requireNotBlank(@NonNull final String toCheck) {
-        if (Objects.requireNonNull(toCheck).isBlank()) {
-            throw new IllegalArgumentException("A String required to be non-blank is blank.");
-        } else {
-            return toCheck;
-        }
+    public static boolean isBlank(final String toCheck) {
+        return Objects.isNull(toCheck) || toCheck.isBlank();
     }
 
     private StringUtilities() {}
