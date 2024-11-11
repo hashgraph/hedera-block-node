@@ -19,6 +19,7 @@ package com.hedera.block.common.utils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
+import java.util.function.Consumer;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -29,21 +30,29 @@ class PreconditionsTest {
     /**
      * This test aims to verify that the
      * {@link Preconditions#requireNotBlank(String)} will return the input
-     * 'toTest' parameter if the non-blank check passes.
+     * 'toTest' parameter if the non-blank check passes. Test includes
+     * overloads.
      *
      * @param toTest parameterized, the string to test
      */
     @ParameterizedTest
     @MethodSource("com.hedera.block.common.CommonsTestUtility#nonBlankStrings")
     void testRequireNotBlankPass(final String toTest) {
+        final Consumer<String> asserts =
+                actual -> assertThat(actual).isNotNull().isNotBlank().isEqualTo(toTest);
+
         final String actual = Preconditions.requireNotBlank(toTest);
-        assertThat(actual).isNotNull().isNotBlank().isEqualTo(toTest);
+        assertThat(actual).satisfies(asserts);
+
+        final String actualOverload = Preconditions.requireNotBlank(toTest, "test error message");
+        assertThat(actualOverload).satisfies(asserts);
     }
 
     /**
      * This test aims to verify that the
      * {@link Preconditions#requireNotBlank(String)} will throw an
-     * {@link IllegalArgumentException} if the non-blank check fails.
+     * {@link IllegalArgumentException} if the non-blank check fails. Test
+     * includes overloads.
      *
      * @param toTest parameterized, the string to test
      */
@@ -51,26 +60,38 @@ class PreconditionsTest {
     @MethodSource("com.hedera.block.common.CommonsTestUtility#blankStrings")
     void testRequireNotBlankFail(final String toTest) {
         assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requireNotBlank(toTest));
+
+        final String testErrorMessage = "test error message";
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requireNotBlank(toTest, testErrorMessage))
+                .withMessage(testErrorMessage);
     }
 
     /**
      * This test aims to verify that the
      * {@link Preconditions#requirePositive(int)} will return the input 'toTest'
-     * parameter if the positive check passes.
+     * parameter if the positive check passes. Test includes overloads.
      *
      * @param toTest parameterized, the number to test
      */
     @ParameterizedTest
     @MethodSource("com.hedera.block.common.CommonsTestUtility#positiveIntegers")
     void testRequirePositivePass(final int toTest) {
+        final Consumer<Integer> asserts =
+                actual -> assertThat(actual).isPositive().isEqualTo(toTest);
+
         final int actual = Preconditions.requirePositive(toTest);
-        assertThat(actual).isPositive().isEqualTo(toTest);
+        assertThat(actual).satisfies(asserts);
+
+        final int actualOverload = Preconditions.requirePositive(toTest, "test error message");
+        assertThat(actualOverload).satisfies(asserts);
     }
 
     /**
      * This test aims to verify that the
      * {@link Preconditions#requirePositive(int)} will throw an
-     * {@link IllegalArgumentException} if the positive check fails.
+     * {@link IllegalArgumentException} if the positive check fails. Test
+     * includes overloads.
      *
      * @param toTest parameterized, the number to test
      */
@@ -78,26 +99,39 @@ class PreconditionsTest {
     @MethodSource("com.hedera.block.common.CommonsTestUtility#zeroAndNegativeIntegers")
     void testRequirePositiveFail(final int toTest) {
         assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requirePositive(toTest));
+
+        final String testErrorMessage = "test error message";
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requirePositive(toTest, testErrorMessage))
+                .withMessage(testErrorMessage);
     }
 
     /**
      * This test aims to verify that the
      * {@link Preconditions#requirePowerOfTwo(int)} will return the input
-     * 'toTest' parameter if the power of two check passes.
+     * 'toTest' parameter if the power of two check passes. Test includes
+     * overloads.
      *
      * @param toTest parameterized, the number to test
      */
     @ParameterizedTest
     @MethodSource("com.hedera.block.common.CommonsTestUtility#powerOfTwoIntegers")
     void testRequirePowerOfTwoPass(final int toTest) {
+        final Consumer<Integer> asserts =
+                actual -> assertThat(actual).isPositive().isEqualTo(toTest);
+
         final int actual = Preconditions.requirePowerOfTwo(toTest);
-        assertThat(actual).isPositive().isEqualTo(toTest);
+        assertThat(actual).satisfies(asserts);
+
+        final int actualOverload = Preconditions.requirePowerOfTwo(toTest, "test error message");
+        assertThat(actualOverload).satisfies(asserts);
     }
 
     /**
      * This test aims to verify that the
      * {@link Preconditions#requirePowerOfTwo(int)} will throw an
-     * {@link IllegalArgumentException} if the power of two check fails.
+     * {@link IllegalArgumentException} if the power of two check fails. Test
+     * includes overloads.
      *
      * @param toTest parameterized, the number to test
      */
@@ -108,5 +142,10 @@ class PreconditionsTest {
     })
     void testRequirePowerOfTwoFail(final int toTest) {
         assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requirePowerOfTwo(toTest));
+
+        final String testErrorMessage = "test error message";
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requirePowerOfTwo(toTest, testErrorMessage))
+                .withMessage(testErrorMessage);
     }
 }

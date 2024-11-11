@@ -16,6 +16,8 @@
 
 package com.hedera.block.common.utils;
 
+import java.util.Objects;
+
 /** A utility class used to assert various preconditions. */
 public final class Preconditions {
     /**
@@ -32,8 +34,29 @@ public final class Preconditions {
      * checked is blank
      */
     public static String requireNotBlank(final String toCheck) {
+        return requireNotBlank(toCheck, null);
+    }
+
+    /**
+     * This method asserts a given {@link String} is not blank, meaning it is
+     * not {@code null} or does not contain only whitespaces as defined by
+     * {@link String#isBlank()}. If the given {@link String} is not blank, then
+     * we return it, else we throw {@link IllegalArgumentException}.
+     *
+     * @param toCheck a {@link String} to be checked if is blank as defined
+     * above
+     * @param errorMessage the error message to be used in the exception if the
+     * input {@link String} to be checked is blank, if null, a default message
+     * @return the {@link String} to be checked if it is not blank as defined
+     * above
+     * @throws IllegalArgumentException if the input {@link String} to be
+     * checked is blank
+     */
+    public static String requireNotBlank(final String toCheck, final String errorMessage) {
         if (StringUtilities.isBlank(toCheck)) {
-            throw new IllegalArgumentException("A String required to be non-blank is blank.");
+            final String message =
+                    Objects.isNull(errorMessage) ? "The input String is required to be non-blank." : errorMessage;
+            throw new IllegalArgumentException(message);
         } else {
             return toCheck;
         }
@@ -49,8 +72,27 @@ public final class Preconditions {
      * positive
      */
     public static int requirePositive(final int toCheck) {
+        return requirePositive(toCheck, null);
+    }
+
+    /**
+     * This method asserts a given integer is a positive. An integer is positive
+     * if it is NOT equal to zero and is greater than zero.
+     *
+     * @param toCheck the integer to check if it is a positive power of two
+     * @param errorMessage the error message to be used in the exception if the
+     * input integer to check is not positive, if null, a default message will
+     * be used
+     * @return the number to check if it is positive
+     * @throws IllegalArgumentException if the input number to check is not
+     * positive
+     */
+    public static int requirePositive(final int toCheck, final String errorMessage) {
         if (0 >= toCheck) {
-            throw new IllegalArgumentException("The input integer [%d] is required be positive.".formatted(toCheck));
+            final String message = Objects.isNull(errorMessage)
+                    ? "The input integer [%d] is required be positive.".formatted(toCheck)
+                    : errorMessage;
+            throw new IllegalArgumentException(message);
         } else {
             return toCheck;
         }
@@ -65,9 +107,26 @@ public final class Preconditions {
      * power of two
      */
     public static int requirePowerOfTwo(final int toCheck) {
+        return requirePowerOfTwo(toCheck, null);
+    }
+
+    /**
+     * This method asserts a given integer is a power of two.
+     *
+     * @param toCheck the number to check if it is a power of two
+     * @param errorMessage the error message to be used in the exception if the
+     * input integer to check is not a power of two, if null, a default message
+     * will be used
+     * @return the number to check if it is a power of two
+     * @throws IllegalArgumentException if the input number to check is not a
+     * power of two
+     */
+    public static int requirePowerOfTwo(final int toCheck, final String errorMessage) {
         if (!MathUtilities.isPowerOfTwo(toCheck)) {
-            throw new IllegalArgumentException(
-                    "The input integer [%d] is required to be a power of two.".formatted(toCheck));
+            final String message = Objects.isNull(errorMessage)
+                    ? "The input integer [%d] is required to be a power of two.".formatted(toCheck)
+                    : errorMessage;
+            throw new IllegalArgumentException(message);
         } else {
             return toCheck;
         }
