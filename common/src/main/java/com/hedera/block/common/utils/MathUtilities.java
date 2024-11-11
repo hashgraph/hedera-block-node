@@ -27,6 +27,10 @@ public final class MathUtilities {
      * @return {@code true} if the given number is a power of two
      */
     public static boolean isPowerOfTwo(final int toCheck) {
+        // mathematically powers of two are always positive numbers, so if the
+        // input is negative or zero, it is not a power of two, and we do not
+        // need to trigger the second check, hence we return false immediately
+        // by short-circuiting the logical AND operation
         return (0 < toCheck) && ((toCheck & (toCheck - 1)) == 0);
     }
 }

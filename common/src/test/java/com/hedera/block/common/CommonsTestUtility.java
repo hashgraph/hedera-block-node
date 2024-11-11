@@ -65,6 +65,9 @@ public final class CommonsTestUtility {
                 );
     }
 
+    /**
+     * Some valid power of two integers.
+     */
     public static Stream<Arguments> powerOfTwoIntegers() {
         return Stream.of(
                 Arguments.of(1),
@@ -100,6 +103,9 @@ public final class CommonsTestUtility {
                 Arguments.of(1_073_741_824));
     }
 
+    /**
+     * Some power of two integers, but with negative sign.
+     */
     public static Stream<Arguments> negativePowerOfTwoIntegers() {
         return Stream.of(
                 Arguments.of(-1),
@@ -135,6 +141,9 @@ public final class CommonsTestUtility {
                 Arguments.of(-1_073_741_824));
     }
 
+    /**
+     * Some non power of two integers.
+     */
     public static Stream<Arguments> nonPowerOfTwoIntegers() {
         return Stream.of(
                 Arguments.of(0),
@@ -155,6 +164,9 @@ public final class CommonsTestUtility {
                 Arguments.of(1_073_741_825));
     }
 
+    /**
+     * Some positive integers.
+     */
     public static Stream<Arguments> positiveIntegers() {
         return Stream.of(
                 Arguments.of(1),
@@ -170,6 +182,9 @@ public final class CommonsTestUtility {
                 Arguments.of(10_000_000));
     }
 
+    /**
+     * Zero and some negative integers.
+     */
     public static Stream<Arguments> zeroAndNegativeIntegers() {
         return Stream.of(
                 Arguments.of(0),

@@ -79,4 +79,34 @@ class PreconditionsTest {
     void testRequirePositiveFail(final int toTest) {
         assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requirePositive(toTest));
     }
+
+    /**
+     * This test aims to verify that the
+     * {@link Preconditions#requirePowerOfTwo(int)} will return the input
+     * 'toTest' parameter if the power of two check passes.
+     *
+     * @param toTest parameterized, the number to test
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#powerOfTwoIntegers")
+    void testRequirePowerOfTwoPass(final int toTest) {
+        final int actual = Preconditions.requirePowerOfTwo(toTest);
+        assertThat(actual).isPositive().isEqualTo(toTest);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link Preconditions#requirePowerOfTwo(int)} will throw an
+     * {@link IllegalArgumentException} if the power of two check fails.
+     *
+     * @param toTest parameterized, the number to test
+     */
+    @ParameterizedTest
+    @MethodSource({
+        "com.hedera.block.common.CommonsTestUtility#nonPowerOfTwoIntegers",
+        "com.hedera.block.common.CommonsTestUtility#negativePowerOfTwoIntegers"
+    })
+    void testRequirePowerOfTwoFail(final int toTest) {
+        assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requirePowerOfTwo(toTest));
+    }
 }
