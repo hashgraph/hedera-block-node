@@ -5,7 +5,7 @@ services:
     container_name: block-node-server
     image: block-node-server:${VERSION}
     env_file:
-      - .env
+      - ../build/.env
     ports:
       - "8080:8080"
       - "5005:5005"

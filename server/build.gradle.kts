@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Hedera Hashgraph, LLC
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,14 +65,20 @@ tasks.register("bumpVersion") {
 
 // Docker related tasks
 
-var updateDockerEnv =
+val buildRootAbsolutePath: String = layout.buildDirectory.get().asFile.toPath().toAbsolutePath().toString()
+
+val updateDockerEnv: TaskProvider<Exec> =
     tasks.register<Exec>("updateDockerEnv") {
         description =
             "Creates the .env file in the docker folder that contains environment variables for docker"
         group = "docker"
 
         workingDir(layout.projectDirectory.dir("docker"))
-        commandLine("sh", "-c", "./update-env.sh ${project.version} false false")
+        commandLine(
+            "sh",
+            "-c",
+            "./update-env.sh $buildRootAbsolutePath ${project.version} false false"
+        )
     }
 
 tasks.register<Exec>("createDockerImage") {
@@ -102,7 +108,7 @@ tasks.register<Exec>("startDockerDebugContainer") {
     commandLine(
         "sh",
         "-c",
-        "./update-env.sh ${project.version} true false && docker compose -p block-node up -d"
+        "./update-env.sh $buildRootAbsolutePath ${project.version} true false && docker compose -p block-node up -d"
     )
 }
 
@@ -120,7 +126,11 @@ tasks.register("buildAndRunSmokeTestsContainer") {
         // ensure smoke test .env properties before creating the container
         exec {
             workingDir(layout.projectDirectory.dir("docker"))
-            commandLine("sh", "-c", "./update-env.sh ${project.version} false true")
+            commandLine(
+                "sh",
+                "-c",
+                "./update-env.sh $buildRootAbsolutePath ${project.version} false true"
+            )
         }
     }
 

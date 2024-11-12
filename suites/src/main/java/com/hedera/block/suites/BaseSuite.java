@@ -50,6 +50,8 @@ import org.testcontainers.utility.DockerImageName;
  * <p>The Block Node Application version is retrieved dynamically from an environment file (.env).
  */
 public abstract class BaseSuite {
+    protected static final Dotenv DOTENV =
+            Dotenv.configure().directory("../server/build").filename(".env").load();
 
     /** Container running the Block Node Application */
     protected static GenericContainer<?> blockNodeContainer;
@@ -92,6 +94,7 @@ public abstract class BaseSuite {
     public static void teardown() {
         if (blockNodeContainer != null) {
             blockNodeContainer.stop();
+            blockNodeContainer.close();
         }
         if (executorService != null) {
             executorService.shutdownNow();
@@ -182,11 +185,6 @@ public abstract class BaseSuite {
      * @return the version of the Block Node server as a string
      */
     private static String getBlockNodeVersion() {
-        Dotenv dotenv = Dotenv.configure()
-                .directory("../server/docker")
-                .filename(".env")
-                .load();
-
-        return dotenv.get("VERSION");
+        return DOTENV.get("VERSION");
     }
 }

@@ -3,16 +3,21 @@
 # This scripts create a '.env' file that is used for docker & docker-compose as an input of environment variables.
 # This script is called by gradle and get the current project version as an input param
 
-if [ $# -lt 1 ]; then
-  echo "USAGE: $0 <VERSION> <DEBUG> <SMOKE_TEST>"
+if [ $# -lt 2 ]; then
+  # <PROJECT_BUILD_ROOT> and <VERSION> are required!
+  echo "USAGE: $0 <PROJECT_BUILD_ROOT> <VERSION> [DEBUG] [SMOKE_TEST]"
   exit 1
 fi
 
-project_version=$1
+project_build_root=$1
+project_version=$2
 # determine if we should include debug opts
-[ "$2" = true ] && is_debug=true || is_debug=false
+[ "$3" = true ] && is_debug=true || is_debug=false
 # determine if we should include smoke test env variables
-[ "$3" = true ] && is_smoke_test=true || is_smoke_test=false
+[ "$4" = true ] && is_smoke_test=true || is_smoke_test=false
+
+# work only inside the scope of the project build root
+cd "$project_build_root" || exit 1
 
 echo "VERSION=$project_version" > .env
 echo "REGISTRY_PREFIX=" >> .env
