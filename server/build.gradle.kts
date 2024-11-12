@@ -84,14 +84,16 @@ val updateDockerEnv: TaskProvider<Exec> =
         )
     }
 
-val createDockerImage: TaskProvider<Exec> = tasks.register<Exec>("createDockerImage") {
-    description = "Creates the docker image of the Block Node Server based on the current version"
-    group = "docker"
+val createDockerImage: TaskProvider<Exec> =
+    tasks.register<Exec>("createDockerImage") {
+        description =
+            "Creates the docker image of the Block Node Server based on the current version"
+        group = "docker"
 
-    dependsOn(updateDockerEnv, tasks.assemble)
-    workingDir(dockerRootDirectory)
-    commandLine("./docker-build.sh", project.version, layout.projectDirectory.dir("..").asFile)
-}
+        dependsOn(updateDockerEnv, tasks.assemble)
+        workingDir(dockerRootDirectory)
+        commandLine("./docker-build.sh", project.version, layout.projectDirectory.dir("..").asFile)
+    }
 
 tasks.register<Exec>("startDockerContainer") {
     description = "Starts the docker container of the Block Node Server of the current version"
@@ -99,7 +101,11 @@ tasks.register<Exec>("startDockerContainer") {
 
     dependsOn(createDockerImage)
     workingDir(dockerRootDirectory)
-    commandLine("sh", "-c", "docker compose --env-file $buildRootEnvFileAbsolutePath -p block-node up -d")
+    commandLine(
+        "sh",
+        "-c",
+        "docker compose --env-file $buildRootEnvFileAbsolutePath -p block-node up -d"
+    )
 }
 
 tasks.register<Exec>("startDockerDebugContainer") {
