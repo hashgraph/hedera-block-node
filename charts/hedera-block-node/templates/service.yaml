@@ -13,7 +13,7 @@ spec:
       protocol: TCP
       name: http
     - name: metrics
-      port: 9999 # TODO - make this configurable
+      port: {{ .Values.blockNode.health.metrics.port }}
       targetPort: metrics
   selector:
     {{- include "hedera-block-node.selectorLabels" . | nindent 4 }}

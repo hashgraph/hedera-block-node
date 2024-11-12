@@ -87,6 +87,8 @@ blockNode:
       endpoint: "/healthz/readyz"
     liveness:
       endpoint: "/healthz/livez"
+    metrics:
+      port: 9999
 
 kube-prometheus-stack:
   prometheusOperator:
@@ -113,5 +115,3 @@ kube-prometheus-stack:
       datasources:
         enabled: true
         label: grafana_datasource
-
-
