@@ -12,5 +12,6 @@ echo "Using project directory: ${2}"
 echo
 
 # run docker build
-echo "Building container:"
+echo "Building image [block-node-server:${VERSION}]"
 docker buildx build --load -t "block-node-server:${VERSION}" --build-context distributions=../build/distributions --build-arg VERSION="${VERSION}" . || exit "${?}"
+echo "Image [block-node-server:${VERSION}] built successfully!"
