@@ -44,8 +44,8 @@ public record MediatorConfig(
      * @throws IllegalArgumentException if the configuration is invalid
      */
     public MediatorConfig {
-        Preconditions.requirePositive(ringBufferSize, "Mediator Ring Buffer Size must be positive!");
-        Preconditions.requirePowerOfTwo(ringBufferSize, "Mediator Ring Buffer Size must be a power of 2!");
+        Preconditions.requirePositive(ringBufferSize, "Mediator Ring Buffer Size must be positive");
+        Preconditions.requirePowerOfTwo(ringBufferSize, "Mediator Ring Buffer Size must be a power of 2");
         LOGGER.log(INFO, "Mediator configuration mediator.ringBufferSize: " + ringBufferSize);
         LOGGER.log(INFO, "Mediator configuration mediator.type: " + type);
     }

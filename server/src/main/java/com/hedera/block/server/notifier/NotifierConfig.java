@@ -39,8 +39,8 @@ public record NotifierConfig(@ConfigProperty(defaultValue = "1024") int ringBuff
      * @throws IllegalArgumentException if the configuration is invalid
      */
     public NotifierConfig {
-        Preconditions.requirePositive(ringBufferSize, "Notifier Ring Buffer Size must be positive!");
-        Preconditions.requirePowerOfTwo(ringBufferSize, "Notifier Ring Buffer Size must be a power of 2!");
+        Preconditions.requirePositive(ringBufferSize, "Notifier Ring Buffer Size must be positive");
+        Preconditions.requirePowerOfTwo(ringBufferSize, "Notifier Ring Buffer Size must be a power of 2");
         LOGGER.log(INFO, "Notifier configuration notifier.ringBufferSize: " + ringBufferSize);
     }
 }

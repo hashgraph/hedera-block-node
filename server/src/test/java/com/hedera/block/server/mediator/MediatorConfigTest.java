@@ -34,7 +34,7 @@ public class MediatorConfigTest {
     public void testMediatorConfig_negativeRingBufferSize() {
         IllegalArgumentException exception =
                 assertThrows(IllegalArgumentException.class, () -> new MediatorConfig(-1, ""));
-        assertEquals("Mediator Ring Buffer Size must be positive!", exception.getMessage());
+        assertEquals("Mediator Ring Buffer Size must be positive", exception.getMessage());
     }
 
     @Test
@@ -52,7 +52,7 @@ public class MediatorConfigTest {
         for (int powerOf2Value : powerOf2Values) {
             IllegalArgumentException exception =
                     assertThrows(IllegalArgumentException.class, () -> new MediatorConfig(powerOf2Value + 1, ""));
-            assertEquals("Mediator Ring Buffer Size must be a power of 2!", exception.getMessage());
+            assertEquals("Mediator Ring Buffer Size must be a power of 2", exception.getMessage());
         }
     }
 }
