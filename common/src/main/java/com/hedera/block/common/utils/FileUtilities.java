@@ -97,7 +97,7 @@ public final class FileUtilities {
         Objects.requireNonNull(toCreate);
         Objects.requireNonNull(logLevel);
         Objects.requireNonNull(permissions);
-        StringUtilities.requireNotBlank(semanticPathName);
+        Preconditions.requireNotBlank(semanticPathName);
         if (Files.notExists(toCreate)) {
             Files.createDirectories(toCreate, permissions);
             final String logMessage = "Created [%s] at '%s'".formatted(semanticPathName, toCreate);

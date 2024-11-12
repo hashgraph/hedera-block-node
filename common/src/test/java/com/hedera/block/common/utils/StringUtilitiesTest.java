@@ -17,13 +17,8 @@
 package com.hedera.block.common.utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
-import java.util.stream.Stream;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /**
@@ -31,78 +26,26 @@ import org.junit.jupiter.params.provider.MethodSource;
  */
 class StringUtilitiesTest {
     /**
-     * This test aims to verify that the {@link StringUtilities#requireNotBlank(String)} will return the input
-     * 'toTest' parameter if the non-blank check passes.
+     * This test aims to verify that the {@link StringUtilities#isBlank(String)}
+     * returns {@code true} if the input string is blank.
      *
-     * @param toTest parameterized, the string to test
+     * @param toTest parameterized, the String to test
      */
     @ParameterizedTest
-    @MethodSource("nonBlankStrings")
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#blankStrings")
     void testRequireNotBlankPass(final String toTest) {
-        final String actual = StringUtilities.requireNotBlank(toTest);
-        assertThat(actual).isNotNull().isNotBlank().isEqualTo(toTest);
+        assertThat(StringUtilities.isBlank(toTest)).isTrue();
     }
 
     /**
-     * This test aims to verify that the {@link StringUtilities#requireNotBlank(String)} will throw an
-     * {@link IllegalArgumentException} if the non-blank check fails.
+     * This test aims to verify that the {@link StringUtilities#isBlank(String)}
+     * returns {@code false} if the input string is not blank.
      *
      * @param toTest parameterized, the string to test
      */
     @ParameterizedTest
-    @MethodSource("blankStrings")
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#nonBlankStrings")
     void testRequireNotBlankFail(final String toTest) {
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> StringUtilities.requireNotBlank(toTest));
-    }
-
-    /**
-     * This test aims to verify that the {@link StringUtilities#requireNotBlank(String)} will throw a
-     * {@link NullPointerException} if the input string to test is null.
-     */
-    @Test
-    void test_requireNotBlank_ThrowsNullPointerExceptionIfInputStringIsNull() {
-        assertThatNullPointerException().isThrownBy(() -> StringUtilities.requireNotBlank(null));
-    }
-
-    /**
-     * Some simple non-blank strings only with spaces and new lines and tabs (there are more whitespace chars).
-     */
-    private static Stream<Arguments> nonBlankStrings() {
-        return Stream.of(
-                Arguments.of("a"),
-                Arguments.of(" a"),
-                Arguments.of("a "),
-                Arguments.of(" a "),
-                Arguments.of("a b"),
-                Arguments.of("\na"), // new line
-                Arguments.of("\ta"), // tab
-                Arguments.of("\fa"), // form feed
-                Arguments.of("\ra"), // carriage return
-                Arguments.of("\u000Ba"), // vertical tab
-                Arguments.of("\u001Ca"), // file separator
-                Arguments.of("\u001Da"), // group separator
-                Arguments.of("\u001Ea"), // record separator
-                Arguments.of("\u001Fa") // unit separator
-                );
-    }
-
-    /**
-     * Some simple blank strings.
-     */
-    private static Stream<Arguments> blankStrings() {
-        return Stream.of(
-                Arguments.of(""),
-                Arguments.of(" "),
-                Arguments.of("\n"), // new line
-                Arguments.of("\t"), // tab
-                Arguments.of("\f"), // form feed
-                Arguments.of("\r"), // carriage return
-                Arguments.of("\u000B"), // vertical tab
-                Arguments.of("\u001C"), // file separator
-                Arguments.of("\u001D"), // group separator
-                Arguments.of("\u001E"), // record separator
-                Arguments.of("\u001F") // unit separator
-                );
+        assertThat(StringUtilities.isBlank(toTest)).isFalse();
     }
 }

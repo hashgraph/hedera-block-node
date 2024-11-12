@@ -18,6 +18,7 @@ package com.hedera.block.server.notifier;
 
 import static java.lang.System.Logger.Level.INFO;
 
+import com.hedera.block.common.utils.Preconditions;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 
@@ -38,14 +39,8 @@ public record NotifierConfig(@ConfigProperty(defaultValue = "1024") int ringBuff
      * @throws IllegalArgumentException if the configuration is invalid
      */
     public NotifierConfig {
-        if (ringBufferSize <= 0) {
-            throw new IllegalArgumentException("Ring buffer size must be greater than 0");
-        }
-
-        if ((ringBufferSize & (ringBufferSize - 1)) != 0) {
-            throw new IllegalArgumentException("Ring buffer size must be a power of 2");
-        }
-
+        Preconditions.requirePositive(ringBufferSize, "Notifier Ring Buffer Size must be positive");
+        Preconditions.requirePowerOfTwo(ringBufferSize, "Notifier Ring Buffer Size must be a power of 2");
         LOGGER.log(INFO, "Notifier configuration notifier.ringBufferSize: " + ringBufferSize);
     }
 }
