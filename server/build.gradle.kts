@@ -77,12 +77,11 @@ val copyDockerFolder: TaskProvider<Copy> =
         into(dockerBuildRootDirectory)
     }
 
-// createProductionDotEnv is temporary and used by the suites, once the suites no longer rely on the .env file from the build root
-// we should remove this task
+// createProductionDotEnv is temporary and used by the suites, once the suites no longer rely on the
+// .env file from the build root we should remove this task
 val createProductionDotEnv: TaskProvider<Exec> =
     tasks.register<Exec>("createProductionDotEnv") {
-        description =
-            "Creates the default dotenv file for the Block Node Server"
+        description = "Creates the default dotenv file for the Block Node Server"
         group = "docker"
 
         dependsOn(copyDockerFolder)
