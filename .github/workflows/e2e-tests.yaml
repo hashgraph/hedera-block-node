@@ -61,9 +61,6 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Build application
-        run: ${{ env.GRADLE_EXEC }} build
-
       - name: Run Acceptance Tests
         id: acceptance-tests
         run: ${GRADLE_EXEC} runSuites

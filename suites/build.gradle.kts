@@ -42,7 +42,7 @@ tasks.register<Test>("runSuites") {
     description = "Runs E2E Test Suites"
     group = "suites"
     modularity.inferModulePath = false
-    dependsOn(":server:createDockerImage")
+    dependsOn(":server:createDockerImage", ":server:createProductionDotEnv")
 
     useJUnitPlatform()
     testLogging { events("passed", "skipped", "failed") }
