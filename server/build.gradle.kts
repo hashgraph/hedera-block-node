@@ -123,7 +123,8 @@ val createDockerImageSmokeTest: TaskProvider<Exec> =
     }
 
 tasks.register<Exec>("startDockerContainer") {
-    description = "Starts the docker container of the Block Node Server for the current version"
+    description =
+        "Starts the docker productiongit a container of the Block Node Server for the current version"
     group = "docker"
 
     dependsOn(createDockerImage)
@@ -132,7 +133,8 @@ tasks.register<Exec>("startDockerContainer") {
 }
 
 tasks.register<Exec>("startDockerContainerDebug") {
-    description = "Starts the docker debug container of the Block Node Server for the current version"
+    description =
+        "Starts the docker debug container of the Block Node Server for the current version"
     group = "docker"
 
     dependsOn(createDockerImageDebug)
@@ -141,16 +143,13 @@ tasks.register<Exec>("startDockerContainerDebug") {
 }
 
 tasks.register<Exec>("startDockerContainerSmokeTest") {
-    description = "Starts the docker smoke test container of the Block Node Server for the current version"
+    description =
+        "Starts the docker smoke test container of the Block Node Server for the current version"
     group = "docker"
 
     dependsOn(createDockerImageSmokeTest)
     workingDir(dockerBuildRootDirectory)
-    commandLine(
-        "sh",
-        "-c",
-        "docker compose -p block-node up -d"
-    )
+    commandLine("sh", "-c", "docker compose -p block-node up -d")
 }
 
 tasks.register<Exec>("stopDockerContainer") {
