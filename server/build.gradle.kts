@@ -85,41 +85,7 @@ val createDockerImage: TaskProvider<Exec> =
 
         dependsOn(copyDockerFolder, tasks.assemble)
         workingDir(dockerBuildRootDirectory)
-        commandLine(
-            "sh",
-            "-c",
-            "./update-env.sh ${project.version} false false && ./docker-build.sh ${project.version}"
-        )
-    }
-
-val createDockerImageDebug: TaskProvider<Exec> =
-    tasks.register<Exec>("createDockerImageDebug") {
-        description =
-            "Creates the debug docker image of the Block Node Server based on the current version"
-        group = "docker"
-
-        dependsOn(copyDockerFolder, tasks.assemble)
-        workingDir(dockerBuildRootDirectory)
-        commandLine(
-            "sh",
-            "-c",
-            "./update-env.sh ${project.version} true false && ./docker-build.sh ${project.version}"
-        )
-    }
-
-val createDockerImageSmokeTest: TaskProvider<Exec> =
-    tasks.register<Exec>("createDockerImageSmokeTest") {
-        description =
-            "Creates the smoke tests docker image of the Block Node Server based on the current version"
-        group = "docker"
-
-        dependsOn(copyDockerFolder, tasks.assemble)
-        workingDir(dockerBuildRootDirectory)
-        commandLine(
-            "sh",
-            "-c",
-            "./update-env.sh ${project.version} false true && ./docker-build.sh ${project.version}"
-        )
+        commandLine("sh", "-c", "./docker-build.sh ${project.version}")
     }
 
 tasks.register<Exec>("startDockerContainer") {
@@ -129,7 +95,11 @@ tasks.register<Exec>("startDockerContainer") {
 
     dependsOn(createDockerImage)
     workingDir(dockerBuildRootDirectory)
-    commandLine("sh", "-c", "docker compose -p block-node up -d")
+    commandLine(
+        "sh",
+        "-c",
+        "./update-env.sh ${project.version} false false && docker compose -p block-node up -d"
+    )
 }
 
 tasks.register<Exec>("startDockerContainerDebug") {
@@ -137,9 +107,13 @@ tasks.register<Exec>("startDockerContainerDebug") {
         "Starts the docker debug container of the Block Node Server for the current version"
     group = "docker"
 
-    dependsOn(createDockerImageDebug)
+    dependsOn(createDockerImage)
     workingDir(dockerBuildRootDirectory)
-    commandLine("sh", "-c", "docker compose -p block-node up -d")
+    commandLine(
+        "sh",
+        "-c",
+        "./update-env.sh ${project.version} true false && docker compose -p block-node up -d"
+    )
 }
 
 tasks.register<Exec>("startDockerContainerSmokeTest") {
@@ -147,9 +121,13 @@ tasks.register<Exec>("startDockerContainerSmokeTest") {
         "Starts the docker smoke test container of the Block Node Server for the current version"
     group = "docker"
 
-    dependsOn(createDockerImageSmokeTest)
+    dependsOn(createDockerImage)
     workingDir(dockerBuildRootDirectory)
-    commandLine("sh", "-c", "docker compose -p block-node up -d")
+    commandLine(
+        "sh",
+        "-c",
+        "./update-env.sh ${project.version} false true && docker compose -p block-node up -d"
+    )
 }
 
 tasks.register<Exec>("stopDockerContainer") {
