@@ -54,8 +54,10 @@ public abstract class BaseSuite {
      * Dotenv instance to load the environment variables from the .env file that
      * is inside the build root of the :server.
      */
-    protected static final Dotenv DOTENV =
-            Dotenv.configure().directory("../server/build").filename(".env").load();
+    protected static final Dotenv DOTENV = Dotenv.configure()
+            .directory("../server/build/docker")
+            .filename(".env")
+            .load();
 
     /** Container running the Block Node Application */
     protected static GenericContainer<?> blockNodeContainer;
