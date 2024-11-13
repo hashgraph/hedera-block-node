@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Hedera Hashgraph, LLC
+ * Copyright (C) 2022-2024 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,60 +64,92 @@ tasks.register("bumpVersion") {
 }
 
 // Vals
-val buildRootAbsolutePath: String =
-    layout.buildDirectory.get().asFile.toPath().toAbsolutePath().toString()
-val buildRootEnvFileAbsolutePath: String = "$buildRootAbsolutePath/.env"
-val dockerRootDirectory: Directory = layout.projectDirectory.dir("docker")
+val dockerProjectRootDirectory: Directory = layout.projectDirectory.dir("docker")
+val dockerBuildRootDirectory: Directory = layout.buildDirectory.dir("docker").get()
 
 // Docker related tasks
-val updateDockerEnv: TaskProvider<Exec> =
-    tasks.register<Exec>("updateDockerEnv") {
-        description =
-            "Creates the .env file in the docker folder that contains environment variables for docker"
+val copyDockerFolder: TaskProvider<Copy> =
+    tasks.register<Copy>("copyDockerFolder") {
+        description = "Copies the docker folder to the build root directory"
         group = "docker"
 
-        workingDir(dockerRootDirectory)
-        commandLine(
-            "sh",
-            "-c",
-            "./update-env.sh $buildRootAbsolutePath ${project.version} false false"
-        )
+        from(dockerProjectRootDirectory)
+        into(dockerBuildRootDirectory)
     }
 
 val createDockerImage: TaskProvider<Exec> =
     tasks.register<Exec>("createDockerImage") {
         description =
-            "Creates the docker image of the Block Node Server based on the current version"
+            "Creates the production docker image of the Block Node Server based on the current version"
         group = "docker"
 
-        dependsOn(updateDockerEnv, tasks.assemble)
-        workingDir(dockerRootDirectory)
-        commandLine("./docker-build.sh", project.version, layout.projectDirectory.dir("..").asFile)
+        dependsOn(copyDockerFolder, tasks.assemble)
+        workingDir(dockerBuildRootDirectory)
+        commandLine(
+            "sh",
+            "-c",
+            "./update-env.sh ${project.version} false false && ./docker-build.sh ${project.version}"
+        )
+    }
+
+val createDockerImageDebug: TaskProvider<Exec> =
+    tasks.register<Exec>("createDockerImageDebug") {
+        description =
+            "Creates the debug docker image of the Block Node Server based on the current version"
+        group = "docker"
+
+        dependsOn(copyDockerFolder, tasks.assemble)
+        workingDir(dockerBuildRootDirectory)
+        commandLine(
+            "sh",
+            "-c",
+            "./update-env.sh ${project.version} true false && ./docker-build.sh ${project.version}"
+        )
+    }
+
+val createDockerImageSmokeTest: TaskProvider<Exec> =
+    tasks.register<Exec>("createDockerImageSmokeTest") {
+        description =
+            "Creates the smoke tests docker image of the Block Node Server based on the current version"
+        group = "docker"
+
+        dependsOn(copyDockerFolder, tasks.assemble)
+        workingDir(dockerBuildRootDirectory)
+        commandLine(
+            "sh",
+            "-c",
+            "./update-env.sh ${project.version} false true && ./docker-build.sh ${project.version}"
+        )
     }
 
 tasks.register<Exec>("startDockerContainer") {
-    description = "Starts the docker container of the Block Node Server of the current version"
+    description = "Starts the docker container of the Block Node Server for the current version"
     group = "docker"
 
     dependsOn(createDockerImage)
-    workingDir(dockerRootDirectory)
-    commandLine(
-        "sh",
-        "-c",
-        "docker compose --env-file $buildRootEnvFileAbsolutePath -p block-node up -d"
-    )
+    workingDir(dockerBuildRootDirectory)
+    commandLine("sh", "-c", "docker compose -p block-node up -d")
 }
 
-tasks.register<Exec>("startDockerDebugContainer") {
-    description = "Starts the docker container of the Block Node Server of the current version"
+tasks.register<Exec>("startDockerContainerDebug") {
+    description = "Starts the docker debug container of the Block Node Server for the current version"
     group = "docker"
 
-    dependsOn(createDockerImage)
-    workingDir(dockerRootDirectory)
+    dependsOn(createDockerImageDebug)
+    workingDir(dockerBuildRootDirectory)
+    commandLine("sh", "-c", "docker compose -p block-node up -d")
+}
+
+tasks.register<Exec>("startDockerContainerSmokeTest") {
+    description = "Starts the docker smoke test container of the Block Node Server for the current version"
+    group = "docker"
+
+    dependsOn(createDockerImageSmokeTest)
+    workingDir(dockerBuildRootDirectory)
     commandLine(
         "sh",
         "-c",
-        "./update-env.sh $buildRootAbsolutePath ${project.version} true false && docker compose --env-file $buildRootEnvFileAbsolutePath -p block-node up -d"
+        "docker compose -p block-node up -d"
     )
 }
 
@@ -125,35 +157,7 @@ tasks.register<Exec>("stopDockerContainer") {
     description = "Stops running docker containers of the Block Node Server"
     group = "docker"
 
-    workingDir(dockerRootDirectory)
+    dependsOn(copyDockerFolder)
+    workingDir(dockerBuildRootDirectory)
     commandLine("sh", "-c", "docker compose -p block-node stop")
-}
-
-tasks.register("buildAndRunSmokeTestsContainer") {
-    doFirst {
-        // ensure smoke test .env properties before creating the container
-        exec {
-            workingDir(dockerRootDirectory)
-            commandLine(
-                "sh",
-                "-c",
-                "./update-env.sh $buildRootAbsolutePath ${project.version} false true"
-            )
-        }
-    }
-
-    // build the project
-    dependsOn(tasks.build)
-
-    doLast {
-        // build and start smoke test container
-        exec {
-            workingDir(dockerRootDirectory)
-            commandLine(
-                "sh",
-                "-c",
-                "./docker-build.sh ${project.version} && docker compose --env-file $buildRootEnvFileAbsolutePath -p block-node up -d"
-            )
-        }
-    }
 }

@@ -79,7 +79,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build And Run Smoke Tests Container
-        run: ${{ env.GRADLE_EXEC }} buildAndRunSmokeTestsContainer -x test
+        run: ${{ env.GRADLE_EXEC }} startDockerContainerSmokeTest
 
       - name: Run Smoke Test
         working-directory: server/src/test/resources/
