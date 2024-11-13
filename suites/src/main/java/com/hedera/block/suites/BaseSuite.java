@@ -54,7 +54,7 @@ public abstract class BaseSuite {
      * Dotenv instance to load the environment variables from the .env file that
      * is inside the build root of the :server.
      */
-    protected static final Dotenv DOTENV = Dotenv.configure()
+    protected static final Dotenv SERVER_DOTENV = Dotenv.configure()
             .directory("../server/build/docker")
             .filename(".env")
             .load();
@@ -187,6 +187,6 @@ public abstract class BaseSuite {
      * @return the version of the Block Node server as a string
      */
     private static String getBlockNodeVersion() {
-        return DOTENV.get("VERSION");
+        return SERVER_DOTENV.get("VERSION");
     }
 }
