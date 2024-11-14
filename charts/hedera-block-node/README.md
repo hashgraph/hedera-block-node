@@ -26,6 +26,8 @@ helm install "${RELEASE}" hedera-block-node/hedera-block-node -f <path-to-custom
 *Note:* If using the chart directly after cloning the github repo, there is no need to add the repo. and install can be directly.
 Assuming you are at the root folder of the repo.
 ```bash
+helm dependency build charts/hedera-block-node
+
 helm install "${RELEASE}" charts/hedera-block-node -f <path-to-custom-values-file>
 ```
 
