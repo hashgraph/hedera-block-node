@@ -42,6 +42,8 @@ tasks.register<Test>("runSuites") {
     description = "Runs E2E Test Suites"
     group = "suites"
     modularity.inferModulePath = false
+
+    // @todo(#343) - :server:createProductionDotEnv should disappear
     dependsOn(":server:createDockerImage", ":server:createProductionDotEnv")
 
     useJUnitPlatform()

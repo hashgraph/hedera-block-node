@@ -54,6 +54,9 @@ public abstract class BaseSuite {
      * Dotenv instance to load the environment variables from the .env file that
      * is inside the build root of the :server.
      */
+    // @todo(#343) - do not use build/environment related files from other
+    // projects directly like that, the SERVER_DOTENV should be constructed
+    // in another way
     protected static final Dotenv SERVER_DOTENV = Dotenv.configure()
             .directory("../server/build/docker")
             .filename(".env")
