@@ -16,13 +16,11 @@
 
 package com.hedera.block.simulator.config.data;
 
-import com.hedera.block.common.utils.Preconditions;
+import static com.hedera.block.common.utils.Preconditions.requirePositive;
+import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.hedera.block.common.utils.Preconditions.requirePositive;
-import static java.util.Objects.requireNonNull;
 
 /**
  * Represents the status of the stream.

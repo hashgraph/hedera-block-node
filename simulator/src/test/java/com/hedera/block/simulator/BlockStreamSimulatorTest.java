@@ -84,7 +84,7 @@ class BlockStreamSimulatorTest {
         try {
             blockStreamSimulator.stop();
         } catch (UnsupportedOperationException e) {
-            // ignore for now, temporary until consumer mode in simulator is added
+            // @todo (121) Implement consumer logic in the Simulator, which will fix this
         }
     }
 

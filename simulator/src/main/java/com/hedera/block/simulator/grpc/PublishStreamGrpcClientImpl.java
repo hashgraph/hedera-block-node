@@ -181,7 +181,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Override
     public List<String> getLastKnownStatuses() {
-        return lastKnownStatuses;
+        return List.copyOf(lastKnownStatuses);
     }
 
     /**
