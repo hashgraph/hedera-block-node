@@ -16,9 +16,12 @@
 
 package com.hedera.block.simulator.config.data;
 
+import com.hedera.block.common.utils.Preconditions;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.hedera.block.common.utils.Preconditions.requirePositive;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -67,6 +70,7 @@ public record StreamStatus(
          * @return the builder instance
          */
         public Builder publishedBlocks(int publishedBlocks) {
+            requirePositive(publishedBlocks);
             this.publishedBlocks = publishedBlocks;
             return this;
         }
@@ -78,6 +82,7 @@ public record StreamStatus(
          * @return the builder instance
          */
         public Builder consumedBlocks(int consumedBlocks) {
+            requirePositive(consumedBlocks);
             this.consumedBlocks = consumedBlocks;
             return this;
         }
