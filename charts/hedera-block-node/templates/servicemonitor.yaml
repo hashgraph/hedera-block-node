@@ -3,7 +3,7 @@ kind: ServiceMonitor
 metadata:
   name: {{ include "hedera-block-node.fullname" . }}
   labels:
-    release: prometheus  # Should match the release name of kube-prometheus-stack
+    monitoring: kube-prometheus-stack
 spec:
   selector:
     matchLabels:

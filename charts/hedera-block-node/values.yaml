@@ -94,15 +94,20 @@ kube-prometheus-stack:
   prometheusOperator:
     namespaces:
       releaseNamespace: true
+  prometheus-node-exporter:
+    prometheus:
+      monitor:
+        additionalLabels:
+            monitoring: kube-prometheus-stack
 
   prometheus:
     prometheusSpec:
       serviceMonitorSelector:
         matchLabels:
-          release: prometheus
+          monitoring: kube-prometheus-stack
 
   grafana:
-    replicaCount: 1
+    replicas: 1
     enabled: true
     defaultDashboardsEnabled: false
     adminPassword: "admin"
@@ -115,3 +120,13 @@ kube-prometheus-stack:
       datasources:
         enabled: true
         label: grafana_datasource
+
+  nodeExporter:
+    enabled: true
+
+  kubelet:
+    serviceMonitor:
+      https: false
+      labels:
+        monitoring: kube-prometheus-stack
+
