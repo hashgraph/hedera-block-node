@@ -29,9 +29,7 @@ import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
-import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.OneOf;
-import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.InstantSource;
 import java.util.List;
@@ -166,19 +164,19 @@ public class ConsumerStreamResponseObserver
                     Objects.requireNonNull(subscribeStreamResponse.blockItems()).blockItems();
             // Only start sending BlockItems after we've reached
             // the beginning of a block.
-            try {
-                BlockItem blockItem =
-                        BlockItem.PROTOBUF.parse(blockItems.getFirst().blockItem());
-                if (!streamStarted && blockItem.hasBlockHeader()) {
-                    LOGGER.log(
-                            DEBUG,
-                            "Sending BlockItem Batch downstream for block: "
-                                    + blockItem.blockHeader().number());
-                    streamStarted = true;
-                }
-            } catch (ParseException p) {
-                // TODO: Handle this exception
+            //            try {
+            final BlockItemUnparsed firstBlockItem = blockItems.getFirst();
+            if (!streamStarted && firstBlockItem.hasBlockHeader()) {
+                LOGGER.log(
+                        DEBUG,
+                        "Sending BlockItem Batch downstream for block: "
+                                + firstBlockItem.blockHeader().number());
+                streamStarted = true;
             }
+            //            } catch (ParseException p) {
+            //                 TODO: Handle this exception
+            //                LOGGER.log(ERROR, "Error parsing BlockItem: " + p.getMessage());
+            //            }
 
             if (streamStarted) {
                 metricsService

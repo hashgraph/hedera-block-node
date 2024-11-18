@@ -29,6 +29,7 @@ import com.hedera.block.server.producer.NoOpProducerObserver;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
 import com.hedera.block.server.producer.ProducerConfig;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.hapi.block.BlockItemSetUnparsed;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.PublishStreamRequestUnparsed;
 import com.hedera.hapi.block.PublishStreamResponse;
@@ -195,7 +196,9 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     private List<BlockItemUnparsed> parsePublishStreamRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options) throws ParseException {
         final PublishStreamRequestUnparsed request = PublishStreamRequestUnparsed.PROTOBUF.parse(message);
-        return request.blockItems().blockItems();
+        final Bytes b = request.blockItems();
+        final BlockItemSetUnparsed blockItemSet = BlockItemSetUnparsed.PROTOBUF.parse(b);
+        return blockItemSet.blockItems();
     }
 
     @NonNull

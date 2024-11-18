@@ -22,7 +22,6 @@ import static java.lang.System.Logger.Level.INFO;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.BlockItemUnparsed;
-import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.List;
@@ -53,9 +52,7 @@ public class NoOpBlockWriter implements BlockWriter<List<BlockItemUnparsed>> {
     @Override
     public Optional<List<BlockItemUnparsed>> write(@NonNull List<BlockItemUnparsed> blockItems) throws IOException {
         try {
-            final BlockItem blockItem =
-                    BlockItem.PROTOBUF.parse(blockItems.getLast().blockItem());
-            if (blockItem.hasBlockProof()) {
+            if (blockItems.getLast().hasBlockProof()) {
                 metricsService.get(BlocksPersisted).increment();
             }
         } catch (Exception e) {

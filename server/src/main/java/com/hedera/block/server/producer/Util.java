@@ -38,6 +38,7 @@ public final class Util {
             throws NoSuchAlgorithmException {
         // Calculate the SHA-384 hash
         MessageDigest digest = MessageDigest.getInstance("SHA-384");
-        return digest.digest(blockItems.getLast().blockItem().toByteArray());
+        //        return digest.digest(blockItems.getLast().blockProof());
+        return new byte[0];
     }
 }
