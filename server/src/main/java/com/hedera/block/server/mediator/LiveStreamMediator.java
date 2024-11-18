@@ -17,8 +17,8 @@
 package com.hedera.block.server.mediator;
 
 import com.hedera.block.server.notifier.Notifiable;
-import com.hedera.hapi.block.SubscribeStreamResponse;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import java.util.List;
 
 /**
@@ -26,4 +26,4 @@ import java.util.List;
  * Hedera network with the contract to be notified of critical system events.
  */
 public interface LiveStreamMediator
-        extends StreamMediator<List<BlockItem>, SubscribeStreamResponse>, Notifiable {}
+        extends StreamMediator<List<BlockItemUnparsed>, SubscribeStreamResponseUnparsed>, Notifiable {}

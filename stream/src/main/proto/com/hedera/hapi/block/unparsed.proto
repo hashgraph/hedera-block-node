@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package com.hedera.hapi.block;
+
+option java_package = "com.hedera.hapi.block.protoc";
+// <<<pbj.java_package = "com.hedera.hapi.block">>> This comment is special code for setting PBJ Compiler java package
+option java_multiple_files = true;
+
+import "block_service.proto";
+
+message PublishStreamRequestUnparsed {
+  BlockItemSetUnparsed block_items = 1;
+}
+
+message SubscribeStreamResponseUnparsed {
+  oneof response {
+    /**
+     * A final response item describing the terminal status of this stream.
+     * <p>
+     * The block node server SHALL end the stream following this message.
+     */
+    com.hedera.hapi.block.SubscribeStreamResponseCode status = 1;
+
+    /**
+     * A stream response item containing one or more `BlockItem`s.
+     * <p>
+     * The full stream SHALL consist of many `block_items` messages
+     * followed by a single `status` message.
+     */
+    BlockItemSetUnparsed block_items = 2;
+  }
+}
+
+message BlockItemSetUnparsed {
+  repeated BlockItemUnparsed block_items = 1;
+}
+
+message BlockItemUnparsed {
+  bytes block_item = 1;
+}

@@ -21,6 +21,7 @@ import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
@@ -32,7 +33,7 @@ import java.util.Optional;
  * designed to isolate the Producer and Mediator components from storage implementation during testing while still
  * providing metrics and logging for troubleshooting.
  */
-public class NoOpBlockWriter implements BlockWriter<List<BlockItem>> {
+public class NoOpBlockWriter implements BlockWriter<List<BlockItemUnparsed>> {
 
     private final MetricsService metricsService;
 
@@ -50,9 +51,16 @@ public class NoOpBlockWriter implements BlockWriter<List<BlockItem>> {
      * {@inheritDoc}
      */
     @Override
-    public Optional<List<BlockItem>> write(@NonNull List<BlockItem> blockItems) throws IOException {
-        if (blockItems.getLast().hasBlockProof()) {
-            metricsService.get(BlocksPersisted).increment();
+    public Optional<List<BlockItemUnparsed>> write(@NonNull List<BlockItemUnparsed> blockItems) throws IOException {
+        try {
+            final BlockItem blockItem =
+                    BlockItem.PROTOBUF.parse(blockItems.getLast().blockItem());
+            if (blockItem.hasBlockProof()) {
+                metricsService.get(BlocksPersisted).increment();
+            }
+        } catch (Exception e) {
+            // TODO: what to do here?
+            System.getLogger(getClass().getName()).log(INFO, "Failed to parse block item: " + e.getMessage());
         }
 
         return Optional.empty();

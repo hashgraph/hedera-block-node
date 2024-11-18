@@ -27,9 +27,11 @@ import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.OneOf;
+import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.InstantSource;
 import java.util.List;
@@ -43,13 +45,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * by Helidon). The ConsumerBlockItemObserver implements the BlockNodeEventHandler interface so the
  * Disruptor can invoke the onEvent() method when a new SubscribeStreamResponse is available.
  */
-public class ConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> {
+public class ConsumerStreamResponseObserver
+        implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final MetricsService metricsService;
-    private final Flow.Subscriber<? super SubscribeStreamResponse> subscribeStreamResponseObserver;
-    private final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
+    private final Flow.Subscriber<? super SubscribeStreamResponseUnparsed> subscribeStreamResponseObserver;
+    private final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
 
     private final AtomicBoolean isResponsePermitted = new AtomicBoolean(true);
     private final ResponseSender statusResponseSender = new StatusResponseSender();
@@ -74,8 +77,8 @@ public class ConsumerStreamResponseObserver implements BlockNodeEventHandler<Obj
      */
     public ConsumerStreamResponseObserver(
             @NonNull final InstantSource producerLivenessClock,
-            @NonNull final SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler,
-            @NonNull final Flow.Subscriber<? super SubscribeStreamResponse> subscribeStreamResponseObserver,
+            @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,
+            @NonNull final Flow.Subscriber<? super SubscribeStreamResponseUnparsed> subscribeStreamResponseObserver,
             @NonNull final BlockNodeContext blockNodeContext) {
 
         this.livenessCalculator = new LivenessCalculator(
@@ -102,7 +105,8 @@ public class ConsumerStreamResponseObserver implements BlockNodeEventHandler<Obj
      * @param b true if the event is the last in the sequence
      */
     @Override
-    public void onEvent(@NonNull final ObjectEvent<SubscribeStreamResponse> event, final long l, final boolean b) {
+    public void onEvent(
+            @NonNull final ObjectEvent<SubscribeStreamResponseUnparsed> event, final long l, final boolean b) {
 
         // Only send the response if the consumer has not cancelled
         // or closed the stream.
@@ -114,7 +118,7 @@ public class ConsumerStreamResponseObserver implements BlockNodeEventHandler<Obj
                 // Refresh the producer liveness and pass the BlockItem to the downstream observer.
                 livenessCalculator.refresh();
 
-                final SubscribeStreamResponse subscribeStreamResponse = event.get();
+                final SubscribeStreamResponseUnparsed subscribeStreamResponse = event.get();
                 final ResponseSender responseSender = getResponseSender(subscribeStreamResponse);
                 responseSender.send(subscribeStreamResponse);
             }
@@ -127,9 +131,10 @@ public class ConsumerStreamResponseObserver implements BlockNodeEventHandler<Obj
     }
 
     @NonNull
-    private ResponseSender getResponseSender(@NonNull final SubscribeStreamResponse subscribeStreamResponse) {
+    private ResponseSender getResponseSender(@NonNull final SubscribeStreamResponseUnparsed subscribeStreamResponse) {
 
-        final OneOf<SubscribeStreamResponse.ResponseOneOfType> responseType = subscribeStreamResponse.response();
+        final OneOf<SubscribeStreamResponseUnparsed.ResponseOneOfType> responseType =
+                subscribeStreamResponse.response();
         return switch (responseType.kind()) {
             case STATUS -> {
                 isResponsePermitted.set(false);
@@ -142,13 +147,13 @@ public class ConsumerStreamResponseObserver implements BlockNodeEventHandler<Obj
     }
 
     private interface ResponseSender {
-        void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse);
+        void send(@NonNull final SubscribeStreamResponseUnparsed subscribeStreamResponse);
     }
 
     private final class BlockItemsResponseSender implements ResponseSender {
         private boolean streamStarted = false;
 
-        public void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse) {
+        public void send(@NonNull final SubscribeStreamResponseUnparsed subscribeStreamResponse) {
 
             if (subscribeStreamResponse.blockItems() == null) {
                 final String message = PROTOCOL_VIOLATION_MESSAGE.formatted(
@@ -157,16 +162,22 @@ public class ConsumerStreamResponseObserver implements BlockNodeEventHandler<Obj
                 throw new IllegalArgumentException(message);
             }
 
-            final List<BlockItem> blockItems =
+            final List<BlockItemUnparsed> blockItems =
                     Objects.requireNonNull(subscribeStreamResponse.blockItems()).blockItems();
             // Only start sending BlockItems after we've reached
             // the beginning of a block.
-            if (!streamStarted && blockItems.getFirst().hasBlockHeader()) {
-                LOGGER.log(
-                        DEBUG,
-                        "Sending BlockItem Batch downstream for block: "
-                                + blockItems.getFirst().blockHeader().number());
-                streamStarted = true;
+            try {
+                BlockItem blockItem =
+                        BlockItem.PROTOBUF.parse(blockItems.getFirst().blockItem());
+                if (!streamStarted && blockItem.hasBlockHeader()) {
+                    LOGGER.log(
+                            DEBUG,
+                            "Sending BlockItem Batch downstream for block: "
+                                    + blockItem.blockHeader().number());
+                    streamStarted = true;
+                }
+            } catch (ParseException p) {
+                // TODO: Handle this exception
             }
 
             if (streamStarted) {
@@ -181,7 +192,7 @@ public class ConsumerStreamResponseObserver implements BlockNodeEventHandler<Obj
     // TODO: Implement another StatusResponseSender that will unsubscribe the observer once the
     // status code is fixed.
     private final class StatusResponseSender implements ResponseSender {
-        public void send(@NonNull final SubscribeStreamResponse subscribeStreamResponse) {
+        public void send(@NonNull final SubscribeStreamResponseUnparsed subscribeStreamResponse) {
             LOGGER.log(DEBUG, "Sending SubscribeStreamResponse downstream: " + subscribeStreamResponse);
             subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
             subscribeStreamResponseObserver.onComplete();

@@ -25,9 +25,9 @@ import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.persistence.storage.write.NoOpBlockWriter;
-import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
@@ -47,7 +47,7 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static BlockWriter<List<BlockItem>> providesBlockWriter(BlockNodeContext blockNodeContext) {
+    static BlockWriter<List<BlockItemUnparsed>> providesBlockWriter(BlockNodeContext blockNodeContext) {
         final String persistenceType = blockNodeContext
                 .configuration()
                 .getConfigData(PersistenceStorageConfig.class)
@@ -82,6 +82,6 @@ public interface PersistenceInjectionModule {
      */
     @Binds
     @Singleton
-    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> bindBlockNodeEventHandler(
+    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> bindBlockNodeEventHandler(
             StreamPersistenceHandlerImpl streamPersistenceHandler);
 }

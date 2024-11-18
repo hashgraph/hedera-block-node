@@ -16,7 +16,9 @@
 
 package com.hedera.block.server.persistence;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -30,9 +32,9 @@ import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
-import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
 import com.swirlds.config.api.Configuration;
 import java.io.IOException;
 import java.util.List;
@@ -52,13 +54,13 @@ class PersistenceInjectionModuleTest {
     private PersistenceStorageConfig persistenceStorageConfig;
 
     @Mock
-    private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
+    private SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
 
     @Mock
     private Notifier notifier;
 
     @Mock
-    private BlockWriter<List<BlockItem>> blockWriter;
+    private BlockWriter<List<BlockItemUnparsed>> blockWriter;
 
     @Mock
     private ServiceStatus serviceStatus;
@@ -73,7 +75,8 @@ class PersistenceInjectionModuleTest {
     @Test
     void testProvidesBlockWriter() {
 
-        BlockWriter<List<BlockItem>> blockWriter = PersistenceInjectionModule.providesBlockWriter(blockNodeContext);
+        BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                PersistenceInjectionModule.providesBlockWriter(blockNodeContext);
 
         assertNotNull(blockWriter);
     }
@@ -109,8 +112,9 @@ class PersistenceInjectionModuleTest {
         BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         // Call the method under test
-        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> streamVerifier = new StreamPersistenceHandlerImpl(
-                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus);
+        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> streamVerifier =
+                new StreamPersistenceHandlerImpl(
+                        subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus);
 
         assertNotNull(streamVerifier);
     }

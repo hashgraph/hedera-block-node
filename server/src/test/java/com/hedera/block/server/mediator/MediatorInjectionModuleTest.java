@@ -21,8 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
-import com.hedera.hapi.block.SubscribeStreamResponse;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +34,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class MediatorInjectionModuleTest {
 
-    @Mock private ServiceStatus serviceStatus;
+    @Mock
+    private ServiceStatus serviceStatus;
 
     @BeforeEach
     void setup() {
@@ -47,7 +48,7 @@ class MediatorInjectionModuleTest {
         BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         // Call the method under test
-        StreamMediator<List<BlockItem>, SubscribeStreamResponse> streamMediator =
+        StreamMediator<List<BlockItemUnparsed>, SubscribeStreamResponseUnparsed> streamMediator =
                 MediatorInjectionModule.providesLiveStreamMediator(blockNodeContext, serviceStatus);
 
         // Verify that the streamMediator is correctly instantiated

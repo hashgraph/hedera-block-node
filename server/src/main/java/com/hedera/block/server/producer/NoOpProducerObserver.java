@@ -24,9 +24,10 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.hapi.block.PublishStreamRequest;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.PublishStreamResponse;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.List;
 import java.util.concurrent.Flow;
 
 /**
@@ -35,7 +36,7 @@ import java.util.concurrent.Flow;
  * still providing metrics and logging for troubleshooting.
  */
 public class NoOpProducerObserver
-        implements Flow.Subscriber<PublishStreamRequest>, BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>> {
+        implements Flow.Subscriber<List<BlockItemUnparsed>>, BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>> {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
     private final MetricsService metricsService;
@@ -57,10 +58,9 @@ public class NoOpProducerObserver
      * {@inheritDoc}
      */
     @Override
-    public void onNext(PublishStreamRequest publishStreamRequest) {
-        metricsService
-                .get(LiveBlockItemsReceived)
-                .add(publishStreamRequest.blockItems().blockItems().size());
+    public void onNext(List<BlockItemUnparsed> blockItems) {
+
+        metricsService.get(LiveBlockItemsReceived).add(blockItems.size());
     }
 
     /**

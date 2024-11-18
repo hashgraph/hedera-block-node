@@ -31,12 +31,10 @@ import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.service.ServiceStatus;
-import com.hedera.hapi.block.BlockItemSet;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.EndOfStream;
-import com.hedera.hapi.block.PublishStreamRequest;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
-import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.grpc.Pipeline;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.InstantSource;
@@ -51,12 +49,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * server).
  */
 public class ProducerBlockItemObserver
-        implements Pipeline<PublishStreamRequest>, BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>> {
+        implements Pipeline<List<BlockItemUnparsed>>, BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>> {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final SubscriptionHandler<PublishStreamResponse> subscriptionHandler;
-    private final Publisher<List<BlockItem>> publisher;
+    private final Publisher<List<BlockItemUnparsed>> publisher;
     private final ServiceStatus serviceStatus;
     private final MetricsService metricsService;
     private final Flow.Subscriber<? super PublishStreamResponse> publishStreamResponseObserver;
@@ -83,7 +81,7 @@ public class ProducerBlockItemObserver
      */
     public ProducerBlockItemObserver(
             @NonNull final InstantSource producerLivenessClock,
-            @NonNull final Publisher<List<BlockItem>> publisher,
+            @NonNull final Publisher<List<BlockItemUnparsed>> publisher,
             @NonNull final SubscriptionHandler<PublishStreamResponse> subscriptionHandler,
             @NonNull final Flow.Subscriber<? super PublishStreamResponse> publishStreamResponseObserver,
             @NonNull final BlockNodeContext blockNodeContext,
@@ -113,17 +111,12 @@ public class ProducerBlockItemObserver
      * producer. The method publish the block item data to all subscribers via the Publisher and
      * sends a response back to the upstream producer.
      *
-     * @param publishStreamRequest the PublishStreamRequest received from the upstream producer
      */
     @Override
-    public void onNext(@NonNull final PublishStreamRequest publishStreamRequest) {
+    public void onNext(@NonNull final List<BlockItemUnparsed> blockItems) {
 
-        final BlockItemSet blockItemSet = publishStreamRequest.blockItems();
-        LOGGER.log(
-                DEBUG,
-                "Received PublishStreamRequest from producer with "
-                        + blockItemSet.blockItems().size() + " BlockItems.");
-        metricsService.get(LiveBlockItemsReceived).add(blockItemSet.blockItems().size());
+        LOGGER.log(DEBUG, "Received PublishStreamRequest from producer with " + blockItems.size() + " BlockItems.");
+        metricsService.get(LiveBlockItemsReceived).add(blockItems.size());
 
         // Publish the block to all the subscribers unless
         // there's an issue with the StreamMediator.
@@ -132,7 +125,7 @@ public class ProducerBlockItemObserver
             livenessCalculator.refresh();
 
             // Publish the block to the mediator
-            publisher.publish(blockItemSet.blockItems());
+            publisher.publish(blockItems);
 
         } else {
             LOGGER.log(ERROR, getClass().getName() + " is not accepting BlockItems");
