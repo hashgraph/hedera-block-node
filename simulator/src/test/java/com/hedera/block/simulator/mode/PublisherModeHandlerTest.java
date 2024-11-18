@@ -115,6 +115,48 @@ public class PublisherModeHandlerTest {
     }
 
     @Test
+    void testStartWithMillisPerBlockStreaming_ShouldPublishFalse() throws Exception {
+        when(blockStreamConfig.streamingMode()).thenReturn(StreamingMode.MILLIS_PER_BLOCK);
+
+        publisherModeHandler = new PublisherModeHandler(
+                blockStreamConfig, publishStreamGrpcClient, blockStreamManager, metricsService);
+
+        Block block1 = mock(Block.class);
+        Block block2 = mock(Block.class);
+
+        when(blockStreamManager.getNextBlock())
+                .thenReturn(block1)
+                .thenReturn(block2)
+                .thenReturn(null);
+        when(publishStreamGrpcClient.streamBlock(any(Block.class))).thenReturn(true);
+
+        when(publishStreamGrpcClient.streamBlock(block1)).thenReturn(true);
+        when(publishStreamGrpcClient.streamBlock(block2)).thenReturn(true);
+
+        publisherModeHandler.stop();
+        publisherModeHandler.start();
+
+        verify(publishStreamGrpcClient, never()).streamBlock(any(Block.class));
+        verify(blockStreamManager).getNextBlock();
+    }
+
+    @Test
+    void testStartWithMillisPerBlockStreaming_NoBlocksAndShouldPublishFalse() throws Exception {
+        when(blockStreamConfig.streamingMode()).thenReturn(StreamingMode.MILLIS_PER_BLOCK);
+
+        publisherModeHandler = new PublisherModeHandler(
+                blockStreamConfig, publishStreamGrpcClient, blockStreamManager, metricsService);
+
+        when(blockStreamManager.getNextBlock()).thenReturn(null);
+
+        publisherModeHandler.stop();
+        publisherModeHandler.start();
+
+        verify(publishStreamGrpcClient, never()).streamBlock(any(Block.class));
+        verify(blockStreamManager).getNextBlock();
+    }
+
+    @Test
     void testStartWithConstantRateStreaming_WithinMaxItems() throws Exception {
         when(blockStreamConfig.streamingMode()).thenReturn(StreamingMode.CONSTANT_RATE);
         when(blockStreamConfig.delayBetweenBlockItems()).thenReturn(0);

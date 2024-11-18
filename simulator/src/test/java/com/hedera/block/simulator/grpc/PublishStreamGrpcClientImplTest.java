@@ -19,6 +19,7 @@ package com.hedera.block.simulator.grpc;
 import static com.hedera.block.simulator.TestUtils.getTestMetrics;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -101,6 +102,22 @@ class PublishStreamGrpcClientImplTest {
         assertTrue(result1);
 
         assertEquals(2, publishStreamGrpcClient.getPublishedBlocks());
+    }
+
+    @Test
+    void streamBlockFailsBecauseOfCompletedStreaming() throws InterruptedException {
+        BlockItem blockItem = BlockItem.newBuilder().build();
+        Block block = Block.newBuilder().addItems(blockItem).build();
+
+        PublishStreamGrpcClientImpl publishStreamGrpcClient =
+                new PublishStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService, streamEnabled);
+
+        publishStreamGrpcClient.init();
+        assertTrue(publishStreamGrpcClient.getLastKnownStatuses().isEmpty());
+
+        publishStreamGrpcClient.completeStreaming();
+
+        assertThrows(IllegalStateException.class, () -> publishStreamGrpcClient.streamBlock(block));
     }
 
     @Test
