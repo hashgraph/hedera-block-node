@@ -29,8 +29,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -60,7 +58,7 @@ public abstract class BaseSuite {
     protected static int blockNodePort;
 
     /** Executor service for managing threads */
-    protected static ExecutorService executorService;
+    protected static CustomThreadPoolExecutor executorService;
 
     /**
      * Default constructor for the BaseSuite class.
@@ -81,7 +79,7 @@ public abstract class BaseSuite {
     public static void setup() {
         blockNodeContainer = createContainer();
         blockNodeContainer.start();
-        executorService = Executors.newFixedThreadPool(8);
+        executorService = new CustomThreadPoolExecutor();
     }
 
     /**
