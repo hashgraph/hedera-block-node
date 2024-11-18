@@ -183,11 +183,17 @@ public final class CommonsTestUtility {
     }
 
     /**
-     * Zero and some negative integers.
+     * Some whole numbers.
      */
-    public static Stream<Arguments> zeroAndNegativeIntegers() {
+    public static Stream<Arguments> wholeNumbers() {
+        return Stream.concat(Stream.of(Arguments.of(0)), positiveIntegers());
+    }
+
+    /**
+     * Some negative integers.
+     */
+    public static Stream<Arguments> negativeIntegers() {
         return Stream.of(
-                Arguments.of(0),
                 Arguments.of(-1),
                 Arguments.of(-2),
                 Arguments.of(-3),
@@ -199,6 +205,13 @@ public final class CommonsTestUtility {
                 Arguments.of(-100_000),
                 Arguments.of(-1_000_000),
                 Arguments.of(-10_000_000));
+    }
+
+    /**
+     * Zero and some negative integers.
+     */
+    public static Stream<Arguments> zeroAndNegativeIntegers() {
+        return Stream.concat(Stream.of(Arguments.of(0)), negativeIntegers());
     }
 
     private CommonsTestUtility() {}

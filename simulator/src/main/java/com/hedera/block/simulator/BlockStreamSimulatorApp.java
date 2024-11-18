@@ -20,6 +20,7 @@ import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.StreamStatus;
 import com.hedera.block.simulator.config.types.SimulatorMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
@@ -101,10 +102,30 @@ public class BlockStreamSimulatorApp {
         return isRunning.get();
     }
 
-    /** Stops the Block Stream Simulator and closes off all grpc channels. */
-    public void stop() {
+    /**
+     * Stops the Block Stream Simulator and closes off all grpc channels.
+     *
+     * @throws InterruptedException if the thread is interrupted
+     */
+    public void stop() throws InterruptedException {
+        simulatorModeHandler.stop();
+        publishStreamGrpcClient.completeStreaming();
+
         publishStreamGrpcClient.shutdown();
         isRunning.set(false);
+
         LOGGER.log(INFO, "Block Stream Simulator has stopped");
+    }
+
+    /**
+     * Gets the stream status from both the publisher and the consumer.
+     *
+     * @return the stream status
+     */
+    public StreamStatus getStreamStatus() {
+        return StreamStatus.builder()
+                .publishedBlocks(publishStreamGrpcClient.getPublishedBlocks())
+                .lastKnownPublisherStatuses(publishStreamGrpcClient.getLastKnownStatuses())
+                .build();
     }
 }

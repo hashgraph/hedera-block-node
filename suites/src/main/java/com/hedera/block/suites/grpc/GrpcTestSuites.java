@@ -17,6 +17,7 @@
 package com.hedera.block.suites.grpc;
 
 import com.hedera.block.suites.grpc.negative.NegativeServerAvailabilityTests;
+import com.hedera.block.suites.grpc.positive.PositiveEndpointBehaviourTests;
 import com.hedera.block.suites.grpc.positive.PositiveServerAvailabilityTests;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
@@ -30,7 +31,11 @@ import org.junit.platform.suite.api.Suite;
  * classes in a single test run.
  */
 @Suite
-@SelectClasses({PositiveServerAvailabilityTests.class, NegativeServerAvailabilityTests.class})
+@SelectClasses({
+    PositiveServerAvailabilityTests.class,
+    PositiveEndpointBehaviourTests.class,
+    NegativeServerAvailabilityTests.class
+})
 public class GrpcTestSuites {
 
     /**

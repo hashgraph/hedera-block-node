@@ -46,6 +46,27 @@ public interface PublishStreamGrpcClient {
     boolean streamBlock(Block block);
 
     /**
+     * Sends a onCompleted message to the server and waits for a short period of time to ensure the message is sent.
+     *
+     * @throws InterruptedException if the thread is interrupted
+     */
+    void completeStreaming() throws InterruptedException;
+
+    /**
+     * Gets the number of published blocks.
+     *
+     * @return the number of published blocks
+     */
+    long getPublishedBlocks();
+
+    /**
+     * Gets the last known statuses.
+     *
+     * @return the last known statuses
+     */
+    List<String> getLastKnownStatuses();
+
+    /**
      * Shutdowns the channel.
      */
     void shutdown();

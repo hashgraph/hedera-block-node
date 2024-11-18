@@ -18,6 +18,7 @@ package com.hedera.block.simulator.metrics;
 
 import static com.hedera.block.simulator.TestUtils.getTestMetrics;
 import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlockItemsSent;
+import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlocksSent;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.hedera.block.simulator.TestUtils;
@@ -50,5 +51,20 @@ public class MetricsServiceTest {
                 LiveBlockItemsSent.description(),
                 metricsService.get(LiveBlockItemsSent).getDescription());
         assertEquals(10, metricsService.get(LiveBlockItemsSent).get());
+    }
+
+    @Test
+    void MetricsService_verifyLiveBlocksSentCounter() {
+
+        for (int i = 0; i < 10; i++) {
+            metricsService.get(LiveBlocksSent).increment();
+        }
+
+        assertEquals(
+                LiveBlocksSent.grafanaLabel(),
+                metricsService.get(LiveBlocksSent).getName());
+        assertEquals(
+                LiveBlocksSent.description(), metricsService.get(LiveBlocksSent).getDescription());
+        assertEquals(10, metricsService.get(LiveBlocksSent).get());
     }
 }

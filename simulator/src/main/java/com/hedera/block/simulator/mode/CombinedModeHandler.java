@@ -56,4 +56,12 @@ public class CombinedModeHandler implements SimulatorModeHandler {
     public void start() {
         throw new UnsupportedOperationException();
     }
+
+    /**
+     * Stops the handler and manager from streaming.
+     */
+    @Override
+    public void stop() {
+        throw new UnsupportedOperationException();
+    }
 }

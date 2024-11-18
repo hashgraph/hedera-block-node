@@ -18,14 +18,19 @@ package com.hedera.block.simulator;
 
 import static com.hedera.block.simulator.TestUtils.getTestMetrics;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.StreamStatus;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
@@ -75,8 +80,12 @@ class BlockStreamSimulatorTest {
     }
 
     @AfterEach
-    void tearDown() {
-        blockStreamSimulator.stop();
+    void tearDown() throws InterruptedException {
+        try {
+            blockStreamSimulator.stop();
+        } catch (UnsupportedOperationException e) {
+            // @todo (121) Implement consumer logic in the Simulator, which will fix this
+        }
     }
 
     @Test
@@ -126,9 +135,10 @@ class BlockStreamSimulatorTest {
     }
 
     @Test
-    void stop_doesNotThrowException() {
+    void stop_doesNotThrowException() throws InterruptedException {
         assertDoesNotThrow(() -> blockStreamSimulator.stop());
         assertFalse(blockStreamSimulator.isRunning());
+        verify(publishStreamGrpcClient, atLeast(1)).completeStreaming();
     }
 
     @Test
@@ -232,6 +242,29 @@ class BlockStreamSimulatorTest {
         assertThrows(NullPointerException.class, () -> {
             new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
         });
+    }
+
+    @Test
+    void testGetStreamStatus() {
+        long expectedPublishedBlocks = 5;
+        List<String> expectedLastKnownStatuses = List.of("Status1", "Status2");
+
+        when(publishStreamGrpcClient.getPublishedBlocks()).thenReturn(expectedPublishedBlocks);
+        when(publishStreamGrpcClient.getLastKnownStatuses()).thenReturn(expectedLastKnownStatuses);
+
+        StreamStatus streamStatus = blockStreamSimulator.getStreamStatus();
+
+        assertNotNull(streamStatus, "StreamStatus should not be null");
+        assertEquals(expectedPublishedBlocks, streamStatus.publishedBlocks(), "Published blocks should match");
+        assertEquals(
+                expectedLastKnownStatuses,
+                streamStatus.lastKnownPublisherStatuses(),
+                "Last known statuses should match");
+        assertEquals(0, streamStatus.consumedBlocks(), "Consumed blocks should be 0 by default");
+        assertEquals(
+                0,
+                streamStatus.lastKnownConsumersStatuses().size(),
+                "Last known consumers statuses should be empty by default");
     }
 
     private List<LogRecord> captureLogs() {

@@ -48,4 +48,9 @@ public interface SimulatorModeHandler {
      * @throws InterruptedException if the thread running the simulator is interrupted
      */
     void start() throws BlockSimulatorParsingException, IOException, InterruptedException;
+
+    /**
+     * Stops the handler and manager from streaming.
+     */
+    void stop();
 }

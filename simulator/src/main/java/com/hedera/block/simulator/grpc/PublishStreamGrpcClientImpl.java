@@ -17,6 +17,7 @@
 package com.hedera.block.simulator.grpc;
 
 import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlockItemsSent;
+import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlocksSent;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
@@ -35,12 +36,14 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
 /**
- * The PublishStreamGrpcClientImpl class provides the methods to stream the block and block item.
+ * The PublishStreamGrpcClientImpl class provides the methods to stream the
+ * block and block item.
  */
 public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
@@ -52,14 +55,16 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
     private final AtomicBoolean streamEnabled;
     private ManagedChannel channel;
     private final MetricsService metricsService;
+    private final List<String> lastKnownStatuses = new ArrayList<>();
 
     /**
      * Creates a new PublishStreamGrpcClientImpl instance.
      *
-     * @param grpcConfig the gRPC configuration
+     * @param grpcConfig        the gRPC configuration
      * @param blockStreamConfig the block stream configuration
-     * @param metricsService the metrics service
-     * @param streamEnabled the flag responsible for enabling and disabling of the streaming
+     * @param metricsService    the metrics service
+     * @param streamEnabled     the flag responsible for enabling and disabling of
+     *                          the streaming
      */
     @Inject
     public PublishStreamGrpcClientImpl(
@@ -74,7 +79,8 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
     }
 
     /**
-     * Initialize the channel and stub for publishBlockStream with the desired configuration.
+     * Initialize the channel and stub for publishBlockStream with the desired
+     * configuration.
      */
     @Override
     public void init() {
@@ -82,12 +88,14 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
                 .usePlaintext()
                 .build();
         BlockStreamServiceGrpc.BlockStreamServiceStub stub = BlockStreamServiceGrpc.newStub(channel);
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled);
+        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled, lastKnownStatuses);
         requestStreamObserver = stub.publishBlockStream(publishStreamObserver);
+        lastKnownStatuses.clear();
     }
 
     /**
-     * The PublishStreamObserver class implements the StreamObserver interface to observe the
+     * The PublishStreamObserver class implements the StreamObserver interface to
+     * observe the
      * stream.
      */
     @Override
@@ -113,7 +121,8 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
     }
 
     /**
-     * The PublishStreamObserver class implements the StreamObserver interface to observe the
+     * The PublishStreamObserver class implements the StreamObserver interface to
+     * observe the
      * stream.
      */
     @Override
@@ -138,10 +147,46 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
                 break;
             }
         }
-
+        metricsService.get(LiveBlocksSent).increment();
         return streamEnabled.get();
     }
 
+    /**
+     * Sends a onCompleted message to the server and waits for a short period of
+     * time to ensure the message is sent.
+     *
+     * @throws InterruptedException if the thread is interrupted
+     */
+    @Override
+    public void completeStreaming() throws InterruptedException {
+        requestStreamObserver.onCompleted();
+        // todo(352) Find a suitable solution for removing the sleep
+        Thread.sleep(100);
+    }
+
+    /**
+     * Gets the number of published blocks.
+     *
+     * @return the number of published blocks
+     */
+    @Override
+    public long getPublishedBlocks() {
+        return metricsService.get(LiveBlocksSent).get();
+    }
+
+    /**
+     * Gets the last known statuses.
+     *
+     * @return the last known statuses
+     */
+    @Override
+    public List<String> getLastKnownStatuses() {
+        return List.copyOf(lastKnownStatuses);
+    }
+
+    /**
+     * Shutdowns the channel.
+     */
     @Override
     public void shutdown() {
         channel.shutdown();
