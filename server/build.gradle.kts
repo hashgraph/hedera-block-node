@@ -103,7 +103,7 @@ val createDockerImage: TaskProvider<Exec> =
 
 tasks.register<Exec>("startDockerContainer") {
     description =
-        "Starts the docker productiongit a container of the Block Node Server for the current version"
+        "Starts the docker production container of the Block Node Server for the current version"
     group = "docker"
 
     dependsOn(createDockerImage)
