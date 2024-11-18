@@ -19,7 +19,7 @@ package com.hedera.block.simulator.config.data;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -178,11 +178,11 @@ class StreamStatusTest {
         publisherStatuses.add("Publisher2");
         consumerStatuses.add("Consumer2");
 
-        assertEquals(
+        assertNotEquals(
                 List.of("Publisher1", "Publisher2"),
                 streamStatus.lastKnownPublisherStatuses(),
                 "lastKnownPublisherStatuses should be immutable");
-        assertEquals(
+        assertNotEquals(
                 List.of("Consumer1", "Consumer2"),
                 streamStatus.lastKnownConsumersStatuses(),
                 "lastKnownConsumersStatuses should be immutable");
@@ -190,15 +190,12 @@ class StreamStatusTest {
 
     @Test
     void testNullLists() {
-        StreamStatus streamStatus = StreamStatus.builder()
+        assertThrows(NullPointerException.class, () -> StreamStatus.builder()
                 .publishedBlocks(0)
                 .consumedBlocks(0)
                 .lastKnownPublisherStatuses(null)
                 .lastKnownConsumersStatuses(null)
-                .build();
-
-        assertNull(streamStatus.lastKnownPublisherStatuses(), "lastKnownPublisherStatuses should be null");
-        assertNull(streamStatus.lastKnownConsumersStatuses(), "lastKnownConsumersStatuses should be null");
+                .build());
     }
 
     @Test

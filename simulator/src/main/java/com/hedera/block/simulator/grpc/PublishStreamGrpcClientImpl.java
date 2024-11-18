@@ -17,6 +17,7 @@
 package com.hedera.block.simulator.grpc;
 
 import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlockItemsSent;
+import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlocksSent;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
@@ -55,7 +56,6 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
     private ManagedChannel channel;
     private final MetricsService metricsService;
     private final List<String> lastKnownStatuses = new ArrayList<>();
-    private int publishedBlocks;
 
     /**
      * Creates a new PublishStreamGrpcClientImpl instance.
@@ -91,7 +91,6 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
         PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled, lastKnownStatuses);
         requestStreamObserver = stub.publishBlockStream(publishStreamObserver);
         lastKnownStatuses.clear();
-        publishedBlocks = 0;
     }
 
     /**
@@ -148,7 +147,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
                 break;
             }
         }
-        publishedBlocks++;
+        metricsService.get(LiveBlocksSent).increment();
         return streamEnabled.get();
     }
 
@@ -161,6 +160,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
     @Override
     public void completeStreaming() throws InterruptedException {
         requestStreamObserver.onCompleted();
+        // todo(352) Find a suitable solution for removing the sleep
         Thread.sleep(100);
     }
 
@@ -170,8 +170,8 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      * @return the number of published blocks
      */
     @Override
-    public int getPublishedBlocks() {
-        return publishedBlocks;
+    public long getPublishedBlocks() {
+        return metricsService.get(LiveBlocksSent).get();
     }
 
     /**

@@ -69,6 +69,45 @@ class PreconditionsTest {
 
     /**
      * This test aims to verify that the
+     * {@link Preconditions#requireWhole(long)} will return the input 'toTest'
+     * parameter if the positive check passes. Test includes overloads.
+     *
+     * @param toTest parameterized, the number to test
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#wholeNumbers")
+    void testRequireWholePass(final int toTest) {
+        final Consumer<Integer> asserts =
+                actual -> assertThat(actual).isGreaterThanOrEqualTo(0).isEqualTo(toTest);
+
+        final int actual = (int) Preconditions.requireWhole(toTest);
+        assertThat(actual).satisfies(asserts);
+
+        final int actualOverload = (int) Preconditions.requireWhole(toTest, "test error message");
+        assertThat(actualOverload).satisfies(asserts);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link Preconditions#requireWhole(long)} will throw an
+     * {@link IllegalArgumentException} if the positive check fails. Test
+     * includes overloads.
+     *
+     * @param toTest parameterized, the number to test
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#negativeIntegers")
+    void testRequireWholeFail(final int toTest) {
+        assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requireWhole(toTest));
+
+        final String testErrorMessage = "test error message";
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requireWhole(toTest, testErrorMessage))
+                .withMessage(testErrorMessage);
+    }
+
+    /**
+     * This test aims to verify that the
      * {@link Preconditions#requirePositive(int)} will return the input 'toTest'
      * parameter if the positive check passes. Test includes overloads.
      *

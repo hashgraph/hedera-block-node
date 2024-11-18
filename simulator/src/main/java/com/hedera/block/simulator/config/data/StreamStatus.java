@@ -16,7 +16,7 @@
 
 package com.hedera.block.simulator.config.data;
 
-import static com.hedera.block.common.utils.Preconditions.requirePositive;
+import static com.hedera.block.common.utils.Preconditions.requireWhole;
 import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
@@ -31,8 +31,8 @@ import java.util.List;
  * @param lastKnownConsumersStatuses the last known consumers statuses
  */
 public record StreamStatus(
-        int publishedBlocks,
-        int consumedBlocks,
+        long publishedBlocks,
+        long consumedBlocks,
         List<String> lastKnownPublisherStatuses,
         List<String> lastKnownConsumersStatuses) {
 
@@ -49,8 +49,8 @@ public record StreamStatus(
      * A builder for creating instances of {@link StreamStatus}.
      */
     public static class Builder {
-        private int publishedBlocks = 0;
-        private int consumedBlocks = 0;
+        private long publishedBlocks = 0;
+        private long consumedBlocks = 0;
         private List<String> lastKnownPublisherStatuses = new ArrayList<>();
         private List<String> lastKnownConsumersStatuses = new ArrayList<>();
 
@@ -67,8 +67,8 @@ public record StreamStatus(
          * @param publishedBlocks the number of published blocks
          * @return the builder instance
          */
-        public Builder publishedBlocks(int publishedBlocks) {
-            requirePositive(publishedBlocks);
+        public Builder publishedBlocks(long publishedBlocks) {
+            requireWhole(publishedBlocks);
             this.publishedBlocks = publishedBlocks;
             return this;
         }
@@ -79,8 +79,8 @@ public record StreamStatus(
          * @param consumedBlocks the number of consumed blocks
          * @return the builder instance
          */
-        public Builder consumedBlocks(int consumedBlocks) {
-            requirePositive(consumedBlocks);
+        public Builder consumedBlocks(long consumedBlocks) {
+            requireWhole(consumedBlocks);
             this.consumedBlocks = consumedBlocks;
             return this;
         }

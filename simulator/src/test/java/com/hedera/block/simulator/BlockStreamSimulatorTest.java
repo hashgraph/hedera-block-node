@@ -246,7 +246,7 @@ class BlockStreamSimulatorTest {
 
     @Test
     void testGetStreamStatus() {
-        int expectedPublishedBlocks = 5;
+        long expectedPublishedBlocks = 5;
         List<String> expectedLastKnownStatuses = List.of("Status1", "Status2");
 
         when(publishStreamGrpcClient.getPublishedBlocks()).thenReturn(expectedPublishedBlocks);

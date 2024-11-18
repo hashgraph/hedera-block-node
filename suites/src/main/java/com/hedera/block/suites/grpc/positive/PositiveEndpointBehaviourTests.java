@@ -52,6 +52,20 @@ public class PositiveEndpointBehaviourTests extends BaseSuite {
     /** Default constructor for the {@link PositiveEndpointBehaviourTests} class. */
     public PositiveEndpointBehaviourTests() {}
 
+    /**
+     * Tests the {@code PublishBlockStream} gRPC endpoint by starting the Block Stream Simulator,
+     * allowing it to publish blocks, and validating the following:
+     *
+     * <ul>
+     *   <li>The number of published blocks is greater than zero.
+     *   <li>The number of published blocks matches the size of the last known publisher statuses.
+     *   <li>Each publisher status contains the word "acknowledgement" to confirm successful
+     *       responses.
+     * </ul>
+     *
+     * @throws IOException if there is an error starting or stopping the Block Stream Simulator.
+     * @throws InterruptedException if the simulator thread is interrupted during execution.
+     */
     @Test
     void verifyPublishBlockStreamEndpoint() throws IOException, InterruptedException {
         blockStreamSimulatorApp = createBlockSimulator();

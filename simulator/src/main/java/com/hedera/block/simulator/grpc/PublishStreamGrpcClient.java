@@ -57,7 +57,7 @@ public interface PublishStreamGrpcClient {
      *
      * @return the number of published blocks
      */
-    int getPublishedBlocks();
+    long getPublishedBlocks();
 
     /**
      * Gets the last known statuses.

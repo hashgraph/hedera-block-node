@@ -76,6 +76,42 @@ public final class Preconditions {
     }
 
     /**
+     * This method asserts a given long is a whole number. A long is whole
+     * if it is greater or equal to zero.
+     *
+     * @param toCheck the long to check if it is a whole number
+     * @return the number to check if it is whole number
+     * @throws IllegalArgumentException if the input number to check is not
+     * positive
+     */
+    public static long requireWhole(final long toCheck) {
+        return requireWhole(toCheck, null);
+    }
+
+    /**
+     * This method asserts a given long is a whole number. A long is whole
+     * if it is greater or equal to zero.
+     *
+     * @param toCheck the long to check if it is a whole number
+     * @param errorMessage the error message to be used in the exception if the
+     * input long to check is not a whole number, if null, a default message will
+     * be used
+     * @return the number to check if it is whole number
+     * @throws IllegalArgumentException if the input number to check is not
+     * positive
+     */
+    public static long requireWhole(final long toCheck, final String errorMessage) {
+        if (toCheck >= 0) {
+            return toCheck;
+        }
+
+        final String message = Objects.isNull(errorMessage)
+                ? "The input integer [%d] is required be whole.".formatted(toCheck)
+                : errorMessage;
+        throw new IllegalArgumentException(message);
+    }
+
+    /**
      * This method asserts a given integer is a positive. An integer is positive
      * if it is NOT equal to zero and is greater than zero.
      *
