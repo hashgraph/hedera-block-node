@@ -58,7 +58,7 @@ public abstract class BaseSuite {
     protected static int blockNodePort;
 
     /** Executor service for managing threads */
-    protected static CustomThreadPoolExecutor executorService;
+    protected static ErrorLoggingExecutor executorService;
 
     /**
      * Default constructor for the BaseSuite class.
@@ -79,7 +79,7 @@ public abstract class BaseSuite {
     public static void setup() {
         blockNodeContainer = createContainer();
         blockNodeContainer.start();
-        executorService = new CustomThreadPoolExecutor();
+        executorService = new ErrorLoggingExecutor();
     }
 
     /**
