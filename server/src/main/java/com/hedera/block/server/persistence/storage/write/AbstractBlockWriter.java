@@ -33,8 +33,8 @@ abstract class AbstractBlockWriter<V> implements BlockWriter<V> {
 
     protected AbstractBlockWriter(
             @NonNull final MetricsService metricsService, @NonNull final BlockRemover blockRemover) {
-        this.blocksPersistedCounter =
-                Objects.requireNonNull(Objects.requireNonNull(metricsService).get(BlocksPersisted));
+        Objects.requireNonNull(metricsService);
+        this.blocksPersistedCounter = Objects.requireNonNull(metricsService.get(BlocksPersisted));
         this.blockRemover = Objects.requireNonNull(blockRemover);
     }
 

@@ -46,8 +46,8 @@ public final class BlockAsDirWriterBuilder {
     /**
      * Creates a new block writer builder using the minimum required parameters.
      *
-     * @param blockNodeContext is required to provide metrics reporting mechanisms .
-     * @param blockRemover todo
+     * @param blockNodeContext is required to provide metrics reporting mechanisms
+     * @param blockRemover used internally
      *
      * @return a block writer builder configured with required parameters.
      */

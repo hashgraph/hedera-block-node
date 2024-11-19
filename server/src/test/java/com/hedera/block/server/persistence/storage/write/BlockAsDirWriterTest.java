@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.same;
 import static org.mockito.Mockito.spy;
 
@@ -57,21 +58,11 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
 public class BlockAsDirWriterTest {
-
-    private final Logger LOGGER = System.getLogger(getClass().getName());
-
     private static final String TEMP_DIR = "block-node-unit-test-dir";
     private static final String PERSISTENCE_STORAGE_ROOT_PATH_KEY = "persistence.storage.rootPath";
-
-    @Mock
-    private BlockRemover blockRemover;
-
+    private final Logger LOGGER = System.getLogger(getClass().getName());
     private Path testPath;
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig testConfig;
@@ -100,7 +91,7 @@ public class BlockAsDirWriterTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, blockRemover)
+                        blockNodeContext, mock(BlockRemover.class))
                 .folderPermissions(DEFAULT_TEST_FOLDER_PERMISSIONS)
                 .build();
         for (int i = 0; i < 10; i++) {
@@ -151,7 +142,7 @@ public class BlockAsDirWriterTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, blockRemover)
+                        blockNodeContext, mock(BlockRemover.class))
                 .build();
 
         // Change the permissions on the block node root directory
@@ -213,7 +204,7 @@ public class BlockAsDirWriterTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, blockRemover)
+                        blockNodeContext, mock(BlockRemover.class))
                 .build();
 
         // Write the first block item to create the block
@@ -251,15 +242,14 @@ public class BlockAsDirWriterTest {
 
     @Test
     public void testPartialBlockRemoval() throws IOException, ParseException {
-        final List<BlockItem> blockItems = generateBlockItems(24);
         final BlockRemover blockRemover = new BlockAsDirRemover(Path.of(testConfig.rootPath()));
-
         // Use a spy of TestBlockAsDirWriter to proxy block items to the real writer
         // for the first 22 block items. Then simulate an IOException on the 23rd block item
         // thrown from a protected write method in the real class. This should trigger the
         // blockRemover instance to remove the partially written block.
         final TestBlockAsDirWriter blockWriter = spy(new TestBlockAsDirWriter(blockRemover, null, blockNodeContext));
 
+        final List<BlockItem> blockItems = generateBlockItems(24);
         for (int i = 0; i < 23; i++) {
             // Prepare the block writer to call the actual write method
             // for 23 block items
@@ -289,7 +279,7 @@ public class BlockAsDirWriterTest {
 
         // Verify the partially written block was removed
         final BlockReader<Block> blockReader =
-            BlockAsDirReaderBuilder.newBuilder(testConfig).build();
+                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
         Optional<Block> blockOpt = blockReader.read(3);
         assertTrue(blockOpt.isEmpty());
 

@@ -28,7 +28,7 @@ public interface MetricsService {
      * @param key to get a specific counter
      * @return the counter
      */
-    Counter get(@NonNull BlockNodeMetricTypes.Counter key);
+    Counter get(@NonNull final BlockNodeMetricTypes.Counter key);
 
     /**
      * Use this method to get a specific gauge for the given metric type.
@@ -36,5 +36,5 @@ public interface MetricsService {
      * @param key to get a specific gauge
      * @return the gauge
      */
-    LongGauge get(@NonNull BlockNodeMetricTypes.Gauge key);
+    LongGauge get(@NonNull final BlockNodeMetricTypes.Gauge key);
 }

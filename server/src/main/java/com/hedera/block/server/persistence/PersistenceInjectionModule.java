@@ -60,8 +60,8 @@ public interface PersistenceInjectionModule {
     @Singleton
     static BlockWriter<List<BlockItem>> providesBlockWriter(
             @NonNull final BlockNodeContext blockNodeContext, @NonNull final BlockRemover blockRemover) {
-        Objects.requireNonNull(blockRemover);
         Objects.requireNonNull(blockNodeContext);
+        Objects.requireNonNull(blockRemover);
         final StorageType persistenceType = blockNodeContext
                 .configuration()
                 .getConfigData(PersistenceStorageConfig.class)

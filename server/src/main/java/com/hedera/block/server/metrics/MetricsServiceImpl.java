@@ -30,7 +30,7 @@ import javax.inject.Inject;
  * <p>Metrics are updated by calling the appropriate method on the metric object instance. For
  * example, to increment a counter, call {@link Counter#increment()}.
  */
-public class MetricsServiceImpl implements MetricsService {
+public final class MetricsServiceImpl implements MetricsService {
     private static final String CATEGORY = "hedera_block_node";
     private final EnumMap<BlockNodeMetricTypes.Counter, Counter> counters =
             new EnumMap<>(BlockNodeMetricTypes.Counter.class);
@@ -54,7 +54,7 @@ public class MetricsServiceImpl implements MetricsService {
         }
 
         // Initialize the gauges
-        for (BlockNodeMetricTypes.Gauge gauge : BlockNodeMetricTypes.Gauge.values()) {
+        for (final BlockNodeMetricTypes.Gauge gauge : BlockNodeMetricTypes.Gauge.values()) {
             gauges.put(
                     gauge,
                     metrics.getOrCreate(
@@ -70,7 +70,7 @@ public class MetricsServiceImpl implements MetricsService {
      */
     @NonNull
     @Override
-    public Counter get(@NonNull BlockNodeMetricTypes.Counter key) {
+    public Counter get(@NonNull final BlockNodeMetricTypes.Counter key) {
         return counters.get(key);
     }
 
@@ -82,7 +82,7 @@ public class MetricsServiceImpl implements MetricsService {
      */
     @NonNull
     @Override
-    public LongGauge get(@NonNull BlockNodeMetricTypes.Gauge key) {
+    public LongGauge get(@NonNull final BlockNodeMetricTypes.Gauge key) {
         return gauges.get(key);
     }
 }
