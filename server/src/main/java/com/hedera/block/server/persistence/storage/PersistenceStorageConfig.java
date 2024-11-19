@@ -37,7 +37,8 @@ import java.nio.file.Paths;
  */
 @ConfigData("persistence.storage")
 public record PersistenceStorageConfig(
-        @ConfigProperty(defaultValue = "") String rootPath, @ConfigProperty(defaultValue = "PRODUCTION") String type) {
+        @ConfigProperty(defaultValue = "") String rootPath,
+        @ConfigProperty(defaultValue = "BLOCK_AS_FILE") StorageType type) {
     private static final System.Logger LOGGER = System.getLogger(PersistenceStorageConfig.class.getName());
 
     /**

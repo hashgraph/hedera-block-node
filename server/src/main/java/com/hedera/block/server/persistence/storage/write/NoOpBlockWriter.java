@@ -50,8 +50,8 @@ public class NoOpBlockWriter implements BlockWriter<List<BlockItem>> {
      * {@inheritDoc}
      */
     @Override
-    public Optional<List<BlockItem>> write(@NonNull List<BlockItem> blockItems) throws IOException {
-        if (blockItems.getLast().hasBlockProof()) {
+    public Optional<List<BlockItem>> write(@NonNull final List<BlockItem> toWrite) throws IOException {
+        if (toWrite.getLast().hasBlockProof()) {
             metricsService.get(BlocksPersisted).increment();
         }
 

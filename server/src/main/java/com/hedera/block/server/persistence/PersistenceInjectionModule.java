@@ -20,9 +20,11 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.StorageType;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
+import com.hedera.block.server.persistence.storage.write.BlockAsFileWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.persistence.storage.write.NoOpBlockWriter;
 import com.hedera.hapi.block.SubscribeStreamResponse;
@@ -47,18 +49,22 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static BlockWriter<List<BlockItem>> providesBlockWriter(BlockNodeContext blockNodeContext) {
-        final String persistenceType = blockNodeContext
+    static BlockWriter<List<BlockItem>> providesBlockWriter(final BlockNodeContext blockNodeContext) {
+        final StorageType persistenceType = blockNodeContext
                 .configuration()
                 .getConfigData(PersistenceStorageConfig.class)
                 .type();
-        if ("NOOP".equalsIgnoreCase(persistenceType)) {
-            return new NoOpBlockWriter(blockNodeContext);
-        }
         try {
-            return BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create block writer", e);
+            return switch (persistenceType) {
+                case null -> throw new NullPointerException(
+                        "Persistence StorageType cannot be [null], cannot create an instance of BlockWriter");
+                case BLOCK_AS_FILE -> BlockAsFileWriterBuilder.newBuilder().build();
+                case BLOCK_AS_DIR -> BlockAsDirWriterBuilder.newBuilder(blockNodeContext)
+                        .build();
+                case NOOP -> new NoOpBlockWriter(blockNodeContext);
+            };
+        } catch (final IOException e) {
+            throw new RuntimeException("Failed to create BlockWriter", e);
         }
     }
 

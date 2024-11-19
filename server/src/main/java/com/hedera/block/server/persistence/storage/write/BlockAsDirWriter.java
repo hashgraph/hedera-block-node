@@ -108,17 +108,16 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
     /**
      * Writes the given block item to the filesystem.
      *
-     * @param blockItems the block item to write
+     * @param toWrite the block item to write
      * @throws IOException if an error occurs while writing the block item
      */
     @Override
-    public Optional<List<BlockItem>> write(@NonNull final List<BlockItem> blockItems) throws IOException {
-
-        if (blockItems.getFirst().hasBlockHeader()) {
-            resetState(blockItems.getFirst());
+    public Optional<List<BlockItem>> write(@NonNull final List<BlockItem> toWrite) throws IOException {
+        if (toWrite.getFirst().hasBlockHeader()) {
+            resetState(toWrite.getFirst());
         }
 
-        for (BlockItem blockItem : blockItems) {
+        for (final BlockItem blockItem : toWrite) {
             final Path blockItemFilePath = calculateBlockItemPath();
             for (int retries = 0; ; retries++) {
                 try {
@@ -144,12 +143,12 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
             }
         }
 
-        if (blockItems.getLast().hasBlockProof()) {
+        if (toWrite.getLast().hasBlockProof()) {
             metricsService.get(BlocksPersisted).increment();
-            return Optional.of(blockItems);
+            return Optional.of(toWrite);
+        } else {
+            return Optional.empty();
         }
-
-        return Optional.empty();
     }
 
     /**
@@ -161,10 +160,9 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
      */
     protected void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItem blockItem) throws IOException {
         try (final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
-
             BlockItem.PROTOBUF.toBytes(blockItem).writeTo(fos);
             LOGGER.log(DEBUG, "Successfully wrote the block item file: {0}", blockItemFilePath);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
             throw e;
         }

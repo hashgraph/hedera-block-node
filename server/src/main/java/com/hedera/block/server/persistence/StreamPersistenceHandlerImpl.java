@@ -48,8 +48,7 @@ import javax.inject.Singleton;
  * invoke the onEvent() method when a new SubscribeStreamResponse is available.
  */
 @Singleton
-public class StreamPersistenceHandlerImpl
-        implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> {
+public class StreamPersistenceHandlerImpl implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -108,12 +107,8 @@ public class StreamPersistenceHandlerImpl
                 switch (oneOfTypeOneOf.kind()) {
                     case BLOCK_ITEMS -> {
                         if (subscribeStreamResponse.blockItems() == null) {
-                            final String message =
-                                    PROTOCOL_VIOLATION_MESSAGE.formatted(
-                                            "SubscribeStreamResponse",
-                                            "BLOCK_ITEM",
-                                            "block_item",
-                                            subscribeStreamResponse);
+                            final String message = PROTOCOL_VIOLATION_MESSAGE.formatted(
+                                    "SubscribeStreamResponse", "BLOCK_ITEM", "block_item", subscribeStreamResponse);
                             LOGGER.log(ERROR, message);
                             metricsService.get(StreamPersistenceHandlerError).increment();
                             throw new BlockStreamProtocolException(message);
@@ -129,8 +124,7 @@ public class StreamPersistenceHandlerImpl
                             }
                         }
                     }
-                    case STATUS -> LOGGER.log(
-                            DEBUG, "Unexpected received a status message rather than a block item");
+                    case STATUS -> LOGGER.log(DEBUG, "Unexpected received a status message rather than a block item");
                     default -> {
                         final String message = "Unknown response type: " + oneOfTypeOneOf.kind();
                         LOGGER.log(ERROR, message);
@@ -139,8 +133,7 @@ public class StreamPersistenceHandlerImpl
                     }
                 }
             } else {
-                LOGGER.log(
-                        ERROR, "Service is not running. Block item will not be processed further.");
+                LOGGER.log(ERROR, "Service is not running. Block item will not be processed further.");
             }
 
         } catch (BlockStreamProtocolException | IOException e) {
