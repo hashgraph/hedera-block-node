@@ -33,7 +33,8 @@ class ServerMappedConfigSourceInitializerTest {
         new ConfigMapping("persistence.storage.rootPath", "PERSISTENCE_STORAGE_ROOT_PATH"),
         new ConfigMapping("service.delayMillis", "SERVICE_DELAY_MILLIS"),
         new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),
-        new ConfigMapping("notifier.ringBufferSize", "NOTIFIER_RING_BUFFER_SIZE")
+        new ConfigMapping("notifier.ringBufferSize", "NOTIFIER_RING_BUFFER_SIZE"),
+        new ConfigMapping("persistence.storage.type", "PERSISTENCE_STORAGE_TYPE")
     };
     private static MappedConfigSource toTest;
 

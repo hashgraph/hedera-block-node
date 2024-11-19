@@ -16,3 +16,4 @@ defaults and can be left unchanged. It is recommended to browse the properties b
 | SERVICE_DELAY_MILLIS | Service shutdown delay in milliseconds | 500 |
 | MEDIATOR_RING_BUFFER_SIZE | Size of the ring buffer used by the mediator (must be a power of 2) | 67108864 |
 | NOTIFIER_RING_BUFFER_SIZE | Size of the ring buffer used by the notifier (must be a power of 2) | 2048 |
+| PERSISTENCE_STORAGE_TYPE | Type of the persistence storage | BLOCK_AS_FILE |
