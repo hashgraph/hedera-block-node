@@ -9,7 +9,7 @@ option java_multiple_files = true;
 import "block_service.proto";
 
 message PublishStreamRequestUnparsed {
-  bytes block_items = 1;
+  BlockItemSetUnparsed block_items = 1;
 }
 
 message SubscribeStreamResponseUnparsed {

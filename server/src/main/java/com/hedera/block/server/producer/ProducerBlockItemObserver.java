@@ -125,7 +125,9 @@ public class ProducerBlockItemObserver
             livenessCalculator.refresh();
 
             // Publish the block to the mediator
-            publisher.publish(blockItems);
+            if (!blockItems.isEmpty()) {
+                publisher.publish(blockItems);
+            }
 
         } else {
             LOGGER.log(ERROR, getClass().getName() + " is not accepting BlockItems");
