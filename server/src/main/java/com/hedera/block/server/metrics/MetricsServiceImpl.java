@@ -21,6 +21,7 @@ import com.swirlds.metrics.api.LongGauge;
 import com.swirlds.metrics.api.Metrics;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.EnumMap;
+import java.util.Objects;
 import javax.inject.Inject;
 
 /**
@@ -30,9 +31,7 @@ import javax.inject.Inject;
  * example, to increment a counter, call {@link Counter#increment()}.
  */
 public class MetricsServiceImpl implements MetricsService {
-
     private static final String CATEGORY = "hedera_block_node";
-
     private final EnumMap<BlockNodeMetricTypes.Counter, Counter> counters =
             new EnumMap<>(BlockNodeMetricTypes.Counter.class);
     private final EnumMap<BlockNodeMetricTypes.Gauge, LongGauge> gauges =
@@ -45,13 +44,13 @@ public class MetricsServiceImpl implements MetricsService {
      */
     @Inject
     public MetricsServiceImpl(@NonNull final Metrics metrics) {
+        Objects.requireNonNull(metrics);
         // Initialize the counters
-        for (BlockNodeMetricTypes.Counter counter : BlockNodeMetricTypes.Counter.values()) {
+        for (final BlockNodeMetricTypes.Counter counter : BlockNodeMetricTypes.Counter.values()) {
             counters.put(
                     counter,
-                    metrics.getOrCreate(
-                            new Counter.Config(CATEGORY, counter.grafanaLabel())
-                                    .withDescription(counter.description())));
+                    metrics.getOrCreate(new Counter.Config(CATEGORY, counter.grafanaLabel())
+                            .withDescription(counter.description())));
         }
 
         // Initialize the gauges
@@ -59,8 +58,7 @@ public class MetricsServiceImpl implements MetricsService {
             gauges.put(
                     gauge,
                     metrics.getOrCreate(
-                            new LongGauge.Config(CATEGORY, gauge.grafanaLabel())
-                                    .withDescription(gauge.description())));
+                            new LongGauge.Config(CATEGORY, gauge.grafanaLabel()).withDescription(gauge.description())));
         }
     }
 

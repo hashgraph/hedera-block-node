@@ -17,13 +17,10 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
@@ -37,25 +34,27 @@ import java.util.Set;
  */
 public final class BlockAsDirWriterBuilder {
     private final BlockNodeContext blockNodeContext;
+    private final BlockRemover blockRemover;
     private FileAttribute<Set<PosixFilePermission>> folderPermissions;
-    private BlockRemover blockRemover;
 
-    private BlockAsDirWriterBuilder(@NonNull final BlockNodeContext blockNodeContext) {
+    private BlockAsDirWriterBuilder(
+            @NonNull final BlockNodeContext blockNodeContext, @NonNull final BlockRemover blockRemover) {
         this.blockNodeContext = Objects.requireNonNull(blockNodeContext);
-        final PersistenceStorageConfig config =
-                blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
-        this.blockRemover = new BlockAsDirRemover(Path.of(config.rootPath()));
+        this.blockRemover = Objects.requireNonNull(blockRemover);
     }
 
     /**
      * Creates a new block writer builder using the minimum required parameters.
      *
      * @param blockNodeContext is required to provide metrics reporting mechanisms .
+     * @param blockRemover todo
+     *
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
-    public static BlockAsDirWriterBuilder newBuilder(@NonNull final BlockNodeContext blockNodeContext) {
-        return new BlockAsDirWriterBuilder(blockNodeContext);
+    public static BlockAsDirWriterBuilder newBuilder(
+            @NonNull final BlockNodeContext blockNodeContext, @NonNull final BlockRemover blockRemover) {
+        return new BlockAsDirWriterBuilder(blockNodeContext, blockRemover);
     }
 
     /**
@@ -73,22 +72,6 @@ public final class BlockAsDirWriterBuilder {
     }
 
     /**
-     * Optionally, provide a block remover to remove blocks from storage.
-     *
-     * <p>By default, the block writer will use the block remover defined in {@link
-     * BlockAsDirRemover}. This method is primarily used for testing purposes. Default values should
-     * be sufficient for production use.
-     *
-     * @param blockRemover the block remover to use when removing blocks from storage.
-     * @return a block writer builder configured with required parameters.
-     */
-    @NonNull
-    public BlockAsDirWriterBuilder blockRemover(@NonNull final BlockRemover blockRemover) {
-        this.blockRemover = Objects.requireNonNull(blockRemover);
-        return this;
-    }
-
-    /**
      * Use the build method to construct a block writer to write blocks to storage.
      *
      * @return a new block writer configured with the parameters provided to the builder.
@@ -96,6 +79,6 @@ public final class BlockAsDirWriterBuilder {
      */
     @NonNull
     public BlockWriter<List<BlockItem>> build() throws IOException {
-        return new BlockAsDirWriter(blockRemover, folderPermissions, blockNodeContext);
+        return new BlockAsDirWriter(blockNodeContext, blockRemover, folderPermissions);
     }
 }

@@ -18,7 +18,6 @@ package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 import static com.hedera.block.server.Constants.BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME;
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -26,7 +25,6 @@ import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -52,28 +50,30 @@ import java.util.Set;
  * to remove the current, incomplete block (directory) before re-throwing the exception to the
  * caller.
  */
-class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
+class BlockAsDirWriter extends AbstractBlockWriter<List<BlockItem>> {
     private final Logger LOGGER = System.getLogger(getClass().getName());
     private final Path blockNodeRootPath;
     private final FileAttribute<Set<PosixFilePermission>> folderPermissions;
-    private final BlockRemover blockRemover;
-    private final MetricsService metricsService;
     private long blockNodeFileNameIndex;
     private Path currentBlockDir;
 
     /**
      * Use the corresponding builder to construct a new BlockAsDirWriter with the given parameters.
      *
-     * @param blockRemover the block remover to use for removing blocks
-     * @param folderPermissions the folder permissions to use for writing blocks, if null provided then defaults will be used
      * @param blockNodeContext the block node context to use for writing blocks
+     * @param blockRemover the block remover to use for removing blocks
+     * @param folderPermissions the folder permissions to use for writing blocks, if null provided then defaults
+     * will be used
+     *
      * @throws IOException if an error occurs while initializing the BlockAsDirWriter
      */
     BlockAsDirWriter(
+            @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
-            final FileAttribute<Set<PosixFilePermission>> folderPermissions,
-            @NonNull final BlockNodeContext blockNodeContext)
+            final FileAttribute<Set<PosixFilePermission>> folderPermissions)
             throws IOException {
+        super(blockNodeContext.metricsService(), blockRemover);
+
         LOGGER.log(INFO, "Initializing FileSystemBlockStorage");
 
         final PersistenceStorageConfig config =
@@ -81,10 +81,7 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
 
         final Path blockNodeRootPath = Path.of(config.rootPath());
         LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);
-
         this.blockNodeRootPath = blockNodeRootPath;
-        this.blockRemover = blockRemover;
-        this.metricsService = blockNodeContext.metricsService();
 
         if (Objects.nonNull(folderPermissions)) {
             this.folderPermissions = folderPermissions;
@@ -144,7 +141,7 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
         }
 
         if (toWrite.getLast().hasBlockProof()) {
-            metricsService.get(BlocksPersisted).increment();
+            incrementBlocksPersisted();
             return Optional.of(toWrite);
         } else {
             return Optional.empty();

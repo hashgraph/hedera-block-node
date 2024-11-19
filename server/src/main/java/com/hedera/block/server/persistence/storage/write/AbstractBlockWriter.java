@@ -16,32 +16,29 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import com.hedera.block.server.config.BlockNodeContext;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
+
+import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.swirlds.metrics.api.Counter;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.util.List;
 import java.util.Objects;
 
 /**
  * TODO: add documentation
  */
-public final class BlockAsFileWriterBuilder {
-    private final BlockNodeContext blockNodeContext;
-    private final BlockRemover blockRemover;
+abstract class AbstractBlockWriter<V> implements BlockWriter<V> {
+    private final Counter blocksPersistedCounter;
+    protected final BlockRemover blockRemover;
 
-    private BlockAsFileWriterBuilder(
-            @NonNull final BlockNodeContext blockNodeContext, @NonNull final BlockRemover blockRemover) {
-        this.blockNodeContext = Objects.requireNonNull(blockNodeContext);
+    protected AbstractBlockWriter(
+            @NonNull final MetricsService metricsService, @NonNull final BlockRemover blockRemover) {
+        this.blocksPersistedCounter =
+                Objects.requireNonNull(Objects.requireNonNull(metricsService).get(BlocksPersisted));
         this.blockRemover = Objects.requireNonNull(blockRemover);
     }
 
-    public static BlockAsFileWriterBuilder newBuilder(
-            @NonNull final BlockNodeContext blockNodeContext, @NonNull final BlockRemover blockRemover) {
-        return new BlockAsFileWriterBuilder(blockNodeContext, blockRemover);
-    }
-
-    public BlockWriter<List<BlockItem>> build() {
-        return new BlockAsFileWriter(blockNodeContext, blockRemover);
+    protected final void incrementBlocksPersisted() {
+        blocksPersistedCounter.increment();
     }
 }

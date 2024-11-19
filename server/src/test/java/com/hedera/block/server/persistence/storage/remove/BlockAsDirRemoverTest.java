@@ -18,7 +18,8 @@ package com.hedera.block.server.persistence.storage.remove;
 
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.from;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
@@ -39,12 +40,17 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class BlockAsDirRemoverTest {
-
     private final Logger LOGGER = System.getLogger(getClass().getName());
-
     private static final String TEMP_DIR = "block-node-unit-test-dir";
+
+    @Mock
+    private BlockRemover blockRemoverMock;
 
     private Path testPath;
     private BlockNodeContext blockNodeContext;
@@ -62,34 +68,37 @@ public class BlockAsDirRemoverTest {
 
     @Test
     public void testRemoveNonExistentBlock() throws IOException, ParseException {
-
         // Write a block
-        final var blockItems = PersistTestUtils.generateBlockItems(1);
+        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
-        final BlockWriter<List<BlockItem>> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
+        final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
+                        blockNodeContext, blockRemoverMock)
+                .build();
         for (final BlockItem blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));
         }
 
         // Remove a block that does not exist
-        final BlockRemover blockRemover = new BlockAsDirRemover(testPath);
-        blockRemover.remove(2);
+        final BlockRemover toTest = new BlockAsDirRemover(testPath);
+        toTest.remove(2);
 
         // Verify the block was not removed
         final BlockReader<Block> blockReader =
                 BlockAsDirReaderBuilder.newBuilder(testConfig).build();
-        Optional<Block> blockOpt = blockReader.read(1);
-        assert (blockOpt.isPresent());
-        assertEquals(
-                blockItems.getFirst().blockHeader(),
-                blockOpt.get().items().getFirst().blockHeader());
+        final Optional<Block> before = blockReader.read(1);
+        assertThat(before)
+            .isNotNull()
+            .isPresent()
+            .get()
+            .returns(blockItems.getFirst().blockHeader(), from(block -> block.items().getFirst().blockHeader()));
 
         // Now remove the block
-        blockRemover.remove(1);
+        toTest.remove(1);
 
         // Verify the block is removed
-        blockOpt = blockReader.read(1);
-        assert (blockOpt.isEmpty());
+        final Optional<Block> after = blockReader.read(1);
+        assertThat(after)
+            .isNotNull()
+            .isEmpty();
     }
 }

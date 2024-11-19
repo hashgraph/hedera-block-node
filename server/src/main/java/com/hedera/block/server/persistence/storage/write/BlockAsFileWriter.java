@@ -16,6 +16,8 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
+import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
@@ -25,10 +27,13 @@ import java.util.Optional;
 /**
  * TODO: add documentation
  */
-class BlockAsFileWriter implements BlockWriter<List<BlockItem>> {
+class BlockAsFileWriter extends AbstractBlockWriter<List<BlockItem>> {
+    BlockAsFileWriter(@NonNull final BlockNodeContext blockNodeContext, @NonNull final BlockRemover blockRemover) {
+        super(blockNodeContext.metricsService(), blockRemover);
+    }
 
     @Override
     public Optional<List<BlockItem>> write(@NonNull final List<BlockItem> toWrite) throws IOException {
-        return Optional.empty();
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 }

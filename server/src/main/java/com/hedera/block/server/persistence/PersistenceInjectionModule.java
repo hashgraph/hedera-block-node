@@ -22,7 +22,13 @@ import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.StorageType;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
+import com.hedera.block.server.persistence.storage.read.BlockAsFileReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
+import com.hedera.block.server.persistence.storage.read.NoOpBlockReader;
+import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
+import com.hedera.block.server.persistence.storage.remove.BlockAsFileRemover;
+import com.hedera.block.server.persistence.storage.remove.BlockRemover;
+import com.hedera.block.server.persistence.storage.remove.NoOpRemover;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockAsFileWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
@@ -33,8 +39,11 @@ import com.hedera.hapi.block.stream.BlockItem;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import javax.inject.Singleton;
 
 /** A Dagger module for providing dependencies for Persistence Module. */
@@ -49,7 +58,10 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static BlockWriter<List<BlockItem>> providesBlockWriter(final BlockNodeContext blockNodeContext) {
+    static BlockWriter<List<BlockItem>> providesBlockWriter(
+            @NonNull final BlockNodeContext blockNodeContext, @NonNull final BlockRemover blockRemover) {
+        Objects.requireNonNull(blockRemover);
+        Objects.requireNonNull(blockNodeContext);
         final StorageType persistenceType = blockNodeContext
                 .configuration()
                 .getConfigData(PersistenceStorageConfig.class)
@@ -58,10 +70,11 @@ public interface PersistenceInjectionModule {
             return switch (persistenceType) {
                 case null -> throw new NullPointerException(
                         "Persistence StorageType cannot be [null], cannot create an instance of BlockWriter");
-                case BLOCK_AS_FILE -> BlockAsFileWriterBuilder.newBuilder().build();
-                case BLOCK_AS_DIR -> BlockAsDirWriterBuilder.newBuilder(blockNodeContext)
+                case BLOCK_AS_FILE -> BlockAsFileWriterBuilder.newBuilder(blockNodeContext, blockRemover)
                         .build();
-                case NOOP -> new NoOpBlockWriter(blockNodeContext);
+                case BLOCK_AS_DIR -> BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemover)
+                        .build();
+                case NOOP -> new NoOpBlockWriter(blockNodeContext, blockRemover);
             };
         } catch (final IOException e) {
             throw new RuntimeException("Failed to create BlockWriter", e);
@@ -76,8 +89,34 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static BlockReader<Block> providesBlockReader(PersistenceStorageConfig config) {
-        return BlockAsDirReaderBuilder.newBuilder(config).build();
+    static BlockReader<Block> providesBlockReader(@NonNull final PersistenceStorageConfig config) {
+        final StorageType persistenceType = Objects.requireNonNull(config).type();
+        return switch (persistenceType) {
+            case null -> throw new NullPointerException(
+                    "Persistence StorageType cannot be [null], cannot create an instance of BlockWriter");
+            case BLOCK_AS_FILE -> BlockAsFileReaderBuilder.newBuilder().build();
+            case BLOCK_AS_DIR -> BlockAsDirReaderBuilder.newBuilder(config).build();
+            case NOOP -> new NoOpBlockReader();
+        };
+    }
+
+    /**
+     * Provides a block reader singleton using the persistence storage config.
+     *
+     * @param config the persistence storage configuration needed to build the block reader
+     * @return a block reader singleton
+     */
+    @Provides
+    @Singleton
+    static BlockRemover providesBlockRemover(@NonNull final PersistenceStorageConfig config) {
+        final StorageType persistenceType = Objects.requireNonNull(config).type();
+        return switch (persistenceType) {
+            case null -> throw new NullPointerException(
+                    "Persistence StorageType cannot be [null], cannot create an instance of BlockWriter");
+            case BLOCK_AS_FILE -> new BlockAsFileRemover();
+            case BLOCK_AS_DIR -> new BlockAsDirRemover(Path.of(config.rootPath()));
+            case NOOP -> new NoOpRemover();
+        };
     }
 
     /**
@@ -89,5 +128,5 @@ public interface PersistenceInjectionModule {
     @Binds
     @Singleton
     BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> bindBlockNodeEventHandler(
-            StreamPersistenceHandlerImpl streamPersistenceHandler);
+            @NonNull final StreamPersistenceHandlerImpl streamPersistenceHandler);
 }

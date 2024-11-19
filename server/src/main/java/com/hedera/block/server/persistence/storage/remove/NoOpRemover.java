@@ -16,15 +16,12 @@
 
 package com.hedera.block.server.persistence.storage.remove;
 
-import java.io.IOException;
-
-/** The BlockRemover interface defines the contract for removing a block from storage. */
-public interface BlockRemover {
-    /**
-     * Remove a block with the given block number.
-     *
-     * @param blockNumber the block number of the block to remove.
-     * @throws IOException when failing to remove a block.
-     */
-    void remove(final long blockNumber) throws IOException;
+/**
+ * TODO: add documentation
+ */
+public class NoOpRemover implements BlockRemover {
+    @Override
+    public void remove(final long blockNumber) {
+        // do nothing
+    }
 }

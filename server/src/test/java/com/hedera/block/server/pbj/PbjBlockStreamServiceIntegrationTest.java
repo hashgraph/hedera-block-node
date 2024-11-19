@@ -39,6 +39,7 @@ import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.notifier.NotifierImpl;
 import com.hedera.block.server.persistence.StreamPersistenceHandlerImpl;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
+import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
@@ -129,6 +130,9 @@ public class PbjBlockStreamServiceIntegrationTest {
 
     @Mock
     private BlockReader<Block> blockReader;
+
+    @Mock
+    private BlockRemover blockRemover;
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
 
@@ -294,8 +298,9 @@ public class PbjBlockStreamServiceIntegrationTest {
     public void testFullProducerConsumerHappyPath() throws IOException {
         int numberOfBlocks = 100;
 
-        final BlockWriter<List<BlockItem>> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
+        final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
+                        blockNodeContext, blockRemover)
+                .build();
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
         final Flow.Subscriber<PublishStreamRequest> producerBlockItemObserver =
@@ -488,7 +493,8 @@ public class PbjBlockStreamServiceIntegrationTest {
 
         // Use a spy to make sure the write() method throws an IOException
         final BlockWriter<List<BlockItem>> blockWriter =
-                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build());
+                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemover)
+                        .build());
         doThrow(IOException.class).when(blockWriter).write(blockItems);
 
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);

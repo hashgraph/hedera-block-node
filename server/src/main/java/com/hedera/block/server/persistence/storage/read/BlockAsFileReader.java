@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage.remove;
+package com.hedera.block.server.persistence.storage.read;
 
-import java.io.IOException;
+import com.hedera.hapi.block.stream.Block;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Optional;
 
-/** The BlockRemover interface defines the contract for removing a block from storage. */
-public interface BlockRemover {
-    /**
-     * Remove a block with the given block number.
-     *
-     * @param blockNumber the block number of the block to remove.
-     * @throws IOException when failing to remove a block.
-     */
-    void remove(final long blockNumber) throws IOException;
+/**
+ * TODO: add documentation
+ */
+public class BlockAsFileReader implements BlockReader<Block> {
+    @NonNull
+    @Override
+    public Optional<Block> read(final long blockNumber) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
 }
