@@ -28,8 +28,8 @@ import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.protoc.SingleBlockResponse;
-import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -50,7 +50,7 @@ class BlockAccessServiceTest {
     private Flow.Subscriber<SingleBlockResponse> responseObserver;
 
     @Mock
-    private BlockReader<Block> blockReader;
+    private BlockReader<BlockUnparsed> blockReader;
 
     @Mock
     private BlockWriter<List<BlockItem>> blockWriter;

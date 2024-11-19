@@ -33,8 +33,8 @@ import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
-import com.hedera.hapi.block.stream.Block;
 import com.swirlds.config.api.Configuration;
 import java.io.IOException;
 import java.util.List;
@@ -101,8 +101,8 @@ class PersistenceInjectionModuleTest {
     @Test
     void testProvidesBlockReader() {
 
-        BlockReader<Block> blockReader = PersistenceInjectionModule.providesBlockReader(persistenceStorageConfig);
-
+        BlockReader<BlockUnparsed> blockReader =
+                PersistenceInjectionModule.providesBlockReader(persistenceStorageConfig);
         assertNotNull(blockReader);
     }
 

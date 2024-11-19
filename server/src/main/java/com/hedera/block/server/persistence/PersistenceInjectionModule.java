@@ -26,8 +26,8 @@ import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.persistence.storage.write.NoOpBlockWriter;
 import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
-import com.hedera.hapi.block.stream.Block;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
@@ -70,7 +70,7 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static BlockReader<Block> providesBlockReader(PersistenceStorageConfig config) {
+    static BlockReader<BlockUnparsed> providesBlockReader(PersistenceStorageConfig config) {
         return BlockAsDirReaderBuilder.newBuilder(config).build();
     }
 

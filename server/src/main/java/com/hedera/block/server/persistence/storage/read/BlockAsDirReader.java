@@ -23,8 +23,8 @@ import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -47,7 +47,7 @@ import java.util.Set;
  * The BlockAsDirReader class reads a block from the file system. The block is stored as a directory
  * containing block items. The block items are stored as files within the block directory.
  */
-class BlockAsDirReader implements BlockReader<Block> {
+class BlockAsDirReader implements BlockReader<BlockUnparsed> {
     private final Logger LOGGER = System.getLogger(getClass().getName());
     private final Path blockNodeRootPath;
     private final FileAttribute<Set<PosixFilePermission>> folderPermissions;
@@ -96,7 +96,7 @@ class BlockAsDirReader implements BlockReader<Block> {
      */
     @NonNull
     @Override
-    public Optional<Block> read(final long blockNumber) throws IOException, ParseException {
+    public Optional<BlockUnparsed> read(final long blockNumber) throws IOException, ParseException {
 
         // Verify path attributes of the block node root path
         if (isPathDisqualified(blockNodeRootPath)) {
@@ -121,11 +121,11 @@ class BlockAsDirReader implements BlockReader<Block> {
             // 10.blk), the loop will directly fetch the BlockItems in order based on
             // their file names. The loop will exit when it attempts to read a
             // BlockItem file that does not exist (e.g., 11.blk).
-            final Block.Builder builder = Block.newBuilder();
-            final List<BlockItem> blockItems = new ArrayList<>();
+            final BlockUnparsed.Builder builder = BlockUnparsed.newBuilder();
+            final List<BlockItemUnparsed> blockItems = new ArrayList<>();
             for (int i = 1; ; i++) {
                 final Path blockItemPath = blockPath.resolve(i + BLOCK_FILE_EXTENSION);
-                final Optional<BlockItem> blockItemOpt = readBlockItem(blockItemPath.toString());
+                final Optional<BlockItemUnparsed> blockItemOpt = readBlockItem(blockItemPath.toString());
                 if (blockItemOpt.isPresent()) {
                     blockItems.add(blockItemOpt.get());
                     continue;
@@ -134,7 +134,7 @@ class BlockAsDirReader implements BlockReader<Block> {
                 break;
             }
 
-            builder.items(blockItems);
+            builder.blockItems(blockItems);
 
             // Return the Block
             return Optional.of(builder.build());
@@ -145,12 +145,11 @@ class BlockAsDirReader implements BlockReader<Block> {
     }
 
     @NonNull
-    private Optional<BlockItem> readBlockItem(@NonNull final String blockItemPath) throws IOException, ParseException {
+    private Optional<BlockItemUnparsed> readBlockItem(@NonNull final String blockItemPath)
+            throws IOException, ParseException {
 
         try (final FileInputStream fis = new FileInputStream(blockItemPath)) {
-
-            BlockItem blockItem = BlockItem.PROTOBUF.parse(Bytes.wrap(fis.readAllBytes()));
-            return Optional.of(blockItem);
+            return Optional.of(BlockItemUnparsed.PROTOBUF.parse(Bytes.wrap(fis.readAllBytes())));
         } catch (FileNotFoundException io) {
             final File f = new File(blockItemPath);
             if (!f.exists()) {

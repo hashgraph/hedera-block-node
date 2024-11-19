@@ -25,10 +25,10 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.SingleBlockRequest;
-import com.hedera.hapi.block.SingleBlockResponse;
 import com.hedera.hapi.block.SingleBlockResponseCode;
-import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.SingleBlockResponseUnparsed;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.grpc.Pipeline;
 import com.hedera.pbj.runtime.grpc.Pipelines;
@@ -50,7 +50,7 @@ public class PbjBlockAccessServiceProxy implements PbjBlockAccessService {
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final ServiceStatus serviceStatus;
-    private final BlockReader<Block> blockReader;
+    private final BlockReader<BlockUnparsed> blockReader;
     private final MetricsService metricsService;
 
     /**
@@ -63,7 +63,7 @@ public class PbjBlockAccessServiceProxy implements PbjBlockAccessService {
     @Inject
     public PbjBlockAccessServiceProxy(
             @NonNull final ServiceStatus serviceStatus,
-            @NonNull final BlockReader<Block> blockReader,
+            @NonNull final BlockReader<BlockUnparsed> blockReader,
             @NonNull final BlockNodeContext blockNodeContext) {
         this.serviceStatus = serviceStatus;
         this.blockReader = blockReader;
@@ -83,7 +83,7 @@ public class PbjBlockAccessServiceProxy implements PbjBlockAccessService {
         try {
             final var m = (BlockAccessMethod) method;
             return switch (m) {
-                case singleBlock -> Pipelines.<SingleBlockRequest, SingleBlockResponse>unary()
+                case singleBlock -> Pipelines.<SingleBlockRequest, SingleBlockResponseUnparsed>unary()
                         .mapRequest(bytes -> parseSingleBlockRequest(bytes, options))
                         .method(this::singleBlock)
                         .mapResponse(reply -> createSingleBlockResponse(reply, options))
@@ -96,19 +96,19 @@ public class PbjBlockAccessServiceProxy implements PbjBlockAccessService {
         }
     }
 
-    SingleBlockResponse singleBlock(SingleBlockRequest singleBlockRequest) {
+    SingleBlockResponseUnparsed singleBlock(SingleBlockRequest singleBlockRequest) {
 
         LOGGER.log(DEBUG, "Executing Unary singleBlock gRPC method");
 
         if (serviceStatus.isRunning()) {
             final long blockNumber = singleBlockRequest.blockNumber();
             try {
-                final Optional<Block> blockOpt = blockReader.read(blockNumber);
+                final Optional<BlockUnparsed> blockOpt = blockReader.read(blockNumber);
                 if (blockOpt.isPresent()) {
                     LOGGER.log(DEBUG, "Successfully returning block number: {0}", blockNumber);
                     metricsService.get(SingleBlocksRetrieved).increment();
 
-                    return SingleBlockResponse.newBuilder()
+                    return SingleBlockResponseUnparsed.newBuilder()
                             .status(SingleBlockResponseCode.READ_BLOCK_SUCCESS)
                             .block(blockOpt.get())
                             .build();
@@ -116,27 +116,27 @@ public class PbjBlockAccessServiceProxy implements PbjBlockAccessService {
                     LOGGER.log(DEBUG, "Block number {0} not found", blockNumber);
                     metricsService.get(SingleBlocksNotFound).increment();
 
-                    return SingleBlockResponse.newBuilder()
+                    return SingleBlockResponseUnparsed.newBuilder()
                             .status(SingleBlockResponseCode.READ_BLOCK_NOT_FOUND)
                             .build();
                 }
             } catch (IOException e) {
                 LOGGER.log(ERROR, "Error reading block number: {0}", blockNumber);
 
-                return SingleBlockResponse.newBuilder()
+                return SingleBlockResponseUnparsed.newBuilder()
                         .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
                         .build();
             } catch (ParseException e) {
                 LOGGER.log(ERROR, "Error parsing block number: {0}", blockNumber);
 
-                return SingleBlockResponse.newBuilder()
+                return SingleBlockResponseUnparsed.newBuilder()
                         .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
                         .build();
             }
         } else {
             LOGGER.log(ERROR, "Unary singleBlock gRPC method is not currently running");
 
-            return SingleBlockResponse.newBuilder()
+            return SingleBlockResponseUnparsed.newBuilder()
                     .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
                     .build();
         }
@@ -145,13 +145,12 @@ public class PbjBlockAccessServiceProxy implements PbjBlockAccessService {
     @NonNull
     private SingleBlockRequest parseSingleBlockRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options) throws ParseException {
-        // TODO: Copying bytes to avoid using references passed from Helidon. Investigate if this is necessary.
-        return SingleBlockRequest.PROTOBUF.parse(Bytes.wrap(message.toByteArray()));
+        return SingleBlockRequest.PROTOBUF.parse(message);
     }
 
     @NonNull
     private Bytes createSingleBlockResponse(
-            @NonNull final SingleBlockResponse reply, @NonNull final RequestOptions options) {
-        return SingleBlockResponse.PROTOBUF.toBytes(reply);
+            @NonNull final SingleBlockResponseUnparsed reply, @NonNull final RequestOptions options) {
+        return SingleBlockResponseUnparsed.PROTOBUF.toBytes(reply);
     }
 }

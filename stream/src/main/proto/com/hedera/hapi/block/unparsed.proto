@@ -31,6 +31,15 @@ message SubscribeStreamResponseUnparsed {
   }
 }
 
+message SingleBlockResponseUnparsed {
+  com.hedera.hapi.block.SingleBlockResponseCode status = 1;
+  BlockUnparsed block = 2;
+}
+
+message BlockUnparsed {
+  repeated BlockItemUnparsed block_items = 1;
+}
+
 message BlockItemSetUnparsed {
   repeated BlockItemUnparsed block_items = 1;
 }

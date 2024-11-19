@@ -29,7 +29,7 @@ import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
-import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -64,9 +64,9 @@ public class BlockAsDirReaderTest {
 
     @Test
     public void testReadBlockDoesNotExist() throws IOException, ParseException {
-        final BlockReader<Block> blockReader =
+        final BlockReader<BlockUnparsed> blockReader =
                 BlockAsDirReaderBuilder.newBuilder(config).build();
-        final Optional<Block> blockOpt = blockReader.read(10000);
+        final Optional<BlockUnparsed> blockOpt = blockReader.read(10000);
         assertTrue(blockOpt.isEmpty());
     }
 
@@ -135,9 +135,9 @@ public class BlockAsDirReaderTest {
         PersistTestUtils.writeBlockItemToPath(blockNodeRootPath.resolve(Path.of("1")), blockItems.getFirst());
 
         // Should return empty because the path is not a directory
-        final BlockReader<Block> blockReader =
+        final BlockReader<BlockUnparsed> blockReader =
                 BlockAsDirReaderBuilder.newBuilder(config).build();
-        final Optional<Block> blockOpt = blockReader.read(1);
+        final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertTrue(blockOpt.isEmpty());
     }
 
@@ -174,7 +174,7 @@ public class BlockAsDirReaderTest {
         final TestBlockAsDirReader blockReader = spy(new TestBlockAsDirReader(config));
         doThrow(IOException.class).when(blockReader).setPerm(any(), any());
 
-        final Optional<Block> blockOpt = blockReader.read(1);
+        final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertTrue(blockOpt.isEmpty());
     }
 
