@@ -14,27 +14,19 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage.read;
+package com.hedera.block.server.persistence.storage.path;
 
-import static java.lang.System.Logger.Level.INFO;
-
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.IOException;
-import java.util.Optional;
+import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * TODO: add documentation
  */
-public class NoOpBlockReader implements BlockReader<Block> {
-    public NoOpBlockReader() {
-        System.getLogger(getClass().getName()).log(INFO, "Using " + getClass().getSimpleName());
-    }
+abstract class AbstractPathResolver implements PathResolver {
+    private final Path root;
 
-    @NonNull
-    @Override
-    public Optional<Block> read(final long blockNumber) throws IOException, ParseException {
-        return Optional.empty();
+    AbstractPathResolver(@NonNull final Path root) {
+        this.root = Objects.requireNonNull(root);
     }
 }

@@ -20,7 +20,6 @@ import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveB
 import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItems;
 import static java.lang.System.Logger;
-import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -38,6 +37,7 @@ import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.notifier.NotifierImpl;
 import com.hedera.block.server.persistence.StreamPersistenceHandlerImpl;
+import com.hedera.block.server.persistence.storage.path.PathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
@@ -67,7 +67,6 @@ import com.lmax.disruptor.BatchEventProcessor;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -81,6 +80,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -132,23 +132,22 @@ public class PbjBlockStreamServiceIntegrationTest {
     private BlockReader<Block> blockReader;
 
     @Mock
-    private BlockRemover blockRemover;
+    private BlockRemover blockRemoverMock;
 
-    private static final String TEMP_DIR = "block-node-unit-test-dir";
+    @Mock
+    private PathResolver pathResolverMock;
 
+    @TempDir
     private Path testPath;
+
     private BlockNodeContext blockNodeContext;
 
     private static final int testTimeout = 2000;
 
     @BeforeEach
     public void setUp() throws IOException {
-        testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
-
         Map<String, String> properties = new HashMap<>();
         properties.put("persistence.storage.rootPath", testPath.toString());
-
         blockNodeContext = TestConfigUtil.getTestBlockNodeContext(properties);
     }
 
@@ -299,7 +298,7 @@ public class PbjBlockStreamServiceIntegrationTest {
         int numberOfBlocks = 100;
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, blockRemover)
+                        blockNodeContext, blockRemoverMock, pathResolverMock)
                 .build();
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
@@ -493,7 +492,7 @@ public class PbjBlockStreamServiceIntegrationTest {
 
         // Use a spy to make sure the write() method throws an IOException
         final BlockWriter<List<BlockItem>> blockWriter =
-                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemover)
+                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemoverMock, pathResolverMock)
                         .build());
         doThrow(IOException.class).when(blockWriter).write(blockItems);
 

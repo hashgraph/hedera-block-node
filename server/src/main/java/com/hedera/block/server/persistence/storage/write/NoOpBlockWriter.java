@@ -19,6 +19,7 @@ package com.hedera.block.server.persistence.storage.write;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.persistence.storage.path.PathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -36,9 +37,13 @@ public class NoOpBlockWriter extends AbstractBlockWriter<List<BlockItem>> {
      * Creates a new NoOpBlockWriter instance for testing and troubleshooting only.
      *
      * @param blockNodeContext the block node context
+     * @param pathResolver used internally
      */
-    public NoOpBlockWriter(@NonNull final BlockNodeContext blockNodeContext, @NonNull final BlockRemover blockRemover) {
-        super(blockNodeContext.metricsService(), blockRemover);
+    public NoOpBlockWriter(
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final BlockRemover blockRemover,
+            @NonNull final PathResolver pathResolver) {
+        super(blockNodeContext.metricsService(), blockRemover, pathResolver);
         System.getLogger(getClass().getName()).log(INFO, "Using " + getClass().getSimpleName());
     }
 

@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage.remove;
+package com.hedera.block.server.persistence.storage.path;
 
-import static java.lang.System.Logger.Level.INFO;
+import java.nio.file.Path;
 
 /**
  * TODO: add documentation
  */
-public class NoOpRemover implements BlockRemover {
-    public NoOpRemover() {
-        System.getLogger(getClass().getName()).log(INFO, "Using " + getClass().getSimpleName());
-    }
-
-    @Override
-    public void remove(final long blockNumber) {
-        // do nothing
-    }
+public interface PathResolver {
+    Path resolvePathToBlock(final long blockNumber);
 }

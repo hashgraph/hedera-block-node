@@ -19,6 +19,7 @@ package com.hedera.block.server.persistence.storage.write;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.persistence.storage.path.PathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.swirlds.metrics.api.Counter;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -30,12 +31,16 @@ import java.util.Objects;
 abstract class AbstractBlockWriter<V> implements BlockWriter<V> {
     private final Counter blocksPersistedCounter;
     protected final BlockRemover blockRemover;
+    protected final PathResolver pathResolver;
 
     protected AbstractBlockWriter(
-            @NonNull final MetricsService metricsService, @NonNull final BlockRemover blockRemover) {
+            @NonNull final MetricsService metricsService,
+            @NonNull final BlockRemover blockRemover,
+            @NonNull final PathResolver pathResolver) {
         Objects.requireNonNull(metricsService);
         this.blocksPersistedCounter = Objects.requireNonNull(metricsService.get(BlocksPersisted));
         this.blockRemover = Objects.requireNonNull(blockRemover);
+        this.pathResolver = Objects.requireNonNull(pathResolver);
     }
 
     protected final void incrementBlocksPersisted() {

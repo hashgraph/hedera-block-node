@@ -36,6 +36,7 @@ import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.path.PathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
@@ -91,7 +92,7 @@ public class BlockAsDirWriterTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class))
+                        blockNodeContext, mock(BlockRemover.class), mock(PathResolver.class))
                 .folderPermissions(DEFAULT_TEST_FOLDER_PERMISSIONS)
                 .build();
         for (int i = 0; i < 10; i++) {
@@ -142,7 +143,7 @@ public class BlockAsDirWriterTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class))
+                        blockNodeContext, mock(BlockRemover.class), mock(PathResolver.class))
                 .build();
 
         // Change the permissions on the block node root directory
@@ -193,7 +194,7 @@ public class BlockAsDirWriterTest {
 
         // Use a spy to simulate an IOException when the first block item is written
         final BlockWriter<List<BlockItem>> blockWriter =
-                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemover)
+                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemover, mock(PathResolver.class))
                         .build());
         doThrow(IOException.class).when(blockWriter).write(blockItems);
         assertThrows(IOException.class, () -> blockWriter.write(blockItems));
@@ -204,7 +205,7 @@ public class BlockAsDirWriterTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class))
+                        blockNodeContext, mock(BlockRemover.class), mock(PathResolver.class))
                 .build();
 
         // Write the first block item to create the block
@@ -319,7 +320,7 @@ public class BlockAsDirWriterTest {
                 final FileAttribute<Set<PosixFilePermission>> filePerms,
                 final BlockNodeContext blockNodeContext)
                 throws IOException {
-            super(blockNodeContext, blockRemover, filePerms);
+            super(blockNodeContext, blockRemover, mock(PathResolver.class), filePerms);
         }
 
         @Override

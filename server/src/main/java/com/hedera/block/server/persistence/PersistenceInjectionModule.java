@@ -21,6 +21,10 @@ import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.StorageType;
+import com.hedera.block.server.persistence.storage.path.BlockAsDirPathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockAsFilePathResolver;
+import com.hedera.block.server.persistence.storage.path.NoOpPathResolver;
+import com.hedera.block.server.persistence.storage.path.PathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockAsFileReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
@@ -49,7 +53,6 @@ import javax.inject.Singleton;
 /** A Dagger module for providing dependencies for Persistence Module. */
 @Module
 public interface PersistenceInjectionModule {
-
     /**
      * Provides a block writer singleton using the block node context.
      *
@@ -59,9 +62,12 @@ public interface PersistenceInjectionModule {
     @Provides
     @Singleton
     static BlockWriter<List<BlockItem>> providesBlockWriter(
-            @NonNull final BlockNodeContext blockNodeContext, @NonNull final BlockRemover blockRemover) {
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final BlockRemover blockRemover,
+            @NonNull final PathResolver pathResolver) {
         Objects.requireNonNull(blockNodeContext);
         Objects.requireNonNull(blockRemover);
+        Objects.requireNonNull(pathResolver);
         final StorageType persistenceType = blockNodeContext
                 .configuration()
                 .getConfigData(PersistenceStorageConfig.class)
@@ -70,11 +76,11 @@ public interface PersistenceInjectionModule {
             return switch (persistenceType) {
                 case null -> throw new NullPointerException(
                         "Persistence StorageType cannot be [null], cannot create an instance of BlockWriter");
-                case BLOCK_AS_FILE -> BlockAsFileWriterBuilder.newBuilder(blockNodeContext, blockRemover)
+                case BLOCK_AS_FILE -> BlockAsFileWriterBuilder.newBuilder(blockNodeContext, blockRemover, pathResolver)
                         .build();
-                case BLOCK_AS_DIR -> BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemover)
+                case BLOCK_AS_DIR -> BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemover, pathResolver)
                         .build();
-                case NOOP -> new NoOpBlockWriter(blockNodeContext, blockRemover);
+                case NOOP -> new NoOpBlockWriter(blockNodeContext, blockRemover, pathResolver);
             };
         } catch (final IOException e) {
             throw new RuntimeException("Failed to create BlockWriter", e);
@@ -84,7 +90,8 @@ public interface PersistenceInjectionModule {
     /**
      * Provides a block reader singleton using the persistence storage config.
      *
-     * @param config the persistence storage configuration needed to build the block reader
+     * @param config the persistence storage configuration needed to build the
+     * block reader
      * @return a block reader singleton
      */
     @Provides
@@ -93,7 +100,7 @@ public interface PersistenceInjectionModule {
         final StorageType persistenceType = Objects.requireNonNull(config).type();
         return switch (persistenceType) {
             case null -> throw new NullPointerException(
-                    "Persistence StorageType cannot be [null], cannot create an instance of BlockWriter");
+                    "Persistence StorageType cannot be [null], cannot create an instance of BlockReader");
             case BLOCK_AS_FILE -> BlockAsFileReaderBuilder.newBuilder().build();
             case BLOCK_AS_DIR -> BlockAsDirReaderBuilder.newBuilder(config).build();
             case NOOP -> new NoOpBlockReader();
@@ -101,10 +108,11 @@ public interface PersistenceInjectionModule {
     }
 
     /**
-     * Provides a block reader singleton using the persistence storage config.
+     * Provides a block remover singleton using the persistence storage config.
      *
-     * @param config the persistence storage configuration needed to build the block reader
-     * @return a block reader singleton
+     * @param config the persistence storage configuration needed to build the
+     * block remover
+     * @return a block remover singleton
      */
     @Provides
     @Singleton
@@ -112,10 +120,31 @@ public interface PersistenceInjectionModule {
         final StorageType persistenceType = Objects.requireNonNull(config).type();
         return switch (persistenceType) {
             case null -> throw new NullPointerException(
-                    "Persistence StorageType cannot be [null], cannot create an instance of BlockWriter");
+                    "Persistence StorageType cannot be [null], cannot create an instance of BlockRemover");
             case BLOCK_AS_FILE -> new BlockAsFileRemover();
             case BLOCK_AS_DIR -> new BlockAsDirRemover(Path.of(config.rootPath()));
             case NOOP -> new NoOpRemover();
+        };
+    }
+
+    /**
+     * Provides a path resolver singleton using the persistence storage config.
+     *
+     * @param config the persistence storage configuration needed to build the
+     * path resolver
+     * @return a path resolver singleton
+     */
+    @Provides
+    @Singleton
+    static PathResolver providesPathResolver(@NonNull final PersistenceStorageConfig config) {
+        final StorageType persistenceType = Objects.requireNonNull(config).type();
+        final Path root = Path.of(config.rootPath());
+        return switch (persistenceType) {
+            case null -> throw new NullPointerException(
+                    "Persistence StorageType cannot be [null], cannot create an instance of PathResolver");
+            case BLOCK_AS_FILE -> new BlockAsFilePathResolver(root);
+            case BLOCK_AS_DIR -> new BlockAsDirPathResolver(root);
+            case NOOP -> new NoOpPathResolver();
         };
     }
 

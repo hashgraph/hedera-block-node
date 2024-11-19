@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.path.PathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
@@ -60,7 +61,7 @@ public class BlockAsDirRemoverTest {
         final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class))
+                        blockNodeContext, mock(BlockRemover.class), mock(PathResolver.class))
                 .build();
         for (final BlockItem blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));

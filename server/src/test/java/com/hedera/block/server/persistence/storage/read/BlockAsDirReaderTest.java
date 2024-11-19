@@ -27,6 +27,7 @@ import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.path.PathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
@@ -78,7 +79,7 @@ public class BlockAsDirReaderTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class))
+                        blockNodeContext, mock(BlockRemover.class), mock(PathResolver.class))
                 .build();
         for (BlockItem blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));
@@ -100,7 +101,7 @@ public class BlockAsDirReaderTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class))
+                        blockNodeContext, mock(BlockRemover.class), mock(PathResolver.class))
                 .build();
         blockWriter.write(blockItems);
 
@@ -121,7 +122,7 @@ public class BlockAsDirReaderTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class))
+                        blockNodeContext, mock(BlockRemover.class), mock(PathResolver.class))
                 .build();
         blockWriter.write(blockItems);
 
@@ -153,7 +154,7 @@ public class BlockAsDirReaderTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class))
+                        blockNodeContext, mock(BlockRemover.class), mock(PathResolver.class))
                 .build();
         blockWriter.write(blockItems);
 
@@ -190,7 +191,7 @@ public class BlockAsDirReaderTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class))
+                        blockNodeContext, mock(BlockRemover.class), mock(PathResolver.class))
                 .build();
         blockWriter.write(blockItems);
 

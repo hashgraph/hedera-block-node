@@ -26,6 +26,7 @@ import static java.lang.System.Logger.Level.INFO;
 import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.path.PathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -58,21 +59,24 @@ class BlockAsDirWriter extends AbstractBlockWriter<List<BlockItem>> {
     private Path currentBlockDir;
 
     /**
-     * Use the corresponding builder to construct a new BlockAsDirWriter with the given parameters.
+     * Use the corresponding builder to construct a new BlockAsDirWriter with
+     * the given parameters.
      *
      * @param blockNodeContext the block node context to use for writing blocks
      * @param blockRemover the block remover to use for removing blocks
-     * @param folderPermissions the folder permissions to use for writing blocks, if null provided then defaults
-     * will be used
+     * @param pathResolver used internally to resolve paths
+     * @param folderPermissions the folder permissions to use for writing
+     * blocks, if null provided then defaults will be used
      *
      * @throws IOException if an error occurs while initializing the BlockAsDirWriter
      */
     BlockAsDirWriter(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
+            @NonNull final PathResolver pathResolver,
             final FileAttribute<Set<PosixFilePermission>> folderPermissions)
             throws IOException {
-        super(blockNodeContext.metricsService(), blockRemover);
+        super(blockNodeContext.metricsService(), blockRemover, pathResolver);
 
         LOGGER.log(INFO, "Initializing FileSystemBlockStorage");
 
