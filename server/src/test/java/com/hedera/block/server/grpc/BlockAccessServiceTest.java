@@ -18,23 +18,36 @@ package com.hedera.block.server.grpc;
 
 import static com.hedera.block.server.Constants.FULL_SERVICE_NAME_BLOCK_ACCESS;
 import static com.hedera.block.server.Constants.SERVICE_NAME_BLOCK_ACCESS;
+import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.pbj.PbjBlockAccessService;
 import com.hedera.block.server.pbj.PbjBlockAccessServiceProxy;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
+import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
-import com.hedera.hapi.block.protoc.SingleBlockResponse;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.SingleBlockRequest;
+import com.hedera.hapi.block.SingleBlockResponseCode;
+import com.hedera.hapi.block.SingleBlockResponseUnparsed;
+import com.hedera.pbj.runtime.ParseException;
+import com.hedera.pbj.runtime.grpc.Pipeline;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Flow;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,13 +60,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class BlockAccessServiceTest {
 
     @Mock
-    private Flow.Subscriber<SingleBlockResponse> responseObserver;
+    private Flow.Subscriber<? super Bytes> responseObserver;
 
     @Mock
     private BlockReader<BlockUnparsed> blockReader;
 
     @Mock
-    private BlockWriter<List<BlockItem>> blockWriter;
+    private BlockWriter<List<BlockItemUnparsed>> blockWriter;
 
     @Mock
     private ServiceStatus serviceStatus;
@@ -92,181 +105,149 @@ class BlockAccessServiceTest {
         assertEquals(1, blockAccessService.methods().size());
     }
 
-    //    @Test
-    //    void testProto() {
-    //        BlockAccessService blockAccessService =
-    //                new BlockAccessService(
-    //                        serviceStatus, blockReader, blockNodeContext.metricsService());
-    //        Descriptors.FileDescriptor fileDescriptor = blockAccessService.proto();
-    //        // Verify the current rpc methods on
-    //        Descriptors.ServiceDescriptor blockAccessServiceDescriptor =
-    //                fileDescriptor.getServices().stream()
-    //                        .filter(
-    //                                service ->
-    //                                        service.getName()
-    //                                                .equals(Constants.SERVICE_NAME_BLOCK_ACCESS))
-    //                        .findFirst()
-    //                        .orElse(null);
-    //
-    //        Assertions.assertNotNull(
-    //                blockAccessServiceDescriptor,
-    //                "Service descriptor not found for: " + Constants.SERVICE_NAME_BLOCK_ACCESS);
-    //        assertEquals(1, blockAccessServiceDescriptor.getMethods().size());
-    //
-    //        assertNotNull(blockAccessServiceDescriptor.getName(), blockAccessService.serviceName());
-    //
-    //        // Verify the current rpc methods on the service
-    //        Descriptors.MethodDescriptor singleBlockMethod =
-    //                blockAccessServiceDescriptor.getMethods().stream()
-    //                        .filter(method -> method.getName().equals(SINGLE_BLOCK_METHOD_NAME))
-    //                        .findFirst()
-    //                        .orElse(null);
-    //
-    //        assertEquals(SINGLE_BLOCK_METHOD_NAME, singleBlockMethod.getName());
-    //    }
-    //
-    //    @Test
-    //    void testSingleBlockHappyPath() throws IOException, ParseException {
-    //
-    //        final BlockReader<Block> blockReader = BlockAsDirReaderBuilder.newBuilder(config).build();
-    //
-    //        final BlockAccessService blockAccessService =
-    //                new BlockAccessService(
-    //                        serviceStatus, blockReader, blockNodeContext.metricsService());
-    //
-    //        // Enable the serviceStatus
-    //        when(serviceStatus.isRunning()).thenReturn(true);
-    //
-    //        // Generate and persist a block
-    //        final BlockWriter<List<BlockItem>> blockWriter =
-    //                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-    //        final List<BlockItem> blockItems = generateBlockItems(1);
-    //        blockWriter.write(blockItems);
-    //
-    //        // Get the block so we can verify the response payload
-    //        final Optional<Block> blockOpt = blockReader.read(1);
-    //        if (blockOpt.isEmpty()) {
-    //            fail("Block 1 should be present");
-    //            return;
-    //        }
-    //
-    //        // Build a response to verify what's passed to the response observer
-    //        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedSingleBlockResponse =
-    //                fromPbjSingleBlockSuccessResponse(blockOpt.get());
-    //
-    //        // Build a request to invoke the service
-    //        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
-    //                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
-    //                        .setBlockNumber(1)
-    //                        .build();
-    //
-    //        // Call the service
-    //        blockAccessService.protocSingleBlock(singleBlockRequest, responseObserver);
-    //        verify(responseObserver, times(1)).onNext(expectedSingleBlockResponse);
-    //    }
-    //
-    //    @Test
-    //    void testSingleBlockNotFoundPath() throws IOException, ParseException {
-    //
-    //        // Get the block so we can verify the response payload
-    //        when(blockReader.read(1)).thenReturn(Optional.empty());
-    //
-    //        // Build a response to verify what's passed to the response observer
-    //        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedNotFound =
-    //                buildSingleBlockNotFoundResponse();
-    //
-    //        // Build a request to invoke the service
-    //        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
-    //                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
-    //                        .setBlockNumber(1)
-    //                        .build();
-    //
-    //        final BlockAccessService blockAccessService =
-    //                new BlockAccessService(
-    //                        serviceStatus, blockReader, blockNodeContext.metricsService());
-    //
-    //        // Enable the serviceStatus
-    //        when(serviceStatus.isRunning()).thenReturn(true);
-    //
-    //        blockAccessService.protocSingleBlock(singleBlockRequest, responseObserver);
-    //        verify(responseObserver, times(1)).onNext(expectedNotFound);
-    //    }
-    //
-    //    @Test
-    //    void testSingleBlockServiceNotAvailable() {
-    //
-    //        final BlockAccessService blockAccessService =
-    //                new BlockAccessService(
-    //                        serviceStatus, blockReader, blockNodeContext.metricsService());
-    //
-    //        // Set the service status to not running
-    //        when(serviceStatus.isRunning()).thenReturn(false);
-    //
-    //        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedNotAvailable =
-    //                buildSingleBlockNotAvailableResponse();
-    //
-    //        // Build a request to invoke the service
-    //        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
-    //                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
-    //                        .setBlockNumber(1)
-    //                        .build();
-    //        blockAccessService.protocSingleBlock(singleBlockRequest, responseObserver);
-    //        verify(responseObserver, times(1)).onNext(expectedNotAvailable);
-    //    }
-    //
-    //    @Test
-    //    public void testSingleBlockIOExceptionPath() throws IOException, ParseException {
-    //        final BlockAccessService blockAccessService =
-    //                new BlockAccessService(
-    //                        serviceStatus, blockReader, blockNodeContext.metricsService());
-    //
-    //        when(serviceStatus.isRunning()).thenReturn(true);
-    //        when(blockReader.read(1)).thenThrow(new IOException("Test exception"));
-    //
-    //        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedNotAvailable =
-    //                buildSingleBlockNotAvailableResponse();
-    //
-    //        // Build a request to invoke the service
-    //        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
-    //                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
-    //                        .setBlockNumber(1)
-    //                        .build();
-    //        blockAccessService.protocSingleBlock(singleBlockRequest, responseObserver);
-    //        verify(responseObserver, times(1)).onNext(expectedNotAvailable);
-    //    }
-    //
-    //    @Test
-    //    public void testSingleBlockParseExceptionPath() throws IOException, ParseException {
-    //        final BlockAccessService blockAccessService =
-    //                new BlockAccessService(
-    //                        serviceStatus, blockReader, blockNodeContext.metricsService());
-    //
-    //        when(serviceStatus.isRunning()).thenReturn(true);
-    //        when(blockReader.read(1)).thenThrow(new ParseException("Test exception"));
-    //
-    //        final com.hedera.hapi.block.protoc.SingleBlockResponse expectedNotAvailable =
-    //                buildSingleBlockNotAvailableResponse();
-    //
-    //        // Build a request to invoke the service
-    //        final com.hedera.hapi.block.protoc.SingleBlockRequest singleBlockRequest =
-    //                com.hedera.hapi.block.protoc.SingleBlockRequest.newBuilder()
-    //                        .setBlockNumber(1)
-    //                        .build();
-    //        blockAccessService.protocSingleBlock(singleBlockRequest, responseObserver);
-    //        verify(responseObserver, times(1)).onNext(expectedNotAvailable);
-    //    }
-    //
-    //    @Test
-    //    public void testUpdateInvokesRoutingWithLambdas() {
-    //
-    //        final BlockAccessService blockAccessService =
-    //                new BlockAccessService(
-    //                        serviceStatus, blockReader, blockNodeContext.metricsService());
-    //
-    //        GrpcService.Routing routing = mock(GrpcService.Routing.class);
-    //        blockAccessService.update(routing);
-    //
-    //        verify(routing, timeout(testTimeout).times(1))
-    //                .unary(eq(SINGLE_BLOCK_METHOD_NAME), any(ServerCalls.UnaryMethod.class));
-    //    }
+    @Test
+    void testSingleBlockHappyPath() throws IOException, ParseException {
+
+        final BlockReader<BlockUnparsed> blockReader =
+                BlockAsDirReaderBuilder.newBuilder(config).build();
+
+        final PbjBlockAccessService blockAccessService =
+                new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
+
+        // Enable the serviceStatus
+        when(serviceStatus.isRunning()).thenReturn(true);
+
+        // Generate and persist a block
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
+        final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
+        blockWriter.write(blockItems);
+
+        // Get the block so we can verify the response payload
+        final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
+        if (blockOpt.isEmpty()) {
+            fail("Block 1 should be present");
+            return;
+        }
+
+        // Build a response to verify what's passed to the response observer
+        final SingleBlockResponseUnparsed expectedSingleBlockResponse = SingleBlockResponseUnparsed.newBuilder()
+                .block(blockOpt.get())
+                .status(SingleBlockResponseCode.READ_BLOCK_SUCCESS)
+                .build();
+
+        // Build a request to invoke the service
+        final SingleBlockRequest singleBlockRequest =
+                SingleBlockRequest.newBuilder().blockNumber(1).build();
+
+        final Pipeline<? super Bytes> pipeline =
+                blockAccessService.open(PbjBlockAccessService.BlockAccessMethod.singleBlock, null, responseObserver);
+
+        // Call the service
+        pipeline.onNext(SingleBlockRequest.PROTOBUF.toBytes(singleBlockRequest));
+        verify(responseObserver, times(1))
+                .onNext(SingleBlockResponseUnparsed.PROTOBUF.toBytes(expectedSingleBlockResponse));
+    }
+
+    @Test
+    void testSingleBlockNotFoundPath() throws IOException, ParseException {
+
+        // Get the block so we can verify the response payload
+        when(blockReader.read(1)).thenReturn(Optional.empty());
+
+        // Build a response to verify what's passed to the response observer
+        final SingleBlockResponseUnparsed expectedNotFound = SingleBlockResponseUnparsed.newBuilder()
+                .status(SingleBlockResponseCode.READ_BLOCK_NOT_FOUND)
+                .build();
+
+        // Build a request to invoke the service
+        final SingleBlockRequest singleBlockRequest =
+                SingleBlockRequest.newBuilder().blockNumber(1).build();
+
+        final PbjBlockAccessService blockAccessService =
+                new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
+
+        // Enable the serviceStatus
+        when(serviceStatus.isRunning()).thenReturn(true);
+
+        final Pipeline<? super Bytes> pipeline =
+                blockAccessService.open(PbjBlockAccessService.BlockAccessMethod.singleBlock, null, responseObserver);
+
+        // Call the service
+        pipeline.onNext(SingleBlockRequest.PROTOBUF.toBytes(singleBlockRequest));
+        verify(responseObserver, times(1)).onNext(SingleBlockResponseUnparsed.PROTOBUF.toBytes(expectedNotFound));
+    }
+
+    @Test
+    void testSingleBlockServiceNotAvailable() {
+
+        final PbjBlockAccessService blockAccessService =
+                new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
+
+        // Set the service status to not running
+        when(serviceStatus.isRunning()).thenReturn(false);
+
+        final SingleBlockResponseUnparsed expectedNotAvailable = SingleBlockResponseUnparsed.newBuilder()
+                .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
+                .build();
+
+        // Build a request to invoke the service
+        final SingleBlockRequest singleBlockRequest =
+                SingleBlockRequest.newBuilder().blockNumber(1).build();
+
+        final Pipeline<? super Bytes> pipeline =
+                blockAccessService.open(PbjBlockAccessService.BlockAccessMethod.singleBlock, null, responseObserver);
+
+        // Call the service
+        pipeline.onNext(SingleBlockRequest.PROTOBUF.toBytes(singleBlockRequest));
+        verify(responseObserver, times(1)).onNext(SingleBlockResponseUnparsed.PROTOBUF.toBytes(expectedNotAvailable));
+    }
+
+    @Test
+    public void testSingleBlockIOExceptionPath() throws IOException, ParseException {
+        final PbjBlockAccessService blockAccessService =
+                new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
+
+        when(serviceStatus.isRunning()).thenReturn(true);
+        when(blockReader.read(1)).thenThrow(new IOException("Test exception"));
+
+        final SingleBlockResponseUnparsed expectedNotAvailable = SingleBlockResponseUnparsed.newBuilder()
+                .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
+                .build();
+
+        // Build a request to invoke the service
+        final SingleBlockRequest singleBlockRequest =
+                SingleBlockRequest.newBuilder().blockNumber(1).build();
+
+        final Pipeline<? super Bytes> pipeline =
+                blockAccessService.open(PbjBlockAccessService.BlockAccessMethod.singleBlock, null, responseObserver);
+
+        // Call the service
+        pipeline.onNext(SingleBlockRequest.PROTOBUF.toBytes(singleBlockRequest));
+        verify(responseObserver, times(1)).onNext(SingleBlockResponseUnparsed.PROTOBUF.toBytes(expectedNotAvailable));
+    }
+
+    @Test
+    public void testSingleBlockParseExceptionPath() throws IOException, ParseException {
+        final PbjBlockAccessService blockAccessService =
+                new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
+
+        when(serviceStatus.isRunning()).thenReturn(true);
+        when(blockReader.read(1)).thenThrow(new ParseException("Test exception"));
+
+        final SingleBlockResponseUnparsed expectedNotAvailable = SingleBlockResponseUnparsed.newBuilder()
+                .status(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE)
+                .build();
+
+        // Build a request to invoke the service
+        final SingleBlockRequest singleBlockRequest =
+                SingleBlockRequest.newBuilder().blockNumber(1).build();
+
+        final Pipeline<? super Bytes> pipeline =
+                blockAccessService.open(PbjBlockAccessService.BlockAccessMethod.singleBlock, null, responseObserver);
+
+        // Call the service
+        pipeline.onNext(SingleBlockRequest.PROTOBUF.toBytes(singleBlockRequest));
+        verify(responseObserver, times(1)).onNext(SingleBlockResponseUnparsed.PROTOBUF.toBytes(expectedNotAvailable));
+    }
 }
