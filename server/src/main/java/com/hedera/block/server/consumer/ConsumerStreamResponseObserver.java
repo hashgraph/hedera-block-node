@@ -162,21 +162,13 @@ public class ConsumerStreamResponseObserver
 
             final List<BlockItemUnparsed> blockItems =
                     Objects.requireNonNull(subscribeStreamResponse.blockItems()).blockItems();
+
             // Only start sending BlockItems after we've reached
             // the beginning of a block.
-            //            try {
             final BlockItemUnparsed firstBlockItem = blockItems.getFirst();
             if (!streamStarted && firstBlockItem.hasBlockHeader()) {
-                LOGGER.log(
-                        DEBUG,
-                        "Sending BlockItem Batch downstream for block: "
-                                + firstBlockItem.blockHeader().number());
                 streamStarted = true;
             }
-            //            } catch (ParseException p) {
-            //                 TODO: Handle this exception
-            //                LOGGER.log(ERROR, "Error parsing BlockItem: " + p.getMessage());
-            //            }
 
             if (streamStarted) {
                 metricsService

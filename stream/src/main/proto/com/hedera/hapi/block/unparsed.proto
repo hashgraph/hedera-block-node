@@ -7,14 +7,6 @@ option java_package = "com.hedera.hapi.block.protoc";
 option java_multiple_files = true;
 
 import "block_service.proto";
-import "stream/output/block_header.proto";
-import "stream/block_item.proto";
-import "stream/block_proof.proto";
-
-
-//message PublishStreamRequestUnparsed {
-//  BlockItemSetUnparsed block_items = 1;
-//}
 
 message PublishStreamRequestUnparsed {
   bytes block_items = 1;
@@ -43,13 +35,9 @@ message BlockItemSetUnparsed {
   repeated BlockItemUnparsed block_items = 1;
 }
 
-//message BlockItemUnparsed {
-//  bytes block_item = 1;
-//}
-
 message BlockItemUnparsed {
   oneof item {
-    com.hedera.hapi.block.stream.output.BlockHeader block_header = 1;
+    bytes block_header = 1;
     bytes event_header = 2;
     bytes round_header = 3;
     bytes event_transaction = 4;
@@ -57,7 +45,7 @@ message BlockItemUnparsed {
     bytes transaction_output = 6;
     bytes state_changes = 7;
     bytes filtered_item_hash = 8;
-    com.hedera.hapi.block.stream.BlockProof block_proof = 9;
+    bytes block_proof = 9;
     bytes record_file = 10;
   }
 }

@@ -31,6 +31,8 @@ import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.pbj.runtime.ParseException;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -116,45 +118,46 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItemUnparsed>> {
     public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> blockItems)
             throws IOException {
 
-        //        try {
+        try {
+            final Bytes unparsedBlockHeader = blockItems.getFirst().blockHeader();
+            if (unparsedBlockHeader != null) {
+                resetState(BlockHeader.PROTOBUF.parse(unparsedBlockHeader));
+            }
 
-        if (blockItems.getFirst().hasBlockHeader()) {
-            resetState(blockItems.getFirst().blockHeader());
-        }
+            for (BlockItemUnparsed blockItemUnparsed : blockItems) {
+                final Path blockItemFilePath = calculateBlockItemPath();
+                for (int retries = 0; ; retries++) {
+                    try {
+                        write(blockItemFilePath, blockItemUnparsed);
+                        break;
+                    } catch (IOException e) {
 
-        for (BlockItemUnparsed blockItemUnparsed : blockItems) {
-            final Path blockItemFilePath = calculateBlockItemPath();
-            for (int retries = 0; ; retries++) {
-                try {
-                    write(blockItemFilePath, blockItemUnparsed);
-                    break;
-                } catch (IOException e) {
+                        LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
 
-                    LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
-
-                    // Remove the block if repairing the permissions fails
-                    if (retries > 0) {
-                        // Attempt to remove the block
-                        blockRemover.remove(Long.parseLong(currentBlockDir.toString()));
-                        throw e;
-                    } else {
-                        // Attempt to repair the permissions on the block path
-                        // and the blockItem path
-                        repairPermissions(blockNodeRootPath);
-                        repairPermissions(calculateBlockPath());
-                        LOGGER.log(INFO, "Retrying to write the BlockItem protobuf to a file");
+                        // Remove the block if repairing the permissions fails
+                        if (retries > 0) {
+                            // Attempt to remove the block
+                            blockRemover.remove(Long.parseLong(currentBlockDir.toString()));
+                            throw e;
+                        } else {
+                            // Attempt to repair the permissions on the block path
+                            // and the blockItem path
+                            repairPermissions(blockNodeRootPath);
+                            repairPermissions(calculateBlockPath());
+                            LOGGER.log(INFO, "Retrying to write the BlockItem protobuf to a file");
+                        }
                     }
                 }
             }
-        }
 
-        if (blockItems.getLast().hasBlockProof()) {
-            metricsService.get(BlocksPersisted).increment();
-            return Optional.of(blockItems);
+            if (blockItems.getLast().hasBlockProof()) {
+                metricsService.get(BlocksPersisted).increment();
+                return Optional.of(blockItems);
+            }
+        } catch (ParseException p) {
+            LOGGER.log(ERROR, "Error parsing BlockHeader: ", p);
+            throw new IOException(p);
         }
-        //        } catch (ParseException p) {
-        // TODO: what to do here?
-        //        }
 
         return Optional.empty();
     }
@@ -169,7 +172,7 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItemUnparsed>> {
     protected void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItemUnparsed blockItem)
             throws IOException {
         try (final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
-
+            // Write the Bytes directly
             BlockItemUnparsed.PROTOBUF.toBytes(blockItem).writeTo(fos);
             LOGGER.log(DEBUG, "Successfully wrote the block item file: {0}", blockItemFilePath);
         } catch (IOException e) {
