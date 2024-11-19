@@ -4,7 +4,8 @@
 # This script is called by gradle and get the current project version as an input param
 
 if [ $# -lt 1 ]; then
-  echo "USAGE: $0 <VERSION> <DEBUG> <SMOKE_TEST>"
+  # <VERSION> is required!
+  echo "USAGE: $0 <VERSION> [DEBUG] [SMOKE_TEST]"
   exit 1
 fi
 
@@ -37,3 +38,4 @@ fi
 # Output the values
 echo ".env properties:"
 cat .env
+echo

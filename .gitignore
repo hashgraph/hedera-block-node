@@ -50,9 +50,11 @@ gradle-app.setting
 
 .idea
 .DS_Store
-# .env files
-server/docker/.env
-/server/data/
+
+# .env files (from anywhere)
+.env
+
+server/data/
 
 # manual test files
 server/src/test/resources/test_output/

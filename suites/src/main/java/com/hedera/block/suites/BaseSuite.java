@@ -50,6 +50,17 @@ import org.testcontainers.utility.DockerImageName;
  * <p>The Block Node Application version is retrieved dynamically from an environment file (.env).
  */
 public abstract class BaseSuite {
+    /**
+     * Dotenv instance to load the environment variables from the .env file that
+     * is inside the build root of the :server.
+     */
+    // @todo(#343) - do not use build/environment related files from other
+    // projects directly like that, the SERVER_DOTENV should be constructed
+    // in another way
+    protected static final Dotenv SERVER_DOTENV = Dotenv.configure()
+            .directory("../server/build/docker")
+            .filename(".env")
+            .load();
 
     /** Container running the Block Node Application */
     protected static GenericContainer<?> blockNodeContainer;
@@ -92,6 +103,7 @@ public abstract class BaseSuite {
     public static void teardown() {
         if (blockNodeContainer != null) {
             blockNodeContainer.stop();
+            blockNodeContainer.close();
         }
         if (executorService != null) {
             executorService.shutdownNow();
@@ -175,18 +187,9 @@ public abstract class BaseSuite {
     /**
      * Retrieves the Block Node server version from the .env file.
      *
-     * <p>This method loads the .env file from the "../server/docker" directory and extracts the
-     * value of the "VERSION" environment variable, which represents the version of the Block Node
-     * server to be used in the container.
-     *
      * @return the version of the Block Node server as a string
      */
     private static String getBlockNodeVersion() {
-        Dotenv dotenv = Dotenv.configure()
-                .directory("../server/docker")
-                .filename(".env")
-                .load();
-
-        return dotenv.get("VERSION");
+        return SERVER_DOTENV.get("VERSION");
     }
 }

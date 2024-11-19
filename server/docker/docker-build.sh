@@ -7,10 +7,11 @@ fi
 
 VERSION=$1
 
-echo "CREATING CONTAINER FOR VERSION ${VERSION}"
-echo "Using project directory: ${2}"
+echo "Building image [block-node-server:${VERSION}]"
 echo
 
 # run docker build
-echo "Building container:"
-docker buildx build --load -t "block-node-server:${VERSION}" --build-context distributions=../build/distributions --build-arg VERSION="${VERSION}" . || exit "${?}"
+docker buildx build --load -t "block-node-server:${VERSION}" --build-context distributions=../distributions --build-arg VERSION="${VERSION}" . || exit "${?}"
+
+echo
+echo "Image [block-node-server:${VERSION}] built successfully!"

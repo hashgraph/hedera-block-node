@@ -78,16 +78,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build And Run Smoke Tests Container
-        run: ${{ env.GRADLE_EXEC }} buildAndRunSmokeTestsContainer -x test
+      - name: Start the Smoke Test Container
+        run: ${{ env.GRADLE_EXEC }} startDockerContainerSmokeTest
 
-      - name: Run Smoke Test
+      - name: Run Smoke Tests
         working-directory: server/src/test/resources/
         run: ./smoke-test.sh
 
-      - name: Stop Smoke Tests Container
+      - name: Stop Smoke Test Container
         if: always()
-        run: docker compose -p block-node stop
+        run: ${{ env.GRADLE_EXEC }} stopDockerContainer
 
       - name: Print Server Container Logs
         if: always()

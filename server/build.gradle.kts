@@ -63,42 +63,65 @@ tasks.register("bumpVersion") {
     replaceVersion("gradle.properties", "(?<=^version=).+")
 }
 
-// Docker related tasks
+// Vals
+val dockerProjectRootDirectory: Directory = layout.projectDirectory.dir("docker")
+val dockerBuildRootDirectory: Directory = layout.buildDirectory.dir("docker").get()
 
-var updateDockerEnv =
-    tasks.register<Exec>("updateDockerEnv") {
-        description =
-            "Creates the .env file in the docker folder that contains environment variables for docker"
+// Docker related tasks
+val copyDockerFolder: TaskProvider<Copy> =
+    tasks.register<Copy>("copyDockerFolder") {
+        description = "Copies the docker folder to the build root directory"
         group = "docker"
 
-        workingDir(layout.projectDirectory.dir("docker"))
+        from(dockerProjectRootDirectory)
+        into(dockerBuildRootDirectory)
+    }
+
+// @todo(#343) - createProductionDotEnv is temporary and used by the suites,
+//  once the suites no longer rely on the .env file from the build root we
+//  should remove this task
+val createProductionDotEnv: TaskProvider<Exec> =
+    tasks.register<Exec>("createProductionDotEnv") {
+        description = "Creates the default dotenv file for the Block Node Server"
+        group = "docker"
+
+        dependsOn(copyDockerFolder)
+        workingDir(dockerBuildRootDirectory)
         commandLine("sh", "-c", "./update-env.sh ${project.version} false false")
     }
 
-tasks.register<Exec>("createDockerImage") {
-    description = "Creates the docker image of the Block Node Server based on the current version"
-    group = "docker"
+val createDockerImage: TaskProvider<Exec> =
+    tasks.register<Exec>("createDockerImage") {
+        description =
+            "Creates the production docker image of the Block Node Server based on the current version"
+        group = "docker"
 
-    dependsOn(updateDockerEnv, tasks.assemble)
-    workingDir(layout.projectDirectory.dir("docker"))
-    commandLine("./docker-build.sh", project.version, layout.projectDirectory.dir("..").asFile)
-}
+        dependsOn(copyDockerFolder, tasks.assemble)
+        workingDir(dockerBuildRootDirectory)
+        commandLine("sh", "-c", "./docker-build.sh ${project.version}")
+    }
 
 tasks.register<Exec>("startDockerContainer") {
-    description = "Starts the docker container of the Block Node Server of the current version"
+    description =
+        "Starts the docker production container of the Block Node Server for the current version"
     group = "docker"
 
-    dependsOn(updateDockerEnv)
-    workingDir(layout.projectDirectory.dir("docker"))
-    commandLine("sh", "-c", "docker-compose -p block-node up -d")
+    dependsOn(createDockerImage)
+    workingDir(dockerBuildRootDirectory)
+    commandLine(
+        "sh",
+        "-c",
+        "./update-env.sh ${project.version} false false && docker compose -p block-node up -d"
+    )
 }
 
-tasks.register<Exec>("startDockerDebugContainer") {
-    description = "Starts the docker container of the Block Node Server of the current version"
+tasks.register<Exec>("startDockerContainerDebug") {
+    description =
+        "Starts the docker debug container of the Block Node Server for the current version"
     group = "docker"
 
-    workingDir(layout.projectDirectory.dir("docker"))
-
+    dependsOn(createDockerImage)
+    workingDir(dockerBuildRootDirectory)
     commandLine(
         "sh",
         "-c",
@@ -106,36 +129,25 @@ tasks.register<Exec>("startDockerDebugContainer") {
     )
 }
 
+tasks.register<Exec>("startDockerContainerSmokeTest") {
+    description =
+        "Starts the docker smoke test container of the Block Node Server for the current version"
+    group = "docker"
+
+    dependsOn(createDockerImage)
+    workingDir(dockerBuildRootDirectory)
+    commandLine(
+        "sh",
+        "-c",
+        "./update-env.sh ${project.version} false true && docker compose -p block-node up -d"
+    )
+}
+
 tasks.register<Exec>("stopDockerContainer") {
     description = "Stops running docker containers of the Block Node Server"
     group = "docker"
 
-    dependsOn(updateDockerEnv)
-    workingDir(layout.projectDirectory.dir("docker"))
-    commandLine("sh", "-c", "docker-compose -p block-node stop")
-}
-
-tasks.register("buildAndRunSmokeTestsContainer") {
-    doFirst {
-        // ensure smoke test .env properties before creating the container
-        exec {
-            workingDir(layout.projectDirectory.dir("docker"))
-            commandLine("sh", "-c", "./update-env.sh ${project.version} false true")
-        }
-    }
-
-    // build the project
-    dependsOn(tasks.build)
-
-    doLast {
-        // build and start smoke test container
-        exec {
-            workingDir(layout.projectDirectory.dir("docker"))
-            commandLine(
-                "sh",
-                "-c",
-                "./docker-build.sh ${project.version} && docker compose -p block-node up -d"
-            )
-        }
-    }
+    dependsOn(copyDockerFolder)
+    workingDir(dockerBuildRootDirectory)
+    commandLine("sh", "-c", "docker compose -p block-node stop")
 }
