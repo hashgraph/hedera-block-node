@@ -20,6 +20,11 @@ import static com.hedera.block.server.producer.Util.getFakeHash;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -33,6 +38,7 @@ import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.notifier.NotifierImpl;
 import com.hedera.block.server.persistence.StreamPersistenceHandlerImpl;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
+import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
@@ -47,9 +53,14 @@ import com.hedera.hapi.block.ItemAcknowledgement;
 import com.hedera.hapi.block.PublishStreamRequestUnparsed;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
+import com.hedera.hapi.block.SingleBlockRequest;
+import com.hedera.hapi.block.SingleBlockResponseCode;
+import com.hedera.hapi.block.SingleBlockResponseUnparsed;
 import com.hedera.hapi.block.SubscribeStreamRequest;
+import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.runtime.grpc.Pipeline;
+import com.hedera.pbj.runtime.grpc.ServiceInterface;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.lmax.disruptor.BatchEventProcessor;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -59,6 +70,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -88,9 +100,6 @@ public class PbjBlockStreamServiceIntegrationTest {
     private Pipeline<? super Bytes> helidonPublishStreamObserver3;
 
     @Mock
-    private SubscribeStreamRequest subscribeStreamRequest;
-
-    @Mock
     private Pipeline<? super Bytes> subscribeStreamObserver1;
 
     @Mock
@@ -116,6 +125,9 @@ public class PbjBlockStreamServiceIntegrationTest {
 
     @Mock
     private BlockReader<BlockUnparsed> blockReader;
+
+    @Mock
+    private ServiceInterface.RequestOptions options;
 
     private static final String TEMP_DIR = "block-node-unit-test-dir";
 
@@ -143,44 +155,38 @@ public class PbjBlockStreamServiceIntegrationTest {
     @Test
     public void testPublishBlockStreamRegistrationAndExecution() throws IOException, NoSuchAlgorithmException {
 
-        final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
-        final var streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
-                .build();
-        final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
-        final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
-                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
-        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = new PbjBlockStreamServiceProxy(
-                streamMediator, serviceStatus, blockNodeEventHandler, notifier, blockNodeContext);
-
-        // Register 3 producers
-        final Bytes publishStreamRequestBytes =
-                PublishStreamRequestUnparsed.PROTOBUF.toBytes(PublishStreamRequestUnparsed.newBuilder()
-                        .blockItems(BlockItemSetUnparsed.newBuilder().build())
-                        .build());
+        // Register 3 producers - Opening a pipeline is not enough to register a producer.
+        // pipeline.onNext() must be invoked to register the producer at the Helidon PBJ layer.
         final Pipeline<? super Bytes> producerPipeline = pbjBlockStreamServiceProxy.open(
-                PbjBlockStreamService.BlockStreamMethod.publishBlockStream, null, helidonPublishStreamObserver1);
+                PbjBlockStreamService.BlockStreamMethod.publishBlockStream, options, helidonPublishStreamObserver1);
         pbjBlockStreamServiceProxy
-                .open(PbjBlockStreamService.BlockStreamMethod.publishBlockStream, null, helidonPublishStreamObserver2)
-                .onNext(publishStreamRequestBytes);
+                .open(
+                        PbjBlockStreamService.BlockStreamMethod.publishBlockStream,
+                        options,
+                        helidonPublishStreamObserver2)
+                .onNext(buildEmptyPublishStreamRequest());
         pbjBlockStreamServiceProxy
-                .open(PbjBlockStreamService.BlockStreamMethod.publishBlockStream, null, helidonPublishStreamObserver3)
-                .onNext(publishStreamRequestBytes);
+                .open(
+                        PbjBlockStreamService.BlockStreamMethod.publishBlockStream,
+                        options,
+                        helidonPublishStreamObserver3)
+                .onNext(buildEmptyPublishStreamRequest());
 
-        final Bytes subscribeStreamRequestBytes = SubscribeStreamRequest.PROTOBUF.toBytes(
-                SubscribeStreamRequest.newBuilder().startBlockNumber(1).build());
-        // Register 3 consumers
+        // Register 3 consumers - Opening a pipeline is not enough to register a consumer.
+        // pipeline.onNext() must be invoked to register the consumer at the Helidon PBJ layer.
         pbjBlockStreamServiceProxy
-                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, null, subscribeStreamObserver1)
-                .onNext(subscribeStreamRequestBytes);
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver1)
+                .onNext(buildEmptySubscribeStreamRequest());
         pbjBlockStreamServiceProxy
-                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, null, subscribeStreamObserver2)
-                .onNext(subscribeStreamRequestBytes);
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver2)
+                .onNext(buildEmptySubscribeStreamRequest());
         pbjBlockStreamServiceProxy
-                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, null, subscribeStreamObserver3)
-                .onNext(subscribeStreamRequestBytes);
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver3)
+                .onNext(buildEmptySubscribeStreamRequest());
 
-        List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
+        final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         for (int i = 0; i < blockItems.size(); i++) {
             if (i == 9) {
                 when(blockWriter.write(List.of(blockItems.get(i)))).thenReturn(Optional.of(List.of(blockItems.get(i))));
@@ -239,380 +245,412 @@ public class PbjBlockStreamServiceIntegrationTest {
         verify(helidonPublishStreamObserver1, timeout(testTimeout).times(1)).onComplete();
     }
 
-    //    @Test
-    //    public void testSubscribeBlockStream() throws IOException {
-    //
-    //        final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
-    //        serviceStatus.setWebServer(webServer);
-    //
-    //        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
-    //
-    //        final var streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
-    //                .build();
-    //
-    //        // Build the BlockStreamService
-    //        final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
-    //                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
-    //
-    //        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = new PbjBlockStreamServiceProxy(
-    //                streamMediator, serviceStatus, blockNodeEventHandler, notifier, blockNodeContext);
-    //
-    //        // Subscribe the consumers
-    //        pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver1);
-    //        pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver2);
-    //        pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver3);
-    //
-    //        // Subscribe the producer
-    //        final Flow.Subscriber<PublishStreamRequest> producerBlockItemsObserver =
-    //                pbjBlockStreamServiceProxy.publishBlockStream(helidonPublishStreamObserver1);
-    //
-    //        // Build the BlockItem
-    //        final List<BlockItem> blockItems = generateBlockItems(1);
-    //        final PublishStreamRequest publishStreamRequest = PublishStreamRequest.newBuilder()
-    //                .blockItems(new BlockItemSet(List.of(blockItems.getFirst())))
-    //                .build();
-    //
-    //        // Calling onNext() with a BlockItem
-    //        producerBlockItemsObserver.onNext(publishStreamRequest);
-    //
-    //        // Verify the counter was incremented
-    //        assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
-    //
-    //        verify(blockWriter, timeout(testTimeout).times(1)).write(List.of(blockItems.getFirst()));
-    //
-    //        final BlockItemSet blockItemSet = BlockItemSet.newBuilder()
-    //                .blockItems(List.of(blockItems.getFirst()))
-    //                .build();
-    //        final SubscribeStreamResponse subscribeStreamResponse =
-    //                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build();
-    //
-    //        verify(subscribeStreamObserver1, timeout(testTimeout).times(1)).onNext(subscribeStreamResponse);
-    //        verify(subscribeStreamObserver2, timeout(testTimeout).times(1)).onNext(subscribeStreamResponse);
-    //        verify(subscribeStreamObserver3, timeout(testTimeout).times(1)).onNext(subscribeStreamResponse);
-    //    }
-    //
-    //    @Test
-    //    public void testFullProducerConsumerHappyPath() throws IOException {
-    //        int numberOfBlocks = 100;
-    //
-    //        final BlockWriter<List<BlockItem>> blockWriter =
-    //                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-    //        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
-    //
-    //        final Flow.Subscriber<PublishStreamRequest> producerBlockItemObserver =
-    //                pbjBlockStreamServiceProxy.publishBlockStream(helidonPublishStreamObserver1);
-    //
-    //        // Subscribe the consumers
-    //        pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver1);
-    //        pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver2);
-    //        pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver3);
-    //
-    //        final List<BlockItem> blockItems = generateBlockItems(numberOfBlocks);
-    //        for (BlockItem blockItem : blockItems) {
-    //            final PublishStreamRequest publishStreamRequest = PublishStreamRequest.newBuilder()
-    //                    .blockItems(new BlockItemSet(List.of(blockItem)))
-    //                    .build();
-    //            producerBlockItemObserver.onNext(publishStreamRequest);
-    //        }
-    //
-    //        verifySubscribeStreamResponse(numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver1, blockItems);
-    //        verifySubscribeStreamResponse(numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver2, blockItems);
-    //        verifySubscribeStreamResponse(numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver3, blockItems);
-    //
-    //        verify(helidonPublishStreamObserver1, timeout(testTimeout).times(100)).onNext(any());
-    //    }
+    @Test
+    public void testFullProducerConsumerHappyPath() throws IOException {
+        int numberOfBlocks = 100;
 
-    //    @Test
-    //    public void testFullWithSubscribersAddedDynamically() {
-    //
-    //        int numberOfBlocks = 100;
-    //
-    //        final PbjBlockStreamServiceProxy blockStreamServiceProxy = buildBlockStreamService(blockWriter);
-    //        final Flow.Subscriber<PublishStreamRequest> streamObserver =
-    //                blockStreamServiceProxy.publishBlockStream(helidonPublishStreamObserver1);
-    //
-    //        final List<BlockItem> blockItems = generateBlockItems(numberOfBlocks);
-    //
-    //        // Subscribe the initial consumers
-    //        blockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver1);
-    //        blockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver2);
-    //        blockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver3);
-    //
-    //        for (int i = 0; i < blockItems.size(); i++) {
-    //            final PublishStreamRequest publishStreamRequest = PublishStreamRequest.newBuilder()
-    //                    .blockItems(new BlockItemSet(List.of(blockItems.get(i))))
-    //                    .build();
-    //
-    //            // Add a new subscriber
-    //            if (i == 51) {
-    //                blockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver4);
-    //            }
-    //
-    //            // Transmit the BlockItem
-    //            streamObserver.onNext(publishStreamRequest);
-    //
-    //            // Add a new subscriber
-    //            if (i == 76) {
-    //                blockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver5);
-    //            }
-    //
-    //            // Add a new subscriber
-    //            if (i == 88) {
-    //                blockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver6);
-    //            }
-    //        }
-    //
-    //        // Verify subscribers who were listening before the stream started
-    //        verifySubscribeStreamResponse(numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver1, blockItems);
-    //        verifySubscribeStreamResponse(numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver2, blockItems);
-    //        verifySubscribeStreamResponse(numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver3, blockItems);
-    //
-    //        // Verify subscribers added while the stream was in progress.
-    //        // The Helidon-provided StreamObserver onNext() method will only
-    //        // be called once a Header BlockItem is reached. So, pass in
-    //        // the number of BlockItems to wait to verify that the method
-    //        // was called.
-    //        verifySubscribeStreamResponse(numberOfBlocks, 59, numberOfBlocks, subscribeStreamObserver4, blockItems);
-    //        verifySubscribeStreamResponse(numberOfBlocks, 79, numberOfBlocks, subscribeStreamObserver5, blockItems);
-    //        verifySubscribeStreamResponse(numberOfBlocks, 89, numberOfBlocks, subscribeStreamObserver6, blockItems);
-    //    }
-    //
-    //    @Test
-    //    public void testSubAndUnsubWhileStreaming() throws InterruptedException {
-    //
-    //        int numberOfBlocks = 100;
-    //
-    //        final LinkedHashMap<
-    //                        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>,
-    //                        BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
-    //                consumers = new LinkedHashMap<>();
-    //
-    //        final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
-    //        final var streamMediator = buildStreamMediator(consumers, serviceStatus);
-    //        final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
-    //                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
-    //        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = new PbjBlockStreamServiceProxy(
-    //                streamMediator, serviceStatus, blockNodeEventHandler, notifier, blockNodeContext);
-    //
-    //        // Pass a StreamObserver to the producer as Helidon does
-    //        final Flow.Subscriber<PublishStreamRequest> streamObserver =
-    //                pbjBlockStreamServiceProxy.publishBlockStream(helidonPublishStreamObserver1);
-    //
-    //        final List<BlockItem> blockItems = generateBlockItems(numberOfBlocks);
-    //
-    //        pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver1);
-    //        pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver2);
-    //        pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver3);
-    //
-    //        for (int i = 0; i < blockItems.size(); i++) {
-    //
-    //            // Transmit the BlockItem
-    //            streamObserver.onNext(PublishStreamRequest.newBuilder()
-    //                    .blockItems(new BlockItemSet(List.of(blockItems.get(i))))
-    //                    .build());
-    //
-    //            // Remove 1st subscriber
-    //            if (i == 10) {
-    //                // Pause here to ensure the last sent block item is received.
-    //                // This makes the test deterministic.
-    //                Thread.sleep(50);
-    //                final var k = consumers.firstEntry().getKey();
-    //                streamMediator.unsubscribe(k);
-    //            }
-    //
-    //            // Remove 2nd subscriber
-    //            if (i == 60) {
-    //                // Pause here to ensure the last sent block item is received.
-    //                // This makes the test deterministic.
-    //                Thread.sleep(50);
-    //                final var k = consumers.firstEntry().getKey();
-    //                streamMediator.unsubscribe(k);
-    //            }
-    //
-    //            // Add a new subscriber
-    //            if (i == 51) {
-    //                pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver4);
-    //            }
-    //
-    //            // Remove 3rd subscriber
-    //            if (i == 70) {
-    //                // Pause here to ensure the last sent block item is received.
-    //                // This makes the test deterministic.
-    //                Thread.sleep(50);
-    //                final var k = consumers.firstEntry().getKey();
-    //                streamMediator.unsubscribe(k);
-    //            }
-    //
-    //            // Add a new subscriber
-    //            if (i == 76) {
-    //                pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver5);
-    //            }
-    //
-    //            // Add a new subscriber
-    //            if (i == 88) {
-    //                pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver6);
-    //            }
-    //        }
-    //
-    //        // Verify subscribers who were listening before the stream started
-    //        verifySubscribeStreamResponse(numberOfBlocks, 0, 10, subscribeStreamObserver1, blockItems);
-    //        verifySubscribeStreamResponse(numberOfBlocks, 0, 60, subscribeStreamObserver2, blockItems);
-    //        verifySubscribeStreamResponse(numberOfBlocks, 0, 70, subscribeStreamObserver3, blockItems);
-    //
-    //        // Verify subscribers added while the stream was in progress.
-    //        // The Helidon-provided StreamObserver onNext() method will only
-    //        // be called once a Header BlockItem is reached. So, pass in
-    //        // the number of BlockItems to wait to verify that the method
-    //        // was called.
-    //        verifySubscribeStreamResponse(numberOfBlocks, 59, numberOfBlocks, subscribeStreamObserver4, blockItems);
-    //        verifySubscribeStreamResponse(numberOfBlocks, 79, numberOfBlocks, subscribeStreamObserver5, blockItems);
-    //        verifySubscribeStreamResponse(numberOfBlocks, 89, numberOfBlocks, subscribeStreamObserver6, blockItems);
-    //
-    //        streamObserver.onComplete();
-    //    }
-    //
-    //    @Test
-    //    public void testMediatorExceptionHandlingWhenPersistenceFailure() throws IOException {
-    //        final ConcurrentHashMap<
-    //                        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>,
-    //                        BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
-    //                consumers = new ConcurrentHashMap<>();
-    //
-    //        // Use a spy to use the real object but also verify the behavior.
-    //        final ServiceStatus serviceStatus = spy(new ServiceStatusImpl(blockNodeContext));
-    //        doCallRealMethod().when(serviceStatus).setWebServer(webServer);
-    //        doCallRealMethod().when(serviceStatus).isRunning();
-    //        doCallRealMethod().when(serviceStatus).stopWebServer(any());
-    //        serviceStatus.setWebServer(webServer);
-    //
-    //        final List<BlockItem> blockItems = generateBlockItems(1);
-    //
-    //        // Use a spy to make sure the write() method throws an IOException
-    //        final BlockWriter<List<BlockItem>> blockWriter =
-    //                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build());
-    //        doThrow(IOException.class).when(blockWriter).write(blockItems);
-    //
-    //        final var streamMediator = buildStreamMediator(consumers, serviceStatus);
-    //        final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
-    //        final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
-    //                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
-    //        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = new PbjBlockStreamServiceProxy(
-    //                streamMediator, serviceStatus, blockNodeEventHandler, notifier, blockNodeContext);
-    //
-    //        // Subscribe the consumers
-    //        pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver1);
-    //        pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver2);
-    //        pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver3);
-    //
-    //        // 3 subscribers + 1 streamPersistenceHandler
-    //        assertEquals(4, consumers.size());
-    //
-    //        // Initialize the producer
-    //        final Flow.Subscriber<PublishStreamRequest> producerBlockItemObserver =
-    //                pbjBlockStreamServiceProxy.publishBlockStream(helidonPublishStreamObserver1);
-    //
-    //        // Transmit a BlockItem
-    //        final PublishStreamRequest publishStreamRequest = PublishStreamRequest.newBuilder()
-    //                .blockItems(new BlockItemSet(blockItems))
-    //                .build();
-    //        producerBlockItemObserver.onNext(publishStreamRequest);
-    //
-    //        // Use verify to make sure the serviceStatus.stopRunning() method is called
-    //        // before the next block is transmitted.
-    //        verify(serviceStatus, timeout(testTimeout).times(2)).stopRunning(any());
-    //
-    //        // Simulate another producer attempting to connect to the Block Node after the exception.
-    //        // Later, verify they received a response indicating the stream is closed.
-    //        final Flow.Subscriber<PublishStreamRequest> expectedNoOpStreamObserver =
-    //                pbjBlockStreamServiceProxy.publishBlockStream(helidonPublishStreamObserver2);
-    //        expectedNoOpStreamObserver.onNext(publishStreamRequest);
-    //
-    //        verify(helidonPublishStreamObserver2, timeout(testTimeout).times(1)).onNext(buildEndOfStreamResponse());
-    //
-    //        // Build a request to invoke the singleBlock service
-    //        final SingleBlockRequest singleBlockRequest =
-    //                SingleBlockRequest.newBuilder().blockNumber(1).build();
-    //
-    //        final PbjBlockAccessServiceProxy pbjBlockAccessServiceProxy =
-    //                new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
-    //
-    //        // Simulate a consumer attempting to connect to the Block Node after the exception.
-    //        final SingleBlockResponse singleBlockResponse =
-    // pbjBlockAccessServiceProxy.singleBlock(singleBlockRequest);
-    //
-    //        // Build a request to invoke the subscribeBlockStream service
-    //        final SubscribeStreamRequest subscribeStreamRequest =
-    //                SubscribeStreamRequest.newBuilder().startBlockNumber(1).build();
-    //        // Simulate a consumer attempting to connect to the Block Node after the exception.
-    //        pbjBlockStreamServiceProxy.subscribeBlockStream(subscribeStreamRequest, subscribeStreamObserver4);
-    //
-    //        // The BlockItem expected to pass through since it was published
-    //        // before the IOException was thrown.
-    //        final BlockItemSet blockItemSet =
-    //                BlockItemSet.newBuilder().blockItems(blockItems).build();
-    //
-    //        final SubscribeStreamResponse subscribeStreamResponse =
-    //                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build();
-    //        verify(subscribeStreamObserver1, timeout(testTimeout).times(1)).onNext(subscribeStreamResponse);
-    //        verify(subscribeStreamObserver2, timeout(testTimeout).times(1)).onNext(subscribeStreamResponse);
-    //        verify(subscribeStreamObserver3, timeout(testTimeout).times(1)).onNext(subscribeStreamResponse);
-    //
-    //        // Verify all the consumers received the end of stream response
-    //        // TODO: Fix the response code when it's available
-    //        final SubscribeStreamResponse endStreamResponse = SubscribeStreamResponse.newBuilder()
-    //                .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
-    //                .build();
-    //        verify(subscribeStreamObserver1, timeout(testTimeout).times(1)).onNext(endStreamResponse);
-    //        verify(subscribeStreamObserver2, timeout(testTimeout).times(1)).onNext(endStreamResponse);
-    //        verify(subscribeStreamObserver3, timeout(testTimeout).times(1)).onNext(endStreamResponse);
-    //
-    //        // Verify the publishBlockStream service returned the expected
-    //        // error code indicating the service is not available.
-    //        verify(helidonPublishStreamObserver1, timeout(testTimeout).times(1)).onNext(buildEndOfStreamResponse());
-    //
-    //        // Adding extra time to allow the service to stop given
-    //        // the built-in delay.
-    //        verify(webServer, timeout(testTimeout).times(1)).stop();
-    //
-    //        assertEquals(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE, singleBlockResponse.status());
-    //
-    //        // TODO: Fix the response code when it's available
-    //        final SubscribeStreamResponse expectedSubscriberStreamNotAvailable = SubscribeStreamResponse.newBuilder()
-    //                .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
-    //                .build();
-    //        verify(subscribeStreamObserver4,
-    // timeout(testTimeout).times(1)).onNext(expectedSubscriberStreamNotAvailable);
-    //    }
+        // Use a real BlockWriter to test the full integration
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
+        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
-    //    private static void verifySubscribeStreamResponse(
-    //            int numberOfBlocks,
-    //            int blockItemsToWait,
-    //            int blockItemsToSkip,
-    //            Pipeline<Bytes> pipeline,
-    //            List<BlockItemUnparsed> blockItems) {
-    //
-    //        // Each block has 10 BlockItems. Verify all the BlockItems
-    //        // in a given block per iteration.
-    //        for (int block = 0; block < numberOfBlocks; block += 10) {
-    //
-    //            if (block < blockItemsToWait || block >= blockItemsToSkip) {
-    //                continue;
-    //            }
-    //
-    //            final BlockItemUnparsed headerBlockItem = blockItems.get(block);
-    //            final Bytes headerSubStreamResponse = buildSubscribeStreamResponse(headerBlockItem);
-    //
-    //            final BlockItemUnparsed bodyBlockItem = blockItems.get(block + 1);
-    //            final Bytes bodySubStreamResponse = buildSubscribeStreamResponse(bodyBlockItem);
-    //
-    //            final BlockItemUnparsed stateProofBlockItem = blockItems.get(block + 9);
-    //            final Bytes stateProofStreamResponse = buildSubscribeStreamResponse(stateProofBlockItem);
-    //
-    //            verify(pipeline, timeout(testTimeout).times(1)).onNext(headerSubStreamResponse);
-    //            verify(pipeline, timeout(testTimeout).times(8)).onNext(bodySubStreamResponse);
-    //            verify(pipeline, timeout(testTimeout).times(1)).onNext(stateProofStreamResponse);
-    //        }
-    //    }
+        // Register 3 producers - Opening a pipeline is not enough to register a producer.
+        // pipeline.onNext() must be invoked to register the producer at the Helidon PBJ layer.
+        final Pipeline<? super Bytes> producerPipeline = pbjBlockStreamServiceProxy.open(
+                PbjBlockStreamService.BlockStreamMethod.publishBlockStream, options, helidonPublishStreamObserver1);
+        pbjBlockStreamServiceProxy
+                .open(
+                        PbjBlockStreamService.BlockStreamMethod.publishBlockStream,
+                        options,
+                        helidonPublishStreamObserver2)
+                .onNext(buildEmptyPublishStreamRequest());
+        pbjBlockStreamServiceProxy
+                .open(
+                        PbjBlockStreamService.BlockStreamMethod.publishBlockStream,
+                        options,
+                        helidonPublishStreamObserver3)
+                .onNext(buildEmptyPublishStreamRequest());
+
+        // Register 3 consumers - Opening a pipeline is not enough to register a consumer.
+        // pipeline.onNext() must be invoked to register the consumer at the Helidon PBJ layer.
+        pbjBlockStreamServiceProxy
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver1)
+                .onNext(buildEmptySubscribeStreamRequest());
+        pbjBlockStreamServiceProxy
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver2)
+                .onNext(buildEmptySubscribeStreamRequest());
+        pbjBlockStreamServiceProxy
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver3)
+                .onNext(buildEmptySubscribeStreamRequest());
+
+        final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(numberOfBlocks);
+        for (BlockItemUnparsed blockItem : blockItems) {
+            // Calling onNext() as Helidon does
+            final BlockItemSetUnparsed blockItemSet =
+                    BlockItemSetUnparsed.newBuilder().blockItems(blockItem).build();
+            final PublishStreamRequestUnparsed publishStreamRequest = PublishStreamRequestUnparsed.newBuilder()
+                    .blockItems(blockItemSet)
+                    .build();
+            producerPipeline.onNext(PublishStreamRequestUnparsed.PROTOBUF.toBytes(publishStreamRequest));
+        }
+
+        // Verify the subscribers received the data
+        verifySubscribeStreamResponse(numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver1, blockItems);
+        verifySubscribeStreamResponse(numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver2, blockItems);
+        verifySubscribeStreamResponse(numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver3, blockItems);
+
+        // Verify the producers received all the responses
+        verify(helidonPublishStreamObserver1, timeout(testTimeout).times(100)).onNext(any());
+        verify(helidonPublishStreamObserver2, timeout(testTimeout).times(100)).onNext(any());
+        verify(helidonPublishStreamObserver3, timeout(testTimeout).times(100)).onNext(any());
+    }
+
+    @Test
+    public void testFullWithSubscribersAddedDynamically() {
+        int numberOfBlocks = 100;
+
+        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
+
+        // Register a producer
+        final Pipeline<? super Bytes> producerPipeline = pbjBlockStreamServiceProxy.open(
+                PbjBlockStreamService.BlockStreamMethod.publishBlockStream, options, helidonPublishStreamObserver1);
+
+        // Register 3 consumers - Opening a pipeline is not enough to register a consumer.
+        // pipeline.onNext() must be invoked to register the consumer at the Helidon PBJ layer.
+        pbjBlockStreamServiceProxy
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver1)
+                .onNext(buildEmptySubscribeStreamRequest());
+        pbjBlockStreamServiceProxy
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver2)
+                .onNext(buildEmptySubscribeStreamRequest());
+        pbjBlockStreamServiceProxy
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver3)
+                .onNext(buildEmptySubscribeStreamRequest());
+
+        final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(numberOfBlocks);
+        for (int i = 0; i < blockItems.size(); i++) {
+            final PublishStreamRequestUnparsed publishStreamRequest = PublishStreamRequestUnparsed.newBuilder()
+                    .blockItems(new BlockItemSetUnparsed(List.of(blockItems.get(i))))
+                    .build();
+
+            // Add a new subscriber
+            if (i == 51) {
+                pbjBlockStreamServiceProxy
+                        .open(
+                                PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream,
+                                options,
+                                subscribeStreamObserver4)
+                        .onNext(buildEmptySubscribeStreamRequest());
+            }
+
+            // Transmit the BlockItem
+            producerPipeline.onNext(PublishStreamRequestUnparsed.PROTOBUF.toBytes(publishStreamRequest));
+
+            // Add a new subscriber
+            if (i == 76) {
+                pbjBlockStreamServiceProxy
+                        .open(
+                                PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream,
+                                options,
+                                subscribeStreamObserver5)
+                        .onNext(buildEmptySubscribeStreamRequest());
+            }
+
+            // Add a new subscriber
+            if (i == 88) {
+                pbjBlockStreamServiceProxy
+                        .open(
+                                PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream,
+                                options,
+                                subscribeStreamObserver6)
+                        .onNext(buildEmptySubscribeStreamRequest());
+            }
+        }
+
+        // Verify subscribers who were listening before the stream started
+        verifySubscribeStreamResponse(numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver1, blockItems);
+        verifySubscribeStreamResponse(numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver2, blockItems);
+        verifySubscribeStreamResponse(numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver3, blockItems);
+
+        // Verify subscribers added while the stream was in progress.
+        // The Helidon-provided StreamObserver onNext() method will only
+        // be called once a Header BlockItem is reached. So, pass in
+        // the number of BlockItems to wait to verify that the method
+        // was called.
+        verifySubscribeStreamResponse(numberOfBlocks, 59, numberOfBlocks, subscribeStreamObserver4, blockItems);
+        verifySubscribeStreamResponse(numberOfBlocks, 79, numberOfBlocks, subscribeStreamObserver5, blockItems);
+        verifySubscribeStreamResponse(numberOfBlocks, 89, numberOfBlocks, subscribeStreamObserver6, blockItems);
+    }
+
+    @Test
+    public void testSubAndUnsubWhileStreaming() throws InterruptedException {
+        int numberOfBlocks = 100;
+        final LinkedHashMap<
+                        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>,
+                        BatchEventProcessor<ObjectEvent<SubscribeStreamResponseUnparsed>>>
+                consumers = new LinkedHashMap<>();
+
+        final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
+        final var streamMediator = buildStreamMediator(consumers, serviceStatus);
+        final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = new PbjBlockStreamServiceProxy(
+                streamMediator, serviceStatus, blockNodeEventHandler, notifier, blockNodeContext);
+
+        final Pipeline<? super Bytes> producerPipeline = pbjBlockStreamServiceProxy.open(
+                PbjBlockStreamService.BlockStreamMethod.publishBlockStream, options, helidonPublishStreamObserver1);
+
+        // Register 3 consumers - Opening a pipeline is not enough to register a consumer.
+        // pipeline.onNext() must be invoked to register the consumer at the Helidon PBJ layer.
+        pbjBlockStreamServiceProxy
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver1)
+                .onNext(buildEmptySubscribeStreamRequest());
+        pbjBlockStreamServiceProxy
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver2)
+                .onNext(buildEmptySubscribeStreamRequest());
+        pbjBlockStreamServiceProxy
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver3)
+                .onNext(buildEmptySubscribeStreamRequest());
+
+        final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(numberOfBlocks);
+        for (int i = 0; i < blockItems.size(); i++) {
+
+            // Transmit the BlockItem
+            final PublishStreamRequestUnparsed publishStreamRequest = PublishStreamRequestUnparsed.newBuilder()
+                    .blockItems(new BlockItemSetUnparsed(List.of(blockItems.get(i))))
+                    .build();
+            producerPipeline.onNext(PublishStreamRequestUnparsed.PROTOBUF.toBytes(publishStreamRequest));
+
+            // Remove 1st subscriber
+            if (i == 10) {
+                // Pause here to ensure the last sent block item is received.
+                // This makes the test deterministic.
+                Thread.sleep(50);
+                final var k = consumers.firstEntry().getKey();
+                streamMediator.unsubscribe(k);
+            }
+
+            // Remove 2nd subscriber
+            if (i == 60) {
+                // Pause here to ensure the last sent block item is received.
+                // This makes the test deterministic.
+                Thread.sleep(50);
+                final var k = consumers.firstEntry().getKey();
+                streamMediator.unsubscribe(k);
+            }
+
+            // Add a new subscriber
+            if (i == 51) {
+                pbjBlockStreamServiceProxy
+                        .open(
+                                PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream,
+                                options,
+                                subscribeStreamObserver4)
+                        .onNext(buildEmptySubscribeStreamRequest());
+            }
+
+            // Remove 3rd subscriber
+            if (i == 70) {
+                // Pause here to ensure the last sent block item is received.
+                // This makes the test deterministic.
+                Thread.sleep(50);
+                final var k = consumers.firstEntry().getKey();
+                streamMediator.unsubscribe(k);
+            }
+
+            // Add a new subscriber
+            if (i == 76) {
+                pbjBlockStreamServiceProxy
+                        .open(
+                                PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream,
+                                options,
+                                subscribeStreamObserver5)
+                        .onNext(buildEmptySubscribeStreamRequest());
+            }
+
+            // Add a new subscriber
+            if (i == 88) {
+                pbjBlockStreamServiceProxy
+                        .open(
+                                PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream,
+                                options,
+                                subscribeStreamObserver6)
+                        .onNext(buildEmptySubscribeStreamRequest());
+            }
+        }
+
+        // Verify subscribers who were listening before the stream started
+        verifySubscribeStreamResponse(numberOfBlocks, 0, 10, subscribeStreamObserver1, blockItems);
+        verifySubscribeStreamResponse(numberOfBlocks, 0, 60, subscribeStreamObserver2, blockItems);
+        verifySubscribeStreamResponse(numberOfBlocks, 0, 70, subscribeStreamObserver3, blockItems);
+
+        // Verify subscribers added while the stream was in progress.
+        // The Helidon-provided StreamObserver onNext() method will only
+        // be called once a Header BlockItem is reached. So, pass in
+        // the number of BlockItems to wait to verify that the method
+        // was called.
+        verifySubscribeStreamResponse(numberOfBlocks, 59, numberOfBlocks, subscribeStreamObserver4, blockItems);
+        verifySubscribeStreamResponse(numberOfBlocks, 79, numberOfBlocks, subscribeStreamObserver5, blockItems);
+        verifySubscribeStreamResponse(numberOfBlocks, 89, numberOfBlocks, subscribeStreamObserver6, blockItems);
+
+        producerPipeline.onComplete();
+    }
+
+    @Test
+    public void testMediatorExceptionHandlingWhenPersistenceFailure() throws IOException {
+        final ConcurrentHashMap<
+                        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>,
+                        BatchEventProcessor<ObjectEvent<SubscribeStreamResponseUnparsed>>>
+                consumers = new ConcurrentHashMap<>();
+
+        // Use a spy to use the real object but also verify the behavior.
+        final ServiceStatus serviceStatus = spy(new ServiceStatusImpl(blockNodeContext));
+        doCallRealMethod().when(serviceStatus).setWebServer(webServer);
+        doCallRealMethod().when(serviceStatus).isRunning();
+        doCallRealMethod().when(serviceStatus).stopWebServer(any());
+        serviceStatus.setWebServer(webServer);
+
+        final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
+
+        // Use a spy to make sure the write() method throws an IOException
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build());
+        doThrow(IOException.class).when(blockWriter).write(blockItems);
+
+        final var streamMediator = buildStreamMediator(consumers, serviceStatus);
+        final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
+        final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = new PbjBlockStreamServiceProxy(
+                streamMediator, serviceStatus, blockNodeEventHandler, notifier, blockNodeContext);
+
+        // Register a producer
+        final Pipeline<? super Bytes> producerPipeline = pbjBlockStreamServiceProxy.open(
+                PbjBlockStreamService.BlockStreamMethod.publishBlockStream, options, helidonPublishStreamObserver1);
+
+        // Register 3 consumers - Opening a pipeline is not enough to register a consumer.
+        // pipeline.onNext() must be invoked to register the consumer at the Helidon PBJ layer.
+        pbjBlockStreamServiceProxy
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver1)
+                .onNext(buildEmptySubscribeStreamRequest());
+        pbjBlockStreamServiceProxy
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver2)
+                .onNext(buildEmptySubscribeStreamRequest());
+        pbjBlockStreamServiceProxy
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver3)
+                .onNext(buildEmptySubscribeStreamRequest());
+
+        // 3 subscribers + 1 streamPersistenceHandler
+        assertEquals(4, consumers.size());
+
+        // Transmit a BlockItem
+        final Bytes publishStreamRequest =
+                PublishStreamRequestUnparsed.PROTOBUF.toBytes(PublishStreamRequestUnparsed.newBuilder()
+                        .blockItems(new BlockItemSetUnparsed(blockItems))
+                        .build());
+        producerPipeline.onNext(publishStreamRequest);
+
+        // Use verify to make sure the serviceStatus.stopRunning() method is called
+        // before the next block is transmitted.
+        verify(serviceStatus, timeout(testTimeout).times(2)).stopRunning(any());
+
+        // Simulate another producer attempting to connect to the Block Node after the exception.
+        // Later, verify they received a response indicating the stream is closed.
+        final Pipeline<? super Bytes> expectedNoOpProducerPipeline = pbjBlockStreamServiceProxy.open(
+                PbjBlockStreamService.BlockStreamMethod.publishBlockStream, options, helidonPublishStreamObserver2);
+
+        expectedNoOpProducerPipeline.onNext(publishStreamRequest);
+
+        verify(helidonPublishStreamObserver2, timeout(testTimeout).times(1)).onNext(buildEndOfStreamResponse());
+
+        // Build a request to invoke the singleBlock service
+        final SingleBlockRequest singleBlockRequest =
+                SingleBlockRequest.newBuilder().blockNumber(1).build();
+
+        final PbjBlockAccessServiceProxy pbjBlockAccessServiceProxy =
+                new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
+
+        // Simulate a consumer attempting to connect to the Block Node after the exception.
+        final SingleBlockResponseUnparsed singleBlockResponse =
+                pbjBlockAccessServiceProxy.singleBlock(singleBlockRequest);
+
+        // Build a request to invoke the subscribeBlockStream service
+        // Simulate a consumer attempting to connect to the Block Node after the exception.
+        pbjBlockStreamServiceProxy
+                .open(PbjBlockStreamService.BlockStreamMethod.subscribeBlockStream, options, subscribeStreamObserver4)
+                .onNext(buildEmptySubscribeStreamRequest());
+
+        // The BlockItem expected to pass through since it was published
+        // before the IOException was thrown.
+        final BlockItemSetUnparsed blockItemSet =
+                BlockItemSetUnparsed.newBuilder().blockItems(blockItems).build();
+
+        final Bytes subscribeStreamResponse =
+                SubscribeStreamResponseUnparsed.PROTOBUF.toBytes(SubscribeStreamResponseUnparsed.newBuilder()
+                        .blockItems(blockItemSet)
+                        .build());
+        verify(subscribeStreamObserver1, timeout(testTimeout).times(1)).onNext(subscribeStreamResponse);
+        verify(subscribeStreamObserver2, timeout(testTimeout).times(1)).onNext(subscribeStreamResponse);
+        verify(subscribeStreamObserver3, timeout(testTimeout).times(1)).onNext(subscribeStreamResponse);
+
+        // Verify all the consumers received the end of stream response
+        // TODO: Fix the response code when it's available
+        final Bytes endStreamResponse =
+                SubscribeStreamResponseUnparsed.PROTOBUF.toBytes(SubscribeStreamResponseUnparsed.newBuilder()
+                        .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
+                        .build());
+        verify(subscribeStreamObserver1, timeout(testTimeout).times(1)).onNext(endStreamResponse);
+        verify(subscribeStreamObserver2, timeout(testTimeout).times(1)).onNext(endStreamResponse);
+        verify(subscribeStreamObserver3, timeout(testTimeout).times(1)).onNext(endStreamResponse);
+
+        // Verify the publishBlockStream service returned the expected
+        // error code indicating the service is not available.
+        verify(helidonPublishStreamObserver1, timeout(testTimeout).times(1)).onNext(buildEndOfStreamResponse());
+
+        // Adding extra time to allow the service to stop given
+        // the built-in delay.
+        verify(webServer, timeout(testTimeout).times(1)).stop();
+
+        assertEquals(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE, singleBlockResponse.status());
+
+        // TODO: Fix the response code when it's available
+        final Bytes expectedSubscriberStreamNotAvailable =
+                SubscribeStreamResponseUnparsed.PROTOBUF.toBytes(SubscribeStreamResponseUnparsed.newBuilder()
+                        .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
+                        .build());
+
+        verify(subscribeStreamObserver4, timeout(testTimeout).times(1)).onNext(expectedSubscriberStreamNotAvailable);
+    }
+
+    private static void verifySubscribeStreamResponse(
+            int numberOfBlocks,
+            int blockItemsToWait,
+            int blockItemsToSkip,
+            Pipeline<? super Bytes> pipeline,
+            List<BlockItemUnparsed> blockItems) {
+
+        // Each block has 10 BlockItems. Verify all the BlockItems
+        // in a given block per iteration.
+        for (int block = 0; block < numberOfBlocks; block += 10) {
+
+            if (block < blockItemsToWait || block >= blockItemsToSkip) {
+                continue;
+            }
+
+            final BlockItemUnparsed headerBlockItem = blockItems.get(block);
+            final Bytes headerSubStreamResponse = buildSubscribeStreamResponse(headerBlockItem);
+
+            final BlockItemUnparsed bodyBlockItem = blockItems.get(block + 1);
+            final Bytes bodySubStreamResponse = buildSubscribeStreamResponse(bodyBlockItem);
+
+            final BlockItemUnparsed stateProofBlockItem = blockItems.get(block + 9);
+            final Bytes stateProofStreamResponse = buildSubscribeStreamResponse(stateProofBlockItem);
+
+            verify(pipeline, timeout(testTimeout).times(1)).onNext(headerSubStreamResponse);
+            verify(pipeline, timeout(testTimeout).times(8)).onNext(bodySubStreamResponse);
+            verify(pipeline, timeout(testTimeout).times(1)).onNext(stateProofStreamResponse);
+        }
+    }
 
     private static Bytes buildSubscribeStreamResponse(BlockItemUnparsed blockItem) {
         return SubscribeStreamResponseUnparsed.PROTOBUF.toBytes(SubscribeStreamResponseUnparsed.newBuilder()
@@ -621,11 +659,12 @@ public class PbjBlockStreamServiceIntegrationTest {
                 .build());
     }
 
-    private static PublishStreamResponse buildEndOfStreamResponse() {
+    private static Bytes buildEndOfStreamResponse() {
         final EndOfStream endOfStream = EndOfStream.newBuilder()
                 .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
                 .build();
-        return PublishStreamResponse.newBuilder().status(endOfStream).build();
+        return PublishStreamResponse.PROTOBUF.toBytes(
+                PublishStreamResponse.newBuilder().status(endOfStream).build());
     }
 
     private PbjBlockStreamServiceProxy buildBlockStreamService(final BlockWriter<List<BlockItemUnparsed>> blockWriter) {
@@ -661,5 +700,16 @@ public class PbjBlockStreamServiceIntegrationTest {
                 .build();
 
         return Acknowledgement.newBuilder().itemAck(itemAck).build();
+    }
+
+    private static Bytes buildEmptyPublishStreamRequest() {
+        return PublishStreamRequestUnparsed.PROTOBUF.toBytes(PublishStreamRequestUnparsed.newBuilder()
+                .blockItems(BlockItemSetUnparsed.newBuilder().build())
+                .build());
+    }
+
+    private static Bytes buildEmptySubscribeStreamRequest() {
+        return SubscribeStreamRequest.PROTOBUF.toBytes(
+                SubscribeStreamRequest.newBuilder().build());
     }
 }
