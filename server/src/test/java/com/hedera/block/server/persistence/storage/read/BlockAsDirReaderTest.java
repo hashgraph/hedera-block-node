@@ -115,7 +115,7 @@ public class BlockAsDirReaderTest {
     }
 
     @Test
-    public void testRemoveBlockItemReadPerms() throws IOException {
+    public void testRemoveBlockItemReadPerms() throws IOException, ParseException {
         final BlockWriter<List<BlockItemUnparsed>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
         blockWriter.write(blockItems);

@@ -44,6 +44,7 @@ import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.grpc.Pipeline;
 import com.swirlds.metrics.api.LongGauge;
 import java.io.IOException;
@@ -135,7 +136,7 @@ public class LiveStreamMediatorImplTest {
     }
 
     @Test
-    public void testMediatorPersistenceWithoutSubscribers() throws IOException {
+    public void testMediatorPersistenceWithoutSubscribers() throws IOException, ParseException {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
@@ -162,7 +163,7 @@ public class LiveStreamMediatorImplTest {
     }
 
     @Test
-    public void testMediatorPublishEventToSubscribers() throws IOException {
+    public void testMediatorPublishEventToSubscribers() throws IOException, ParseException {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
@@ -384,7 +385,7 @@ public class LiveStreamMediatorImplTest {
     //    }
 
     @Test
-    public void testMediatorBlocksPublishAfterException() throws IOException, InterruptedException {
+    public void testMediatorBlocksPublishAfterException() throws IOException, InterruptedException, ParseException {
 
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);

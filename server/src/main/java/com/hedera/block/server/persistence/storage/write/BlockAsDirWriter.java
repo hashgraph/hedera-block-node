@@ -116,47 +116,42 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItemUnparsed>> {
      */
     @Override
     public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> blockItems)
-            throws IOException {
+            throws IOException, ParseException {
 
-        try {
-            final Bytes unparsedBlockHeader = blockItems.getFirst().blockHeader();
-            if (unparsedBlockHeader != null) {
-                resetState(BlockHeader.PROTOBUF.parse(unparsedBlockHeader));
-            }
+        final Bytes unparsedBlockHeader = blockItems.getFirst().blockHeader();
+        if (unparsedBlockHeader != null) {
+            resetState(BlockHeader.PROTOBUF.parse(unparsedBlockHeader));
+        }
 
-            for (BlockItemUnparsed blockItemUnparsed : blockItems) {
-                final Path blockItemFilePath = calculateBlockItemPath();
-                for (int retries = 0; ; retries++) {
-                    try {
-                        write(blockItemFilePath, blockItemUnparsed);
-                        break;
-                    } catch (IOException e) {
+        for (BlockItemUnparsed blockItemUnparsed : blockItems) {
+            final Path blockItemFilePath = calculateBlockItemPath();
+            for (int retries = 0; ; retries++) {
+                try {
+                    write(blockItemFilePath, blockItemUnparsed);
+                    break;
+                } catch (IOException e) {
 
-                        LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
+                    LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
 
-                        // Remove the block if repairing the permissions fails
-                        if (retries > 0) {
-                            // Attempt to remove the block
-                            blockRemover.remove(Long.parseLong(currentBlockDir.toString()));
-                            throw e;
-                        } else {
-                            // Attempt to repair the permissions on the block path
-                            // and the blockItem path
-                            repairPermissions(blockNodeRootPath);
-                            repairPermissions(calculateBlockPath());
-                            LOGGER.log(INFO, "Retrying to write the BlockItem protobuf to a file");
-                        }
+                    // Remove the block if repairing the permissions fails
+                    if (retries > 0) {
+                        // Attempt to remove the block
+                        blockRemover.remove(Long.parseLong(currentBlockDir.toString()));
+                        throw e;
+                    } else {
+                        // Attempt to repair the permissions on the block path
+                        // and the blockItem path
+                        repairPermissions(blockNodeRootPath);
+                        repairPermissions(calculateBlockPath());
+                        LOGGER.log(INFO, "Retrying to write the BlockItem protobuf to a file");
                     }
                 }
             }
+        }
 
-            if (blockItems.getLast().hasBlockProof()) {
-                metricsService.get(BlocksPersisted).increment();
-                return Optional.of(blockItems);
-            }
-        } catch (ParseException p) {
-            LOGGER.log(ERROR, "Error parsing BlockHeader: ", p);
-            throw new IOException(p);
+        if (blockItems.getLast().hasBlockProof()) {
+            metricsService.get(BlocksPersisted).increment();
+            return Optional.of(blockItems);
         }
 
         return Optional.empty();

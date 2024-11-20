@@ -59,6 +59,7 @@ import com.hedera.hapi.block.SingleBlockResponseUnparsed;
 import com.hedera.hapi.block.SubscribeStreamRequest;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
+import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.grpc.Pipeline;
 import com.hedera.pbj.runtime.grpc.ServiceInterface;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
@@ -153,7 +154,7 @@ public class PbjBlockStreamServiceIntegrationTest {
     }
 
     @Test
-    public void testPublishBlockStreamRegistrationAndExecution() throws IOException, NoSuchAlgorithmException {
+    public void testPublishBlockStreamRegistrationAndExecution() throws IOException, NoSuchAlgorithmException, ParseException {
 
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
@@ -497,7 +498,7 @@ public class PbjBlockStreamServiceIntegrationTest {
     }
 
     @Test
-    public void testMediatorExceptionHandlingWhenPersistenceFailure() throws IOException {
+    public void testMediatorExceptionHandlingWhenPersistenceFailure() throws IOException, ParseException {
         final ConcurrentHashMap<
                         BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>,
                         BatchEventProcessor<ObjectEvent<SubscribeStreamResponseUnparsed>>>

@@ -185,7 +185,7 @@ public class BlockAsDirWriterTest {
     }
 
     @Test
-    public void testUnrecoverableIOExceptionOnWrite() throws IOException {
+    public void testUnrecoverableIOExceptionOnWrite() throws IOException, ParseException {
 
         final BlockRemover blockRemover = new BlockAsDirRemover(Path.of(testConfig.rootPath()));
 
