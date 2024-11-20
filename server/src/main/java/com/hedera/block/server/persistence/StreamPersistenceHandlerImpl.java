@@ -140,6 +140,8 @@ public class StreamPersistenceHandlerImpl
 
         } catch (BlockStreamProtocolException | IOException | ParseException e) {
 
+            LOGGER.log(ERROR, "Failed to persist BlockItems: ", e);
+
             metricsService.get(StreamPersistenceHandlerError).increment();
 
             // Trigger the server to stop accepting new requests
