@@ -154,7 +154,8 @@ public class PbjBlockStreamServiceIntegrationTest {
     }
 
     @Test
-    public void testPublishBlockStreamRegistrationAndExecution() throws IOException, NoSuchAlgorithmException, ParseException {
+    public void testPublishBlockStreamRegistrationAndExecution()
+            throws IOException, NoSuchAlgorithmException, ParseException {
 
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
