@@ -116,6 +116,10 @@ public class ProducerBlockItemObserver
     public void onNext(@NonNull final List<BlockItemUnparsed> blockItems) {
 
         LOGGER.log(DEBUG, "Received PublishStreamRequest from producer with " + blockItems.size() + " BlockItems.");
+        if (blockItems.isEmpty()) {
+            return;
+        }
+
         metricsService.get(LiveBlockItemsReceived).add(blockItems.size());
 
         // Publish the block to all the subscribers unless
@@ -125,9 +129,7 @@ public class ProducerBlockItemObserver
             livenessCalculator.refresh();
 
             // Publish the block to the mediator
-            if (!blockItems.isEmpty()) {
-                publisher.publish(blockItems);
-            }
+            publisher.publish(blockItems);
 
         } else {
             LOGGER.log(ERROR, getClass().getName() + " is not accepting BlockItems");
@@ -147,6 +149,7 @@ public class ProducerBlockItemObserver
 
         if (isResponsePermitted.get()) {
             if (isTimeoutExpired()) {
+                isResponsePermitted.set(false);
                 subscriptionHandler.unsubscribe(this);
                 LOGGER.log(DEBUG, "Producer liveness timeout. Unsubscribed ProducerBlockItemObserver.");
             } else {
@@ -190,8 +193,6 @@ public class ProducerBlockItemObserver
         isResponsePermitted.set(false);
         subscriptionHandler.unsubscribe(this);
         LOGGER.log(DEBUG, "Producer completed the stream. Observer unsubscribed.");
-
-        publishStreamResponseObserver.onComplete();
     }
 
     @Override

@@ -20,7 +20,6 @@ import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.hapi.block.BlockItemUnparsed;
-import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.hapi.block.stream.input.EventHeader;
 import com.hedera.hapi.block.stream.output.BlockHeader;
@@ -85,47 +84,6 @@ public final class PersistTestUtils {
                                                 .creatorNodeId(i)
                                                 .build())
                                         .build()))
-                                .build());
-                        break;
-                }
-            }
-        }
-
-        return blockItems;
-    }
-
-    public static List<BlockItem> generateBlockItems(int numOfBlocks) {
-
-        List<BlockItem> blockItems = new ArrayList<>();
-        for (int i = 1; i <= numOfBlocks; i++) {
-            for (int j = 1; j <= 10; j++) {
-                switch (j) {
-                    case 1:
-                        // First block is always the header
-                        blockItems.add(BlockItem.newBuilder()
-                                .blockHeader(BlockHeader.newBuilder()
-                                        .number(i)
-                                        .softwareVersion(SemanticVersion.newBuilder()
-                                                .major(1)
-                                                .minor(0)
-                                                .build())
-                                        .build())
-                                .build());
-                        break;
-                    case 10:
-                        // Last block is always the state proof
-                        blockItems.add(BlockItem.newBuilder()
-                                .blockProof(BlockProof.newBuilder().block(i).build())
-                                .build());
-                        break;
-                    default:
-                        // Middle blocks are events
-                        blockItems.add(BlockItem.newBuilder()
-                                .eventHeader(EventHeader.newBuilder()
-                                        .eventCore(EventCore.newBuilder()
-                                                .creatorNodeId(i)
-                                                .build())
-                                        .build())
                                 .build());
                         break;
                 }
