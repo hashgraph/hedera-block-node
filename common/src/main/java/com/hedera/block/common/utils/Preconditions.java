@@ -90,8 +90,8 @@ public final class Preconditions {
     public static int requirePositive(final int toCheck, final String errorMessage) {
         if (0 >= toCheck) {
             final String message = Objects.isNull(errorMessage)
-                ? "The input integer [%d] is required be positive.".formatted(toCheck)
-                : errorMessage;
+                    ? "The input integer [%d] is required be positive.".formatted(toCheck)
+                    : errorMessage;
             throw new IllegalArgumentException(message);
         } else {
             return toCheck;
@@ -126,8 +126,8 @@ public final class Preconditions {
     public static long requirePositive(final long toCheck, final String errorMessage) {
         if (0 >= toCheck) {
             final String message = Objects.isNull(errorMessage)
-                ? "The input long [%d] is required be positive.".formatted(toCheck)
-                : errorMessage;
+                    ? "The input long [%d] is required be positive.".formatted(toCheck)
+                    : errorMessage;
             throw new IllegalArgumentException(message);
         } else {
             return toCheck;

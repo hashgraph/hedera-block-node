@@ -60,19 +60,16 @@ class ServerMappedConfigSourceInitializerTest {
 
         for (final ConfigMapping current : SUPPORTED_MAPPINGS) {
             final Predicate<ConfigMapping> predicate =
-                    cm ->
-                            current.mappedName().equals(cm.mappedName())
-                                    && current.originalName().equals(cm.originalName());
+                    cm -> current.mappedName().equals(cm.mappedName())
+                            && current.originalName().equals(cm.originalName());
             assertTrue(
                     actual.stream().anyMatch(predicate),
-                    () ->
-                            "when testing for: [%s] it is not contained in mappings of the actual initialized object %s"
-                                    .formatted(current, actual));
+                    () -> "when testing for: [%s] it is not contained in mappings of the actual initialized object %s"
+                            .formatted(current, actual));
         }
     }
 
-    private static Queue<ConfigMapping> extractConfigMappings()
-            throws ReflectiveOperationException {
+    private static Queue<ConfigMapping> extractConfigMappings() throws ReflectiveOperationException {
         final Field configMappings = MappedConfigSource.class.getDeclaredField("configMappings");
         try {
             configMappings.setAccessible(true);

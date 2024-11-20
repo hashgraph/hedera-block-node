@@ -80,8 +80,8 @@ class PersistenceInjectionModuleTest {
     @Test
     void testProvidesBlockWriter() {
 
-        BlockWriter<List<BlockItem>> blockWriter =
-                PersistenceInjectionModule.providesBlockWriter(blockNodeContext, new NoOpRemover(), new NoOpPathResolver());
+        BlockWriter<List<BlockItem>> blockWriter = PersistenceInjectionModule.providesBlockWriter(
+                blockNodeContext, new NoOpRemover(), new NoOpPathResolver());
 
         assertNotNull(blockWriter);
     }
@@ -105,7 +105,8 @@ class PersistenceInjectionModuleTest {
         // Expect a RuntimeException due to the IOException
         assertThatRuntimeException()
                 .isThrownBy(() -> {
-                    PersistenceInjectionModule.providesBlockWriter(blockNodeContext, new NoOpRemover(), new NoOpPathResolver());
+                    PersistenceInjectionModule.providesBlockWriter(
+                            blockNodeContext, new NoOpRemover(), new NoOpPathResolver());
                 })
                 .withCauseInstanceOf(IOException.class)
                 .withMessage("Failed to create BlockWriter");

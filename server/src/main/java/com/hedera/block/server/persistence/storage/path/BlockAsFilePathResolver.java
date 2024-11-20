@@ -37,8 +37,8 @@ public final class BlockAsFilePathResolver extends AbstractPathResolver {
         Preconditions.requirePositive(blockNumber); // todo do we have block number 0?
         final String inputString = String.format("%0" + MAX_LONG_DIGITS + "d", blockNumber);
         final String[] blockPath = inputString.split("");
-        final String blockFileName = blockPath[blockPath.length - 1].concat(Constants.BLOCK_FILE_EXTENSION);
-        blockPath[blockPath.length -1] = blockFileName;
+        final String blockFileName = inputString.concat(Constants.BLOCK_FILE_EXTENSION);
+        blockPath[blockPath.length - 1] = blockFileName;
         return Paths.get(root.toAbsolutePath().toString(), blockPath);
     }
 }

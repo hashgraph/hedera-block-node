@@ -155,8 +155,7 @@ class PreconditionsTest {
     @ParameterizedTest
     @MethodSource("com.hedera.block.common.CommonsTestUtility#positiveIntegers")
     void testRequirePositiveLongPass(final long toTest) {
-        final Consumer<Long> asserts =
-            actual -> assertThat(actual).isPositive().isEqualTo(toTest);
+        final Consumer<Long> asserts = actual -> assertThat(actual).isPositive().isEqualTo(toTest);
 
         final long actual = Preconditions.requirePositive(toTest);
         assertThat(actual).satisfies(asserts);
@@ -180,8 +179,8 @@ class PreconditionsTest {
 
         final String testErrorMessage = "test error message";
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> Preconditions.requirePositive(toTest, testErrorMessage))
-            .withMessage(testErrorMessage);
+                .isThrownBy(() -> Preconditions.requirePositive(toTest, testErrorMessage))
+                .withMessage(testErrorMessage);
     }
 
     /**

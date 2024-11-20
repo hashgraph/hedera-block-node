@@ -34,6 +34,8 @@ import java.util.Optional;
  * TODO: add documentation
  */
 class BlockAsFileWriter extends AbstractBlockWriter<List<BlockItem>> {
+    private Block curentBlock; // fixme this is temporary just to explore the workflow and make proof of concept
+
     BlockAsFileWriter(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
@@ -43,19 +45,27 @@ class BlockAsFileWriter extends AbstractBlockWriter<List<BlockItem>> {
 
     @Override
     public Optional<List<BlockItem>> write(@NonNull final List<BlockItem> toWrite) throws IOException {
-        if (!toWrite.getFirst().hasBlockHeader()) {
-            throw new RuntimeException("Block header is missing");
-            // todo handle this properly for now just not to forget
-            // order of the items is significant
-            // also do we need to check for proof here or below like in dir writer?
+        if (toWrite.getFirst().hasBlockHeader()) {
+            curentBlock = Block.newBuilder().items(toWrite).build();
+        } else {
+            final List<BlockItem> currentItems = curentBlock.items();
+            currentItems.addAll(toWrite);
+            curentBlock = Block.newBuilder().items(currentItems).build();
         }
-        final Block blockToWrite = Block.newBuilder().items(toWrite).build();
-        final long number = toWrite.getFirst().blockHeader().number(); // fixme could be null, handle!
+
+        if (toWrite.getLast().hasBlockProof()) {
+            return writeToFs(curentBlock);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private Optional<List<BlockItem>> writeToFs(final Block blockToWrite) throws IOException {
+        final long number = blockToWrite.items().getFirst().blockHeader().number(); // fixme could be null, handle!
 
         // todo we should handle cases where the block path exists, we do not expect it to
         // exist at this stage, if it does, there is something wrong here
         final Path blockToWritePathResolved = pathResolver.resolvePathToBlock(number);
-
         Files.createDirectories(blockToWritePathResolved.getParent());
         Files.createFile(blockToWritePathResolved);
 
@@ -73,6 +83,7 @@ class BlockAsFileWriter extends AbstractBlockWriter<List<BlockItem>> {
             // todo handle properly
             throw new RuntimeException(e);
         }
-        return Optional.of(toWrite);
+        curentBlock = null;
+        return Optional.of(blockToWrite.items());
     }
 }
