@@ -5,4 +5,5 @@ metadata:
   labels:
     grafana_dashboard: "1"
 data:
-  my-dashboard.json: {{ .Files.Get "dashboards/block-node-server.json" | quote }}
+  block-node-dashboard.json: {{ .Files.Get "dashboards/block-node-server.json" | quote }}
+  node-exporter-dashboard.json: {{ .Files.Get "dashboards/node-exporter-full.json" | quote }}
