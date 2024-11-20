@@ -164,6 +164,7 @@ class BlockAsDirWriter extends AbstractBlockWriter<List<BlockItem>> {
             BlockItem.PROTOBUF.toBytes(blockItem).writeTo(fos);
             LOGGER.log(DEBUG, "Successfully wrote the block item file: {0}", blockItemFilePath);
         } catch (final IOException e) {
+            // fixme writeTo throws UncheckedIOException, we should handle other cases as well
             LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
             throw e;
         }

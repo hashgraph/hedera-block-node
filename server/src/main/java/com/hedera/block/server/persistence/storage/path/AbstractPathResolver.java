@@ -24,7 +24,7 @@ import java.util.Objects;
  * TODO: add documentation
  */
 abstract class AbstractPathResolver implements PathResolver {
-    private final Path root;
+    protected final Path root;
 
     AbstractPathResolver(@NonNull final Path root) {
         this.root = Objects.requireNonNull(root);

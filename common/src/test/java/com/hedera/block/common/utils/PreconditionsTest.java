@@ -147,6 +147,45 @@ class PreconditionsTest {
 
     /**
      * This test aims to verify that the
+     * {@link Preconditions#requirePositive(long)} will return the input 'toTest'
+     * parameter if the positive check passes. Test includes overloads.
+     *
+     * @param toTest parameterized, the number to test
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#positiveIntegers")
+    void testRequirePositiveLongPass(final long toTest) {
+        final Consumer<Long> asserts =
+            actual -> assertThat(actual).isPositive().isEqualTo(toTest);
+
+        final long actual = Preconditions.requirePositive(toTest);
+        assertThat(actual).satisfies(asserts);
+
+        final long actualOverload = Preconditions.requirePositive(toTest, "test error message");
+        assertThat(actualOverload).satisfies(asserts);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link Preconditions#requirePositive(long)} will throw an
+     * {@link IllegalArgumentException} if the positive check fails. Test
+     * includes overloads.
+     *
+     * @param toTest parameterized, the number to test
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#zeroAndNegativeIntegers")
+    void testRequirePositiveLongFail(final long toTest) {
+        assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requirePositive(toTest));
+
+        final String testErrorMessage = "test error message";
+        assertThatIllegalArgumentException()
+            .isThrownBy(() -> Preconditions.requirePositive(toTest, testErrorMessage))
+            .withMessage(testErrorMessage);
+    }
+
+    /**
+     * This test aims to verify that the
      * {@link Preconditions#requirePowerOfTwo(int)} will return the input
      * 'toTest' parameter if the power of two check passes. Test includes
      * overloads.

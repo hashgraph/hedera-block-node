@@ -22,5 +22,9 @@ import java.nio.file.Path;
  * TODO: add documentation
  */
 public interface PathResolver {
+    // TODO extend this interface, we probably need more methods for checking if
+    // a path exists or resolving for compressed/decompressed or resolving for
+    // archived non archived etc. For now I only care to start writing blocks
+    // as files to the disk and clean up the approach on how to do that.
     Path resolvePathToBlock(final long blockNumber);
 }
