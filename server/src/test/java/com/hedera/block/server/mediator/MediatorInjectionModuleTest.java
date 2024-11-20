@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.mediator;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.hedera.block.server.config.BlockNodeContext;
@@ -25,6 +26,7 @@ import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,5 +55,21 @@ class MediatorInjectionModuleTest {
 
         // Verify that the streamMediator is correctly instantiated
         assertNotNull(streamMediator);
+        assertInstanceOf(LiveStreamMediatorImpl.class, streamMediator);
+    }
+
+    @Test
+    void testNoOpProvidesStreamMediator() throws IOException {
+
+        Map<String, String> properties = Map.of("mediator.type", "NOOP");
+        BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext(properties);
+
+        // Call the method under test
+        StreamMediator<List<BlockItemUnparsed>, SubscribeStreamResponseUnparsed> streamMediator =
+                MediatorInjectionModule.providesLiveStreamMediator(blockNodeContext, serviceStatus);
+
+        // Verify that the streamMediator is correctly instantiated
+        assertNotNull(streamMediator);
+        assertInstanceOf(NoOpLiveStreamMediator.class, streamMediator);
     }
 }
