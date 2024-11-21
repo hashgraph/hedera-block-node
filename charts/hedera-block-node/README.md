@@ -7,7 +7,7 @@ Installs the Hedera Block Node on a Kubernetes cluster.
 
 For Development and Test environment is recommended to use minikube with the following command (if want to deploy the kube-prometheus-stack for metrics visualization):
 ```bash
-minikube delete && minikube start --kubernetes-version=v1.23.0 --memory=6g --bootstrapper=kubeadm --extra-config=kubelet.authentication-token-webhook=true --extra-config=kubelet.authorization-mode=Webhook --extra-config=scheduler.bind-address=0.0.0.0 --extra-config=controller-manager.bind-address=0.0.0.0
+minikube delete && minikube start --kubernetes-version=v1.23.0 --memory=8g --bootstrapper=kubeadm --extra-config=kubelet.authentication-token-webhook=true --extra-config=kubelet.authorization-mode=Webhook --extra-config=scheduler.bind-address=0.0.0.0 --extra-config=controller-manager.bind-address=0.0.0.0
 ```
 
 Set environment variables that will be used for the remainder of the document:
@@ -69,7 +69,7 @@ By default the stack includes a chart dependency that includes a prometheus + gr
 
 If you prefer to use your own prometheus+grafana stack, you can disable the stack by setting the following values:
 ```yaml
-kube-prometheus-stack:
+kubepromstack:
   enabled: false
 ```
 
