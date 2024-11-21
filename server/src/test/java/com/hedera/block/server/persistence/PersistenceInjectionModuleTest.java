@@ -30,7 +30,7 @@ import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.StorageType;
-import com.hedera.block.server.persistence.storage.path.NoOpPathResolver;
+import com.hedera.block.server.persistence.storage.path.NoOpBlockPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.NoOpRemover;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
@@ -81,7 +81,7 @@ class PersistenceInjectionModuleTest {
     void testProvidesBlockWriter() {
 
         BlockWriter<List<BlockItem>> blockWriter = PersistenceInjectionModule.providesBlockWriter(
-                blockNodeContext, new NoOpRemover(), new NoOpPathResolver());
+                blockNodeContext, new NoOpRemover(), new NoOpBlockPathResolver());
 
         assertNotNull(blockWriter);
     }
@@ -106,7 +106,7 @@ class PersistenceInjectionModuleTest {
         assertThatRuntimeException()
                 .isThrownBy(() -> {
                     PersistenceInjectionModule.providesBlockWriter(
-                            blockNodeContext, new NoOpRemover(), new NoOpPathResolver());
+                            blockNodeContext, new NoOpRemover(), new NoOpBlockPathResolver());
                 })
                 .withCauseInstanceOf(IOException.class)
                 .withMessage("Failed to create BlockWriter");

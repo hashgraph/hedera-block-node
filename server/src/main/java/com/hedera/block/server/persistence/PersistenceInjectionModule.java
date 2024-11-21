@@ -23,8 +23,8 @@ import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.StorageType;
 import com.hedera.block.server.persistence.storage.path.BlockAsDirPathResolver;
 import com.hedera.block.server.persistence.storage.path.BlockAsFilePathResolver;
-import com.hedera.block.server.persistence.storage.path.NoOpPathResolver;
-import com.hedera.block.server.persistence.storage.path.PathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
+import com.hedera.block.server.persistence.storage.path.NoOpBlockPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockAsFileReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
@@ -65,21 +65,23 @@ public interface PersistenceInjectionModule {
     static BlockWriter<List<BlockItem>> providesBlockWriter(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
-            @NonNull final PathResolver pathResolver) {
+            @NonNull final BlockPathResolver blockPathResolver) {
         Objects.requireNonNull(blockNodeContext);
         Objects.requireNonNull(blockRemover);
-        Objects.requireNonNull(pathResolver);
+        Objects.requireNonNull(blockPathResolver);
         final StorageType persistenceType = blockNodeContext
                 .configuration()
                 .getConfigData(PersistenceStorageConfig.class)
                 .type();
         try {
             return switch (persistenceType) {
-                case BLOCK_AS_FILE -> BlockAsFileWriterBuilder.newBuilder(blockNodeContext, blockRemover, pathResolver)
+                case BLOCK_AS_FILE -> BlockAsFileWriterBuilder.newBuilder(
+                                blockNodeContext, blockRemover, blockPathResolver)
                         .build();
-                case BLOCK_AS_DIR -> BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemover, pathResolver)
+                case BLOCK_AS_DIR -> BlockAsDirWriterBuilder.newBuilder(
+                                blockNodeContext, blockRemover, blockPathResolver)
                         .build();
-                case NOOP -> new NoOpBlockWriter(blockNodeContext, blockRemover, pathResolver);
+                case NOOP -> new NoOpBlockWriter(blockNodeContext, blockRemover, blockPathResolver);
             };
         } catch (final IOException e) {
             // we cannot have checked exceptions with dagger @Provides
@@ -114,11 +116,12 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static BlockRemover providesBlockRemover(@NonNull final PersistenceStorageConfig config) {
+    static BlockRemover providesBlockRemover(
+            @NonNull final PersistenceStorageConfig config, @NonNull final BlockPathResolver blockPathResolver) {
         final StorageType persistenceType = Objects.requireNonNull(config).type();
         return switch (persistenceType) {
             case BLOCK_AS_FILE -> new BlockAsFileRemover();
-            case BLOCK_AS_DIR -> new BlockAsDirRemover(Path.of(config.rootPath()));
+            case BLOCK_AS_DIR -> new BlockAsDirRemover(blockPathResolver);
             case NOOP -> new NoOpRemover();
         };
     }
@@ -132,13 +135,13 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static PathResolver providesPathResolver(@NonNull final PersistenceStorageConfig config) {
+    static BlockPathResolver providesPathResolver(@NonNull final PersistenceStorageConfig config) {
         final StorageType persistenceType = Objects.requireNonNull(config).type();
-        final Path root = Path.of(config.rootPath());
+        final Path blockStorageRoot = Path.of(config.rootPath());
         return switch (persistenceType) {
-            case BLOCK_AS_FILE -> new BlockAsFilePathResolver(root);
-            case BLOCK_AS_DIR -> new BlockAsDirPathResolver(root);
-            case NOOP -> new NoOpPathResolver();
+            case BLOCK_AS_FILE -> new BlockAsFilePathResolver(blockStorageRoot);
+            case BLOCK_AS_DIR -> new BlockAsDirPathResolver(blockStorageRoot);
+            case NOOP -> new NoOpBlockPathResolver();
         };
     }
 

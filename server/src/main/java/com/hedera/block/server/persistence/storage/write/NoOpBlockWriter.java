@@ -20,7 +20,7 @@ import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.Block
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.persistence.storage.path.PathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -37,21 +37,21 @@ import java.util.Optional;
 public class NoOpBlockWriter implements LocalBlockWriter<List<BlockItem>> {
     private final MetricsService metricsService;
     private final BlockRemover blockRemover; // todo do I need here?
-    private final PathResolver pathResolver; // todo do I need here?
+    private final BlockPathResolver blockPathResolver; // todo do I need here?
 
     /**
      * Creates a new NoOpBlockWriter instance for testing and troubleshooting only.
      *
      * @param blockNodeContext the block node context
-     * @param pathResolver used internally
+     * @param blockPathResolver used internally
      */
     public NoOpBlockWriter(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
-            @NonNull final PathResolver pathResolver) {
+            @NonNull final BlockPathResolver blockPathResolver) {
         this.metricsService = Objects.requireNonNull(blockNodeContext.metricsService());
         this.blockRemover = Objects.requireNonNull(blockRemover);
-        this.pathResolver = Objects.requireNonNull(pathResolver);
+        this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
     }
 
     /**

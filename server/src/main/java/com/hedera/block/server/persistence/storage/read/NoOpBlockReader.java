@@ -16,8 +16,6 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
-import static java.lang.System.Logger.Level.INFO;
-
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -28,10 +26,6 @@ import java.util.Optional;
  * TODO: add documentation
  */
 public class NoOpBlockReader implements BlockReader<Block> {
-    public NoOpBlockReader() {
-        System.getLogger(getClass().getName()).log(INFO, "Using " + getClass().getSimpleName());
-    }
-
     @NonNull
     @Override
     public Optional<Block> read(final long blockNumber) throws IOException, ParseException {

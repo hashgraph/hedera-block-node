@@ -21,7 +21,7 @@ import java.io.IOException;
 /**
  * TODO: add documentation
  */
-public class BlockAsFileRemover implements BlockRemover {
+public class BlockAsFileRemover implements LocalBlockRemover {
     @Override
     public void remove(final long blockNumber) throws IOException {
         throw new UnsupportedOperationException("Not implemented yet");

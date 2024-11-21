@@ -22,13 +22,13 @@ import java.nio.file.Path;
 /**
  * TODO: add documentation
  */
-public final class BlockAsDirPathResolver extends AbstractPathResolver {
-    public BlockAsDirPathResolver(@NonNull final Path root) {
-        super(root);
+public final class BlockAsDirPathResolver extends AbstractBlockPathResolver {
+    public BlockAsDirPathResolver(@NonNull final Path blockStorageRoot) {
+        super(blockStorageRoot);
     }
 
     @Override
     public Path resolvePathToBlock(final long blockNumber) {
-        return root.resolve(String.valueOf(blockNumber));
+        return blockStorageRoot.resolve(String.valueOf(blockNumber));
     }
 }

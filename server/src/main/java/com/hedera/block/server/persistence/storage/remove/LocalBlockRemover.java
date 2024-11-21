@@ -14,19 +14,9 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage.path;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import java.nio.file.Path;
-import java.util.Objects;
+package com.hedera.block.server.persistence.storage.remove;
 
 /**
  * TODO: add documentation
  */
-abstract class AbstractPathResolver implements PathResolver {
-    protected final Path root;
-
-    AbstractPathResolver(@NonNull final Path root) {
-        this.root = Objects.requireNonNull(root);
-    }
-}
+public interface LocalBlockRemover extends BlockRemover {}

@@ -19,10 +19,10 @@ package com.hedera.block.server.persistence.storage.remove;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.ERROR;
 
+import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -30,37 +30,36 @@ import java.util.Objects;
  * The BlockAsDirRemover class removes a block from the file system. The block is stored as a
  * directory containing block items. The block items are stored as files within the block directory.
  */
-public class BlockAsDirRemover implements BlockRemover {
+public class BlockAsDirRemover implements LocalBlockRemover {
     private final Logger LOGGER = System.getLogger(getClass().getName());
-    private final Path blockNodeRootPath;
+    private final BlockPathResolver blockPathResolver;
 
     /**
      * Create a block remover to manage removing blocks from storage.
      *
-     * @param blockNodeRootPath the root path where blocks are stored.
+     * @param blockPathResolver the root path where blocks are stored.
      */
-    public BlockAsDirRemover(@NonNull final Path blockNodeRootPath) {
-        this.blockNodeRootPath = Objects.requireNonNull(blockNodeRootPath);
+    public BlockAsDirRemover(@NonNull final BlockPathResolver blockPathResolver) {
+        this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
     }
 
     /**
      * Removes a block from the file system.
      *
-     * @param id the id of the block to remove
+     * @param blockNumber the id of the block to remove
      * @throws IOException if an I/O error occurs
      */
     @Override
-    public void remove(final long id) throws IOException {
-        // Calculate the block path and proactively set the permissions
-        // for removal
-        final Path blockPath = blockNodeRootPath.resolve(String.valueOf(id));
-        if (Files.notExists(blockPath)) {
-            LOGGER.log(ERROR, "Block does not exist: {0}", id);
-            return;
-        }
-        // Best effort to delete the block
-        if (!delete(blockPath.toFile())) {
-            LOGGER.log(ERROR, "Failed to delete block: {0}", id);
+    public void remove(final long blockNumber) throws IOException {
+        // todo should we add file permissions normalization?
+        if (blockPathResolver.notExistsBlock(blockNumber)) {
+            LOGGER.log(ERROR, "Block cannot be deleted as it does not exist: {0}", blockNumber);
+        } else {
+            final Path blockPath = blockPathResolver.resolvePathToBlock(blockNumber);
+            final boolean deleted = delete(blockPath.toFile());
+            if (!deleted) {
+                LOGGER.log(ERROR, "Failed to delete block: {0}", blockNumber);
+            }
         }
     }
 

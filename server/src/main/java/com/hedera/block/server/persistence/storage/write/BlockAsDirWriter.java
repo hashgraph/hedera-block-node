@@ -28,7 +28,7 @@ import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.path.PathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -58,7 +58,7 @@ class BlockAsDirWriter implements LocalBlockWriter<List<BlockItem>> {
     private final Path blockNodeRootPath;
     private final MetricsService metricsService;
     private final BlockRemover blockRemover;
-    private final PathResolver pathResolver;
+    private final BlockPathResolver blockPathResolver;
     private final FileAttribute<Set<PosixFilePermission>> folderPermissions;
     private long blockNodeFileNameIndex;
     private long currentBlockNumber;
@@ -69,7 +69,7 @@ class BlockAsDirWriter implements LocalBlockWriter<List<BlockItem>> {
      *
      * @param blockNodeContext the block node context to use for writing blocks
      * @param blockRemover the block remover to use for removing blocks
-     * @param pathResolver used internally to resolve paths
+     * @param blockPathResolver used internally to resolve paths
      * @param folderPermissions the folder permissions to use for writing
      * blocks, if null provided then defaults will be used
      *
@@ -78,14 +78,14 @@ class BlockAsDirWriter implements LocalBlockWriter<List<BlockItem>> {
     BlockAsDirWriter(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
-            @NonNull final PathResolver pathResolver,
+            @NonNull final BlockPathResolver blockPathResolver,
             final FileAttribute<Set<PosixFilePermission>> folderPermissions)
             throws IOException {
         LOGGER.log(INFO, "Initializing FileSystemBlockStorage");
 
         this.metricsService = Objects.requireNonNull(blockNodeContext.metricsService());
         this.blockRemover = Objects.requireNonNull(blockRemover);
-        this.pathResolver = Objects.requireNonNull(pathResolver);
+        this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
 
         final PersistenceStorageConfig config =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
@@ -142,7 +142,7 @@ class BlockAsDirWriter implements LocalBlockWriter<List<BlockItem>> {
                         // Attempt to repair the permissions on the block path
                         // and the blockItem path
                         repairPermissions(blockNodeRootPath);
-                        repairPermissions(pathResolver.resolvePathToBlock(currentBlockNumber));
+                        repairPermissions(blockPathResolver.resolvePathToBlock(currentBlockNumber));
                         LOGGER.log(INFO, "Retrying to write the BlockItem protobuf to a file");
                     }
                 }
@@ -186,7 +186,7 @@ class BlockAsDirWriter implements LocalBlockWriter<List<BlockItem>> {
 
         // Construct the path to the block directory
         FileUtilities.createFolderPathIfNotExists(
-                pathResolver.resolvePathToBlock(currentBlockNumber),
+                blockPathResolver.resolvePathToBlock(currentBlockNumber),
                 DEBUG,
                 folderPermissions,
                 BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME);
@@ -209,7 +209,7 @@ class BlockAsDirWriter implements LocalBlockWriter<List<BlockItem>> {
     @NonNull
     private Path calculateBlockItemPath() {
         // Build the path to a .blk file
-        final Path blockPath = pathResolver.resolvePathToBlock(currentBlockNumber);
+        final Path blockPath = blockPathResolver.resolvePathToBlock(currentBlockNumber);
         blockNodeFileNameIndex++;
         return blockPath.resolve(blockNodeFileNameIndex + BLOCK_FILE_EXTENSION);
     }

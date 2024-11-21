@@ -20,7 +20,7 @@ import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.Block
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.persistence.storage.path.PathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -40,16 +40,16 @@ import java.util.Optional;
 class BlockAsFileWriter implements LocalBlockWriter<List<BlockItem>> {
     private final MetricsService metricsService;
     private final BlockRemover blockRemover; // todo do I need here?
-    private final PathResolver pathResolver;
+    private final BlockPathResolver blockPathResolver;
     private Block curentBlock; // fixme this is temporary just to explore the workflow and make proof of concept
 
     BlockAsFileWriter(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
-            @NonNull final PathResolver pathResolver) {
+            @NonNull final BlockPathResolver blockPathResolver) {
         this.metricsService = Objects.requireNonNull(blockNodeContext.metricsService());
         this.blockRemover = Objects.requireNonNull(blockRemover);
-        this.pathResolver = Objects.requireNonNull(pathResolver);
+        this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
     }
 
     @Override
@@ -77,7 +77,7 @@ class BlockAsFileWriter implements LocalBlockWriter<List<BlockItem>> {
 
         // todo we should handle cases where the block path exists, we do not expect it to
         // exist at this stage, if it does, there is something wrong here
-        final Path blockToWritePathResolved = pathResolver.resolvePathToBlock(number);
+        final Path blockToWritePathResolved = blockPathResolver.resolvePathToBlock(number);
         Files.createDirectories(blockToWritePathResolved.getParent());
         Files.createFile(blockToWritePathResolved);
 

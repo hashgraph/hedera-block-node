@@ -37,7 +37,7 @@ import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.notifier.NotifierImpl;
 import com.hedera.block.server.persistence.StreamPersistenceHandlerImpl;
-import com.hedera.block.server.persistence.storage.path.PathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
@@ -135,7 +135,7 @@ public class PbjBlockStreamServiceIntegrationTest {
     private BlockRemover blockRemoverMock;
 
     @Mock
-    private PathResolver pathResolverMock;
+    private BlockPathResolver blockPathResolverMock;
 
     @TempDir
     private Path testPath;
@@ -298,7 +298,7 @@ public class PbjBlockStreamServiceIntegrationTest {
         int numberOfBlocks = 100;
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, blockRemoverMock, pathResolverMock)
+                        blockNodeContext, blockRemoverMock, blockPathResolverMock)
                 .build();
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
@@ -492,7 +492,7 @@ public class PbjBlockStreamServiceIntegrationTest {
 
         // Use a spy to make sure the write() method throws an IOException
         final BlockWriter<List<BlockItem>> blockWriter =
-                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemoverMock, pathResolverMock)
+                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemoverMock, blockPathResolverMock)
                         .build());
         doThrow(IOException.class).when(blockWriter).write(blockItems);
 

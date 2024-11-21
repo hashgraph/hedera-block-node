@@ -36,7 +36,7 @@ import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.path.PathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
@@ -92,7 +92,7 @@ public class BlockAsDirWriterTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class), mock(PathResolver.class))
+                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
                 .folderPermissions(DEFAULT_TEST_FOLDER_PERMISSIONS)
                 .build();
         for (int i = 0; i < 10; i++) {
@@ -143,7 +143,7 @@ public class BlockAsDirWriterTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class), mock(PathResolver.class))
+                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
                 .build();
 
         // Change the permissions on the block node root directory
@@ -190,11 +190,11 @@ public class BlockAsDirWriterTest {
     public void testUnrecoverableIOExceptionOnWrite() throws IOException {
 
         final List<BlockItem> blockItems = generateBlockItems(1);
-        final BlockRemover blockRemover = new BlockAsDirRemover(Path.of(testConfig.rootPath()));
+        final BlockRemover blockRemover = new BlockAsDirRemover(mock(BlockPathResolver.class));
 
         // Use a spy to simulate an IOException when the first block item is written
         final BlockWriter<List<BlockItem>> blockWriter =
-                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemover, mock(PathResolver.class))
+                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemover, mock(BlockPathResolver.class))
                         .build());
         doThrow(IOException.class).when(blockWriter).write(blockItems);
         assertThrows(IOException.class, () -> blockWriter.write(blockItems));
@@ -205,7 +205,7 @@ public class BlockAsDirWriterTest {
         final List<BlockItem> blockItems = generateBlockItems(1);
 
         final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class), mock(PathResolver.class))
+                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
                 .build();
 
         // Write the first block item to create the block
@@ -243,7 +243,7 @@ public class BlockAsDirWriterTest {
 
     @Test
     public void testPartialBlockRemoval() throws IOException, ParseException {
-        final BlockRemover blockRemover = new BlockAsDirRemover(Path.of(testConfig.rootPath()));
+        final BlockRemover blockRemover = new BlockAsDirRemover(mock(BlockPathResolver.class));
         // Use a spy of TestBlockAsDirWriter to proxy block items to the real writer
         // for the first 22 block items. Then simulate an IOException on the 23rd block item
         // thrown from a protected write method in the real class. This should trigger the
@@ -320,7 +320,7 @@ public class BlockAsDirWriterTest {
                 final FileAttribute<Set<PosixFilePermission>> filePerms,
                 final BlockNodeContext blockNodeContext)
                 throws IOException {
-            super(blockNodeContext, blockRemover, mock(PathResolver.class), filePerms);
+            super(blockNodeContext, blockRemover, mock(BlockPathResolver.class), filePerms);
         }
 
         @Override

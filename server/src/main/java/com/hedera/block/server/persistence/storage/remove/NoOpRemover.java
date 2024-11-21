@@ -16,16 +16,10 @@
 
 package com.hedera.block.server.persistence.storage.remove;
 
-import static java.lang.System.Logger.Level.INFO;
-
 /**
  * TODO: add documentation
  */
-public class NoOpRemover implements BlockRemover {
-    public NoOpRemover() {
-        System.getLogger(getClass().getName()).log(INFO, "Using " + getClass().getSimpleName());
-    }
-
+public class NoOpRemover implements LocalBlockRemover {
     @Override
     public void remove(final long blockNumber) {
         // do nothing

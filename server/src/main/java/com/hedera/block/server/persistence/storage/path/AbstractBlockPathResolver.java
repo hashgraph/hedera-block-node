@@ -17,28 +17,30 @@
 package com.hedera.block.server.persistence.storage.path;
 
 import com.hedera.block.common.utils.Preconditions;
-import com.hedera.block.server.Constants;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Objects;
 
 /**
  * TODO: add documentation
  */
-public final class BlockAsFilePathResolver extends AbstractBlockPathResolver {
-    private static final int MAX_LONG_DIGITS = 19;
+abstract class AbstractBlockPathResolver implements BlockPathResolver {
+    protected final Path blockStorageRoot;
 
-    public BlockAsFilePathResolver(@NonNull final Path blockStorageRoot) {
-        super(blockStorageRoot);
+    AbstractBlockPathResolver(@NonNull final Path blockStorageRoot) {
+        this.blockStorageRoot = Objects.requireNonNull(blockStorageRoot);
     }
 
     @Override
-    public Path resolvePathToBlock(final long blockNumber) {
-        Preconditions.requirePositive(blockNumber); // todo do we have block number 0?
-        final String inputString = String.format("%0" + MAX_LONG_DIGITS + "d", blockNumber);
-        final String[] blockPath = inputString.split("");
-        final String blockFileName = inputString.concat(Constants.BLOCK_FILE_EXTENSION);
-        blockPath[blockPath.length - 1] = blockFileName;
-        return Paths.get(blockStorageRoot.toAbsolutePath().toString(), blockPath);
+    public final boolean existsBlock(final long blockNumber) {
+        return Files.exists(resolvePathToBlock(Preconditions.requirePositive(blockNumber)));
+        // todo do we have block number 0? change precondition?
+    }
+
+    @Override
+    public final boolean notExistsBlock(final long blockNumber) {
+        return Files.notExists(resolvePathToBlock(Preconditions.requirePositive(blockNumber)));
+        // todo do we have block number 0? change precondition?
     }
 }

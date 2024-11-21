@@ -17,7 +17,7 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.persistence.storage.path.PathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -36,16 +36,16 @@ import java.util.Set;
 public final class BlockAsDirWriterBuilder {
     private final BlockNodeContext blockNodeContext;
     private final BlockRemover blockRemover;
-    private final PathResolver pathResolver;
+    private final BlockPathResolver blockPathResolver;
     private FileAttribute<Set<PosixFilePermission>> folderPermissions;
 
     private BlockAsDirWriterBuilder(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
-            @NonNull final PathResolver pathResolver) {
+            @NonNull final BlockPathResolver blockPathResolver) {
         this.blockNodeContext = Objects.requireNonNull(blockNodeContext);
         this.blockRemover = Objects.requireNonNull(blockRemover);
-        this.pathResolver = Objects.requireNonNull(pathResolver);
+        this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
     }
 
     /**
@@ -53,15 +53,15 @@ public final class BlockAsDirWriterBuilder {
      *
      * @param blockNodeContext is required to provide metrics reporting mechanisms
      * @param blockRemover used internally
-     * @param pathResolver used internally
+     * @param blockPathResolver used internally
      * @return a block writer builder configured with required parameters.
      */
     @NonNull
     public static BlockAsDirWriterBuilder newBuilder(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
-            @NonNull final PathResolver pathResolver) {
-        return new BlockAsDirWriterBuilder(blockNodeContext, blockRemover, pathResolver);
+            @NonNull final BlockPathResolver blockPathResolver) {
+        return new BlockAsDirWriterBuilder(blockNodeContext, blockRemover, blockPathResolver);
     }
 
     /**
@@ -86,6 +86,6 @@ public final class BlockAsDirWriterBuilder {
      */
     @NonNull
     public BlockWriter<List<BlockItem>> build() throws IOException {
-        return new BlockAsDirWriter(blockNodeContext, blockRemover, pathResolver, folderPermissions);
+        return new BlockAsDirWriter(blockNodeContext, blockRemover, blockPathResolver, folderPermissions);
     }
 }
