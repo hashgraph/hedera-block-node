@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.hedera.block.simulator.grpc.impl.PublishStreamObserver;
 import com.hedera.hapi.block.protoc.PublishStreamResponse;
 import java.util.ArrayList;
 import java.util.List;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.simulator.grpc;
+package com.hedera.block.simulator.grpc.impl;
 
 import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlockItemsSent;
 import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlocksSent;
@@ -26,6 +26,7 @@ import static java.util.Objects.requireNonNull;
 import com.hedera.block.common.utils.ChunkUtils;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
+import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.hapi.block.protoc.BlockItemSet;
 import com.hedera.hapi.block.protoc.BlockStreamServiceGrpc;

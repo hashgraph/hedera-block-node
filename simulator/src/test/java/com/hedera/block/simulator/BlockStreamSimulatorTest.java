@@ -33,6 +33,7 @@ import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.StreamStatus;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
+import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.block.simulator.metrics.MetricsServiceImpl;
@@ -59,235 +60,246 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class BlockStreamSimulatorTest {
 
-    @Mock
-    private BlockStreamManager blockStreamManager;
+        @Mock
+        private BlockStreamManager blockStreamManager;
 
-    @Mock
-    private PublishStreamGrpcClient publishStreamGrpcClient;
+        @Mock
+        private PublishStreamGrpcClient publishStreamGrpcClient;
 
-    private BlockStreamSimulatorApp blockStreamSimulator;
-    private MetricsService metricsService;
+        @Mock
+        private ConsumerStreamGrpcClient consumerStreamGrpcClient;
 
-    @BeforeEach
-    void setUp() throws IOException {
+        private BlockStreamSimulatorApp blockStreamSimulator;
+        private MetricsService metricsService;
 
-        Configuration configuration = TestUtils.getTestConfiguration(
-                Map.of("blockStream.maxBlockItemsToStream", "100", "blockStream.streamingMode", "CONSTANT_RATE"));
+        @BeforeEach
+        void setUp() throws IOException {
 
-        metricsService = new MetricsServiceImpl(getTestMetrics(configuration));
-        blockStreamSimulator =
-                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
-    }
+                Configuration configuration = TestUtils.getTestConfiguration(
+                                Map.of("blockStream.maxBlockItemsToStream", "100", "blockStream.streamingMode",
+                                                "CONSTANT_RATE"));
 
-    @AfterEach
-    void tearDown() throws InterruptedException {
-        try {
-            blockStreamSimulator.stop();
-        } catch (UnsupportedOperationException e) {
-            // @todo (121) Implement consumer logic in the Simulator, which will fix this
+                metricsService = new MetricsServiceImpl(getTestMetrics(configuration));
+                blockStreamSimulator = new BlockStreamSimulatorApp(
+                                configuration, blockStreamManager, publishStreamGrpcClient, consumerStreamGrpcClient,
+                                metricsService);
         }
-    }
 
-    @Test
-    void start_logsStartedMessage() throws InterruptedException, BlockSimulatorParsingException, IOException {
-        blockStreamSimulator.start();
-        assertTrue(blockStreamSimulator.isRunning());
-    }
+        @AfterEach
+        void tearDown() throws InterruptedException {
+                try {
+                        blockStreamSimulator.stop();
+                } catch (UnsupportedOperationException e) {
+                        // @todo (121) Implement consumer logic in the Simulator, which will fix this
+                }
+        }
 
-    @Test
-    void start_constantRateStreaming() throws InterruptedException, BlockSimulatorParsingException, IOException {
+        @Test
+        void start_logsStartedMessage() throws InterruptedException, BlockSimulatorParsingException, IOException {
+                blockStreamSimulator.start();
+                assertTrue(blockStreamSimulator.isRunning());
+        }
 
-        BlockItem blockItem = BlockItem.newBuilder()
-                .setBlockHeader(BlockHeader.newBuilder().setNumber(1L).build())
-                .build();
+        @Test
+        void start_constantRateStreaming() throws InterruptedException, BlockSimulatorParsingException, IOException {
 
-        Block block1 = Block.newBuilder().addItems(blockItem).build();
-        Block block2 = Block.newBuilder()
-                .addItems(blockItem)
-                .addItems(blockItem)
-                .addItems(blockItem)
-                .build();
+                BlockItem blockItem = BlockItem.newBuilder()
+                                .setBlockHeader(BlockHeader.newBuilder().setNumber(1L).build())
+                                .build();
 
-        BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
-        when(blockStreamManager.getNextBlock()).thenReturn(block1, block2, null);
+                Block block1 = Block.newBuilder().addItems(blockItem).build();
+                Block block2 = Block.newBuilder()
+                                .addItems(blockItem)
+                                .addItems(blockItem)
+                                .addItems(blockItem)
+                                .build();
 
-        Configuration configuration = TestUtils.getTestConfiguration(Map.of(
-                "blockStream.maxBlockItemsToStream",
-                "2",
-                "generator.managerImplementation",
-                "BlockAsFileLargeDataSets",
-                "generator.rootPath",
-                getAbsoluteFolder("src/test/resources/block-0.0.3-blk/"),
-                "blockStream.streamingMode",
-                "CONSTANT_RATE",
-                "blockStream.blockItemsBatchSize",
-                "2"));
+                BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
+                when(blockStreamManager.getNextBlock()).thenReturn(block1, block2, null);
 
-        BlockStreamSimulatorApp blockStreamSimulator =
-                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
+                Configuration configuration = TestUtils.getTestConfiguration(Map.of(
+                                "blockStream.maxBlockItemsToStream",
+                                "2",
+                                "generator.managerImplementation",
+                                "BlockAsFileLargeDataSets",
+                                "generator.rootPath",
+                                getAbsoluteFolder("src/test/resources/block-0.0.3-blk/"),
+                                "blockStream.streamingMode",
+                                "CONSTANT_RATE",
+                                "blockStream.blockItemsBatchSize",
+                                "2"));
 
-        blockStreamSimulator.start();
-        assertTrue(blockStreamSimulator.isRunning());
-    }
+                BlockStreamSimulatorApp blockStreamSimulator = new BlockStreamSimulatorApp(
+                                configuration, blockStreamManager, publishStreamGrpcClient, consumerStreamGrpcClient,
+                                metricsService);
 
-    private String getAbsoluteFolder(String relativePath) {
-        return Paths.get(relativePath).toAbsolutePath().toString();
-    }
+                blockStreamSimulator.start();
+                assertTrue(blockStreamSimulator.isRunning());
+        }
 
-    @Test
-    void stop_doesNotThrowException() throws InterruptedException {
-        assertDoesNotThrow(() -> blockStreamSimulator.stop());
-        assertFalse(blockStreamSimulator.isRunning());
-        verify(publishStreamGrpcClient, atLeast(1)).completeStreaming();
-    }
+        private String getAbsoluteFolder(String relativePath) {
+                return Paths.get(relativePath).toAbsolutePath().toString();
+        }
 
-    @Test
-    void start_millisPerBlockStreaming() throws InterruptedException, IOException, BlockSimulatorParsingException {
-        BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
-        BlockItem blockItem = BlockItem.newBuilder()
-                .setBlockHeader(BlockHeader.newBuilder().setNumber(1L).build())
-                .build();
-        Block block = Block.newBuilder().addItems(blockItem).build();
-        when(blockStreamManager.getNextBlock()).thenReturn(block, block, null);
+        @Test
+        void stop_doesNotThrowException() throws InterruptedException {
+                assertDoesNotThrow(() -> blockStreamSimulator.stop());
+                assertFalse(blockStreamSimulator.isRunning());
+                verify(publishStreamGrpcClient, atLeast(1)).completeStreaming();
+        }
 
-        Configuration configuration = TestUtils.getTestConfiguration(Map.of(
-                "blockStream.maxBlockItemsToStream",
-                "2",
-                "generator.managerImplementation",
-                "BlockAsFileLargeDataSets",
-                "generator.rootPath",
-                getAbsoluteFolder("src/test/resources/block-0.0.3-blk/"),
-                "blockStream.streamingMode",
-                "MILLIS_PER_BLOCK"));
+        @Test
+        void start_millisPerBlockStreaming() throws InterruptedException, IOException, BlockSimulatorParsingException {
+                BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
+                BlockItem blockItem = BlockItem.newBuilder()
+                                .setBlockHeader(BlockHeader.newBuilder().setNumber(1L).build())
+                                .build();
+                Block block = Block.newBuilder().addItems(blockItem).build();
+                when(blockStreamManager.getNextBlock()).thenReturn(block, block, null);
 
-        BlockStreamSimulatorApp blockStreamSimulator =
-                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
+                Configuration configuration = TestUtils.getTestConfiguration(Map.of(
+                                "blockStream.maxBlockItemsToStream",
+                                "2",
+                                "generator.managerImplementation",
+                                "BlockAsFileLargeDataSets",
+                                "generator.rootPath",
+                                getAbsoluteFolder("src/test/resources/block-0.0.3-blk/"),
+                                "blockStream.streamingMode",
+                                "MILLIS_PER_BLOCK"));
 
-        blockStreamSimulator.start();
-        assertTrue(blockStreamSimulator.isRunning());
-    }
+                BlockStreamSimulatorApp blockStreamSimulator = new BlockStreamSimulatorApp(
+                                configuration, blockStreamManager, publishStreamGrpcClient, consumerStreamGrpcClient,
+                                metricsService);
 
-    @Test
-    void start_millisPerSecond_streamingLagVerifyWarnLog()
-            throws InterruptedException, IOException, BlockSimulatorParsingException {
-        BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
-        BlockItem blockItem = BlockItem.newBuilder()
-                .setBlockHeader(BlockHeader.newBuilder().setNumber(1L).build())
-                .build();
-        Block block = Block.newBuilder().addItems(blockItem).build();
-        when(blockStreamManager.getNextBlock()).thenReturn(block, block, null);
-        PublishStreamGrpcClient publishStreamGrpcClient = mock(PublishStreamGrpcClient.class);
+                blockStreamSimulator.start();
+                assertTrue(blockStreamSimulator.isRunning());
+        }
 
-        // simulate that the first block takes 15ms to stream, when the limit is 10, to force to go
-        // over WARN Path.
-        when(publishStreamGrpcClient.streamBlock(any()))
-                .thenAnswer(invocation -> {
-                    Thread.sleep(15);
-                    return true;
-                })
-                .thenReturn(true);
+        @Test
+        void start_millisPerSecond_streamingLagVerifyWarnLog()
+                        throws InterruptedException, IOException, BlockSimulatorParsingException {
+                BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
+                BlockItem blockItem = BlockItem.newBuilder()
+                                .setBlockHeader(BlockHeader.newBuilder().setNumber(1L).build())
+                                .build();
+                Block block = Block.newBuilder().addItems(blockItem).build();
+                when(blockStreamManager.getNextBlock()).thenReturn(block, block, null);
+                PublishStreamGrpcClient publishStreamGrpcClient = mock(PublishStreamGrpcClient.class);
 
-        Configuration configuration = TestUtils.getTestConfiguration(Map.of(
-                "generator.managerImplementation",
-                "BlockAsFileBlockStreamManager",
-                "generator.rootPath",
-                getAbsoluteFolder("src/test/resources/block-0.0.3-blk/"),
-                "blockStream.maxBlockItemsToStream",
-                "2",
-                "blockStream.streamingMode",
-                "MILLIS_PER_BLOCK",
-                "blockStream.millisecondsPerBlock",
-                "10",
-                "blockStream.blockItemsBatchSize",
-                "1"));
+                // simulate that the first block takes 15ms to stream, when the limit is 10, to
+                // force to go
+                // over WARN Path.
+                when(publishStreamGrpcClient.streamBlock(any()))
+                                .thenAnswer(invocation -> {
+                                        Thread.sleep(15);
+                                        return true;
+                                })
+                                .thenReturn(true);
 
-        BlockStreamSimulatorApp blockStreamSimulator =
-                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
-        List<LogRecord> logRecords = captureLogs();
+                Configuration configuration = TestUtils.getTestConfiguration(Map.of(
+                                "generator.managerImplementation",
+                                "BlockAsFileBlockStreamManager",
+                                "generator.rootPath",
+                                getAbsoluteFolder("src/test/resources/block-0.0.3-blk/"),
+                                "blockStream.maxBlockItemsToStream",
+                                "2",
+                                "blockStream.streamingMode",
+                                "MILLIS_PER_BLOCK",
+                                "blockStream.millisecondsPerBlock",
+                                "10",
+                                "blockStream.blockItemsBatchSize",
+                                "1"));
 
-        blockStreamSimulator.start();
-        assertTrue(blockStreamSimulator.isRunning());
+                BlockStreamSimulatorApp blockStreamSimulator = new BlockStreamSimulatorApp(
+                                configuration, blockStreamManager, publishStreamGrpcClient, consumerStreamGrpcClient,
+                                metricsService);
+                List<LogRecord> logRecords = captureLogs();
 
-        // Assert log exists
-        boolean found_log = logRecords.stream()
-                .anyMatch(logRecord -> logRecord.getMessage().contains("Block Server is running behind"));
-        assertTrue(found_log);
-    }
+                blockStreamSimulator.start();
+                assertTrue(blockStreamSimulator.isRunning());
 
-    @Test
-    void start_withBothMode_throwsUnsupportedOperationException() throws Exception {
-        Configuration configuration = TestUtils.getTestConfiguration(Map.of("blockStream.simulatorMode", "BOTH"));
-        blockStreamSimulator =
-                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
-        assertThrows(UnsupportedOperationException.class, () -> blockStreamSimulator.start());
-    }
+                // Assert log exists
+                boolean found_log = logRecords.stream()
+                                .anyMatch(logRecord -> logRecord.getMessage()
+                                                .contains("Block Server is running behind"));
+                assertTrue(found_log);
+        }
 
-    @Test
-    void start_withConsumerMode_throwsUnsupportedOperationException() throws Exception {
-        Configuration configuration = TestUtils.getTestConfiguration(Map.of("blockStream.simulatorMode", "CONSUMER"));
-        blockStreamSimulator =
-                new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
-        assertThrows(UnsupportedOperationException.class, () -> blockStreamSimulator.start());
-    }
+        @Test
+        void start_withBothMode_throwsUnsupportedOperationException() throws Exception {
+                Configuration configuration = TestUtils
+                                .getTestConfiguration(Map.of("blockStream.simulatorMode", "BOTH"));
+                blockStreamSimulator = new BlockStreamSimulatorApp(
+                                configuration, blockStreamManager, publishStreamGrpcClient, consumerStreamGrpcClient,
+                                metricsService);
+                assertThrows(UnsupportedOperationException.class, () -> blockStreamSimulator.start());
+        }
 
-    @Test
-    void constructor_throwsExceptionForNullSimulatorMode() {
-        Configuration configuration = mock(Configuration.class);
-        BlockStreamConfig blockStreamConfig = mock(BlockStreamConfig.class);
+        @Test
+        void constructor_throwsExceptionForNullSimulatorMode() {
+                Configuration configuration = mock(Configuration.class);
+                BlockStreamConfig blockStreamConfig = mock(BlockStreamConfig.class);
 
-        when(configuration.getConfigData(BlockStreamConfig.class)).thenReturn(blockStreamConfig);
-        when(blockStreamConfig.simulatorMode()).thenReturn(null);
+                when(configuration.getConfigData(BlockStreamConfig.class)).thenReturn(blockStreamConfig);
+                when(blockStreamConfig.simulatorMode()).thenReturn(null);
 
-        assertThrows(NullPointerException.class, () -> {
-            new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
-        });
-    }
+                assertThrows(NullPointerException.class, () -> {
+                        new BlockStreamSimulatorApp(
+                                        configuration,
+                                        blockStreamManager,
+                                        publishStreamGrpcClient,
+                                        consumerStreamGrpcClient,
+                                        metricsService);
+                });
+        }
 
-    @Test
-    void testGetStreamStatus() {
-        long expectedPublishedBlocks = 5;
-        List<String> expectedLastKnownStatuses = List.of("Status1", "Status2");
+        @Test
+        void testGetStreamStatus() {
+                long expectedPublishedBlocks = 5;
+                List<String> expectedLastKnownStatuses = List.of("Status1", "Status2");
 
-        when(publishStreamGrpcClient.getPublishedBlocks()).thenReturn(expectedPublishedBlocks);
-        when(publishStreamGrpcClient.getLastKnownStatuses()).thenReturn(expectedLastKnownStatuses);
+                when(publishStreamGrpcClient.getPublishedBlocks()).thenReturn(expectedPublishedBlocks);
+                when(publishStreamGrpcClient.getLastKnownStatuses()).thenReturn(expectedLastKnownStatuses);
 
-        StreamStatus streamStatus = blockStreamSimulator.getStreamStatus();
+                StreamStatus streamStatus = blockStreamSimulator.getStreamStatus();
 
-        assertNotNull(streamStatus, "StreamStatus should not be null");
-        assertEquals(expectedPublishedBlocks, streamStatus.publishedBlocks(), "Published blocks should match");
-        assertEquals(
-                expectedLastKnownStatuses,
-                streamStatus.lastKnownPublisherStatuses(),
-                "Last known statuses should match");
-        assertEquals(0, streamStatus.consumedBlocks(), "Consumed blocks should be 0 by default");
-        assertEquals(
-                0,
-                streamStatus.lastKnownConsumersStatuses().size(),
-                "Last known consumers statuses should be empty by default");
-    }
+                assertNotNull(streamStatus, "StreamStatus should not be null");
+                assertEquals(expectedPublishedBlocks, streamStatus.publishedBlocks(), "Published blocks should match");
+                assertEquals(
+                                expectedLastKnownStatuses,
+                                streamStatus.lastKnownPublisherStatuses(),
+                                "Last known statuses should match");
+                assertEquals(0, streamStatus.consumedBlocks(), "Consumed blocks should be 0 by default");
+                assertEquals(
+                                0,
+                                streamStatus.lastKnownConsumersStatuses().size(),
+                                "Last known consumers statuses should be empty by default");
+        }
 
-    private List<LogRecord> captureLogs() {
-        // Capture logs
-        Logger logger = Logger.getLogger(PublisherModeHandler.class.getName());
-        final List<LogRecord> logRecords = new ArrayList<>();
+        private List<LogRecord> captureLogs() {
+                // Capture logs
+                Logger logger = Logger.getLogger(PublisherModeHandler.class.getName());
+                final List<LogRecord> logRecords = new ArrayList<>();
 
-        // Custom handler to capture logs
-        Handler handler = new Handler() {
-            @Override
-            public void publish(LogRecord record) {
-                logRecords.add(record);
-            }
+                // Custom handler to capture logs
+                Handler handler = new Handler() {
+                        @Override
+                        public void publish(LogRecord record) {
+                                logRecords.add(record);
+                        }
 
-            @Override
-            public void flush() {}
+                        @Override
+                        public void flush() {
+                        }
 
-            @Override
-            public void close() throws SecurityException {}
-        };
+                        @Override
+                        public void close() throws SecurityException {
+                        }
+                };
 
-        // Add handler to logger
-        logger.addHandler(handler);
+                // Add handler to logger
+                logger.addHandler(handler);
 
-        return logRecords;
-    }
+                return logRecords;
+        }
 }

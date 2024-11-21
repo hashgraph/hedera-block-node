@@ -26,6 +26,7 @@ import com.hedera.block.simulator.config.data.StreamStatus;
 import com.hedera.block.simulator.config.types.SimulatorMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
+import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.block.simulator.mode.CombinedModeHandler;
@@ -49,6 +50,8 @@ public class BlockStreamSimulatorApp {
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final PublishStreamGrpcClient publishStreamGrpcClient;
+    private final ConsumerStreamGrpcClient consumerStreamGrpcClient;
+    private final BlockStreamConfig blockStreamConfig;
     private final SimulatorModeHandler simulatorModeHandler;
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final MetricsService metricsService;
@@ -56,16 +59,23 @@ public class BlockStreamSimulatorApp {
     /**
      * Creates a new BlockStreamSimulatorApp instance.
      *
-     * @param configuration the configuration to be used by the block stream simulator
-     * @param blockStreamManager the block stream manager to be used by the block stream simulator
-     * @param publishStreamGrpcClient the gRPC client to be used by the block stream simulator
-     * @param metricsService the metrics service to be used by the block stream simulator
+     * @param configuration            the configuration to be used by the block
+     *                                 stream simulator
+     * @param blockStreamManager       the block stream manager to be used by the
+     *                                 block stream simulator
+     * @param publishStreamGrpcClient  the gRPC client to be used by the block
+     *                                 stream simulator to publish blocks
+     * @param consumerStreamGrpcClient the gRPC client to be used by the block
+     *                                 stream simulator to consume blocks
+     * @param metricsService           the metrics service to be used by the block
+     *                                 stream simulator
      */
     @Inject
     public BlockStreamSimulatorApp(
             @NonNull Configuration configuration,
             @NonNull BlockStreamManager blockStreamManager,
             @NonNull PublishStreamGrpcClient publishStreamGrpcClient,
+            @NonNull ConsumerStreamGrpcClient consumerStreamGrpcClient,
             @NonNull MetricsService metricsService) {
 
         requireNonNull(configuration);
@@ -74,14 +84,16 @@ public class BlockStreamSimulatorApp {
         this.publishStreamGrpcClient = requireNonNull(publishStreamGrpcClient);
         loadLoggingProperties();
 
-        final BlockStreamConfig blockStreamConfig =
-                requireNonNull(configuration.getConfigData(BlockStreamConfig.class));
+        final BlockStreamConfig blockStreamConfig = requireNonNull(
+                configuration.getConfigData(BlockStreamConfig.class));
+        this.consumerStreamGrpcClient = requireNonNull(consumerStreamGrpcClient);
 
         final SimulatorMode simulatorMode = blockStreamConfig.simulatorMode();
         switch (simulatorMode) {
             case PUBLISHER -> simulatorModeHandler = new PublisherModeHandler(
                     blockStreamConfig, publishStreamGrpcClient, blockStreamManager, metricsService);
-            case CONSUMER -> simulatorModeHandler = new ConsumerModeHandler(blockStreamConfig);
+            case CONSUMER ->
+                simulatorModeHandler = new ConsumerModeHandler(blockStreamConfig, consumerStreamGrpcClient);
             case BOTH -> simulatorModeHandler = new CombinedModeHandler(blockStreamConfig);
             default -> throw new IllegalArgumentException("Unknown SimulatorMode: " + simulatorMode);
         }
@@ -90,13 +102,24 @@ public class BlockStreamSimulatorApp {
     /**
      * Starts the block stream simulator.
      *
-     * @throws InterruptedException if the thread is interrupted
+     * @throws InterruptedException           if the thread is interrupted
      * @throws BlockSimulatorParsingException if a parse error occurs
-     * @throws IOException if an I/O error occurs
+     * @throws IOException                    if an I/O error occurs
      */
     public void start() throws InterruptedException, BlockSimulatorParsingException, IOException {
         LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator started initializing components...");
-        publishStreamGrpcClient.init();
+
+        // WIP
+        switch (blockStreamConfig.simulatorMode()) {
+            case PUBLISHER -> publishStreamGrpcClient.init();
+            case CONSUMER -> consumerStreamGrpcClient.init();
+            case BOTH -> throw new UnsupportedOperationException(
+                    "Unknown SimulatorMode: " + blockStreamConfig.simulatorMode());
+            default -> throw new IllegalArgumentException(
+                    "Unknown SimulatorMode: " + blockStreamConfig.simulatorMode());
+        }
+        // WIP
+
         isRunning.set(true);
 
         simulatorModeHandler.start();
@@ -134,7 +157,9 @@ public class BlockStreamSimulatorApp {
     public StreamStatus getStreamStatus() {
         return StreamStatus.builder()
                 .publishedBlocks(publishStreamGrpcClient.getPublishedBlocks())
+                .consumedBlocks(consumerStreamGrpcClient.getConsumedBlocks())
                 .lastKnownPublisherStatuses(publishStreamGrpcClient.getLastKnownStatuses())
+                .lastKnownConsumersStatuses(consumerStreamGrpcClient.getLastKnownStatuses())
                 .build();
     }
 

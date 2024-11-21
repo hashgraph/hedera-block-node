@@ -19,6 +19,7 @@ package com.hedera.block.simulator.mode;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
@@ -34,24 +35,25 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * {@link UnsupportedOperationException}.
  */
 public class ConsumerModeHandler implements SimulatorModeHandler {
-
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+    private final ConsumerStreamGrpcClient consumerStreamGrpcClient;
     private final BlockStreamConfig blockStreamConfig;
 
-    /**
-     * Constructs a new {@code ConsumerModeHandler} with the specified block stream configuration.
-     *
-     * @param blockStreamConfig the configuration data for managing block streams
-     */
-    public ConsumerModeHandler(@NonNull final BlockStreamConfig blockStreamConfig) {
+    public ConsumerModeHandler(
+            @NonNull final BlockStreamConfig blockStreamConfig,
+            @NonNull final ConsumerStreamGrpcClient consumerStreamGrpcClient) {
         this.blockStreamConfig = requireNonNull(blockStreamConfig);
+        this.consumerStreamGrpcClient = requireNonNull(consumerStreamGrpcClient);
     }
 
     /**
      * Starts the simulator and initiate streaming, depending on the working mode.
      */
     @Override
-    public void start() {
-        throw new UnsupportedOperationException();
+    public void start() throws InterruptedException {
+        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator is starting in consumer mode.");
+        // WIP
+        consumerStreamGrpcClient.requestBlocks(0, 0);
     }
 
     /**
@@ -59,6 +61,7 @@ public class ConsumerModeHandler implements SimulatorModeHandler {
      */
     @Override
     public void stop() {
+        // WIP
         throw new UnsupportedOperationException();
     }
 }

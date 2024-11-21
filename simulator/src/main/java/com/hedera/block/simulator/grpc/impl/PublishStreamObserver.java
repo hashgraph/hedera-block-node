@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.simulator.grpc;
+package com.hedera.block.simulator.grpc.impl;
 
 import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
