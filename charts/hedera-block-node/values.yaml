@@ -90,7 +90,8 @@ blockNode:
     metrics:
       port: 9999
 
-kube-prometheus-stack:
+kubepromstack:
+  enabled: true
   prometheusOperator:
     namespaces:
       releaseNamespace: true
