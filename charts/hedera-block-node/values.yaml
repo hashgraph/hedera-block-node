@@ -117,6 +117,8 @@ kube-prometheus-stack:
       dashboards:
         enabled: true
         label: grafana_dashboard
+        provider:
+          allowUiUpdates: true
       datasources:
         enabled: true
         label: grafana_datasource
