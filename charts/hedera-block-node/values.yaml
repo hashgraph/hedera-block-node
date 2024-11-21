@@ -94,18 +94,6 @@ kube-prometheus-stack:
   prometheusOperator:
     namespaces:
       releaseNamespace: true
-  prometheus-node-exporter:
-    prometheus:
-      monitor:
-        additionalLabels:
-            monitoring: kube-prometheus-stack
-
-  prometheus:
-    prometheusSpec:
-      serviceMonitorSelector:
-        matchLabels:
-          monitoring: kube-prometheus-stack
-
   grafana:
     replicas: 1
     enabled: true
@@ -125,10 +113,3 @@ kube-prometheus-stack:
 
   nodeExporter:
     enabled: true
-
-  kubelet:
-    serviceMonitor:
-      https: false
-      labels:
-        monitoring: kube-prometheus-stack
-

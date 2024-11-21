@@ -3,7 +3,9 @@ kind: ServiceMonitor
 metadata:
   name: {{ include "hedera-block-node.fullname" . }}
   labels:
-    monitoring: kube-prometheus-stack
+    app: {{ include "hedera-block-node.name" . }}
+    release: {{ .Release.Name }}
+    {{- include "hedera-block-node.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:

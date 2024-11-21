@@ -7,3 +7,4 @@ metadata:
 data:
   block-node-dashboard.json: {{ .Files.Get "dashboards/block-node-server.json" | quote }}
   node-exporter-dashboard.json: {{ .Files.Get "dashboards/node-exporter-full.json" | quote }}
+  kubernetes-views-pods.json : {{ .Files.Get "dashboards/kubernetes-views-pods.json" | quote }}
