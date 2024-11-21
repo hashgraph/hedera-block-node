@@ -12,7 +12,7 @@ data:
       - name: Prometheus
         type: prometheus
         access: proxy
-        url: http://{{ include "kube-prometheus-stack.fullname" . }}-prometheus:9090
+        url: http://{{ .Release.Name }}-kubepromstack-prometheus:9090
         isDefault: true
         editable: true
         jsonData:
