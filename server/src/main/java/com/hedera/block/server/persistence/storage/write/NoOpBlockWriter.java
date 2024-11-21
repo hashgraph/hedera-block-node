@@ -16,11 +16,9 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
@@ -34,15 +32,12 @@ import java.util.Optional;
  */
 public class NoOpBlockWriter implements BlockWriter<List<BlockItemUnparsed>> {
 
-    private final MetricsService metricsService;
-
     /**
      * Creates a new NoOpBlockWriter instance for testing and troubleshooting only.
      *
      * @param blockNodeContext the block node context
      */
     public NoOpBlockWriter(BlockNodeContext blockNodeContext) {
-        this.metricsService = blockNodeContext.metricsService();
         System.getLogger(getClass().getName()).log(INFO, "Using " + getClass().getSimpleName());
     }
 
@@ -51,13 +46,11 @@ public class NoOpBlockWriter implements BlockWriter<List<BlockItemUnparsed>> {
      */
     @Override
     public Optional<List<BlockItemUnparsed>> write(@NonNull List<BlockItemUnparsed> blockItems) throws IOException {
-        try {
-            if (blockItems.getLast().hasBlockProof()) {
-                metricsService.get(BlocksPersisted).increment();
-            }
-        } catch (Exception e) {
-            // TODO: what to do here?
-            System.getLogger(getClass().getName()).log(INFO, "Failed to parse block item: " + e.getMessage());
+        if (blockItems.getLast().hasBlockProof()) {
+            // Returning the BlockItems triggers a
+            // PublishStreamResponse to be sent to the
+            // upstream producer.
+            return Optional.of(blockItems);
         }
 
         return Optional.empty();

@@ -172,7 +172,7 @@ public class ConsumerStreamResponseObserver
 
             if (streamStarted) {
                 metricsService
-                        .get(BlockNodeMetricTypes.Counter.LiveBlockItemsReceived)
+                        .get(BlockNodeMetricTypes.Counter.LiveBlockItemsConsumed)
                         .add(blockItems.size());
                 subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
             }

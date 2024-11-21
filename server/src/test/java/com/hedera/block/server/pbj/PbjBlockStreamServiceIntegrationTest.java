@@ -16,7 +16,9 @@
 
 package com.hedera.block.server.pbj;
 
-import static com.hedera.block.server.producer.Util.getFakeHash;
+import static com.hedera.block.server.util.PbjProtoTestUtils.buildAck;
+import static com.hedera.block.server.util.PbjProtoTestUtils.buildEmptyPublishStreamRequest;
+import static com.hedera.block.server.util.PbjProtoTestUtils.buildEmptySubscribeStreamRequest;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
@@ -49,14 +51,12 @@ import com.hedera.hapi.block.BlockItemSetUnparsed;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.EndOfStream;
-import com.hedera.hapi.block.ItemAcknowledgement;
 import com.hedera.hapi.block.PublishStreamRequestUnparsed;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.hapi.block.SingleBlockRequest;
 import com.hedera.hapi.block.SingleBlockResponseCode;
 import com.hedera.hapi.block.SingleBlockResponseUnparsed;
-import com.hedera.hapi.block.SubscribeStreamRequest;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.runtime.ParseException;
@@ -64,7 +64,6 @@ import com.hedera.pbj.runtime.grpc.Pipeline;
 import com.hedera.pbj.runtime.grpc.ServiceInterface;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.lmax.disruptor.BatchEventProcessor;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -693,25 +692,5 @@ public class PbjBlockStreamServiceIntegrationTest {
         return LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
                 .subscribers(subscribers)
                 .build();
-    }
-
-    public static Acknowledgement buildAck(@NonNull final List<BlockItemUnparsed> blockItems)
-            throws NoSuchAlgorithmException {
-        ItemAcknowledgement itemAck = ItemAcknowledgement.newBuilder()
-                .itemsHash(Bytes.wrap(getFakeHash(blockItems)))
-                .build();
-
-        return Acknowledgement.newBuilder().itemAck(itemAck).build();
-    }
-
-    private static Bytes buildEmptyPublishStreamRequest() {
-        return PublishStreamRequestUnparsed.PROTOBUF.toBytes(PublishStreamRequestUnparsed.newBuilder()
-                .blockItems(BlockItemSetUnparsed.newBuilder().build())
-                .build());
-    }
-
-    private static Bytes buildEmptySubscribeStreamRequest() {
-        return SubscribeStreamRequest.PROTOBUF.toBytes(
-                SubscribeStreamRequest.newBuilder().build());
     }
 }
