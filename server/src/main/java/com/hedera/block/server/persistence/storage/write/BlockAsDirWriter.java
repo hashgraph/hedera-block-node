@@ -18,6 +18,7 @@ package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
 import static com.hedera.block.server.Constants.BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -25,6 +26,7 @@ import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.PathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
@@ -51,12 +53,15 @@ import java.util.Set;
  * to remove the current, incomplete block (directory) before re-throwing the exception to the
  * caller.
  */
-class BlockAsDirWriter extends AbstractBlockWriter<List<BlockItem>> {
+class BlockAsDirWriter implements LocalBlockWriter<List<BlockItem>> {
     private final Logger LOGGER = System.getLogger(getClass().getName());
     private final Path blockNodeRootPath;
+    private final MetricsService metricsService;
+    private final BlockRemover blockRemover;
+    private final PathResolver pathResolver;
     private final FileAttribute<Set<PosixFilePermission>> folderPermissions;
     private long blockNodeFileNameIndex;
-    private Path currentBlockDir;
+    private long currentBlockNumber;
 
     /**
      * Use the corresponding builder to construct a new BlockAsDirWriter with
@@ -76,16 +81,16 @@ class BlockAsDirWriter extends AbstractBlockWriter<List<BlockItem>> {
             @NonNull final PathResolver pathResolver,
             final FileAttribute<Set<PosixFilePermission>> folderPermissions)
             throws IOException {
-        super(blockNodeContext.metricsService(), blockRemover, pathResolver);
-
         LOGGER.log(INFO, "Initializing FileSystemBlockStorage");
+
+        this.metricsService = Objects.requireNonNull(blockNodeContext.metricsService());
+        this.blockRemover = Objects.requireNonNull(blockRemover);
+        this.pathResolver = Objects.requireNonNull(pathResolver);
 
         final PersistenceStorageConfig config =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
-
-        final Path blockNodeRootPath = Path.of(config.rootPath());
+        this.blockNodeRootPath = Path.of(config.rootPath());
         LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);
-        this.blockNodeRootPath = blockNodeRootPath;
 
         if (Objects.nonNull(folderPermissions)) {
             this.folderPermissions = folderPermissions;
@@ -131,13 +136,13 @@ class BlockAsDirWriter extends AbstractBlockWriter<List<BlockItem>> {
                     // Remove the block if repairing the permissions fails
                     if (retries > 0) {
                         // Attempt to remove the block
-                        blockRemover.remove(Long.parseLong(currentBlockDir.toString()));
+                        blockRemover.remove(currentBlockNumber);
                         throw e;
                     } else {
                         // Attempt to repair the permissions on the block path
                         // and the blockItem path
                         repairPermissions(blockNodeRootPath);
-                        repairPermissions(calculateBlockPath());
+                        repairPermissions(pathResolver.resolvePathToBlock(currentBlockNumber));
                         LOGGER.log(INFO, "Retrying to write the BlockItem protobuf to a file");
                     }
                 }
@@ -145,7 +150,7 @@ class BlockAsDirWriter extends AbstractBlockWriter<List<BlockItem>> {
         }
 
         if (toWrite.getLast().hasBlockProof()) {
-            incrementBlocksPersisted();
+            metricsService.get(BlocksPersisted).increment();
             return Optional.of(toWrite);
         } else {
             return Optional.empty();
@@ -173,7 +178,7 @@ class BlockAsDirWriter extends AbstractBlockWriter<List<BlockItem>> {
     private void resetState(@NonNull final BlockItem blockItem) throws IOException {
         // Here a "block" is represented as a directory of BlockItems.
         // Create the "block" directory based on the block_number
-        currentBlockDir = Path.of(String.valueOf(blockItem.blockHeader().number()));
+        currentBlockNumber = blockItem.blockHeader().number();
 
         // Check the blockNodeRootPath permissions and
         // attempt to repair them if possible
@@ -181,12 +186,16 @@ class BlockAsDirWriter extends AbstractBlockWriter<List<BlockItem>> {
 
         // Construct the path to the block directory
         FileUtilities.createFolderPathIfNotExists(
-                calculateBlockPath(), DEBUG, folderPermissions, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME);
+                pathResolver.resolvePathToBlock(currentBlockNumber),
+                DEBUG,
+                folderPermissions,
+                BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME);
 
         // Reset
         blockNodeFileNameIndex = 0;
     }
 
+    // todo do we need this method at all?
     private void repairPermissions(@NonNull final Path path) throws IOException {
         final boolean isWritable = Files.isWritable(path);
         if (!isWritable) {
@@ -200,13 +209,8 @@ class BlockAsDirWriter extends AbstractBlockWriter<List<BlockItem>> {
     @NonNull
     private Path calculateBlockItemPath() {
         // Build the path to a .blk file
-        final Path blockPath = calculateBlockPath();
+        final Path blockPath = pathResolver.resolvePathToBlock(currentBlockNumber);
         blockNodeFileNameIndex++;
         return blockPath.resolve(blockNodeFileNameIndex + BLOCK_FILE_EXTENSION);
-    }
-
-    @NonNull
-    private Path calculateBlockPath() {
-        return blockNodeRootPath.resolve(currentBlockDir);
     }
 }

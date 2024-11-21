@@ -45,6 +45,7 @@ import dagger.Module;
 import dagger.Provides;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -74,8 +75,6 @@ public interface PersistenceInjectionModule {
                 .type();
         try {
             return switch (persistenceType) {
-                case null -> throw new NullPointerException(
-                        "Persistence StorageType cannot be [null], cannot create an instance of BlockWriter");
                 case BLOCK_AS_FILE -> BlockAsFileWriterBuilder.newBuilder(blockNodeContext, blockRemover, pathResolver)
                         .build();
                 case BLOCK_AS_DIR -> BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemover, pathResolver)
@@ -83,7 +82,8 @@ public interface PersistenceInjectionModule {
                 case NOOP -> new NoOpBlockWriter(blockNodeContext, blockRemover, pathResolver);
             };
         } catch (final IOException e) {
-            throw new RuntimeException("Failed to create BlockWriter", e);
+            // we cannot have checked exceptions with dagger @Provides
+            throw new UncheckedIOException("Failed to create BlockWriter", e);
         }
     }
 
@@ -99,8 +99,6 @@ public interface PersistenceInjectionModule {
     static BlockReader<Block> providesBlockReader(@NonNull final PersistenceStorageConfig config) {
         final StorageType persistenceType = Objects.requireNonNull(config).type();
         return switch (persistenceType) {
-            case null -> throw new NullPointerException(
-                    "Persistence StorageType cannot be [null], cannot create an instance of BlockReader");
             case BLOCK_AS_FILE -> BlockAsFileReaderBuilder.newBuilder().build();
             case BLOCK_AS_DIR -> BlockAsDirReaderBuilder.newBuilder(config).build();
             case NOOP -> new NoOpBlockReader();
@@ -119,8 +117,6 @@ public interface PersistenceInjectionModule {
     static BlockRemover providesBlockRemover(@NonNull final PersistenceStorageConfig config) {
         final StorageType persistenceType = Objects.requireNonNull(config).type();
         return switch (persistenceType) {
-            case null -> throw new NullPointerException(
-                    "Persistence StorageType cannot be [null], cannot create an instance of BlockRemover");
             case BLOCK_AS_FILE -> new BlockAsFileRemover();
             case BLOCK_AS_DIR -> new BlockAsDirRemover(Path.of(config.rootPath()));
             case NOOP -> new NoOpRemover();
@@ -140,8 +136,6 @@ public interface PersistenceInjectionModule {
         final StorageType persistenceType = Objects.requireNonNull(config).type();
         final Path root = Path.of(config.rootPath());
         return switch (persistenceType) {
-            case null -> throw new NullPointerException(
-                    "Persistence StorageType cannot be [null], cannot create an instance of PathResolver");
             case BLOCK_AS_FILE -> new BlockAsFilePathResolver(root);
             case BLOCK_AS_DIR -> new BlockAsDirPathResolver(root);
             case NOOP -> new NoOpPathResolver();

@@ -16,15 +16,17 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import static java.lang.System.Logger.Level.INFO;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.path.PathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.stream.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -32,7 +34,11 @@ import java.util.Optional;
  * designed to isolate the Producer and Mediator components from storage implementation during testing while still
  * providing metrics and logging for troubleshooting.
  */
-public class NoOpBlockWriter extends AbstractBlockWriter<List<BlockItem>> {
+public class NoOpBlockWriter implements LocalBlockWriter<List<BlockItem>> {
+    private final MetricsService metricsService;
+    private final BlockRemover blockRemover; // todo do I need here?
+    private final PathResolver pathResolver; // todo do I need here?
+
     /**
      * Creates a new NoOpBlockWriter instance for testing and troubleshooting only.
      *
@@ -43,8 +49,9 @@ public class NoOpBlockWriter extends AbstractBlockWriter<List<BlockItem>> {
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
             @NonNull final PathResolver pathResolver) {
-        super(blockNodeContext.metricsService(), blockRemover, pathResolver);
-        System.getLogger(getClass().getName()).log(INFO, "Using " + getClass().getSimpleName());
+        this.metricsService = Objects.requireNonNull(blockNodeContext.metricsService());
+        this.blockRemover = Objects.requireNonNull(blockRemover);
+        this.pathResolver = Objects.requireNonNull(pathResolver);
     }
 
     /**
@@ -53,7 +60,7 @@ public class NoOpBlockWriter extends AbstractBlockWriter<List<BlockItem>> {
     @Override
     public Optional<List<BlockItem>> write(@NonNull final List<BlockItem> toWrite) throws IOException {
         if (toWrite.getLast().hasBlockProof()) {
-            incrementBlocksPersisted();
+            metricsService.get(BlocksPersisted).increment();
         }
         return Optional.empty();
     }

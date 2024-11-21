@@ -16,7 +16,10 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
+
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.path.PathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.stream.Block;
@@ -28,19 +31,25 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
  * TODO: add documentation
  */
-class BlockAsFileWriter extends AbstractBlockWriter<List<BlockItem>> {
+class BlockAsFileWriter implements LocalBlockWriter<List<BlockItem>> {
+    private final MetricsService metricsService;
+    private final BlockRemover blockRemover; // todo do I need here?
+    private final PathResolver pathResolver;
     private Block curentBlock; // fixme this is temporary just to explore the workflow and make proof of concept
 
     BlockAsFileWriter(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
             @NonNull final PathResolver pathResolver) {
-        super(blockNodeContext.metricsService(), blockRemover, pathResolver);
+        this.metricsService = Objects.requireNonNull(blockNodeContext.metricsService());
+        this.blockRemover = Objects.requireNonNull(blockRemover);
+        this.pathResolver = Objects.requireNonNull(pathResolver);
     }
 
     @Override
@@ -54,12 +63,15 @@ class BlockAsFileWriter extends AbstractBlockWriter<List<BlockItem>> {
         }
 
         if (toWrite.getLast().hasBlockProof()) {
+            metricsService.get(BlocksPersisted).increment();
             return writeToFs(curentBlock);
         } else {
             return Optional.empty();
         }
     }
 
+    // todo we could recursively retry if exception occurs, then after a few attempts
+    // if we cannot persist, we must throw the initial exception
     private Optional<List<BlockItem>> writeToFs(final Block blockToWrite) throws IOException {
         final long number = blockToWrite.items().getFirst().blockHeader().number(); // fixme could be null, handle!
 
@@ -72,7 +84,7 @@ class BlockAsFileWriter extends AbstractBlockWriter<List<BlockItem>> {
         try (final FileOutputStream fos = new FileOutputStream(blockToWritePathResolved.toFile())) {
             Block.PROTOBUF.toBytes(blockToWrite).writeTo(fos);
             // todo what should be fallback logic if something goes wrong here? we attempt to resolve the path
-            // with proper perms? we
+            // with proper perms (is that necessary)? we must clean up and retry?
         } catch (final IOException ioe) {
             // todo handle properly
             throw new UncheckedIOException(ioe);

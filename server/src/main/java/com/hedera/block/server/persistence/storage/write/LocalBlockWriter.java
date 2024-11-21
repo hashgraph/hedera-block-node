@@ -14,21 +14,9 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage.path;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import java.nio.file.Path;
+package com.hedera.block.server.persistence.storage.write;
 
 /**
  * TODO: add documentation
  */
-public final class BlockAsDirPathResolver extends AbstractPathResolver {
-    public BlockAsDirPathResolver(@NonNull final Path root) {
-        super(root);
-    }
-
-    @Override
-    public Path resolvePathToBlock(final long blockNumber) {
-        return root.resolve(String.valueOf(blockNumber));
-    }
-}
+interface LocalBlockWriter<V> extends BlockWriter<V> {}

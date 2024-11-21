@@ -24,8 +24,10 @@ import com.hedera.block.common.utils.FileUtilities;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 /**
  * Use this configuration across the persistent storage package
@@ -46,15 +48,20 @@ public record PersistenceStorageConfig(
      * directory in the current working directory
      */
     public PersistenceStorageConfig {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(rootPath);
+
         // verify rootPath prop
         Path path = Path.of(rootPath);
-        if (rootPath.isEmpty()) {
-            path = Paths.get(rootPath).toAbsolutePath().resolve("data");
+        if (rootPath.isBlank()) {
+            path = Paths.get("").toAbsolutePath().resolve("data");
         }
+
         // Check if absolute
         if (!path.isAbsolute()) {
             throw new IllegalArgumentException(rootPath + " Root path must be absolute");
         }
+
         // Create Directory if it does not exist
         try {
             FileUtilities.createFolderPathIfNotExists(path, ERROR, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME);
@@ -62,11 +69,11 @@ public record PersistenceStorageConfig(
             final String message =
                     "Unable to instantiate [%s]! Unable to create the root directory for the block storage [%s]"
                             .formatted(this.getClass().getName(), path);
-            throw new RuntimeException(message, e);
+            throw new UncheckedIOException(message, e);
         }
 
-        LOGGER.log(INFO, "Persistence Storage configuration persistence.storage.rootPath: " + path);
         rootPath = path.toString();
-        LOGGER.log(INFO, "Persistence configuration persistence.storage.type: " + type);
+        LOGGER.log(INFO, "Persistence Storage Configuration: persistence.storage.rootPath=" + path);
+        LOGGER.log(INFO, "Persistence Storage Configuration: persistence.storage.type= " + type);
     }
 }
