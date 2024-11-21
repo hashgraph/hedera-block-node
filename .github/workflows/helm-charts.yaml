@@ -65,6 +65,10 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
         uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.10.0
 
+      - name: Update chart dependency
+        if: steps.list-changed.outputs.changed == 'true'
+        run: helm dependency update charts/hedera-block-node
+
       - name: Run chart-testing (install)
         if: steps.list-changed.outputs.changed == 'true'
         run: ct install --config ct.yaml
