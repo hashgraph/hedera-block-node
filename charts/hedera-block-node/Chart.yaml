@@ -17,6 +17,6 @@ version: 0.3.0-SNAPSHOT
 dependencies:
   - name: kube-prometheus-stack
     alias: kubepromstack
-    condition: kubePrometheusStack.enabled
+    condition: kubepromstack.enabled
     version: "51.2.0"  # Use the latest stable version
     repository: "https://prometheus-community.github.io/helm-charts"
