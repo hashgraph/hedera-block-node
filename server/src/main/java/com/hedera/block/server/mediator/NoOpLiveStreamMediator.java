@@ -86,4 +86,9 @@ public class NoOpLiveStreamMediator implements LiveStreamMediator {
      */
     @Override
     public void notifyUnrecoverableError() {}
+
+    @Override
+    public int subscriberCount() {
+        return 0;
+    }
 }

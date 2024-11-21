@@ -102,13 +102,14 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
         if (serviceStatus.isRunning()) {
 
             // Publish the block for all subscribers to receive
-            LOGGER.log(DEBUG, "Publishing BlockItem");
             final BlockItemSetUnparsed blockItemsSet =
                     BlockItemSetUnparsed.newBuilder().blockItems(blockItems).build();
 
             final var subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
                     .blockItems(blockItemsSet)
                     .build();
+
+            LOGGER.log(DEBUG, "Publishing BlockItems: " + blockItems.size());
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
 
             long remainingCapacity = ringBuffer.remainingCapacity();
@@ -116,6 +117,9 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
 
             // Increment the block item counter by all block items published
             metricsService.get(LiveBlockItems).add(blockItems.size());
+
+            //            LOGGER.log(DEBUG, "Subscriber count: " + subscriberCount());
+            //            metricsService.get(Consumers).set(subscriberCount());
 
         } else {
             LOGGER.log(ERROR, "StreamMediator is not accepting BlockItems");

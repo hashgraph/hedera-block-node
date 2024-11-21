@@ -106,6 +106,11 @@ public class ConsumerStreamResponseObserver
     public void onEvent(
             @NonNull final ObjectEvent<SubscribeStreamResponseUnparsed> event, final long l, final boolean b) {
 
+        LOGGER.log(
+                DEBUG,
+                "Received SubscribeStreamResponse event: "
+                        + event.get().blockItems().blockItems().size());
+
         // Only send the response if the consumer has not cancelled
         // or closed the stream.
         if (isResponsePermitted.get()) {

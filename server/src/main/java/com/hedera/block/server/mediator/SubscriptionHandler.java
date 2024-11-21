@@ -52,4 +52,6 @@ public interface SubscriptionHandler<V> {
 
     /** Unsubscribes all the expired handlers from the stream of events. */
     void unsubscribeAllExpired();
+
+    int subscriberCount();
 }

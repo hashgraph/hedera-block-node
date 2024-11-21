@@ -18,6 +18,8 @@ plugins {
     id("com.gradle.enterprise").version("3.15.1")
 }
 
+includeBuild("/Users/mattpeterson/repos/pbj/pbj-core")
+
 // Include the subprojects
 include(":common")
 include(":suites")
@@ -84,7 +86,7 @@ dependencyResolutionManagement {
             version("com.google.protobuf", protobufVersion)
             version("com.google.protobuf.util", protobufVersion)
 
-            var pbjVersion = "0.9.10"
+            var pbjVersion = "0.9.10-SNAPSHOT"
 
             // PBJ dependencies
             plugin("pbj", "com.hedera.pbj.pbj-compiler").version(pbjVersion)

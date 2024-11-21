@@ -180,8 +180,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     @NonNull
     private SubscribeStreamRequest parseSubscribeStreamRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options) throws ParseException {
-        // TODO: Copying bytes to avoid using references passed from Helidon. Investigate if this is necessary.
-        return SubscribeStreamRequest.PROTOBUF.parse(Bytes.wrap(message.toByteArray()));
+        return SubscribeStreamRequest.PROTOBUF.parse(message);
     }
 
     @NonNull
