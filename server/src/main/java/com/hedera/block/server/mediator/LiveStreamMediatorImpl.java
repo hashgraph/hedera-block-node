@@ -117,10 +117,6 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
 
             // Increment the block item counter by all block items published
             metricsService.get(LiveBlockItems).add(blockItems.size());
-
-            //            LOGGER.log(DEBUG, "Subscriber count: " + subscriberCount());
-            //            metricsService.get(Consumers).set(subscriberCount());
-
         } else {
             LOGGER.log(ERROR, "StreamMediator is not accepting BlockItems");
         }
