@@ -44,6 +44,7 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
 
     // State
     private final CountDownLatch streamLatch;
+    private final List<String> lastKnownStatuses;
 
     /**
      * Constructs a new ConsumerStreamObserver.
@@ -53,9 +54,12 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
      * @throws NullPointerException if any parameter is null
      */
     public ConsumerStreamObserver(
-            @NonNull final MetricsService metricsService, @NonNull final CountDownLatch streamLatch) {
+            @NonNull final MetricsService metricsService,
+            @NonNull final CountDownLatch streamLatch,
+            @NonNull final List<String> lastKnownStatuses) {
         this.metricsService = requireNonNull(metricsService);
         this.streamLatch = requireNonNull(streamLatch);
+        this.lastKnownStatuses = requireNonNull(lastKnownStatuses);
     }
 
     /**
@@ -67,6 +71,7 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
     @Override
     public void onNext(SubscribeStreamResponse subscribeStreamResponse) {
         final SubscribeStreamResponse.ResponseCase responseType = subscribeStreamResponse.getResponseCase();
+        lastKnownStatuses.add(subscribeStreamResponse.toString());
 
         switch (responseType) {
             case STATUS -> LOGGER.log(INFO, "Received Response: " + subscribeStreamResponse);
@@ -84,6 +89,7 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
     @Override
     public void onError(Throwable streamError) {
         Status status = Status.fromThrowable(streamError);
+        lastKnownStatuses.add(status.toString());
         LOGGER.log(ERROR, "Error %s with status %s.".formatted(streamError, status), streamError);
         streamLatch.countDown();
     }

@@ -101,6 +101,29 @@ class BlockStreamSimulatorTest {
         }
 
         @Test
+        void startPublishing_logsStartedMessage()
+                        throws InterruptedException, BlockSimulatorParsingException, IOException {
+                blockStreamSimulator.start();
+                assertTrue(blockStreamSimulator.isRunning());
+        }
+
+        @Test
+        void startConsuming() throws IOException, BlockSimulatorParsingException, InterruptedException {
+                Configuration configuration = TestUtils
+                                .getTestConfiguration(Map.of("blockStream.simulatorMode", "CONSUMER"));
+
+                metricsService = new MetricsServiceImpl(getTestMetrics(configuration));
+                blockStreamSimulator = new BlockStreamSimulatorApp(
+                                configuration, blockStreamManager, publishStreamGrpcClient, consumerStreamGrpcClient,
+                                metricsService);
+                blockStreamSimulator.start();
+
+                verify(consumerStreamGrpcClient).init();
+                verify(consumerStreamGrpcClient).requestBlocks(0, 0);
+                assertTrue(blockStreamSimulator.isRunning());
+        }
+
+        @Test
         void start_constantRateStreaming() throws InterruptedException, BlockSimulatorParsingException, IOException {
 
                 BlockItem blockItem = BlockItem.newBuilder()
@@ -116,8 +139,9 @@ class BlockStreamSimulatorTest {
 
                 BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
                 when(blockStreamManager.getNextBlock()).thenReturn(block1, block2, null);
-
                 Configuration configuration = TestUtils.getTestConfiguration(Map.of(
+                                "blockStream.simulatorMode",
+                                "PUBLISHER",
                                 "blockStream.maxBlockItemsToStream",
                                 "2",
                                 "generator.managerImplementation",
@@ -137,15 +161,33 @@ class BlockStreamSimulatorTest {
                 assertTrue(blockStreamSimulator.isRunning());
         }
 
-        private String getAbsoluteFolder(String relativePath) {
-                return Paths.get(relativePath).toAbsolutePath().toString();
-        }
-
         @Test
-        void stop_doesNotThrowException() throws InterruptedException {
+        void stopPublishing_doesNotThrowException() throws InterruptedException, IOException {
+                Configuration configuration = TestUtils
+                                .getTestConfiguration(Map.of("blockStream.simulatorMode", "PUBLISHER"));
+
+                metricsService = new MetricsServiceImpl(getTestMetrics(configuration));
+                blockStreamSimulator = new BlockStreamSimulatorApp(
+                                configuration, blockStreamManager, publishStreamGrpcClient, consumerStreamGrpcClient,
+                                metricsService);
+
                 assertDoesNotThrow(() -> blockStreamSimulator.stop());
                 assertFalse(blockStreamSimulator.isRunning());
                 verify(publishStreamGrpcClient, atLeast(1)).completeStreaming();
+        }
+
+        @Test
+        void stopConsuming_doesNotThrowException() throws InterruptedException, IOException {
+                Configuration configuration = TestUtils
+                                .getTestConfiguration(Map.of("blockStream.simulatorMode", "CONSUMER"));
+
+                metricsService = new MetricsServiceImpl(getTestMetrics(configuration));
+                blockStreamSimulator = new BlockStreamSimulatorApp(
+                                configuration, blockStreamManager, publishStreamGrpcClient, consumerStreamGrpcClient,
+                                metricsService);
+                assertDoesNotThrow(() -> blockStreamSimulator.stop());
+                assertFalse(blockStreamSimulator.isRunning());
+                verify(consumerStreamGrpcClient, atLeast(1)).completeStreaming();
         }
 
         @Test
@@ -156,6 +198,18 @@ class BlockStreamSimulatorTest {
                                 .build();
                 Block block = Block.newBuilder().addItems(blockItem).build();
                 when(blockStreamManager.getNextBlock()).thenReturn(block, block, null);
+
+                Configuration configuration = TestUtils.getTestConfiguration(Map.of(
+                                "blockStream.simulatorMode",
+                                "PUBLISHER",
+                                "blockStream.maxBlockItemsToStream",
+                                "2",
+                                "generator.managerImplementation",
+                                "BlockAsFileLargeDataSets",
+                                "generator.rootPath",
+                                getAbsoluteFolder("src/test/resources/block-0.0.3-blk/"),
+                                "blockStream.streamingMode",
+                                "MILLIS_PER_BLOCK"));
 
                 Configuration configuration = TestUtils.getTestConfiguration(Map.of(
                                 "blockStream.maxBlockItemsToStream",
@@ -197,6 +251,8 @@ class BlockStreamSimulatorTest {
                                 .thenReturn(true);
 
                 Configuration configuration = TestUtils.getTestConfiguration(Map.of(
+                                "blockStream.simulatorMode",
+                                "PUBLISHER",
                                 "generator.managerImplementation",
                                 "BlockAsFileBlockStreamManager",
                                 "generator.rootPath",

@@ -70,7 +70,7 @@ public class ConsumerModeHandler implements SimulatorModeHandler {
 
     /**
      * Starts consuming blocks from the stream beginning at genesis (block 0).
-     * Currently requests an infinite stream of blocks starting from genesis.
+     * Currently, requests an infinite stream of blocks starting from genesis.
      *
      * @throws InterruptedException if the consumption process is interrupted
      */

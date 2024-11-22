@@ -16,25 +16,72 @@
 
 package com.hedera.block.simulator.mode;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
+
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
-import com.hedera.block.simulator.grpc.impl.ConsumerStreamGrpcClientImpl;
-import org.mockito.Mock;
+import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class ConsumerModeHandlerTest {
+class ConsumerModeHandlerTest {
 
-    @Mock
     private BlockStreamConfig blockStreamConfig;
-
-    @Mock
-    private ConsumerStreamGrpcClientImpl consumerStreamGrpcClient;
-
+    private ConsumerStreamGrpcClient consumerStreamGrpcClient;
     private ConsumerModeHandler consumerModeHandler;
 
-    //    @Test
-    //    void testStartThrowsUnsupportedOperationException() {
-    //        MockitoAnnotations.openMocks(this);
-    //        consumerModeHandler = new ConsumerModeHandler(consumerStreamGrpcClient, blockStreamConfig);
-    //
-    //        assertThrows(UnsupportedOperationException.class, () -> consumerModeHandler.start());
-    //    }
+    @BeforeEach
+    void setUp() {
+        blockStreamConfig = mock(BlockStreamConfig.class);
+        consumerStreamGrpcClient = mock(ConsumerStreamGrpcClient.class);
+
+        consumerModeHandler = new ConsumerModeHandler(blockStreamConfig, consumerStreamGrpcClient);
+    }
+
+    @Test
+    void testConstructorWithNullArguments() {
+        assertThrows(NullPointerException.class, () -> new ConsumerModeHandler(null, consumerStreamGrpcClient));
+        assertThrows(NullPointerException.class, () -> new ConsumerModeHandler(blockStreamConfig, null));
+    }
+
+    @Test
+    void testInit() {
+        consumerModeHandler.init();
+
+        verify(consumerStreamGrpcClient).init();
+    }
+
+    @Test
+    void testStart() throws InterruptedException {
+        consumerModeHandler.start();
+        verify(consumerStreamGrpcClient).requestBlocks(0, 0);
+    }
+
+    @Test
+    void testStart_throwsExceptionDuringConsuming() throws InterruptedException {
+        consumerModeHandler.start();
+
+        doThrow(new InterruptedException("Test exception"))
+                .when(consumerStreamGrpcClient)
+                .requestBlocks(0, 0);
+        assertThrows(InterruptedException.class, () -> consumerModeHandler.start());
+    }
+
+    @Test
+    void testStop() throws InterruptedException {
+        consumerModeHandler.stop();
+
+        verify(consumerStreamGrpcClient).completeStreaming();
+        verify(consumerStreamGrpcClient).shutdown();
+    }
+
+    @Test
+    void testStop_throwsExceptionDuringCompleteStreaming() throws InterruptedException {
+        consumerModeHandler.stop();
+        doThrow(new InterruptedException("Test exception"))
+                .when(consumerStreamGrpcClient)
+                .completeStreaming();
+
+        assertThrows(InterruptedException.class, () -> consumerModeHandler.stop());
+    }
 }

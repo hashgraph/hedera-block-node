@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.simulator.grpc;
+package com.hedera.block.simulator.grpc.impl;
 
 import static com.hedera.block.simulator.TestUtils.getTestMetrics;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,7 +27,6 @@ import static org.mockito.Mockito.verify;
 import com.hedera.block.simulator.TestUtils;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
-import com.hedera.block.simulator.grpc.impl.PublishStreamGrpcClientImpl;
 import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.block.simulator.metrics.MetricsServiceImpl;
 import com.hedera.hapi.block.stream.protoc.Block;

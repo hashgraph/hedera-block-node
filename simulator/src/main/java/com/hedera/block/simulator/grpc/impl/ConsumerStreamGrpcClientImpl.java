@@ -79,12 +79,13 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
         lastKnownStatuses.clear();
     }
 
+    @Override
     public void requestBlocks(long startBlock, long endBlock) throws InterruptedException {
         Preconditions.requireWhole(startBlock);
         Preconditions.requireWhole(endBlock);
 
         CountDownLatch streamLatch = new CountDownLatch(1);
-        consumerStreamObserver = new ConsumerStreamObserver(metricsService, streamLatch);
+        consumerStreamObserver = new ConsumerStreamObserver(metricsService, streamLatch, lastKnownStatuses);
 
         SubscribeStreamRequest request = SubscribeStreamRequest.newBuilder()
                 .setStartBlockNumber(startBlock)
@@ -96,6 +97,7 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
         streamLatch.await();
     }
 
+    @Override
     public void completeStreaming() throws InterruptedException {
         consumerStreamObserver.onCompleted();
         // todo(352) Find a suitable solution for removing the sleep
@@ -112,6 +114,7 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
         return List.copyOf(lastKnownStatuses);
     }
 
+    @Override
     public void shutdown() {
         channel.shutdown();
     }
