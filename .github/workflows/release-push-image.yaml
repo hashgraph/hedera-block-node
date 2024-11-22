@@ -125,6 +125,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract version
+        id: extract_version
+        run: |
+          VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
       - name: Package helm chart
         run: |
           helm package charts/hedera-block-node
