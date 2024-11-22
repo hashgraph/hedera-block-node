@@ -21,8 +21,9 @@ echo "REGISTRY_PREFIX=" >> .env
 echo "BLOCKNODE_STORAGE_ROOT_PATH=/app/storage" >> .env
 
 if [ true = "$is_debug" ]; then
-  # wait for debugger to attach
-  echo "SERVER_OPTS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005'" >> .env
+  # The server will wait for the debugger to attach on port 5005
+  # JProfiler can attach on port 8849
+  echo "SERVER_OPTS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005' -agentpath:/path/to/libjprofilerti.so=port=8849 " >> .env
 fi
 
 if [ true = "$is_smoke_test" ]; then

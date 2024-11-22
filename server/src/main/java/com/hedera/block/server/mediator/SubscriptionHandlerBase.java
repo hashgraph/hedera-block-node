@@ -137,9 +137,4 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
                 .filter(BlockNodeEventHandler::isTimeoutExpired)
                 .forEach(this::unsubscribe);
     }
-
-    @Override
-    public int subscriberCount() {
-        return subscribers.size();
-    }
 }
