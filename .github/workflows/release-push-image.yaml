@@ -118,10 +118,17 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@fe7b79cd5ee1e45176fcad797de68ecaf3ca4814 # v4.2.0
 
-      - name: Publish helm chart
-        uses: step-security/helm-gh-pages@6a390e89293c1ec8bc5120f6692f3b8a313a9a3d # v1.7.0
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
-          target_dir: charts
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: gh-pages
-          app_version: ${{ env.VERSION }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Package helm chart
+        run: |
+          helm package charts/hedera-block-node
+
+      - name: Push helm chart
+        run: |
+          helm push hedera-block-node-chart-${{ env.VERSION }}.tgz oci://ghcr.io/hashgraph/hedera-block-node
