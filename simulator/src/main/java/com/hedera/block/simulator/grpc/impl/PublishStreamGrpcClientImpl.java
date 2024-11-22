@@ -43,29 +43,37 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
 /**
- * The PublishStreamGrpcClientImpl class provides the methods to stream the
- * block and block item.
+ * Implementation of {@link PublishStreamGrpcClient} that handles the publication of blocks
+ * via gRPC streaming. This implementation manages the connection to the server, handles
+ * block chunking, and tracks metrics related to block publication.
  */
 public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
-
+    /** Logger for this class */
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
-    private StreamObserver<PublishStreamRequest> requestStreamObserver;
+    // Configuration
     private final BlockStreamConfig blockStreamConfig;
     private final GrpcConfig grpcConfig;
-    private final AtomicBoolean streamEnabled;
-    private ManagedChannel channel;
+
+    // Service dependencies
     private final MetricsService metricsService;
-    private final List<String> lastKnownStatuses = new ArrayList<>();
+
+    // gRPC components
+    private ManagedChannel channel;
+    private StreamObserver<PublishStreamRequest> requestStreamObserver;
+
+    // State
+    private final AtomicBoolean streamEnabled;
+    private final List<String> lastKnownStatuses;
 
     /**
-     * Creates a new PublishStreamGrpcClientImpl instance.
+     * Creates a new PublishStreamGrpcClientImpl with the specified dependencies.
      *
-     * @param grpcConfig        the gRPC configuration
-     * @param blockStreamConfig the block stream configuration
-     * @param metricsService    the metrics service
-     * @param streamEnabled     the flag responsible for enabling and disabling of
-     *                          the streaming
+     * @param grpcConfig The configuration for gRPC connection settings
+     * @param blockStreamConfig The configuration for block streaming parameters
+     * @param metricsService The service for recording publication metrics
+     * @param streamEnabled Flag controlling stream state
+     * @throws NullPointerException if any parameter is null
      */
     @Inject
     public PublishStreamGrpcClientImpl(
@@ -77,11 +85,11 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
         this.blockStreamConfig = requireNonNull(blockStreamConfig);
         this.metricsService = requireNonNull(metricsService);
         this.streamEnabled = requireNonNull(streamEnabled);
+        this.lastKnownStatuses = new ArrayList<>();
     }
 
     /**
-     * Initialize the channel and stub for publishBlockStream with the desired
-     * configuration.
+     * Initializes the gRPC channel and creates the publishing stream.
      */
     @Override
     public void init() {
@@ -95,13 +103,13 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
     }
 
     /**
-     * The PublishStreamObserver class implements the StreamObserver interface to
-     * observe the
-     * stream.
+     * Streams a list of block items to the server.
+     *
+     * @param blockItems The list of block items to stream
+     * @return true if streaming should continue, false if streaming should stop
      */
     @Override
     public boolean streamBlockItem(List<BlockItem> blockItems) {
-
         if (streamEnabled.get()) {
             requestStreamObserver.onNext(PublishStreamRequest.newBuilder()
                     .setBlockItems(BlockItemSet.newBuilder()
@@ -122,13 +130,13 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
     }
 
     /**
-     * The PublishStreamObserver class implements the StreamObserver interface to
-     * observe the
-     * stream.
+     * Streams a complete block to the server, chunking it if necessary based on configuration.
+     *
+     * @param block The block to stream
+     * @return true if streaming should continue, false if streaming should stop
      */
     @Override
     public boolean streamBlock(Block block) {
-
         List<List<BlockItem>> streamingBatches =
                 ChunkUtils.chunkify(block.getItemsList(), blockStreamConfig.blockItemsBatchSize());
         for (List<BlockItem> streamingBatch : streamingBatches) {

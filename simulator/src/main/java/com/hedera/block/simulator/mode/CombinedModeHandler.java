@@ -37,20 +37,29 @@ public class CombinedModeHandler implements SimulatorModeHandler {
     private final BlockStreamConfig blockStreamConfig;
 
     /**
-     * Constructs a new {@code CombinedModeHandler} with the specified block stream configuration.
+     * Constructs a new {@code CombinedModeHandler} with the specified configuration.
      *
-     * @param blockStreamConfig the configuration data for managing block streams
+     * @param blockStreamConfig The configuration for block streaming parameters
+     * @throws NullPointerException if blockStreamConfig is null
      */
     public CombinedModeHandler(@NonNull final BlockStreamConfig blockStreamConfig) {
         this.blockStreamConfig = requireNonNull(blockStreamConfig);
     }
 
     /**
-     * Starts the simulator in combined mode, handling both consumption and publication
-     * of block stream. However, this method is currently not implemented, and will throw
-     * an {@link UnsupportedOperationException}.
+     * Initializes resources for both consuming and publishing blocks.
      *
-     * @throws UnsupportedOperationException as the method is not yet implemented
+     * @throws UnsupportedOperationException as this functionality is not yet implemented
+     */
+    @Override
+    public void init() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Starts both consuming and publishing blocks simultaneously.
+     *
+     * @throws UnsupportedOperationException as this functionality is not yet implemented
      */
     @Override
     public void start() {
@@ -58,7 +67,9 @@ public class CombinedModeHandler implements SimulatorModeHandler {
     }
 
     /**
-     * Stops the handler and manager from streaming.
+     * Gracefully stops both consumption and publishing of blocks.
+     *
+     * @throws UnsupportedOperationException as this functionality is not yet implemented
      */
     @Override
     public void stop() {

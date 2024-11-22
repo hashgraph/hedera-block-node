@@ -11,6 +11,7 @@ Uses the prefix `blockStream` so all properties should start with `blockStream.`
 
 | Key | Description | Default Value |
 |:---|:---|---:|
+| `simulatorMode` | The desired simulator mode to use, it can be either `PUBLISHER` or `CONSUMER`. | `PUBLISHER` |
 | `delayBetweenBlockItems` | The delay between each block item in nanoseconds, only applicable when streamingMode=CONSTANT_RATE | `1_500_000` |
 | `maxBlockItemsToStream` | exit condition for the simulator and the circular implementations such as `BlockAsDir` or `BlockAsFile` implementations | `10_000` |
 | `streamingMode` | can either be `CONSTANT_RATE` or `MILLIS_PER_BLOCK` | `CONSTANT_RATE` |

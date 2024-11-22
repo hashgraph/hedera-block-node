@@ -31,17 +31,18 @@ import java.io.IOException;
  *   <li>Publisher mode: The simulator publishes data to the block stream.</li>
  *   <li>Combined mode: The simulator handles both consuming and publishing.</li>
  * </ul>
- *
- * <p>The {@code SimulatorModeHandler} is responsible for managing the simulator lifecycle,
- * starting and stopping the streaming of blocks and handling any exceptions that may arise
- * during the process.
  */
 public interface SimulatorModeHandler {
 
     /**
-     * Starts the simulator and initiates the streaming process, based on the
-     * configuration. The behavior
-     * of this method depends on the specific working mode (e.g., consumer, publisher, both).
+     * Initializes the handler by setting up required resources and connections.
+     * This method should be called before {@link #start()}.
+     */
+    void init();
+
+    /**
+     * Starts the simulator and initiates the streaming process according to the configured mode.
+     * The behavior of this method depends on the specific working mode (consumer, publisher, or combined).
      *
      * @throws BlockSimulatorParsingException if an error occurs while parsing blocks
      * @throws IOException if an I/O error occurs during block streaming
@@ -50,7 +51,9 @@ public interface SimulatorModeHandler {
     void start() throws BlockSimulatorParsingException, IOException, InterruptedException;
 
     /**
-     * Stops the handler and manager from streaming.
+     * Gracefully stops the handler, cleaning up resources and terminating any active streams.
+     *
+     * @throws InterruptedException if the shutdown process is interrupted
      */
-    void stop();
+    void stop() throws InterruptedException;
 }
