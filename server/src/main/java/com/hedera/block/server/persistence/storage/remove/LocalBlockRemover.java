@@ -17,6 +17,7 @@
 package com.hedera.block.server.persistence.storage.remove;
 
 /**
- * TODO: add documentation
+ * A marker interface that groups all removers that operate on a local file
+ * system.
  */
 public interface LocalBlockRemover extends BlockRemover {}

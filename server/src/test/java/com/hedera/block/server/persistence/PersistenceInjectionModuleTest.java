@@ -29,7 +29,7 @@ import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.StorageType;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
 import com.hedera.block.server.persistence.storage.path.NoOpBlockPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.NoOpRemover;

@@ -17,9 +17,13 @@
 package com.hedera.block.server.persistence.storage.remove;
 
 /**
- * TODO: add documentation
+ * A no-op Block remover
  */
 public class NoOpRemover implements LocalBlockRemover {
+    /**
+     * No-op remover. Does nothing and returns immediately. No preconditions
+     * check also.
+     */
     @Override
     public void remove(final long blockNumber) {
         // do nothing

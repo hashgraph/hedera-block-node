@@ -18,6 +18,7 @@ package com.hedera.block.server.persistence.storage;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

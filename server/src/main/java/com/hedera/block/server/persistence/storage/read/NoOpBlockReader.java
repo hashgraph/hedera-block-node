@@ -23,9 +23,12 @@ import java.io.IOException;
 import java.util.Optional;
 
 /**
- * TODO: add documentation
+ * A no-op Block reader.
  */
 public class NoOpBlockReader implements BlockReader<Block> {
+    /**
+     * {@inheritDoc}
+     */
     @NonNull
     @Override
     public Optional<Block> read(final long blockNumber) throws IOException, ParseException {

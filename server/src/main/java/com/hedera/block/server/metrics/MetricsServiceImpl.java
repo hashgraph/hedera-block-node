@@ -71,7 +71,7 @@ public final class MetricsServiceImpl implements MetricsService {
     @NonNull
     @Override
     public Counter get(@NonNull final BlockNodeMetricTypes.Counter key) {
-        return counters.get(key);
+        return counters.get(Objects.requireNonNull(key));
     }
 
     /**
@@ -83,6 +83,6 @@ public final class MetricsServiceImpl implements MetricsService {
     @NonNull
     @Override
     public LongGauge get(@NonNull final BlockNodeMetricTypes.Gauge key) {
-        return gauges.get(key);
+        return gauges.get(Objects.requireNonNull(key));
     }
 }

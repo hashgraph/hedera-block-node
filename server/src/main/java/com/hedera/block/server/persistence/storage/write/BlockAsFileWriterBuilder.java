@@ -25,13 +25,20 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * TODO: add documentation
+ * A builder for {@link BlockAsFileWriter}.
  */
 public final class BlockAsFileWriterBuilder {
     private final BlockNodeContext blockNodeContext;
     private final BlockRemover blockRemover;
     private final BlockPathResolver blockPathResolver;
 
+    /**
+     * Constructor.
+     *
+     * @param blockNodeContext valid, {@code non-null} instance of {@link BlockNodeContext}
+     * @param blockRemover valid, {@code non-null} instance of {@link BlockRemover}
+     * @param blockPathResolver valid, {@code non-null} instance of {@link BlockPathResolver}
+     */
     private BlockAsFileWriterBuilder(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
@@ -41,6 +48,14 @@ public final class BlockAsFileWriterBuilder {
         this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
     }
 
+    /**
+     * This method creates a new instance of {@link BlockAsFileWriterBuilder}.
+     *
+     * @param blockNodeContext valid, {@code non-null} instance of {@link BlockNodeContext}
+     * @param blockRemover valid, {@code non-null} instance of {@link BlockRemover}
+     * @param blockPathResolver valid, {@code non-null} instance of {@link BlockPathResolver}
+     * @return a new instance of {@link BlockAsFileWriterBuilder}
+     */
     public static BlockAsFileWriterBuilder newBuilder(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
@@ -48,6 +63,12 @@ public final class BlockAsFileWriterBuilder {
         return new BlockAsFileWriterBuilder(blockNodeContext, blockRemover, blockPathResolver);
     }
 
+    /**
+     * This method builds a new instance of {@link BlockAsFileWriter} using the
+     * properties set within this builder.
+     *
+     * @return a new, fully initialized instance of {@link BlockAsFileWriter}
+     */
     public BlockWriter<List<BlockItem>> build() {
         return new BlockAsFileWriter(blockNodeContext, blockRemover, blockPathResolver);
     }

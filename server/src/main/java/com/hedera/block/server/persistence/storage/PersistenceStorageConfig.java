@@ -76,4 +76,34 @@ public record PersistenceStorageConfig(
         LOGGER.log(INFO, "Persistence Storage Configuration: persistence.storage.rootPath=" + path);
         LOGGER.log(INFO, "Persistence Storage Configuration: persistence.storage.type= " + type);
     }
+
+    /**
+     * An enum that reflects the type of Block Storage Persistence that is
+     * currently used within the given server instance. During runtime one
+     * should only query for the storage type that was configured by calling
+     * {@link PersistenceStorageConfig#type()} on an instance of the persistence
+     * storage config that was only constructed via
+     * {@link com.swirlds.config.api.Configuration#getConfigData(Class)}!
+     */
+    public enum StorageType {
+        /**
+         * This type of storage stores Blocks as individual files with the Block
+         * number as a unique file name and persisted in a trie structure with
+         * digit-per-folder
+         * (see <a href="https://github.com/hashgraph/hedera-block-node/issues/125">#125</a>).
+         * This is also the default setting for the server if it is not
+         * explicitly specified via an environment variable or app.properties.
+         */
+        BLOCK_AS_FILE,
+        /**
+         * This type of storage stores Blocks as directories with the Block
+         * number being the directory number. Block Items are stored as files
+         * within a given Block directory. Used primarily for testing purposes.
+         */
+        BLOCK_AS_DIR,
+        /**
+         * This type of storage does nothing.
+         */
+        NOOP
+    }
 }

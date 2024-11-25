@@ -19,16 +19,17 @@ package com.hedera.block.server.persistence.storage.path;
 import java.nio.file.Path;
 
 /**
- * TODO: add documentation
+ * A Block path resolver. Used to resolve path to a given Block and all the
+ * supporting related operations.
  */
 public interface BlockPathResolver {
-    // TODO extend this interface, we probably need more methods for checking if
-    // a path exists or resolving for compressed/decompressed or resolving for
-    // archived non archived etc. For now I only care to start writing blocks
-    // as files to the disk and clean up the approach on how to do that.
+    /**
+     * This method resolves the fs {@link Path} to a Block by a given input
+     * number. This method does not guarantee that the returned {@link Path}
+     * exists!
+     *
+     * @param blockNumber to be resolved the path for
+     * @return the resolved path to the given Block by a number
+     */
     Path resolvePathToBlock(final long blockNumber);
-
-    boolean existsBlock(final long blockNumber);
-
-    boolean notExistsBlock(final long blockNumber);
 }

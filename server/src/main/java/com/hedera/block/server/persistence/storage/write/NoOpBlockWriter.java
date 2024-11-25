@@ -40,10 +40,15 @@ public class NoOpBlockWriter implements LocalBlockWriter<List<BlockItem>> {
     private final BlockPathResolver blockPathResolver; // todo do I need here?
 
     /**
-     * Creates a new NoOpBlockWriter instance for testing and troubleshooting only.
+     * Creates a new NoOpBlockWriter instance for testing and troubleshooting
+     * only.
      *
-     * @param blockNodeContext the block node context
-     * @param blockPathResolver used internally
+     * @param blockNodeContext valid, {@code non-null} instance of
+     * {@link BlockNodeContext} used to access the metrics service
+     * @param blockRemover valid, {@code non-null} instance of
+     * {@link BlockRemover}
+     * @param blockPathResolver valid, {@code non-null} instance of
+     * {@link BlockPathResolver}
      */
     public NoOpBlockWriter(
             @NonNull final BlockNodeContext blockNodeContext,

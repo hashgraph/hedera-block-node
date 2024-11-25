@@ -18,15 +18,28 @@ package com.hedera.block.server.persistence.storage.path;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.file.Path;
+import java.util.Objects;
 
 /**
- * TODO: add documentation
+ * A Block path resolver for block-as-dir.
  */
-public final class BlockAsDirPathResolver extends AbstractBlockPathResolver {
+public final class BlockAsDirPathResolver implements BlockPathResolver {
+    private final Path blockStorageRoot;
+
+    /**
+     * Constructor.
+     *
+     * @param blockStorageRoot valid, {@code non-null} instance of {@link Path}
+     * that points to the root of the block storage
+     */
     public BlockAsDirPathResolver(@NonNull final Path blockStorageRoot) {
-        super(blockStorageRoot);
+        this.blockStorageRoot = Objects.requireNonNull(blockStorageRoot);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @NonNull
     @Override
     public Path resolvePathToBlock(final long blockNumber) {
         return blockStorageRoot.resolve(String.valueOf(blockNumber));

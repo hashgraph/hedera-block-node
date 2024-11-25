@@ -21,23 +21,35 @@ import com.hedera.block.server.Constants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 /**
- * TODO: add documentation
+ * A Block path resolver for block-as-file.
  */
-public final class BlockAsFilePathResolver extends AbstractBlockPathResolver {
+public final class BlockAsFilePathResolver implements BlockPathResolver {
     private static final int MAX_LONG_DIGITS = 19;
+    private final Path blockStorageRoot;
 
+    /**
+     * Constructor.
+     *
+     * @param blockStorageRoot valid, {@code non-null} instance of {@link Path}
+     * that points to the root of the block storage
+     */
     public BlockAsFilePathResolver(@NonNull final Path blockStorageRoot) {
-        super(blockStorageRoot);
+        this.blockStorageRoot = Objects.requireNonNull(blockStorageRoot);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @NonNull
     @Override
     public Path resolvePathToBlock(final long blockNumber) {
         Preconditions.requirePositive(blockNumber); // todo do we have block number 0?
-        final String inputString = String.format("%0" + MAX_LONG_DIGITS + "d", blockNumber);
-        final String[] blockPath = inputString.split("");
-        final String blockFileName = inputString.concat(Constants.BLOCK_FILE_EXTENSION);
+        final String rawBlockNumber = String.format("%0" + MAX_LONG_DIGITS + "d", blockNumber);
+        final String[] blockPath = rawBlockNumber.split("");
+        final String blockFileName = rawBlockNumber.concat(Constants.BLOCK_FILE_EXTENSION);
         blockPath[blockPath.length - 1] = blockFileName;
         return Paths.get(blockStorageRoot.toAbsolutePath().toString(), blockPath);
     }

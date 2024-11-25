@@ -27,7 +27,6 @@ import java.util.Optional;
  * @param <V> the type of the block to read
  */
 public interface BlockReader<V> {
-
     /**
      * Reads the block with the given block number.
      *

@@ -35,7 +35,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * TODO: add documentation
+ * A Block writer that handles writing of block-as-file.
  */
 class BlockAsFileWriter implements LocalBlockWriter<List<BlockItem>> {
     private final MetricsService metricsService;
@@ -43,6 +43,16 @@ class BlockAsFileWriter implements LocalBlockWriter<List<BlockItem>> {
     private final BlockPathResolver blockPathResolver;
     private Block curentBlock; // fixme this is temporary just to explore the workflow and make proof of concept
 
+    /**
+     * Constructor.
+     *
+     * @param blockNodeContext valid, {@code non-null} instance of {@link BlockNodeContext} used to
+     * get the {@link MetricsService}
+     * @param blockRemover valid, {@code non-null} instance of {@link BlockRemover} used to remove
+     * blocks in case of cleanup
+     * @param blockPathResolver valid, {@code non-null} instance of {@link BlockPathResolver} used
+     * to resolve paths to Blocks
+     */
     BlockAsFileWriter(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,

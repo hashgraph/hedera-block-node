@@ -19,9 +19,15 @@ package com.hedera.block.server.persistence.storage.remove;
 import java.io.IOException;
 
 /**
- * TODO: add documentation
+ * A Block remover that handles block-as-file.
  */
 public class BlockAsFileRemover implements LocalBlockRemover {
+    /**
+     * Removes a block from the file system.
+     *
+     * @param blockNumber the id of the block to remove
+     * @throws IOException if an I/O error occurs
+     */
     @Override
     public void remove(final long blockNumber) throws IOException {
         throw new UnsupportedOperationException("Not implemented yet");

@@ -20,7 +20,7 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.StorageType;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
 import com.hedera.block.server.persistence.storage.path.BlockAsDirPathResolver;
 import com.hedera.block.server.persistence.storage.path.BlockAsFilePathResolver;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
@@ -58,6 +58,8 @@ public interface PersistenceInjectionModule {
      * Provides a block writer singleton using the block node context.
      *
      * @param blockNodeContext the application context
+     * @param blockRemover the block remover
+     * @param blockPathResolver the block path resolver
      * @return a block writer singleton
      */
     @Provides
@@ -112,6 +114,7 @@ public interface PersistenceInjectionModule {
      *
      * @param config the persistence storage configuration needed to build the
      * block remover
+     * @param blockPathResolver the block path resolver
      * @return a block remover singleton
      */
     @Provides

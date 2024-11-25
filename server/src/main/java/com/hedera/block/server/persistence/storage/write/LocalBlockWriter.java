@@ -17,6 +17,7 @@
 package com.hedera.block.server.persistence.storage.write;
 
 /**
- * TODO: add documentation
+ * A marker interface that groups all writers that operate on a local file
+ * system.
  */
 interface LocalBlockWriter<V> extends BlockWriter<V> {}

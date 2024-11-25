@@ -21,9 +21,12 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Optional;
 
 /**
- * TODO: add documentation
+ * A Block reader that reads block-as-file.
  */
-public class BlockAsFileReader implements BlockReader<Block> {
+class BlockAsFileReader implements BlockReader<Block> {
+    /**
+     * {@inheritDoc}
+     */
     @NonNull
     @Override
     public Optional<Block> read(final long blockNumber) {

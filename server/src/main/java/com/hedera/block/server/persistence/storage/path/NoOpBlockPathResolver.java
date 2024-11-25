@@ -19,21 +19,15 @@ package com.hedera.block.server.persistence.storage.path;
 import java.nio.file.Path;
 
 /**
- * TODO: add documentation
+ * A no-op path resolver.
  */
 public final class NoOpBlockPathResolver implements BlockPathResolver {
+    /**
+     * No-op resolver. Does nothing and always returns null. No preconditions
+     * check also.
+     */
     @Override
     public Path resolvePathToBlock(final long blockNumber) {
         return null;
-    }
-
-    @Override
-    public boolean existsBlock(final long blockNumber) {
-        return false;
-    }
-
-    @Override
-    public boolean notExistsBlock(final long blockNumber) {
-        return false;
     }
 }

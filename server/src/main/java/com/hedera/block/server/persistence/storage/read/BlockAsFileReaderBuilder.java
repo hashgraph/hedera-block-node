@@ -19,15 +19,27 @@ package com.hedera.block.server.persistence.storage.read;
 import com.hedera.hapi.block.stream.Block;
 
 /**
- * TODO: add documentation
+ * Builder for {@link BlockAsFileReader}.
  */
 public class BlockAsFileReaderBuilder {
     private BlockAsFileReaderBuilder() {}
 
+    /**
+     * This method returns a new instance of {@link BlockAsFileReaderBuilder}.
+     *
+     * @return a new instance of {@link BlockAsFileReaderBuilder}
+     */
     public static BlockAsFileReaderBuilder newBuilder() {
         return new BlockAsFileReaderBuilder();
     }
 
+    /**
+     * This method builds and fully initializes a new instance of
+     * {@link BlockAsFileReader} with properties set via this builder.
+     *
+     * @return a new fully initialized instance of {@link BlockAsFileReader}
+     * constructed using the properties set within this builder instance.
+     */
     public BlockReader<Block> build() {
         return new BlockAsFileReader();
     }

@@ -23,6 +23,7 @@ import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -35,9 +36,10 @@ public class BlockAsDirRemover implements LocalBlockRemover {
     private final BlockPathResolver blockPathResolver;
 
     /**
-     * Create a block remover to manage removing blocks from storage.
+     * Constructor.
      *
-     * @param blockPathResolver the root path where blocks are stored.
+     * @param blockPathResolver valid, {@code non-null} instance of
+     * {@link BlockPathResolver} to be used internally to resolve paths to Block
      */
     public BlockAsDirRemover(@NonNull final BlockPathResolver blockPathResolver) {
         this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
@@ -52,10 +54,10 @@ public class BlockAsDirRemover implements LocalBlockRemover {
     @Override
     public void remove(final long blockNumber) throws IOException {
         // todo should we add file permissions normalization?
-        if (blockPathResolver.notExistsBlock(blockNumber)) {
+        final Path blockPath = blockPathResolver.resolvePathToBlock(blockNumber);
+        if (Files.notExists(blockPath)) {
             LOGGER.log(ERROR, "Block cannot be deleted as it does not exist: {0}", blockNumber);
         } else {
-            final Path blockPath = blockPathResolver.resolvePathToBlock(blockNumber);
             final boolean deleted = delete(blockPath.toFile());
             if (!deleted) {
                 LOGGER.log(ERROR, "Failed to delete block: {0}", blockNumber);
