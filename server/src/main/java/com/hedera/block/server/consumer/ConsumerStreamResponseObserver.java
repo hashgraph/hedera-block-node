@@ -30,11 +30,11 @@ import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.runtime.OneOf;
+import com.hedera.pbj.runtime.grpc.Pipeline;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.InstantSource;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -49,7 +49,7 @@ public class ConsumerStreamResponseObserver
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final MetricsService metricsService;
-    private final Flow.Subscriber<? super SubscribeStreamResponseUnparsed> subscribeStreamResponseObserver;
+    private final Pipeline<? super SubscribeStreamResponseUnparsed> subscribeStreamResponseObserver;
     private final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
 
     private final AtomicBoolean isResponsePermitted = new AtomicBoolean(true);
@@ -76,7 +76,7 @@ public class ConsumerStreamResponseObserver
     public ConsumerStreamResponseObserver(
             @NonNull final InstantSource producerLivenessClock,
             @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,
-            @NonNull final Flow.Subscriber<? super SubscribeStreamResponseUnparsed> subscribeStreamResponseObserver,
+            @NonNull final Pipeline<? super SubscribeStreamResponseUnparsed> subscribeStreamResponseObserver,
             @NonNull final BlockNodeContext blockNodeContext) {
 
         this.livenessCalculator = new LivenessCalculator(
@@ -118,7 +118,17 @@ public class ConsumerStreamResponseObserver
 
                 final SubscribeStreamResponseUnparsed subscribeStreamResponse = event.get();
                 final ResponseSender responseSender = getResponseSender(subscribeStreamResponse);
-                responseSender.send(subscribeStreamResponse);
+                try {
+                    responseSender.send(subscribeStreamResponse);
+                } catch (IllegalArgumentException e) {
+                    throw e;
+                } catch (RuntimeException e) {
+                    isResponsePermitted.set(false);
+                    subscriptionHandler.unsubscribe(this);
+                    LOGGER.log(
+                            DEBUG,
+                            "RuntimeException caught from Pipeline instance. Unsubscribed ConsumerBlockItemObserver instance");
+                }
             }
         }
     }

@@ -83,7 +83,7 @@ public class ProducerBlockItemObserver
             @NonNull final InstantSource producerLivenessClock,
             @NonNull final Publisher<List<BlockItemUnparsed>> publisher,
             @NonNull final SubscriptionHandler<PublishStreamResponse> subscriptionHandler,
-            @NonNull final Flow.Subscriber<? super PublishStreamResponse> publishStreamResponseObserver,
+            @NonNull final Pipeline<? super PublishStreamResponse> publishStreamResponseObserver,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
 

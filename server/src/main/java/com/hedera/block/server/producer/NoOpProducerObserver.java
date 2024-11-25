@@ -26,6 +26,7 @@ import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.PublishStreamResponse;
+import com.hedera.pbj.runtime.grpc.Pipeline;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.concurrent.Flow;
@@ -36,7 +37,7 @@ import java.util.concurrent.Flow;
  * still providing metrics and logging for troubleshooting.
  */
 public class NoOpProducerObserver
-        implements Flow.Subscriber<List<BlockItemUnparsed>>, BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>> {
+        implements Pipeline<List<BlockItemUnparsed>>, BlockNodeEventHandler<ObjectEvent<PublishStreamResponse>> {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
     private final MetricsService metricsService;
@@ -48,7 +49,7 @@ public class NoOpProducerObserver
      * @param blockNodeContext the block node context
      */
     public NoOpProducerObserver(
-            @NonNull final Flow.Subscriber<? super PublishStreamResponse> publishStreamResponseObserver,
+            @NonNull final Pipeline<? super PublishStreamResponse> publishStreamResponseObserver,
             @NonNull final BlockNodeContext blockNodeContext) {
         LOGGER.log(INFO, "Using " + getClass().getName());
         this.metricsService = blockNodeContext.metricsService();
