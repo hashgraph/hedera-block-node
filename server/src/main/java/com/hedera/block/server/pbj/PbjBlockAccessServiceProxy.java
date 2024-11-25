@@ -84,7 +84,7 @@ public class PbjBlockAccessServiceProxy implements PbjBlockAccessService {
             final var m = (BlockAccessMethod) method;
             return switch (m) {
                 case singleBlock -> Pipelines.<SingleBlockRequest, SingleBlockResponseUnparsed>unary()
-                        .mapRequest(bytes -> parseSingleBlockRequest(bytes, options))
+                        .mapRequest(bytes -> parseSingleBlockRequest(bytes))
                         .method(this::singleBlock)
                         .mapResponse(reply -> createSingleBlockResponse(reply, options))
                         .respondTo(replies)
@@ -143,8 +143,7 @@ public class PbjBlockAccessServiceProxy implements PbjBlockAccessService {
     }
 
     @NonNull
-    private SingleBlockRequest parseSingleBlockRequest(
-            @NonNull final Bytes message, @NonNull final RequestOptions options) throws ParseException {
+    private SingleBlockRequest parseSingleBlockRequest(@NonNull final Bytes message) throws ParseException {
         return SingleBlockRequest.PROTOBUF.parse(message);
     }
 
