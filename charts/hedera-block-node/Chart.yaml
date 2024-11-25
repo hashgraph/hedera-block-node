@@ -14,3 +14,9 @@ name: hedera-block-node
 sources:
   - https://github.com/hashgraph/hedera-block-node
 version: 0.3.0-SNAPSHOT
+dependencies:
+  - name: kube-prometheus-stack
+    alias: kubepromstack
+    condition: kubepromstack.enabled
+    version: "51.2.0"  # Use the latest stable version
+    repository: "https://prometheus-community.github.io/helm-charts"

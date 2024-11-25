@@ -1,0 +1,21 @@
+{{ if .Values.kubepromstack.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "hedera-block-node.fullname" . }}
+  labels:
+    app: {{ include "hedera-block-node.name" . }}
+    release: {{ .Release.Name }}
+    {{- include "hedera-block-node.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "hedera-block-node.name" . }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+    - port: metrics
+      interval: 15s
+
+{{- end }}

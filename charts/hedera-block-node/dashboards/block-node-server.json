@@ -18,10 +18,12 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "links": [],
+  "links": [
+
+  ],
   "panels": [
     {
-      "collapsed": true,
+      "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -30,333 +32,358 @@
       },
       "id": 16,
       "panels": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 1
-                  }
-                ]
-              },
-              "unit": "short"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 6,
-            "x": 0,
-            "y": 33
-          },
-          "id": 15,
-          "options": {
-            "colorMode": "value",
-            "graphMode": "none",
-            "justifyMode": "auto",
-            "orientation": "auto",
-            "percentChangeColorMode": "standard",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "showPercentChange": false,
-            "textMode": "auto",
-            "wideLayout": true
-          },
-          "pluginVersion": "11.1.4",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-              },
-              "editorMode": "code",
-              "expr": "hedera_block_node_live_block_stream_mediator_error_total",
-              "instant": false,
-              "legendFormat": "Block Item Errors",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Mediator Errors",
-          "type": "stat"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 1
-                  }
-                ]
-              },
-              "unit": "reqps"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 18,
-            "x": 6,
-            "y": 33
-          },
-          "id": 14,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-              },
-              "editorMode": "code",
-              "expr": "rate( hedera_block_node_live_block_stream_mediator_error_total [$__rate_interval])",
-              "instant": false,
-              "legendFormat": "Mediator Errors",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Rate of Mediator Errors",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 1
-                  }
-                ]
-              },
-              "unit": "short"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 6,
-            "x": 0,
-            "y": 39
-          },
-          "id": 28,
-          "options": {
-            "colorMode": "value",
-            "graphMode": "area",
-            "justifyMode": "auto",
-            "orientation": "auto",
-            "percentChangeColorMode": "standard",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "showPercentChange": false,
-            "textMode": "auto",
-            "wideLayout": true
-          },
-          "pluginVersion": "11.1.4",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-              },
-              "editorMode": "code",
-              "expr": "hedera_block_node_stream_persistence_handler_error_total",
-              "instant": false,
-              "legendFormat": "__auto",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Stream Persistence Errors",
-          "type": "stat"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "reqps"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 18,
-            "x": 6,
-            "y": 39
-          },
-          "id": 29,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-              },
-              "editorMode": "code",
-              "expr": "rate(hedera_block_node_stream_persistence_handler_error_total [$__rate_interval])",
-              "instant": false,
-              "legendFormat": "Stream Persistence Errors",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Rate of Stream Persistence Errors",
-          "type": "timeseries"
-        }
+
       ],
       "title": "Errors",
       "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "id": 15,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "hedera_block_node_live_block_stream_mediator_error_total",
+          "instant": false,
+          "legendFormat": "Block Item Errors",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Mediator Errors",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [
+
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": [
+
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 18,
+        "x": 6,
+        "y": 1
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": [
+
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "rate( hedera_block_node_live_block_stream_mediator_error_total [$__rate_interval])",
+          "instant": false,
+          "legendFormat": "Mediator Errors",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Rate of Mediator Errors",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 7
+      },
+      "id": 28,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "hedera_block_node_stream_persistence_handler_error_total",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Stream Persistence Errors",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [
+
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": [
+
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 18,
+        "x": 6,
+        "y": 7
+      },
+      "id": 29,
+      "options": {
+        "legend": {
+          "calcs": [
+
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "rate(hedera_block_node_stream_persistence_handler_error_total [$__rate_interval])",
+          "instant": false,
+          "legendFormat": "Stream Persistence Errors",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Rate of Stream Persistence Errors",
+      "type": "timeseries"
     },
     {
       "collapsed": false,
@@ -364,10 +391,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 1
+        "y": 14
       },
       "id": 9,
-      "panels": [],
+      "panels": [
+
+      ],
       "title": "Live Stream",
       "type": "row"
     },
@@ -381,7 +410,9 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -393,13 +424,15 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 5,
         "w": 6,
         "x": 0,
-        "y": 2
+        "y": 15
       },
       "id": 13,
       "options": {
@@ -480,7 +513,9 @@
               "mode": "off"
             }
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -500,18 +535,22 @@
           },
           "unit": "reqps"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 5,
         "w": 18,
         "x": 6,
-        "y": 2
+        "y": 15
       },
       "id": 12,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -548,7 +587,9 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -560,13 +601,15 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 5,
         "w": 6,
         "x": 0,
-        "y": 7
+        "y": 20
       },
       "id": 3,
       "options": {
@@ -643,10 +686,12 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "area"
             }
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -666,18 +711,22 @@
           },
           "unit": "reqps"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 5,
         "w": 18,
         "x": 6,
-        "y": 7
+        "y": 20
       },
       "id": 7,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -715,7 +764,9 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -727,13 +778,15 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 5,
         "w": 6,
         "x": 0,
-        "y": 12
+        "y": 25
       },
       "id": 11,
       "options": {
@@ -813,7 +866,9 @@
               "mode": "off"
             }
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -833,18 +888,22 @@
           },
           "unit": "reqps"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 5,
         "w": 18,
         "x": 6,
-        "y": 12
+        "y": 25
       },
       "id": 10,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -881,354 +940,10 @@
           "color": {
             "mode": "thresholds"
           },
-          "displayName": "Mediator Remaining Capacity",
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 1000
-              },
-              {
-                "color": "yellow",
-                "value": 2000
-              },
-              {
-                "color": "green",
-                "value": 4096
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 0,
-        "y": 17
-      },
-      "id": 30,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "11.1.4",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "hedera_block_node_mediator_ring_buffer_remaining_capacity",
-          "instant": false,
-          "legendFormat": "Mediator Remaining Capacity",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Mediator Remaining Capacity",
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 18,
-        "x": 6,
-        "y": 17
-      },
-      "id": 32,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "disableTextWrap": false,
-          "editorMode": "code",
-          "expr": "min(hedera_block_node_mediator_ring_buffer_remaining_capacity)",
-          "fullMetaSearch": false,
-          "includeNullMetadata": true,
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A",
-          "useBackend": false
-        }
-      ],
-      "title": "Mediator Ring Buffer Capacity",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "displayName": "Notifier Remaining Capacity",
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 200
-              },
-              {
-                "color": "#EAB839",
-                "value": 201
-              },
-              {
-                "color": "green",
-                "value": 501
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 0,
-        "y": 24
-      },
-      "id": 31,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "11.1.4",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "hedera_block_node_notifier_ring_buffer_remaining_capacity",
-          "instant": false,
-          "legendFormat": "Notifier Remaining Capacity",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Notifier Remaining Capacity",
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 18,
-        "x": 6,
-        "y": 24
-      },
-      "id": 33,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "min(hedera_block_node_notifier_ring_buffer_remaining_capacity)",
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Notifier Ring Buffer Capacity",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
           "displayName": "Producers",
-          "mappings": [],
+          "mappings": [
+
+          ],
           "max": 20,
           "thresholds": {
             "mode": "absolute",
@@ -1248,13 +963,15 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 7,
         "w": 6,
         "x": 0,
-        "y": 31
+        "y": 30
       },
       "id": 25,
       "options": {
@@ -1301,7 +1018,9 @@
             "mode": "thresholds"
           },
           "displayName": "Consumers",
-          "mappings": [],
+          "mappings": [
+
+          ],
           "max": 20,
           "min": 0,
           "thresholds": {
@@ -1322,13 +1041,15 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 7,
         "w": 6,
         "x": 6,
-        "y": 31
+        "y": 30
       },
       "id": 4,
       "options": {
@@ -1370,10 +1091,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 37
       },
       "id": 18,
-      "panels": [],
+      "panels": [
+
+      ],
       "title": "Persistence",
       "type": "row"
     },
@@ -1387,7 +1110,9 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1399,13 +1124,15 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 6,
         "w": 6,
         "x": 0,
-        "y": 39
+        "y": 38
       },
       "id": 6,
       "options": {
@@ -1482,10 +1209,12 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "area"
             }
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1505,18 +1234,22 @@
           },
           "unit": "wps"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 6,
         "w": 18,
         "x": 6,
-        "y": 39
+        "y": 38
       },
       "id": 8,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -1550,10 +1283,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 45
+        "y": 44
       },
       "id": 23,
-      "panels": [],
+      "panels": [
+
+      ],
       "title": "Live Stream Responses",
       "type": "row"
     },
@@ -1567,7 +1302,9 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1579,13 +1316,15 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 6,
         "w": 6,
         "x": 0,
-        "y": 46
+        "y": 45
       },
       "id": 24,
       "options": {
@@ -1665,7 +1404,9 @@
               "mode": "off"
             }
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1681,18 +1422,22 @@
           },
           "unit": "reqps"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 6,
         "w": 18,
         "x": 6,
-        "y": 46
+        "y": 45
       },
       "id": 22,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -1729,23 +1474,28 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 6,
         "w": 6,
         "x": 0,
-        "y": 52
+        "y": 51
       },
       "id": 27,
       "options": {
@@ -1825,29 +1575,36 @@
               "mode": "off"
             }
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
           "unit": "reqps"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 6,
         "w": 18,
         "x": 6,
-        "y": 52
+        "y": 51
       },
       "id": 26,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -1880,10 +1637,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 58
+        "y": 57
       },
       "id": 17,
-      "panels": [],
+      "panels": [
+
+      ],
       "title": "Single Block",
       "type": "row"
     },
@@ -1897,12 +1656,15 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1912,13 +1674,15 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 6,
         "w": 6,
         "x": 0,
-        "y": 59
+        "y": 58
       },
       "id": 19,
       "options": {
@@ -1998,12 +1762,15 @@
               "mode": "off"
             }
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2013,18 +1780,22 @@
           },
           "unit": "reqps"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 6,
         "w": 18,
         "x": 6,
-        "y": 59
+        "y": 58
       },
       "id": 5,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -2061,7 +1832,9 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2076,13 +1849,15 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 6,
         "w": 6,
         "x": 0,
-        "y": 65
+        "y": 64
       },
       "id": 21,
       "options": {
@@ -2162,7 +1937,9 @@
               "mode": "off"
             }
           },
-          "mappings": [],
+          "mappings": [
+
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2177,18 +1954,22 @@
           },
           "unit": "reqps"
         },
-        "overrides": []
+        "overrides": [
+
+        ]
       },
       "gridPos": {
         "h": 6,
         "w": 18,
         "x": 6,
-        "y": 65
+        "y": 64
       },
       "id": 20,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
@@ -2218,15 +1999,21 @@
   ],
   "refresh": "5s",
   "schemaVersion": 39,
-  "tags": [],
+  "tags": [
+
+  ],
   "templating": {
-    "list": []
+    "list": [
+
+    ]
   },
   "time": {
     "from": "now-5m",
     "to": "now"
   },
-  "timepicker": {},
+  "timepicker": {
+
+  },
   "timezone": "browser",
   "title": "Block-Node Server Dashboard",
   "uid": "edu86nutnxts0c",
