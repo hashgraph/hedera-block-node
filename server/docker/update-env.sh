@@ -27,6 +27,7 @@ fi
 
 if [ true = "$is_smoke_test" ]; then
   # add smoke test variables
+  echo "PERSISTENCE_STORAGE_TYPE=BLOCK_AS_DIR" >> .env #todo maybe in the future this needs to use BLOCK_AS_FILE?
   echo "MEDIATOR_RING_BUFFER_SIZE=1024" >> .env
   echo "NOTIFIER_RING_BUFFER_SIZE=1024" >> .env
   echo "JAVA_OPTS='-Xms4G -Xmx4G'" >> .env

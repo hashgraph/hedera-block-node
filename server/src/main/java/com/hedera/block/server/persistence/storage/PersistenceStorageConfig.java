@@ -74,7 +74,7 @@ public record PersistenceStorageConfig(
 
         rootPath = path.toString();
         LOGGER.log(INFO, "Persistence Storage Configuration: persistence.storage.rootPath=" + path);
-        LOGGER.log(INFO, "Persistence Storage Configuration: persistence.storage.type= " + type);
+        LOGGER.log(INFO, "Persistence Storage Configuration: persistence.storage.type=" + type);
     }
 
     /**
