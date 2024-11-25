@@ -28,8 +28,8 @@ import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.pbj.runtime.ParseException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -64,11 +64,11 @@ public class BlockAsDirRemoverTest {
     public void testRemoveNonExistentBlock() throws IOException, ParseException {
 
         // Write a block
-        final var blockItems = PersistTestUtils.generateBlockItems(1);
+        final var blockItems = PersistTestUtils.generateBlockItemsUnparsed(1);
 
-        final BlockWriter<List<BlockItem>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
                 BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
-        for (final BlockItem blockItem : blockItems) {
+        for (BlockItemUnparsed blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));
         }
 
@@ -77,13 +77,13 @@ public class BlockAsDirRemoverTest {
         blockRemover.remove(2);
 
         // Verify the block was not removed
-        final BlockReader<Block> blockReader =
+        final BlockReader<BlockUnparsed> blockReader =
                 BlockAsDirReaderBuilder.newBuilder(testConfig).build();
-        Optional<Block> blockOpt = blockReader.read(1);
+        Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assert (blockOpt.isPresent());
         assertEquals(
                 blockItems.getFirst().blockHeader(),
-                blockOpt.get().items().getFirst().blockHeader());
+                blockOpt.get().blockItems().getFirst().blockHeader());
 
         // Now remove the block
         blockRemover.remove(1);

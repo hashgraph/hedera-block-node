@@ -29,7 +29,10 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.pbj.runtime.ParseException;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -52,7 +55,7 @@ import java.util.Set;
  * to remove the current, incomplete block (directory) before re-throwing the exception to the
  * caller.
  */
-class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
+class BlockAsDirWriter implements BlockWriter<List<BlockItemUnparsed>> {
     private final Logger LOGGER = System.getLogger(getClass().getName());
     private final Path blockNodeRootPath;
     private final FileAttribute<Set<PosixFilePermission>> folderPermissions;
@@ -112,17 +115,19 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
      * @throws IOException if an error occurs while writing the block item
      */
     @Override
-    public Optional<List<BlockItem>> write(@NonNull final List<BlockItem> blockItems) throws IOException {
+    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> blockItems)
+            throws IOException, ParseException {
 
-        if (blockItems.getFirst().hasBlockHeader()) {
-            resetState(blockItems.getFirst());
+        final Bytes unparsedBlockHeader = blockItems.getFirst().blockHeader();
+        if (unparsedBlockHeader != null) {
+            resetState(BlockHeader.PROTOBUF.parse(unparsedBlockHeader));
         }
 
-        for (BlockItem blockItem : blockItems) {
+        for (BlockItemUnparsed blockItemUnparsed : blockItems) {
             final Path blockItemFilePath = calculateBlockItemPath();
             for (int retries = 0; ; retries++) {
                 try {
-                    write(blockItemFilePath, blockItem);
+                    write(blockItemFilePath, blockItemUnparsed);
                     break;
                 } catch (IOException e) {
 
@@ -159,10 +164,11 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
      * @param blockItem the block item to write
      * @throws IOException if an error occurs while writing the block item
      */
-    protected void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItem blockItem) throws IOException {
+    protected void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItemUnparsed blockItem)
+            throws IOException {
         try (final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
-
-            BlockItem.PROTOBUF.toBytes(blockItem).writeTo(fos);
+            // Write the Bytes directly
+            BlockItemUnparsed.PROTOBUF.toBytes(blockItem).writeTo(fos);
             LOGGER.log(DEBUG, "Successfully wrote the block item file: {0}", blockItemFilePath);
         } catch (IOException e) {
             LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
@@ -170,10 +176,10 @@ class BlockAsDirWriter implements BlockWriter<List<BlockItem>> {
         }
     }
 
-    private void resetState(@NonNull final BlockItem blockItem) throws IOException {
+    private void resetState(@NonNull final BlockHeader blockHeader) throws IOException {
         // Here a "block" is represented as a directory of BlockItems.
         // Create the "block" directory based on the block_number
-        currentBlockDir = Path.of(String.valueOf(blockItem.blockHeader().number()));
+        currentBlockDir = Path.of(String.valueOf(blockHeader.number()));
 
         // Check the blockNodeRootPath permissions and
         // attempt to repair them if possible

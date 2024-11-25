@@ -26,14 +26,14 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.StreamMediator;
 import com.hedera.block.server.util.TestConfigUtil;
-import com.hedera.hapi.block.BlockItemSet;
-import com.hedera.hapi.block.SubscribeStreamResponse;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemSetUnparsed;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.hapi.block.stream.input.EventHeader;
 import com.hedera.hapi.block.stream.output.BlockHeader;
-import com.hedera.hapi.platform.event.EventCore;
 import com.hedera.pbj.runtime.grpc.Pipeline;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.io.IOException;
 import java.time.InstantSource;
 import java.util.Map;
@@ -51,13 +51,13 @@ public class ConsumerStreamResponseObserverTest {
     private static final int testTimeout = 1000;
 
     @Mock
-    private StreamMediator<BlockItem, SubscribeStreamResponse> streamMediator;
+    private StreamMediator<BlockItemUnparsed, SubscribeStreamResponseUnparsed> streamMediator;
 
     @Mock
-    private Pipeline<SubscribeStreamResponse> responseStreamObserver;
+    private Pipeline<SubscribeStreamResponseUnparsed> responseStreamObserver;
 
     @Mock
-    private ObjectEvent<SubscribeStreamResponse> objectEvent;
+    private ObjectEvent<SubscribeStreamResponseUnparsed> objectEvent;
 
     @Mock
     private InstantSource testClock;
@@ -78,12 +78,14 @@ public class ConsumerStreamResponseObserverTest {
                 new ConsumerStreamResponseObserver(testClock, streamMediator, responseStreamObserver, testContext);
 
         final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
-        final BlockItem blockItem =
-                BlockItem.newBuilder().blockHeader(blockHeader).build();
-        final BlockItemSet blockItemSet =
-                BlockItemSet.newBuilder().blockItems(blockItem).build();
-        final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build();
+        final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder()
+                .blockHeader(BlockHeader.PROTOBUF.toBytes(blockHeader))
+                .build();
+        final BlockItemSetUnparsed blockItemSet =
+                BlockItemSetUnparsed.newBuilder().blockItems(blockItem).build();
+        final SubscribeStreamResponseUnparsed subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
+                .blockItems(blockItemSet)
+                .build();
 
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
@@ -124,37 +126,40 @@ public class ConsumerStreamResponseObserverTest {
         for (int i = 1; i <= 10; i++) {
 
             if (i % 2 == 0) {
-                final EventHeader eventHeader = EventHeader.newBuilder()
-                        .eventCore(EventCore.newBuilder().build())
-                        .build();
-                final BlockItem blockItem =
-                        BlockItem.newBuilder().eventHeader(eventHeader).build();
-                final BlockItemSet blockItemSet =
-                        BlockItemSet.newBuilder().blockItems(blockItem).build();
-                final SubscribeStreamResponse subscribeStreamResponse = SubscribeStreamResponse.newBuilder()
-                        .blockItems(blockItemSet)
-                        .build();
+                final Bytes eventHeader =
+                        EventHeader.PROTOBUF.toBytes(EventHeader.newBuilder().build());
+                final BlockItemUnparsed blockItem =
+                        BlockItemUnparsed.newBuilder().eventHeader(eventHeader).build();
+                final BlockItemSetUnparsed blockItemSet =
+                        BlockItemSetUnparsed.newBuilder().blockItems(blockItem).build();
+                final SubscribeStreamResponseUnparsed subscribeStreamResponse =
+                        SubscribeStreamResponseUnparsed.newBuilder()
+                                .blockItems(blockItemSet)
+                                .build();
                 when(objectEvent.get()).thenReturn(subscribeStreamResponse);
             } else {
-                final BlockProof blockProof = BlockProof.newBuilder().block(i).build();
-                final BlockItem blockItem =
-                        BlockItem.newBuilder().blockProof(blockProof).build();
-                final BlockItemSet blockItemSet =
-                        BlockItemSet.newBuilder().blockItems(blockItem).build();
-                final SubscribeStreamResponse subscribeStreamResponse = SubscribeStreamResponse.newBuilder()
-                        .blockItems(blockItemSet)
-                        .build();
+                final Bytes blockProof = BlockProof.PROTOBUF.toBytes(
+                        BlockProof.newBuilder().block(i).build());
+                final BlockItemUnparsed blockItem =
+                        BlockItemUnparsed.newBuilder().blockProof(blockProof).build();
+                final BlockItemSetUnparsed blockItemSet =
+                        BlockItemSetUnparsed.newBuilder().blockItems(blockItem).build();
+                final SubscribeStreamResponseUnparsed subscribeStreamResponse =
+                        SubscribeStreamResponseUnparsed.newBuilder()
+                                .blockItems(blockItemSet)
+                                .build();
                 when(objectEvent.get()).thenReturn(subscribeStreamResponse);
             }
 
             consumerBlockItemObserver.onEvent(objectEvent, 0, true);
         }
 
-        final BlockItem blockItem = BlockItem.newBuilder().build();
-        final BlockItemSet blockItemSet =
-                BlockItemSet.newBuilder().blockItems(blockItem).build();
-        final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build();
+        final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder().build();
+        final BlockItemSetUnparsed blockItemSet =
+                BlockItemSetUnparsed.newBuilder().blockItems(blockItem).build();
+        final SubscribeStreamResponseUnparsed subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
+                .blockItems(blockItemSet)
+                .build();
 
         // Confirm that the observer was called with the next BlockItem
         // since we never send a BlockItem with a Header to start the stream.
@@ -167,11 +172,12 @@ public class ConsumerStreamResponseObserverTest {
         // The generated objects contain safeguards to prevent a SubscribeStreamResponse
         // being created with a null BlockItem. Here, I have to used a spy() to even
         // manufacture this scenario. This should not happen in production.
-        final BlockItem blockItem = BlockItem.newBuilder().build();
-        final BlockItemSet blockItemSet =
-                BlockItemSet.newBuilder().blockItems(blockItem).build();
-        final SubscribeStreamResponse subscribeStreamResponse = spy(
-                SubscribeStreamResponse.newBuilder().blockItems(blockItemSet).build());
+        final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder().build();
+        final BlockItemSetUnparsed blockItemSet =
+                BlockItemSetUnparsed.newBuilder().blockItems(blockItem).build();
+        final SubscribeStreamResponseUnparsed subscribeStreamResponse = spy(SubscribeStreamResponseUnparsed.newBuilder()
+                .blockItems(blockItemSet)
+                .build());
 
         when(subscribeStreamResponse.blockItems()).thenReturn(null);
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
@@ -184,8 +190,8 @@ public class ConsumerStreamResponseObserverTest {
     @Test
     public void testSubscribeStreamResponseTypeNotSupported() {
 
-        final SubscribeStreamResponse subscribeStreamResponse =
-                SubscribeStreamResponse.newBuilder().build();
+        final SubscribeStreamResponseUnparsed subscribeStreamResponse =
+                SubscribeStreamResponseUnparsed.newBuilder().build();
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
         final var consumerBlockItemObserver =

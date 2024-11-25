@@ -8,6 +8,7 @@ services:
       - "8080:8080"
       - "5005:5005"
       - "9999:9999"
+      - "8849:8849"
 
   cadvisor:
     image: "gcr.io/cadvisor/cadvisor:v0.47.0"

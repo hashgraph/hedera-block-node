@@ -29,10 +29,10 @@ import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.service.ServiceStatus;
-import com.hedera.hapi.block.BlockItemSet;
-import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.BlockItemSetUnparsed;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.lmax.disruptor.BatchEventProcessor;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
@@ -46,7 +46,8 @@ import java.util.Map;
  * subscribers as they arrive via a RingBuffer maintained in the base class and persists the block
  * items to a store.
  */
-class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResponse> implements LiveStreamMediator {
+class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResponseUnparsed>
+        implements LiveStreamMediator {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -69,8 +70,8 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
     LiveStreamMediatorImpl(
             @NonNull
                     final Map<
-                                    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>,
-                                    BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
+                                    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>,
+                                    BatchEventProcessor<ObjectEvent<SubscribeStreamResponseUnparsed>>>
                             subscribers,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
@@ -96,17 +97,19 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
      *     consumers
      */
     @Override
-    public void publish(@NonNull final List<BlockItem> blockItems) {
+    public void publish(@NonNull final List<BlockItemUnparsed> blockItems) {
 
         if (serviceStatus.isRunning()) {
 
             // Publish the block for all subscribers to receive
-            LOGGER.log(DEBUG, "Publishing BlockItem");
-            final BlockItemSet blockItemsSet =
-                    BlockItemSet.newBuilder().blockItems(blockItems).build();
-            final var subscribeStreamResponse = SubscribeStreamResponse.newBuilder()
+            final BlockItemSetUnparsed blockItemsSet =
+                    BlockItemSetUnparsed.newBuilder().blockItems(blockItems).build();
+
+            final var subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
                     .blockItems(blockItemsSet)
                     .build();
+
+            LOGGER.log(DEBUG, "Publishing BlockItems: " + blockItems.size());
             ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
 
             long remainingCapacity = ringBuffer.remainingCapacity();
@@ -114,7 +117,6 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
 
             // Increment the block item counter by all block items published
             metricsService.get(LiveBlockItems).add(blockItems.size());
-
         } else {
             LOGGER.log(ERROR, "StreamMediator is not accepting BlockItems");
         }
@@ -133,16 +135,16 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
         LOGGER.log(ERROR, "Sending an error response to end the stream for all consumers.");
 
         // Publish an end of stream response to all downstream consumers
-        final SubscribeStreamResponse endStreamResponse = buildEndStreamResponse();
+        final SubscribeStreamResponseUnparsed endStreamResponse = buildEndStreamResponse();
         ringBuffer.publishEvent((event, sequence) -> event.set(endStreamResponse));
     }
 
     @NonNull
-    private static SubscribeStreamResponse buildEndStreamResponse() {
+    private static SubscribeStreamResponseUnparsed buildEndStreamResponse() {
         // The current spec does not contain a generic error code for
         // SubscribeStreamResponseCode.
         // TODO: Replace READ_STREAM_SUCCESS (2) with a generic error code?
-        return SubscribeStreamResponse.newBuilder()
+        return SubscribeStreamResponseUnparsed.newBuilder()
                 .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
                 .build();
     }

@@ -26,11 +26,12 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.SingleBlockRequest;
 import com.hedera.hapi.block.SingleBlockResponse;
 import com.hedera.hapi.block.SingleBlockResponseCode;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.SingleBlockResponseUnparsed;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.grpc.Pipeline;
@@ -54,7 +55,7 @@ public class PbjBlockAccessServiceProxyTest {
     private ServiceStatus serviceStatus;
 
     @Mock
-    private BlockReader<Block> blockReader;
+    private BlockReader<BlockUnparsed> blockReader;
 
     @Mock
     private ServiceInterface.RequestOptions options;
@@ -94,24 +95,25 @@ public class PbjBlockAccessServiceProxyTest {
 
         when(serviceStatus.isRunning()).thenReturn(true);
 
-        final Block block = Block.newBuilder()
-                .items(BlockItem.newBuilder()
-                        .blockHeader(BlockHeader.newBuilder().number(1).build())
-                        .build())
+        final var blockItems = BlockItemUnparsed.newBuilder()
+                .blockHeader(BlockHeader.PROTOBUF.toBytes(
+                        BlockHeader.newBuilder().number(1).build()))
                 .build();
+        final BlockUnparsed block =
+                BlockUnparsed.newBuilder().blockItems(blockItems).build();
         when(blockReader.read(1)).thenReturn(Optional.of(block));
 
         final SingleBlockRequest singleBlockRequest =
                 SingleBlockRequest.newBuilder().blockNumber(1).build();
         pipeline.onNext(SingleBlockRequest.PROTOBUF.toBytes(singleBlockRequest));
 
-        final var readSuccessResponse = SingleBlockResponse.newBuilder()
+        final var readSuccessResponse = SingleBlockResponseUnparsed.newBuilder()
                 .status(SingleBlockResponseCode.READ_BLOCK_SUCCESS)
                 .block(block)
                 .build();
         verify(replies, timeout(testTimeout).times(1)).onSubscribe(any());
         verify(replies, timeout(testTimeout).times(1))
-                .onNext(SingleBlockResponse.PROTOBUF.toBytes(readSuccessResponse));
+                .onNext(SingleBlockResponseUnparsed.PROTOBUF.toBytes(readSuccessResponse));
         verify(replies, timeout(testTimeout).times(1)).onComplete();
     }
 

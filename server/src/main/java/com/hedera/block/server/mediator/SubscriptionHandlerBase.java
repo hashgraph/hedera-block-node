@@ -39,8 +39,7 @@ import java.util.concurrent.Executors;
  */
 public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<V> {
 
-    private final Map<BlockNodeEventHandler<ObjectEvent<V>>, BatchEventProcessor<ObjectEvent<V>>>
-            subscribers;
+    private final Map<BlockNodeEventHandler<ObjectEvent<V>>, BatchEventProcessor<ObjectEvent<V>>> subscribers;
 
     /** The ring buffer to publish events to the subscribers. */
     protected final RingBuffer<ObjectEvent<V>> ringBuffer;
@@ -60,11 +59,7 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
      * @param ringBufferSize the size of the ring buffer
      */
     protected SubscriptionHandlerBase(
-            @NonNull
-                    final Map<
-                                    BlockNodeEventHandler<ObjectEvent<V>>,
-                                    BatchEventProcessor<ObjectEvent<V>>>
-                            subscribers,
+            @NonNull final Map<BlockNodeEventHandler<ObjectEvent<V>>, BatchEventProcessor<ObjectEvent<V>>> subscribers,
             @NonNull final LongGauge subscriptionGauge,
             final int ringBufferSize) {
 
@@ -89,8 +84,7 @@ public abstract class SubscriptionHandlerBase<V> implements SubscriptionHandler<
         if (!subscribers.containsKey(handler)) {
             // Initialize the batch event processor and set it on the ring buffer
             final var batchEventProcessor =
-                    new BatchEventProcessorBuilder()
-                            .build(ringBuffer, ringBuffer.newBarrier(), handler);
+                    new BatchEventProcessorBuilder().build(ringBuffer, ringBuffer.newBarrier(), handler);
 
             ringBuffer.addGatingSequences(batchEventProcessor.getSequence());
             executor.execute(batchEventProcessor);

@@ -16,12 +16,10 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.List;
@@ -32,9 +30,7 @@ import java.util.Optional;
  * designed to isolate the Producer and Mediator components from storage implementation during testing while still
  * providing metrics and logging for troubleshooting.
  */
-public class NoOpBlockWriter implements BlockWriter<List<BlockItem>> {
-
-    private final MetricsService metricsService;
+public class NoOpBlockWriter implements BlockWriter<List<BlockItemUnparsed>> {
 
     /**
      * Creates a new NoOpBlockWriter instance for testing and troubleshooting only.
@@ -42,7 +38,6 @@ public class NoOpBlockWriter implements BlockWriter<List<BlockItem>> {
      * @param blockNodeContext the block node context
      */
     public NoOpBlockWriter(BlockNodeContext blockNodeContext) {
-        this.metricsService = blockNodeContext.metricsService();
         System.getLogger(getClass().getName()).log(INFO, "Using " + getClass().getSimpleName());
     }
 
@@ -50,9 +45,12 @@ public class NoOpBlockWriter implements BlockWriter<List<BlockItem>> {
      * {@inheritDoc}
      */
     @Override
-    public Optional<List<BlockItem>> write(@NonNull List<BlockItem> blockItems) throws IOException {
+    public Optional<List<BlockItemUnparsed>> write(@NonNull List<BlockItemUnparsed> blockItems) throws IOException {
         if (blockItems.getLast().hasBlockProof()) {
-            metricsService.get(BlocksPersisted).increment();
+            // Returning the BlockItems triggers a
+            // PublishStreamResponse to be sent to the
+            // upstream producer.
+            return Optional.of(blockItems);
         }
 
         return Optional.empty();

@@ -23,8 +23,8 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.hapi.block.SubscribeStreamResponse;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 
@@ -51,7 +51,7 @@ public class NoOpLiveStreamMediator implements LiveStreamMediator {
      * {@inheritDoc}
      */
     @Override
-    public void publish(@NonNull List<BlockItem> blockItems) {
+    public void publish(@NonNull List<BlockItemUnparsed> blockItems) {
         metricsService.get(LiveBlockItems).add(blockItems.size());
     }
 
@@ -59,19 +59,19 @@ public class NoOpLiveStreamMediator implements LiveStreamMediator {
      * {@inheritDoc}
      */
     @Override
-    public void subscribe(@NonNull BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> handler) {}
+    public void subscribe(@NonNull BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> handler) {}
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void unsubscribe(@NonNull BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> handler) {}
+    public void unsubscribe(@NonNull BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> handler) {}
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean isSubscribed(@NonNull BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> handler) {
+    public boolean isSubscribed(@NonNull BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> handler) {
         return false;
     }
 

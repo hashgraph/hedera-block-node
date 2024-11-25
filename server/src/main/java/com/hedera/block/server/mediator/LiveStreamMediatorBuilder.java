@@ -21,7 +21,7 @@ import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
-import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.lmax.disruptor.BatchEventProcessor;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
@@ -41,16 +41,15 @@ public class LiveStreamMediatorBuilder {
     private final ServiceStatus serviceStatus;
 
     private Map<
-                    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>,
-                    BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
+                    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>,
+                    BatchEventProcessor<ObjectEvent<SubscribeStreamResponseUnparsed>>>
             subscribers;
 
     /** The initial capacity of the subscriber map. */
     private static final int SUBSCRIBER_INIT_CAPACITY = 32;
 
     private LiveStreamMediatorBuilder(
-            @NonNull final BlockNodeContext blockNodeContext,
-            @NonNull final ServiceStatus serviceStatus) {
+            @NonNull final BlockNodeContext blockNodeContext, @NonNull final ServiceStatus serviceStatus) {
         this.subscribers = new ConcurrentHashMap<>(SUBSCRIBER_INIT_CAPACITY);
         this.blockNodeContext = blockNodeContext;
         this.serviceStatus = serviceStatus;
@@ -67,8 +66,7 @@ public class LiveStreamMediatorBuilder {
      */
     @NonNull
     public static LiveStreamMediatorBuilder newBuilder(
-            @NonNull final BlockNodeContext blockNodeContext,
-            @NonNull final ServiceStatus serviceStatus) {
+            @NonNull final BlockNodeContext blockNodeContext, @NonNull final ServiceStatus serviceStatus) {
         return new LiveStreamMediatorBuilder(blockNodeContext, serviceStatus);
     }
 
@@ -85,8 +83,8 @@ public class LiveStreamMediatorBuilder {
     public LiveStreamMediatorBuilder subscribers(
             @NonNull
                     final Map<
-                                    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>>,
-                                    BatchEventProcessor<ObjectEvent<SubscribeStreamResponse>>>
+                                    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>,
+                                    BatchEventProcessor<ObjectEvent<SubscribeStreamResponseUnparsed>>>
                             subscribers) {
         this.subscribers = subscribers;
         return this;

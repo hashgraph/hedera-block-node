@@ -27,11 +27,11 @@ import com.hedera.block.server.mediator.SubscriptionHandlerBase;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.Acknowledgement;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.ItemAcknowledgement;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
-import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.security.NoSuchAlgorithmException;
@@ -109,7 +109,7 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
      *     upstream producers
      */
     @Override
-    public void publish(@NonNull List<BlockItem> blockItems) {
+    public void publish(@NonNull List<BlockItemUnparsed> blockItems) {
 
         try {
             if (serviceStatus.isRunning()) {
@@ -155,7 +155,7 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
      * @throws NoSuchAlgorithmException if the hash algorithm is not supported
      */
     @NonNull
-    Acknowledgement buildAck(@NonNull final List<BlockItem> blockItems) throws NoSuchAlgorithmException {
+    Acknowledgement buildAck(@NonNull final List<BlockItemUnparsed> blockItems) throws NoSuchAlgorithmException {
         final ItemAcknowledgement itemAck = ItemAcknowledgement.newBuilder()
                 // TODO: Replace this with a real hash generator
                 .itemsHash(Bytes.wrap(getFakeHash(blockItems)))

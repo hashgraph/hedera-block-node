@@ -17,13 +17,12 @@
 package com.hedera.block.server.notifier;
 
 import com.hedera.block.server.mediator.StreamMediator;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.PublishStreamResponse;
-import com.hedera.hapi.block.stream.BlockItem;
 import java.util.List;
 
 /**
  * Use this interface to combine the contract for streaming block items with the contract to be
  * notified of critical system events.
  */
-public interface Notifier
-        extends StreamMediator<List<BlockItem>, PublishStreamResponse>, Notifiable {}
+public interface Notifier extends StreamMediator<List<BlockItemUnparsed>, PublishStreamResponse>, Notifiable {}
