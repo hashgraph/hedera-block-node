@@ -64,7 +64,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
     // State
     private final AtomicBoolean streamEnabled;
-    private final List<String> lastKnownStatuses;
+    private final List<String> lastKnownStatuses = new ArrayList<>();
 
     /**
      * Creates a new PublishStreamGrpcClientImpl with the specified dependencies.
@@ -85,7 +85,6 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
         this.blockStreamConfig = requireNonNull(blockStreamConfig);
         this.metricsService = requireNonNull(metricsService);
         this.streamEnabled = requireNonNull(streamEnabled);
-        this.lastKnownStatuses = new ArrayList<>();
     }
 
     /**

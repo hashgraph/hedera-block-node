@@ -89,6 +89,7 @@ public class PublisherModeHandler implements SimulatorModeHandler {
     }
 
     public void init() {
+        blockStreamManager.init();
         publishStreamGrpcClient.init();
         LOGGER.log(INFO, "gRPC Channel initialized for publishing blocks.");
     }

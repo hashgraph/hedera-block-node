@@ -16,6 +16,7 @@
 
 package com.hedera.block.simulator.grpc.impl;
 
+import static com.hedera.block.simulator.TestUtils.findFreePort;
 import static com.hedera.block.simulator.TestUtils.getTestMetrics;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -35,7 +36,6 @@ import io.grpc.ServerBuilder;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.net.ServerSocket;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,15 +46,13 @@ public class ConsumerStreamGrpcClientImplTest {
     @Mock
     private GrpcConfig grpcConfig;
 
-    private MetricsService metricsService;
     private ConsumerStreamGrpcClient consumerStreamGrpcClientImpl;
     private Server server;
-    private int serverPort;
 
     @BeforeEach
     void setUp() throws IOException {
         MockitoAnnotations.openMocks(this);
-        serverPort = findFreePort();
+        final int serverPort = findFreePort();
         server = ServerBuilder.forPort(serverPort)
                 .addService(new BlockStreamServiceGrpc.BlockStreamServiceImplBase() {
                     @Override
@@ -100,8 +98,8 @@ public class ConsumerStreamGrpcClientImplTest {
         when(grpcConfig.serverAddress()).thenReturn("localhost");
         when(grpcConfig.port()).thenReturn(serverPort);
 
-        Configuration config = TestUtils.getTestConfiguration();
-        metricsService = new MetricsServiceImpl(getTestMetrics(config));
+        final Configuration config = TestUtils.getTestConfiguration();
+        final MetricsService metricsService = new MetricsServiceImpl(getTestMetrics(config));
         consumerStreamGrpcClientImpl = new ConsumerStreamGrpcClientImpl(grpcConfig, metricsService);
         consumerStreamGrpcClientImpl.init();
     }
@@ -178,12 +176,5 @@ public class ConsumerStreamGrpcClientImplTest {
                         .augmentDescription("Channel shutdown invoked")
                         .toString(),
                 firstStatus);
-    }
-
-    private int findFreePort() throws IOException {
-        // Find a free port
-        try (ServerSocket socket = new ServerSocket(0)) {
-            return socket.getLocalPort();
-        }
     }
 }

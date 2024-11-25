@@ -63,6 +63,13 @@ public class BlockAsDirBlockStreamManager implements BlockStreamManager {
     @Inject
     public BlockAsDirBlockStreamManager(@NonNull BlockGeneratorConfig blockGeneratorConfig) {
         this.rootFolder = blockGeneratorConfig.folderRootPath();
+    }
+
+    /**
+     * Initialize the block stream manager and load blocks into memory.
+     */
+    @Override
+    public void init() {
         try {
             this.loadBlocks();
         } catch (IOException | ParseException | IllegalArgumentException e) {

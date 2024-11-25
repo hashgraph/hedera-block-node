@@ -51,6 +51,7 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
      *
      * @param metricsService The service for recording consumption metrics
      * @param streamLatch A latch used to coordinate stream completion
+     * @param lastKnownStatuses List to store the most recent status messages
      * @throws NullPointerException if any parameter is null
      */
     public ConsumerStreamObserver(

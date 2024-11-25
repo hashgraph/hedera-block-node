@@ -27,11 +27,12 @@ import com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter;
 import com.hedera.hapi.block.protoc.BlockItemSet;
 import com.hedera.hapi.block.protoc.SubscribeStreamResponse;
 import com.hedera.hapi.block.protoc.SubscribeStreamResponseCode;
+import com.hedera.hapi.block.stream.output.protoc.BlockHeader;
 import com.hedera.hapi.block.stream.protoc.BlockItem;
+import com.hedera.hapi.block.stream.protoc.BlockProof;
 import com.swirlds.config.api.Configuration;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import org.junit.jupiter.api.BeforeEach;
@@ -78,23 +79,30 @@ class ConsumerStreamObserverTest {
 
     @Test
     void testOnNextWithBlockItemsResponse() {
-        BlockItem blockItemWithProof = mock(BlockItem.class);
-        when(blockItemWithProof.hasBlockProof()).thenReturn(true);
+        BlockItem blockItemHeader = BlockItem.newBuilder()
+                .setBlockHeader(BlockHeader.newBuilder().setNumber(0).build())
+                .build();
+        BlockItem blockItemProof = BlockItem.newBuilder()
+                .setBlockProof(BlockProof.newBuilder().setBlock(0).build())
+                .build();
+        BlockItem blockItemProof1 = BlockItem.newBuilder()
+                .setBlockProof(BlockProof.newBuilder().setBlock(1).build())
+                .build();
 
-        BlockItem blockItemWithoutProof = mock(BlockItem.class);
-        when(blockItemWithoutProof.hasBlockProof()).thenReturn(false);
+        BlockItemSet blockItemsSet = BlockItemSet.newBuilder()
+                .addBlockItems(blockItemHeader)
+                .addBlockItems(blockItemProof)
+                .addBlockItems(blockItemProof1)
+                .build();
 
-        List<BlockItem> blockItems = Arrays.asList(blockItemWithProof, blockItemWithoutProof, blockItemWithProof);
-        BlockItemSet blockItemSet =
-                BlockItemSet.newBuilder().addAllBlockItems(blockItems).build();
-
-        SubscribeStreamResponse response =
-                SubscribeStreamResponse.newBuilder().setBlockItems(blockItemSet).build();
-        assertEquals(metricsService.get(Counter.LiveBlocksConsumed).get(), 0);
+        SubscribeStreamResponse response = SubscribeStreamResponse.newBuilder()
+                .setBlockItems(blockItemsSet)
+                .build();
+        assertEquals(0, metricsService.get(Counter.LiveBlocksConsumed).get());
 
         observer.onNext(response);
 
-        assertEquals(metricsService.get(Counter.LiveBlocksConsumed).get(), 2);
+        assertEquals(2, metricsService.get(Counter.LiveBlocksConsumed).get());
         verifyNoInteractions(streamLatch);
     }
 
