@@ -49,7 +49,7 @@ dependencyResolutionManagement {
             val protobufVersion = "4.28.2"
             val helidonVersion = "4.1.1"
             val grpcIoVersion = "1.65.1"
-            var pbjVersion = "0.9.10"
+            var pbjVersion = "0.9.11"
 
             // Compile time dependencies
             version("io.helidon.webserver.http2", helidonVersion)
