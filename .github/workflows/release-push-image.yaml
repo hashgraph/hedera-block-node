@@ -137,4 +137,4 @@ jobs:
 
       - name: Push helm chart
         run: |
-          helm push hedera-block-node-chart-${{ env.VERSION }}.tgz oci://ghcr.io/hashgraph/hedera-block-node
+          helm push hedera-block-node-chart-${{ env.VERSION }}.tgz oci://ghcr.io/hashgraph/hedera-block-node/charts

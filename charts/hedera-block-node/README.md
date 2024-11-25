@@ -11,23 +11,35 @@ minikube delete && minikube start --kubernetes-version=v1.23.0 --memory=8g --boo
 ```
 
 Set environment variables that will be used for the remainder of the document:
+Replacing the values with the appropriate values for your environment: bn1 is short for block-node-1, but you can name you release as you wish. And use the version that you want to install.
 ```bash
 export RELEASE="bn1"
+export VERSION="0.3.0-SNAPSHOT"
 ```
 
 ## Template
-To generate the K8 manifest files without installing the chart:
+To generate the K8 manifest files without installing the chart, you need to clone this repo and navigate to `/charts` folder.
 ```bash
 helm template --name-template my-bn hedera-block-node/ --dry-run --output-dir out
 ```
 
-## Install
-To install the chart:
+## Install using released chart
+
+To pull the packaged chart from public repo:
 ```bash
-helm repo add hedera-block-node https://hashgraph.github.io/hedera-block-node/charts
-helm dependency update charts/hedera-block-node
-helm install "${RELEASE}" charts/hedera-block-node -f <path-to-custom-values-file>
+helm pull oci://ghcr.io/hashgraph/hedera-block-node/charts/hedera-block-node-chart --version "${VERSION}"
 ```
+
+To install the chart with default values:
+```bash
+helm install "${RELEASE}" hedera-block-node/charts/hedera-block-node-chart-$VERSION.tgz
+```
+
+To install the chart with custom values:
+```bash
+helm install "${RELEASE}" hedera-block-node/charts/hedera-block-node-chart-$VERSION.tgz -f <path-to-custom-values-file>
+```
+
 *Note:* If using the chart directly after cloning the github repo, there is no need to add the repo. and install can be directly.
 Assuming you are at the root folder of the repo.
 ```bash
