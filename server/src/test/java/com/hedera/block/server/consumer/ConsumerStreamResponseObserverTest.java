@@ -204,7 +204,7 @@ public class ConsumerStreamResponseObserverTest {
     }
 
     @Test
-    public void testRuntimeException() {
+    public void testUncheckedIOExceptionException() {
         final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
         final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder()
                 .blockHeader(BlockHeader.PROTOBUF.toBytes(blockHeader))
@@ -216,6 +216,27 @@ public class ConsumerStreamResponseObserverTest {
                 .build();
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
         doThrow(UncheckedIOException.class).when(responseStreamObserver).onNext(subscribeStreamResponse);
+
+        final var consumerBlockItemObserver =
+                new ConsumerStreamResponseObserver(testClock, streamMediator, responseStreamObserver, testContext);
+        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
+
+        verify(streamMediator, timeout(testTimeout).times(1)).unsubscribe(any());
+    }
+
+    @Test
+    public void testRuntimeException() {
+        final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
+        final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder()
+                .blockHeader(BlockHeader.PROTOBUF.toBytes(blockHeader))
+                .build();
+        final BlockItemSetUnparsed blockItemSet =
+                BlockItemSetUnparsed.newBuilder().blockItems(blockItem).build();
+        final SubscribeStreamResponseUnparsed subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
+                .blockItems(blockItemSet)
+                .build();
+        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+        doThrow(RuntimeException.class).when(responseStreamObserver).onNext(subscribeStreamResponse);
 
         final var consumerBlockItemObserver =
                 new ConsumerStreamResponseObserver(testClock, streamMediator, responseStreamObserver, testContext);

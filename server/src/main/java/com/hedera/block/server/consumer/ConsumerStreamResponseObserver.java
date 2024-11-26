@@ -32,6 +32,7 @@ import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.runtime.OneOf;
 import com.hedera.pbj.runtime.grpc.Pipeline;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.UncheckedIOException;
 import java.time.InstantSource;
 import java.util.List;
 import java.util.Objects;
@@ -130,15 +131,21 @@ public class ConsumerStreamResponseObserver
                     // message to terminate all connections
                     // and shut the server down.
                     throw e;
-                } catch (RuntimeException e) {
-                    // RuntimeExceptions at this layer will almost
+                } catch (UncheckedIOException e) {
+                    // UncheckedIOException at this layer will almost
                     // always be wrapped SocketExceptions from individual
                     // clients disconnecting from the server streaming
                     // service. This should be happening all the time.
                     stopProcessing();
                     LOGGER.log(
                             DEBUG,
-                            "RuntimeException caught from Pipeline instance. Unsubscribed ConsumerBlockItemObserver instance");
+                            "UncheckedIOException caught from Pipeline instance. Unsubscribed ConsumerBlockItemObserver instance");
+                } catch (RuntimeException e) {
+                    stopProcessing();
+                    LOGGER.log(
+                            ERROR,
+                            "RuntimeException caught from Pipeline instance. Unsubscribed ConsumerBlockItemObserver instance.");
+                    LOGGER.log(ERROR, e.getMessage());
                 }
             }
         }
