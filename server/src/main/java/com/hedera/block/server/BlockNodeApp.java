@@ -48,6 +48,7 @@ public class BlockNodeApp {
     private final WebServerConfig.Builder webServerBuilder;
     private final PbjBlockStreamService pbjBlockStreamService;
     private final PbjBlockAccessService pbjBlockAccessService;
+    private final ServerConfig serverConfig;
 
     /**
      * Constructs a new BlockNodeApp with the specified dependencies.
@@ -57,6 +58,7 @@ public class BlockNodeApp {
      * @param pbjBlockStreamService defines the Block Stream services
      * @param pbjBlockAccessService defines the Block Access services
      * @param webServerBuilder used to build the web server and start it
+     * @param serverConfig has the server configuration
      */
     @Inject
     public BlockNodeApp(
@@ -64,12 +66,14 @@ public class BlockNodeApp {
             @NonNull HealthService healthService,
             @NonNull PbjBlockStreamService pbjBlockStreamService,
             @NonNull PbjBlockAccessService pbjBlockAccessService,
-            @NonNull WebServerConfig.Builder webServerBuilder) {
+            @NonNull WebServerConfig.Builder webServerBuilder,
+            @NonNull ServerConfig serverConfig) {
         this.serviceStatus = serviceStatus;
         this.healthService = healthService;
         this.pbjBlockStreamService = pbjBlockStreamService;
         this.pbjBlockAccessService = pbjBlockAccessService;
         this.webServerBuilder = webServerBuilder;
+        this.serverConfig = serverConfig;
     }
 
     /**
@@ -88,13 +92,13 @@ public class BlockNodeApp {
         // Override the default message size
         final PbjConfig pbjConfig = PbjConfig.builder()
                 .name(PBJ_PROTOCOL_PROVIDER_CONFIG_NAME)
-                .maxMessageSizeBytes(1024 * 4096)
+                .maxMessageSizeBytes(serverConfig.maxMessageSizeBytes())
                 .build();
 
         // Build the web server
         // TODO: make port server a configurable value.
         final WebServer webServer = webServerBuilder
-                .port(8080)
+                .port(serverConfig.port())
                 .addProtocol(pbjConfig)
                 .addRouting(pbjRouting)
                 .addRouting(httpRouting)

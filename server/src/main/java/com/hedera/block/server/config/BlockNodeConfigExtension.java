@@ -17,6 +17,7 @@
 package com.hedera.block.server.config;
 
 import com.google.auto.service.AutoService;
+import com.hedera.block.server.ServerConfig;
 import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.mediator.MediatorConfig;
 import com.hedera.block.server.notifier.NotifierConfig;
@@ -54,6 +55,7 @@ public class BlockNodeConfigExtension implements ConfigurationExtension {
                 PrometheusConfig.class,
                 ProducerConfig.class,
                 ConsumerConfig.class,
-                PersistenceStorageConfig.class);
+                PersistenceStorageConfig.class,
+                ServerConfig.class);
     }
 }

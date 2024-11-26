@@ -33,7 +33,9 @@ class ServerMappedConfigSourceInitializerTest {
         new ConfigMapping("persistence.storage.rootPath", "PERSISTENCE_STORAGE_ROOT_PATH"),
         new ConfigMapping("service.delayMillis", "SERVICE_DELAY_MILLIS"),
         new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),
-        new ConfigMapping("notifier.ringBufferSize", "NOTIFIER_RING_BUFFER_SIZE")
+        new ConfigMapping("notifier.ringBufferSize", "NOTIFIER_RING_BUFFER_SIZE"),
+        new ConfigMapping("server.maxMessageSizeBytes", "SERVER_MAX_MESSAGE_SIZE_BYTES"),
+        new ConfigMapping("server.port", "SERVER_PORT"),
     };
     private static MappedConfigSource toTest;
 
@@ -59,19 +61,16 @@ class ServerMappedConfigSourceInitializerTest {
 
         for (final ConfigMapping current : SUPPORTED_MAPPINGS) {
             final Predicate<ConfigMapping> predicate =
-                    cm ->
-                            current.mappedName().equals(cm.mappedName())
-                                    && current.originalName().equals(cm.originalName());
+                    cm -> current.mappedName().equals(cm.mappedName())
+                            && current.originalName().equals(cm.originalName());
             assertTrue(
                     actual.stream().anyMatch(predicate),
-                    () ->
-                            "when testing for: [%s] it is not contained in mappings of the actual initialized object %s"
-                                    .formatted(current, actual));
+                    () -> "when testing for: [%s] it is not contained in mappings of the actual initialized object %s"
+                            .formatted(current, actual));
         }
     }
 
-    private static Queue<ConfigMapping> extractConfigMappings()
-            throws ReflectiveOperationException {
+    private static Queue<ConfigMapping> extractConfigMappings() throws ReflectiveOperationException {
         final Field configMappings = MappedConfigSource.class.getDeclaredField("configMappings");
         try {
             configMappings.setAccessible(true);
