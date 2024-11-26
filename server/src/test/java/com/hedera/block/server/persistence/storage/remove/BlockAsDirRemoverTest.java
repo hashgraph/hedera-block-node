@@ -87,7 +87,7 @@ public class BlockAsDirRemoverTest {
         toTest.remove(1);
 
         // Verify the block is removed
-        final Optional<Block> after = blockReader.read(1);
+        final Optional<BlockUnparsed> after = blockReader.read(1);
         assertThat(after).isNotNull().isEmpty();
     }
 }

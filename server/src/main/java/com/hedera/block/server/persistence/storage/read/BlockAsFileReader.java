@@ -16,20 +16,20 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
-import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.BlockUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Optional;
 
 /**
  * A Block reader that reads block-as-file.
  */
-class BlockAsFileReader implements BlockReader<Block> {
+class BlockAsFileReader implements BlockReader<BlockUnparsed> {
     /**
      * {@inheritDoc}
      */
     @NonNull
     @Override
-    public Optional<Block> read(final long blockNumber) {
+    public Optional<BlockUnparsed> read(final long blockNumber) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 }

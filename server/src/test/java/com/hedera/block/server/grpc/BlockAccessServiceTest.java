@@ -21,6 +21,7 @@ import static com.hedera.block.server.Constants.SERVICE_NAME_BLOCK_ACCESS;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,8 +30,10 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.pbj.PbjBlockAccessService;
 import com.hedera.block.server.pbj.PbjBlockAccessServiceProxy;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
+import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
@@ -118,8 +121,9 @@ class BlockAccessServiceTest {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         // Generate and persist a block
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
+                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
+                .build();
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         blockWriter.write(blockItems);
 

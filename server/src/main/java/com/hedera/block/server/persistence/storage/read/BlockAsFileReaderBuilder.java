@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
-import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.BlockUnparsed;
 
 /**
  * Builder for {@link BlockAsFileReader}.
@@ -40,7 +40,7 @@ public class BlockAsFileReaderBuilder {
      * @return a new fully initialized instance of {@link BlockAsFileReader}
      * constructed using the properties set within this builder instance.
      */
-    public BlockReader<Block> build() {
+    public BlockReader<BlockUnparsed> build() {
         return new BlockAsFileReader();
     }
 }

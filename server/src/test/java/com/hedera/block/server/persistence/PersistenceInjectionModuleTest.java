@@ -19,8 +19,6 @@ package com.hedera.block.server.persistence;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 import static org.assertj.core.api.Assertions.assertThatRuntimeException;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -82,8 +80,7 @@ class PersistenceInjectionModuleTest {
     @Test
     void testProvidesBlockWriter() {
 
-        BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                PersistenceInjectionModule.providesBlockWriter(
+        BlockWriter<List<BlockItemUnparsed>> blockWriter = PersistenceInjectionModule.providesBlockWriter(
                 blockNodeContext, new NoOpRemover(), new NoOpBlockPathResolver());
 
         assertNotNull(blockWriter);

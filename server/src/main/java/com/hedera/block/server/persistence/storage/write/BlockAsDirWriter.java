@@ -120,6 +120,7 @@ class BlockAsDirWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
      * @param toWrite the block item to write
      * @throws IOException if an error occurs while writing the block item
      */
+    @NonNull
     @Override
     public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> toWrite)
             throws IOException, ParseException {
@@ -134,7 +135,7 @@ class BlockAsDirWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
                 try {
                     write(blockItemFilePath, blockItemUnparsed);
                     break;
-                } catch (IOException e) {
+                } catch (final IOException e) {
 
                     LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
 

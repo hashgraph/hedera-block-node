@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
-import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
@@ -25,13 +25,13 @@ import java.util.Optional;
 /**
  * A no-op Block reader.
  */
-public class NoOpBlockReader implements BlockReader<Block> {
+public class NoOpBlockReader implements BlockReader<BlockUnparsed> {
     /**
      * {@inheritDoc}
      */
     @NonNull
     @Override
-    public Optional<Block> read(final long blockNumber) throws IOException, ParseException {
+    public Optional<BlockUnparsed> read(final long blockNumber) throws IOException, ParseException {
         return Optional.empty();
     }
 }

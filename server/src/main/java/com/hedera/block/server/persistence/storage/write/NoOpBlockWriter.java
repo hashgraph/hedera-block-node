@@ -31,13 +31,14 @@ public class NoOpBlockWriter implements LocalBlockWriter<List<BlockItemUnparsed>
     /**
      * {@inheritDoc}
      */
+    @NonNull
     @Override
     public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> toWrite) throws IOException {
         if (toWrite.getLast().hasBlockProof()) {
             // Returning the BlockItems triggers a
             // PublishStreamResponse to be sent to the
             // upstream producer.
-            return Optional.of(blockItems);
+            return Optional.of(toWrite);
         } else {
             return Optional.empty();
         }

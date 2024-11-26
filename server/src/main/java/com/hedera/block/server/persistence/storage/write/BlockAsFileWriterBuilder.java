@@ -19,7 +19,7 @@ package com.hedera.block.server.persistence.storage.write;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Objects;
@@ -69,7 +69,7 @@ public final class BlockAsFileWriterBuilder {
      *
      * @return a new, fully initialized instance of {@link BlockAsFileWriter}
      */
-    public BlockWriter<List<BlockItem>> build() {
+    public BlockWriter<List<BlockItemUnparsed>> build() {
         return new BlockAsFileWriter(blockNodeContext, blockRemover, blockPathResolver);
     }
 }

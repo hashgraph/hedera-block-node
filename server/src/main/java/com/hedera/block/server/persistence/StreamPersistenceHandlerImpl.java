@@ -49,7 +49,8 @@ import javax.inject.Singleton;
  * invoke the onEvent() method when a new SubscribeStreamResponse is available.
  */
 @Singleton
-public class StreamPersistenceHandlerImpl implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> {
+public class StreamPersistenceHandlerImpl
+        implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -101,7 +102,6 @@ public class StreamPersistenceHandlerImpl implements BlockNodeEventHandler<Objec
     public void onEvent(ObjectEvent<SubscribeStreamResponseUnparsed> event, long l, boolean b) {
         try {
             if (serviceStatus.isRunning()) {
-
                 final SubscribeStreamResponseUnparsed subscribeStreamResponse = event.get();
                 final OneOf<SubscribeStreamResponseUnparsed.ResponseOneOfType> oneOfTypeOneOf =
                         subscribeStreamResponse.response();
@@ -136,9 +136,13 @@ public class StreamPersistenceHandlerImpl implements BlockNodeEventHandler<Objec
             } else {
                 LOGGER.log(ERROR, "Service is not running. Block item will not be processed further.");
             }
-
-        } catch (BlockStreamProtocolException | IOException | ParseException e) {
-
+        } catch (final BlockStreamProtocolException | IOException | ParseException e) {
+            // todo maybe we should catch here Exception so we do not miss anything and we can
+            // cleanup properly after every kind of exception
+            // also it would be a good idea to have a cleanup method to call instead of having this
+            // cleanup logic here, cause we could also use the cleanup method in another place if needed
+            // and in that way cleanup will not be error prone and will be managed only in one place
+            // also most of this seems to be duplicated in notifier.notifyUnrecoverableError()
             LOGGER.log(ERROR, "Failed to persist BlockItems: ", e);
 
             metricsService.get(StreamPersistenceHandlerError).increment();

@@ -83,7 +83,7 @@ public interface PersistenceInjectionModule {
                 case BLOCK_AS_DIR -> BlockAsDirWriterBuilder.newBuilder(
                                 blockNodeContext, blockRemover, blockPathResolver)
                         .build();
-                case NOOP -> new NoOpBlockWriter(blockNodeContext, blockRemover, blockPathResolver);
+                case NOOP -> new NoOpBlockWriter();
             };
         } catch (final IOException e) {
             // we cannot have checked exceptions with dagger @Provides

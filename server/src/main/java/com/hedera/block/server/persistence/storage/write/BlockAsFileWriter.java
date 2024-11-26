@@ -22,8 +22,10 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.BlockUnparsed;
+import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -37,11 +39,12 @@ import java.util.Optional;
 /**
  * A Block writer that handles writing of block-as-file.
  */
-class BlockAsFileWriter implements LocalBlockWriter<List<BlockItem>> {
+class BlockAsFileWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
     private final MetricsService metricsService;
     private final BlockRemover blockRemover; // todo do I need here?
     private final BlockPathResolver blockPathResolver;
-    private Block curentBlock; // fixme this is temporary just to explore the workflow and make proof of concept
+    private BlockUnparsed
+            currentBlockUnparsed; // fixme this is temporary just to explore the workflow and make proof of concept
 
     /**
      * Constructor.
@@ -62,19 +65,26 @@ class BlockAsFileWriter implements LocalBlockWriter<List<BlockItem>> {
         this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @NonNull
     @Override
-    public Optional<List<BlockItem>> write(@NonNull final List<BlockItem> toWrite) throws IOException {
+    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> toWrite)
+            throws IOException, ParseException {
         if (toWrite.getFirst().hasBlockHeader()) {
-            curentBlock = Block.newBuilder().items(toWrite).build();
+            currentBlockUnparsed =
+                    BlockUnparsed.newBuilder().blockItems(toWrite).build();
         } else {
-            final List<BlockItem> currentItems = curentBlock.items();
+            final List<BlockItemUnparsed> currentItems = currentBlockUnparsed.blockItems();
             currentItems.addAll(toWrite);
-            curentBlock = Block.newBuilder().items(currentItems).build();
+            currentBlockUnparsed =
+                    BlockUnparsed.newBuilder().blockItems(currentItems).build();
         }
 
         if (toWrite.getLast().hasBlockProof()) {
             metricsService.get(BlocksPersisted).increment();
-            return writeToFs(curentBlock);
+            return Optional.ofNullable(writeToFs(currentBlockUnparsed));
         } else {
             return Optional.empty();
         }
@@ -82,8 +92,10 @@ class BlockAsFileWriter implements LocalBlockWriter<List<BlockItem>> {
 
     // todo we could recursively retry if exception occurs, then after a few attempts
     // if we cannot persist, we must throw the initial exception
-    private Optional<List<BlockItem>> writeToFs(final Block blockToWrite) throws IOException {
-        final long number = blockToWrite.items().getFirst().blockHeader().number(); // fixme could be null, handle!
+    private List<BlockItemUnparsed> writeToFs(final BlockUnparsed blockToWrite) throws IOException, ParseException {
+        final long number = BlockHeader.PROTOBUF
+                .parse(blockToWrite.blockItems().getFirst().blockHeader())
+                .number(); // fixme could be null, handle!
 
         // todo we should handle cases where the block path exists, we do not expect it to
         // exist at this stage, if it does, there is something wrong here
@@ -91,8 +103,10 @@ class BlockAsFileWriter implements LocalBlockWriter<List<BlockItem>> {
         Files.createDirectories(blockToWritePathResolved.getParent());
         Files.createFile(blockToWritePathResolved);
 
+        // todo maybe this is not the place to handle the exceptions, but maybe if we do a retry mechanism we
+        // must catch here
         try (final FileOutputStream fos = new FileOutputStream(blockToWritePathResolved.toFile())) {
-            Block.PROTOBUF.toBytes(blockToWrite).writeTo(fos);
+            BlockUnparsed.PROTOBUF.toBytes(blockToWrite).writeTo(fos);
             // todo what should be fallback logic if something goes wrong here? we attempt to resolve the path
             // with proper perms (is that necessary)? we must clean up and retry?
         } catch (final IOException ioe) {
@@ -105,7 +119,7 @@ class BlockAsFileWriter implements LocalBlockWriter<List<BlockItem>> {
             // todo handle properly
             throw new RuntimeException(e);
         }
-        curentBlock = null;
-        return Optional.of(blockToWrite.items());
+        currentBlockUnparsed = null;
+        return blockToWrite.blockItems();
     }
 }
