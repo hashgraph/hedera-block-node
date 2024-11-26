@@ -29,17 +29,19 @@ import com.hedera.block.server.producer.NoOpProducerObserver;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
 import com.hedera.block.server.producer.ProducerConfig;
 import com.hedera.block.server.service.ServiceStatus;
-import com.hedera.hapi.block.PublishStreamRequest;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.PublishStreamRequestUnparsed;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamRequest;
-import com.hedera.hapi.block.SubscribeStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
+import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.grpc.Pipeline;
 import com.hedera.pbj.runtime.grpc.Pipelines;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Clock;
+import java.util.List;
 import java.util.concurrent.Flow;
 import javax.inject.Inject;
 
@@ -71,7 +73,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     public PbjBlockStreamServiceProxy(
             @NonNull final LiveStreamMediator streamMediator,
             @NonNull final ServiceStatus serviceStatus,
-            @NonNull final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> streamPersistenceHandler,
+            @NonNull final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> streamPersistenceHandler,
             @NonNull final Notifier notifier,
             @NonNull final BlockNodeContext blockNodeContext) {
         this.serviceStatus = serviceStatus;
@@ -97,7 +99,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
             return switch (m) {
                 case publishBlockStream -> {
                     notifier.unsubscribeAllExpired();
-                    yield Pipelines.<PublishStreamRequest, PublishStreamResponse>bidiStreaming()
+                    yield Pipelines.<List<BlockItemUnparsed>, PublishStreamResponse>bidiStreaming()
                             .mapRequest(bytes -> parsePublishStreamRequest(bytes, options))
                             .method(this::publishBlockStream)
                             .mapResponse(bytes -> createPublishStreamResponse(bytes, options))
@@ -105,7 +107,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
                             .build();
                 }
                 case subscribeBlockStream -> Pipelines
-                        .<SubscribeStreamRequest, SubscribeStreamResponse>serverStreaming()
+                        .<SubscribeStreamRequest, SubscribeStreamResponseUnparsed>serverStreaming()
                         .mapRequest(bytes -> parseSubscribeStreamRequest(bytes, options))
                         .method(this::subscribeBlockStream)
                         .mapResponse(reply -> createSubscribeStreamResponse(reply, options))
@@ -118,7 +120,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         }
     }
 
-    Flow.Subscriber<PublishStreamRequest> publishBlockStream(
+    Flow.Subscriber<List<BlockItemUnparsed>> publishBlockStream(
             Flow.Subscriber<? super PublishStreamResponse> helidonProducerObserver) {
         LOGGER.log(DEBUG, "Executing bidirectional publishBlockStream gRPC method");
 
@@ -154,7 +156,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
 
     void subscribeBlockStream(
             SubscribeStreamRequest subscribeStreamRequest,
-            Flow.Subscriber<? super SubscribeStreamResponse> subscribeStreamResponseObserver) {
+            Flow.Subscriber<? super SubscribeStreamResponseUnparsed> subscribeStreamResponseObserver) {
 
         LOGGER.log(DEBUG, "Executing Server Streaming subscribeBlockStream gRPC method");
 
@@ -169,7 +171,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         } else {
             LOGGER.log(ERROR, "Server Streaming subscribeBlockStream gRPC Service is not currently running");
 
-            subscribeStreamResponseObserver.onNext(SubscribeStreamResponse.newBuilder()
+            subscribeStreamResponseObserver.onNext(SubscribeStreamResponseUnparsed.newBuilder()
                     .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
                     .build());
         }
@@ -178,21 +180,21 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     @NonNull
     private SubscribeStreamRequest parseSubscribeStreamRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options) throws ParseException {
-        // TODO: Copying bytes to avoid using references passed from Helidon. Investigate if this is necessary.
-        return SubscribeStreamRequest.PROTOBUF.parse(Bytes.wrap(message.toByteArray()));
+        return SubscribeStreamRequest.PROTOBUF.parse(message);
     }
 
     @NonNull
     private Bytes createSubscribeStreamResponse(
-            @NonNull final SubscribeStreamResponse subscribeStreamResponse, @NonNull final RequestOptions options) {
-        return SubscribeStreamResponse.PROTOBUF.toBytes(subscribeStreamResponse);
+            @NonNull final SubscribeStreamResponseUnparsed subscribeStreamResponse,
+            @NonNull final RequestOptions options) {
+        return SubscribeStreamResponseUnparsed.PROTOBUF.toBytes(subscribeStreamResponse);
     }
 
     @NonNull
-    private PublishStreamRequest parsePublishStreamRequest(
+    private List<BlockItemUnparsed> parsePublishStreamRequest(
             @NonNull final Bytes message, @NonNull final RequestOptions options) throws ParseException {
-        // TODO: Copying bytes to avoid using references passed from Helidon. Investigate if this is necessary.
-        return PublishStreamRequest.PROTOBUF.parse(Bytes.wrap(message.toByteArray()));
+        final PublishStreamRequestUnparsed request = PublishStreamRequestUnparsed.PROTOBUF.parse(message);
+        return request.blockItems().blockItems();
     }
 
     @NonNull

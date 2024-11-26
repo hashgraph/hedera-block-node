@@ -19,7 +19,7 @@ package com.hedera.block.server.persistence.storage.write;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.attribute.FileAttribute;
@@ -85,7 +85,7 @@ public final class BlockAsDirWriterBuilder {
      * @throws IOException when an error occurs while persisting block items to storage.
      */
     @NonNull
-    public BlockWriter<List<BlockItem>> build() throws IOException {
+    public BlockWriter<List<BlockItemUnparsed>> build() throws IOException {
         return new BlockAsDirWriter(blockNodeContext, blockRemover, blockPathResolver, folderPermissions);
     }
 }

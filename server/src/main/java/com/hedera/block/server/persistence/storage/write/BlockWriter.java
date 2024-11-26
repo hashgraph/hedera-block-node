@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
+import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Optional;
@@ -34,6 +35,7 @@ public interface BlockWriter<V> {
      * @return an optional containing the block item written to storage if the block item was a
      *     block proof signaling the end of the block, an empty optional otherwise.
      * @throws IOException when failing to write the block item to storage.
+     * @throws ParseException when failing to parse a block item.
      */
-    Optional<V> write(@NonNull final V toWrite) throws IOException;
+    Optional<V> write(@NonNull final V toWrite) throws IOException, ParseException;
 }

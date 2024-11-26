@@ -1,0 +1,21 @@
+{{ if .Values.kubepromstack.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hedera-block-node.fullname" . }}-grafana-datasource
+  labels:
+    grafana_datasource: "1"
+data:
+  datasource.yaml: |
+    apiVersion: 2
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://{{ .Release.Name }}-kubepromstack-prometheus:9090
+        isDefault: true
+        editable: true
+        jsonData:
+          timeInterval: "15s"
+
+{{- end }}

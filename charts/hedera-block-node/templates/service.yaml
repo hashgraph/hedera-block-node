@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: {{ include "hedera-block-node.fullname" . }}
   labels:
+    app: {{ include "hedera-block-node.name" . }}
     {{- include "hedera-block-node.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
@@ -11,5 +12,8 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+    - name: metrics
+      port: {{ .Values.blockNode.health.metrics.port }}
+      targetPort: metrics
   selector:
     {{- include "hedera-block-node.selectorLabels" . | nindent 4 }}

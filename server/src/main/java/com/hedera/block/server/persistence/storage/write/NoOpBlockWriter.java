@@ -16,17 +16,10 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
-
-import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
-import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -34,39 +27,19 @@ import java.util.Optional;
  * designed to isolate the Producer and Mediator components from storage implementation during testing while still
  * providing metrics and logging for troubleshooting.
  */
-public class NoOpBlockWriter implements LocalBlockWriter<List<BlockItem>> {
-    private final MetricsService metricsService;
-    private final BlockRemover blockRemover; // todo do I need here?
-    private final BlockPathResolver blockPathResolver; // todo do I need here?
-
-    /**
-     * Creates a new NoOpBlockWriter instance for testing and troubleshooting
-     * only.
-     *
-     * @param blockNodeContext valid, {@code non-null} instance of
-     * {@link BlockNodeContext} used to access the metrics service
-     * @param blockRemover valid, {@code non-null} instance of
-     * {@link BlockRemover}
-     * @param blockPathResolver valid, {@code non-null} instance of
-     * {@link BlockPathResolver}
-     */
-    public NoOpBlockWriter(
-            @NonNull final BlockNodeContext blockNodeContext,
-            @NonNull final BlockRemover blockRemover,
-            @NonNull final BlockPathResolver blockPathResolver) {
-        this.metricsService = Objects.requireNonNull(blockNodeContext.metricsService());
-        this.blockRemover = Objects.requireNonNull(blockRemover);
-        this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
-    }
-
+public class NoOpBlockWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
     /**
      * {@inheritDoc}
      */
     @Override
-    public Optional<List<BlockItem>> write(@NonNull final List<BlockItem> toWrite) throws IOException {
+    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> toWrite) throws IOException {
         if (toWrite.getLast().hasBlockProof()) {
-            metricsService.get(BlocksPersisted).increment();
+            // Returning the BlockItems triggers a
+            // PublishStreamResponse to be sent to the
+            // upstream producer.
+            return Optional.of(blockItems);
+        } else {
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 }

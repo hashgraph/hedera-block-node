@@ -37,9 +37,9 @@ import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder
 import com.hedera.block.server.persistence.storage.write.BlockAsFileWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.persistence.storage.write.NoOpBlockWriter;
-import com.hedera.hapi.block.SubscribeStreamResponse;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.BlockUnparsed;
+import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
@@ -64,7 +64,7 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static BlockWriter<List<BlockItem>> providesBlockWriter(
+    static BlockWriter<List<BlockItemUnparsed>> providesBlockWriter(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
             @NonNull final BlockPathResolver blockPathResolver) {
@@ -100,7 +100,7 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static BlockReader<Block> providesBlockReader(@NonNull final PersistenceStorageConfig config) {
+    static BlockReader<BlockUnparsed> providesBlockReader(@NonNull final PersistenceStorageConfig config) {
         final StorageType persistenceType = Objects.requireNonNull(config).type();
         return switch (persistenceType) {
             case BLOCK_AS_FILE -> BlockAsFileReaderBuilder.newBuilder().build();
@@ -156,6 +156,6 @@ public interface PersistenceInjectionModule {
      */
     @Binds
     @Singleton
-    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> bindBlockNodeEventHandler(
+    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> bindBlockNodeEventHandler(
             @NonNull final StreamPersistenceHandlerImpl streamPersistenceHandler);
 }

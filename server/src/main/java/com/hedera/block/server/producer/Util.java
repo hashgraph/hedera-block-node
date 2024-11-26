@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.producer;
 
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -34,10 +34,10 @@ public final class Util {
      * @return the fake hash for the given block item
      * @throws NoSuchAlgorithmException thrown if the SHA-384 algorithm is not available
      */
-    public static byte[] getFakeHash(@NonNull final List<BlockItem> blockItems)
+    public static byte[] getFakeHash(@NonNull final List<BlockItemUnparsed> blockItems)
             throws NoSuchAlgorithmException {
         // Calculate the SHA-384 hash
         MessageDigest digest = MessageDigest.getInstance("SHA-384");
-        return digest.digest(BlockItem.PROTOBUF.toBytes(blockItems.getLast()).toByteArray());
+        return digest.digest(blockItems.getLast().blockProof().toByteArray());
     }
 }

@@ -35,6 +35,9 @@ spec:
           - name: http
             containerPort: {{ .Values.service.port }}
             protocol: TCP
+          - name: metrics
+            containerPort: 9999
+            protocol: TCP
         envFrom:
           - configMapRef:
               name: {{ include "hedera-block-node.fullname" . }}-config

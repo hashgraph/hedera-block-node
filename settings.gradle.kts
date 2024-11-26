@@ -47,8 +47,9 @@ dependencyResolutionManagement {
 
             // Define a constant for protobuf version.
             val protobufVersion = "4.28.2"
-
             val helidonVersion = "4.1.1"
+            val grpcIoVersion = "1.65.1"
+            var pbjVersion = "0.9.10"
 
             // Compile time dependencies
             version("io.helidon.webserver.http2", helidonVersion)
@@ -69,22 +70,21 @@ dependencyResolutionManagement {
             version("info.picocli", "4.7.6")
 
             // gRPC dependencies for the stream subproject
-            version("io.grpc", "1.65.1")
-            version("io.grpc.protobuf", "1.65.1")
-            version("io.grpc.stub", "1.65.1")
+            version("io.grpc", grpcIoVersion)
+            version("io.grpc.protobuf", grpcIoVersion)
+            version("io.grpc.stub", grpcIoVersion)
 
             // netty dependency for the simulator subproject
-            version("io.grpc.netty.shaded", "1.65.1")
+            version("io.grpc.netty.shaded", grpcIoVersion)
 
             // Reference from the protobuf plugin
             version("google.proto", protobufVersion)
-            version("grpc.protobuf.grpc", "1.65.1")
+            version("grpc.protobuf.grpc", grpcIoVersion)
 
             // Google protobuf dependencies
             version("com.google.protobuf", protobufVersion)
             version("com.google.protobuf.util", protobufVersion)
 
-            var pbjVersion = "0.9.10"
 
             // PBJ dependencies
             plugin("pbj", "com.hedera.pbj.pbj-compiler").version(pbjVersion)

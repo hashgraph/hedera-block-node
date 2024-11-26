@@ -29,8 +29,8 @@ import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.pbj.runtime.ParseException;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -58,12 +58,12 @@ public class BlockAsDirRemoverTest {
     @Test
     public void testRemoveNonExistentBlock() throws IOException, ParseException {
         // Write a block
-        final List<BlockItem> blockItems = PersistTestUtils.generateBlockItems(1);
+        final List<BlockItemUnparsed> blockItems = PersistTestUtils.generateBlockItemsUnparsed(1);
 
-        final BlockWriter<List<BlockItem>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
                         blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
                 .build();
-        for (final BlockItem blockItem : blockItems) {
+        for (final BlockItemUnparsed blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));
         }
 
@@ -72,16 +72,16 @@ public class BlockAsDirRemoverTest {
         toTest.remove(2);
 
         // Verify the block was not removed
-        final BlockReader<Block> blockReader =
+        final BlockReader<BlockUnparsed> blockReader =
                 BlockAsDirReaderBuilder.newBuilder(testConfig).build();
-        final Optional<Block> before = blockReader.read(1);
+        final Optional<BlockUnparsed> before = blockReader.read(1);
         assertThat(before)
                 .isNotNull()
                 .isPresent()
                 .get()
                 .returns(
                         blockItems.getFirst().blockHeader(),
-                        from(block -> block.items().getFirst().blockHeader()));
+                        from(block -> block.blockItems().getFirst().blockHeader()));
 
         // Now remove the block
         toTest.remove(1);

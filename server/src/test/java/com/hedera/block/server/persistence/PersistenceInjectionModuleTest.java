@@ -18,7 +18,9 @@ package com.hedera.block.server.persistence;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 import static org.assertj.core.api.Assertions.assertThatRuntimeException;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -36,9 +38,9 @@ import com.hedera.block.server.persistence.storage.remove.NoOpRemover;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
-import com.hedera.hapi.block.SubscribeStreamResponse;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockItem;
+import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.BlockUnparsed;
+import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.swirlds.config.api.Configuration;
 import com.swirlds.metrics.api.Counter;
 import java.io.IOException;
@@ -59,13 +61,13 @@ class PersistenceInjectionModuleTest {
     private PersistenceStorageConfig persistenceStorageConfig;
 
     @Mock
-    private SubscriptionHandler<SubscribeStreamResponse> subscriptionHandler;
+    private SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
 
     @Mock
     private Notifier notifier;
 
     @Mock
-    private BlockWriter<List<BlockItem>> blockWriter;
+    private BlockWriter<List<BlockItemUnparsed>> blockWriter;
 
     @Mock
     private ServiceStatus serviceStatus;
@@ -80,7 +82,8 @@ class PersistenceInjectionModuleTest {
     @Test
     void testProvidesBlockWriter() {
 
-        BlockWriter<List<BlockItem>> blockWriter = PersistenceInjectionModule.providesBlockWriter(
+        BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                PersistenceInjectionModule.providesBlockWriter(
                 blockNodeContext, new NoOpRemover(), new NoOpBlockPathResolver());
 
         assertNotNull(blockWriter);
@@ -115,8 +118,8 @@ class PersistenceInjectionModuleTest {
     @Test
     void testProvidesBlockReader() {
 
-        BlockReader<Block> blockReader = PersistenceInjectionModule.providesBlockReader(persistenceStorageConfig);
-
+        BlockReader<BlockUnparsed> blockReader =
+                PersistenceInjectionModule.providesBlockReader(persistenceStorageConfig);
         assertNotNull(blockReader);
     }
 
@@ -126,8 +129,9 @@ class PersistenceInjectionModuleTest {
         BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         // Call the method under test
-        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponse>> streamVerifier = new StreamPersistenceHandlerImpl(
-                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus);
+        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> streamVerifier =
+                new StreamPersistenceHandlerImpl(
+                        subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus);
 
         assertNotNull(streamVerifier);
     }

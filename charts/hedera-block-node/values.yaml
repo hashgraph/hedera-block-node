@@ -87,3 +87,30 @@ blockNode:
       endpoint: "/healthz/readyz"
     liveness:
       endpoint: "/healthz/livez"
+    metrics:
+      port: 9999
+
+kubepromstack:
+  enabled: true
+  prometheusOperator:
+    namespaces:
+      releaseNamespace: true
+  grafana:
+    replicas: 1
+    enabled: true
+    defaultDashboardsEnabled: false
+    adminPassword: "admin"
+    datasources:
+      datasources.yaml: {}
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        provider:
+          allowUiUpdates: true
+      datasources:
+        enabled: true
+        label: grafana_datasource
+
+  nodeExporter:
+    enabled: true

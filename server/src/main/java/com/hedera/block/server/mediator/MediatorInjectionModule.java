@@ -19,7 +19,7 @@ package com.hedera.block.server.mediator;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.notifier.Notifiable;
 import com.hedera.block.server.service.ServiceStatus;
-import com.hedera.hapi.block.SubscribeStreamResponse;
+import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
@@ -61,7 +61,7 @@ public interface MediatorInjectionModule {
      */
     @Binds
     @Singleton
-    SubscriptionHandler<SubscribeStreamResponse> bindSubscriptionHandler(
+    SubscriptionHandler<SubscribeStreamResponseUnparsed> bindSubscriptionHandler(
             @NonNull final LiveStreamMediator liveStreamMediator);
 
     /**

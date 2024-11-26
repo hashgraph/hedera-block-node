@@ -17,7 +17,7 @@
 package com.hedera.block.server.persistence.storage.read;
 
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.hapi.block.stream.Block;
+import com.hedera.hapi.block.BlockUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
@@ -69,7 +69,7 @@ public final class BlockAsDirReaderBuilder {
      * @return a new block reader configured with the parameters provided to the builder.
      */
     @NonNull
-    public BlockReader<Block> build() {
+    public BlockReader<BlockUnparsed> build() {
         return new BlockAsDirReader(config, folderPermissions);
     }
 }
