@@ -36,7 +36,6 @@ import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Optional;
-import java.util.concurrent.Flow;
 import javax.inject.Inject;
 
 /**
@@ -78,7 +77,7 @@ public class PbjBlockAccessServiceProxy implements PbjBlockAccessService {
     public Pipeline<? super Bytes> open(
             final @NonNull Method method,
             final @NonNull RequestOptions options,
-            final @NonNull Flow.Subscriber<? super Bytes> replies) {
+            final @NonNull Pipeline<? super Bytes> replies) {
 
         try {
             final var m = (BlockAccessMethod) method;

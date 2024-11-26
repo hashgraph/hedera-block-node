@@ -83,7 +83,7 @@ public class ProducerBlockItemObserver
             @NonNull final InstantSource producerLivenessClock,
             @NonNull final Publisher<List<BlockItemUnparsed>> publisher,
             @NonNull final SubscriptionHandler<PublishStreamResponse> subscriptionHandler,
-            @NonNull final Flow.Subscriber<? super PublishStreamResponse> publishStreamResponseObserver,
+            @NonNull final Pipeline<? super PublishStreamResponse> publishStreamResponseObserver,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus) {
 
@@ -133,13 +133,10 @@ public class ProducerBlockItemObserver
 
         } else {
             LOGGER.log(ERROR, getClass().getName() + " is not accepting BlockItems");
+            stopProcessing();
 
             // Close the upstream connection to the producer(s)
-            final var errorResponse = buildErrorStreamResponse();
-
-            isResponsePermitted.set(false);
-            subscriptionHandler.unsubscribe(this);
-            publishStreamResponseObserver.onNext(errorResponse);
+            publishStreamResponseObserver.onNext(buildErrorStreamResponse());
             LOGGER.log(ERROR, "Error PublishStreamResponse sent to upstream producer");
         }
     }
@@ -149,8 +146,7 @@ public class ProducerBlockItemObserver
 
         if (isResponsePermitted.get()) {
             if (isTimeoutExpired()) {
-                isResponsePermitted.set(false);
-                subscriptionHandler.unsubscribe(this);
+                stopProcessing();
                 LOGGER.log(DEBUG, "Producer liveness timeout. Unsubscribed ProducerBlockItemObserver.");
             } else {
                 LOGGER.log(DEBUG, "Publishing response to upstream producer: " + publishStreamResponseObserver);
@@ -177,10 +173,8 @@ public class ProducerBlockItemObserver
      */
     @Override
     public void onError(@NonNull final Throwable t) {
+        stopProcessing();
         LOGGER.log(ERROR, "onError method invoked with an exception: ", t);
-
-        isResponsePermitted.set(false);
-        subscriptionHandler.unsubscribe(this);
         LOGGER.log(ERROR, "Producer cancelled the stream. Observer unsubscribed.");
     }
 
@@ -190,8 +184,7 @@ public class ProducerBlockItemObserver
      */
     @Override
     public void onComplete() {
-        isResponsePermitted.set(false);
-        subscriptionHandler.unsubscribe(this);
+        stopProcessing();
         LOGGER.log(DEBUG, "Producer completed the stream. Observer unsubscribed.");
     }
 
@@ -202,8 +195,12 @@ public class ProducerBlockItemObserver
 
     @Override
     public void clientEndStreamReceived() {
+        stopProcessing();
+        LOGGER.log(DEBUG, "Producer cancelled the stream. Observer unsubscribed.");
+    }
+
+    private void stopProcessing() {
         isResponsePermitted.set(false);
         subscriptionHandler.unsubscribe(this);
-        LOGGER.log(DEBUG, "Producer cancelled the stream. Observer unsubscribed.");
     }
 }

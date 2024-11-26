@@ -17,6 +17,8 @@
 package com.hedera.block.server.consumer;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -35,6 +37,7 @@ import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.grpc.Pipeline;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.InstantSource;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -198,5 +201,47 @@ public class ConsumerStreamResponseObserverTest {
                 new ConsumerStreamResponseObserver(testClock, streamMediator, responseStreamObserver, testContext);
 
         assertThrows(IllegalArgumentException.class, () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
+    }
+
+    @Test
+    public void testUncheckedIOExceptionException() {
+        final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
+        final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder()
+                .blockHeader(BlockHeader.PROTOBUF.toBytes(blockHeader))
+                .build();
+        final BlockItemSetUnparsed blockItemSet =
+                BlockItemSetUnparsed.newBuilder().blockItems(blockItem).build();
+        final SubscribeStreamResponseUnparsed subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
+                .blockItems(blockItemSet)
+                .build();
+        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+        doThrow(UncheckedIOException.class).when(responseStreamObserver).onNext(subscribeStreamResponse);
+
+        final var consumerBlockItemObserver =
+                new ConsumerStreamResponseObserver(testClock, streamMediator, responseStreamObserver, testContext);
+        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
+
+        verify(streamMediator, timeout(testTimeout).times(1)).unsubscribe(any());
+    }
+
+    @Test
+    public void testRuntimeException() {
+        final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
+        final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder()
+                .blockHeader(BlockHeader.PROTOBUF.toBytes(blockHeader))
+                .build();
+        final BlockItemSetUnparsed blockItemSet =
+                BlockItemSetUnparsed.newBuilder().blockItems(blockItem).build();
+        final SubscribeStreamResponseUnparsed subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
+                .blockItems(blockItemSet)
+                .build();
+        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+        doThrow(RuntimeException.class).when(responseStreamObserver).onNext(subscribeStreamResponse);
+
+        final var consumerBlockItemObserver =
+                new ConsumerStreamResponseObserver(testClock, streamMediator, responseStreamObserver, testContext);
+        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
+
+        verify(streamMediator, timeout(testTimeout).times(1)).unsubscribe(any());
     }
 }
