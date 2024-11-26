@@ -124,7 +124,7 @@ public final class Preconditions {
      * positive
      */
     public static long requirePositive(final long toCheck, final String errorMessage) {
-        if (0 >= toCheck) {
+        if (0L >= toCheck) {
             final String message = Objects.isNull(errorMessage)
                     ? "The input long [%d] is required be positive.".formatted(toCheck)
                     : errorMessage;

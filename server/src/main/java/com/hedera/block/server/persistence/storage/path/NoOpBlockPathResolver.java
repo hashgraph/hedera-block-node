@@ -29,5 +29,8 @@ public final class NoOpBlockPathResolver implements BlockPathResolver {
     @Override
     public Path resolvePathToBlock(final long blockNumber) {
         return null;
+        // todo should we return some path here so it is not null?
+        // reason would be to not have null pointer somewhere in our code
+        // if for whatever reason this no op impl needs to be used?
     }
 }

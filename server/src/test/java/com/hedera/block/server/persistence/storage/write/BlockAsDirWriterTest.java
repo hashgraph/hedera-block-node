@@ -32,7 +32,6 @@ import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.same;
 import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;

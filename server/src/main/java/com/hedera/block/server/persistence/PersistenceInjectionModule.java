@@ -68,7 +68,6 @@ public interface PersistenceInjectionModule {
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
             @NonNull final BlockPathResolver blockPathResolver) {
-        Objects.requireNonNull(blockNodeContext);
         Objects.requireNonNull(blockRemover);
         Objects.requireNonNull(blockPathResolver);
         final StorageType persistenceType = blockNodeContext
@@ -77,13 +76,13 @@ public interface PersistenceInjectionModule {
                 .type();
         try {
             return switch (persistenceType) {
-                case BLOCK_AS_FILE -> BlockAsFileWriterBuilder.newBuilder(
+                case BLOCK_AS_LOCAL_FILE -> BlockAsFileWriterBuilder.newBuilder(
                                 blockNodeContext, blockRemover, blockPathResolver)
                         .build();
-                case BLOCK_AS_DIR -> BlockAsDirWriterBuilder.newBuilder(
+                case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsDirWriterBuilder.newBuilder(
                                 blockNodeContext, blockRemover, blockPathResolver)
                         .build();
-                case NOOP -> new NoOpBlockWriter();
+                case NO_OP -> new NoOpBlockWriter();
             };
         } catch (final IOException e) {
             // we cannot have checked exceptions with dagger @Provides
@@ -101,11 +100,11 @@ public interface PersistenceInjectionModule {
     @Provides
     @Singleton
     static BlockReader<BlockUnparsed> providesBlockReader(@NonNull final PersistenceStorageConfig config) {
-        final StorageType persistenceType = Objects.requireNonNull(config).type();
+        final StorageType persistenceType = config.type();
         return switch (persistenceType) {
-            case BLOCK_AS_FILE -> BlockAsFileReaderBuilder.newBuilder().build();
-            case BLOCK_AS_DIR -> BlockAsDirReaderBuilder.newBuilder(config).build();
-            case NOOP -> new NoOpBlockReader();
+            case BLOCK_AS_LOCAL_FILE -> BlockAsFileReaderBuilder.newBuilder().build();
+            case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsDirReaderBuilder.newBuilder(config).build();
+            case NO_OP -> new NoOpBlockReader();
         };
     }
 
@@ -121,11 +120,12 @@ public interface PersistenceInjectionModule {
     @Singleton
     static BlockRemover providesBlockRemover(
             @NonNull final PersistenceStorageConfig config, @NonNull final BlockPathResolver blockPathResolver) {
-        final StorageType persistenceType = Objects.requireNonNull(config).type();
+        Objects.requireNonNull(blockPathResolver);
+        final StorageType persistenceType = config.type();
         return switch (persistenceType) {
-            case BLOCK_AS_FILE -> new BlockAsFileRemover();
-            case BLOCK_AS_DIR -> new BlockAsDirRemover(blockPathResolver);
-            case NOOP -> new NoOpRemover();
+            case BLOCK_AS_LOCAL_FILE -> new BlockAsFileRemover();
+            case BLOCK_AS_LOCAL_DIRECTORY -> new BlockAsDirRemover(blockPathResolver);
+            case NO_OP -> new NoOpRemover();
         };
     }
 
@@ -139,12 +139,12 @@ public interface PersistenceInjectionModule {
     @Provides
     @Singleton
     static BlockPathResolver providesPathResolver(@NonNull final PersistenceStorageConfig config) {
-        final StorageType persistenceType = Objects.requireNonNull(config).type();
+        final StorageType persistenceType = config.type();
         final Path blockStorageRoot = Path.of(config.rootPath());
         return switch (persistenceType) {
-            case BLOCK_AS_FILE -> new BlockAsFilePathResolver(blockStorageRoot);
-            case BLOCK_AS_DIR -> new BlockAsDirPathResolver(blockStorageRoot);
-            case NOOP -> new NoOpBlockPathResolver();
+            case BLOCK_AS_LOCAL_FILE -> new BlockAsFilePathResolver(blockStorageRoot);
+            case BLOCK_AS_LOCAL_DIRECTORY -> new BlockAsDirPathResolver(blockStorageRoot);
+            case NO_OP -> new NoOpBlockPathResolver();
         };
     }
 

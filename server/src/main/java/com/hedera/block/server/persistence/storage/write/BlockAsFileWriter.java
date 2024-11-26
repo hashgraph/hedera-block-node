@@ -104,7 +104,8 @@ class BlockAsFileWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
         Files.createFile(blockToWritePathResolved);
 
         // todo maybe this is not the place to handle the exceptions, but maybe if we do a retry mechanism we
-        // must catch here
+        // must catch here. also should we repair permissions and use the remover to remove as a cleanup?
+        // do we have such cases?
         try (final FileOutputStream fos = new FileOutputStream(blockToWritePathResolved.toFile())) {
             BlockUnparsed.PROTOBUF.toBytes(blockToWrite).writeTo(fos);
             // todo what should be fallback logic if something goes wrong here? we attempt to resolve the path

@@ -40,7 +40,7 @@ import java.util.Objects;
 @ConfigData("persistence.storage")
 public record PersistenceStorageConfig(
         @ConfigProperty(defaultValue = "") String rootPath,
-        @ConfigProperty(defaultValue = "BLOCK_AS_FILE") StorageType type) {
+        @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type) {
     private static final System.Logger LOGGER = System.getLogger(PersistenceStorageConfig.class.getName());
 
     /**
@@ -94,16 +94,16 @@ public record PersistenceStorageConfig(
          * This is also the default setting for the server if it is not
          * explicitly specified via an environment variable or app.properties.
          */
-        BLOCK_AS_FILE,
+        BLOCK_AS_LOCAL_FILE,
         /**
          * This type of storage stores Blocks as directories with the Block
          * number being the directory number. Block Items are stored as files
          * within a given Block directory. Used primarily for testing purposes.
          */
-        BLOCK_AS_DIR,
+        BLOCK_AS_LOCAL_DIRECTORY,
         /**
          * This type of storage does nothing.
          */
-        NOOP
+        NO_OP
     }
 }
