@@ -110,7 +110,11 @@ public class ConsumerStreamResponseObserver
         // or closed the stream.
         if (isResponsePermitted.get()) {
             if (isTimeoutExpired()) {
-                subscriptionHandler.unsubscribe(this);
+                stopProcessing();
+
+                // Notify the Helidon observer that we've
+                // stopped processing the stream
+                subscribeStreamResponseObserver.onComplete();
                 LOGGER.log(DEBUG, "Producer liveness timeout. Unsubscribed ConsumerBlockItemObserver.");
             } else {
                 // Refresh the producer liveness and pass the BlockItem to the downstream observer.
@@ -121,10 +125,17 @@ public class ConsumerStreamResponseObserver
                 try {
                     responseSender.send(subscribeStreamResponse);
                 } catch (IllegalArgumentException e) {
+                    // Bubble protocol exceptions up to a higher
+                    // layer where we can broadcast a uniform
+                    // message to terminate all connections
+                    // and shut the server down.
                     throw e;
                 } catch (RuntimeException e) {
-                    isResponsePermitted.set(false);
-                    subscriptionHandler.unsubscribe(this);
+                    // RuntimeExceptions at this layer will almost
+                    // always be wrapped SocketExceptions from individual
+                    // clients disconnecting from the server streaming
+                    // service. This should be happening all the time.
+                    stopProcessing();
                     LOGGER.log(
                             DEBUG,
                             "RuntimeException caught from Pipeline instance. Unsubscribed ConsumerBlockItemObserver instance");
@@ -145,11 +156,16 @@ public class ConsumerStreamResponseObserver
                 subscribeStreamResponse.response();
         return switch (responseType.kind()) {
             case STATUS -> {
-                isResponsePermitted.set(false);
-                subscriptionHandler.unsubscribe(this);
+                // Per the spec, status messages signal
+                // the end of processing. Unsubscribe this
+                // observer and send a message back to the
+                // client
+                stopProcessing();
                 yield statusResponseSender;
             }
             case BLOCK_ITEMS -> blockItemsResponseSender;
+                // An unknown response type here is a protocol violation
+                // and should shut down the server.
             default -> throw new IllegalArgumentException("Unknown response type: " + responseType.kind());
         };
     }
@@ -197,5 +213,10 @@ public class ConsumerStreamResponseObserver
             subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
             subscribeStreamResponseObserver.onComplete();
         }
+    }
+
+    private void stopProcessing() {
+        isResponsePermitted.set(false);
+        subscriptionHandler.unsubscribe(this);
     }
 }
