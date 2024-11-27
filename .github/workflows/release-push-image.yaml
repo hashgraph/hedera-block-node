@@ -133,6 +133,7 @@ jobs:
 
       - name: Package helm chart
         run: |
+          helm dependency update charts/hedera-block-node
           helm package charts/hedera-block-node
 
       - name: Push helm chart
