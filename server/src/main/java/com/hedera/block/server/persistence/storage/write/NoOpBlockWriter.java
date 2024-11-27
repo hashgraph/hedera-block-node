@@ -27,7 +27,22 @@ import java.util.Optional;
  * designed to isolate the Producer and Mediator components from storage implementation during testing while still
  * providing metrics and logging for troubleshooting.
  */
-public class NoOpBlockWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
+public final class NoOpBlockWriter implements BlockWriter<List<BlockItemUnparsed>> {
+    /**
+     * Constructor.
+     */
+    private NoOpBlockWriter() {}
+
+    /**
+     * This method creates and returns a new instance of
+     * {@link NoOpBlockWriter}.
+     *
+     * @return a new, fully initialized instance of {@link NoOpBlockWriter}
+     */
+    public static NoOpBlockWriter newInstance() {
+        return new NoOpBlockWriter();
+    }
+
     /**
      * {@inheritDoc}
      */

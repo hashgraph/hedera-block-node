@@ -39,7 +39,7 @@ import java.util.Optional;
 /**
  * A Block writer that handles writing of block-as-file.
  */
-class BlockAsFileWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
+public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
     private final MetricsService metricsService;
     private final BlockRemover blockRemover; // todo do I need here?
     private final BlockPathResolver blockPathResolver;
@@ -56,13 +56,31 @@ class BlockAsFileWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
      * @param blockPathResolver valid, {@code non-null} instance of {@link BlockPathResolver} used
      * to resolve paths to Blocks
      */
-    BlockAsFileWriter(
+    private BlockAsLocalFileWriter(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
             @NonNull final BlockPathResolver blockPathResolver) {
         this.metricsService = Objects.requireNonNull(blockNodeContext.metricsService());
         this.blockRemover = Objects.requireNonNull(blockRemover);
         this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
+    }
+
+    /**
+     * This method creates and returns a new instance of {@link BlockAsLocalFileWriter}.
+     *
+     * @param blockNodeContext valid, {@code non-null} instance of
+     * {@link BlockNodeContext} used to get the {@link MetricsService}
+     * @param blockRemover valid, {@code non-null} instance of
+     * {@link BlockRemover} used to remove blocks in case of cleanup
+     * @param blockPathResolver valid, {@code non-null} instance of
+     * {@link BlockPathResolver} used to resolve paths to Blocks
+     * @return a new, fully initialized instance of {@link BlockAsLocalFileWriter}
+     */
+    public static BlockAsLocalFileWriter of(
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final BlockRemover blockRemover,
+            @NonNull final BlockPathResolver blockPathResolver) {
+        return new BlockAsLocalFileWriter(blockNodeContext, blockRemover, blockPathResolver);
     }
 
     /**

@@ -34,7 +34,7 @@ import com.hedera.block.server.persistence.storage.remove.BlockAsLocalFileRemove
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.remove.NoOpRemover;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
-import com.hedera.block.server.persistence.storage.write.BlockAsFileWriterBuilder;
+import com.hedera.block.server.persistence.storage.write.BlockAsLocalFileWriter;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.persistence.storage.write.NoOpBlockWriter;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -76,13 +76,12 @@ public interface PersistenceInjectionModule {
                 .type();
         try {
             return switch (persistenceType) {
-                case BLOCK_AS_LOCAL_FILE -> BlockAsFileWriterBuilder.newBuilder(
-                                blockNodeContext, blockRemover, blockPathResolver)
-                        .build();
+                case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileWriter.of(
+                                blockNodeContext, blockRemover, blockPathResolver);
                 case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsDirWriterBuilder.newBuilder(
                                 blockNodeContext, blockRemover, blockPathResolver)
                         .build();
-                case NO_OP -> new NoOpBlockWriter();
+                case NO_OP -> NoOpBlockWriter.newInstance();
             };
         } catch (final IOException e) {
             // we cannot have checked exceptions with dagger @Provides
