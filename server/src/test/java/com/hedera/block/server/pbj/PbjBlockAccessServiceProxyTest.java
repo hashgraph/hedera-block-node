@@ -41,7 +41,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Flow;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,7 +60,7 @@ public class PbjBlockAccessServiceProxyTest {
     private ServiceInterface.RequestOptions options;
 
     @Mock
-    private Flow.Subscriber<? super Bytes> replies;
+    private Pipeline<? super Bytes> replies;
 
     private BlockNodeContext blockNodeContext;
 

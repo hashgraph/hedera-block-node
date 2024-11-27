@@ -42,7 +42,6 @@ import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Clock;
 import java.util.List;
-import java.util.concurrent.Flow;
 import javax.inject.Inject;
 
 /**
@@ -92,7 +91,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     public Pipeline<? super Bytes> open(
             final @NonNull Method method,
             final @NonNull RequestOptions options,
-            final @NonNull Flow.Subscriber<? super Bytes> replies) {
+            final @NonNull Pipeline<? super Bytes> replies) {
 
         final var m = (BlockStreamMethod) method;
         try {
@@ -120,8 +119,8 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         }
     }
 
-    Flow.Subscriber<List<BlockItemUnparsed>> publishBlockStream(
-            Flow.Subscriber<? super PublishStreamResponse> helidonProducerObserver) {
+    Pipeline<List<BlockItemUnparsed>> publishBlockStream(
+            Pipeline<? super PublishStreamResponse> helidonProducerObserver) {
         LOGGER.log(DEBUG, "Executing bidirectional publishBlockStream gRPC method");
 
         // Unsubscribe any expired notifiers
@@ -156,7 +155,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
 
     void subscribeBlockStream(
             SubscribeStreamRequest subscribeStreamRequest,
-            Flow.Subscriber<? super SubscribeStreamResponseUnparsed> subscribeStreamResponseObserver) {
+            Pipeline<? super SubscribeStreamResponseUnparsed> subscribeStreamResponseObserver) {
 
         LOGGER.log(DEBUG, "Executing Server Streaming subscribeBlockStream gRPC method");
 

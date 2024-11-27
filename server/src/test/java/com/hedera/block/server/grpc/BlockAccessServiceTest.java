@@ -51,7 +51,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Flow;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,7 +62,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class BlockAccessServiceTest {
 
     @Mock
-    private Flow.Subscriber<? super Bytes> responseObserver;
+    private Pipeline<? super Bytes> responseObserver;
 
     @Mock
     private BlockReader<BlockUnparsed> blockReader;
