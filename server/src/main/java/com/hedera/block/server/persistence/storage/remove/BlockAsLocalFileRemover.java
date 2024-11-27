@@ -19,9 +19,25 @@ package com.hedera.block.server.persistence.storage.remove;
 import java.io.IOException;
 
 /**
- * A Block remover that handles block-as-file.
+ * A Block remover that handles block-as-local-file.
  */
-public class BlockAsFileRemover implements LocalBlockRemover {
+public final class BlockAsLocalFileRemover implements LocalBlockRemover {
+    /**
+     * Constructor.
+     */
+    private BlockAsLocalFileRemover() {}
+
+    /**
+     * This method creates and returns a new instance of
+     * {@link BlockAsLocalFileRemover}.
+     *
+     * @return a new fully initialized instance of
+     * {@link BlockAsLocalFileRemover}
+     */
+    public static BlockAsLocalFileRemover newInstance() {
+        return new BlockAsLocalFileRemover();
+    }
+
     /**
      * Removes a block from the file system.
      *

@@ -33,7 +33,8 @@ public class NoOpBlockWriter implements LocalBlockWriter<List<BlockItemUnparsed>
      */
     @NonNull
     @Override
-    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> valueToWrite) throws IOException {
+    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
+            throws IOException {
         if (valueToWrite.getLast().hasBlockProof()) {
             // Returning the BlockItems triggers a
             // PublishStreamResponse to be sent to the

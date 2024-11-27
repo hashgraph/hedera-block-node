@@ -31,7 +31,7 @@ import java.util.Objects;
  * The BlockAsDirRemover class removes a block from the file system. The block is stored as a
  * directory containing block items. The block items are stored as files within the block directory.
  */
-public class BlockAsDirRemover implements LocalBlockRemover {
+public final class BlockAsLocalDirRemover implements LocalBlockRemover {
     private final Logger LOGGER = System.getLogger(getClass().getName());
     private final BlockPathResolver blockPathResolver;
 
@@ -41,8 +41,21 @@ public class BlockAsDirRemover implements LocalBlockRemover {
      * @param blockPathResolver valid, {@code non-null} instance of
      * {@link BlockPathResolver} to be used internally to resolve paths to Block
      */
-    public BlockAsDirRemover(@NonNull final BlockPathResolver blockPathResolver) {
+    private BlockAsLocalDirRemover(@NonNull final BlockPathResolver blockPathResolver) {
         this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
+    }
+
+    /**
+     * This method creates and returns a new instance of
+     * {@link BlockAsLocalDirRemover}.
+     *
+     * @param blockPathResolver valid, {@code non-null} instance of
+     * {@link BlockPathResolver} to be used internally to resolve paths to Block
+     * @return a new, fully initialized instance of
+     * {@link BlockAsLocalDirRemover}
+     */
+    public static BlockAsLocalDirRemover of(@NonNull final BlockPathResolver blockPathResolver) {
+        return new BlockAsLocalDirRemover(blockPathResolver);
     }
 
     /**

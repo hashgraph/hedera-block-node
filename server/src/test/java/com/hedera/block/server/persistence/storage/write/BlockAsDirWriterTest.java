@@ -39,7 +39,7 @@ import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
-import com.hedera.block.server.persistence.storage.remove.BlockAsDirRemover;
+import com.hedera.block.server.persistence.storage.remove.BlockAsLocalDirRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
@@ -188,7 +188,7 @@ public class BlockAsDirWriterTest {
     @Test
     public void testUnrecoverableIOExceptionOnWrite() throws IOException, ParseException {
 
-        final BlockRemover blockRemover = new BlockAsDirRemover(mock(BlockPathResolver.class));
+        final BlockRemover blockRemover = BlockAsLocalDirRemover.of(mock(BlockPathResolver.class));
 
         // Use a spy to simulate an IOException when the first block item is written
         final BlockWriter<List<BlockItemUnparsed>> blockWriter =
@@ -241,7 +241,7 @@ public class BlockAsDirWriterTest {
     @Test
     public void testPartialBlockRemoval() throws IOException, ParseException {
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(3);
-        final BlockRemover blockRemover = new BlockAsDirRemover(mock(BlockPathResolver.class));
+        final BlockRemover blockRemover = BlockAsLocalDirRemover.of(mock(BlockPathResolver.class));
         // Use a spy of TestBlockAsDirWriter to proxy block items to the real writer
         // for the first 22 block items. Then simulate an IOException on the 23rd block item
         // thrown from a protected write method in the real class. This should trigger the
