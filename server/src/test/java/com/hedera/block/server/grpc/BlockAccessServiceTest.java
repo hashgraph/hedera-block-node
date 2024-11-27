@@ -31,7 +31,7 @@ import com.hedera.block.server.pbj.PbjBlockAccessService;
 import com.hedera.block.server.pbj.PbjBlockAccessServiceProxy;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
-import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
+import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
@@ -112,7 +112,7 @@ class BlockAccessServiceTest {
     void testSingleBlockHappyPath() throws IOException, ParseException {
 
         final BlockReader<BlockUnparsed> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(config).build();
+                BlockAsLocalDirReader.of(config, null);
 
         final PbjBlockAccessService blockAccessService =
                 new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);

@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import static com.hedera.block.server.persistence.storage.read.BlockAsDirReaderTest.removeBlockReadPerms;
+import static com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReaderTest.removeBlockReadPerms;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
 import static com.hedera.block.server.util.TestConfigUtil.DEFAULT_TEST_FOLDER_PERMISSIONS;
 import static java.lang.System.Logger;
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.spy;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
-import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
+import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockAsLocalDirRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
@@ -112,7 +112,7 @@ public class BlockAsDirWriterTest {
 
         // Confirm the block
         BlockReader<BlockUnparsed> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
+            BlockAsLocalDirReader.of(testConfig, null);
         Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
 
@@ -155,7 +155,7 @@ public class BlockAsDirWriterTest {
 
         // Confirm we're able to read 1 block item
         BlockReader<BlockUnparsed> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
+            BlockAsLocalDirReader.of(testConfig, null);
         Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
         assertEquals(1, blockOpt.get().blockItems().size());
@@ -232,7 +232,7 @@ public class BlockAsDirWriterTest {
         }
 
         BlockReader<BlockUnparsed> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
+            BlockAsLocalDirReader.of(testConfig, null);
         Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
         assertEquals(10, blockOpt.get().blockItems().size());
@@ -277,7 +277,7 @@ public class BlockAsDirWriterTest {
 
         // Verify the partially written block was removed
         final BlockReader<BlockUnparsed> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
+            BlockAsLocalDirReader.of(testConfig, null);
         Optional<BlockUnparsed> blockOpt = blockReader.read(3);
         assertTrue(blockOpt.isEmpty());
 

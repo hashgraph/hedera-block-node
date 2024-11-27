@@ -55,7 +55,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-public class BlockAsDirReaderTest {
+public class BlockAsLocalDirReaderTest {
     @TempDir
     private Path testPath;
 
@@ -74,7 +74,7 @@ public class BlockAsDirReaderTest {
     @Test
     public void testReadBlockDoesNotExist() throws IOException, ParseException {
         final BlockReader<BlockUnparsed> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(config).build();
+                BlockAsLocalDirReader.of(config, null);
         final Optional<BlockUnparsed> blockOpt = blockReader.read(10000);
         assertTrue(blockOpt.isEmpty());
     }
@@ -93,7 +93,7 @@ public class BlockAsDirReaderTest {
 
         // The default BlockReader will attempt to repair the permissions and should succeed
         final BlockReader<BlockUnparsed> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(config).build();
+            BlockAsLocalDirReader.of(config, null);
         final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
         assertEquals(10, blockOpt.get().blockItems().size());
@@ -111,9 +111,7 @@ public class BlockAsDirReaderTest {
 
         // For this test, build the Reader with ineffective repair permissions to
         // simulate a failed repair (root changed the perms, etc.)
-        final BlockReader<BlockUnparsed> blockReader = BlockAsDirReaderBuilder.newBuilder(config)
-                .folderPermissions(TestUtils.getNoPerms())
-                .build();
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config, TestUtils.getNoPerms());
         final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertTrue(blockOpt.isEmpty());
     }
@@ -128,7 +126,7 @@ public class BlockAsDirReaderTest {
         removeBlockItemReadPerms(1, 1, config);
 
         final BlockReader<BlockUnparsed> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(config).build();
+            BlockAsLocalDirReader.of(config, null);
         assertThrows(IOException.class, () -> blockReader.read(1));
     }
 
@@ -142,7 +140,7 @@ public class BlockAsDirReaderTest {
 
         // Should return empty because the path is not a directory
         final BlockReader<BlockUnparsed> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(config).build();
+            BlockAsLocalDirReader.of(config, null);
         final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertTrue(blockOpt.isEmpty());
     }
@@ -159,7 +157,7 @@ public class BlockAsDirReaderTest {
         // Use a spy on a subclass of the BlockAsDirReader to proxy calls
         // to the actual methods but to also throw an IOException when
         // the setPerm method is called.
-        final TestBlockAsDirReader blockReader = spy(new TestBlockAsDirReader(config));
+        final TestBlockAsLocalDirReader blockReader = spy(new TestBlockAsLocalDirReader(config));
         doThrow(IOException.class).when(blockReader).setPerm(any(), any());
 
         final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
@@ -175,7 +173,7 @@ public class BlockAsDirReaderTest {
         // Use a spy on a subclass of the BlockAsDirReader to proxy calls
         // to the actual methods but to also throw an IOException when
         // the setPerm method is called.
-        final TestBlockAsDirReader blockReader = spy(new TestBlockAsDirReader(config));
+        final TestBlockAsLocalDirReader blockReader = spy(new TestBlockAsLocalDirReader(config));
         doThrow(IOException.class).when(blockReader).setPerm(any(), any());
 
         final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
@@ -191,7 +189,7 @@ public class BlockAsDirReaderTest {
 
         // Read the block back and confirm it's read successfully
         final BlockReader<BlockUnparsed> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(config).build();
+            BlockAsLocalDirReader.of(config, null);
         final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
 
@@ -238,8 +236,8 @@ public class BlockAsDirReaderTest {
 
     // TestBlockAsDirReader overrides the setPerm() method to allow a test spy to simulate an
     // IOException while allowing the real setPerm() method to remain protected.
-    private static final class TestBlockAsDirReader extends BlockAsDirReader {
-        public TestBlockAsDirReader(PersistenceStorageConfig config) {
+    private static final class TestBlockAsLocalDirReader extends BlockAsLocalDirReader {
+        public TestBlockAsLocalDirReader(PersistenceStorageConfig config) {
             super(config, null);
         }
 

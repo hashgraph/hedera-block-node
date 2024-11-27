@@ -47,7 +47,7 @@ import java.util.Set;
  * The BlockAsDirReader class reads a block from the file system. The block is stored as a directory
  * containing block items. The block items are stored as files within the block directory.
  */
-class BlockAsDirReader implements BlockReader<BlockUnparsed> {
+public class BlockAsLocalDirReader implements LocalBlockReader<BlockUnparsed> {
     private final Logger LOGGER = System.getLogger(getClass().getName());
     private final Path blockNodeRootPath;
     private final FileAttribute<Set<PosixFilePermission>> folderPermissions;
@@ -59,7 +59,7 @@ class BlockAsDirReader implements BlockReader<BlockUnparsed> {
      * @param config the configuration to retrieve the block node root path
      * @param folderPermissions the folder permissions to set on the block node root path, default  will be used if null provided
      */
-    BlockAsDirReader(
+    protected BlockAsLocalDirReader(
             @NonNull final PersistenceStorageConfig config,
             final FileAttribute<Set<PosixFilePermission>> folderPermissions) {
         LOGGER.log(INFO, "Initializing FileSystemBlockReader");
@@ -84,6 +84,22 @@ class BlockAsDirReader implements BlockReader<BlockUnparsed> {
                     PosixFilePermission.OTHERS_READ,
                     PosixFilePermission.OTHERS_EXECUTE));
         }
+    }
+
+    /**
+     * This method creates and returns a new instance of
+     * {@link BlockAsLocalDirReader}.
+     *
+     * @param config valid, {@code non-null} instance of
+     * {@link PersistenceStorageConfig} used to retrieve the block node root path
+     * @param folderPermissions todo remove this field
+     * @return a new, fully initialized instance of
+     * {@link BlockAsLocalDirReader}
+     */
+    public static BlockAsLocalDirReader of(
+            @NonNull final PersistenceStorageConfig config,
+            final FileAttribute<Set<PosixFilePermission>> folderPermissions) {
+        return new BlockAsLocalDirReader(config, folderPermissions);
     }
 
     /**

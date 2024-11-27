@@ -21,12 +21,12 @@ import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
-import com.hedera.block.server.persistence.storage.path.BlockAsLocalFilePathResolver;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockAsLocalFilePathResolver;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.path.NoOpBlockPathResolver;
-import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockAsFileReaderBuilder;
+import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.read.NoOpBlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockAsLocalDirRemover;
@@ -103,8 +103,7 @@ public interface PersistenceInjectionModule {
         final StorageType persistenceType = config.type();
         return switch (persistenceType) {
             case BLOCK_AS_LOCAL_FILE -> BlockAsFileReaderBuilder.newBuilder().build();
-            case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsDirReaderBuilder.newBuilder(config)
-                    .build();
+            case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirReader.of(config, null);
             case NO_OP -> new NoOpBlockReader();
         };
     }

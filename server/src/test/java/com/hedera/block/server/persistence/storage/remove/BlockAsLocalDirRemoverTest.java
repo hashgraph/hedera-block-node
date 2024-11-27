@@ -23,7 +23,7 @@ import static org.mockito.Mockito.mock;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
-import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
+import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
@@ -73,7 +73,7 @@ class BlockAsLocalDirRemoverTest {
 
         // Verify the block was not removed
         final BlockReader<BlockUnparsed> blockReader =
-                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
+            BlockAsLocalDirReader.of(testConfig, null);
         final Optional<BlockUnparsed> before = blockReader.read(1);
         assertThat(before)
                 .isNotNull()
