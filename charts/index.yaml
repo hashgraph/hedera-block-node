@@ -3,7 +3,7 @@ entries:
   hedera-block-node:
   - apiVersion: v2
     appVersion: 0.3.0-SNAPSHOT
-    created: "2024-11-26T16:02:03.328361814Z"
+    created: "2024-11-27T20:40:42.289942773Z"
     dependencies:
     - alias: kubepromstack
       condition: kubepromstack.enabled
@@ -11,7 +11,7 @@ entries:
       repository: https://prometheus-community.github.io/helm-charts
       version: 51.2.0
     description: A Helm chart for Hedera Block Node
-    digest: 16e87ceffdd9e826f3eca6f57d33382282c4fc98ebd3c6f5f4da6d0c02a729ee
+    digest: 661e201b9ae5f2adef63257d39258ac09e039875fc1354f85c6cc50d1e9eb9c8
     home: https://github.com/hashgraph/hedera-block-node
     keywords:
     - blocknode
@@ -127,4 +127,4 @@ entries:
     urls:
     - https://hashgraph.github.io/hedera-block-node/charts/hedera-block-node-0.1.0-SNAPSHOT.tgz
     version: 0.1.0-SNAPSHOT
-generated: "2024-11-26T16:02:03.2860158Z"
+generated: "2024-11-27T20:40:42.260910163Z"
