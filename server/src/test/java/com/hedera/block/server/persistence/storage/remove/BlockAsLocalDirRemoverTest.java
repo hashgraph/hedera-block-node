@@ -51,8 +51,7 @@ class BlockAsLocalDirRemoverTest {
     @BeforeEach
     public void setUp() throws IOException {
         blockNodeContext =
-            TestConfigUtil.getTestBlockNodeContext(
-                Map.of("persistence.storage.liveRootPath", testPath.toString()));
+                TestConfigUtil.getTestBlockNodeContext(Map.of("persistence.storage.liveRootPath", testPath.toString()));
         testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
     }
 
@@ -62,8 +61,8 @@ class BlockAsLocalDirRemoverTest {
         final List<BlockItemUnparsed> blockItems = PersistTestUtils.generateBlockItemsUnparsed(1);
 
         final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
-            .build();
+                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
+                .build();
         for (final BlockItemUnparsed blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));
         }
@@ -74,15 +73,15 @@ class BlockAsLocalDirRemoverTest {
 
         // Verify the block was not removed
         final BlockReader<BlockUnparsed> blockReader =
-            BlockAsDirReaderBuilder.newBuilder(testConfig).build();
+                BlockAsDirReaderBuilder.newBuilder(testConfig).build();
         final Optional<BlockUnparsed> before = blockReader.read(1);
         assertThat(before)
-            .isNotNull()
-            .isPresent()
-            .get()
-            .returns(
-                blockItems.getFirst().blockHeader(),
-                from(block -> block.blockItems().getFirst().blockHeader()));
+                .isNotNull()
+                .isPresent()
+                .get()
+                .returns(
+                        blockItems.getFirst().blockHeader(),
+                        from(block -> block.blockItems().getFirst().blockHeader()));
 
         // Now remove the block
         toTest.remove(1);

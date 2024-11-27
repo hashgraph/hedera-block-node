@@ -23,6 +23,20 @@ import java.nio.file.Path;
  */
 public final class NoOpBlockPathResolver implements BlockPathResolver {
     /**
+     * Constructor.
+     */
+    private NoOpBlockPathResolver() {}
+
+    /**
+     * This method creates and returns a new instance of {@link NoOpBlockPathResolver}.
+     *
+     * @return a new, fully initialized instance of {@link NoOpBlockPathResolver}
+     */
+    public static NoOpBlockPathResolver newInstance() {
+        return new NoOpBlockPathResolver();
+    }
+
+    /**
      * No-op resolver. Does nothing and always returns null. No preconditions
      * check also.
      */

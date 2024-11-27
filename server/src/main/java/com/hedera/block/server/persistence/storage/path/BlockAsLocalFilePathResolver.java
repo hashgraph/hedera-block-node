@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * A Block path resolver for block-as-file.
  */
-public final class BlockAsFilePathResolver implements BlockPathResolver {
+public final class BlockAsLocalFilePathResolver implements BlockPathResolver {
     private static final int MAX_LONG_DIGITS = 19;
     private final Path blockStorageRoot;
 
@@ -36,8 +36,21 @@ public final class BlockAsFilePathResolver implements BlockPathResolver {
      * @param blockStorageRoot valid, {@code non-null} instance of {@link Path}
      * that points to the root of the block storage
      */
-    public BlockAsFilePathResolver(@NonNull final Path blockStorageRoot) {
+    private BlockAsLocalFilePathResolver(@NonNull final Path blockStorageRoot) {
         this.blockStorageRoot = Objects.requireNonNull(blockStorageRoot);
+    }
+
+    /**
+     * This method creates and returns a new instance of
+     * {@link BlockAsLocalFilePathResolver}.
+     *
+     * @param blockStorageRoot valid, {@code non-null} instance of {@link Path}
+     * that points to the root of the block storage
+     * @return a new, fully initialized instance of
+     * {@link BlockAsLocalFilePathResolver}
+     */
+    public static BlockAsLocalFilePathResolver of(@NonNull final Path blockStorageRoot) {
+        return new BlockAsLocalFilePathResolver(blockStorageRoot);
     }
 
     /**

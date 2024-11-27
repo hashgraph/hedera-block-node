@@ -23,7 +23,7 @@ import java.util.Objects;
 /**
  * A Block path resolver for block-as-dir.
  */
-public final class BlockAsDirPathResolver implements BlockPathResolver {
+public final class BlockAsLocalDirPathResolver implements BlockPathResolver {
     private final Path blockStorageRoot;
 
     /**
@@ -32,8 +32,21 @@ public final class BlockAsDirPathResolver implements BlockPathResolver {
      * @param blockStorageRoot valid, {@code non-null} instance of {@link Path}
      * that points to the root of the block storage
      */
-    public BlockAsDirPathResolver(@NonNull final Path blockStorageRoot) {
+    private BlockAsLocalDirPathResolver(@NonNull final Path blockStorageRoot) {
         this.blockStorageRoot = Objects.requireNonNull(blockStorageRoot);
+    }
+
+    /**
+     * This method creates and returns a new instance of
+     * {@link BlockAsLocalDirPathResolver}.
+     *
+     * @param blockStorageRoot valid, {@code non-null} instance of {@link Path}
+     * that points to the root of the block storage
+     * @return a new, fully initialized instance of
+     * {@link BlockAsLocalDirPathResolver}
+     */
+    public static BlockAsLocalDirPathResolver of(@NonNull final Path blockStorageRoot) {
+        return new BlockAsLocalDirPathResolver(blockStorageRoot);
     }
 
     /**

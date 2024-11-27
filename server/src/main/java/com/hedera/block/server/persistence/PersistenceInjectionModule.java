@@ -21,8 +21,8 @@ import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
-import com.hedera.block.server.persistence.storage.path.BlockAsDirPathResolver;
-import com.hedera.block.server.persistence.storage.path.BlockAsFilePathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockAsLocalFilePathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.path.NoOpBlockPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsDirReaderBuilder;
@@ -143,9 +143,9 @@ public interface PersistenceInjectionModule {
         final StorageType persistenceType = config.type();
         final Path blockStorageRoot = Path.of(config.liveRootPath());
         return switch (persistenceType) {
-            case BLOCK_AS_LOCAL_FILE -> new BlockAsFilePathResolver(blockStorageRoot);
-            case BLOCK_AS_LOCAL_DIRECTORY -> new BlockAsDirPathResolver(blockStorageRoot);
-            case NO_OP -> new NoOpBlockPathResolver();
+            case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFilePathResolver.of(blockStorageRoot);
+            case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirPathResolver.of(blockStorageRoot);
+            case NO_OP -> NoOpBlockPathResolver.newInstance();
         };
     }
 
