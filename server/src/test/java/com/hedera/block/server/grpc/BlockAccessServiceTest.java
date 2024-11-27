@@ -111,8 +111,7 @@ class BlockAccessServiceTest {
     @Test
     void testSingleBlockHappyPath() throws IOException, ParseException {
 
-        final BlockReader<BlockUnparsed> blockReader =
-                BlockAsLocalDirReader.of(config, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config, null);
 
         final PbjBlockAccessService blockAccessService =
                 new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);

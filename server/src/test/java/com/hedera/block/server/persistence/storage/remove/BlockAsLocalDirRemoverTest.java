@@ -72,8 +72,7 @@ class BlockAsLocalDirRemoverTest {
         toTest.remove(2);
 
         // Verify the block was not removed
-        final BlockReader<BlockUnparsed> blockReader =
-            BlockAsLocalDirReader.of(testConfig, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig, null);
         final Optional<BlockUnparsed> before = blockReader.read(1);
         assertThat(before)
                 .isNotNull()

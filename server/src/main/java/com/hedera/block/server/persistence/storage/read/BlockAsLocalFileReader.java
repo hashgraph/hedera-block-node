@@ -23,7 +23,23 @@ import java.util.Optional;
 /**
  * A Block reader that reads block-as-file.
  */
-class BlockAsFileReader implements BlockReader<BlockUnparsed> {
+public class BlockAsLocalFileReader implements LocalBlockReader<BlockUnparsed> {
+    /**
+     * Constructor.
+     */
+    private BlockAsLocalFileReader() {}
+
+    /**
+     * This method creates and returns a new instance of
+     * {@link BlockAsLocalFileReader}.
+     *
+     * @return a new, fully initialized instance of
+     * {@link BlockAsLocalFileReader}
+     */
+    public static BlockAsLocalFileReader newInstance() {
+        return new BlockAsLocalFileReader();
+    }
+
     /**
      * {@inheritDoc}
      */

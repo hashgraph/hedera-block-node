@@ -25,8 +25,8 @@ import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResol
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalFilePathResolver;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.path.NoOpBlockPathResolver;
-import com.hedera.block.server.persistence.storage.read.BlockAsFileReaderBuilder;
 import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
+import com.hedera.block.server.persistence.storage.read.BlockAsLocalFileReader;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.read.NoOpBlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockAsLocalDirRemover;
@@ -102,9 +102,9 @@ public interface PersistenceInjectionModule {
     static BlockReader<BlockUnparsed> providesBlockReader(@NonNull final PersistenceStorageConfig config) {
         final StorageType persistenceType = config.type();
         return switch (persistenceType) {
-            case BLOCK_AS_LOCAL_FILE -> BlockAsFileReaderBuilder.newBuilder().build();
+            case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileReader.newInstance();
             case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirReader.of(config, null);
-            case NO_OP -> new NoOpBlockReader();
+            case NO_OP -> NoOpBlockReader.newInstance();
         };
     }
 

@@ -27,6 +27,22 @@ import java.util.Optional;
  */
 public class NoOpBlockReader implements BlockReader<BlockUnparsed> {
     /**
+     * Constructor.
+     */
+    private NoOpBlockReader() {}
+
+    /**
+     * This method creates and returns a new instance of
+     * {@link NoOpBlockReader}.
+     *
+     * @return a new, fully initialized instance of
+     * {@link NoOpBlockReader}
+     */
+    public static NoOpBlockReader newInstance() {
+        return new NoOpBlockReader();
+    }
+
+    /**
      * {@inheritDoc}
      */
     @NonNull

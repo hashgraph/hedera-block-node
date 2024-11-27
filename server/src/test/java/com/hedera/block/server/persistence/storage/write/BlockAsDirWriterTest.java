@@ -111,8 +111,7 @@ public class BlockAsDirWriterTest {
         }
 
         // Confirm the block
-        BlockReader<BlockUnparsed> blockReader =
-            BlockAsLocalDirReader.of(testConfig, null);
+        BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig, null);
         Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
 
@@ -154,8 +153,7 @@ public class BlockAsDirWriterTest {
         assertFalse(result.isPresent());
 
         // Confirm we're able to read 1 block item
-        BlockReader<BlockUnparsed> blockReader =
-            BlockAsLocalDirReader.of(testConfig, null);
+        BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig, null);
         Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
         assertEquals(1, blockOpt.get().blockItems().size());
@@ -231,8 +229,7 @@ public class BlockAsDirWriterTest {
             }
         }
 
-        BlockReader<BlockUnparsed> blockReader =
-            BlockAsLocalDirReader.of(testConfig, null);
+        BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig, null);
         Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
         assertEquals(10, blockOpt.get().blockItems().size());
@@ -276,8 +273,7 @@ public class BlockAsDirWriterTest {
         assertThrows(IOException.class, () -> blockWriter.write(List.of(blockItems.get(23))));
 
         // Verify the partially written block was removed
-        final BlockReader<BlockUnparsed> blockReader =
-            BlockAsLocalDirReader.of(testConfig, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig, null);
         Optional<BlockUnparsed> blockOpt = blockReader.read(3);
         assertTrue(blockOpt.isEmpty());
 

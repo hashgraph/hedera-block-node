@@ -73,8 +73,7 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testReadBlockDoesNotExist() throws IOException, ParseException {
-        final BlockReader<BlockUnparsed> blockReader =
-                BlockAsLocalDirReader.of(config, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config, null);
         final Optional<BlockUnparsed> blockOpt = blockReader.read(10000);
         assertTrue(blockOpt.isEmpty());
     }
@@ -92,8 +91,7 @@ public class BlockAsLocalDirReaderTest {
         removeBlockReadPerms(1, config);
 
         // The default BlockReader will attempt to repair the permissions and should succeed
-        final BlockReader<BlockUnparsed> blockReader =
-            BlockAsLocalDirReader.of(config, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config, null);
         final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
         assertEquals(10, blockOpt.get().blockItems().size());
@@ -125,8 +123,7 @@ public class BlockAsLocalDirReaderTest {
 
         removeBlockItemReadPerms(1, 1, config);
 
-        final BlockReader<BlockUnparsed> blockReader =
-            BlockAsLocalDirReader.of(config, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config, null);
         assertThrows(IOException.class, () -> blockReader.read(1));
     }
 
@@ -139,8 +136,7 @@ public class BlockAsLocalDirReaderTest {
         writeBlockItemToPath(blockNodeRootPath.resolve(Path.of("1")), blockItems.getFirst());
 
         // Should return empty because the path is not a directory
-        final BlockReader<BlockUnparsed> blockReader =
-            BlockAsLocalDirReader.of(config, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config, null);
         final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertTrue(blockOpt.isEmpty());
     }
@@ -188,8 +184,7 @@ public class BlockAsLocalDirReaderTest {
         blockWriter.write(blockItems);
 
         // Read the block back and confirm it's read successfully
-        final BlockReader<BlockUnparsed> blockReader =
-            BlockAsLocalDirReader.of(config, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config, null);
         final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
 

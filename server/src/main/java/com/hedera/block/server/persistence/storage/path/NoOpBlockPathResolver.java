@@ -28,9 +28,11 @@ public final class NoOpBlockPathResolver implements BlockPathResolver {
     private NoOpBlockPathResolver() {}
 
     /**
-     * This method creates and returns a new instance of {@link NoOpBlockPathResolver}.
+     * This method creates and returns a new instance of
+     * {@link NoOpBlockPathResolver}.
      *
-     * @return a new, fully initialized instance of {@link NoOpBlockPathResolver}
+     * @return a new, fully initialized instance of
+     * {@link NoOpBlockPathResolver}
      */
     public static NoOpBlockPathResolver newInstance() {
         return new NoOpBlockPathResolver();
