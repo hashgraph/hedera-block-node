@@ -43,6 +43,13 @@ spec:
               name: {{ include "hedera-block-node.fullname" . }}-config
           - secretRef:
               name: {{ include "hedera-block-node.fullname" . }}-secret
+        resources:
+          requests:
+            memory: {{ .Values.blockNode.resources.requests.memory }}
+            cpu: {{ .Values.blockNode.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.blockNode.resources.limits.memory }}
+            cpu: {{ .Values.blockNode.resources.limits.cpu }}
         livenessProbe:
           httpGet:
             path: {{ .Values.blockNode.health.liveness.endpoint }}
