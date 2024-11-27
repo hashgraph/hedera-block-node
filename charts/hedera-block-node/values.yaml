@@ -89,6 +89,13 @@ blockNode:
       endpoint: "/healthz/livez"
     metrics:
       port: 9999
+  resources:
+    limits:
+      cpu: "8"
+      memory: "16Gi"
+    requests:
+      cpu: "2"
+      memory: "8Gi"
 
 kubepromstack:
   enabled: true
@@ -114,3 +121,4 @@ kubepromstack:
 
   nodeExporter:
     enabled: true
+
