@@ -27,17 +27,17 @@ helm template --name-template my-bn hedera-block-node/ --dry-run --output-dir ou
 
 To pull the packaged chart from public repo:
 ```bash
-helm pull oci://ghcr.io/hashgraph/hedera-block-node/charts/hedera-block-node-chart --version "${VERSION}"
+helm pull oci://ghcr.io/hashgraph/hedera-block-node/block-node-helm-chart --version "${VERSION}"
 ```
 
 To install the chart with default values:
 ```bash
-helm install "${RELEASE}" hedera-block-node/charts/hedera-block-node-chart-$VERSION.tgz
+helm install "${RELEASE}" hedera-block-node/charts/block-node-helm-chart-$VERSION.tgz
 ```
 
 To install the chart with custom values:
 ```bash
-helm install "${RELEASE}" hedera-block-node/charts/hedera-block-node-chart-$VERSION.tgz -f <path-to-custom-values-file>
+helm install "${RELEASE}" hedera-block-node/charts/block-node-helm-chart-$VERSION.tgz -f <path-to-custom-values-file>
 ```
 
 *Note:* If using the chart directly after cloning the github repo, there is no need to add the repo. and install can be directly.
