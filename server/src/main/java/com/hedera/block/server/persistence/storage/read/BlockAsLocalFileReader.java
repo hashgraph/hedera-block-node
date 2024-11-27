@@ -23,7 +23,7 @@ import java.util.Optional;
 /**
  * A Block reader that reads block-as-file.
  */
-public class BlockAsLocalFileReader implements LocalBlockReader<BlockUnparsed> {
+public final class BlockAsLocalFileReader implements LocalBlockReader<BlockUnparsed> {
     /**
      * Constructor.
      */

@@ -61,7 +61,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class BlockAsDirWriterTest {
+public class BlockAsLocalDirWriterTest {
     private static final String TEMP_DIR = "block-node-unit-test-dir";
     private static final String PERSISTENCE_STORAGE_ROOT_PATH_KEY = "persistence.storage.liveRootPath";
     private final Logger LOGGER = System.getLogger(getClass().getName());
@@ -92,10 +92,11 @@ public class BlockAsDirWriterTest {
     @Test
     public void testWriterAndReaderHappyPath() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
-                .folderPermissions(DEFAULT_TEST_FOLDER_PERMISSIONS)
-                .build();
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext,
+                mock(BlockRemover.class),
+                mock(BlockPathResolver.class),
+                DEFAULT_TEST_FOLDER_PERMISSIONS);
         for (int i = 0; i < 10; i++) {
             if (i == 9) {
                 Optional<List<BlockItemUnparsed>> result = blockWriter.write(List.of(blockItems.get(i)));
@@ -140,9 +141,8 @@ public class BlockAsDirWriterTest {
     @Test
     public void testRemoveBlockWritePerms() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
-                .build();
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
 
         // Change the permissions on the block node root directory
         removeRootWritePerms(testConfig);
@@ -189,9 +189,8 @@ public class BlockAsDirWriterTest {
         final BlockRemover blockRemover = BlockAsLocalDirRemover.of(mock(BlockPathResolver.class));
 
         // Use a spy to simulate an IOException when the first block item is written
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemover, mock(BlockPathResolver.class))
-                        .build());
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = spy(BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null));
         doThrow(IOException.class).when(blockWriter).write(blockItems);
         assertThrows(IOException.class, () -> blockWriter.write(blockItems));
     }
@@ -199,9 +198,8 @@ public class BlockAsDirWriterTest {
     @Test
     public void testRemoveRootDirReadPerm() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
-                .build();
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
 
         // Write the first block item to create the block
         // directory
@@ -243,7 +241,8 @@ public class BlockAsDirWriterTest {
         // for the first 22 block items. Then simulate an IOException on the 23rd block item
         // thrown from a protected write method in the real class. This should trigger the
         // blockRemover instance to remove the partially written block.
-        final TestBlockAsDirWriter blockWriter = spy(new TestBlockAsDirWriter(blockRemover, null, blockNodeContext));
+        final TestBlockAsLocalDirWriter blockWriter =
+                spy(new TestBlockAsLocalDirWriter(blockRemover, null, blockNodeContext));
 
         for (int i = 0; i < 23; i++) {
             // Prepare the block writer to call the actual write method
@@ -315,8 +314,8 @@ public class BlockAsDirWriterTest {
 
     //     TestBlockAsDirWriter overrides the write() method to allow a test spy to simulate an
     //     IOException while allowing the real write() method to remain protected.
-    private static final class TestBlockAsDirWriter extends BlockAsDirWriter {
-        public TestBlockAsDirWriter(
+    private static final class TestBlockAsLocalDirWriter extends BlockAsLocalDirWriter {
+        public TestBlockAsLocalDirWriter(
                 final BlockRemover blockRemover,
                 final FileAttribute<Set<PosixFilePermission>> filePerms,
                 final BlockNodeContext blockNodeContext)

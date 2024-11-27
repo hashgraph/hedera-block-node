@@ -34,7 +34,7 @@ import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
+import com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
@@ -120,9 +120,8 @@ class BlockAccessServiceTest {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         // Generate and persist a block
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
-                .build();
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         blockWriter.write(blockItems);
 

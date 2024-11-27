@@ -33,7 +33,7 @@ import com.hedera.block.server.persistence.storage.remove.BlockAsLocalDirRemover
 import com.hedera.block.server.persistence.storage.remove.BlockAsLocalFileRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.remove.NoOpRemover;
-import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
+import com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter;
 import com.hedera.block.server.persistence.storage.write.BlockAsLocalFileWriter;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.persistence.storage.write.NoOpBlockWriter;
@@ -77,10 +77,9 @@ public interface PersistenceInjectionModule {
         try {
             return switch (persistenceType) {
                 case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileWriter.of(
-                                blockNodeContext, blockRemover, blockPathResolver);
-                case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsDirWriterBuilder.newBuilder(
-                                blockNodeContext, blockRemover, blockPathResolver)
-                        .build();
+                        blockNodeContext, blockRemover, blockPathResolver);
+                case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirWriter.of(
+                        blockNodeContext, blockRemover, blockPathResolver, null);
                 case NO_OP -> NoOpBlockWriter.newInstance();
             };
         } catch (final IOException e) {

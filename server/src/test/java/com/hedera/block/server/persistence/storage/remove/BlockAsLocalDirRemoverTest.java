@@ -25,7 +25,7 @@ import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
-import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
+import com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
@@ -60,9 +60,8 @@ class BlockAsLocalDirRemoverTest {
         // Write a block
         final List<BlockItemUnparsed> blockItems = PersistTestUtils.generateBlockItemsUnparsed(1);
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
-                .build();
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
         for (final BlockItemUnparsed blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));
         }

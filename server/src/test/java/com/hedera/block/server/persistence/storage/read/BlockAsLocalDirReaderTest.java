@@ -33,7 +33,7 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
+import com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
@@ -80,9 +80,8 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testReadPermsRepairSucceeded() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
-                .build();
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
         for (BlockItemUnparsed blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));
         }
@@ -99,9 +98,8 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testRemoveBlockReadPermsRepairFailed() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
-                .build();
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
         blockWriter.write(blockItems);
 
         // Make the block unreadable
@@ -116,9 +114,8 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testRemoveBlockItemReadPerms() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
-                .build();
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
         blockWriter.write(blockItems);
 
         removeBlockItemReadPerms(1, 1, config);
@@ -143,9 +140,8 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testRepairReadPermsFails() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
-                .build();
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
         blockWriter.write(blockItems);
 
         removeBlockReadPerms(1, config);
@@ -178,9 +174,8 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testParseExceptionHandling() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class))
-                .build();
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
         blockWriter.write(blockItems);
 
         // Read the block back and confirm it's read successfully

@@ -24,9 +24,9 @@ import java.util.Optional;
 /**
  * The BlockReader interface defines the contract for reading a block from storage.
  *
- * @param <V> the type of the block to read
+ * @param <T> the type to be returned after reading the block
  */
-public interface BlockReader<V> {
+public interface BlockReader<T> {
     /**
      * Reads the block with the given block number.
      *
@@ -38,5 +38,5 @@ public interface BlockReader<V> {
      *     operation when fetching the block.
      */
     @NonNull
-    Optional<V> read(final long blockNumber) throws IOException, ParseException;
+    Optional<T> read(final long blockNumber) throws IOException, ParseException;
 }

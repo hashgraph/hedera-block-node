@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -41,7 +42,7 @@ import com.hedera.block.server.persistence.StreamPersistenceHandlerImpl;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
+import com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
@@ -254,9 +255,8 @@ public class PbjBlockStreamServiceIntegrationTest {
         int numberOfBlocks = 100;
 
         // Use a real BlockWriter to test the full integration
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsDirWriterBuilder.newBuilder(
-                        blockNodeContext, blockRemoverMock, blockPathResolverMock)
-                .build();
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
         // Register 3 producers - Opening a pipeline is not enough to register a producer.
@@ -518,9 +518,8 @@ public class PbjBlockStreamServiceIntegrationTest {
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
 
         // Use a spy to make sure the write() method throws an IOException
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext, blockRemoverMock, blockPathResolverMock)
-                        .build());
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = spy(BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null));
         doThrow(IOException.class).when(blockWriter).write(blockItems);
 
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);

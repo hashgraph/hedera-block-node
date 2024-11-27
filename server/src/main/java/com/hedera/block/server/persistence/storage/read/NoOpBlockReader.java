@@ -25,7 +25,7 @@ import java.util.Optional;
 /**
  * A no-op Block reader.
  */
-public class NoOpBlockReader implements BlockReader<BlockUnparsed> {
+public final class NoOpBlockReader implements BlockReader<BlockUnparsed> {
     /**
      * Constructor.
      */
