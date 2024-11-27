@@ -23,9 +23,9 @@ To generate the K8 manifest files without installing the chart, you need to clon
 helm template --name-template my-bn hedera-block-node/ --dry-run --output-dir out
 ```
 
-## Install using released chart
+## Install using a published chart
 
-To pull the packaged chart from public repo:
+To pull the packaged chart from the public repo:
 ```bash
 helm pull oci://ghcr.io/hashgraph/hedera-block-node/block-node-helm-chart --version "${VERSION}"
 ```
