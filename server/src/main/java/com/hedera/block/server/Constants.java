@@ -18,8 +18,11 @@ package com.hedera.block.server;
 
 /** Constants used in the BlockNode service. */
 public final class Constants {
-    /** Constant mapped to the semantic name of the Block Node root directory */
-    public static final String BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME = "Block Node Root Directory";
+    /** Constant mapped to the semantic name of the Block Node live root directory */
+    public static final String BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME = "Block Node Live Root Directory";
+
+    /** Constant mapped to the semantic name of the Block Node archive root directory */
+    public static final String BLOCK_NODE_ARCHIVE_ROOT_DIRECTORY_SEMANTIC_NAME = "Block Node Archive Root Directory";
 
     /** Constant mapped to PbjProtocolProvider.CONFIG_NAME in the PBJ Helidon Plugin */
     public static final String PBJ_PROTOCOL_PROVIDER_CONFIG_NAME = "pbj";

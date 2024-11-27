@@ -64,7 +64,7 @@ class BlockAsDirReader implements BlockReader<BlockUnparsed> {
             final FileAttribute<Set<PosixFilePermission>> folderPermissions) {
         LOGGER.log(INFO, "Initializing FileSystemBlockReader");
 
-        final Path blockNodeRootPath = Path.of(config.rootPath());
+        final Path blockNodeRootPath = Path.of(config.liveRootPath());
 
         LOGGER.log(INFO, config.toString());
         LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);

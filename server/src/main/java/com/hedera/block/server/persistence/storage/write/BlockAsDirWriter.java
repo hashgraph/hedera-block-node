@@ -17,7 +17,7 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.Constants.BLOCK_FILE_EXTENSION;
-import static com.hedera.block.server.Constants.BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME;
+import static com.hedera.block.server.Constants.BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
@@ -92,7 +92,7 @@ class BlockAsDirWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
 
         final PersistenceStorageConfig config =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
-        this.blockNodeRootPath = Path.of(config.rootPath());
+        this.blockNodeRootPath = Path.of(config.liveRootPath());
         LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);
 
         if (Objects.nonNull(folderPermissions)) {
@@ -111,7 +111,7 @@ class BlockAsDirWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
 
         // Initialize the block node root directory if it does not exist
         FileUtilities.createFolderPathIfNotExists(
-                blockNodeRootPath, INFO, this.folderPermissions, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME);
+                blockNodeRootPath, INFO, this.folderPermissions, BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
     }
 
     /**
@@ -197,7 +197,7 @@ class BlockAsDirWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
                 blockPathResolver.resolvePathToBlock(currentBlockNumber),
                 DEBUG,
                 folderPermissions,
-                BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME);
+                BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
 
         // Reset
         blockNodeFileNameIndex = 0;

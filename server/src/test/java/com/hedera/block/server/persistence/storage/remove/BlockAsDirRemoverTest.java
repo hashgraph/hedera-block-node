@@ -51,7 +51,7 @@ public class BlockAsDirRemoverTest {
     @BeforeEach
     public void setUp() throws IOException {
         blockNodeContext =
-                TestConfigUtil.getTestBlockNodeContext(Map.of("persistence.storage.rootPath", testPath.toString()));
+                TestConfigUtil.getTestBlockNodeContext(Map.of("persistence.storage.liveRootPath", testPath.toString()));
         testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
     }
 

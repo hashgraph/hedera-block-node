@@ -28,7 +28,8 @@ import java.util.List;
 public final class ServerMappedConfigSourceInitializer {
     private static final List<ConfigMapping> MAPPINGS = List.of(
             new ConfigMapping("consumer.timeoutThresholdMillis", "CONSUMER_TIMEOUT_THRESHOLD_MILLIS"),
-            new ConfigMapping("persistence.storage.rootPath", "PERSISTENCE_STORAGE_ROOT_PATH"),
+            new ConfigMapping("persistence.storage.liveRootPath", "PERSISTENCE_STORAGE_LIVE_ROOT_PATH"),
+            new ConfigMapping("persistence.storage.archiveRootPath", "PERSISTENCE_STORAGE_ARCHIVE_ROOT_PATH"),
             new ConfigMapping("persistence.storage.type", "PERSISTENCE_STORAGE_TYPE"),
             new ConfigMapping("service.delayMillis", "SERVICE_DELAY_MILLIS"),
             new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),

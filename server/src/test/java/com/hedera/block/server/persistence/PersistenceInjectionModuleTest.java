@@ -91,7 +91,7 @@ class PersistenceInjectionModuleTest {
         final BlockNodeContext blockNodeContext = mock(BlockNodeContext.class);
 
         final PersistenceStorageConfig persistenceStorageConfig = mock(PersistenceStorageConfig.class);
-        when(persistenceStorageConfig.rootPath()).thenReturn("/invalid_path/:invalid_directory");
+        when(persistenceStorageConfig.liveRootPath()).thenReturn("/invalid_path/:invalid_directory");
         when(persistenceStorageConfig.type()).thenReturn(StorageType.BLOCK_AS_LOCAL_DIRECTORY);
 
         final Configuration configuration = mock(Configuration.class);

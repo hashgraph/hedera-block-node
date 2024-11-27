@@ -66,7 +66,7 @@ public class BlockAsDirReaderTest {
     @BeforeEach
     public void setUp() throws IOException {
         blockNodeContext =
-                TestConfigUtil.getTestBlockNodeContext(Map.of("persistence.storage.rootPath", testPath.toString()));
+                TestConfigUtil.getTestBlockNodeContext(Map.of("persistence.storage.liveRootPath", testPath.toString()));
         config = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
         blockItems = generateBlockItemsUnparsed(1);
     }
@@ -135,7 +135,7 @@ public class BlockAsDirReaderTest {
     @Test
     public void testPathIsNotDirectory() throws IOException, ParseException {
 
-        final Path blockNodeRootPath = Path.of(config.rootPath());
+        final Path blockNodeRootPath = Path.of(config.liveRootPath());
 
         // Write a file named "1" where a directory should be
         writeBlockItemToPath(blockNodeRootPath.resolve(Path.of("1")), blockItems.getFirst());
@@ -170,7 +170,7 @@ public class BlockAsDirReaderTest {
     public void testBlockNodePathReadFails() throws IOException, ParseException {
 
         // Remove read perm on the root path
-        removePathReadPerms(Path.of(config.rootPath()));
+        removePathReadPerms(Path.of(config.liveRootPath()));
 
         // Use a spy on a subclass of the BlockAsDirReader to proxy calls
         // to the actual methods but to also throw an IOException when
@@ -197,7 +197,7 @@ public class BlockAsDirReaderTest {
 
         final PersistenceStorageConfig persistenceStorageConfig =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
-        final Path blockNodeRootPath = Path.of(persistenceStorageConfig.rootPath());
+        final Path blockNodeRootPath = Path.of(persistenceStorageConfig.liveRootPath());
         Path blockPath = blockNodeRootPath.resolve(String.valueOf(1));
 
         byte[] bytes;
@@ -219,7 +219,7 @@ public class BlockAsDirReaderTest {
     }
 
     public static void removeBlockReadPerms(int blockNumber, final PersistenceStorageConfig config) throws IOException {
-        final Path blockNodeRootPath = Path.of(config.rootPath());
+        final Path blockNodeRootPath = Path.of(config.liveRootPath());
         final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
         removePathReadPerms(blockPath);
     }
@@ -230,7 +230,7 @@ public class BlockAsDirReaderTest {
 
     private void removeBlockItemReadPerms(int blockNumber, int blockItem, PersistenceStorageConfig config)
             throws IOException {
-        final Path blockNodeRootPath = Path.of(config.rootPath());
+        final Path blockNodeRootPath = Path.of(config.liveRootPath());
         final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
         final Path blockItemPath = blockPath.resolve(blockItem + BLOCK_FILE_EXTENSION);
         Files.setPosixFilePermissions(blockItemPath, TestUtils.getNoRead().value());

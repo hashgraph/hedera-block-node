@@ -103,7 +103,8 @@ public interface PersistenceInjectionModule {
         final StorageType persistenceType = config.type();
         return switch (persistenceType) {
             case BLOCK_AS_LOCAL_FILE -> BlockAsFileReaderBuilder.newBuilder().build();
-            case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsDirReaderBuilder.newBuilder(config).build();
+            case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsDirReaderBuilder.newBuilder(config)
+                    .build();
             case NO_OP -> new NoOpBlockReader();
         };
     }
@@ -140,7 +141,7 @@ public interface PersistenceInjectionModule {
     @Singleton
     static BlockPathResolver providesPathResolver(@NonNull final PersistenceStorageConfig config) {
         final StorageType persistenceType = config.type();
-        final Path blockStorageRoot = Path.of(config.rootPath());
+        final Path blockStorageRoot = Path.of(config.liveRootPath());
         return switch (persistenceType) {
             case BLOCK_AS_LOCAL_FILE -> new BlockAsFilePathResolver(blockStorageRoot);
             case BLOCK_AS_LOCAL_DIRECTORY -> new BlockAsDirPathResolver(blockStorageRoot);

@@ -63,7 +63,7 @@ import org.junit.jupiter.api.Test;
 
 public class BlockAsDirWriterTest {
     private static final String TEMP_DIR = "block-node-unit-test-dir";
-    private static final String PERSISTENCE_STORAGE_ROOT_PATH_KEY = "persistence.storage.rootPath";
+    private static final String PERSISTENCE_STORAGE_ROOT_PATH_KEY = "persistence.storage.liveRootPath";
     private final Logger LOGGER = System.getLogger(getClass().getName());
     private Path testPath;
     private BlockNodeContext blockNodeContext;
@@ -302,17 +302,17 @@ public class BlockAsDirWriterTest {
     }
 
     private void removeRootWritePerms(final PersistenceStorageConfig config) throws IOException {
-        final Path blockNodeRootPath = Path.of(config.rootPath());
+        final Path blockNodeRootPath = Path.of(config.liveRootPath());
         Files.setPosixFilePermissions(blockNodeRootPath, TestUtils.getNoWrite().value());
     }
 
     private void removeRootReadPerms(final PersistenceStorageConfig config) throws IOException {
-        final Path blockNodeRootPath = Path.of(config.rootPath());
+        final Path blockNodeRootPath = Path.of(config.liveRootPath());
         Files.setPosixFilePermissions(blockNodeRootPath, TestUtils.getNoRead().value());
     }
 
     private void removeBlockAllPerms(final int blockNumber, final PersistenceStorageConfig config) throws IOException {
-        final Path blockNodeRootPath = Path.of(config.rootPath());
+        final Path blockNodeRootPath = Path.of(config.liveRootPath());
         final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
         Files.setPosixFilePermissions(blockPath, TestUtils.getNoPerms().value());
     }

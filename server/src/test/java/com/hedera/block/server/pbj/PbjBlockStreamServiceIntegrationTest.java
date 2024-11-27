@@ -146,7 +146,7 @@ public class PbjBlockStreamServiceIntegrationTest {
     @BeforeEach
     public void setUp() throws IOException {
         Map<String, String> properties = new HashMap<>();
-        properties.put("persistence.storage.rootPath", testPath.toString());
+        properties.put("persistence.storage.liveRootPath", testPath.toString());
         blockNodeContext = TestConfigUtil.getTestBlockNodeContext(properties);
     }
 
