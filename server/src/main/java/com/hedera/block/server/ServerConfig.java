@@ -31,9 +31,22 @@ import com.swirlds.config.api.validation.annotation.Min;
  */
 @ConfigData("server")
 public record ServerConfig(
-        @ConfigProperty(defaultValue = "4_194_304") @Min(10_240) @Max(16_777_215) int maxMessageSizeBytes,
-        @ConfigProperty(defaultValue = "8080") @Min(1024) @Max(65_535) int port) {
+        @ConfigProperty(defaultValue = defaultMaxMessageSizeBytes)
+                @Min(minMaxMessageSizeBytes)
+                @Max(maxMaxMessageSizeBytes)
+                int maxMessageSizeBytes,
+        @ConfigProperty(defaultValue = defaultPort) @Min(minPort) @Max(maxPort) int port) {
     private static final System.Logger LOGGER = System.getLogger(ServerConfig.class.getName());
+
+    // Constants for maxMessageSizeBytes property
+    private static final String defaultMaxMessageSizeBytes = "4_194_304";
+    private static final long minMaxMessageSizeBytes = 10_240;
+    private static final long maxMaxMessageSizeBytes = 16_777_215;
+
+    // Constants for port property
+    private static final String defaultPort = "8080";
+    private static final int minPort = 1024;
+    private static final int maxPort = 65_535;
 
     /**
      * Validate the configuration.
@@ -50,22 +63,22 @@ public record ServerConfig(
     }
 
     private void validatePort(int port) {
-        if (port < 1024) {
-            throw new IllegalArgumentException("port must be greater than 1024");
+        if (port < minPort) {
+            throw new IllegalArgumentException("port must be greater than " + minPort);
         }
 
-        if (port > 65_535) {
-            throw new IllegalArgumentException("port must be less than 65_535");
+        if (port > maxPort) {
+            throw new IllegalArgumentException("port must be less than " + maxPort);
         }
     }
 
     private void validateMaxMessageSizeBytes(int maxMessageSizeBytes) {
-        if (maxMessageSizeBytes < 10_240) {
-            throw new IllegalArgumentException("maxMessageSizeBytes must be greater than 10_240");
+        if (maxMessageSizeBytes < minMaxMessageSizeBytes) {
+            throw new IllegalArgumentException("maxMessageSizeBytes must be greater than " + minMaxMessageSizeBytes);
         }
 
-        if (maxMessageSizeBytes > 16_777_215) {
-            throw new IllegalArgumentException("maxMessageSizeBytes must be less than 16_777_215");
+        if (maxMessageSizeBytes > maxMaxMessageSizeBytes) {
+            throw new IllegalArgumentException("maxMessageSizeBytes must be less than " + maxMaxMessageSizeBytes);
         }
     }
 }
