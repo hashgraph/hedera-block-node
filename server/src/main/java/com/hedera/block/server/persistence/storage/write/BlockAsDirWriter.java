@@ -117,19 +117,19 @@ class BlockAsDirWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
     /**
      * Writes the given block item to the filesystem.
      *
-     * @param toWrite the block item to write
+     * @param valueToWrite the block item to write
      * @throws IOException if an error occurs while writing the block item
      */
     @NonNull
     @Override
-    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> toWrite)
+    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
             throws IOException, ParseException {
-        final Bytes unparsedBlockHeader = toWrite.getFirst().blockHeader();
+        final Bytes unparsedBlockHeader = valueToWrite.getFirst().blockHeader();
         if (unparsedBlockHeader != null) {
             resetState(BlockHeader.PROTOBUF.parse(unparsedBlockHeader));
         }
 
-        for (final BlockItemUnparsed blockItemUnparsed : toWrite) {
+        for (final BlockItemUnparsed blockItemUnparsed : valueToWrite) {
             final Path blockItemFilePath = calculateBlockItemPath();
             for (int retries = 0; ; retries++) {
                 try {
@@ -155,9 +155,9 @@ class BlockAsDirWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
             }
         }
 
-        if (toWrite.getLast().hasBlockProof()) {
+        if (valueToWrite.getLast().hasBlockProof()) {
             metricsService.get(BlocksPersisted).increment();
-            return Optional.of(toWrite);
+            return Optional.of(valueToWrite);
         } else {
             return Optional.empty();
         }

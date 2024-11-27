@@ -70,19 +70,19 @@ class BlockAsFileWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
      */
     @NonNull
     @Override
-    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> toWrite)
+    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
             throws IOException, ParseException {
-        if (toWrite.getFirst().hasBlockHeader()) {
+        if (valueToWrite.getFirst().hasBlockHeader()) {
             currentBlockUnparsed =
-                    BlockUnparsed.newBuilder().blockItems(toWrite).build();
+                    BlockUnparsed.newBuilder().blockItems(valueToWrite).build();
         } else {
             final List<BlockItemUnparsed> currentItems = currentBlockUnparsed.blockItems();
-            currentItems.addAll(toWrite);
+            currentItems.addAll(valueToWrite);
             currentBlockUnparsed =
                     BlockUnparsed.newBuilder().blockItems(currentItems).build();
         }
 
-        if (toWrite.getLast().hasBlockProof()) {
+        if (valueToWrite.getLast().hasBlockProof()) {
             metricsService.get(BlocksPersisted).increment();
             return Optional.ofNullable(writeToFs(currentBlockUnparsed));
         } else {
