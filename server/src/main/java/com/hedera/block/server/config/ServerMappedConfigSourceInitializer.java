@@ -26,15 +26,14 @@ import java.util.List;
  * A class that extends {@link MappedConfigSource} ir order to have project-relevant initialization.
  */
 public final class ServerMappedConfigSourceInitializer {
-    private static final List<ConfigMapping> MAPPINGS =
-            List.of(
-                    new ConfigMapping(
-                            "consumer.timeoutThresholdMillis", "CONSUMER_TIMEOUT_THRESHOLD_MILLIS"),
-                    new ConfigMapping(
-                            "persistence.storage.rootPath", "PERSISTENCE_STORAGE_ROOT_PATH"),
-                    new ConfigMapping("service.delayMillis", "SERVICE_DELAY_MILLIS"),
-                    new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),
-                    new ConfigMapping("notifier.ringBufferSize", "NOTIFIER_RING_BUFFER_SIZE"));
+    private static final List<ConfigMapping> MAPPINGS = List.of(
+            new ConfigMapping("consumer.timeoutThresholdMillis", "CONSUMER_TIMEOUT_THRESHOLD_MILLIS"),
+            new ConfigMapping("persistence.storage.rootPath", "PERSISTENCE_STORAGE_ROOT_PATH"),
+            new ConfigMapping("service.delayMillis", "SERVICE_DELAY_MILLIS"),
+            new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),
+            new ConfigMapping("notifier.ringBufferSize", "NOTIFIER_RING_BUFFER_SIZE"),
+            new ConfigMapping("server.maxMessageSizeBytes", "SERVER_MAX_MESSAGE_SIZE_BYTES"),
+            new ConfigMapping("server.port", "SERVER_PORT"));
 
     private ServerMappedConfigSourceInitializer() {}
 
@@ -47,8 +46,7 @@ public final class ServerMappedConfigSourceInitializer {
      */
     @NonNull
     public static MappedConfigSource getMappedConfigSource() {
-        final MappedConfigSource config =
-                new MappedConfigSource(SystemEnvironmentConfigSource.getInstance());
+        final MappedConfigSource config = new MappedConfigSource(SystemEnvironmentConfigSource.getInstance());
         MAPPINGS.forEach(config::addMapping);
         return config;
     }

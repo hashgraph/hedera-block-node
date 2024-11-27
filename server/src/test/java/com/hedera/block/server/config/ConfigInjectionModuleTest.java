@@ -18,6 +18,7 @@ package com.hedera.block.server.config;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.hedera.block.server.ServerConfig;
 import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.mediator.MediatorConfig;
 import com.hedera.block.server.notifier.NotifierConfig;
@@ -36,12 +37,10 @@ class ConfigInjectionModuleTest {
 
         BlockNodeContext context = TestConfigUtil.getTestBlockNodeContext();
         Configuration configuration = context.configuration();
-        PersistenceStorageConfig persistenceStorageConfig =
-                configuration.getConfigData(PersistenceStorageConfig.class);
+        PersistenceStorageConfig persistenceStorageConfig = configuration.getConfigData(PersistenceStorageConfig.class);
 
         // Call the method under test
-        PersistenceStorageConfig providedConfig =
-                ConfigInjectionModule.providePersistenceStorageConfig(configuration);
+        PersistenceStorageConfig providedConfig = ConfigInjectionModule.providePersistenceStorageConfig(configuration);
 
         // Verify that the correct config data is returned
         assertNotNull(providedConfig);
@@ -71,8 +70,7 @@ class ConfigInjectionModuleTest {
         PrometheusConfig prometheusConfig = configuration.getConfigData(PrometheusConfig.class);
 
         // Call the method under test
-        PrometheusConfig providedConfig =
-                ConfigInjectionModule.providePrometheusConfig(configuration);
+        PrometheusConfig providedConfig = ConfigInjectionModule.providePrometheusConfig(configuration);
 
         // Verify that the correct config data is returned
         assertNotNull(providedConfig);
@@ -118,5 +116,18 @@ class ConfigInjectionModuleTest {
         // Verify the config
         assertNotNull(providedConfig);
         assertSame(notifierConfig, providedConfig);
+    }
+
+    @Test
+    void testServerConfig() throws IOException {
+        BlockNodeContext context = TestConfigUtil.getTestBlockNodeContext();
+        Configuration configuration = context.configuration();
+        ServerConfig serverConfig = configuration.getConfigData(ServerConfig.class);
+
+        ServerConfig providedConfig = ConfigInjectionModule.provideServerConfig(configuration);
+
+        // Verify the config
+        assertNotNull(providedConfig);
+        assertSame(serverConfig, providedConfig);
     }
 }
