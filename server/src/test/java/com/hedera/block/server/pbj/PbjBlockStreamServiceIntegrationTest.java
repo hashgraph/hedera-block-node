@@ -255,8 +255,8 @@ public class PbjBlockStreamServiceIntegrationTest {
         int numberOfBlocks = 100;
 
         // Use a real BlockWriter to test the full integration
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class));
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
         // Register 3 producers - Opening a pipeline is not enough to register a producer.
@@ -518,8 +518,8 @@ public class PbjBlockStreamServiceIntegrationTest {
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
 
         // Use a spy to make sure the write() method throws an IOException
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = spy(BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null));
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = spy(
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class)));
         doThrow(IOException.class).when(blockWriter).write(blockItems);
 
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);

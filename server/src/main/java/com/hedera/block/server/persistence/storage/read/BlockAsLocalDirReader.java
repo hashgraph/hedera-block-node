@@ -39,7 +39,6 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -50,18 +49,22 @@ import java.util.Set;
 public class BlockAsLocalDirReader implements LocalBlockReader<BlockUnparsed> {
     private final Logger LOGGER = System.getLogger(getClass().getName());
     private final Path blockNodeRootPath;
-    private final FileAttribute<Set<PosixFilePermission>> folderPermissions;
+    private final FileAttribute<Set<PosixFilePermission>> folderPermissions =
+            PosixFilePermissions.asFileAttribute(Set.of(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ,
+                    PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ,
+                    PosixFilePermission.OTHERS_EXECUTE));
 
     /**
-     * Constructor for the BlockAsDirReader class. It initializes the BlockAsDirReader with the
-     * given parameters.
+     * Constructor.
      *
      * @param config the configuration to retrieve the block node root path
-     * @param folderPermissions the folder permissions to set on the block node root path, default  will be used if null provided
      */
-    protected BlockAsLocalDirReader(
-            @NonNull final PersistenceStorageConfig config,
-            final FileAttribute<Set<PosixFilePermission>> folderPermissions) {
+    protected BlockAsLocalDirReader(@NonNull final PersistenceStorageConfig config) {
         LOGGER.log(INFO, "Initializing FileSystemBlockReader");
 
         final Path blockNodeRootPath = Path.of(config.liveRootPath());
@@ -70,20 +73,6 @@ public class BlockAsLocalDirReader implements LocalBlockReader<BlockUnparsed> {
         LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);
 
         this.blockNodeRootPath = blockNodeRootPath;
-
-        if (Objects.nonNull(folderPermissions)) {
-            this.folderPermissions = folderPermissions;
-        } else {
-            // default permissions for folders
-            this.folderPermissions = PosixFilePermissions.asFileAttribute(Set.of(
-                    PosixFilePermission.OWNER_READ,
-                    PosixFilePermission.OWNER_WRITE,
-                    PosixFilePermission.OWNER_EXECUTE,
-                    PosixFilePermission.GROUP_READ,
-                    PosixFilePermission.GROUP_EXECUTE,
-                    PosixFilePermission.OTHERS_READ,
-                    PosixFilePermission.OTHERS_EXECUTE));
-        }
     }
 
     /**
@@ -91,15 +80,13 @@ public class BlockAsLocalDirReader implements LocalBlockReader<BlockUnparsed> {
      * {@link BlockAsLocalDirReader}.
      *
      * @param config valid, {@code non-null} instance of
-     * {@link PersistenceStorageConfig} used to retrieve the block node root path
-     * @param folderPermissions todo remove this field
+     * {@link PersistenceStorageConfig} used to retrieve the block node root
+     * path
      * @return a new, fully initialized instance of
      * {@link BlockAsLocalDirReader}
      */
-    public static BlockAsLocalDirReader of(
-            @NonNull final PersistenceStorageConfig config,
-            final FileAttribute<Set<PosixFilePermission>> folderPermissions) {
-        return new BlockAsLocalDirReader(config, folderPermissions);
+    public static BlockAsLocalDirReader of(@NonNull final PersistenceStorageConfig config) {
+        return new BlockAsLocalDirReader(config);
     }
 
     /**

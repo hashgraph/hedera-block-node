@@ -110,7 +110,7 @@ class BlockAccessServiceTest {
     @Test
     void testSingleBlockHappyPath() throws IOException, ParseException {
 
-        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config);
 
         final PbjBlockAccessService blockAccessService =
                 new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
@@ -119,8 +119,8 @@ class BlockAccessServiceTest {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         // Generate and persist a block
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class));
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         blockWriter.write(blockItems);
 

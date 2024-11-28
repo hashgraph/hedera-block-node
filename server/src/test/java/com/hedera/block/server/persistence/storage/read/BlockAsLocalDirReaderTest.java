@@ -73,15 +73,15 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testReadBlockDoesNotExist() throws IOException, ParseException {
-        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config);
         final Optional<BlockUnparsed> blockOpt = blockReader.read(10000);
         assertTrue(blockOpt.isEmpty());
     }
 
     @Test
     public void testReadPermsRepairSucceeded() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class));
         for (BlockItemUnparsed blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));
         }
@@ -90,7 +90,7 @@ public class BlockAsLocalDirReaderTest {
         removeBlockReadPerms(1, config);
 
         // The default BlockReader will attempt to repair the permissions and should succeed
-        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config);
         final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
         assertEquals(10, blockOpt.get().blockItems().size());
@@ -98,8 +98,8 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testRemoveBlockReadPermsRepairFailed() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class));
         blockWriter.write(blockItems);
 
         // Make the block unreadable
@@ -107,20 +107,20 @@ public class BlockAsLocalDirReaderTest {
 
         // For this test, build the Reader with ineffective repair permissions to
         // simulate a failed repair (root changed the perms, etc.)
-        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config, TestUtils.getNoPerms());
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config);
         final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertTrue(blockOpt.isEmpty());
     }
 
     @Test
     public void testRemoveBlockItemReadPerms() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class));
         blockWriter.write(blockItems);
 
         removeBlockItemReadPerms(1, 1, config);
 
-        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config);
         assertThrows(IOException.class, () -> blockReader.read(1));
     }
 
@@ -133,15 +133,15 @@ public class BlockAsLocalDirReaderTest {
         writeBlockItemToPath(blockNodeRootPath.resolve(Path.of("1")), blockItems.getFirst());
 
         // Should return empty because the path is not a directory
-        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config);
         final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertTrue(blockOpt.isEmpty());
     }
 
     @Test
     public void testRepairReadPermsFails() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class));
         blockWriter.write(blockItems);
 
         removeBlockReadPerms(1, config);
@@ -174,12 +174,12 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testParseExceptionHandling() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class));
         blockWriter.write(blockItems);
 
         // Read the block back and confirm it's read successfully
-        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config);
         final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
 
@@ -228,7 +228,7 @@ public class BlockAsLocalDirReaderTest {
     // IOException while allowing the real setPerm() method to remain protected.
     private static final class TestBlockAsLocalDirReader extends BlockAsLocalDirReader {
         public TestBlockAsLocalDirReader(PersistenceStorageConfig config) {
-            super(config, null);
+            super(config);
         }
 
         @Override

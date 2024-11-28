@@ -79,7 +79,7 @@ public interface PersistenceInjectionModule {
                 case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileWriter.of(
                         blockNodeContext, blockRemover, blockPathResolver);
                 case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirWriter.of(
-                        blockNodeContext, blockRemover, blockPathResolver, null);
+                        blockNodeContext, blockRemover, blockPathResolver);
                 case NO_OP -> NoOpBlockWriter.newInstance();
             };
         } catch (final IOException e) {
@@ -101,7 +101,7 @@ public interface PersistenceInjectionModule {
         final StorageType persistenceType = config.type();
         return switch (persistenceType) {
             case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileReader.newInstance();
-            case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirReader.of(config, null);
+            case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirReader.of(config);
             case NO_OP -> NoOpBlockReader.newInstance();
         };
     }

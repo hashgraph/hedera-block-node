@@ -62,27 +62,31 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
     private final MetricsService metricsService;
     private final BlockRemover blockRemover;
     private final BlockPathResolver blockPathResolver;
-    private final FileAttribute<Set<PosixFilePermission>> folderPermissions;
+    private final FileAttribute<Set<PosixFilePermission>> folderPermissions =
+            PosixFilePermissions.asFileAttribute(Set.of(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ,
+                    PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ,
+                    PosixFilePermission.OTHERS_EXECUTE));
     private long blockNodeFileNameIndex;
     private long currentBlockNumber;
 
     /**
-     * Use the corresponding builder to construct a new BlockAsDirWriter with
-     * the given parameters.
+     * Use the corresponding builder to construct a new BlockAsDirWriter with the given parameters.
      *
      * @param blockNodeContext the block node context to use for writing blocks
      * @param blockRemover the block remover to use for removing blocks
      * @param blockPathResolver used internally to resolve paths
-     * @param folderPermissions the folder permissions to use for writing
-     * blocks, if null provided then defaults will be used
      *
      * @throws IOException if an error occurs while initializing the BlockAsDirWriter
      */
     protected BlockAsLocalDirWriter(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
-            @NonNull final BlockPathResolver blockPathResolver,
-            final FileAttribute<Set<PosixFilePermission>> folderPermissions)
+            @NonNull final BlockPathResolver blockPathResolver)
             throws IOException {
         LOGGER.log(INFO, "Initializing FileSystemBlockStorage");
 
@@ -94,20 +98,6 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
         this.blockNodeRootPath = Path.of(config.liveRootPath());
         LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);
-
-        if (Objects.nonNull(folderPermissions)) {
-            this.folderPermissions = folderPermissions;
-        } else {
-            // default permissions for folders
-            this.folderPermissions = PosixFilePermissions.asFileAttribute(Set.of(
-                    PosixFilePermission.OWNER_READ,
-                    PosixFilePermission.OWNER_WRITE,
-                    PosixFilePermission.OWNER_EXECUTE,
-                    PosixFilePermission.GROUP_READ,
-                    PosixFilePermission.GROUP_EXECUTE,
-                    PosixFilePermission.OTHERS_READ,
-                    PosixFilePermission.OTHERS_EXECUTE));
-        }
 
         // Initialize the block node root directory if it does not exist
         FileUtilities.createFolderPathIfNotExists(
@@ -124,17 +114,15 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
      * {@link BlockRemover} used to remove blocks in case of cleanup
      * @param blockPathResolver valid, {@code non-null} instance of
      * {@link BlockPathResolver} used to resolve paths to Blocks
-     * @param folderPermissions todo remove
      * @return a new, fully initialized instance of {@link BlockAsLocalDirWriter}
      * @throws IOException if an error occurs while initializing the BlockAsDirWriter
      */
     public static BlockAsLocalDirWriter of(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
-            @NonNull final BlockPathResolver blockPathResolver,
-            final FileAttribute<Set<PosixFilePermission>> folderPermissions)
+            @NonNull final BlockPathResolver blockPathResolver)
             throws IOException {
-        return new BlockAsLocalDirWriter(blockNodeContext, blockRemover, blockPathResolver, folderPermissions);
+        return new BlockAsLocalDirWriter(blockNodeContext, blockRemover, blockPathResolver);
     }
 
     /**

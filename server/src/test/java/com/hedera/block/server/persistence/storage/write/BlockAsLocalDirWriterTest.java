@@ -18,7 +18,6 @@ package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReaderTest.removeBlockReadPerms;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
-import static com.hedera.block.server.util.TestConfigUtil.DEFAULT_TEST_FOLDER_PERMISSIONS;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
@@ -92,11 +91,8 @@ public class BlockAsLocalDirWriterTest {
     @Test
     public void testWriterAndReaderHappyPath() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
-                blockNodeContext,
-                mock(BlockRemover.class),
-                mock(BlockPathResolver.class),
-                DEFAULT_TEST_FOLDER_PERMISSIONS);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class));
         for (int i = 0; i < 10; i++) {
             if (i == 9) {
                 Optional<List<BlockItemUnparsed>> result = blockWriter.write(List.of(blockItems.get(i)));
@@ -112,7 +108,7 @@ public class BlockAsLocalDirWriterTest {
         }
 
         // Confirm the block
-        BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig, null);
+        BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig);
         Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
 
@@ -141,8 +137,8 @@ public class BlockAsLocalDirWriterTest {
     @Test
     public void testRemoveBlockWritePerms() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class));
 
         // Change the permissions on the block node root directory
         removeRootWritePerms(testConfig);
@@ -153,7 +149,7 @@ public class BlockAsLocalDirWriterTest {
         assertFalse(result.isPresent());
 
         // Confirm we're able to read 1 block item
-        BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig, null);
+        BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig);
         Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
         assertEquals(1, blockOpt.get().blockItems().size());
@@ -189,8 +185,8 @@ public class BlockAsLocalDirWriterTest {
         final BlockRemover blockRemover = BlockAsLocalDirRemover.of(mock(BlockPathResolver.class));
 
         // Use a spy to simulate an IOException when the first block item is written
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = spy(BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null));
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = spy(
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class)));
         doThrow(IOException.class).when(blockWriter).write(blockItems);
         assertThrows(IOException.class, () -> blockWriter.write(blockItems));
     }
@@ -198,8 +194,8 @@ public class BlockAsLocalDirWriterTest {
     @Test
     public void testRemoveRootDirReadPerm() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class));
 
         // Write the first block item to create the block
         // directory
@@ -227,7 +223,7 @@ public class BlockAsLocalDirWriterTest {
             }
         }
 
-        BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig, null);
+        BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig);
         Optional<BlockUnparsed> blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
         assertEquals(10, blockOpt.get().blockItems().size());
@@ -242,7 +238,7 @@ public class BlockAsLocalDirWriterTest {
         // thrown from a protected write method in the real class. This should trigger the
         // blockRemover instance to remove the partially written block.
         final TestBlockAsLocalDirWriter blockWriter =
-                spy(new TestBlockAsLocalDirWriter(blockRemover, null, blockNodeContext));
+                spy(new TestBlockAsLocalDirWriter(blockRemover, blockNodeContext));
 
         for (int i = 0; i < 23; i++) {
             // Prepare the block writer to call the actual write method
@@ -272,7 +268,7 @@ public class BlockAsLocalDirWriterTest {
         assertThrows(IOException.class, () -> blockWriter.write(List.of(blockItems.get(23))));
 
         // Verify the partially written block was removed
-        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig);
         Optional<BlockUnparsed> blockOpt = blockReader.read(3);
         assertTrue(blockOpt.isEmpty());
 
@@ -317,10 +313,9 @@ public class BlockAsLocalDirWriterTest {
     private static final class TestBlockAsLocalDirWriter extends BlockAsLocalDirWriter {
         public TestBlockAsLocalDirWriter(
                 final BlockRemover blockRemover,
-                final FileAttribute<Set<PosixFilePermission>> filePerms,
                 final BlockNodeContext blockNodeContext)
                 throws IOException {
-            super(blockNodeContext, blockRemover, mock(BlockPathResolver.class), filePerms);
+            super(blockNodeContext, blockRemover, mock(BlockPathResolver.class));
         }
 
         @Override

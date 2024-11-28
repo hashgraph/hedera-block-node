@@ -60,8 +60,8 @@ class BlockAsLocalDirRemoverTest {
         // Write a block
         final List<BlockItemUnparsed> blockItems = PersistTestUtils.generateBlockItemsUnparsed(1);
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class), null);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class));
         for (final BlockItemUnparsed blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));
         }
@@ -71,7 +71,7 @@ class BlockAsLocalDirRemoverTest {
         toTest.remove(2);
 
         // Verify the block was not removed
-        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig, null);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig);
         final Optional<BlockUnparsed> before = blockReader.read(1);
         assertThat(before)
                 .isNotNull()
