@@ -50,12 +50,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -311,9 +308,7 @@ public class BlockAsLocalDirWriterTest {
     //     TestBlockAsDirWriter overrides the write() method to allow a test spy to simulate an
     //     IOException while allowing the real write() method to remain protected.
     private static final class TestBlockAsLocalDirWriter extends BlockAsLocalDirWriter {
-        public TestBlockAsLocalDirWriter(
-                final BlockRemover blockRemover,
-                final BlockNodeContext blockNodeContext)
+        public TestBlockAsLocalDirWriter(final BlockRemover blockRemover, final BlockNodeContext blockNodeContext)
                 throws IOException {
             super(blockNodeContext, blockRemover, mock(BlockPathResolver.class));
         }
