@@ -74,10 +74,14 @@ class BlockNodeAppTest {
     @Mock
     private BlockNodeContext blockNodeContext;
 
+    ServerConfig serverConfig;
+
     private BlockNodeApp blockNodeApp;
 
     @BeforeEach
     void setup() {
+
+        serverConfig = new ServerConfig(4_194_304, 8080);
 
         blockNodeApp = new BlockNodeApp(
                 serviceStatus,
@@ -85,7 +89,8 @@ class BlockNodeAppTest {
                 new PbjBlockStreamServiceProxy(
                         liveStreamMediator, serviceStatus, blockNodeEventHandler, notifier, blockNodeContext),
                 new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext),
-                webServerBuilder);
+                webServerBuilder,
+                serverConfig);
 
         when(webServerBuilder.port(8080)).thenReturn(webServerBuilder);
         when(webServerBuilder.addProtocol(any(PbjConfig.class))).thenReturn(webServerBuilder);

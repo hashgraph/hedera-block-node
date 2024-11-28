@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.config;
 
+import com.hedera.block.server.ServerConfig;
 import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.mediator.MediatorConfig;
 import com.hedera.block.server.notifier.NotifierConfig;
@@ -117,5 +118,17 @@ public interface ConfigInjectionModule {
     @Provides
     static ProducerConfig provideProducerConfig(Configuration configuration) {
         return configuration.getConfigData(ProducerConfig.class);
+    }
+
+    /**
+     * Provides a server configuration singleton using the configuration.
+     *
+     * @param configuration is the configuration singleton
+     * @return a server configuration singleton
+     */
+    @Singleton
+    @Provides
+    static ServerConfig provideServerConfig(Configuration configuration) {
+        return configuration.getConfigData(ServerConfig.class);
     }
 }

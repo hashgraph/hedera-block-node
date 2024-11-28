@@ -33,7 +33,9 @@ public final class ServerMappedConfigSourceInitializer {
             new ConfigMapping("persistence.storage.type", "PERSISTENCE_STORAGE_TYPE"),
             new ConfigMapping("service.delayMillis", "SERVICE_DELAY_MILLIS"),
             new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),
-            new ConfigMapping("notifier.ringBufferSize", "NOTIFIER_RING_BUFFER_SIZE"));
+            new ConfigMapping("notifier.ringBufferSize", "NOTIFIER_RING_BUFFER_SIZE"),
+            new ConfigMapping("server.maxMessageSizeBytes", "SERVER_MAX_MESSAGE_SIZE_BYTES"),
+            new ConfigMapping("server.port", "SERVER_PORT"));
 
     private ServerMappedConfigSourceInitializer() {}
 
