@@ -18,7 +18,11 @@ package com.hedera.block.server.util;
 
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.hapi.block.stream.input.EventHeader;
@@ -26,15 +30,17 @@ import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.hapi.node.base.SemanticVersion;
 import com.hedera.hapi.platform.event.EventCore;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public final class PersistTestUtils {
-
     private static final Logger LOGGER = System.getLogger(PersistTestUtils.class.getName());
+    public static final String PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY = "persistence.storage.liveRootPath";
 
     private PersistTestUtils() {}
 
@@ -104,5 +110,49 @@ public final class PersistTestUtils {
         }
 
         return reversed;
+    }
+
+    /**
+     * This method mocks and trains a {@link BlockAsLocalDirPathResolver}. It
+     * requires a path to the live root test directory to use as base (usually
+     * it would be a temp dir). The mock is trained to return the resolved path
+     * to a block by a given block number, using the live root test directory as
+     * a base. The mock captures anyLong input so it is dynamic in that sense.
+     *
+     * @param liveRootTestPath path to the live root test directory
+     * @return a trained mock that will return the resolved path to a block by a
+     * given block number
+     */
+    public static BlockAsLocalDirPathResolver getTrainedBlockAsLocalDirPathResolver(
+            @NonNull final Path liveRootTestPath) {
+        return doTrainResolver(mock(BlockAsLocalDirPathResolver.class), liveRootTestPath);
+    }
+
+    /**
+     * This method trains a {@link BlockAsLocalDirPathResolver} to return the
+     * resolved path to a block by a given block number, using the live root
+     * test directory as a base. The resolver is trained to return the resolved
+     * path to a block by a given block number, using the live root test
+     * directory as a base. The mock captures anyLong input so it is dynamic
+     * in that sense.
+     *
+     * @param resolverToTrain  the resolver to train
+     * @param liveRootTestPath path to the live root test directory
+     * @return the trained resolver
+     */
+    public static BlockAsLocalDirPathResolver trainAndReturnBlockAsLocalDirPathResolver(
+            @NonNull final BlockAsLocalDirPathResolver resolverToTrain, @NonNull final Path liveRootTestPath) {
+        return doTrainResolver(resolverToTrain, liveRootTestPath);
+    }
+
+    private static BlockAsLocalDirPathResolver doTrainResolver(
+            @NonNull final BlockAsLocalDirPathResolver resolverToTrain, @NonNull final Path liveRootTestPath) {
+        Objects.requireNonNull(resolverToTrain);
+        Objects.requireNonNull(liveRootTestPath);
+        when(resolverToTrain.resolvePathToBlock(anyLong())).thenAnswer(invocation -> {
+            final long blockNumber = invocation.getArgument(0);
+            return Path.of(liveRootTestPath.resolve(Long.toString(blockNumber)).toString());
+        });
+        return resolverToTrain;
     }
 }

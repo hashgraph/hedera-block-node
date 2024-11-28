@@ -18,7 +18,9 @@ package com.hedera.block.server.grpc;
 
 import static com.hedera.block.server.Constants.FULL_SERVICE_NAME_BLOCK_ACCESS;
 import static com.hedera.block.server.Constants.SERVICE_NAME_BLOCK_ACCESS;
+import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
@@ -30,13 +32,14 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.pbj.PbjBlockAccessService;
 import com.hedera.block.server.pbj.PbjBlockAccessServiceProxy;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
@@ -60,6 +63,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class BlockAccessServiceTest {
+    private BlockAsLocalDirPathResolver pathResolverMock;
 
     @Mock
     private Pipeline<? super Bytes> responseObserver;
@@ -68,28 +72,27 @@ class BlockAccessServiceTest {
     private BlockReader<BlockUnparsed> blockReader;
 
     @Mock
-    private BlockWriter<List<BlockItemUnparsed>> blockWriter;
-
-    @Mock
     private ServiceStatus serviceStatus;
 
-    private static final int testTimeout = 1000;
-
     @TempDir
-    private Path testPath;
+    private Path testLiveRootPath;
 
     private BlockNodeContext blockNodeContext;
-    private PersistenceStorageConfig config;
+    private PersistenceStorageConfig testConfig;
     private PbjBlockAccessService blockAccessService;
 
     @BeforeEach
     public void setUp() throws IOException {
 
-        blockNodeContext =
-                TestConfigUtil.getTestBlockNodeContext(Map.of("persistence.storage.liveRootPath", testPath.toString()));
-        config = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
+        blockNodeContext = TestConfigUtil.getTestBlockNodeContext(
+                Map.of(PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY, testLiveRootPath.toString()));
+        testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
 
         blockAccessService = new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
+
+        final String testConfigLiveRootPath = testConfig.liveRootPath();
+        assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
+        pathResolverMock = mock(BlockAsLocalDirPathResolver.class);
     }
 
     @Test
@@ -109,8 +112,7 @@ class BlockAccessServiceTest {
 
     @Test
     void testSingleBlockHappyPath() throws IOException, ParseException {
-
-        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(config);
+        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig);
 
         final PbjBlockAccessService blockAccessService =
                 new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
@@ -118,9 +120,12 @@ class BlockAccessServiceTest {
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
 
+        final BlockAsLocalDirPathResolver trainedPathResolver =
+                PersistTestUtils.trainAndReturnBlockAsLocalDirPathResolver(
+                        pathResolverMock, Path.of(testConfig.liveRootPath()));
         // Generate and persist a block
         final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class));
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), trainedPathResolver);
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         blockWriter.write(blockItems);
 

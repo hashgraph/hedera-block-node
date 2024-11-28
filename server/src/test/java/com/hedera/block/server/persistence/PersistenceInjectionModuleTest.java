@@ -16,7 +16,6 @@
 
 package com.hedera.block.server.persistence;
 
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 import static org.assertj.core.api.Assertions.assertThatRuntimeException;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
@@ -40,7 +39,6 @@ import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.swirlds.config.api.Configuration;
-import com.swirlds.metrics.api.Counter;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,14 +98,11 @@ class PersistenceInjectionModuleTest {
 
         final MetricsService metricsServiceMock = mock(MetricsService.class);
         when(blockNodeContext.metricsService()).thenReturn(metricsServiceMock);
-        when(metricsServiceMock.get(BlocksPersisted)).thenReturn(mock(Counter.class));
 
         // Expect a RuntimeException due to the IOException
         assertThatRuntimeException()
-                .isThrownBy(() -> {
-                    PersistenceInjectionModule.providesBlockWriter(
-                            blockNodeContext, NoOpRemover.newInstance(), NoOpBlockPathResolver.newInstance());
-                })
+                .isThrownBy(() -> PersistenceInjectionModule.providesBlockWriter(
+                        blockNodeContext, NoOpRemover.newInstance(), NoOpBlockPathResolver.newInstance()))
                 .withCauseInstanceOf(IOException.class)
                 .withMessage("Failed to create BlockWriter");
     }

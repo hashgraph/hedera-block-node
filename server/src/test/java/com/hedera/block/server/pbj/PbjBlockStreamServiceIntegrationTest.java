@@ -19,8 +19,9 @@ package com.hedera.block.server.pbj;
 import static com.hedera.block.server.util.PbjProtoTestUtils.buildAck;
 import static com.hedera.block.server.util.PbjProtoTestUtils.buildEmptyPublishStreamRequest;
 import static com.hedera.block.server.util.PbjProtoTestUtils.buildEmptySubscribeStreamRequest;
+import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
-import static java.lang.System.Logger;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -39,13 +40,15 @@ import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.notifier.NotifierImpl;
 import com.hedera.block.server.persistence.StreamPersistenceHandlerImpl;
-import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
+import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.Acknowledgement;
@@ -86,8 +89,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class PbjBlockStreamServiceIntegrationTest {
-
-    private final Logger LOGGER = System.getLogger(getClass().getName());
+    private static final int testTimeout = 2000;
+    private BlockAsLocalDirPathResolver pathResolverMock;
 
     @Mock
     private Notifier notifier;
@@ -131,29 +134,24 @@ public class PbjBlockStreamServiceIntegrationTest {
     @Mock
     private ServiceInterface.RequestOptions options;
 
-    @Mock
-    private BlockRemover blockRemoverMock;
-
-    @Mock
-    private BlockPathResolver blockPathResolverMock;
-
     @TempDir
-    private Path testPath;
+    private Path testLiveRootPath;
 
     private BlockNodeContext blockNodeContext;
-
-    private static final int testTimeout = 2000;
+    private PersistenceStorageConfig testConfig;
 
     @BeforeEach
     public void setUp() throws IOException {
         Map<String, String> properties = new HashMap<>();
-        properties.put("persistence.storage.liveRootPath", testPath.toString());
+        properties.put(PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY, testLiveRootPath.toString());
         blockNodeContext = TestConfigUtil.getTestBlockNodeContext(properties);
-    }
+        testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
 
-    @AfterEach
-    public void tearDown() {
-        TestUtils.deleteDirectory(testPath.toFile());
+        pathResolverMock = mock(BlockAsLocalDirPathResolver.class);
+
+        final String testConfigLiveRootPath = testConfig.liveRootPath();
+        assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
+        pathResolverMock = mock(BlockAsLocalDirPathResolver.class);
     }
 
     @Test
@@ -254,9 +252,12 @@ public class PbjBlockStreamServiceIntegrationTest {
     public void testFullProducerConsumerHappyPath() throws IOException {
         int numberOfBlocks = 100;
 
+        final BlockAsLocalDirPathResolver trainedPathResolver =
+                PersistTestUtils.trainAndReturnBlockAsLocalDirPathResolver(
+                        pathResolverMock, Path.of(testConfig.liveRootPath()));
         // Use a real BlockWriter to test the full integration
         final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class));
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), trainedPathResolver);
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
         // Register 3 producers - Opening a pipeline is not enough to register a producer.
@@ -518,8 +519,8 @@ public class PbjBlockStreamServiceIntegrationTest {
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
 
         // Use a spy to make sure the write() method throws an IOException
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = spy(
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class)));
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                spy(BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock));
         doThrow(IOException.class).when(blockWriter).write(blockItems);
 
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);

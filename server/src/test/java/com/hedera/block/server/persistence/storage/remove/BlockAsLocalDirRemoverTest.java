@@ -16,13 +16,14 @@
 
 package com.hedera.block.server.persistence.storage.remove;
 
+import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.from;
 import static org.mockito.Mockito.mock;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter;
@@ -44,15 +45,20 @@ import org.junit.jupiter.api.io.TempDir;
 class BlockAsLocalDirRemoverTest {
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig testConfig;
+    private BlockAsLocalDirPathResolver pathResolverMock;
 
     @TempDir
-    private Path testPath;
+    private Path testLiveRootPath;
 
     @BeforeEach
     public void setUp() throws IOException {
-        blockNodeContext =
-                TestConfigUtil.getTestBlockNodeContext(Map.of("persistence.storage.liveRootPath", testPath.toString()));
+        blockNodeContext = TestConfigUtil.getTestBlockNodeContext(
+                Map.of(PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY, testLiveRootPath.toString()));
         testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
+
+        final String testConfigLiveRootPath = testConfig.liveRootPath();
+        assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
+        pathResolverMock = PersistTestUtils.getTrainedBlockAsLocalDirPathResolver(Path.of(testConfigLiveRootPath));
     }
 
     @Test
@@ -61,13 +67,13 @@ class BlockAsLocalDirRemoverTest {
         final List<BlockItemUnparsed> blockItems = PersistTestUtils.generateBlockItemsUnparsed(1);
 
         final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), mock(BlockPathResolver.class));
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         for (final BlockItemUnparsed blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));
         }
 
         // Remove a block that does not exist
-        final BlockRemover toTest = BlockAsLocalDirRemover.of(mock(BlockPathResolver.class));
+        final BlockRemover toTest = BlockAsLocalDirRemover.of(pathResolverMock);
         toTest.remove(2);
 
         // Verify the block was not removed
