@@ -22,6 +22,7 @@ import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 
+import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
@@ -47,9 +48,8 @@ import java.util.Set;
  * containing block items. The block items are stored as files within the block directory.
  */
 public class BlockAsLocalDirReader implements LocalBlockReader<BlockUnparsed> {
-    private final Logger LOGGER = System.getLogger(getClass().getName());
-    private final Path blockNodeRootPath;
-    private final FileAttribute<Set<PosixFilePermission>> folderPermissions =
+    private static final Logger LOGGER = System.getLogger(BlockAsLocalDirReader.class.getName());
+    private static final FileAttribute<Set<PosixFilePermission>> DEFAULT_FOLDER_PERMISSIONS =
             PosixFilePermissions.asFileAttribute(Set.of(
                     PosixFilePermission.OWNER_READ,
                     PosixFilePermission.OWNER_WRITE,
@@ -58,21 +58,16 @@ public class BlockAsLocalDirReader implements LocalBlockReader<BlockUnparsed> {
                     PosixFilePermission.GROUP_EXECUTE,
                     PosixFilePermission.OTHERS_READ,
                     PosixFilePermission.OTHERS_EXECUTE));
+    private final Path liveRootPath;
 
     /**
      * Constructor.
      *
-     * @param config the configuration to retrieve the block node root path
+     * @param config the configuration to retrieve the root paths
      */
     protected BlockAsLocalDirReader(@NonNull final PersistenceStorageConfig config) {
-        LOGGER.log(INFO, "Initializing FileSystemBlockReader");
-
-        final Path blockNodeRootPath = Path.of(config.liveRootPath());
-
-        LOGGER.log(INFO, config.toString());
-        LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);
-
-        this.blockNodeRootPath = blockNodeRootPath;
+        LOGGER.log(INFO, "Initializing %s...".formatted(getClass().getName()));
+        this.liveRootPath = Path.of(config.liveRootPath());
     }
 
     /**
@@ -100,15 +95,15 @@ public class BlockAsLocalDirReader implements LocalBlockReader<BlockUnparsed> {
     @NonNull
     @Override
     public Optional<BlockUnparsed> read(final long blockNumber) throws IOException, ParseException {
-
-        // Verify path attributes of the block node root path
-        if (isPathDisqualified(blockNodeRootPath)) {
+        Preconditions.requireWhole(blockNumber);
+        // Verify path attributes of the block node live root path
+        if (isPathDisqualified(liveRootPath)) {
             return Optional.empty();
         }
 
         // Verify path attributes of the block directory within the
-        // block node root path
-        final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
+        // block node live root path
+        final Path blockPath = liveRootPath.resolve(String.valueOf(blockNumber));
         if (isPathDisqualified(blockPath)) {
             return Optional.empty();
         }
@@ -133,7 +128,6 @@ public class BlockAsLocalDirReader implements LocalBlockReader<BlockUnparsed> {
                     blockItems.add(blockItemOpt.get());
                     continue;
                 }
-
                 break;
             }
 
@@ -141,7 +135,7 @@ public class BlockAsLocalDirReader implements LocalBlockReader<BlockUnparsed> {
 
             // Return the Block
             return Optional.of(builder.build());
-        } catch (IOException io) {
+        } catch (final IOException io) {
             LOGGER.log(ERROR, "Error reading block: " + blockPath, io);
             throw io;
         }
@@ -190,7 +184,7 @@ public class BlockAsLocalDirReader implements LocalBlockReader<BlockUnparsed> {
             try {
                 // If resetting the permissions fails or
                 // if the path is still unreadable, return true.
-                setPerm(path, folderPermissions.value());
+                setPerm(path, DEFAULT_FOLDER_PERMISSIONS.value());
                 if (!path.toFile().canRead()) {
                     return true;
                 }

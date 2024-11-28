@@ -36,9 +36,8 @@ import org.testcontainers.containers.Container;
  */
 @DisplayName("Positive Data Persistence Tests")
 public class PositiveDataPersistenceTests extends BaseSuite {
+    // @todo(#371) - the default life/archive root path must be absolute starting from /opt
     private final String[] GET_BLOCKS_COMMAND = new String[] {"ls", "hashgraph/blocknode/data/live", "-1"};
-
-    private BlockStreamSimulatorApp blockStreamSimulatorApp;
 
     private Future<?> simulatorThread;
 
@@ -66,7 +65,7 @@ public class PositiveDataPersistenceTests extends BaseSuite {
         String savedBlocksFolderBefore = getContainerCommandResult(GET_BLOCKS_COMMAND);
         int savedBlocksCountBefore = getSavedBlocksCount(savedBlocksFolderBefore);
 
-        blockStreamSimulatorApp = createBlockSimulator();
+        final BlockStreamSimulatorApp blockStreamSimulatorApp = createBlockSimulator();
         simulatorThread = startSimulatorInThread(blockStreamSimulatorApp);
         Thread.sleep(5000);
         blockStreamSimulatorApp.stop();

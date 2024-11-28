@@ -28,29 +28,29 @@ import java.util.Objects;
  */
 public final class BlockAsLocalFilePathResolver implements BlockPathResolver {
     private static final int MAX_LONG_DIGITS = 19;
-    private final Path blockStorageRoot;
+    private final Path liveRootPath;
 
     /**
      * Constructor.
      *
-     * @param blockStorageRoot valid, {@code non-null} instance of {@link Path}
-     * that points to the root of the block storage
+     * @param liveRootPath valid, {@code non-null} instance of {@link Path}
+     * that points to the live root of the block storage
      */
-    private BlockAsLocalFilePathResolver(@NonNull final Path blockStorageRoot) {
-        this.blockStorageRoot = Objects.requireNonNull(blockStorageRoot);
+    private BlockAsLocalFilePathResolver(@NonNull final Path liveRootPath) {
+        this.liveRootPath = Objects.requireNonNull(liveRootPath);
     }
 
     /**
      * This method creates and returns a new instance of
      * {@link BlockAsLocalFilePathResolver}.
      *
-     * @param blockStorageRoot valid, {@code non-null} instance of {@link Path}
-     * that points to the root of the block storage
+     * @param liveRootPath valid, {@code non-null} instance of {@link Path}
+     * that points to the live root of the block storage
      * @return a new, fully initialized instance of
      * {@link BlockAsLocalFilePathResolver}
      */
-    public static BlockAsLocalFilePathResolver of(@NonNull final Path blockStorageRoot) {
-        return new BlockAsLocalFilePathResolver(blockStorageRoot);
+    public static BlockAsLocalFilePathResolver of(@NonNull final Path liveRootPath) {
+        return new BlockAsLocalFilePathResolver(liveRootPath);
     }
 
     /**
@@ -59,11 +59,11 @@ public final class BlockAsLocalFilePathResolver implements BlockPathResolver {
     @NonNull
     @Override
     public Path resolvePathToBlock(final long blockNumber) {
-        Preconditions.requirePositive(blockNumber); // todo do we have block number 0?
+        Preconditions.requireWhole(blockNumber);
         final String rawBlockNumber = String.format("%0" + MAX_LONG_DIGITS + "d", blockNumber);
         final String[] blockPath = rawBlockNumber.split("");
         final String blockFileName = rawBlockNumber.concat(Constants.BLOCK_FILE_EXTENSION);
         blockPath[blockPath.length - 1] = blockFileName;
-        return Paths.get(blockStorageRoot.toAbsolutePath().toString(), blockPath);
+        return Paths.get(liveRootPath.toString(), blockPath);
     }
 }

@@ -57,12 +57,8 @@ import java.util.Set;
  * caller.
  */
 public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
-    private final Logger LOGGER = System.getLogger(getClass().getName());
-    private final Path blockNodeRootPath;
-    private final MetricsService metricsService;
-    private final BlockRemover blockRemover;
-    private final BlockPathResolver blockPathResolver;
-    private final FileAttribute<Set<PosixFilePermission>> folderPermissions =
+    private static final Logger LOGGER = System.getLogger(BlockAsLocalDirWriter.class.getName());
+    private static final FileAttribute<Set<PosixFilePermission>> DEFAULT_FOLDER_PERMISSIONS =
             PosixFilePermissions.asFileAttribute(Set.of(
                     PosixFilePermission.OWNER_READ,
                     PosixFilePermission.OWNER_WRITE,
@@ -71,6 +67,10 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
                     PosixFilePermission.GROUP_EXECUTE,
                     PosixFilePermission.OTHERS_READ,
                     PosixFilePermission.OTHERS_EXECUTE));
+    private final Path liveRootPath;
+    private final MetricsService metricsService;
+    private final BlockRemover blockRemover;
+    private final BlockPathResolver blockPathResolver;
     private long blockNodeFileNameIndex;
     private long currentBlockNumber;
 
@@ -88,7 +88,7 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
             @NonNull final BlockRemover blockRemover,
             @NonNull final BlockPathResolver blockPathResolver)
             throws IOException {
-        LOGGER.log(INFO, "Initializing FileSystemBlockStorage");
+        LOGGER.log(INFO, "Initializing %s...".formatted(getClass().getName()));
 
         this.metricsService = Objects.requireNonNull(blockNodeContext.metricsService());
         this.blockRemover = Objects.requireNonNull(blockRemover);
@@ -96,12 +96,11 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
 
         final PersistenceStorageConfig config =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
-        this.blockNodeRootPath = Path.of(config.liveRootPath());
-        LOGGER.log(INFO, "Block Node Root Path: " + blockNodeRootPath);
+        this.liveRootPath = Path.of(config.liveRootPath());
 
         // Initialize the block node root directory if it does not exist
         FileUtilities.createFolderPathIfNotExists(
-                blockNodeRootPath, INFO, this.folderPermissions, BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
+                liveRootPath, INFO, DEFAULT_FOLDER_PERMISSIONS, BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
     }
 
     /**
@@ -158,7 +157,7 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
                     } else {
                         // Attempt to repair the permissions on the block path
                         // and the blockItem path
-                        repairPermissions(blockNodeRootPath);
+                        repairPermissions(liveRootPath);
                         repairPermissions(blockPathResolver.resolvePathToBlock(currentBlockNumber));
                         LOGGER.log(INFO, "Retrying to write the BlockItem protobuf to a file");
                     }
@@ -201,13 +200,13 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
 
         // Check the blockNodeRootPath permissions and
         // attempt to repair them if possible
-        repairPermissions(blockNodeRootPath);
+        repairPermissions(liveRootPath);
 
         // Construct the path to the block directory
         FileUtilities.createFolderPathIfNotExists(
                 blockPathResolver.resolvePathToBlock(currentBlockNumber),
                 DEBUG,
-                folderPermissions,
+                DEFAULT_FOLDER_PERMISSIONS,
                 BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
 
         // Reset
@@ -221,7 +220,7 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
             LOGGER.log(ERROR, "Block node root directory is not writable. Attempting to change the" + " permissions.");
 
             // Attempt to restore the permissions on the block node root directory
-            Files.setPosixFilePermissions(path, folderPermissions.value());
+            Files.setPosixFilePermissions(path, DEFAULT_FOLDER_PERMISSIONS.value());
         }
     }
 

@@ -162,12 +162,12 @@ public final class Preconditions {
     public static long requireWhole(final long toCheck, final String errorMessage) {
         if (toCheck >= 0) {
             return toCheck;
+        } else {
+            final String message = Objects.isNull(errorMessage)
+                    ? "The input integer [%d] is required be whole.".formatted(toCheck)
+                    : errorMessage;
+            throw new IllegalArgumentException(message);
         }
-
-        final String message = Objects.isNull(errorMessage)
-                ? "The input integer [%d] is required be whole.".formatted(toCheck)
-                : errorMessage;
-        throw new IllegalArgumentException(message);
     }
 
     /**

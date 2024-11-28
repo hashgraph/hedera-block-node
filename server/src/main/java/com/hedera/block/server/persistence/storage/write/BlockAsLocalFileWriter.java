@@ -102,7 +102,7 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
 
         if (valueToWrite.getLast().hasBlockProof()) {
             metricsService.get(BlocksPersisted).increment();
-            return Optional.ofNullable(writeToFs(currentBlockUnparsed));
+            return Optional.of(writeToFs(currentBlockUnparsed));
         } else {
             return Optional.empty();
         }
@@ -112,8 +112,8 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
     // if we cannot persist, we must throw the initial exception
     private List<BlockItemUnparsed> writeToFs(final BlockUnparsed blockToWrite) throws IOException, ParseException {
         final long number = BlockHeader.PROTOBUF
-                .parse(blockToWrite.blockItems().getFirst().blockHeader())
-                .number(); // fixme could be null, handle!
+                .parse(blockToWrite.blockItems().getFirst().blockHeader()) // fixme could be null, handle!
+                .number(); // todo should we check if whole? If so, what handle we should have?
 
         // todo we should handle cases where the block path exists, we do not expect it to
         // exist at this stage, if it does, there is something wrong here

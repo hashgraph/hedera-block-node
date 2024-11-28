@@ -40,12 +40,16 @@ import java.util.Objects;
  */
 @ConfigData("persistence.storage")
 public record PersistenceStorageConfig(
+        // @todo(#371) - the default life/archive root path must be absolute starting from /opt
         @ConfigProperty(defaultValue = "") String liveRootPath,
+        // @todo(#371) - the default life/archive root path must be absolute starting from /opt
         @ConfigProperty(defaultValue = "") String archiveRootPath,
         @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type) {
     private static final System.Logger LOGGER = System.getLogger(PersistenceStorageConfig.class.getName());
+    // @todo(#371) - the default life/archive root path must be absolute starting from /opt
     private static final String LIVE_ROOT_PATH =
             Path.of("hashgraph/blocknode/data/live/").toAbsolutePath().toString();
+    // @todo(#371) - the default life/archive root path must be absolute starting from /opt
     private static final String ARCHIVE_ROOT_PATH =
             Path.of("hashgraph/blocknode/data/archive/").toAbsolutePath().toString();
 
@@ -130,9 +134,8 @@ public record PersistenceStorageConfig(
             Files.createDirectories(targetPath);
         } catch (final IOException e) {
             final String classname = this.getClass().getName();
-            final String message =
-                    "Unable to instantiate [%s]! Unable to create the [%s] path for the block storage at [%s]"
-                            .formatted(classname, semanticPathName, targetPath);
+            final String message = "Unable to instantiate [%s]! Unable to create the [%s] path that was provided!"
+                    .formatted(classname, semanticPathName);
             throw new UncheckedIOException(message, e);
         }
     }

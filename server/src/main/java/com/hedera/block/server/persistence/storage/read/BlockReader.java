@@ -36,6 +36,7 @@ public interface BlockReader<T> {
      * @throws ParseException if the PBJ codec encounters a problem caused by I/O issues, malformed
      *     input data, or any other reason that prevents the parse() method from completing the
      *     operation when fetching the block.
+     * @throws IllegalArgumentException if the blockNumber IS NOT a whole number
      */
     @NonNull
     Optional<T> read(final long blockNumber) throws IOException, ParseException;

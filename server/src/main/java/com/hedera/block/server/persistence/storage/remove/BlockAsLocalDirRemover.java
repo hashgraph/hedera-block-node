@@ -19,6 +19,7 @@ package com.hedera.block.server.persistence.storage.remove;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.ERROR;
 
+import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
@@ -63,10 +64,11 @@ public final class BlockAsLocalDirRemover implements LocalBlockRemover {
      *
      * @param blockNumber the id of the block to remove
      * @throws IOException if an I/O error occurs
+     * @throws IllegalArgumentException if the blockNumber IS NOT a whole number
      */
     @Override
     public void remove(final long blockNumber) throws IOException {
-        // todo should we add file permissions normalization?
+        Preconditions.requireWhole(blockNumber);
         final Path blockPath = blockPathResolver.resolvePathToBlock(blockNumber);
         if (Files.notExists(blockPath)) {
             LOGGER.log(ERROR, "Block cannot be deleted as it does not exist: {0}", blockNumber);

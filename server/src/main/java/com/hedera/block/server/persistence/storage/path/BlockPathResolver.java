@@ -30,6 +30,7 @@ public interface BlockPathResolver {
      *
      * @param blockNumber to be resolved the path for
      * @return the resolved path to the given Block by a number
+     * @throws IllegalArgumentException if the blockNumber IS NOT a whole number
      */
     Path resolvePathToBlock(final long blockNumber);
 }

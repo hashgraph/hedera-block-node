@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.persistence.storage.read;
 
+import com.hedera.block.common.utils.Preconditions;
 import com.hedera.hapi.block.BlockUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Optional;
@@ -46,6 +47,7 @@ public final class BlockAsLocalFileReader implements LocalBlockReader<BlockUnpar
     @NonNull
     @Override
     public Optional<BlockUnparsed> read(final long blockNumber) {
+        Preconditions.requireWhole(blockNumber);
         throw new UnsupportedOperationException("Not implemented yet");
     }
 }

@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.persistence.storage.remove;
 
+import com.hedera.block.common.utils.Preconditions;
 import java.io.IOException;
 
 /**
@@ -39,13 +40,15 @@ public final class BlockAsLocalFileRemover implements LocalBlockRemover {
     }
 
     /**
-     * Removes a block from the file system.
+     * Remove a block with the given block number.
      *
-     * @param blockNumber the id of the block to remove
-     * @throws IOException if an I/O error occurs
+     * @param blockNumber the block number of the block to remove
+     * @throws IOException when failing to remove a block
+     * @throws IllegalArgumentException if the blockNumber IS NOT a whole number
      */
     @Override
     public void remove(final long blockNumber) throws IOException {
+        Preconditions.requireWhole(blockNumber);
         throw new UnsupportedOperationException("Not implemented yet");
     }
 }

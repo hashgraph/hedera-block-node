@@ -215,17 +215,17 @@ class PersistenceStorageConfigTest {
     @SuppressWarnings("all")
     private static Stream<Arguments> validAbsoluteNonDefaultRootPaths() {
         final String liveToTest1 = PERSISTENCE_STORAGE_ROOT_ABSOLUTE_PATH
-                .resolve("nondefault/live/path/")
+                .resolve("nondefault/live/")
                 .toString();
         final String archiveToTest1 = PERSISTENCE_STORAGE_ROOT_ABSOLUTE_PATH
-                .resolve("nondefault/archive/path/")
+                .resolve("nondefault/archive/")
                 .toString();
 
         final String liveToTest2 = PERSISTENCE_STORAGE_ROOT_ABSOLUTE_PATH
-                .resolve("another/nondefault/live/path/")
+                .resolve("another/nondefault/live/")
                 .toString();
         final String archiveToTest2 = PERSISTENCE_STORAGE_ROOT_ABSOLUTE_PATH
-                .resolve("another/nondefault/archive/path/")
+                .resolve("another/nondefault/archive/")
                 .toString();
 
         return Stream.of(
@@ -241,8 +241,8 @@ class PersistenceStorageConfigTest {
      */
     private static Stream<Arguments> validNonAbsolutePaths() {
         // these must fail, if we provide external paths, they must be absolute
-        final String liveToTest = "hashgraph/blocknode/data/relative/live/path/";
-        final String archiveToTest = "hashgraph/blocknode/data/relative/archive/path/";
+        final String liveToTest = "hashgraph/blocknode/data/relative/live/";
+        final String archiveToTest = "hashgraph/blocknode/data/relative/archive/";
         return Stream.of(
                 Arguments.of("", archiveToTest), Arguments.of(liveToTest, ""), Arguments.of(liveToTest, archiveToTest));
     }
