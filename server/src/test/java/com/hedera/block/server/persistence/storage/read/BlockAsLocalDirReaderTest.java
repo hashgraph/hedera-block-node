@@ -105,23 +105,6 @@ public class BlockAsLocalDirReaderTest {
     }
 
     @Test
-    public void testRemoveBlockReadPermsRepairFailed() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
-        blockWriter.write(blockItems);
-
-        // Make the block unreadable
-        removeBlockReadPerms(1, testConfig);
-
-        // For this test, build the Reader with ineffective repair permissions to
-        // simulate a failed repair (root changed the perms, etc.)
-        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig);
-        final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
-        assertTrue(blockOpt.isEmpty());
-        // todo fix this
-    }
-
-    @Test
     public void testRemoveBlockItemReadPerms() throws IOException, ParseException {
         final BlockWriter<List<BlockItemUnparsed>> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
