@@ -64,6 +64,6 @@ public final class BlockAsLocalFilePathResolver implements BlockPathResolver {
         final String[] blockPath = rawBlockNumber.split("");
         final String blockFileName = rawBlockNumber.concat(Constants.BLOCK_FILE_EXTENSION);
         blockPath[blockPath.length - 1] = blockFileName;
-        return Paths.get(liveRootPath.toString(), blockPath);
+        return Path.of(liveRootPath.toString(), blockPath);
     }
 }
