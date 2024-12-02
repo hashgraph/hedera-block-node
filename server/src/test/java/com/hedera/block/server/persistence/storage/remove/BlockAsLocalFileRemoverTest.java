@@ -16,7 +16,8 @@
 
 package com.hedera.block.server.persistence.storage.remove;
 
-import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,27 +26,42 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /**
- * Test class for {@link NoOpBlockRemover}.
+ * Test class for {@link BlockAsLocalFileRemover}.
  */
-class NoOpBlockRemoverTest {
-    private NoOpBlockRemover toTest;
+class BlockAsLocalFileRemoverTest {
+    private BlockAsLocalFileRemover toTest;
 
     @BeforeEach
     void setUp() {
-        toTest = NoOpBlockRemover.newInstance();
+        toTest = BlockAsLocalFileRemover.newInstance();
     }
 
     /**
      * This test aims to verify that the
-     * {@link NoOpBlockRemover#remove(long)} does nothing and does not throw any
-     * exceptions. The no-op remover has no preconditions check as well.
+     * {@link BlockAsLocalFileRemover#remove(long)} correctly deletes a block
+     * with the given block number.
      *
      * @param toRemove parameterized, block number
      */
     @ParameterizedTest
-    @MethodSource({"validBlockNumbers", "invalidBlockNumbers"})
+    @MethodSource("validBlockNumbers")
     void testSuccessfulBlockDeletion(final long toRemove) {
-        assertThatNoException().isThrownBy(() -> toTest.remove(toRemove));
+        // todo currently throws UnsupportedOperationException
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> toTest.remove(toRemove));
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link BlockAsLocalFileRemover#remove(long)} correctly throws an
+     * {@link IllegalArgumentException} when an invalid block number is
+     * provided. A block number is invalid it is a strictly negative number.
+     *
+     * @param toRemove parameterized, block number
+     */
+    @ParameterizedTest
+    @MethodSource("invalidBlockNumbers")
+    void testInvalidBlockNumber(final long toRemove) {
+        assertThatIllegalArgumentException().isThrownBy(() -> toTest.remove(toRemove));
     }
 
     /**
