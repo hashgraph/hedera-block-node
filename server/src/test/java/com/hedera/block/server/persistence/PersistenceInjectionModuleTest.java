@@ -31,7 +31,7 @@ import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
 import com.hedera.block.server.persistence.storage.path.NoOpBlockPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
-import com.hedera.block.server.persistence.storage.remove.NoOpRemover;
+import com.hedera.block.server.persistence.storage.remove.NoOpBlockRemover;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
@@ -79,7 +79,7 @@ class PersistenceInjectionModuleTest {
     void testProvidesBlockWriter() {
 
         BlockWriter<List<BlockItemUnparsed>> blockWriter = PersistenceInjectionModule.providesBlockWriter(
-                blockNodeContext, NoOpRemover.newInstance(), NoOpBlockPathResolver.newInstance());
+                blockNodeContext, NoOpBlockRemover.newInstance(), NoOpBlockPathResolver.newInstance());
 
         assertNotNull(blockWriter);
     }
@@ -102,7 +102,7 @@ class PersistenceInjectionModuleTest {
         // Expect a RuntimeException due to the IOException
         assertThatRuntimeException()
                 .isThrownBy(() -> PersistenceInjectionModule.providesBlockWriter(
-                        blockNodeContext, NoOpRemover.newInstance(), NoOpBlockPathResolver.newInstance()))
+                        blockNodeContext, NoOpBlockRemover.newInstance(), NoOpBlockPathResolver.newInstance()))
                 .withCauseInstanceOf(IOException.class)
                 .withMessage("Failed to create BlockWriter");
     }

@@ -19,19 +19,19 @@ package com.hedera.block.server.persistence.storage.remove;
 /**
  * A no-op Block remover.
  */
-public final class NoOpRemover implements BlockRemover {
+public final class NoOpBlockRemover implements BlockRemover {
     /**
      * Constructor.
      */
-    private NoOpRemover() {}
+    private NoOpBlockRemover() {}
 
     /**
-     * This method creates and returns a new instance of {@link NoOpRemover}.
+     * This method creates and returns a new instance of {@link NoOpBlockRemover}.
      *
-     * @return a new, fully initialized instance of {@link NoOpRemover}
+     * @return a new, fully initialized instance of {@link NoOpBlockRemover}
      */
-    public static NoOpRemover newInstance() {
-        return new NoOpRemover();
+    public static NoOpBlockRemover newInstance() {
+        return new NoOpBlockRemover();
     }
 
     /**
