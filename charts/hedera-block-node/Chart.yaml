@@ -10,7 +10,7 @@ keywords:
 maintainers:
   - name: Hedera Block Node Team
     email: blocknode@hashgraph.com
-name: hedera-block-node
+name: block-node-helm-chart
 sources:
   - https://github.com/hashgraph/hedera-block-node
 version: 0.3.0-SNAPSHOT
