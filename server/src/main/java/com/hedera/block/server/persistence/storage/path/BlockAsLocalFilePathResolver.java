@@ -20,7 +20,6 @@ import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.Constants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Objects;
 
 /**

@@ -53,6 +53,7 @@ class BlockAsLocalFilePathResolverTest {
      * itself is the file name.
      *
      * @param toResolve parameterized, valid block number
+     * @param expected parameterized, expected path
      */
     @ParameterizedTest
     @MethodSource("validBlockNumbers")

@@ -49,6 +49,7 @@ class BlockAsLocalDirPathResolverTest {
      * the live root path appended with the given block number.
      *
      * @param toResolve parameterized, valid block number
+     * @param expected parameterized, expected path
      */
     @ParameterizedTest
     @MethodSource("validBlockNumbers")
