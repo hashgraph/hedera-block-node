@@ -66,7 +66,7 @@ class BlockAsLocalFilePathResolverTest {
      * This test aims to verify that the
      * {@link BlockAsLocalFilePathResolver#resolvePathToBlock(long)} correctly
      * throws an {@link IllegalArgumentException} when an invalid block number
-     * is provided. A block number is invalid it is a strictly negative number.
+     * is provided. A block number is invalid if it is a strictly negative number.
      *
      * @param toResolve parameterized, invalid block number
      */

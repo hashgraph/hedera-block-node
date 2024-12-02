@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage.remove;
+package com.hedera.block.server.persistence.storage.read;
 
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
@@ -26,42 +26,42 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /**
- * Test class for {@link BlockAsLocalFileRemover}.
+ * Tests for the {@link BlockAsLocalFileReader} class.
  */
-class BlockAsLocalFileRemoverTest {
-    private BlockAsLocalFileRemover toTest;
+class BlockAsLocalFileReaderTest {
+    private BlockAsLocalFileReader toTest;
 
     @BeforeEach
     void setUp() {
-        toTest = BlockAsLocalFileRemover.newInstance();
+        toTest = BlockAsLocalFileReader.newInstance();
     }
 
     /**
      * This test aims to verify that the
-     * {@link BlockAsLocalFileRemover#remove(long)} correctly deletes a block
-     * with the given block number.
+     * {@link BlockAsLocalFileReader#read(long)} correctly reads a block with
+     * a given block number.
      *
-     * @param toRemove parameterized, block number
+     * @param toRead parameterized, block number
      */
     @ParameterizedTest
     @MethodSource("validBlockNumbers")
-    void testSuccessfulBlockDeletion(final long toRemove) {
+    void testSuccessfulBlockRead(final long toRead) {
         // todo currently throws UnsupportedOperationException
-        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> toTest.remove(toRemove));
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> toTest.read(toRead));
     }
 
     /**
      * This test aims to verify that the
-     * {@link BlockAsLocalFileRemover#remove(long)} correctly throws an
+     * {@link BlockAsLocalFileReader#read(long)} correctly throws an
      * {@link IllegalArgumentException} when an invalid block number is
      * provided. A block number is invalid if it is a strictly negative number.
      *
-     * @param toRemove parameterized, block number
+     * @param toRead parameterized, block number
      */
     @ParameterizedTest
     @MethodSource("invalidBlockNumbers")
-    void testInvalidBlockNumber(final long toRemove) {
-        assertThatIllegalArgumentException().isThrownBy(() -> toTest.remove(toRemove));
+    void testInvalidBlockNumber(final long toRead) {
+        assertThatIllegalArgumentException().isThrownBy(() -> toTest.read(toRead));
     }
 
     /**
