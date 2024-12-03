@@ -18,6 +18,7 @@ package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 
+import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
@@ -29,9 +30,9 @@ import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -43,8 +44,8 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
     private final MetricsService metricsService;
     private final BlockRemover blockRemover; // todo do I need here?
     private final BlockPathResolver blockPathResolver;
-    private BlockUnparsed
-            currentBlockUnparsed; // fixme this is temporary just to explore the workflow and make proof of concept
+    private List<BlockItemUnparsed> currentBlockItems;
+    private long currentBlockNumber = -1;
 
     /**
      * Constructor.
@@ -90,55 +91,39 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
     @Override
     public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
             throws IOException, ParseException {
-        if (valueToWrite.getFirst().hasBlockHeader()) {
-            currentBlockUnparsed =
-                    BlockUnparsed.newBuilder().blockItems(valueToWrite).build();
+        final BlockItemUnparsed firstItem = valueToWrite.getFirst();
+        if (firstItem.hasBlockHeader()) {
+            currentBlockNumber = Preconditions.requireWhole(
+                    BlockHeader.PROTOBUF.parse(firstItem.blockHeader()).number());
+            currentBlockItems = new LinkedList<>(valueToWrite);
         } else {
-            final List<BlockItemUnparsed> currentItems = currentBlockUnparsed.blockItems();
-            currentItems.addAll(valueToWrite);
-            currentBlockUnparsed =
-                    BlockUnparsed.newBuilder().blockItems(currentItems).build();
+            currentBlockItems.addAll(valueToWrite);
         }
 
         if (valueToWrite.getLast().hasBlockProof()) {
+            final Optional<List<BlockItemUnparsed>> result = Optional.of(writeToFs());
             metricsService.get(BlocksPersisted).increment();
-            return Optional.of(writeToFs(currentBlockUnparsed));
+            resetState();
+            return result;
         } else {
             return Optional.empty();
         }
     }
 
-    // todo we could recursively retry if exception occurs, then after a few attempts
-    // if we cannot persist, we must throw the initial exception
-    private List<BlockItemUnparsed> writeToFs(final BlockUnparsed blockToWrite) throws IOException, ParseException {
-        final long number = BlockHeader.PROTOBUF
-                .parse(blockToWrite.blockItems().getFirst().blockHeader()) // fixme could be null, handle!
-                .number(); // todo should we check if whole? If so, what handle we should have?
-
-        // todo we should handle cases where the block path exists, we do not expect it to
-        // exist at this stage, if it does, there is something wrong here
-        final Path blockToWritePathResolved = blockPathResolver.resolvePathToBlock(number);
+    private List<BlockItemUnparsed> writeToFs() throws IOException {
+        final Path blockToWritePathResolved = blockPathResolver.resolvePathToBlock(currentBlockNumber);
         Files.createDirectories(blockToWritePathResolved.getParent());
         Files.createFile(blockToWritePathResolved);
-
-        // todo maybe this is not the place to handle the exceptions, but maybe if we do a retry mechanism we
-        // must catch here. also should we repair permissions and use the remover to remove as a cleanup?
-        // do we have such cases?
         try (final FileOutputStream fos = new FileOutputStream(blockToWritePathResolved.toFile())) {
+            final BlockUnparsed blockToWrite =
+                    BlockUnparsed.newBuilder().blockItems(currentBlockItems).build();
             BlockUnparsed.PROTOBUF.toBytes(blockToWrite).writeTo(fos);
-            // todo what should be fallback logic if something goes wrong here? we attempt to resolve the path
-            // with proper perms (is that necessary)? we must clean up and retry?
-        } catch (final IOException ioe) {
-            // todo handle properly
-            throw new UncheckedIOException(ioe);
-        } catch (final UncheckedIOException uioe) {
-            // todo handle properly
-            throw uioe;
-        } catch (final Exception e) {
-            // todo handle properly
-            throw new RuntimeException(e);
         }
-        currentBlockUnparsed = null;
-        return blockToWrite.blockItems();
+        return currentBlockItems;
+    }
+
+    private void resetState() {
+        currentBlockItems = null;
+        currentBlockNumber = -1;
     }
 }
