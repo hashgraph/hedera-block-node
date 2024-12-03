@@ -143,28 +143,7 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
 
         for (final BlockItemUnparsed blockItemUnparsed : valueToWrite) {
             final Path blockItemFilePath = calculateBlockItemPath();
-            for (int retries = 0; ; retries++) {
-                try {
-                    write(blockItemFilePath, blockItemUnparsed);
-                    break;
-                } catch (final IOException | UncheckedIOException e) {
-
-                    LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
-
-                    // Remove the block if repairing the permissions fails
-                    if (retries > 0) {
-                        // Attempt to remove the block
-                        blockRemover.remove(currentBlockNumber);
-                        throw e;
-                    } else {
-                        // Attempt to repair the permissions on the block path
-                        // and the blockItem path
-                        repairPermissions(liveRootPath);
-                        repairPermissions(blockPathResolver.resolvePathToBlock(currentBlockNumber));
-                        LOGGER.log(INFO, "Retrying to write the BlockItem protobuf to a file");
-                    }
-                }
-            }
+            doWrite(blockItemFilePath, blockItemUnparsed, 0);
         }
 
         if (valueToWrite.getLast().hasBlockProof()) {
@@ -175,19 +154,23 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
         }
     }
 
-    /**
-     * Writes the given block item to the filesystem. This method is protected to allow for testing.
-     *
-     * @param blockItemFilePath the path to the block item file
-     * @param blockItem the block item to write
-     * @throws IOException if an error occurs while writing the block item
-     */
-    protected void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItemUnparsed blockItem)
+    private void doWrite(final Path targetPath, final BlockItemUnparsed toWrite, final int attempt)
             throws IOException {
-        try (final FileOutputStream fos = new FileOutputStream(blockItemFilePath.toString())) {
-            // Write the Bytes directly
-            BlockItemUnparsed.PROTOBUF.toBytes(blockItem).writeTo(fos);
-            LOGGER.log(DEBUG, "Successfully wrote the block item file: {0}", blockItemFilePath);
+        try (final FileOutputStream fos = new FileOutputStream(targetPath.toString())) {
+            BlockItemUnparsed.PROTOBUF.toBytes(toWrite).writeTo(fos);
+            LOGGER.log(DEBUG, "Successfully wrote the block item file: {0}", targetPath);
+        } catch (final IOException | UncheckedIOException e) {
+            LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
+            if (attempt > 0) {
+                // If the write operation fails after a retry, attempt to remove the current block
+                blockRemover.remove(currentBlockNumber);
+                throw e;
+            } else {
+                repairPermissions(liveRootPath);
+                repairPermissions(blockPathResolver.resolvePathToBlock(currentBlockNumber));
+                LOGGER.log(INFO, "Retrying to write the BlockItem protobuf to a file");
+                doWrite(targetPath, toWrite, attempt + 1);
+            }
         }
     }
 

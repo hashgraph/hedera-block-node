@@ -20,15 +20,14 @@ import static com.hedera.block.server.persistence.storage.read.BlockAsLocalDirRe
 import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.same;
-import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -46,13 +45,13 @@ import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.ParseException;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -221,28 +220,14 @@ public class BlockAsLocalDirWriterTest {
 
     @Test
     public void testPartialBlockRemoval() throws IOException, ParseException {
+        final int expectedItemsPerBlock = 10;
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(3);
         final BlockRemover blockRemover = BlockAsLocalDirRemover.of(pathResolverMock);
-        // Use a spy of TestBlockAsDirWriter to proxy block items to the real writer
-        // for the first 22 block items. Then simulate an IOException on the 23rd block item
-        // thrown from a protected write method in the real class. This should trigger the
-        // blockRemover instance to remove the partially written block.
-        final TestBlockAsLocalDirWriter blockWriter =
-                spy(new TestBlockAsLocalDirWriter(blockRemover, blockNodeContext));
-
-        for (int i = 0; i < 23; i++) {
-            // Prepare the block writer to call the actual write method
-            // for 23 block items
-            doCallRealMethod().when(blockWriter).write(any(Path.class), same(blockItems.get(i)));
-        }
-
-        // Simulate an IOException when writing the 24th block item
-        // from an overridden write method in sub-class.
-        doThrow(IOException.class).when(blockWriter).write(any(Path.class), same(blockItems.get(23)));
+        final BlockAsLocalDirWriter toTest = BlockAsLocalDirWriter.of(blockNodeContext, blockRemover, pathResolverMock);
 
         // Now make the calls
         for (int i = 0; i < 23; i++) {
-            Optional<List<BlockItemUnparsed>> result = blockWriter.write(List.of(blockItems.get(i)));
+            final Optional<List<BlockItemUnparsed>> result = toTest.write(List.of(blockItems.get(i)));
             if (i == 9 || i == 19) {
                 // The last block item in each block is the block proof
                 // and should be returned by the write method
@@ -254,18 +239,37 @@ public class BlockAsLocalDirWriterTest {
             }
         }
 
-        // Verify the IOException was thrown on the 24th block item
-        assertThrows(IOException.class, () -> blockWriter.write(List.of(blockItems.get(23))));
+        // simulate an IOException on the 23rd block item
+        final AtomicInteger callCount = new AtomicInteger(0);
+        doAnswer(invocation -> {
+                    if (callCount.incrementAndGet() == 1) {
+                        return Path.of("/invalid_path/:invalid_directory");
+                    }
+                    return invocation.callRealMethod();
+                })
+                .when(pathResolverMock)
+                .resolvePathToBlock(3);
+
+        assertThatIOException().isThrownBy(() -> toTest.write(List.of(blockItems.get(23))));
 
         // Verify the partially written block was removed
         final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig);
         Optional<BlockUnparsed> blockOpt = blockReader.read(3);
         assertTrue(blockOpt.isEmpty());
 
+        final Path targetPathForBlock1 = pathResolverMock.resolvePathToBlock(1);
+        assertThat(targetPathForBlock1).isNotNull().exists().isDirectory();
+
+        final Path targetPathForBlock2 = pathResolverMock.resolvePathToBlock(2);
+        assertThat(targetPathForBlock2).isNotNull().exists().isDirectory();
+
+        final Path targetPathForBlock3 = pathResolverMock.resolvePathToBlock(3);
+        assertThat(targetPathForBlock3).isNotNull().doesNotExist();
+
         // Confirm blocks 1 and 2 still exist
         blockOpt = blockReader.read(1);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(10, blockOpt.get().blockItems().size());
+        assertEquals(expectedItemsPerBlock, blockOpt.get().blockItems().size());
         assertEquals(
                 1,
                 BlockHeader.PROTOBUF
@@ -274,7 +278,7 @@ public class BlockAsLocalDirWriterTest {
 
         blockOpt = blockReader.read(2);
         assertFalse(blockOpt.isEmpty());
-        assertEquals(10, blockOpt.get().blockItems().size());
+        assertEquals(expectedItemsPerBlock, blockOpt.get().blockItems().size());
         assertEquals(
                 2,
                 BlockHeader.PROTOBUF
@@ -319,22 +323,6 @@ public class BlockAsLocalDirWriterTest {
         final Path blockNodeRootPath = Path.of(config.liveRootPath());
         final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
         Files.setPosixFilePermissions(blockPath, TestUtils.getNoPerms().value());
-    }
-
-    //     TestBlockAsDirWriter overrides the write() method to allow a test spy to simulate an
-    //     IOException while allowing the real write() method to remain protected.
-    private final class TestBlockAsLocalDirWriter extends BlockAsLocalDirWriter {
-
-        public TestBlockAsLocalDirWriter(final BlockRemover blockRemover, final BlockNodeContext blockNodeContext)
-                throws IOException {
-            super(blockNodeContext, blockRemover, pathResolverMock);
-        }
-
-        @Override
-        public void write(@NonNull final Path blockItemFilePath, @NonNull final BlockItemUnparsed blockItem)
-                throws IOException {
-            super.write(blockItemFilePath, blockItem);
-        }
     }
 
     /**
