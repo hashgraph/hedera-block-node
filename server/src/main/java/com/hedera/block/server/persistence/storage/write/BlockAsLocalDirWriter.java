@@ -154,8 +154,7 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
         }
     }
 
-    private void doWrite(final Path targetPath, final BlockItemUnparsed toWrite, final int attempt)
-            throws IOException {
+    private void doWrite(final Path targetPath, final BlockItemUnparsed toWrite, final int attempt) throws IOException {
         try (final FileOutputStream fos = new FileOutputStream(targetPath.toString())) {
             BlockItemUnparsed.PROTOBUF.toBytes(toWrite).writeTo(fos);
             LOGGER.log(DEBUG, "Successfully wrote the block item file: {0}", targetPath);
