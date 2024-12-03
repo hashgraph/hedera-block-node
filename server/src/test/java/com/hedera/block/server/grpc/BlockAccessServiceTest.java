@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,7 +40,6 @@ import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
-import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
@@ -92,7 +92,7 @@ class BlockAccessServiceTest {
 
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
-        pathResolverMock = mock(BlockAsLocalDirPathResolver.class);
+        pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testLiveRootPath));
     }
 
     @Test
@@ -120,11 +120,9 @@ class BlockAccessServiceTest {
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
 
-        final BlockAsLocalDirPathResolver localPathResolverMock =
-                PersistTestUtils.getTrainedBlockAsLocalDirPathResolver(testLiveRootPath);
         // Generate and persist a block
         final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), localPathResolverMock);
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         blockWriter.write(blockItems);
 

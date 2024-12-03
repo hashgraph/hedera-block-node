@@ -48,7 +48,6 @@ import com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
-import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.BlockItemSetUnparsed;
@@ -145,11 +144,9 @@ public class PbjBlockStreamServiceIntegrationTest {
         blockNodeContext = TestConfigUtil.getTestBlockNodeContext(properties);
         testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
 
-        pathResolverMock = mock(BlockAsLocalDirPathResolver.class);
-
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
-        pathResolverMock = mock(BlockAsLocalDirPathResolver.class);
+        pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testLiveRootPath));
     }
 
     @Test
@@ -250,11 +247,9 @@ public class PbjBlockStreamServiceIntegrationTest {
     public void testFullProducerConsumerHappyPath() throws IOException {
         int numberOfBlocks = 100;
 
-        final BlockAsLocalDirPathResolver localPathResolver =
-                PersistTestUtils.getTrainedBlockAsLocalDirPathResolver(testLiveRootPath);
         // Use a real BlockWriter to test the full integration
         final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), localPathResolver);
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
         // Register 3 producers - Opening a pipeline is not enough to register a producer.

@@ -40,7 +40,6 @@ import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.remove.BlockAsLocalDirRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -80,7 +79,7 @@ public class BlockAsLocalDirWriterTest {
 
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
-        pathResolverMock = PersistTestUtils.getTrainedBlockAsLocalDirPathResolver(Path.of(testConfigLiveRootPath));
+        pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testLiveRootPath));
     }
 
     @Test

@@ -18,12 +18,7 @@ package com.hedera.block.server.util;
 
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
-import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
-import com.hedera.block.server.persistence.storage.path.BlockAsLocalFilePathResolver;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.hapi.block.stream.input.EventHeader;
@@ -31,13 +26,11 @@ import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.hapi.node.base.SemanticVersion;
 import com.hedera.hapi.platform.event.EventCore;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public final class PersistTestUtils {
     private static final Logger LOGGER = System.getLogger(PersistTestUtils.class.getName());
@@ -111,42 +104,5 @@ public final class PersistTestUtils {
         }
 
         return reversed;
-    }
-
-    /**
-     * This method spies and trains a {@link BlockAsLocalDirPathResolver}. It
-     * requires a path to the live root test directory to use as base (usually
-     * it would be a temp dir). The spy calls the real method when
-     * {@link BlockAsLocalDirPathResolver#resolvePathToBlock(long)} is called.
-     * The mock captures anyLong input so it is dynamic in that sense.
-     *
-     * @param liveRootTestPath path to the live root test directory
-     * @return a trained mock that will return the resolved path to a block by a
-     * given block number
-     */
-    public static BlockAsLocalDirPathResolver getTrainedBlockAsLocalDirPathResolver(
-            @NonNull final Path liveRootTestPath) {
-        Objects.requireNonNull(liveRootTestPath);
-        final BlockAsLocalDirPathResolver result = spy(BlockAsLocalDirPathResolver.of(liveRootTestPath));
-        when(result.resolvePathToBlock(anyLong())).thenCallRealMethod();
-        return result;
-    }
-
-    /**
-     * This method spies and trains a {@link BlockAsLocalFilePathResolver}. It
-     * requires a path to the live root test directory to use as base (usually
-     * it would be a temp dir). The spy calls the real method when
-     * {@link BlockAsLocalFilePathResolver#resolvePathToBlock(long)} is called.
-     * The mock captures anyLong input so it is dynamic in that sense.
-     *
-     * @param liveRootTestPath path to the live root test directory
-     * @return a trained mock that will return the resolved path to a block by a
-     * given block number
-     */
-    public static BlockAsLocalFilePathResolver getTrainedBlockAsLocalFilePathResolver(final Path liveRootTestPath) {
-        Objects.requireNonNull(liveRootTestPath);
-        final BlockAsLocalFilePathResolver result = spy(BlockAsLocalFilePathResolver.of(liveRootTestPath));
-        when(result.resolvePathToBlock(anyLong())).thenCallRealMethod();
-        return result;
     }
 }

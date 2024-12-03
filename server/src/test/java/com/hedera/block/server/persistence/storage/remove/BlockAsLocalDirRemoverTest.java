@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.from;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
@@ -64,7 +65,7 @@ class BlockAsLocalDirRemoverTest {
 
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
-        pathResolverMock = PersistTestUtils.getTrainedBlockAsLocalDirPathResolver(Path.of(testConfigLiveRootPath));
+        pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testLiveRootPath));
         toTest = BlockAsLocalDirRemover.of(pathResolverMock);
     }
 

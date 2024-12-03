@@ -20,12 +20,12 @@ import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalFilePathResolver;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
@@ -65,7 +65,7 @@ class BlockAsLocalFileWriterTest {
 
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
-        pathResolverMock = PersistTestUtils.getTrainedBlockAsLocalFilePathResolver(Path.of(testConfigLiveRootPath));
+        pathResolverMock = spy(BlockAsLocalFilePathResolver.of(testLiveRootPath));
 
         toTest = BlockAsLocalFileWriter.of(blockNodeContext, blockRemoverMock, pathResolverMock);
     }
