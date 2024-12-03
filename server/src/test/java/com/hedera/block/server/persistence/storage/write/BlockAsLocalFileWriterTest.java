@@ -54,7 +54,6 @@ class BlockAsLocalFileWriterTest {
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig testConfig;
     private BlockAsLocalFilePathResolver pathResolverMock;
-    private BlockRemover blockRemoverMock;
 
     @TempDir
     private Path testLiveRootPath;
@@ -67,13 +66,11 @@ class BlockAsLocalFileWriterTest {
                 Map.of(PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY, testLiveRootPath.toString()));
         testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
 
-        blockRemoverMock = mock(BlockRemover.class);
-
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
         pathResolverMock = spy(BlockAsLocalFilePathResolver.of(testLiveRootPath));
 
-        toTest = BlockAsLocalFileWriter.of(blockNodeContext, blockRemoverMock, pathResolverMock);
+        toTest = BlockAsLocalFileWriter.of(blockNodeContext, pathResolverMock);
     }
 
     /**

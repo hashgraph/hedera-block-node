@@ -22,7 +22,6 @@ import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
-import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.stream.output.BlockHeader;
@@ -42,7 +41,6 @@ import java.util.Optional;
  */
 public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
     private final MetricsService metricsService;
-    private final BlockRemover blockRemover; // todo do I need here?
     private final BlockPathResolver blockPathResolver;
     private List<BlockItemUnparsed> currentBlockItems;
     private long currentBlockNumber = -1;
@@ -52,17 +50,12 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
      *
      * @param blockNodeContext valid, {@code non-null} instance of {@link BlockNodeContext} used to
      * get the {@link MetricsService}
-     * @param blockRemover valid, {@code non-null} instance of {@link BlockRemover} used to remove
-     * blocks in case of cleanup
      * @param blockPathResolver valid, {@code non-null} instance of {@link BlockPathResolver} used
      * to resolve paths to Blocks
      */
     private BlockAsLocalFileWriter(
-            @NonNull final BlockNodeContext blockNodeContext,
-            @NonNull final BlockRemover blockRemover,
-            @NonNull final BlockPathResolver blockPathResolver) {
+            @NonNull final BlockNodeContext blockNodeContext, @NonNull final BlockPathResolver blockPathResolver) {
         this.metricsService = Objects.requireNonNull(blockNodeContext.metricsService());
-        this.blockRemover = Objects.requireNonNull(blockRemover);
         this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
     }
 
@@ -71,17 +64,13 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
      *
      * @param blockNodeContext valid, {@code non-null} instance of
      * {@link BlockNodeContext} used to get the {@link MetricsService}
-     * @param blockRemover valid, {@code non-null} instance of
-     * {@link BlockRemover} used to remove blocks in case of cleanup
      * @param blockPathResolver valid, {@code non-null} instance of
      * {@link BlockPathResolver} used to resolve paths to Blocks
      * @return a new, fully initialized instance of {@link BlockAsLocalFileWriter}
      */
     public static BlockAsLocalFileWriter of(
-            @NonNull final BlockNodeContext blockNodeContext,
-            @NonNull final BlockRemover blockRemover,
-            @NonNull final BlockPathResolver blockPathResolver) {
-        return new BlockAsLocalFileWriter(blockNodeContext, blockRemover, blockPathResolver);
+            @NonNull final BlockNodeContext blockNodeContext, @NonNull final BlockPathResolver blockPathResolver) {
+        return new BlockAsLocalFileWriter(blockNodeContext, blockPathResolver);
     }
 
     /**
