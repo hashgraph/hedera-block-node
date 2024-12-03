@@ -96,7 +96,6 @@ public class BlockNodeApp {
                 .build();
 
         // Build the web server
-        // TODO: make port server a configurable value.
         final WebServer webServer = webServerBuilder
                 .port(serverConfig.port())
                 .addProtocol(pbjConfig)

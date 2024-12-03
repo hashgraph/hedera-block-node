@@ -76,8 +76,7 @@ public interface PersistenceInjectionModule {
                 .type();
         try {
             return switch (persistenceType) {
-                case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileWriter.of(
-                        blockNodeContext, blockPathResolver);
+                case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileWriter.of(blockNodeContext, blockPathResolver);
                 case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirWriter.of(
                         blockNodeContext, blockRemover, blockPathResolver);
                 case NO_OP -> NoOpBlockWriter.newInstance();

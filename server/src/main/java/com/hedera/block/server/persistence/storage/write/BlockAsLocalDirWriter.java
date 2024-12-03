@@ -38,6 +38,7 @@ import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
@@ -146,7 +147,7 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
                 try {
                     write(blockItemFilePath, blockItemUnparsed);
                     break;
-                } catch (final IOException e) {
+                } catch (final IOException | UncheckedIOException e) {
 
                     LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
 
@@ -187,10 +188,6 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
             // Write the Bytes directly
             BlockItemUnparsed.PROTOBUF.toBytes(blockItem).writeTo(fos);
             LOGGER.log(DEBUG, "Successfully wrote the block item file: {0}", blockItemFilePath);
-        } catch (final IOException e) {
-            // fixme writeTo throws UncheckedIOException, we should handle other cases as well
-            LOGGER.log(ERROR, "Error writing the BlockItem protobuf to a file: ", e);
-            throw e;
         }
     }
 
@@ -215,7 +212,6 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
         blockNodeFileNameIndex = 0;
     }
 
-    // todo do we need this method at all?
     private void repairPermissions(@NonNull final Path path) throws IOException {
         final boolean isWritable = Files.isWritable(path);
         if (!isWritable) {

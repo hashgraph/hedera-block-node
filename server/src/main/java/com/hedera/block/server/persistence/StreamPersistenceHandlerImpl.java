@@ -32,9 +32,7 @@ import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.runtime.OneOf;
-import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -136,13 +134,7 @@ public class StreamPersistenceHandlerImpl
             } else {
                 LOGGER.log(ERROR, "Service is not running. Block item will not be processed further.");
             }
-        } catch (final BlockStreamProtocolException | IOException | ParseException e) {
-            // todo maybe we should catch here Exception so we do not miss anything and we can
-            // cleanup properly after every kind of exception
-            // also it would be a good idea to have a cleanup method to call instead of having this
-            // cleanup logic here, cause we could also use the cleanup method in another place if needed
-            // and in that way cleanup will not be error prone and will be managed only in one place
-            // also most of this seems to be duplicated in notifier.notifyUnrecoverableError()
+        } catch (final Exception e) {
             LOGGER.log(ERROR, "Failed to persist BlockItems: ", e);
 
             metricsService.get(StreamPersistenceHandlerError).increment();

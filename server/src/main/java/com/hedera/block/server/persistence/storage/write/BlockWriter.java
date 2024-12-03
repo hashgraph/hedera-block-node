@@ -26,8 +26,7 @@ import java.util.Optional;
  *
  * @param <T> the type of the block item to write
  */
-public interface BlockWriter<T> { // todo maybe we can remove the generics?
-
+public interface BlockWriter<T> {
     /**
      * Write the block item to storage.
      *
