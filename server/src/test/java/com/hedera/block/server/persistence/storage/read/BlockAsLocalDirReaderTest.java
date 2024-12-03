@@ -22,6 +22,7 @@ import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUn
 import static com.hedera.block.server.util.PersistTestUtils.reverseByteArray;
 import static com.hedera.block.server.util.PersistTestUtils.writeBlockItemToPath;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -54,9 +55,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class BlockAsLocalDirReaderTest {
     @TempDir
@@ -198,6 +203,21 @@ public class BlockAsLocalDirReaderTest {
         assertThrows(ParseException.class, () -> blockReader.read(1));
     }
 
+    /**
+     * This test aims to verify that the
+     * {@link BlockAsLocalDirReader#read(long)} correctly throws an
+     * {@link IllegalArgumentException} when an invalid block number is
+     * provided. A block number is invalid if it is a strictly negative number.
+     *
+     * @param blockNumber parameterized, block number
+     */
+    @ParameterizedTest
+    @MethodSource("invalidBlockNumbers")
+    void testInvalidBlockNumber(final long blockNumber) {
+        final BlockReader<BlockUnparsed> toTest = BlockAsLocalDirReader.of(testConfig);
+        assertThatIllegalArgumentException().isThrownBy(() -> toTest.read(blockNumber));
+    }
+
     public static void removeBlockReadPerms(int blockNumber, final PersistenceStorageConfig config) throws IOException {
         final Path blockNodeRootPath = Path.of(config.liveRootPath());
         final Path blockPath = blockNodeRootPath.resolve(String.valueOf(blockNumber));
@@ -228,5 +248,35 @@ public class BlockAsLocalDirReaderTest {
                 throws IOException {
             super.setPerm(path, perms);
         }
+    }
+
+    /**
+     * Some invalid block numbers.
+     *
+     * @return a stream of invalid block numbers
+     */
+    public static Stream<Arguments> invalidBlockNumbers() {
+        return Stream.of(
+                Arguments.of(-1L),
+                Arguments.of(-2L),
+                Arguments.of(-10L),
+                Arguments.of(-100L),
+                Arguments.of(-1_000L),
+                Arguments.of(-10_000L),
+                Arguments.of(-100_000L),
+                Arguments.of(-1_000_000L),
+                Arguments.of(-10_000_000L),
+                Arguments.of(-100_000_000L),
+                Arguments.of(-1_000_000_000L),
+                Arguments.of(-10_000_000_000L),
+                Arguments.of(-100_000_000_000L),
+                Arguments.of(-1_000_000_000_000L),
+                Arguments.of(-10_000_000_000_000L),
+                Arguments.of(-100_000_000_000_000L),
+                Arguments.of(-1_000_000_000_000_000L),
+                Arguments.of(-10_000_000_000_000_000L),
+                Arguments.of(-100_000_000_000_000_000L),
+                Arguments.of(-1_000_000_000_000_000_000L),
+                Arguments.of(Long.MIN_VALUE));
     }
 }

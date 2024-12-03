@@ -25,6 +25,7 @@ import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.common.utils.FileUtilities;
+import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
@@ -196,7 +197,8 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
     private void resetState(@NonNull final BlockHeader blockHeader) throws IOException {
         // Here a "block" is represented as a directory of BlockItems.
         // Create the "block" directory based on the block_number
-        currentBlockNumber = blockHeader.number();
+        // Block Number must be a whole number!
+        currentBlockNumber = Preconditions.requireWhole(blockHeader.number());
 
         // Check the blockNodeRootPath permissions and
         // attempt to repair them if possible

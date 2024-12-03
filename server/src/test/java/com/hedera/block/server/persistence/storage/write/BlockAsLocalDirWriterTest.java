@@ -20,6 +20,7 @@ import static com.hedera.block.server.persistence.storage.read.BlockAsLocalDirRe
 import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -53,9 +54,13 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class BlockAsLocalDirWriterTest {
     private BlockNodeContext blockNodeContext;
@@ -278,6 +283,29 @@ public class BlockAsLocalDirWriterTest {
                         .number());
     }
 
+    /**
+     * This test aims to verify that the
+     * {@link BlockAsLocalDirWriter#write(List)} correctly throws an
+     * {@link IllegalArgumentException} when an invalid block number is
+     * provided. A block number is invalid if it is a strictly negative number.
+     *
+     * @param blockNumber parameterized, block number
+     */
+    @ParameterizedTest
+    @MethodSource("invalidBlockNumbers")
+    void testInvalidBlockNumber(final long blockNumber) throws IOException {
+        final BlockAsLocalDirWriter toTest =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
+
+        final BlockHeader blockHeader =
+                BlockHeader.newBuilder().number(blockNumber).build();
+        final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder()
+                .blockHeader(BlockHeader.PROTOBUF.toBytes(blockHeader))
+                .build();
+
+        assertThatIllegalArgumentException().isThrownBy(() -> toTest.write(List.of(blockItem)));
+    }
+
     private void removeRootWritePerms(final PersistenceStorageConfig config) throws IOException {
         final Path blockNodeRootPath = Path.of(config.liveRootPath());
         Files.setPosixFilePermissions(blockNodeRootPath, TestUtils.getNoWrite().value());
@@ -297,6 +325,7 @@ public class BlockAsLocalDirWriterTest {
     //     TestBlockAsDirWriter overrides the write() method to allow a test spy to simulate an
     //     IOException while allowing the real write() method to remain protected.
     private final class TestBlockAsLocalDirWriter extends BlockAsLocalDirWriter {
+
         public TestBlockAsLocalDirWriter(final BlockRemover blockRemover, final BlockNodeContext blockNodeContext)
                 throws IOException {
             super(blockNodeContext, blockRemover, pathResolverMock);
@@ -307,5 +336,35 @@ public class BlockAsLocalDirWriterTest {
                 throws IOException {
             super.write(blockItemFilePath, blockItem);
         }
+    }
+
+    /**
+     * Some invalid block numbers.
+     *
+     * @return a stream of invalid block numbers
+     */
+    public static Stream<Arguments> invalidBlockNumbers() {
+        return Stream.of(
+                Arguments.of(-1L),
+                Arguments.of(-2L),
+                Arguments.of(-10L),
+                Arguments.of(-100L),
+                Arguments.of(-1_000L),
+                Arguments.of(-10_000L),
+                Arguments.of(-100_000L),
+                Arguments.of(-1_000_000L),
+                Arguments.of(-10_000_000L),
+                Arguments.of(-100_000_000L),
+                Arguments.of(-1_000_000_000L),
+                Arguments.of(-10_000_000_000L),
+                Arguments.of(-100_000_000_000L),
+                Arguments.of(-1_000_000_000_000L),
+                Arguments.of(-10_000_000_000_000L),
+                Arguments.of(-100_000_000_000_000L),
+                Arguments.of(-1_000_000_000_000_000L),
+                Arguments.of(-10_000_000_000_000_000L),
+                Arguments.of(-100_000_000_000_000_000L),
+                Arguments.of(-1_000_000_000_000_000_000L),
+                Arguments.of(Long.MIN_VALUE));
     }
 }
