@@ -19,10 +19,11 @@ package com.hedera.block.server.util;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockAsLocalFilePathResolver;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.hapi.block.stream.input.EventHeader;
@@ -113,11 +114,11 @@ public final class PersistTestUtils {
     }
 
     /**
-     * This method mocks and trains a {@link BlockAsLocalDirPathResolver}. It
+     * This method spies and trains a {@link BlockAsLocalDirPathResolver}. It
      * requires a path to the live root test directory to use as base (usually
-     * it would be a temp dir). The mock is trained to return the resolved path
-     * to a block by a given block number, using the live root test directory as
-     * a base. The mock captures anyLong input so it is dynamic in that sense.
+     * it would be a temp dir). The spy calls the real method when
+     * {@link BlockAsLocalDirPathResolver#resolvePathToBlock(long)} is called.
+     * The mock captures anyLong input so it is dynamic in that sense.
      *
      * @param liveRootTestPath path to the live root test directory
      * @return a trained mock that will return the resolved path to a block by a
@@ -125,34 +126,27 @@ public final class PersistTestUtils {
      */
     public static BlockAsLocalDirPathResolver getTrainedBlockAsLocalDirPathResolver(
             @NonNull final Path liveRootTestPath) {
-        return doTrainResolver(mock(BlockAsLocalDirPathResolver.class), liveRootTestPath);
+        Objects.requireNonNull(liveRootTestPath);
+        final BlockAsLocalDirPathResolver result = spy(BlockAsLocalDirPathResolver.of(liveRootTestPath));
+        when(result.resolvePathToBlock(anyLong())).thenCallRealMethod();
+        return result;
     }
 
     /**
-     * This method trains a {@link BlockAsLocalDirPathResolver} to return the
-     * resolved path to a block by a given block number, using the live root
-     * test directory as a base. The resolver is trained to return the resolved
-     * path to a block by a given block number, using the live root test
-     * directory as a base. The mock captures anyLong input so it is dynamic
-     * in that sense.
+     * This method spies and trains a {@link BlockAsLocalFilePathResolver}. It
+     * requires a path to the live root test directory to use as base (usually
+     * it would be a temp dir). The spy calls the real method when
+     * {@link BlockAsLocalFilePathResolver#resolvePathToBlock(long)} is called.
+     * The mock captures anyLong input so it is dynamic in that sense.
      *
-     * @param resolverToTrain  the resolver to train
      * @param liveRootTestPath path to the live root test directory
-     * @return the trained resolver
+     * @return a trained mock that will return the resolved path to a block by a
+     * given block number
      */
-    public static BlockAsLocalDirPathResolver trainAndReturnBlockAsLocalDirPathResolver(
-            @NonNull final BlockAsLocalDirPathResolver resolverToTrain, @NonNull final Path liveRootTestPath) {
-        return doTrainResolver(resolverToTrain, liveRootTestPath);
-    }
-
-    private static BlockAsLocalDirPathResolver doTrainResolver(
-            @NonNull final BlockAsLocalDirPathResolver resolverToTrain, @NonNull final Path liveRootTestPath) {
-        Objects.requireNonNull(resolverToTrain);
+    public static BlockAsLocalFilePathResolver getTrainedBlockAsLocalFilePathResolver(final Path liveRootTestPath) {
         Objects.requireNonNull(liveRootTestPath);
-        when(resolverToTrain.resolvePathToBlock(anyLong())).thenAnswer(invocation -> {
-            final long blockNumber = invocation.getArgument(0);
-            return Path.of(liveRootTestPath.resolve(Long.toString(blockNumber)).toString());
-        });
-        return resolverToTrain;
+        final BlockAsLocalFilePathResolver result = spy(BlockAsLocalFilePathResolver.of(liveRootTestPath));
+        when(result.resolvePathToBlock(anyLong())).thenCallRealMethod();
+        return result;
     }
 }

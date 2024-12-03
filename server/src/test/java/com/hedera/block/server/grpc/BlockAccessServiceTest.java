@@ -120,12 +120,11 @@ class BlockAccessServiceTest {
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
 
-        final BlockAsLocalDirPathResolver trainedPathResolver =
-                PersistTestUtils.trainAndReturnBlockAsLocalDirPathResolver(
-                        pathResolverMock, Path.of(testConfig.liveRootPath()));
+        final BlockAsLocalDirPathResolver localPathResolverMock =
+                PersistTestUtils.getTrainedBlockAsLocalDirPathResolver(testLiveRootPath);
         // Generate and persist a block
         final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), trainedPathResolver);
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), localPathResolverMock);
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         blockWriter.write(blockItems);
 

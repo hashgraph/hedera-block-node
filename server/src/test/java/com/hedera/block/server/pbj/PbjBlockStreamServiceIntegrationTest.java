@@ -250,12 +250,11 @@ public class PbjBlockStreamServiceIntegrationTest {
     public void testFullProducerConsumerHappyPath() throws IOException {
         int numberOfBlocks = 100;
 
-        final BlockAsLocalDirPathResolver trainedPathResolver =
-                PersistTestUtils.trainAndReturnBlockAsLocalDirPathResolver(
-                        pathResolverMock, Path.of(testConfig.liveRootPath()));
+        final BlockAsLocalDirPathResolver localPathResolver =
+                PersistTestUtils.getTrainedBlockAsLocalDirPathResolver(testLiveRootPath);
         // Use a real BlockWriter to test the full integration
         final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), trainedPathResolver);
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), localPathResolver);
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
         // Register 3 producers - Opening a pipeline is not enough to register a producer.
