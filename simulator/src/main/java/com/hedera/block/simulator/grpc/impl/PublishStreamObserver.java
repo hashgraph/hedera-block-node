@@ -32,8 +32,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * This class processes server responses and manages the stream state based on server feedback.
  */
 public class PublishStreamObserver implements StreamObserver<PublishStreamResponse> {
-
-    /** Logger for this class */
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     // State

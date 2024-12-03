@@ -17,31 +17,29 @@
 package com.hedera.block.simulator.mode;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
-import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class ConsumerModeHandlerTest {
 
-    private BlockStreamConfig blockStreamConfig;
     private ConsumerStreamGrpcClient consumerStreamGrpcClient;
     private ConsumerModeHandler consumerModeHandler;
 
     @BeforeEach
     void setUp() {
-        blockStreamConfig = mock(BlockStreamConfig.class);
         consumerStreamGrpcClient = mock(ConsumerStreamGrpcClient.class);
 
-        consumerModeHandler = new ConsumerModeHandler(blockStreamConfig, consumerStreamGrpcClient);
+        consumerModeHandler = new ConsumerModeHandler(consumerStreamGrpcClient);
     }
 
     @Test
     void testConstructorWithNullArguments() {
-        assertThrows(NullPointerException.class, () -> new ConsumerModeHandler(null, consumerStreamGrpcClient));
-        assertThrows(NullPointerException.class, () -> new ConsumerModeHandler(blockStreamConfig, null));
+        assertThrows(NullPointerException.class, () -> new ConsumerModeHandler(null));
     }
 
     @Test
@@ -72,7 +70,6 @@ class ConsumerModeHandlerTest {
         consumerModeHandler.stop();
 
         verify(consumerStreamGrpcClient).completeStreaming();
-        verify(consumerStreamGrpcClient).shutdown();
     }
 
     @Test

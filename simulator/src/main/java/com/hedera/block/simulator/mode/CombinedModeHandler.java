@@ -16,10 +16,7 @@
 
 package com.hedera.block.simulator.mode;
 
-import static java.util.Objects.requireNonNull;
-
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * The {@code CombinedModeHandler} class implements the {@link SimulatorModeHandler} interface
@@ -34,17 +31,11 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * {@link UnsupportedOperationException}.
  */
 public class CombinedModeHandler implements SimulatorModeHandler {
-    private final BlockStreamConfig blockStreamConfig;
 
     /**
      * Constructs a new {@code CombinedModeHandler} with the specified configuration.
-     *
-     * @param blockStreamConfig The configuration for block streaming parameters
-     * @throws NullPointerException if blockStreamConfig is null
      */
-    public CombinedModeHandler(@NonNull final BlockStreamConfig blockStreamConfig) {
-        this.blockStreamConfig = requireNonNull(blockStreamConfig);
-    }
+    public CombinedModeHandler() {}
 
     /**
      * Initializes resources for both consuming and publishing blocks.

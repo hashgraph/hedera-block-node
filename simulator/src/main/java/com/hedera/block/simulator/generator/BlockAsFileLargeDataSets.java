@@ -65,14 +65,6 @@ public class BlockAsFileLargeDataSets implements BlockStreamManager {
         this.formatString = "%0" + config.paddedLength() + "d" + config.fileExtension();
     }
 
-    /**
-     * Initialize the block stream manager and load blocks into memory.
-     */
-    @Override
-    public void init() {
-        // Do nothing, because we don't have real initializing and loading blocks into memory for this implementation.
-    }
-
     @Override
     public GenerationMode getGenerationMode() {
         return GenerationMode.DIR;

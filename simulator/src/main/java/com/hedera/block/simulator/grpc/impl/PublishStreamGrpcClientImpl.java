@@ -48,7 +48,6 @@ import javax.inject.Inject;
  * block chunking, and tracks metrics related to block publication.
  */
 public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
-    /** Logger for this class */
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     // Configuration
@@ -196,7 +195,8 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      * Shutdowns the channel.
      */
     @Override
-    public void shutdown() {
+    public void shutdown() throws InterruptedException {
+        completeStreaming();
         channel.shutdown();
     }
 }

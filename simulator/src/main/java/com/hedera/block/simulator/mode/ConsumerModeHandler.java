@@ -36,11 +36,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * {@link UnsupportedOperationException}.
  */
 public class ConsumerModeHandler implements SimulatorModeHandler {
-    /** Logger for this class */
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
-
-    // Configuration
-    private final BlockStreamConfig blockStreamConfig;
 
     // Service dependencies
     private final ConsumerStreamGrpcClient consumerStreamGrpcClient;
@@ -48,14 +44,10 @@ public class ConsumerModeHandler implements SimulatorModeHandler {
     /**
      * Constructs a new {@code ConsumerModeHandler} with the specified dependencies.
      *
-     * @param blockStreamConfig The configuration for block streaming parameters
      * @param consumerStreamGrpcClient The client for consuming blocks via gRPC
      * @throws NullPointerException if any parameter is null
      */
-    public ConsumerModeHandler(
-            @NonNull final BlockStreamConfig blockStreamConfig,
-            @NonNull final ConsumerStreamGrpcClient consumerStreamGrpcClient) {
-        this.blockStreamConfig = requireNonNull(blockStreamConfig);
+    public ConsumerModeHandler(@NonNull final ConsumerStreamGrpcClient consumerStreamGrpcClient) {
         this.consumerStreamGrpcClient = requireNonNull(consumerStreamGrpcClient);
     }
 
@@ -88,6 +80,5 @@ public class ConsumerModeHandler implements SimulatorModeHandler {
     @Override
     public void stop() throws InterruptedException {
         consumerStreamGrpcClient.completeStreaming();
-        consumerStreamGrpcClient.shutdown();
     }
 }

@@ -54,6 +54,7 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
 
     // State
     private final List<String> lastKnownStatuses;
+    private CountDownLatch streamLatch;
 
     /**
      * Constructs a new ConsumerStreamGrpcClientImpl with the specified configuration and metrics service.
@@ -77,6 +78,7 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
                 .build();
         stub = BlockStreamServiceGrpc.newStub(channel);
         lastKnownStatuses.clear();
+        streamLatch = new CountDownLatch(1);
     }
 
     @Override
@@ -84,7 +86,6 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
         Preconditions.requireWhole(startBlock);
         Preconditions.requireWhole(endBlock);
 
-        CountDownLatch streamLatch = new CountDownLatch(1);
         consumerStreamObserver = new ConsumerStreamObserver(metricsService, streamLatch, lastKnownStatuses);
 
         SubscribeStreamRequest request = SubscribeStreamRequest.newBuilder()
@@ -99,9 +100,8 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
 
     @Override
     public void completeStreaming() throws InterruptedException {
-        consumerStreamObserver.onCompleted();
-        // todo(352) Find a suitable solution for removing the sleep
-        Thread.sleep(100);
+        streamLatch.countDown();
+        channel.shutdown();
     }
 
     @Override
@@ -112,10 +112,5 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
     @Override
     public List<String> getLastKnownStatuses() {
         return List.copyOf(lastKnownStatuses);
-    }
-
-    @Override
-    public void shutdown() {
-        channel.shutdown();
     }
 }

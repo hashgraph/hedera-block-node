@@ -35,8 +35,6 @@ import java.util.concurrent.CountDownLatch;
  * This class processes incoming blocks and status messages, updating metrics accordingly.
  */
 public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamResponse> {
-
-    /** Logger for this class */
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     // Service dependencies
@@ -105,8 +103,10 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
     }
 
     private void processBlockItems(List<BlockItem> blockItems) {
-        blockItems.stream()
-                .filter(BlockItem::hasBlockProof)
-                .forEach(__ -> metricsService.get(LiveBlocksConsumed).increment());
+        blockItems.stream().filter(BlockItem::hasBlockProof).forEach(blockItem -> {
+            metricsService.get(LiveBlocksConsumed).increment();
+            LOGGER.log(
+                    INFO, "Received block number: " + blockItem.getBlockProof().getBlock());
+        });
     }
 }

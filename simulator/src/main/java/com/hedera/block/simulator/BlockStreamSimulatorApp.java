@@ -57,17 +57,15 @@ import javax.inject.Inject;
  * execution, and shutdown of streaming operations based on the configured mode.
  */
 public class BlockStreamSimulatorApp {
-    /** Logger for this class */
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     // Service dependencies
     private final PublishStreamGrpcClient publishStreamGrpcClient;
     private final ConsumerStreamGrpcClient consumerStreamGrpcClient;
     private final SimulatorModeHandler simulatorModeHandler;
-    private final MetricsService metricsService;
 
     // State
-    private final AtomicBoolean isRunning;
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
     /**
      * Creates a new BlockStreamSimulatorApp instance with the specified
@@ -93,26 +91,21 @@ public class BlockStreamSimulatorApp {
 
         requireNonNull(configuration);
         requireNonNull(blockStreamManager);
-
-        this.metricsService = requireNonNull(metricsService);
-        this.publishStreamGrpcClient = requireNonNull(publishStreamGrpcClient);
         loadLoggingProperties();
 
-        final BlockStreamConfig blockStreamConfig = requireNonNull(
-                configuration.getConfigData(BlockStreamConfig.class));
+        this.publishStreamGrpcClient = requireNonNull(publishStreamGrpcClient);
         this.consumerStreamGrpcClient = requireNonNull(consumerStreamGrpcClient);
-        this.isRunning = new AtomicBoolean(false);
 
         // Initialize the appropriate mode handler based on configuration
-        final BlockStreamConfig blockStreamConfig = requireNonNull(
-                configuration.getConfigData(BlockStreamConfig.class));
+        final BlockStreamConfig blockStreamConfig =
+                requireNonNull(configuration.getConfigData(BlockStreamConfig.class));
+        // @todo(386) Load simulator mode using dagger
         final SimulatorMode simulatorMode = blockStreamConfig.simulatorMode();
         this.simulatorModeHandler = switch (simulatorMode) {
             case PUBLISHER -> new PublisherModeHandler(
                     blockStreamConfig, publishStreamGrpcClient, blockStreamManager, metricsService);
-            case CONSUMER -> new ConsumerModeHandler(blockStreamConfig, consumerStreamGrpcClient);
-            case BOTH -> new CombinedModeHandler(blockStreamConfig);
-            default -> throw new IllegalArgumentException("Unknown SimulatorMode: " + simulatorMode);
+            case CONSUMER -> new ConsumerModeHandler(consumerStreamGrpcClient);
+            case BOTH -> new CombinedModeHandler();
         };
     }
 
@@ -152,6 +145,7 @@ public class BlockStreamSimulatorApp {
      * @throws InterruptedException if the shutdown process is interrupted
      */
     public void stop() throws InterruptedException {
+        // @todo(322) Add real lifecycle to the simulator
         simulatorModeHandler.stop();
         isRunning.set(false);
 

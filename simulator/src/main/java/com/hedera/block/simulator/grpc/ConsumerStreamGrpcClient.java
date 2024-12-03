@@ -40,7 +40,7 @@ public interface ConsumerStreamGrpcClient {
     void requestBlocks(long startBlock, long endBlock) throws InterruptedException;
 
     /**
-     * Signals completion of the streaming process to the server.
+     * Shutdown the channel and signals completion of the streaming process to the server.
      * This method should be called to gracefully terminate the stream.
      *
      * @throws InterruptedException if the completion process is interrupted
@@ -60,10 +60,4 @@ public interface ConsumerStreamGrpcClient {
      * @return a list of status messages in chronological order
      */
     List<String> getLastKnownStatuses();
-
-    /**
-     * Shuts down the gRPC channel and releases associated resources.
-     * This method should be called when the client is no longer needed.
-     */
-    void shutdown();
 }

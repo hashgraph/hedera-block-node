@@ -46,7 +46,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * the simulator needs to handle publication of blocks.
  */
 public class PublisherModeHandler implements SimulatorModeHandler {
-    /** Logger for this class */
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     // Configuration fields
@@ -183,7 +182,6 @@ public class PublisherModeHandler implements SimulatorModeHandler {
     @Override
     public void stop() throws InterruptedException {
         shouldPublish.set(false);
-        publishStreamGrpcClient.completeStreaming();
         publishStreamGrpcClient.shutdown();
     }
 }

@@ -69,5 +69,5 @@ public interface PublishStreamGrpcClient {
     /**
      * Shutdowns the channel.
      */
-    void shutdown();
+    void shutdown() throws InterruptedException;
 }

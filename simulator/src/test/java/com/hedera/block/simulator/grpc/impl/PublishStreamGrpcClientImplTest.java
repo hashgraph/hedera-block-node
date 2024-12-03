@@ -20,7 +20,7 @@ import static com.hedera.block.simulator.TestUtils.findFreePort;
 import static com.hedera.block.simulator.TestUtils.getTestMetrics;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 import com.hedera.block.simulator.TestUtils;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
@@ -28,7 +28,11 @@ import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.block.simulator.metrics.MetricsServiceImpl;
-import com.hedera.hapi.block.protoc.*;
+import com.hedera.hapi.block.protoc.BlockItemSet;
+import com.hedera.hapi.block.protoc.BlockStreamServiceGrpc;
+import com.hedera.hapi.block.protoc.PublishStreamRequest;
+import com.hedera.hapi.block.protoc.PublishStreamResponse;
+import com.hedera.hapi.block.protoc.PublishStreamResponseCode;
 import com.hedera.hapi.block.stream.output.protoc.BlockHeader;
 import com.hedera.hapi.block.stream.protoc.Block;
 import com.hedera.hapi.block.stream.protoc.BlockItem;
@@ -139,7 +143,6 @@ class PublishStreamGrpcClientImplTest {
 
     @AfterEach
     void teardown() throws InterruptedException {
-        publishStreamGrpcClient.completeStreaming();
         publishStreamGrpcClient.shutdown();
 
         if (server != null) {

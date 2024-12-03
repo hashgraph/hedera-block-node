@@ -18,22 +18,27 @@ package com.hedera.block.simulator.grpc.impl;
 
 import static com.hedera.block.simulator.TestUtils.findFreePort;
 import static com.hedera.block.simulator.TestUtils.getTestMetrics;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import com.hedera.block.simulator.TestUtils;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
 import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.block.simulator.metrics.MetricsServiceImpl;
-import com.hedera.hapi.block.protoc.*;
+import com.hedera.hapi.block.protoc.BlockItemSet;
+import com.hedera.hapi.block.protoc.BlockStreamServiceGrpc;
+import com.hedera.hapi.block.protoc.SubscribeStreamRequest;
+import com.hedera.hapi.block.protoc.SubscribeStreamResponse;
+import com.hedera.hapi.block.protoc.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.stream.output.protoc.BlockHeader;
 import com.hedera.hapi.block.stream.protoc.BlockItem;
 import com.hedera.hapi.block.stream.protoc.BlockProof;
 import com.swirlds.config.api.Configuration;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import org.junit.jupiter.api.AfterEach;
@@ -105,8 +110,8 @@ public class ConsumerStreamGrpcClientImplTest {
     }
 
     @AfterEach
-    public void tearDown() {
-        consumerStreamGrpcClientImpl.shutdown();
+    public void tearDown() throws InterruptedException {
+        consumerStreamGrpcClientImpl.completeStreaming();
         server.shutdownNow();
     }
 
@@ -158,23 +163,5 @@ public class ConsumerStreamGrpcClientImplTest {
 
         consumerStreamGrpcClientImpl.requestBlocks(startBlock, endBlock);
         consumerStreamGrpcClientImpl.completeStreaming();
-    }
-
-    @Test
-    void shutdown() throws InterruptedException {
-        final long startBlock = 0;
-        final long endBlock = 5;
-
-        consumerStreamGrpcClientImpl.shutdown();
-        consumerStreamGrpcClientImpl.requestBlocks(startBlock, endBlock);
-
-        // We check if the first status is UNAVAILABLE, because should fail immediately
-        final String firstStatus =
-                consumerStreamGrpcClientImpl.getLastKnownStatuses().getFirst();
-        assertEquals(
-                Status.UNAVAILABLE
-                        .augmentDescription("Channel shutdown invoked")
-                        .toString(),
-                firstStatus);
     }
 }
