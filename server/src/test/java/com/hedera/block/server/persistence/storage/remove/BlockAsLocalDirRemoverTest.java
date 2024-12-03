@@ -18,6 +18,7 @@ package com.hedera.block.server.persistence.storage.remove;
 
 import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.from;
 import static org.mockito.Mockito.mock;
 
@@ -38,14 +39,19 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 class BlockAsLocalDirRemoverTest {
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig testConfig;
     private BlockAsLocalDirPathResolver pathResolverMock;
+    private BlockAsLocalDirRemover toTest;
 
     @TempDir
     private Path testLiveRootPath;
@@ -59,6 +65,7 @@ class BlockAsLocalDirRemoverTest {
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
         pathResolverMock = PersistTestUtils.getTrainedBlockAsLocalDirPathResolver(Path.of(testConfigLiveRootPath));
+        toTest = BlockAsLocalDirRemover.of(pathResolverMock);
     }
 
     @Test
@@ -73,7 +80,6 @@ class BlockAsLocalDirRemoverTest {
         }
 
         // Remove a block that does not exist
-        final BlockRemover toTest = BlockAsLocalDirRemover.of(pathResolverMock);
         toTest.remove(2);
 
         // Verify the block was not removed
@@ -93,5 +99,49 @@ class BlockAsLocalDirRemoverTest {
         // Verify the block is removed
         final Optional<BlockUnparsed> after = blockReader.read(1);
         assertThat(after).isNotNull().isEmpty();
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link BlockAsLocalDirRemover#remove(long)} correctly throws an
+     * {@link IllegalArgumentException} when an invalid block number is
+     * provided. A block number is invalid if it is a strictly negative number.
+     *
+     * @param toRemove parameterized, block number
+     */
+    @ParameterizedTest
+    @MethodSource("invalidBlockNumbers")
+    void testInvalidBlockNumber(final long toRemove) {
+        assertThatIllegalArgumentException().isThrownBy(() -> toTest.remove(toRemove));
+    }
+
+    /**
+     * Some invalid block numbers.
+     *
+     * @return a stream of invalid block numbers
+     */
+    public static Stream<Arguments> invalidBlockNumbers() {
+        return Stream.of(
+                Arguments.of(-1L),
+                Arguments.of(-2L),
+                Arguments.of(-10L),
+                Arguments.of(-100L),
+                Arguments.of(-1_000L),
+                Arguments.of(-10_000L),
+                Arguments.of(-100_000L),
+                Arguments.of(-1_000_000L),
+                Arguments.of(-10_000_000L),
+                Arguments.of(-100_000_000L),
+                Arguments.of(-1_000_000_000L),
+                Arguments.of(-10_000_000_000L),
+                Arguments.of(-100_000_000_000L),
+                Arguments.of(-1_000_000_000_000L),
+                Arguments.of(-10_000_000_000_000L),
+                Arguments.of(-100_000_000_000_000L),
+                Arguments.of(-1_000_000_000_000_000L),
+                Arguments.of(-10_000_000_000_000_000L),
+                Arguments.of(-100_000_000_000_000_000L),
+                Arguments.of(-1_000_000_000_000_000_000L),
+                Arguments.of(Long.MIN_VALUE));
     }
 }
