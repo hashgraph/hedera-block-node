@@ -52,9 +52,6 @@ public final class BlockAsLocalFilePathResolver implements BlockPathResolver {
         return new BlockAsLocalFilePathResolver(liveRootPath);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @NonNull
     @Override
     public Path resolvePathToBlock(final long blockNumber) {

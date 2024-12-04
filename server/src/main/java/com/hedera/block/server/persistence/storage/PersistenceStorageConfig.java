@@ -18,7 +18,6 @@ package com.hedera.block.server.persistence.storage;
 
 import static com.hedera.block.server.Constants.BLOCK_NODE_ARCHIVE_ROOT_DIRECTORY_SEMANTIC_NAME;
 import static com.hedera.block.server.Constants.BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME;
-import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.common.utils.StringUtilities;
 import com.swirlds.config.api.ConfigData;
@@ -45,7 +44,6 @@ public record PersistenceStorageConfig(
         // @todo(#371) - the default life/archive root path must be absolute starting from /opt
         @ConfigProperty(defaultValue = "") String archiveRootPath,
         @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type) {
-    private static final System.Logger LOGGER = System.getLogger(PersistenceStorageConfig.class.getName());
     // @todo(#371) - the default life/archive root path must be absolute starting from /opt
     private static final String LIVE_ROOT_PATH =
             Path.of("hashgraph/blocknode/data/live/").toAbsolutePath().toString();
@@ -62,9 +60,6 @@ public record PersistenceStorageConfig(
         liveRootPath = resolvePath(liveRootPath, LIVE_ROOT_PATH, BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
         archiveRootPath =
                 resolvePath(archiveRootPath, ARCHIVE_ROOT_PATH, BLOCK_NODE_ARCHIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
-        LOGGER.log(INFO, "Persistence Storage Configuration: persistence.storage.type=" + type);
-        LOGGER.log(INFO, "Persistence Storage Configuration: persistence.storage.liveRootPath=" + liveRootPath);
-        LOGGER.log(INFO, "Persistence Storage Configuration: persistence.storage.archiveRootPath=" + archiveRootPath);
     }
 
     /**

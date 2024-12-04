@@ -50,9 +50,6 @@ public final class BlockAsLocalDirPathResolver implements BlockPathResolver {
         return new BlockAsLocalDirPathResolver(liveRootPath);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @NonNull
     @Override
     public Path resolvePathToBlock(final long blockNumber) {

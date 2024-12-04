@@ -43,9 +43,6 @@ public final class NoOpBlockWriter implements BlockWriter<List<BlockItemUnparsed
         return new NoOpBlockWriter();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @NonNull
     @Override
     public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> valueToWrite)

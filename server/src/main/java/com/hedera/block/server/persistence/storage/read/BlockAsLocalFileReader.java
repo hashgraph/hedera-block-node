@@ -41,9 +41,6 @@ public final class BlockAsLocalFileReader implements LocalBlockReader<BlockUnpar
         return new BlockAsLocalFileReader();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @NonNull
     @Override
     public Optional<BlockUnparsed> read(final long blockNumber) {

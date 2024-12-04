@@ -19,7 +19,6 @@ package com.hedera.block.server.persistence.storage.path;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
-import com.hedera.block.server.Constants;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,8 +31,6 @@ import org.junit.jupiter.params.provider.MethodSource;
  * Tests for the {@link BlockAsLocalFilePathResolver} class.
  */
 class BlockAsLocalFilePathResolverTest {
-    private static final long MAX_LONG_DIGITS = 19L;
-
     @TempDir
     private static Path TEST_LIVE_ROOT_PATH;
 
@@ -76,14 +73,6 @@ class BlockAsLocalFilePathResolverTest {
         assertThatIllegalArgumentException().isThrownBy(() -> toTest.resolvePathToBlock(toResolve));
     }
 
-    private static Path expectedResolvedBlockPath(final long blockNumber) {
-        final String rawBlockNumber = String.format("%0" + MAX_LONG_DIGITS + "d", blockNumber);
-        final String[] blockPath = rawBlockNumber.split("");
-        final String blockFileName = rawBlockNumber.concat(Constants.BLOCK_FILE_EXTENSION);
-        blockPath[blockPath.length - 1] = blockFileName;
-        return Path.of(TEST_LIVE_ROOT_PATH.toString(), blockPath);
-    }
-
     /**
      * Some valid block numbers.
      *
@@ -91,28 +80,69 @@ class BlockAsLocalFilePathResolverTest {
      */
     public static Stream<Arguments> validBlockNumbers() {
         return Stream.of(
-                Arguments.of(0L, expectedResolvedBlockPath(0L)),
-                Arguments.of(1L, expectedResolvedBlockPath(1L)),
-                Arguments.of(2L, expectedResolvedBlockPath(2L)),
-                Arguments.of(10L, expectedResolvedBlockPath(10L)),
-                Arguments.of(100L, expectedResolvedBlockPath(100L)),
-                Arguments.of(1_000L, expectedResolvedBlockPath(1_000L)),
-                Arguments.of(10_000L, expectedResolvedBlockPath(10_000L)),
-                Arguments.of(100_000L, expectedResolvedBlockPath(100_000L)),
-                Arguments.of(1_000_000L, expectedResolvedBlockPath(1_000_000L)),
-                Arguments.of(10_000_000L, expectedResolvedBlockPath(10_000_000L)),
-                Arguments.of(100_000_000L, expectedResolvedBlockPath(100_000_000L)),
-                Arguments.of(1_000_000_000L, expectedResolvedBlockPath(1_000_000_000L)),
-                Arguments.of(10_000_000_000L, expectedResolvedBlockPath(10_000_000_000L)),
-                Arguments.of(100_000_000_000L, expectedResolvedBlockPath(100_000_000_000L)),
-                Arguments.of(1_000_000_000_000L, expectedResolvedBlockPath(1_000_000_000_000L)),
-                Arguments.of(10_000_000_000_000L, expectedResolvedBlockPath(10_000_000_000_000L)),
-                Arguments.of(100_000_000_000_000L, expectedResolvedBlockPath(100_000_000_000_000L)),
-                Arguments.of(1_000_000_000_000_000L, expectedResolvedBlockPath(1_000_000_000_000_000L)),
-                Arguments.of(10_000_000_000_000_000L, expectedResolvedBlockPath(10_000_000_000_000_000L)),
-                Arguments.of(100_000_000_000_000_000L, expectedResolvedBlockPath(100_000_000_000_000_000L)),
-                Arguments.of(1_000_000_000_000_000_000L, expectedResolvedBlockPath(1_000_000_000_000_000_000L)),
-                Arguments.of(Long.MAX_VALUE, expectedResolvedBlockPath(Long.MAX_VALUE)));
+                Arguments.of(
+                        0L, TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0000000000000000000.blk")),
+                Arguments.of(
+                        1L, TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0000000000000000001.blk")),
+                Arguments.of(
+                        2L, TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0000000000000000002.blk")),
+                Arguments.of(
+                        10L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/1/0000000000000000010.blk")),
+                Arguments.of(
+                        100L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/1/0/0000000000000000100.blk")),
+                Arguments.of(
+                        1_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/1/0/0/0000000000000001000.blk")),
+                Arguments.of(
+                        10_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/0/0/0/0/0/0/0/0/1/0/0/0/0000000000000010000.blk")),
+                Arguments.of(
+                        100_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/0/0/0/0/0/0/0/1/0/0/0/0/0000000000000100000.blk")),
+                Arguments.of(
+                        1_000_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/0/0/0/0/0/0/1/0/0/0/0/0/0000000000001000000.blk")),
+                Arguments.of(
+                        10_000_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/0/0/0/0/0/1/0/0/0/0/0/0/0000000000010000000.blk")),
+                Arguments.of(
+                        100_000_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/0/0/0/0/1/0/0/0/0/0/0/0/0000000000100000000.blk")),
+                Arguments.of(
+                        1_000_000_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/0/0/0/1/0/0/0/0/0/0/0/0/0000000001000000000.blk")),
+                Arguments.of(
+                        10_000_000_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/0/0/1/0/0/0/0/0/0/0/0/0/0000000010000000000.blk")),
+                Arguments.of(
+                        100_000_000_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/0/1/0/0/0/0/0/0/0/0/0/0/0000000100000000000.blk")),
+                Arguments.of(
+                        1_000_000_000_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/0/1/0/0/0/0/0/0/0/0/0/0/0/0000001000000000000.blk")),
+                Arguments.of(
+                        10_000_000_000_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/0/1/0/0/0/0/0/0/0/0/0/0/0/0/0000010000000000000.blk")),
+                Arguments.of(
+                        100_000_000_000_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/0/1/0/0/0/0/0/0/0/0/0/0/0/0/0/0000100000000000000.blk")),
+                Arguments.of(
+                        1_000_000_000_000_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/0/1/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0001000000000000000.blk")),
+                Arguments.of(
+                        10_000_000_000_000_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/0/1/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0010000000000000000.blk")),
+                Arguments.of(
+                        100_000_000_000_000_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("0/1/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0100000000000000000.blk")),
+                Arguments.of(
+                        1_000_000_000_000_000_000L,
+                        TEST_LIVE_ROOT_PATH.resolve("1/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/1000000000000000000.blk")),
+                Arguments.of(
+                        Long.MAX_VALUE,
+                        TEST_LIVE_ROOT_PATH.resolve("9/2/2/3/3/7/2/0/3/6/8/5/4/7/7/5/8/0/9223372036854775807.blk")));
     }
 
     /**

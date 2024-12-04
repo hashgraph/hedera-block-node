@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.persistence.storage.path;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.file.Path;
 
 /**
@@ -26,11 +27,13 @@ public interface BlockPathResolver {
     /**
      * This method resolves the fs {@link Path} to a Block by a given input
      * number. This method does not guarantee that the returned {@link Path}
-     * exists!
+     * exists! This method is guaranteed to return a {@code non-null}
+     * {@link Path}.
      *
      * @param blockNumber to be resolved the path for
      * @return the resolved path to the given Block by a number
      * @throws IllegalArgumentException if the blockNumber IS NOT a whole number
      */
+    @NonNull
     Path resolvePathToBlock(final long blockNumber);
 }

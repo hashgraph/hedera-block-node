@@ -42,9 +42,6 @@ public final class NoOpBlockReader implements BlockReader<BlockUnparsed> {
         return new NoOpBlockReader();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @NonNull
     @Override
     public Optional<BlockUnparsed> read(final long blockNumber) throws IOException, ParseException {

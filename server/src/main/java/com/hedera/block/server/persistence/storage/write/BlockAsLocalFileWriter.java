@@ -73,9 +73,6 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
         return new BlockAsLocalFileWriter(blockNodeContext, blockPathResolver);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @NonNull
     @Override
     public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
