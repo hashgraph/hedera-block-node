@@ -24,6 +24,7 @@ module com.hedera.block.simulator {
     requires io.grpc.stub;
     requires io.grpc;
     requires javax.inject;
+    requires java.logging;
 
     provides com.swirlds.config.api.ConfigurationExtension with
             SimulatorConfigExtension;
