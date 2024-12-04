@@ -56,7 +56,7 @@ class BlockAsLocalFilePathResolverTest {
     @MethodSource("validBlockNumbers")
     void testSuccessfulPathResolution(final long toResolve, final Path expected) {
         final Path actual = toTest.resolvePathToBlock(toResolve);
-        assertThat(actual).isNotNull().isEqualTo(expected);
+        assertThat(actual).isNotNull().isAbsolute().isEqualByComparingTo(expected);
     }
 
     /**

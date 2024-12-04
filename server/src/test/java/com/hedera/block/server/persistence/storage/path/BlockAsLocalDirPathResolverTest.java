@@ -17,10 +17,10 @@
 package com.hedera.block.server.persistence.storage.path;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.nio.file.Path;
 import java.util.stream.Stream;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -55,7 +55,7 @@ class BlockAsLocalDirPathResolverTest {
     @MethodSource("validBlockNumbers")
     void testSuccessfulPathResolution(final long toResolve, final Path expected) {
         final Path actual = toTest.resolvePathToBlock(toResolve);
-        assertThat(actual).isNotNull().isEqualTo(expected);
+        assertThat(actual).isNotNull().isAbsolute().isEqualByComparingTo(expected);
     }
 
     /**
@@ -69,7 +69,7 @@ class BlockAsLocalDirPathResolverTest {
     @ParameterizedTest
     @MethodSource("invalidBlockNumbers")
     void testInvalidBlockNumber(final long toResolve) {
-        Assertions.assertThatIllegalArgumentException().isThrownBy(() -> toTest.resolvePathToBlock(toResolve));
+        assertThatIllegalArgumentException().isThrownBy(() -> toTest.resolvePathToBlock(toResolve));
     }
 
     /**
