@@ -170,8 +170,6 @@ class BlockStreamSimulatorTest {
     @Test
     void start_millisPerSecond_streamingLagVerifyWarnLog()
             throws InterruptedException, IOException, BlockSimulatorParsingException {
-        List<LogRecord> logRecords = captureLogs();
-
         BlockStreamManager blockStreamManager = mock(BlockStreamManager.class);
         BlockItem blockItem = BlockItem.newBuilder()
                 .setBlockHeader(BlockHeader.newBuilder().setNumber(1L).build())
@@ -205,6 +203,7 @@ class BlockStreamSimulatorTest {
 
         BlockStreamSimulatorApp blockStreamSimulator =
                 new BlockStreamSimulatorApp(configuration, blockStreamManager, publishStreamGrpcClient, metricsService);
+        List<LogRecord> logRecords = captureLogs();
 
         blockStreamSimulator.start();
         assertTrue(blockStreamSimulator.isRunning());
