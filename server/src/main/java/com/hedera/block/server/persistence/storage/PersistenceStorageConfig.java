@@ -103,9 +103,9 @@ public record PersistenceStorageConfig(
             @NonNull final String semanticPathName) {
         final Path result;
         if (StringUtilities.isBlank(pathToNormalize)) {
-            result = Path.of(defaultIfBlank).toAbsolutePath();
+            result = Path.of(defaultIfBlank).normalize().toAbsolutePath();
         } else {
-            result = Path.of(pathToNormalize);
+            result = Path.of(pathToNormalize).normalize().toAbsolutePath();
         }
 
         if (!result.isAbsolute()) {
