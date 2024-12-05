@@ -216,3 +216,22 @@ The purpose of this implementation is to provide a simple, fast to resolve local
 storage. Intended as a production default.
 
 ### No Op (a.k.a. `no-op`)
+
+#### Overview
+
+This type of storage implementation does nothing.
+
+#### Specific implementations
+
+The specific implementations of the defined [abstractions](#abstractions) as
+listed above are:
+
+1. `BlockWriter` - `com.hedera.block.server.persistence.storage.write.NoOpBlockWriter`
+1. `BlockReader` - `com.hedera.block.server.persistence.storage.read.NoOpBlockReader`
+1. `BlockRemover` - `com.hedera.block.server.persistence.storage.remove.NoOpBlockRemover`
+1. `BlockPathResolver` - `com.hedera.block.server.persistence.storage.path.NoOpBlockPathResolver`
+
+#### Purpose
+
+The purpose of this implementation is to provide a no-op implementation, mainly
+for testing and development purposes.
