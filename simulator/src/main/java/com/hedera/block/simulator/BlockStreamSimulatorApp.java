@@ -37,7 +37,10 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
 import javax.inject.Inject;
 
 /** BlockStream Simulator App */
@@ -136,9 +139,18 @@ public class BlockStreamSimulatorApp {
     }
 
     private void loadLoggingProperties() {
+        final LogManager logManager = LogManager.getLogManager();
         try (InputStream is = BlockStreamSimulator.class.getClassLoader().getResourceAsStream(LOGGING_PROPERTIES)) {
-            LogManager.getLogManager().readConfiguration(is);
-        } catch (IOException e) {
+            logManager.readConfiguration(is);
+        } catch (IOException | NullPointerException e) {
+            logManager.reset();
+            Logger rootLogger = logManager.getLogger("");
+            ConsoleHandler consoleHandler = new ConsoleHandler();
+
+            consoleHandler.setLevel(Level.INFO);
+            rootLogger.setLevel(Level.INFO);
+            rootLogger.addHandler(consoleHandler);
+
             LOGGER.log(
                     ERROR,
                     "Loading Logging Configuration failed, continuing with default. Error is: %s"
