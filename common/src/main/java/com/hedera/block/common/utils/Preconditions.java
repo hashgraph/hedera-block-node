@@ -19,7 +19,7 @@ package com.hedera.block.common.utils;
 import java.util.Objects;
 
 /** A utility class used to assert various preconditions. */
-public final class Preconditions {
+public final class Preconditions { // @todo(381) change the APIs to accept non-null error messages
     /**
      * This method asserts a given {@link String} is not blank, meaning it is
      * not {@code null} or does not contain only whitespaces as defined by
