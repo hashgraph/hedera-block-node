@@ -23,8 +23,8 @@ module com.hedera.block.simulator {
     requires dagger;
     requires io.grpc.stub;
     requires io.grpc;
-    requires javax.inject;
     requires java.logging;
+    requires javax.inject;
 
     provides com.swirlds.config.api.ConfigurationExtension with
             SimulatorConfigExtension;
