@@ -52,8 +52,7 @@ public record PersistenceStorageConfig(
             Path.of("hashgraph/blocknode/data/archive/").toAbsolutePath().toString();
 
     /**
-     * Constructor to set the default root path if not provided, it will be set to the data
-     * directory in the current working directory
+     * Constructor.
      */
     public PersistenceStorageConfig {
         Objects.requireNonNull(type);
@@ -79,40 +78,23 @@ public record PersistenceStorageConfig(
     @NonNull
     private String resolvePath(
             final String pathToResolve, @NonNull final String defaultIfBlank, @NonNull final String semanticPathName) {
-        final Path normalized = getNormalizedPath(pathToResolve, defaultIfBlank, semanticPathName);
+        final Path normalized = getNormalizedPath(pathToResolve, defaultIfBlank);
         createDirectoryPath(normalized, semanticPathName);
         return normalized.toString();
     }
 
     /**
      * This method normalizes a given path. If the path to normalize is blank,
-     * a default path is used. The normalized path must be absolute! If the
-     * normalized path is not absolute, an {@link IllegalArgumentException} is
-     * thrown.
+     * a default path is used. The normalized path must be absolute!
      *
      * @param pathToNormalize the path to normalize
      * @param defaultIfBlank the default path if the path to normalize is blank
-     * @param semanticPathName the semantic name of the path used for logging
-     * @return the normalized path
      * @throws IllegalArgumentException if the path to normalize is not absolute
      */
     @NonNull
-    private Path getNormalizedPath(
-            final String pathToNormalize,
-            @NonNull final String defaultIfBlank,
-            @NonNull final String semanticPathName) {
-        final Path result;
-        if (StringUtilities.isBlank(pathToNormalize)) {
-            result = Path.of(defaultIfBlank).normalize().toAbsolutePath();
-        } else {
-            result = Path.of(pathToNormalize).normalize().toAbsolutePath();
-        }
-
-        if (!result.isAbsolute()) {
-            throw new IllegalArgumentException("Path provided for [%s] must be absolute!".formatted(semanticPathName));
-        } else {
-            return result;
-        }
+    private Path getNormalizedPath(final String pathToNormalize, @NonNull final String defaultIfBlank) {
+        final String actualToNormalize = StringUtilities.isBlank(pathToNormalize) ? defaultIfBlank : pathToNormalize;
+        return Path.of(actualToNormalize).normalize().toAbsolutePath();
     }
 
     /**

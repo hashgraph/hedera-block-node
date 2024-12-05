@@ -11,8 +11,8 @@ defaults and can be left unchanged. It is recommended to browse the properties b
 
 | Environment Variable | Description | Default Value |
 |:---|:---|---:|
-| PERSISTENCE_STORAGE_LIVE_ROOT_PATH | The root path for the live storage. The provided path must be absolute! | |
-| PERSISTENCE_STORAGE_ARCHIVE_ROOT_PATH | The root path for the archive storage. The provided path must be absolute! | |
+| PERSISTENCE_STORAGE_LIVE_ROOT_PATH | The root path for the live storage. | |
+| PERSISTENCE_STORAGE_ARCHIVE_ROOT_PATH | The root path for the archive storage. | |
 | PERSISTENCE_STORAGE_TYPE | Type of the persistence storage | BLOCK_AS_LOCAL_FILE |
 | CONSUMER_TIMEOUT_THRESHOLD_MILLIS | Time to wait for subscribers before disconnecting in milliseconds | 1500 |
 | SERVICE_DELAY_MILLIS | Service shutdown delay in milliseconds | 500 |

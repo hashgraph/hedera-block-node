@@ -18,7 +18,6 @@ package com.hedera.block.server.persistence.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.from;
 
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
@@ -119,25 +118,6 @@ class PersistenceStorageConfigTest {
     }
 
     /**
-     * This test aims to verify that the {@link PersistenceStorageConfig} class
-     * correctly throws an {@link IllegalArgumentException} when either the live
-     * or archive root paths are relative.
-     *
-     * @param invalidLiveRootPathToTest parameterized, the invalid live root
-     * path to test
-     * @param invalidArchiveRootPathToTest parameterized, the invalid archive
-     * root path to test
-     */
-    @ParameterizedTest
-    @MethodSource({"validNonAbsolutePaths"})
-    void testPersistenceStorageConfigRelativeRootPaths(
-            final String invalidLiveRootPathToTest, final String invalidArchiveRootPathToTest) {
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> new PersistenceStorageConfig(
-                        invalidLiveRootPathToTest, invalidArchiveRootPathToTest, StorageType.BLOCK_AS_LOCAL_FILE));
-    }
-
-    /**
      * All storage types dynamically provided.
      */
     private static Stream<Arguments> storageTypes() {
@@ -231,20 +211,6 @@ class PersistenceStorageConfigTest {
         return Stream.of(
                 Arguments.of(liveToTest1, liveToTest1, archiveToTest1, archiveToTest1),
                 Arguments.of(liveToTest2, liveToTest2, archiveToTest2, archiveToTest2));
-    }
-
-    /**
-     * Supplying blank is valid, both must be valid paths in order to be able
-     * to create the config instance. If either liveRootPath or archiveRootPath
-     * is invalid, we expect to fail. If we provide external paths, they must be
-     * absolute.
-     */
-    private static Stream<Arguments> validNonAbsolutePaths() {
-        // these must fail, if we provide external paths, they must be absolute
-        final String liveToTest = "hashgraph/blocknode/data/relative/live/";
-        final String archiveToTest = "hashgraph/blocknode/data/relative/archive/";
-        return Stream.of(
-                Arguments.of("", archiveToTest), Arguments.of(liveToTest, ""), Arguments.of(liveToTest, archiveToTest));
     }
 
     /**
