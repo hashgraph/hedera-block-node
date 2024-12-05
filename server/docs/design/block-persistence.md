@@ -7,6 +7,13 @@
 1. [Abstractions](#abstractions)
 1. [Goals](#goals)
 1. [Overview](#overview)
+1. [Implementations](#implementations)
+   1. [Block as Local Directory (a.k.a. `block-as-local-dir`)](#block-as-local-directory-aka-block-as-local-dir)
+      1. [Overview](#overview-1)
+      1. [Specific implementations](#specific-implementations)
+      1. [Configurable Parameters](#configurable-parameters)
+   1. [Block as Local File (a.k.a. `block-as-local-file`)](#block-as-local-file-aka-block-as-local-file)
+   1. [No Op (a.k.a. `no-op`)](#no-op-aka-no-op)
 
 ## Purpose
 
@@ -85,3 +92,34 @@ caller. Services requiring one or more `Block`s should leverage a `BlockReader`
 implementation. The `BlockReader` should be able to efficiently retrieve a
 `Block` by block number.  The `BlockReader` should pass unrecoverable exceptions
 when reading a `Block` up to the caller.
+
+## Implementations
+
+### Block as Local Directory (a.k.a. `block-as-local-dir`)
+
+#### Overview
+
+This type of storage implementation persists `Block`s to a local filesystem. A
+`Block` is persisted as a directory containing a file for each `BlockItem` that
+comprises the given `Block`. The storage has a root path where each directory
+under the root path is a given block. The names of the directories (`Block`s)
+are the respective `Block`.
+
+#### Specific implementations
+
+The specific implementations of the defined [abstractions](#abstractions) as
+listed above are:
+
+1. `BlockWriter` - `com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter`
+2. `BlockReader` - `com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader`
+3. `BlockRemover` - `com.hedera.block.server.persistence.storage.remove.BlockAsLocalDirRemover`
+4. `BlockPathResolver` - `com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver`
+
+#### Configurable Parameters
+
+- `persistence.storage.liveRootPath` - the root path where all `Block`s are
+  stored.
+
+### Block as Local File (a.k.a. `block-as-local-file`)
+
+### No Op (a.k.a. `no-op`)
