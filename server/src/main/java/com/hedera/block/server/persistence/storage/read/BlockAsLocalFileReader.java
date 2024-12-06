@@ -66,12 +66,15 @@ public final class BlockAsLocalFileReader implements LocalBlockReader<BlockUnpar
         if (Files.exists(resolvedBlockPath)) {
             return Optional.of(doRead(resolvedBlockPath));
         } else {
+            // todo we generally expect the block to be there, so we
+            // return an empty optional here, or do something else?
+            // of course sometimes the block may not even exist yet.
             return Optional.empty();
         }
     }
 
     private BlockUnparsed doRead(final Path resolvedBlockPath) throws IOException, ParseException {
-        // todo there are other ways of parsing, for example we can pass ReadableSequentialData instead of the fos
+        // todo there are other ways of parsing, for example we can pass ReadableSequentialData instead of the fis
         // because the readAllBytes does not seem like the best idea, what is the correct (or better) way to parse
         // the block file?
         try (final FileInputStream fis = new FileInputStream(resolvedBlockPath.toFile())) {
