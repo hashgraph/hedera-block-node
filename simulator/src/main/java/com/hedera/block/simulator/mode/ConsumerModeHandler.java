@@ -16,9 +16,11 @@
 
 package com.hedera.block.simulator.mode;
 
+import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
@@ -34,31 +36,49 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * {@link UnsupportedOperationException}.
  */
 public class ConsumerModeHandler implements SimulatorModeHandler {
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final BlockStreamConfig blockStreamConfig;
+    // Service dependencies
+    private final ConsumerStreamGrpcClient consumerStreamGrpcClient;
 
     /**
-     * Constructs a new {@code ConsumerModeHandler} with the specified block stream configuration.
+     * Constructs a new {@code ConsumerModeHandler} with the specified dependencies.
      *
-     * @param blockStreamConfig the configuration data for managing block streams
+     * @param consumerStreamGrpcClient The client for consuming blocks via gRPC
+     * @throws NullPointerException if any parameter is null
      */
-    public ConsumerModeHandler(@NonNull final BlockStreamConfig blockStreamConfig) {
-        this.blockStreamConfig = requireNonNull(blockStreamConfig);
+    public ConsumerModeHandler(@NonNull final ConsumerStreamGrpcClient consumerStreamGrpcClient) {
+        this.consumerStreamGrpcClient = requireNonNull(consumerStreamGrpcClient);
     }
 
     /**
-     * Starts the simulator and initiate streaming, depending on the working mode.
+     * Initializes the gRPC channel for block consumption.
      */
     @Override
-    public void start() {
-        throw new UnsupportedOperationException();
+    public void init() {
+        consumerStreamGrpcClient.init();
+        LOGGER.log(INFO, "gRPC Channel initialized for consuming blocks.");
     }
 
     /**
-     * Stops the handler and manager from streaming.
+     * Starts consuming blocks from the stream beginning at genesis (block 0).
+     * Currently, requests an infinite stream of blocks starting from genesis.
+     *
+     * @throws InterruptedException if the consumption process is interrupted
      */
     @Override
-    public void stop() {
-        throw new UnsupportedOperationException();
+    public void start() throws InterruptedException {
+        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator is starting in consumer mode.");
+        consumerStreamGrpcClient.requestBlocks(0, 0);
+    }
+
+    /**
+     * Gracefully stops block consumption and shuts down the gRPC client.
+     *
+     * @throws InterruptedException if the shutdown process is interrupted
+     */
+    @Override
+    public void stop() throws InterruptedException {
+        consumerStreamGrpcClient.completeStreaming();
     }
 }

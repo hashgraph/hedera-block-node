@@ -46,6 +46,7 @@ class BlockAsDirBlockStreamManagerTest {
     @Test
     void getNextBlockItem() throws IOException, BlockSimulatorParsingException {
         BlockStreamManager blockStreamManager = getBlockAsDirBlockStreamManager(getAbsoluteFolder(rootFolder));
+        blockStreamManager.init();
 
         for (int i = 0; i < 1000; i++) {
             assertNotNull(blockStreamManager.getNextBlockItem());
@@ -55,6 +56,7 @@ class BlockAsDirBlockStreamManagerTest {
     @Test
     void getNextBlock() throws IOException, BlockSimulatorParsingException {
         BlockStreamManager blockStreamManager = getBlockAsDirBlockStreamManager(getAbsoluteFolder(rootFolder));
+        blockStreamManager.init();
 
         for (int i = 0; i < 3000; i++) {
             assertNotNull(blockStreamManager.getNextBlock());
@@ -71,7 +73,8 @@ class BlockAsDirBlockStreamManagerTest {
     private BlockStreamManager getBlockAsDirBlockStreamManager(String rootFolder) {
         final BlockGeneratorConfig blockGeneratorConfig = new BlockGeneratorConfig(
                 GenerationMode.DIR, rootFolder, "BlockAsDirBlockStreamManager", 36, ".blk", 0, 0);
-
-        return new BlockAsDirBlockStreamManager(blockGeneratorConfig);
+        final BlockStreamManager blockStreamManager = new BlockAsDirBlockStreamManager(blockGeneratorConfig);
+        blockStreamManager.init();
+        return blockStreamManager;
     }
 }

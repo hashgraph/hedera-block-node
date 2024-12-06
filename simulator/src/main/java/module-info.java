@@ -10,6 +10,7 @@ module com.hedera.block.simulator {
     exports com.hedera.block.simulator.grpc;
     exports com.hedera.block.simulator.generator;
     exports com.hedera.block.simulator.metrics;
+    exports com.hedera.block.simulator.grpc.impl;
 
     requires static com.github.spotbugs.annotations;
     requires static com.google.auto.service;

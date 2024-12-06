@@ -67,6 +67,8 @@ module com.hedera.block.stream {
     exports com.hedera.hapi.platform.state;
     exports com.hedera.hapi.node.state.roster;
     exports com.hedera.hapi.block.stream.schema;
+    exports com.hedera.hapi.platform.state.legacy to
+            com.google.protobuf;
 
     requires transitive com.google.common;
     requires transitive com.google.protobuf;

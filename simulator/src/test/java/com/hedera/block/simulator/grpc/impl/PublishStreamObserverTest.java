@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.simulator.grpc;
+package com.hedera.block.simulator.grpc.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

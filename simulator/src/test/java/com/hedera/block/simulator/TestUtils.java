@@ -24,6 +24,7 @@ import com.swirlds.config.extensions.sources.SimpleConfigSource;
 import com.swirlds.metrics.api.Metrics;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -54,5 +55,11 @@ public class TestUtils {
         final Metrics metrics = metricsProvider.createGlobalMetrics();
         metricsProvider.start();
         return metrics;
+    }
+
+    public static int findFreePort() throws IOException {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            return socket.getLocalPort();
+        }
     }
 }

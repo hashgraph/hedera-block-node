@@ -26,6 +26,7 @@ import com.hedera.block.simulator.config.data.StreamStatus;
 import com.hedera.block.simulator.config.types.SimulatorMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
+import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.block.simulator.mode.CombinedModeHandler;
@@ -43,98 +44,128 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import javax.inject.Inject;
 
-/** BlockStream Simulator App */
+/**
+ * The BlockStream Simulator Application manages the lifecycle and coordination
+ * of block streaming
+ * operations. It supports different modes of operation including publishing,
+ * consuming, or both
+ * simultaneously.
+ *
+ * <p>
+ * This class serves as the main entry point for the simulator, handling
+ * initialization,
+ * execution, and shutdown of streaming operations based on the configured mode.
+ */
 public class BlockStreamSimulatorApp {
-
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
+    // Service dependencies
     private final PublishStreamGrpcClient publishStreamGrpcClient;
+    private final ConsumerStreamGrpcClient consumerStreamGrpcClient;
     private final SimulatorModeHandler simulatorModeHandler;
+
+    // State
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
-    private final MetricsService metricsService;
 
     /**
-     * Creates a new BlockStreamSimulatorApp instance.
+     * Creates a new BlockStreamSimulatorApp instance with the specified
+     * dependencies.
      *
-     * @param configuration the configuration to be used by the block stream simulator
-     * @param blockStreamManager the block stream manager to be used by the block stream simulator
-     * @param publishStreamGrpcClient the gRPC client to be used by the block stream simulator
-     * @param metricsService the metrics service to be used by the block stream simulator
+     * @param configuration            The configuration to be used by the block
+     *                                 stream simulator
+     * @param blockStreamManager       The manager responsible for block stream
+     *                                 generation
+     * @param publishStreamGrpcClient  The gRPC client for publishing blocks
+     * @param consumerStreamGrpcClient The gRPC client for consuming blocks
+     * @param metricsService           The service for recording metrics
+     * @throws NullPointerException     if any parameter is null
+     * @throws IllegalArgumentException if an unknown simulator mode is configured
      */
     @Inject
     public BlockStreamSimulatorApp(
             @NonNull Configuration configuration,
             @NonNull BlockStreamManager blockStreamManager,
             @NonNull PublishStreamGrpcClient publishStreamGrpcClient,
+            @NonNull ConsumerStreamGrpcClient consumerStreamGrpcClient,
             @NonNull MetricsService metricsService) {
 
         requireNonNull(configuration);
         requireNonNull(blockStreamManager);
-        this.metricsService = requireNonNull(metricsService);
-        this.publishStreamGrpcClient = requireNonNull(publishStreamGrpcClient);
         loadLoggingProperties();
 
+        this.publishStreamGrpcClient = requireNonNull(publishStreamGrpcClient);
+        this.consumerStreamGrpcClient = requireNonNull(consumerStreamGrpcClient);
+
+        // Initialize the appropriate mode handler based on configuration
         final BlockStreamConfig blockStreamConfig =
                 requireNonNull(configuration.getConfigData(BlockStreamConfig.class));
-
+        // @todo(386) Load simulator mode using dagger
         final SimulatorMode simulatorMode = blockStreamConfig.simulatorMode();
-        switch (simulatorMode) {
-            case PUBLISHER -> simulatorModeHandler = new PublisherModeHandler(
+        this.simulatorModeHandler = switch (simulatorMode) {
+            case PUBLISHER -> new PublisherModeHandler(
                     blockStreamConfig, publishStreamGrpcClient, blockStreamManager, metricsService);
-            case CONSUMER -> simulatorModeHandler = new ConsumerModeHandler(blockStreamConfig);
-            case BOTH -> simulatorModeHandler = new CombinedModeHandler(blockStreamConfig);
-            default -> throw new IllegalArgumentException("Unknown SimulatorMode: " + simulatorMode);
-        }
+            case CONSUMER -> new ConsumerModeHandler(consumerStreamGrpcClient);
+            case BOTH -> new CombinedModeHandler();
+        };
     }
 
     /**
-     * Starts the block stream simulator.
+     * Initializes and starts the block stream simulator in the configured mode.
+     * This method initializes all components and begins the streaming process.
      *
-     * @throws InterruptedException if the thread is interrupted
-     * @throws BlockSimulatorParsingException if a parse error occurs
-     * @throws IOException if an I/O error occurs
+     * @throws InterruptedException           if the streaming process is
+     *                                        interrupted
+     * @throws BlockSimulatorParsingException if a block parsing error occurs
+     * @throws IOException                    if an I/O error occurs during
+     *                                        streaming
      */
     public void start() throws InterruptedException, BlockSimulatorParsingException, IOException {
-        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator started initializing components...");
-        publishStreamGrpcClient.init();
+        LOGGER.log(INFO, "Block Stream Simulator started initializing components...");
+        simulatorModeHandler.init();
+
         isRunning.set(true);
 
         simulatorModeHandler.start();
     }
 
     /**
-     * Returns whether the block stream simulator is running.
+     * Checks if the simulator is currently running.
      *
-     * @return true if the block stream simulator is running, false otherwise
+     * @return true if the simulator is running, false otherwise
      */
     public boolean isRunning() {
         return isRunning.get();
     }
 
     /**
-     * Stops the Block Stream Simulator and closes off all grpc channels.
+     * Gracefully stops the simulator and closes all gRPC channels.
+     * This method ensures proper cleanup of resources and termination of streaming
+     * operations.
      *
-     * @throws InterruptedException if the thread is interrupted
+     * @throws InterruptedException if the shutdown process is interrupted
      */
     public void stop() throws InterruptedException {
+        // @todo(322) Add real lifecycle to the simulator
         simulatorModeHandler.stop();
-        publishStreamGrpcClient.completeStreaming();
-
-        publishStreamGrpcClient.shutdown();
         isRunning.set(false);
 
         LOGGER.log(INFO, "Block Stream Simulator has stopped");
     }
 
     /**
-     * Gets the stream status from both the publisher and the consumer.
+     * Retrieves the current status of both publishing and consuming streams.
+     * This method provides information about the number of blocks processed and the
+     * last known status of both publisher and consumer operations.
      *
-     * @return the stream status
+     * @return A StreamStatus object containing current metrics and status
+     *         information
      */
     public StreamStatus getStreamStatus() {
         return StreamStatus.builder()
                 .publishedBlocks(publishStreamGrpcClient.getPublishedBlocks())
+                .consumedBlocks(consumerStreamGrpcClient.getConsumedBlocks())
                 .lastKnownPublisherStatuses(publishStreamGrpcClient.getLastKnownStatuses())
+                .lastKnownConsumersStatuses(consumerStreamGrpcClient.getLastKnownStatuses())
                 .build();
     }
 

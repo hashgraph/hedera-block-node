@@ -26,6 +26,11 @@ import java.io.IOException;
 public interface BlockStreamManager {
 
     /**
+     * Initialize the block stream manager and load blocks into memory.
+     */
+    default void init() {}
+
+    /**
      * Get the generation mode.
      *
      * @return the generation mode

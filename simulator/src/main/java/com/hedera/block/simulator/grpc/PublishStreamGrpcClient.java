@@ -68,6 +68,8 @@ public interface PublishStreamGrpcClient {
 
     /**
      * Shutdowns the channel.
+     *
+     * @throws InterruptedException if the thread is interrupted
      */
-    void shutdown();
+    void shutdown() throws InterruptedException;
 }

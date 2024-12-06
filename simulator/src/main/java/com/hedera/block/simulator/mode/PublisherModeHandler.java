@@ -47,26 +47,29 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class PublisherModeHandler implements SimulatorModeHandler {
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
-    private final BlockStreamManager blockStreamManager;
+
+    // Configuration fields
     private final BlockStreamConfig blockStreamConfig;
-    private final PublishStreamGrpcClient publishStreamGrpcClient;
     private final StreamingMode streamingMode;
     private final int delayBetweenBlockItems;
     private final int millisecondsPerBlock;
+
+    // Service dependencies
+    private final BlockStreamManager blockStreamManager;
+    private final PublishStreamGrpcClient publishStreamGrpcClient;
     private final MetricsService metricsService;
-    private final AtomicBoolean shouldPublish = new AtomicBoolean(true);
+
+    // State fields
+    private final AtomicBoolean shouldPublish;
 
     /**
-     * Constructs a new {@code PublisherModeHandler} with the specified block stream
-     * configuration and publisher client.
+     * Constructs a new {@code PublisherModeHandler} with the specified dependencies.
      *
-     * @param blockStreamConfig       the configuration data for managing block
-     *                                streams
-     * @param publishStreamGrpcClient the grpc client used for streaming blocks
-     * @param blockStreamManager      the block stream manager, responsible for
-     *                                generating blocks
-     * @param metricsService          the metrics service to record and report usage
-     *                                statistics
+     * @param blockStreamConfig The configuration for block streaming parameters
+     * @param publishStreamGrpcClient The client for publishing blocks via gRPC
+     * @param blockStreamManager The manager responsible for block generation
+     * @param metricsService The service for recording metrics
+     * @throws NullPointerException if any parameter is null
      */
     public PublisherModeHandler(
             @NonNull final BlockStreamConfig blockStreamConfig,
@@ -81,6 +84,13 @@ public class PublisherModeHandler implements SimulatorModeHandler {
         streamingMode = blockStreamConfig.streamingMode();
         delayBetweenBlockItems = blockStreamConfig.delayBetweenBlockItems();
         millisecondsPerBlock = blockStreamConfig.millisecondsPerBlock();
+        shouldPublish = new AtomicBoolean(true);
+    }
+
+    public void init() {
+        blockStreamManager.init();
+        publishStreamGrpcClient.init();
+        LOGGER.log(INFO, "gRPC Channel initialized for publishing blocks.");
     }
 
     /**
@@ -95,7 +105,7 @@ public class PublisherModeHandler implements SimulatorModeHandler {
      */
     @Override
     public void start() throws BlockSimulatorParsingException, IOException, InterruptedException {
-        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator has started streaming.");
+        LOGGER.log(INFO, "Block Stream Simulator is starting in publisher mode.");
         if (streamingMode == StreamingMode.MILLIS_PER_BLOCK) {
             millisPerBlockStreaming();
         } else {
@@ -170,7 +180,8 @@ public class PublisherModeHandler implements SimulatorModeHandler {
      * Stops the handler and manager from streaming.
      */
     @Override
-    public void stop() {
+    public void stop() throws InterruptedException {
         shouldPublish.set(false);
+        publishStreamGrpcClient.shutdown();
     }
 }

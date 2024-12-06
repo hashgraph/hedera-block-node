@@ -38,7 +38,9 @@ public final class SimulatorMetricTypes {
         /** The number of live block items sent by the simulator . */
         LiveBlockItemsSent("live_block_items_sent", "Live Block Items Sent"),
         /** The number of live blocks sent by the simulator */
-        LiveBlocksSent("live_blocks_sent", "Live Blocks Sent");
+        LiveBlocksSent("live_blocks_sent", "Live Blocks Sent"),
+        /** The number of live blocks consumed by the simulator */
+        LiveBlocksConsumed("live_blocks_consumed", "Live Blocks Consumed");
 
         private final String grafanaLabel;
         private final String description;

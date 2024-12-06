@@ -208,6 +208,26 @@ public final class CommonsTestUtility {
     }
 
     /**
+     * Provides valid test data for cases where the value to test is greater than or equal to the base value.
+     *
+     * @return a stream of arguments where each argument is a pair of {@code (toTest, base)} values,
+     *         such that {@code toTest >= base}.
+     */
+    public static Stream<Arguments> validGreaterOrEqualValues() {
+        return Stream.of(Arguments.of(10L, 5L), Arguments.of(5L, 5L), Arguments.of(0L, -5L), Arguments.of(100L, 50L));
+    }
+
+    /**
+     * Provides invalid test data for cases where the value to test is less than the base value.
+     *
+     * @return a stream of arguments where each argument is a pair of {@code (toTest, base)} values,
+     *         such that {@code toTest < base}.
+     */
+    public static Stream<Arguments> invalidGreaterOrEqualValues() {
+        return Stream.of(Arguments.of(3L, 5L), Arguments.of(-10L, -5L), Arguments.of(0L, 1L), Arguments.of(-1L, 0L));
+    }
+
+    /**
      * Zero and some negative integers.
      */
     public static Stream<Arguments> zeroAndNegativeIntegers() {
