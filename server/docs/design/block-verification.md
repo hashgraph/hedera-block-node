@@ -72,6 +72,11 @@ sequenceDiagram
     participant V as VerificationHandler
     participant F as BlockHashingSessionFactory
     participant S as BlockHashingSession
+    participant SV as SignaturesequenceDiagram
+    participant U as UnverifiedRingBuffer
+    participant V as VerificationHandler
+    participant F as BlockHashingSessionFactory
+    participant S as BlockHashingSession
     participant SV as SignatureVerifier
     participant BSM as BlockStatusManager
 
@@ -79,22 +84,22 @@ sequenceDiagram
     U->>V: (1) onBlockItemsReceived(List<BlockItem>)        
     
     alt (2) Detects block_header
-    rect rgb(230, 230, 230)
+    
     V->>F: createSession(initialBlockItems, executorService, signatureVerifier)
     Note over S: New instance of BlockHashingSession created
     F-->>V: returns BlockHashingSession (S)
     V-->>U: Returns without blocking
     S->>S: Starts hash computation asynchronously
-    end
+    
     else (3) Append more Block Items
-    rect rgb(230, 230, 230)
+    loop
     V->>S: addBlockItems(items)
     V-->>U: return without blocking
     S->>S: Continues hash computation asynchronously
     end
 
     else (4) Append BlockItems with block_proof
-    rect rgb(230, 230, 230)
+   
     V->>S: addBlockItems(items with block_proof)
     V-->>U: return without blocking    
     S->>S: completeHashing()   
@@ -110,7 +115,7 @@ sequenceDiagram
       Note over BSM: (9) Follow-up to downstream services
     end
     end
-    end
+
 ```
 
 ## Interfaces
