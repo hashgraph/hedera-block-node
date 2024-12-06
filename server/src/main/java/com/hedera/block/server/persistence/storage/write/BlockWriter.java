@@ -24,18 +24,18 @@ import java.util.Optional;
 /**
  * BlockWriter defines the contract for writing block items to storage.
  *
- * @param <V> the type of the block item to write
+ * @param <T> the type of the block item to write
  */
-public interface BlockWriter<V> {
-
+public interface BlockWriter<T> {
     /**
      * Write the block item to storage.
      *
-     * @param blockItem the block item to write to storage.
-     * @return an optional containing the block item written to storage if the block item was a
-     *     block proof signaling the end of the block, an empty optional otherwise.
-     * @throws IOException when failing to write the block item to storage.
+     * @param valueToWrite to storage.
+     * @return an optional containing the item written to storage if the item
+     * was a block proof signaling the end of the block, an empty optional otherwise.
+     * @throws IOException when failing to write the item to storage.
      * @throws ParseException when failing to parse a block item.
      */
-    Optional<V> write(@NonNull final V blockItem) throws IOException, ParseException;
+    @NonNull
+    Optional<T> write(@NonNull final T valueToWrite) throws IOException, ParseException;
 }

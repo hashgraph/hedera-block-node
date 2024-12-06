@@ -16,9 +16,6 @@
 
 package com.hedera.block.server.persistence.storage.write;
 
-import static java.lang.System.Logger.Level.INFO;
-
-import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
@@ -30,29 +27,33 @@ import java.util.Optional;
  * designed to isolate the Producer and Mediator components from storage implementation during testing while still
  * providing metrics and logging for troubleshooting.
  */
-public class NoOpBlockWriter implements BlockWriter<List<BlockItemUnparsed>> {
+public final class NoOpBlockWriter implements BlockWriter<List<BlockItemUnparsed>> {
+    /**
+     * Constructor.
+     */
+    private NoOpBlockWriter() {}
 
     /**
-     * Creates a new NoOpBlockWriter instance for testing and troubleshooting only.
+     * This method creates and returns a new instance of
+     * {@link NoOpBlockWriter}.
      *
-     * @param blockNodeContext the block node context
+     * @return a new, fully initialized instance of {@link NoOpBlockWriter}
      */
-    public NoOpBlockWriter(BlockNodeContext blockNodeContext) {
-        System.getLogger(getClass().getName()).log(INFO, "Using " + getClass().getSimpleName());
+    public static NoOpBlockWriter newInstance() {
+        return new NoOpBlockWriter();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @NonNull
     @Override
-    public Optional<List<BlockItemUnparsed>> write(@NonNull List<BlockItemUnparsed> blockItems) throws IOException {
-        if (blockItems.getLast().hasBlockProof()) {
+    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
+            throws IOException {
+        if (valueToWrite.getLast().hasBlockProof()) {
             // Returning the BlockItems triggers a
             // PublishStreamResponse to be sent to the
             // upstream producer.
-            return Optional.of(blockItems);
+            return Optional.of(valueToWrite);
+        } else {
+            return Optional.empty();
         }
-
-        return Optional.empty();
     }
 }

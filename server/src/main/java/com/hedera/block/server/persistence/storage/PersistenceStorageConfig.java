@@ -16,56 +16,134 @@
 
 package com.hedera.block.server.persistence.storage;
 
-import static com.hedera.block.server.Constants.BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME;
-import static java.lang.System.Logger.Level.ERROR;
-import static java.lang.System.Logger.Level.INFO;
+import static com.hedera.block.server.Constants.BLOCK_NODE_ARCHIVE_ROOT_DIRECTORY_SEMANTIC_NAME;
+import static com.hedera.block.server.Constants.BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME;
 
-import com.hedera.block.common.utils.FileUtilities;
+import com.hedera.block.common.utils.StringUtilities;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Objects;
 
 /**
- * Use this configuration across the persistent storage package
+ * Use this configuration across the persistence storage package.
  *
- * @param rootPath provides the root path for saving block data, if you want to override it need to
- *     set it as persistence.storage.rootPath
+ * @param liveRootPath provides the root path for saving blocks live
+ * @param archiveRootPath provides the root path for archived blocks
  * @param type use a predefined type string to replace the persistence component implementation.
- *     Non-PRODUCTION values should only be used for troubleshooting and development purposes.
+ * Non-PRODUCTION values should only be used for troubleshooting and development purposes.
  */
 @ConfigData("persistence.storage")
 public record PersistenceStorageConfig(
-        @ConfigProperty(defaultValue = "") String rootPath, @ConfigProperty(defaultValue = "PRODUCTION") String type) {
-    private static final System.Logger LOGGER = System.getLogger(PersistenceStorageConfig.class.getName());
+        // @todo(#371) - the default life/archive root path must be absolute starting from /opt
+        @ConfigProperty(defaultValue = "") String liveRootPath,
+        // @todo(#371) - the default life/archive root path must be absolute starting from /opt
+        @ConfigProperty(defaultValue = "") String archiveRootPath,
+        @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type) {
+    // @todo(#371) - the default life/archive root path must be absolute starting from /opt
+    private static final String LIVE_ROOT_PATH =
+            Path.of("hashgraph/blocknode/data/live/").toAbsolutePath().toString();
+    // @todo(#371) - the default life/archive root path must be absolute starting from /opt
+    private static final String ARCHIVE_ROOT_PATH =
+            Path.of("hashgraph/blocknode/data/archive/").toAbsolutePath().toString();
 
     /**
-     * Constructor to set the default root path if not provided, it will be set to the data
-     * directory in the current working directory
+     * Constructor.
      */
     public PersistenceStorageConfig {
-        // verify rootPath prop
-        Path path = Path.of(rootPath);
-        if (rootPath.isEmpty()) {
-            path = Paths.get(rootPath).toAbsolutePath().resolve("data");
-        }
-        // Check if absolute
-        if (!path.isAbsolute()) {
-            throw new IllegalArgumentException(rootPath + " Root path must be absolute");
-        }
-        // Create Directory if it does not exist
-        try {
-            FileUtilities.createFolderPathIfNotExists(path, ERROR, BLOCK_NODE_ROOT_DIRECTORY_SEMANTIC_NAME);
-        } catch (final IOException e) {
-            final String message =
-                    "Unable to instantiate [%s]! Unable to create the root directory for the block storage [%s]"
-                            .formatted(this.getClass().getName(), path);
-            throw new RuntimeException(message, e);
-        }
+        Objects.requireNonNull(type);
+        liveRootPath = resolvePath(liveRootPath, LIVE_ROOT_PATH, BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
+        archiveRootPath =
+                resolvePath(archiveRootPath, ARCHIVE_ROOT_PATH, BLOCK_NODE_ARCHIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
+    }
 
-        LOGGER.log(INFO, "Persistence Storage configuration persistence.storage.rootPath: " + path);
-        rootPath = path.toString();
-        LOGGER.log(INFO, "Persistence configuration persistence.storage.type: " + type);
+    /**
+     * This method attempts to resolve a given configured path. If the input
+     * path is blank, a default path is used. The resolved path must be
+     * absolute! If the path resolution is successful, at attempt is made to
+     * create the directory path. If the directory path cannot be created, an
+     * {@link UncheckedIOException} is thrown.
+     *
+     * @param pathToResolve the path to resolve
+     * @param defaultIfBlank the default path if the path to resolve is blank
+     * @param semanticPathName the semantic name of the path used for logging
+     * @return the resolved path
+     * @throws IllegalArgumentException if the resolved path is not absolute
+     * @throws UncheckedIOException if the resolved path cannot be created
+     */
+    @NonNull
+    private String resolvePath(
+            final String pathToResolve, @NonNull final String defaultIfBlank, @NonNull final String semanticPathName) {
+        final Path normalized = getNormalizedPath(pathToResolve, defaultIfBlank);
+        createDirectoryPath(normalized, semanticPathName);
+        return normalized.toString();
+    }
+
+    /**
+     * This method normalizes a given path. If the path to normalize is blank,
+     * a default path is used. The normalized path must be absolute!
+     *
+     * @param pathToNormalize the path to normalize
+     * @param defaultIfBlank the default path if the path to normalize is blank
+     * @throws IllegalArgumentException if the path to normalize is not absolute
+     */
+    @NonNull
+    private Path getNormalizedPath(final String pathToNormalize, @NonNull final String defaultIfBlank) {
+        final String actualToNormalize = StringUtilities.isBlank(pathToNormalize) ? defaultIfBlank : pathToNormalize;
+        return Path.of(actualToNormalize).normalize().toAbsolutePath();
+    }
+
+    /**
+     * This method creates a directory path at the given target path. If the
+     * directory path cannot be created, an {@link UncheckedIOException} is
+     * thrown.
+     *
+     * @param targetPath the target path to create the directory path
+     * @param semanticPathName the semantic name of the path used for logging
+     * @throws UncheckedIOException if the directory path cannot be created
+     */
+    private void createDirectoryPath(@NonNull final Path targetPath, @NonNull final String semanticPathName) {
+        try {
+            Files.createDirectories(targetPath);
+        } catch (final IOException e) {
+            final String classname = this.getClass().getName();
+            final String message = "Unable to instantiate [%s]! Unable to create the [%s] path that was provided!"
+                    .formatted(classname, semanticPathName);
+            throw new UncheckedIOException(message, e);
+        }
+    }
+
+    /**
+     * An enum that reflects the type of Block Storage Persistence that is
+     * currently used within the given server instance. During runtime one
+     * should only query for the storage type that was configured by calling
+     * {@link PersistenceStorageConfig#type()} on an instance of the persistence
+     * storage config that was only constructed via
+     * {@link com.swirlds.config.api.Configuration#getConfigData(Class)}!
+     */
+    public enum StorageType {
+        /**
+         * This type of storage stores Blocks as individual files with the Block
+         * number as a unique file name and persisted in a trie structure with
+         * digit-per-folder
+         * (see <a href="https://github.com/hashgraph/hedera-block-node/issues/125">#125</a>).
+         * This is also the default setting for the server if it is not
+         * explicitly specified via an environment variable or app.properties.
+         */
+        BLOCK_AS_LOCAL_FILE,
+        /**
+         * This type of storage stores Blocks as directories with the Block
+         * number being the directory number. Block Items are stored as files
+         * within a given Block directory. Used primarily for testing purposes.
+         */
+        BLOCK_AS_LOCAL_DIRECTORY,
+        /**
+         * This type of storage does nothing.
+         */
+        NO_OP
     }
 }

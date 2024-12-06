@@ -19,13 +19,14 @@ package com.hedera.block.server.pbj;
 import static com.hedera.block.server.util.PbjProtoTestUtils.buildAck;
 import static com.hedera.block.server.util.PbjProtoTestUtils.buildEmptyPublishStreamRequest;
 import static com.hedera.block.server.util.PbjProtoTestUtils.buildEmptySubscribeStreamRequest;
+import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
-import static java.lang.System.Logger;
-import static java.lang.System.Logger.Level.INFO;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -39,13 +40,15 @@ import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.notifier.NotifierImpl;
 import com.hedera.block.server.persistence.StreamPersistenceHandlerImpl;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
-import com.hedera.block.server.persistence.storage.write.BlockAsDirWriterBuilder;
+import com.hedera.block.server.persistence.storage.remove.BlockRemover;
+import com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
-import com.hedera.block.server.util.TestUtils;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.BlockItemSetUnparsed;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -66,7 +69,6 @@ import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.lmax.disruptor.BatchEventProcessor;
 import io.helidon.webserver.WebServer;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -75,17 +77,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class PbjBlockStreamServiceIntegrationTest {
-
-    private final Logger LOGGER = System.getLogger(getClass().getName());
+    private static final int testTimeout = 2000;
+    private BlockAsLocalDirPathResolver pathResolverMock;
 
     @Mock
     private Notifier notifier;
@@ -129,27 +131,22 @@ public class PbjBlockStreamServiceIntegrationTest {
     @Mock
     private ServiceInterface.RequestOptions options;
 
-    private static final String TEMP_DIR = "block-node-unit-test-dir";
+    @TempDir
+    private Path testLiveRootPath;
 
-    private Path testPath;
     private BlockNodeContext blockNodeContext;
-
-    private static final int testTimeout = 2000;
+    private PersistenceStorageConfig testConfig;
 
     @BeforeEach
     public void setUp() throws IOException {
-        testPath = Files.createTempDirectory(TEMP_DIR);
-        LOGGER.log(INFO, "Created temp directory: " + testPath.toString());
-
         Map<String, String> properties = new HashMap<>();
-        properties.put("persistence.storage.rootPath", testPath.toString());
-
+        properties.put(PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY, testLiveRootPath.toString());
         blockNodeContext = TestConfigUtil.getTestBlockNodeContext(properties);
-    }
+        testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
 
-    @AfterEach
-    public void tearDown() {
-        TestUtils.deleteDirectory(testPath.toFile());
+        final String testConfigLiveRootPath = testConfig.liveRootPath();
+        assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
+        pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testLiveRootPath));
     }
 
     @Test
@@ -252,7 +249,7 @@ public class PbjBlockStreamServiceIntegrationTest {
 
         // Use a real BlockWriter to test the full integration
         final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build();
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
         // Register 3 producers - Opening a pipeline is not enough to register a producer.
@@ -515,7 +512,7 @@ public class PbjBlockStreamServiceIntegrationTest {
 
         // Use a spy to make sure the write() method throws an IOException
         final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                spy(BlockAsDirWriterBuilder.newBuilder(blockNodeContext).build());
+                spy(BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock));
         doThrow(IOException.class).when(blockWriter).write(blockItems);
 
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);

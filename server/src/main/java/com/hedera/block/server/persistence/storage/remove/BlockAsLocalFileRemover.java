@@ -16,10 +16,29 @@
 
 package com.hedera.block.server.persistence.storage.remove;
 
+import com.hedera.block.common.utils.Preconditions;
 import java.io.IOException;
 
-/** The BlockRemover interface defines the contract for removing a block from storage. */
-public interface BlockRemover {
+/**
+ * A Block remover that handles block-as-local-file.
+ */
+public final class BlockAsLocalFileRemover implements LocalBlockRemover {
+    /**
+     * Constructor.
+     */
+    private BlockAsLocalFileRemover() {}
+
+    /**
+     * This method creates and returns a new instance of
+     * {@link BlockAsLocalFileRemover}.
+     *
+     * @return a new fully initialized instance of
+     * {@link BlockAsLocalFileRemover}
+     */
+    public static BlockAsLocalFileRemover newInstance() {
+        return new BlockAsLocalFileRemover();
+    }
+
     /**
      * Remove a block with the given block number.
      *
@@ -27,5 +46,9 @@ public interface BlockRemover {
      * @throws IOException when failing to remove a block
      * @throws IllegalArgumentException if the blockNumber IS NOT a whole number
      */
-    void remove(final long blockNumber) throws IOException;
+    @Override
+    public void remove(final long blockNumber) throws IOException {
+        Preconditions.requireWhole(blockNumber);
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
 }

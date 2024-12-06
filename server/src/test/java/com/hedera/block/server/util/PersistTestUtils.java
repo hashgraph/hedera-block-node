@@ -33,8 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class PersistTestUtils {
-
     private static final Logger LOGGER = System.getLogger(PersistTestUtils.class.getName());
+    public static final String PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY = "persistence.storage.liveRootPath";
 
     private PersistTestUtils() {}
 

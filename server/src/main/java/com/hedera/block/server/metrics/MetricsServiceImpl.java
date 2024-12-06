@@ -21,6 +21,7 @@ import com.swirlds.metrics.api.LongGauge;
 import com.swirlds.metrics.api.Metrics;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.EnumMap;
+import java.util.Objects;
 import javax.inject.Inject;
 
 /**
@@ -29,10 +30,8 @@ import javax.inject.Inject;
  * <p>Metrics are updated by calling the appropriate method on the metric object instance. For
  * example, to increment a counter, call {@link Counter#increment()}.
  */
-public class MetricsServiceImpl implements MetricsService {
-
+public final class MetricsServiceImpl implements MetricsService {
     private static final String CATEGORY = "hedera_block_node";
-
     private final EnumMap<BlockNodeMetricTypes.Counter, Counter> counters =
             new EnumMap<>(BlockNodeMetricTypes.Counter.class);
     private final EnumMap<BlockNodeMetricTypes.Gauge, LongGauge> gauges =
@@ -45,22 +44,21 @@ public class MetricsServiceImpl implements MetricsService {
      */
     @Inject
     public MetricsServiceImpl(@NonNull final Metrics metrics) {
+        Objects.requireNonNull(metrics);
         // Initialize the counters
-        for (BlockNodeMetricTypes.Counter counter : BlockNodeMetricTypes.Counter.values()) {
+        for (final BlockNodeMetricTypes.Counter counter : BlockNodeMetricTypes.Counter.values()) {
             counters.put(
                     counter,
-                    metrics.getOrCreate(
-                            new Counter.Config(CATEGORY, counter.grafanaLabel())
-                                    .withDescription(counter.description())));
+                    metrics.getOrCreate(new Counter.Config(CATEGORY, counter.grafanaLabel())
+                            .withDescription(counter.description())));
         }
 
         // Initialize the gauges
-        for (BlockNodeMetricTypes.Gauge gauge : BlockNodeMetricTypes.Gauge.values()) {
+        for (final BlockNodeMetricTypes.Gauge gauge : BlockNodeMetricTypes.Gauge.values()) {
             gauges.put(
                     gauge,
                     metrics.getOrCreate(
-                            new LongGauge.Config(CATEGORY, gauge.grafanaLabel())
-                                    .withDescription(gauge.description())));
+                            new LongGauge.Config(CATEGORY, gauge.grafanaLabel()).withDescription(gauge.description())));
         }
     }
 
@@ -72,8 +70,8 @@ public class MetricsServiceImpl implements MetricsService {
      */
     @NonNull
     @Override
-    public Counter get(@NonNull BlockNodeMetricTypes.Counter key) {
-        return counters.get(key);
+    public Counter get(@NonNull final BlockNodeMetricTypes.Counter key) {
+        return counters.get(Objects.requireNonNull(key));
     }
 
     /**
@@ -84,7 +82,7 @@ public class MetricsServiceImpl implements MetricsService {
      */
     @NonNull
     @Override
-    public LongGauge get(@NonNull BlockNodeMetricTypes.Gauge key) {
-        return gauges.get(key);
+    public LongGauge get(@NonNull final BlockNodeMetricTypes.Gauge key) {
+        return gauges.get(Objects.requireNonNull(key));
     }
 }

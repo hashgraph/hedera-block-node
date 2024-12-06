@@ -32,9 +32,7 @@ import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.runtime.OneOf;
-import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -102,7 +100,6 @@ public class StreamPersistenceHandlerImpl
     public void onEvent(ObjectEvent<SubscribeStreamResponseUnparsed> event, long l, boolean b) {
         try {
             if (serviceStatus.isRunning()) {
-
                 final SubscribeStreamResponseUnparsed subscribeStreamResponse = event.get();
                 final OneOf<SubscribeStreamResponseUnparsed.ResponseOneOfType> oneOfTypeOneOf =
                         subscribeStreamResponse.response();
@@ -137,9 +134,7 @@ public class StreamPersistenceHandlerImpl
             } else {
                 LOGGER.log(ERROR, "Service is not running. Block item will not be processed further.");
             }
-
-        } catch (BlockStreamProtocolException | IOException | ParseException e) {
-
+        } catch (final Exception e) {
             LOGGER.log(ERROR, "Failed to persist BlockItems: ", e);
 
             metricsService.get(StreamPersistenceHandlerError).increment();

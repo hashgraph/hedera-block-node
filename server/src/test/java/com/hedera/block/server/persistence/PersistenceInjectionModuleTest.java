@@ -16,9 +16,10 @@
 
 package com.hedera.block.server.persistence;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -26,10 +27,26 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
+import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
+import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockAsLocalFilePathResolver;
+import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
+import com.hedera.block.server.persistence.storage.path.NoOpBlockPathResolver;
+import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
+import com.hedera.block.server.persistence.storage.read.BlockAsLocalFileReader;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
+import com.hedera.block.server.persistence.storage.read.NoOpBlockReader;
+import com.hedera.block.server.persistence.storage.remove.BlockAsLocalDirRemover;
+import com.hedera.block.server.persistence.storage.remove.BlockAsLocalFileRemover;
+import com.hedera.block.server.persistence.storage.remove.BlockRemover;
+import com.hedera.block.server.persistence.storage.remove.NoOpBlockRemover;
+import com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter;
+import com.hedera.block.server.persistence.storage.write.BlockAsLocalFileWriter;
 import com.hedera.block.server.persistence.storage.write.BlockWriter;
+import com.hedera.block.server.persistence.storage.write.NoOpBlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -37,85 +54,215 @@ import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.swirlds.config.api.Configuration;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class PersistenceInjectionModuleTest {
+    @Mock
+    private BlockNodeContext blockNodeContextMock;
 
     @Mock
-    private BlockNodeContext blockNodeContext;
+    private PersistenceStorageConfig persistenceStorageConfigMock;
 
     @Mock
-    private PersistenceStorageConfig persistenceStorageConfig;
+    private BlockRemover blockRemoverMock;
 
     @Mock
-    private SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
+    private BlockPathResolver blockPathResolverMock;
 
     @Mock
-    private Notifier notifier;
+    private SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandlerMock;
 
     @Mock
-    private BlockWriter<List<BlockItemUnparsed>> blockWriter;
+    private Notifier notifierMock;
 
     @Mock
-    private ServiceStatus serviceStatus;
+    private BlockWriter<List<BlockItemUnparsed>> blockWriterMock;
 
-    @BeforeEach
-    void setup() throws IOException {
-        // Setup any necessary mocks before each test
-        blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
-        persistenceStorageConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
+    @Mock
+    private ServiceStatus serviceStatusMock;
+
+    @TempDir
+    private Path testLiveRootPath;
+
+    /**
+     * This test aims to verify that the
+     * {@link PersistenceInjectionModule#providesBlockWriter} method will return
+     * the correct {@link BlockWriter} instance based on the {@link StorageType}
+     * parameter. The test verifies only the result type and not what is inside
+     * the instance! For the purpose of this test, what is inside the instance
+     * is not important. We aim to test the branch that will be taken based on
+     * the {@link StorageType} parameter in terms of the returned instance type.
+     *
+     * @param storageType parameterized, the {@link StorageType} to test
+     */
+    @ParameterizedTest
+    @MethodSource("storageTypes")
+    void testProvidesBlockWriter(final StorageType storageType) {
+        final Configuration localConfigurationMock = mock(Configuration.class);
+        lenient().when(blockNodeContextMock.metricsService()).thenReturn(mock(MetricsService.class));
+        when(blockNodeContextMock.configuration()).thenReturn(localConfigurationMock);
+        when(localConfigurationMock.getConfigData(PersistenceStorageConfig.class))
+                .thenReturn(persistenceStorageConfigMock);
+
+        lenient().when(persistenceStorageConfigMock.liveRootPath()).thenReturn(testLiveRootPath.toString());
+        when(persistenceStorageConfigMock.type()).thenReturn(storageType);
+
+        final BlockWriter<List<BlockItemUnparsed>> actual = PersistenceInjectionModule.providesBlockWriter(
+                blockNodeContextMock, blockRemoverMock, blockPathResolverMock);
+
+        final Class<?> targetInstanceType =
+                switch (storageType) {
+                    case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirWriter.class;
+                    case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileWriter.class;
+                    case NO_OP -> NoOpBlockWriter.class;
+                };
+        assertThat(actual).isNotNull().isExactlyInstanceOf(targetInstanceType);
     }
 
-    @Test
-    void testProvidesBlockWriter() {
-
-        BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                PersistenceInjectionModule.providesBlockWriter(blockNodeContext);
-
-        assertNotNull(blockWriter);
-    }
-
+    /**
+     * This test aims to verify that the
+     * {@link PersistenceInjectionModule#providesBlockWriter} throws an
+     * {@link java.io.UncheckedIOException} if there is a problem with the
+     * creation of the {@link BlockWriter} instance.
+     */
     @Test
     void testProvidesBlockWriter_IOException() {
-        BlockNodeContext blockNodeContext = mock(BlockNodeContext.class);
-        PersistenceStorageConfig persistenceStorageConfig = mock(PersistenceStorageConfig.class);
-        when(persistenceStorageConfig.rootPath()).thenReturn("/invalid_path/:invalid_directory");
-        Configuration configuration = mock(Configuration.class);
-        when(blockNodeContext.configuration()).thenReturn(configuration);
-        when(configuration.getConfigData(PersistenceStorageConfig.class)).thenReturn(persistenceStorageConfig);
+        final BlockNodeContext blockNodeContextMock = mock(BlockNodeContext.class);
 
-        // Expect a RuntimeException due to the IOException
-        RuntimeException exception = assertThrows(
-                RuntimeException.class, () -> PersistenceInjectionModule.providesBlockWriter(blockNodeContext));
+        final PersistenceStorageConfig localPersistenceStorageConfigMock = mock(PersistenceStorageConfig.class);
+        when(localPersistenceStorageConfigMock.liveRootPath()).thenReturn("/invalid_path/:invalid_directory");
+        when(localPersistenceStorageConfigMock.type()).thenReturn(StorageType.BLOCK_AS_LOCAL_DIRECTORY);
 
-        // Verify the exception message
-        assertTrue(exception.getMessage().contains("Failed to create block writer"));
+        final Configuration configuration = mock(Configuration.class);
+        when(blockNodeContextMock.configuration()).thenReturn(configuration);
+        when(configuration.getConfigData(PersistenceStorageConfig.class)).thenReturn(localPersistenceStorageConfigMock);
+
+        final MetricsService metricsServiceMock = mock(MetricsService.class);
+        when(blockNodeContextMock.metricsService()).thenReturn(metricsServiceMock);
+
+        // Expect an UncheckedIOException due to the IOException
+        assertThatExceptionOfType(UncheckedIOException.class)
+                .isThrownBy(() -> PersistenceInjectionModule.providesBlockWriter(
+                        blockNodeContextMock, blockRemoverMock, blockPathResolverMock))
+                .withCauseInstanceOf(IOException.class)
+                .withMessage("Failed to create BlockWriter");
     }
 
-    @Test
-    void testProvidesBlockReader() {
+    /**
+     * This test aims to verify that the
+     * {@link PersistenceInjectionModule#providesBlockReader} method will return
+     * the correct {@link BlockReader} instance based on the {@link StorageType}
+     * parameter. The test verifies only the result type and not what is inside
+     * the instance! For the purpose of this test, what is inside the instance
+     * is not important. We aim to test the branch that will be taken based on
+     * the {@link StorageType} parameter in terms of the returned instance type.
+     *
+     * @param storageType parameterized, the {@link StorageType} to test
+     */
+    @ParameterizedTest
+    @MethodSource("storageTypes")
+    void testProvidesBlockReader(final StorageType storageType) {
+        lenient().when(persistenceStorageConfigMock.liveRootPath()).thenReturn(testLiveRootPath.toString());
+        when(persistenceStorageConfigMock.type()).thenReturn(storageType);
 
-        BlockReader<BlockUnparsed> blockReader =
-                PersistenceInjectionModule.providesBlockReader(persistenceStorageConfig);
-        assertNotNull(blockReader);
+        final BlockReader<BlockUnparsed> actual =
+                PersistenceInjectionModule.providesBlockReader(persistenceStorageConfigMock);
+
+        final Class<?> targetInstanceType =
+                switch (storageType) {
+                    case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirReader.class;
+                    case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileReader.class;
+                    case NO_OP -> NoOpBlockReader.class;
+                };
+        assertThat(actual).isNotNull().isExactlyInstanceOf(targetInstanceType);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link PersistenceInjectionModule#providesBlockRemover} method will
+     * return the correct {@link BlockRemover} instance based on the
+     * {@link StorageType} parameter. The test verifies only the result type and
+     * not what is inside the instance! For the purpose of this test, what is
+     * inside the instance is not important. We aim to test the branch that will
+     * be taken based on the {@link StorageType} parameter in terms of the
+     * returned instance type.
+     *
+     * @param storageType parameterized, the {@link StorageType} to test
+     */
+    @ParameterizedTest
+    @MethodSource("storageTypes")
+    void testProvidesBlockRemover(final StorageType storageType) {
+        when(persistenceStorageConfigMock.type()).thenReturn(storageType);
+
+        final BlockRemover actual =
+                PersistenceInjectionModule.providesBlockRemover(persistenceStorageConfigMock, blockPathResolverMock);
+
+        final Class<?> targetInstanceType =
+                switch (storageType) {
+                    case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirRemover.class;
+                    case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileRemover.class;
+                    case NO_OP -> NoOpBlockRemover.class;
+                };
+        assertThat(actual).isNotNull().isExactlyInstanceOf(targetInstanceType);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link PersistenceInjectionModule#providesPathResolver(PersistenceStorageConfig)}
+     * method will return the correct {@link BlockPathResolver} instance based
+     * on the {@link StorageType} parameter. The test verifies only the result
+     * type and not what is inside the instance! For the purpose of this test,
+     * what is inside the instance is not important. We aim to test the branch
+     * that will be taken based on the {@link StorageType} parameter in terms of
+     * the returned instance type.
+     *
+     * @param storageType parameterized, the {@link StorageType} to test
+     */
+    @ParameterizedTest
+    @MethodSource("storageTypes")
+    void testProvidesBlockPathResolver(final StorageType storageType) {
+        lenient().when(persistenceStorageConfigMock.liveRootPath()).thenReturn(testLiveRootPath.toString());
+        when(persistenceStorageConfigMock.type()).thenReturn(storageType);
+
+        final BlockPathResolver actual = PersistenceInjectionModule.providesPathResolver(persistenceStorageConfigMock);
+
+        final Class<?> targetInstanceType =
+                switch (storageType) {
+                    case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirPathResolver.class;
+                    case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFilePathResolver.class;
+                    case NO_OP -> NoOpBlockPathResolver.class;
+                };
+        assertThat(actual).isNotNull().isExactlyInstanceOf(targetInstanceType);
     }
 
     @Test
     void testProvidesStreamValidatorBuilder() throws IOException {
-
-        BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         // Call the method under test
-        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> streamVerifier =
+        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> streamVerifier =
                 new StreamPersistenceHandlerImpl(
-                        subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus);
-
+                        subscriptionHandlerMock, notifierMock, blockWriterMock, blockNodeContext, serviceStatusMock);
         assertNotNull(streamVerifier);
+    }
+
+    /**
+     * All {@link StorageType} dynamically generated.
+     */
+    private static Stream<Arguments> storageTypes() {
+        return Arrays.stream(StorageType.values()).map(Arguments::of);
     }
 }

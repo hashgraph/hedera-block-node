@@ -19,7 +19,7 @@ package com.hedera.block.common.utils;
 import java.util.Objects;
 
 /** A utility class used to assert various preconditions. */
-public final class Preconditions {
+public final class Preconditions { // @todo(381) change the APIs to accept non-null error messages
     /**
      * This method asserts a given {@link String} is not blank, meaning it is
      * not {@code null} or does not contain only whitespaces as defined by
@@ -76,6 +76,65 @@ public final class Preconditions {
     }
 
     /**
+     * This method asserts a given integer is a positive. An integer is positive
+     * if it is NOT equal to zero and is greater than zero.
+     *
+     * @param toCheck the integer to check if it is a positive power of two
+     * @param errorMessage the error message to be used in the exception if the
+     * input integer to check is not positive, if null, a default message will
+     * be used
+     * @return the number to check if it is positive
+     * @throws IllegalArgumentException if the input number to check is not
+     * positive
+     */
+    public static int requirePositive(final int toCheck, final String errorMessage) {
+        if (0 >= toCheck) {
+            final String message = Objects.isNull(errorMessage)
+                    ? "The input integer [%d] is required be positive.".formatted(toCheck)
+                    : errorMessage;
+            throw new IllegalArgumentException(message);
+        } else {
+            return toCheck;
+        }
+    }
+
+    /**
+     * This method asserts a given long is a positive. A long is positive
+     * if it is NOT equal to zero and is greater than zero.
+     *
+     * @param toCheck the long to check if it is a positive power of two
+     * @return the long to check if it is positive
+     * @throws IllegalArgumentException if the input long to check is not
+     * positive
+     */
+    public static long requirePositive(final long toCheck) {
+        return requirePositive(toCheck, null);
+    }
+
+    /**
+     * This method asserts a given long is a positive. A long is positive
+     * if it is NOT equal to zero and is greater than zero.
+     *
+     * @param toCheck the long to check if it is a positive power of two
+     * @param errorMessage the error message to be used in the exception if the
+     * input long to check is not positive, if null, a default message will
+     * be used
+     * @return the long to check if it is positive
+     * @throws IllegalArgumentException if the input long to check is not
+     * positive
+     */
+    public static long requirePositive(final long toCheck, final String errorMessage) {
+        if (0L >= toCheck) {
+            final String message = Objects.isNull(errorMessage)
+                    ? "The input long [%d] is required be positive.".formatted(toCheck)
+                    : errorMessage;
+            throw new IllegalArgumentException(message);
+        } else {
+            return toCheck;
+        }
+    }
+
+    /**
      * This method asserts a given long is a whole number. A long is whole
      * if it is greater or equal to zero.
      *
@@ -103,34 +162,11 @@ public final class Preconditions {
     public static long requireWhole(final long toCheck, final String errorMessage) {
         if (toCheck >= 0) {
             return toCheck;
-        }
-
-        final String message = Objects.isNull(errorMessage)
-                ? "The input integer [%d] is required be whole.".formatted(toCheck)
-                : errorMessage;
-        throw new IllegalArgumentException(message);
-    }
-
-    /**
-     * This method asserts a given integer is a positive. An integer is positive
-     * if it is NOT equal to zero and is greater than zero.
-     *
-     * @param toCheck the integer to check if it is a positive power of two
-     * @param errorMessage the error message to be used in the exception if the
-     * input integer to check is not positive, if null, a default message will
-     * be used
-     * @return the number to check if it is positive
-     * @throws IllegalArgumentException if the input number to check is not
-     * positive
-     */
-    public static int requirePositive(final int toCheck, final String errorMessage) {
-        if (0 >= toCheck) {
+        } else {
             final String message = Objects.isNull(errorMessage)
-                    ? "The input integer [%d] is required be positive.".formatted(toCheck)
+                    ? "The input integer [%d] is required be whole.".formatted(toCheck)
                     : errorMessage;
             throw new IllegalArgumentException(message);
-        } else {
-            return toCheck;
         }
     }
 
