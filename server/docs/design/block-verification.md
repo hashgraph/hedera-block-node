@@ -89,20 +89,24 @@ sequenceDiagram
     Note over S: New instance of BlockHashingSession created
     F-->>V: returns BlockHashingSession (S)
     V-->>U: Returns without blocking
-    S->>S: Starts hash computation asynchronously
+    rect rgb(230, 230, 230)
+    S->>S: *Starts hash computation asynchronously
+    end
     
     else (3) Append more Block Items
     loop
     V->>S: addBlockItems(items)
     V-->>U: return without blocking
-    S->>S: Continues hash computation asynchronously
+    rect rgb(230, 230, 230)
+    S->>S: *Continues hash computation asynchronously
+    end
     end
 
     else (4) Append BlockItems with block_proof
    
     V->>S: addBlockItems(items with block_proof)
     V-->>U: return without blocking    
-    S->>S: completeHashing()   
+    S->>S: async completeHashing()   
 
     S->>SV: (5) verifySignature(signature, computedHash, blockNumber)    
 
@@ -116,7 +120,7 @@ sequenceDiagram
     end
 
 ```
-
+**Note:** The gray boxes on async hash computation will be implemented later only if we need to improve the latency of the verified blocks stream. (see note at the end of the document)
 ## Interfaces
 
 ### VerificationHandler
@@ -188,3 +192,7 @@ public enum VerificationError {
 
 ### Signature invalid
 If the computed hash does not match the hash implied by the signature, the block is considered tampered. It is marked invalid and appropriate recovery steps are taken.
+
+## Notes:
+In order to keep it simple the first implementation will not start work async as items come, but will wait for the block_proof to arrive in order to start work async, that way we avoid a thread waiting for items and idle, and avoid the complexity of activating the async work as items come. The tradeoff of this simplification is that we might experience a higher latency for the stream of verified blocks, but we can always improve this in the future if is needed since the design already contemplates the async work of block items as they are received.
+By using metrics we will be able to measure the latency of block verification and decide if we need to improve it by activating the async work of block items as they come.
