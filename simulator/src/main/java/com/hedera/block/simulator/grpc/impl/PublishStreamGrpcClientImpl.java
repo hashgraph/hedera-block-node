@@ -193,6 +193,8 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
     /**
      * Shutdowns the channel.
+     *
+     * @throws InterruptedException if the thread is interrupted
      */
     @Override
     public void shutdown() throws InterruptedException {

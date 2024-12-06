@@ -85,6 +85,7 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
     public void requestBlocks(long startBlock, long endBlock) throws InterruptedException {
         Preconditions.requireWhole(startBlock);
         Preconditions.requireWhole(endBlock);
+        Preconditions.requireGreaterOrEqual(endBlock, startBlock);
 
         consumerStreamObserver = new ConsumerStreamObserver(metricsService, streamLatch, lastKnownStatuses);
 
@@ -99,7 +100,7 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
     }
 
     @Override
-    public void completeStreaming() throws InterruptedException {
+    public void completeStreaming() {
         streamLatch.countDown();
         channel.shutdown();
     }

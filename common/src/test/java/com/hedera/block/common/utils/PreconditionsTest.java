@@ -108,6 +108,44 @@ class PreconditionsTest {
 
     /**
      * This test aims to verify that the
+     * {@link Preconditions#requireGreaterOrEqual(long, long)} will return the input
+     * 'toTest' parameter if the check passes.
+     *
+     * @param toTest parameterized, the number to test
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#validGreaterOrEqualValues")
+    void testRequireGreaterOrEqualPass(final long toTest, final long base) {
+        final Consumer<Long> asserts =
+                actual -> assertThat(actual).isGreaterThanOrEqualTo(base).isEqualTo(toTest);
+
+        final long actual = Preconditions.requireGreaterOrEqual(toTest, base);
+        assertThat(actual).satisfies(asserts);
+
+        final long actualOverload = Preconditions.requireGreaterOrEqual(toTest, base, "test error message");
+        assertThat(actualOverload).satisfies(asserts);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link Preconditions#requireGreaterOrEqual(long, long)} will throw an
+     * {@link IllegalArgumentException} if the check fails.
+     *
+     * @param toTest parameterized, the number to test
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#invalidGreaterOrEqualValues")
+    void testRequireGreaterOrEqualFail(final long toTest, final long base) {
+        assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requireGreaterOrEqual(toTest, base));
+
+        final String testErrorMessage = "test error message";
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requireGreaterOrEqual(toTest, base, testErrorMessage))
+                .withMessage(testErrorMessage);
+    }
+
+    /**
+     * This test aims to verify that the
      * {@link Preconditions#requirePositive(int)} will return the input 'toTest'
      * parameter if the positive check passes. Test includes overloads.
      *
