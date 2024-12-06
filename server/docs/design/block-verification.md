@@ -1,4 +1,4 @@
-# Block Verification
+# Block Verification Design
 
 ## Table of Contents
 
@@ -14,12 +14,12 @@
 
 ## Purpose
 
-The objective of the Block Verification feature of the block-node is to ensure that blocks received from consensus nodes are valid and have not been tampered with. This is done by re-calculating the block’s hash from its items and verifying that it matches the hash implied by the signature. If the computed hash does not match, the block is considered invalid.
+The purpose of the Block Verification feature is to ensure that blocks received from consensus nodes are valid and have not been tampered with. This is achieved by re-calculating the block hash and verifying it against the signature provided by the consensus node.
 
 ## Goals
 
-1) The block-node must re-create the block hash from its items and verify that it matches the expected hash derived from the block’s signature.
-2) If verification fails, the block should be marked as invalid and appropriate error handling should be triggered.
+1) The block-node must re-create the block hash from the block items and verify that it matches the hash implied by the signature.
+2) If verification fails, the block should be considered invalid, and appropriate error-handling procedures must be triggered.
 
 
 ## Terms
@@ -35,61 +35,85 @@ The objective of the Block Verification feature of the block-node is to ensure t
 
 - **VerificationHandler** 
   - Receives the stream of block items in the form of List<BlockItemsUnparsed> from the unparsed and unverified block items ring buffer. 
-  - Parses the block items, creates a new block context, and obtains a `BlockHashingSession` from the `BlockHashingSessionFactory`.
-  - Feeds all the block items to the `BlockHashingSession`.
-  - Once hashing is completed, verifies the signature. if verification fails, marks the block as invalid, else marks it as verified.
+  - When it detects a block_header, it creates a BlockHashingSession using the BlockHashingSessionFactory, providing it with the initial block items (and internally, the session will handle asynchronous hashing).
+  - Adds subsequent block items to the session, including the block_proof.
+  - Once the block_proof is received, calls completeHashing() on the BlockHashingSession, then releases the thread back to the UnverifiedRingBuffer.
+  - Does not block waiting for verification; the hash computation and verification continue asynchronously.
 - **BlockHashingSessionFactory**
-  - Responsible for creating instances of BlockHashingSession for computing block hashes.
+  - Creates new BlockHashingSession instances, provides them with a ExecutorService.
 - **BlockHashingSession**
-  - Incrementally accepts block items and computes the final block hash asynchronously once completes as soon as all required items are provided (block proof is the last needed item)
-  - Returns the computed hash upon completion.
+  - Holds all necessary block data.
+  - Accepts block items incrementally. (continues to compute them asynchronously)
+  - Once the block_proof is provided, finalizes the hash computation asynchronously.
+  - After computing the final hash, calls SignatureVerifier for verification.
 - **SignatureVerifier**
   - Verifies the signature by comparing the computed hash to the hash implied by the signature (using the public key).
-  - Returns true if valid, false otherwise.
+  - Calls BlockStatusManager with the verification result.
 - **BlockStatusManager**
-  - Tracks the verification status of blocks. (also tracks persistence and other block statuses)
-  - Updates the block status based on the verification results.
-  - Handles downstream processes in case of invalid or valid verification results.
+  - Receives verification results from SignatureVerifier.
+  - Updates block status and triggers any necessary recovery or follow-up processes depending on the outcome.
 
 ## Design
 
-`VerificationHandler` receives block items from the unverified ring buffer. When it detects a block_header, it creates a `BlockHashingSession` using the `BlockHashingSessionFactory`. As subsequent items arrive, each is added to the `BlockHashingSession`.
-
-Once all required items, including `block_proof`, are added, the session completes the hashing. The `VerificationHandler` then verifies the signature. If verification fails, a `SIGNATURE_INVALID` error is reported. If it succeeds, the block is verified.
+1. The `VerificationHandler` receives the list of block items from the unverified ring buffer.
+2. When the block_header is detected, the `VerificationHandler` creates a `BlockHashingSession` using the `BlockHashingSessionFactory`.
+3. The `BlockHashingSession` accepts subsequent block items incrementally.
+4. Once the block_proof is received, the `BlockHashingSession` calls `completeHashing()` to finalize the hash computation.
+5. Upon completion of computing the final block hash, the `BlockHashingSession` calls the `SignatureVerifier` to verify the signature.
+6. The `SignatureVerifier` compares the computed hash to the hash implied by the signature using the public key.
+7. If the verification fails, the `SignatureVerifier` calls the `BlockStatusManager` to update the block status as SIGNATURE_INVALID.
+8. If the verification succeeds, the `SignatureVerifier` calls the `BlockStatusManager` to update the block status as VERIFIED.
+9. The `BlockStatusManager` triggers any necessary recovery or follow-up processes depending on the verification result.
 
 Sequence Diagram:
 ```mermaid
 sequenceDiagram
-    participant UnverifiedRingBuffer
-    participant VerificationHandler
-    participant HashingService
-    participant BlockHashingSession
-    participant SignatureVerifier
-    participant BlockStatusManager
+    participant U as UnverifiedRingBuffer
+    participant V as VerificationHandler
+    participant F as BlockHashingSessionFactory
+    participant S as BlockHashingSession
+    participant SV as SignatureVerifier
+    participant BSM as BlockStatusManager
 
-    UnverifiedRingBuffer->>VerificationHandler: onBlockItemsReceived(List<BlockItemsUnparsed>)
-    note over VerificationHandler: Parse items & detect block_header
+        
+    U->>V: (1) onBlockItemsReceived(List<BlockItem>)        
     
-    VerificationHandler->>HashingService: createSession(previousBlockHash)
-    HashingService-->>VerificationHandler: returns BlockHashingSession
-    
-    note over VerificationHandler: Add items to the session
-    VerificationHandler->>BlockHashingSession: addBlockItem(item) (async)
-    VerificationHandler->>BlockHashingSession: addBlockItem(block_proof) (async)
-    
-    note over VerificationHandler,BlockHashingSession: Once all items are added
-    VerificationHandler->>BlockHashingSession: completeHashing()
-    BlockHashingSession-->>VerificationHandler: computedHash (async completion)
-    
-    note over VerificationHandler: Verify hash with signature
-    VerificationHandler->>SignatureVerifier: verifySignature(pubKey, signature, computedHash)
-    SignatureVerifier-->>VerificationHandler: returns true or false
-    
-    alt Signature verification fails
-        VerificationHandler->>BlockStatusManager: updateBlockStatus(blockNumber, ERROR, SIGNATURE_INVALID)
-    else Signature verification succeeds
-        VerificationHandler->>BlockStatusManager: updateBlockStatus(blockNumber, VERIFIED, NONE)
+    alt (2) Detects block_header
+    rect rgb(230, 230, 230)
+    V->>F: createSession(initialBlockItems, executorService, signatureVerifier)
+    Note over S: New instance of BlockHashingSession created
+    F-->>V: returns BlockHashingSession (S)
+    V-->>U: Returns without blocking
+    S->>S: Starts hash computation asynchronously
     end
+    else (3) Append more Block Items
+    rect rgb(230, 230, 230)
+    U->>V: onBlockItemsReceived(List<BlockItem>)    
+    V->>S: addBlockItem(item)
+    V-->>U: return without blocking
+    S->>S: Continues hash computation asynchronously
+    end
+
+    else (4) Append BlockItems with block_proof
+    rect rgb(230, 230, 230)
+    U->>V: onBlockItemsReceived(List<BlockItem>) with block_proof
+    V->>S: addBlockItem(block_proof)
+    V-->>U: return without blocking    
+    S->>S: completeHashing()   
+
+    S->>SV: (5) verifySignature(signature, computedHash, blockNumber)    
+
+    Note over SV,BSM: (6) Compare computed hash and signature
+    alt (7) Verification Fails
+      SV->>BSM: (7) updateBlockStatus(blockNumber, ERROR, SIGNATURE_INVALID)
+      Note over BSM: (9) Recovery for error handling
+    else (8) Verification Succeeds
+      SV->>BSM: (8) updateBlockStatus(blockNumber, VERIFIED, NONE)
+      Note over BSM: (9) Follow-up to downstream services
+    end
+    end
+    end
+    
 
 ```
 
@@ -99,56 +123,62 @@ sequenceDiagram
 
 ```java
 public interface VerificationHandler {
-    void onBlockItemsReceived(List<BlockItemsUnparsed> blockItems);
-    void onBlockHashComputed(BlockContext context, byte[] computedHash);
-    void onVerificationResult(BlockContext context, boolean isValid, VerificationError error);
+  void onBlockItemsReceived(List<BlockItem> blockItems);  
 }
 ```
 ### BlockHashingSessionFactory
+
 ```java
+import java.util.concurrent.ExecutorService;
+
 public interface BlockHashingSessionFactory {
-    BlockHashingSession createSession(byte[] previousBlockHash);
+  BlockHashingSession createSession(List<BlockItem> initialBlockItems, ExecutorService executorService, SignatureVerifier signatureVerifier);
 }
 ```
 ### BlockHashingSession
 ```java
+/* Once hashing is completed internally, calls SignatureVerifier to continue with verification process */
 public interface BlockHashingSession {
-    void addBlockItem(BlockItem item);
-    CompletableFuture<byte[]> completeHashing();
+  void addBlockItem(BlockItem item);
+  CompletableFuture<Void> completeHashing(); // triggers final hash computation asynchronously  
 }
 ```
 ### SignatureVerifier
 ```java
-
 public interface SignatureVerifier {
-    boolean verifySignature(byte[] publicKey, byte[] signature, byte[] computedHash);
+  void verifySignature(byte[] signature, byte[] computedHash, long blockNumber);  
 }
 ```
 ### BlockStatusManager
 ```java
 
 public interface BlockStatusManager {
-    void updateBlockStatus(byte[] blockId, BlockVerificationStatus status, VerificationError error);
+    void updateBlockStatus(long blockNumber, BlockVerificationStatus status, VerificationError error);
 }
 ```
 
 ## Enums
 ```java
 public enum BlockVerificationStatus {
-    UNVERIFIED,
-    VERIFIED,
-    SIGNATURE_INVALID,
-    SYSTEM_ERROR
+  VERIFIED,
+  ERROR
+}
+
+public enum VerificationError {
+  NONE,
+  SIGNATURE_INVALID,
+  SYSTEM_ERROR
 }
 ```
 
 ## Metrics
 
-- **blocks_unverified**: Gauge of the number of blocks pending verification
+- **blocks_received**: Counter of the number of blocks received for verification
 - **blocks_verified**: Counter of the number of blocks verified
+- **blocks_unverified**: Counter of the number of blocks that have not been verified, is the difference between blocks_received and blocks_verified.
 - **blocks_signature_invalid**: Counter of the number of blocks with invalid signatures
 - **blocks_system_error**: Counter of the number of blocks with system errors
-- **block_verification_time**: Histogram of the time taken to verify a block 
+- **block_verification_time**: Histogram of the time taken to verify a block, gives the node operator an idea of the time taken to verify a block.
 - 
 ## Exceptions
 
@@ -158,5 +188,3 @@ public enum BlockVerificationStatus {
 
 ### Signature invalid
 If the computed hash does not match the hash implied by the signature, the block is considered tampered. It is marked invalid and appropriate recovery steps are taken.
-
-
