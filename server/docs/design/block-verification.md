@@ -108,12 +108,11 @@ sequenceDiagram
 
     Note over SV,BSM: (6) Compare computed hash and signature
     alt (7) Verification Fails
-      SV->>BSM: (7) updateBlockStatus(blockNumber, ERROR, SIGNATURE_INVALID)
-      Note over BSM: (9) Recovery for error handling
+      SV->>BSM: updateBlockStatus(blockNumber, ERROR, SIGNATURE_INVALID      
     else (8) Verification Succeeds
-      SV->>BSM: (8) updateBlockStatus(blockNumber, VERIFIED, NONE)
-      Note over BSM: (9) Follow-up to downstream services
+      SV->>BSM: updateBlockStatus(blockNumber, VERIFIED, NONE)      
     end
+    Note over BSM: (9) Follow-up to downstream services
     end
 
 ```
