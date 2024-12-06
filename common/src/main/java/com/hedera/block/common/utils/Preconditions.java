@@ -55,8 +55,8 @@ public final class Preconditions { // @todo(381) change the APIs to accept non-n
      */
     public static String requireNotBlank(final String toCheck, final String errorMessage) {
         if (StringUtilities.isBlank(toCheck)) {
-            final String message = Objects.isNull(errorMessage) ? "The input String is required to be non-blank."
-                    : errorMessage;
+            final String message =
+                    Objects.isNull(errorMessage) ? "The input String is required to be non-blank." : errorMessage;
             throw new IllegalArgumentException(message);
         } else {
             return toCheck;
@@ -257,6 +257,5 @@ public final class Preconditions { // @todo(381) change the APIs to accept non-n
         }
     }
 
-    private Preconditions() {
-    }
+    private Preconditions() {}
 }
