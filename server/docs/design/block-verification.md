@@ -88,16 +88,14 @@ sequenceDiagram
     end
     else (3) Append more Block Items
     rect rgb(230, 230, 230)
-    U->>V: onBlockItemsReceived(List<BlockItem>)    
-    V->>S: addBlockItem(item)
+    V->>S: addBlockItems(items)
     V-->>U: return without blocking
     S->>S: Continues hash computation asynchronously
     end
 
     else (4) Append BlockItems with block_proof
     rect rgb(230, 230, 230)
-    U->>V: onBlockItemsReceived(List<BlockItem>) with block_proof
-    V->>S: addBlockItem(block_proof)
+    V->>S: addBlockItems(items with block_proof)
     V-->>U: return without blocking    
     S->>S: completeHashing()   
 
@@ -113,8 +111,6 @@ sequenceDiagram
     end
     end
     end
-    
-
 ```
 
 ## Interfaces
