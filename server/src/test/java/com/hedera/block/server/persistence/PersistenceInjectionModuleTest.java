@@ -30,7 +30,11 @@ import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
+import com.hedera.block.server.persistence.storage.compression.Compression;
+import com.hedera.block.server.persistence.storage.compression.NoOpCompression;
+import com.hedera.block.server.persistence.storage.compression.ZstdCompression;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalFilePathResolver;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
@@ -83,6 +87,9 @@ class PersistenceInjectionModuleTest {
     private BlockPathResolver blockPathResolverMock;
 
     @Mock
+    private Compression compressionMock;
+
+    @Mock
     private SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandlerMock;
 
     @Mock
@@ -121,7 +128,7 @@ class PersistenceInjectionModuleTest {
         when(persistenceStorageConfigMock.type()).thenReturn(storageType);
 
         final BlockWriter<List<BlockItemUnparsed>> actual = PersistenceInjectionModule.providesBlockWriter(
-                blockNodeContextMock, blockRemoverMock, blockPathResolverMock);
+                blockNodeContextMock, blockRemoverMock, blockPathResolverMock, compressionMock);
 
         final Class<?> targetInstanceType =
                 switch (storageType) {
@@ -156,7 +163,7 @@ class PersistenceInjectionModuleTest {
         // Expect an UncheckedIOException due to the IOException
         assertThatExceptionOfType(UncheckedIOException.class)
                 .isThrownBy(() -> PersistenceInjectionModule.providesBlockWriter(
-                        blockNodeContextMock, blockRemoverMock, blockPathResolverMock))
+                        blockNodeContextMock, blockRemoverMock, blockPathResolverMock, compressionMock))
                 .withCauseInstanceOf(IOException.class)
                 .withMessage("Failed to create BlockWriter");
     }
@@ -248,6 +255,32 @@ class PersistenceInjectionModuleTest {
         assertThat(actual).isNotNull().isExactlyInstanceOf(targetInstanceType);
     }
 
+    /**
+     * This test aims to verify that the
+     * {@link PersistenceInjectionModule#providesCompression(PersistenceStorageConfig)}
+     * method will return the correct {@link Compression} instance based on the
+     * {@link CompressionType} parameter. The test verifies only the result type
+     * and not what is inside the instance! For the purpose of this test, what
+     * is inside the instance is not important. We aim to test the branch that
+     * will be taken based on the {@link CompressionType} parameter in terms of
+     * the returned instance type.
+     *
+     * @param compressionType parameterized, the {@link CompressionType} to test
+     */
+    @ParameterizedTest
+    @MethodSource("compressionTypes")
+    void testProvidesCompression(final CompressionType compressionType) {
+        when(persistenceStorageConfigMock.compression()).thenReturn(compressionType);
+        final Compression actual = PersistenceInjectionModule.providesCompression(persistenceStorageConfigMock);
+
+        final Class<?> targetInstanceType =
+                switch (compressionType) {
+                    case ZSTD -> ZstdCompression.class;
+                    case NONE -> NoOpCompression.class;
+                };
+        assertThat(actual).isNotNull().isExactlyInstanceOf(targetInstanceType);
+    }
+
     @Test
     void testProvidesStreamValidatorBuilder() throws IOException {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
@@ -264,5 +297,12 @@ class PersistenceInjectionModuleTest {
      */
     private static Stream<Arguments> storageTypes() {
         return Arrays.stream(StorageType.values()).map(Arguments::of);
+    }
+
+    /**
+     * All {@link CompressionType} dynamically generated.
+     */
+    private static Stream<Arguments> compressionTypes() {
+        return Arrays.stream(CompressionType.values()).map(Arguments::of);
     }
 }

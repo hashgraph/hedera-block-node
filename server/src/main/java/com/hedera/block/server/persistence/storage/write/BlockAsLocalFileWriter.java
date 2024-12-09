@@ -21,14 +21,15 @@ import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.Block
 import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.persistence.storage.compression.Compression;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
@@ -42,21 +43,27 @@ import java.util.Optional;
 public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
     private final MetricsService metricsService;
     private final BlockPathResolver blockPathResolver;
+    private final Compression compression;
     private List<BlockItemUnparsed> currentBlockItems;
     private long currentBlockNumber = -1;
 
     /**
      * Constructor.
      *
-     * @param blockNodeContext valid, {@code non-null} instance of {@link BlockNodeContext} used to
-     * get the {@link MetricsService}
-     * @param blockPathResolver valid, {@code non-null} instance of {@link BlockPathResolver} used
-     * to resolve paths to Blocks
+     * @param blockNodeContext valid, {@code non-null} instance of
+     * {@link BlockNodeContext} used to get the {@link MetricsService}
+     * @param blockPathResolver valid, {@code non-null} instance of
+     * {@link BlockPathResolver} used to resolve paths to Blocks
+     * @param compression valid, {@code non-null} instance of
+     * {@link Compression} used to compress the Block
      */
     private BlockAsLocalFileWriter(
-            @NonNull final BlockNodeContext blockNodeContext, @NonNull final BlockPathResolver blockPathResolver) {
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final BlockPathResolver blockPathResolver,
+            @NonNull final Compression compression) {
         this.metricsService = Objects.requireNonNull(blockNodeContext.metricsService());
         this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
+        this.compression = Objects.requireNonNull(compression);
     }
 
     /**
@@ -66,11 +73,15 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
      * {@link BlockNodeContext} used to get the {@link MetricsService}
      * @param blockPathResolver valid, {@code non-null} instance of
      * {@link BlockPathResolver} used to resolve paths to Blocks
+     * @param compression valid, {@code non-null} instance of
+     * {@link Compression} used to compress the Block
      * @return a new, fully initialized instance of {@link BlockAsLocalFileWriter}
      */
     public static BlockAsLocalFileWriter of(
-            @NonNull final BlockNodeContext blockNodeContext, @NonNull final BlockPathResolver blockPathResolver) {
-        return new BlockAsLocalFileWriter(blockNodeContext, blockPathResolver);
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final BlockPathResolver blockPathResolver,
+            @NonNull final Compression compression) {
+        return new BlockAsLocalFileWriter(blockNodeContext, blockPathResolver, compression);
     }
 
     @NonNull
@@ -98,12 +109,17 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
 
     private List<BlockItemUnparsed> writeToFs() throws IOException {
         final Path blockToWritePathResolved = blockPathResolver.resolvePathToBlock(currentBlockNumber);
+        if (Files.exists(blockToWritePathResolved)) {
+            // todo the file must not exist, the stream below must create the file itself since it might add a
+            // file extension, here is a good idea to implement the proposal of resovler.findBlock and only if not
+            // found then we proceed, else throw
+            throw new IOException("Block file already exists: " + blockToWritePathResolved);
+        }
         Files.createDirectories(blockToWritePathResolved.getParent());
-        Files.createFile(blockToWritePathResolved);
-        try (final FileOutputStream fos = new FileOutputStream(blockToWritePathResolved.toFile())) {
+        try (final OutputStream out = compression.newCompressingOutputStream(blockToWritePathResolved)) {
             final BlockUnparsed blockToWrite =
                     BlockUnparsed.newBuilder().blockItems(currentBlockItems).build();
-            BlockUnparsed.PROTOBUF.toBytes(blockToWrite).writeTo(fos);
+            BlockUnparsed.PROTOBUF.toBytes(blockToWrite).writeTo(out);
         }
         return currentBlockItems;
     }
