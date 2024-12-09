@@ -51,45 +51,73 @@ public final class PersistTestUtils {
         }
     }
 
-    public static List<BlockItemUnparsed> generateBlockItemsUnparsed(int numOfBlocks) {
-
-        List<BlockItemUnparsed> blockItems = new ArrayList<>();
-        for (int i = 1; i <= numOfBlocks; i++) {
-            for (int j = 1; j <= 10; j++) {
-                switch (j) {
-                    case 1:
-                        // First block is always the header
-                        blockItems.add(BlockItemUnparsed.newBuilder()
-                                .blockHeader(BlockHeader.PROTOBUF.toBytes(BlockHeader.newBuilder()
-                                        .number(i)
-                                        .softwareVersion(SemanticVersion.newBuilder()
-                                                .major(1)
-                                                .minor(0)
-                                                .build())
-                                        .build()))
-                                .build());
-                        break;
-                    case 10:
-                        // Last block is always the state proof
-                        blockItems.add(BlockItemUnparsed.newBuilder()
-                                .blockProof(BlockProof.PROTOBUF.toBytes(
-                                        BlockProof.newBuilder().block(i).build()))
-                                .build());
-                        break;
-                    default:
-                        // Middle blocks are events
-                        blockItems.add(BlockItemUnparsed.newBuilder()
-                                .eventHeader(EventHeader.PROTOBUF.toBytes(EventHeader.newBuilder()
-                                        .eventCore(EventCore.newBuilder()
-                                                .creatorNodeId(i)
-                                                .build())
-                                        .build()))
-                                .build());
-                        break;
-                }
+    /**
+     * This method generates a list of {@link BlockItemUnparsed} with the input
+     * blockNumber used to generate the block items for. It generates 10 block
+     * items starting with the block header, followed by 8 events and ending
+     * with the block proof.
+     *
+     * @param blockNumber the block number to generate the block items for
+     *
+     * @return a list of {@link BlockItemUnparsed} with the input blockNumber
+     * used to generate the block items for
+     */
+    public static List<BlockItemUnparsed> generateBlockItemsUnparsedForWithBlockNumber(final long blockNumber) {
+        final List<BlockItemUnparsed> result = new ArrayList<>();
+        for (int j = 1; j <= 10; j++) {
+            switch (j) {
+                case 1:
+                    // First block is always the header
+                    result.add(BlockItemUnparsed.newBuilder()
+                            .blockHeader(BlockHeader.PROTOBUF.toBytes(BlockHeader.newBuilder()
+                                    .number(blockNumber)
+                                    .softwareVersion(SemanticVersion.newBuilder()
+                                            .major(1)
+                                            .minor(0)
+                                            .build())
+                                    .build()))
+                            .build());
+                    break;
+                case 10:
+                    // Last block is always the state proof
+                    result.add(BlockItemUnparsed.newBuilder()
+                            .blockProof(BlockProof.PROTOBUF.toBytes(
+                                    BlockProof.newBuilder().block(blockNumber).build()))
+                            .build());
+                    break;
+                default:
+                    // Middle blocks are events
+                    result.add(BlockItemUnparsed.newBuilder()
+                            .eventHeader(EventHeader.PROTOBUF.toBytes(EventHeader.newBuilder()
+                                    .eventCore(EventCore.newBuilder()
+                                            .creatorNodeId(blockNumber)
+                                            .build())
+                                    .build()))
+                            .build());
+                    break;
             }
         }
+        return result;
+    }
 
+    /**
+     * This method generates a list of {@link BlockItemUnparsed} for as many
+     * blocks as specified by the input parameter numOfBlocks. For each block
+     * number from 1 to numOfBlocks, it generates 10 block items starting with
+     * the block header, followed by 8 events and ending with the block proof.
+     * In a way, this simulates a stream of block items. Each 10 items in the
+     * list represent a block.
+     *
+     * @param numOfBlocks the number of blocks to generate block items for
+     *
+     * @return a list of {@link BlockItemUnparsed} for as many blocks as
+     * specified by the input parameter numOfBlocks
+     */
+    public static List<BlockItemUnparsed> generateBlockItemsUnparsed(int numOfBlocks) {
+        final List<BlockItemUnparsed> blockItems = new ArrayList<>();
+        for (int i = 1; i <= numOfBlocks; i++) {
+            blockItems.addAll(generateBlockItemsUnparsedForWithBlockNumber(i));
+        }
         return blockItems;
     }
 
