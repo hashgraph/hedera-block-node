@@ -24,6 +24,8 @@ import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.compression.Compression;
+import com.hedera.block.server.persistence.storage.compression.NoOpCompression;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalFilePathResolver;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -52,6 +54,7 @@ class BlockAsLocalFileWriterTest {
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig testConfig;
     private BlockAsLocalFilePathResolver pathResolverMock;
+    private Compression compressionMock;
 
     @TempDir
     private Path testLiveRootPath;
@@ -68,7 +71,9 @@ class BlockAsLocalFileWriterTest {
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
         pathResolverMock = spy(BlockAsLocalFilePathResolver.of(testLiveRootPath));
 
-        toTest = BlockAsLocalFileWriter.of(blockNodeContext, pathResolverMock);
+        compressionMock = spy(new NoOpCompression());
+
+        toTest = BlockAsLocalFileWriter.of(blockNodeContext, pathResolverMock, compressionMock);
     }
 
     /**
