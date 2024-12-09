@@ -62,15 +62,14 @@ class BlockAsLocalFileReaderTest {
     @BeforeEach
     void setUp() throws IOException {
         blockNodeContext = TestConfigUtil.getTestBlockNodeContext(
-            Map.of(PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY, testLiveRootPath.toString()));
+                Map.of(PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY, testLiveRootPath.toString()));
         testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
 
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
 
         blockAsLocalFileResolverMock = spy(BlockAsLocalFilePathResolver.of(testLiveRootPath));
-        blockAsLocalFileWriterMock = spy(
-            BlockAsLocalFileWriter.of(blockNodeContext, blockAsLocalFileResolverMock));
+        blockAsLocalFileWriterMock = spy(BlockAsLocalFileWriter.of(blockNodeContext, blockAsLocalFileResolverMock));
         toTest = BlockAsLocalFileReader.of(blockAsLocalFileResolverMock);
     }
 
@@ -82,34 +81,34 @@ class BlockAsLocalFileReaderTest {
     @MethodSource("validBlockNumbers")
     void testSuccessfulBlockRead(final long blockNumber) throws IOException, ParseException {
         final List<BlockItemUnparsed> blockItemUnparsed =
-            PersistTestUtils.generateBlockItemsUnparsedForWithBlockNumber(blockNumber);
+                PersistTestUtils.generateBlockItemsUnparsedForWithBlockNumber(blockNumber);
         final Optional<List<BlockItemUnparsed>> written = blockAsLocalFileWriterMock.write(blockItemUnparsed);
 
         assertThat(written).isNotNull().isPresent();
 
         final Optional<BlockUnparsed> actual = toTest.read(blockNumber);
         assertThat(actual)
-            .isNotNull()
-            .isPresent()
-            .get(InstanceOfAssertFactories.type(BlockUnparsed.class))
-            .isNotNull()
-            .isExactlyInstanceOf(BlockUnparsed.class)
-            .returns(blockNumber, from(blockUnparsed -> {
-                try {
-                    return BlockHeader.PROTOBUF
-                        .parse(Objects.requireNonNull(
-                            blockUnparsed.blockItems().getFirst().blockHeader()))
-                        .number();
-                } catch (final ParseException e) {
-                    throw new RuntimeException(e);
-                }
-            }))
-            .extracting(BlockUnparsed::blockItems)
-            .asList()
-            .isNotNull()
-            .isNotEmpty()
-            .hasSize(blockItemUnparsed.size())
-            .containsExactlyElementsOf(blockItemUnparsed);
+                .isNotNull()
+                .isPresent()
+                .get(InstanceOfAssertFactories.type(BlockUnparsed.class))
+                .isNotNull()
+                .isExactlyInstanceOf(BlockUnparsed.class)
+                .returns(blockNumber, from(blockUnparsed -> {
+                    try {
+                        return BlockHeader.PROTOBUF
+                                .parse(Objects.requireNonNull(
+                                        blockUnparsed.blockItems().getFirst().blockHeader()))
+                                .number();
+                    } catch (final ParseException e) {
+                        throw new RuntimeException(e);
+                    }
+                }))
+                .extracting(BlockUnparsed::blockItems)
+                .asList()
+                .isNotNull()
+                .isNotEmpty()
+                .hasSize(blockItemUnparsed.size())
+                .containsExactlyElementsOf(blockItemUnparsed);
     }
 
     /**
@@ -132,28 +131,28 @@ class BlockAsLocalFileReaderTest {
      */
     public static Stream<Arguments> validBlockNumbers() {
         return Stream.of(
-            Arguments.of(0L),
-            Arguments.of(1L),
-            Arguments.of(2L),
-            Arguments.of(10L),
-            Arguments.of(100L),
-            Arguments.of(1_000L),
-            Arguments.of(10_000L),
-            Arguments.of(100_000L),
-            Arguments.of(1_000_000L),
-            Arguments.of(10_000_000L),
-            Arguments.of(100_000_000L),
-            Arguments.of(1_000_000_000L),
-            Arguments.of(10_000_000_000L),
-            Arguments.of(100_000_000_000L),
-            Arguments.of(1_000_000_000_000L),
-            Arguments.of(10_000_000_000_000L),
-            Arguments.of(100_000_000_000_000L),
-            Arguments.of(1_000_000_000_000_000L),
-            Arguments.of(10_000_000_000_000_000L),
-            Arguments.of(100_000_000_000_000_000L),
-            Arguments.of(1_000_000_000_000_000_000L),
-            Arguments.of(Long.MAX_VALUE));
+                Arguments.of(0L),
+                Arguments.of(1L),
+                Arguments.of(2L),
+                Arguments.of(10L),
+                Arguments.of(100L),
+                Arguments.of(1_000L),
+                Arguments.of(10_000L),
+                Arguments.of(100_000L),
+                Arguments.of(1_000_000L),
+                Arguments.of(10_000_000L),
+                Arguments.of(100_000_000L),
+                Arguments.of(1_000_000_000L),
+                Arguments.of(10_000_000_000L),
+                Arguments.of(100_000_000_000L),
+                Arguments.of(1_000_000_000_000L),
+                Arguments.of(10_000_000_000_000L),
+                Arguments.of(100_000_000_000_000L),
+                Arguments.of(1_000_000_000_000_000L),
+                Arguments.of(10_000_000_000_000_000L),
+                Arguments.of(100_000_000_000_000_000L),
+                Arguments.of(1_000_000_000_000_000_000L),
+                Arguments.of(Long.MAX_VALUE));
     }
 
     /**
@@ -163,26 +162,26 @@ class BlockAsLocalFileReaderTest {
      */
     public static Stream<Arguments> invalidBlockNumbers() {
         return Stream.of(
-            Arguments.of(-1L),
-            Arguments.of(-2L),
-            Arguments.of(-10L),
-            Arguments.of(-100L),
-            Arguments.of(-1_000L),
-            Arguments.of(-10_000L),
-            Arguments.of(-100_000L),
-            Arguments.of(-1_000_000L),
-            Arguments.of(-10_000_000L),
-            Arguments.of(-100_000_000L),
-            Arguments.of(-1_000_000_000L),
-            Arguments.of(-10_000_000_000L),
-            Arguments.of(-100_000_000_000L),
-            Arguments.of(-1_000_000_000_000L),
-            Arguments.of(-10_000_000_000_000L),
-            Arguments.of(-100_000_000_000_000L),
-            Arguments.of(-1_000_000_000_000_000L),
-            Arguments.of(-10_000_000_000_000_000L),
-            Arguments.of(-100_000_000_000_000_000L),
-            Arguments.of(-1_000_000_000_000_000_000L),
-            Arguments.of(Long.MIN_VALUE));
+                Arguments.of(-1L),
+                Arguments.of(-2L),
+                Arguments.of(-10L),
+                Arguments.of(-100L),
+                Arguments.of(-1_000L),
+                Arguments.of(-10_000L),
+                Arguments.of(-100_000L),
+                Arguments.of(-1_000_000L),
+                Arguments.of(-10_000_000L),
+                Arguments.of(-100_000_000L),
+                Arguments.of(-1_000_000_000L),
+                Arguments.of(-10_000_000_000L),
+                Arguments.of(-100_000_000_000L),
+                Arguments.of(-1_000_000_000_000L),
+                Arguments.of(-10_000_000_000_000L),
+                Arguments.of(-100_000_000_000_000L),
+                Arguments.of(-1_000_000_000_000_000L),
+                Arguments.of(-10_000_000_000_000_000L),
+                Arguments.of(-100_000_000_000_000_000L),
+                Arguments.of(-1_000_000_000_000_000_000L),
+                Arguments.of(Long.MIN_VALUE));
     }
 }
