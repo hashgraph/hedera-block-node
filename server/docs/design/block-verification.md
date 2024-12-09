@@ -1,7 +1,6 @@
 # Block Verification Design
 
 ## Table of Contents
-
 1. [Purpose](#purpose)
 1. [Goals](#goals)
 1. [Terms](#terms)
@@ -13,17 +12,14 @@
 1. [Exceptions](#exceptions)
 
 ## Purpose
-
 The purpose of the Block Verification feature is to ensure that blocks received from consensus nodes are valid and have not been tampered with. This is achieved by re-calculating the block hash and verifying it against the signature provided by the consensus node.
 
 ## Goals
-
 1. The block-node must re-create the block hash from the block items and verify that it matches the hash implied by the signature. 
 1. If verification fails, the block should be considered invalid, and appropriate error-handling procedures must be triggered.
 
 
 ## Terms
-
 - Consensus Node (CN): A node that produces and provides blocks.
 - Block Items: The block data pieces (header, events, transactions, transaction result, state changes, proof) that make up a block.
 - Block Hash: A cryptographic hash representing the block’s integrity.
@@ -37,7 +33,7 @@ The purpose of the Block Verification feature is to ensure that blocks received 
   - Receives the stream of block items in the form of List<BlockItemsUnparsed> from the unparsed and unverified block items ring buffer. 
   - When it detects a block_header, it creates a BlockHashingSession using the BlockHashingSessionFactory, providing it with the initial block items (and internally, the session will handle asynchronous hashing).
   - Adds subsequent block items to the session, including the block_proof.
-  - Does not block waiting for verification; the hash computation and verification continue asynchronously.
+  - Does not block waiting for verification; the hash computation and verification continue asynchronously.  
 - ### BlockHashingSessionFactory
   - Creates new BlockHashingSession instances, provides them with a ExecutorService.
 - ### BlockHashingSession
@@ -53,7 +49,6 @@ The purpose of the Block Verification feature is to ensure that blocks received 
   - Updates block status and triggers any necessary recovery or follow-up processes depending on the outcome.
 
 ## Design
-
 1. The `VerificationHandler` receives the list of block items from the unverified ring buffer.
 1. When the block_header is detected, the `VerificationHandler` creates a `BlockHashingSession` using the `BlockHashingSessionFactory`.
 1. The `BlockHashingSession` accepts subsequent block items incrementally.
@@ -120,17 +115,17 @@ sequenceDiagram
 
 ```
 **Note:** The gray boxes on async hash computation will be implemented later only if we need to improve the latency of the verified blocks stream. (see note at the end of the document)
+
 ## Interfaces
 
 ### VerificationHandler
-
 ```java
 public interface VerificationHandler {
   void onBlockItemsReceived(List<BlockItem> blockItems);  
 }
 ```
-### BlockHashingSessionFactory
 
+### BlockHashingSessionFactory
 ```java
 import java.util.concurrent.ExecutorService;
 
@@ -138,6 +133,7 @@ public interface BlockHashingSessionFactory {
   BlockHashingSession createSession(List<BlockItem> initialBlockItems, ExecutorService executorService, SignatureVerifier signatureVerifier);
 }
 ```
+
 ### BlockHashingSession
 ```java
 /* Once hashing is completed internally, calls SignatureVerifier to continue with verification process */
@@ -146,12 +142,14 @@ public interface BlockHashingSession {
   CompletableFuture<Void> completeHashing(); // triggers final hash computation asynchronously  
 }
 ```
+
 ### SignatureVerifier
 ```java
 public interface SignatureVerifier {
   void verifySignature(byte[] signature, byte[] computedHash, long blockNumber);  
 }
 ```
+
 ### BlockStatusManager
 ```java
 
@@ -175,7 +173,6 @@ public enum VerificationError {
 ```
 
 ## Metrics
-
 <dl>
 <dt>blocks_received</dt><dd>Counter of the number of blocks received for verification.</dd>
 <dt>blocks_verified</dt><dd>Counter of the number of blocks verified.</dd>
@@ -184,9 +181,8 @@ public enum VerificationError {
 <dt>blocks_system_error</dt><dd>Counter of the number of blocks with system errors.</dd>
 <dt>block_verification_time</dt><dd>Histogram of the time taken to verify a block, gives the node operator an idea of the time taken to verify a block.</dd>
 </dl>
-- 
-## Exceptions
 
+## Exceptions
 - **SYSTEM_ERROR:** Issues with node configuration or bugs. The node logs details, updates metrics, and might attempt recovery or halt.
 - **SIGNATURE_INVALID:** If verification fails, SIGNATURE_INVALID is used. The block is marked invalid, and the BlockStatusManager triggers error-handling routines (requesting re-sends, removing corrupted data, notifying subscribers, etc.).
 
