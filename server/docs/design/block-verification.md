@@ -83,17 +83,13 @@ sequenceDiagram
     Note over S: New instance of BlockHashingSession created
     F-->>V: returns BlockHashingSession (S)
     V-->>U: Returns without blocking
-    rect rgb(240, 192, 129)
     S->>S: *Starts hash computation asynchronously
-    end
     
     else (3) Append more Block Items
     loop
     V->>S: addBlockItems(items)
     V-->>U: return without blocking
-    rect rgb(240, 192, 129)
     S->>S: *Continues hash computation asynchronously
-    end
     end
 
     else (4) Append BlockItems with block_proof
@@ -114,7 +110,6 @@ sequenceDiagram
     end
 
 ```
-**Note:** The gray boxes on async hash computation will be implemented later only if we need to improve the latency of the verified blocks stream. (see note at the end of the document)
 
 ## Interfaces
 
@@ -136,10 +131,9 @@ public interface BlockHashingSessionFactory {
 
 ### BlockHashingSession
 ```java
-/* Once hashing is completed internally, calls SignatureVerifier to continue with verification process */
 public interface BlockHashingSession {
   void addBlockItem(BlockItem item);
-  CompletableFuture<Void> completeHashing(); // triggers final hash computation asynchronously  
+  CompletableFuture<Void> completeHashing();
 }
 ```
 
@@ -188,7 +182,3 @@ public enum VerificationError {
 
 ### Signature invalid
 If the computed hash does not match the hash signed by the network, the block is considered unverified. It is marked as such and publishers are requested to resend the block.
-
-## Notes:
-In order to keep it simple the first implementation will not start work async as items come, but will wait for the block_proof to arrive in order to start work async, that way we avoid a thread waiting for items and idle, and avoid the complexity of activating the async work as items come. The tradeoff of this simplification is that we might experience a higher latency for the stream of verified blocks, but we can always improve this in the future if is needed since the design already contemplates the async work of block items as they are received.
-By using metrics we will be able to measure the latency of block verification and decide if we need to improve it by activating the async work of block items as they come.
