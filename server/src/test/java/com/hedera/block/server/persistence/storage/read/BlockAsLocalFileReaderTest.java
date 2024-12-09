@@ -51,9 +51,6 @@ import org.junit.jupiter.params.provider.MethodSource;
  */
 class BlockAsLocalFileReaderTest {
     private BlockAsLocalFileWriter blockAsLocalFileWriterMock;
-    private BlockAsLocalFilePathResolver blockAsLocalFileResolverMock;
-    private BlockNodeContext blockNodeContext;
-    private PersistenceStorageConfig testConfig;
     private BlockAsLocalFileReader toTest;
 
     @TempDir
@@ -61,21 +58,24 @@ class BlockAsLocalFileReaderTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        blockNodeContext = TestConfigUtil.getTestBlockNodeContext(
+        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext(
                 Map.of(PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY, testLiveRootPath.toString()));
-        testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
+        final PersistenceStorageConfig testConfig =
+                blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
 
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
 
-        blockAsLocalFileResolverMock = spy(BlockAsLocalFilePathResolver.of(testLiveRootPath));
+        final BlockAsLocalFilePathResolver blockAsLocalFileResolverMock =
+                spy(BlockAsLocalFilePathResolver.of(testLiveRootPath));
         blockAsLocalFileWriterMock = spy(BlockAsLocalFileWriter.of(blockNodeContext, blockAsLocalFileResolverMock));
         toTest = BlockAsLocalFileReader.of(blockAsLocalFileResolverMock);
     }
 
     /**
-     * This test aims to verify that the {@link BlockAsLocalFileReader#read(long)} correctly reads a block with a
-     * given block number.
+     * This test aims to verify that the
+     * {@link BlockAsLocalFileReader#read(long)} correctly reads a block with a
+     * given block number and returns a {@code non-empty} {@link Optional}.
      */
     @ParameterizedTest
     @MethodSource("validBlockNumbers")
@@ -84,6 +84,7 @@ class BlockAsLocalFileReaderTest {
                 PersistTestUtils.generateBlockItemsUnparsedForWithBlockNumber(blockNumber);
         final Optional<List<BlockItemUnparsed>> written = blockAsLocalFileWriterMock.write(blockItemUnparsed);
 
+        // writing the test data is successful
         assertThat(written).isNotNull().isPresent();
 
         final Optional<BlockUnparsed> actual = toTest.read(blockNumber);
@@ -106,15 +107,44 @@ class BlockAsLocalFileReaderTest {
                 .extracting(BlockUnparsed::blockItems)
                 .asList()
                 .isNotNull()
+                .isNotEmpty();
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link BlockAsLocalFileReader#read(long)} correctly reads a block with a
+     * given block number and has the same contents as the block that has been
+     * persisted.
+     */
+    @ParameterizedTest
+    @MethodSource("validBlockNumbers")
+    void testSuccessfulBlockReadContents(final long blockNumber) throws IOException, ParseException {
+        final List<BlockItemUnparsed> blockItemUnparsed =
+                PersistTestUtils.generateBlockItemsUnparsedForWithBlockNumber(blockNumber);
+        final Optional<List<BlockItemUnparsed>> written = blockAsLocalFileWriterMock.write(blockItemUnparsed);
+
+        // writing the test data is successful
+        assertThat(written).isNotNull().isPresent();
+
+        final Optional<BlockUnparsed> actual = toTest.read(blockNumber);
+        assertThat(actual)
+                .isNotNull()
+                .isPresent()
+                .get(InstanceOfAssertFactories.type(BlockUnparsed.class))
+                .isNotNull()
+                .extracting(BlockUnparsed::blockItems)
+                .asList()
+                .isNotNull()
                 .isNotEmpty()
                 .hasSize(blockItemUnparsed.size())
                 .containsExactlyElementsOf(blockItemUnparsed);
     }
 
     /**
-     * This test aims to verify that the {@link BlockAsLocalFileReader#read(long)} correctly throws an
-     * {@link IllegalArgumentException} when an invalid block number is provided. A block number is invalid if it
-     * is a strictly negative number.
+     * This test aims to verify that the
+     * {@link BlockAsLocalFileReader#read(long)} correctly throws an
+     * {@link IllegalArgumentException} when an invalid block number is
+     * provided. A block number is invalid if it is a strictly negative number.
      *
      * @param toRead parameterized, block number
      */
