@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.from;
 
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -70,7 +71,7 @@ class PersistenceStorageConfigTest {
     @ParameterizedTest
     @MethodSource("storageTypes")
     void testPersistenceStorageConfigStorageTypes(final StorageType storageType) {
-        final PersistenceStorageConfig actual = new PersistenceStorageConfig("", "", storageType);
+        final PersistenceStorageConfig actual = new PersistenceStorageConfig("", "", storageType, CompressionType.NONE);
         assertThat(actual).returns(storageType, from(PersistenceStorageConfig::type));
     }
 
@@ -92,7 +93,7 @@ class PersistenceStorageConfigTest {
             final String archiveRootPathToTest,
             final String expectedArchiveRootPathToTest) {
         final PersistenceStorageConfig actual = new PersistenceStorageConfig(
-                liveRootPathToTest, archiveRootPathToTest, StorageType.BLOCK_AS_LOCAL_FILE);
+                liveRootPathToTest, archiveRootPathToTest, StorageType.BLOCK_AS_LOCAL_FILE, CompressionType.NONE);
         assertThat(actual)
                 .returns(expectedLiveRootPathToTest, from(PersistenceStorageConfig::liveRootPath))
                 .returns(expectedArchiveRootPathToTest, from(PersistenceStorageConfig::archiveRootPath));
@@ -114,7 +115,10 @@ class PersistenceStorageConfigTest {
             final String invalidLiveRootPathToTest, final String invalidArchiveRootPathToTest) {
         assertThatExceptionOfType(UncheckedIOException.class)
                 .isThrownBy(() -> new PersistenceStorageConfig(
-                        invalidLiveRootPathToTest, invalidArchiveRootPathToTest, StorageType.BLOCK_AS_LOCAL_FILE));
+                        invalidLiveRootPathToTest,
+                        invalidArchiveRootPathToTest,
+                        StorageType.BLOCK_AS_LOCAL_FILE,
+                        CompressionType.NONE));
     }
 
     /**

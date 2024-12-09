@@ -20,7 +20,11 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
+import com.hedera.block.server.persistence.storage.compression.Compression;
+import com.hedera.block.server.persistence.storage.compression.NoOpCompression;
+import com.hedera.block.server.persistence.storage.compression.ZstdCompression;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalFilePathResolver;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
@@ -67,7 +71,8 @@ public interface PersistenceInjectionModule {
     static BlockWriter<List<BlockItemUnparsed>> providesBlockWriter(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
-            @NonNull final BlockPathResolver blockPathResolver) {
+            @NonNull final BlockPathResolver blockPathResolver,
+            @NonNull final Compression compression) {
         Objects.requireNonNull(blockRemover);
         Objects.requireNonNull(blockPathResolver);
         final StorageType persistenceType = blockNodeContext
@@ -76,7 +81,7 @@ public interface PersistenceInjectionModule {
                 .type();
         try {
             return switch (persistenceType) {
-                case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileWriter.of(blockNodeContext, blockPathResolver);
+                case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileWriter.of(blockNodeContext, blockPathResolver, compression);
                 case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirWriter.of(
                         blockNodeContext, blockRemover, blockPathResolver);
                 case NO_OP -> NoOpBlockWriter.newInstance();
@@ -145,6 +150,23 @@ public interface PersistenceInjectionModule {
             case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFilePathResolver.of(blockStorageRoot);
             case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirPathResolver.of(blockStorageRoot);
             case NO_OP -> NoOpBlockPathResolver.newInstance();
+        };
+    }
+
+    /**
+     * Provides a compression singleton using the compression config.
+     *
+     * @param config the persistence storage configuration needed to build the
+     * compression
+     * @return a compression singleton
+     */
+    @Provides
+    @Singleton
+    static Compression providesCompression(@NonNull final PersistenceStorageConfig config) {
+        final CompressionType compressionType = config.compression();
+        return switch (compressionType) {
+            case ZSTD -> new ZstdCompression();
+            case NONE -> new NoOpCompression();
         };
     }
 
