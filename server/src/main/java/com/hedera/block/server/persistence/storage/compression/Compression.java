@@ -22,9 +22,22 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 
 /**
- * TODO: add documentation
+ * A compression abstractions that allows for the compression of bytes using
+ * different compression algorithms based on specific implementation.
  */
 public interface Compression {
+    /**
+     * This method aims to create a new {@link OutputStream} instance that will
+     * run the input data through a compression algorithm (algorithm is based on
+     * specific implementation) before writing it to the input path.
+     *
+     * @param pathToFile valid {@code non-null} {@link Path} instance that will
+     * be used to create the resulting {@link OutputStream} instance
+     * @return a newly created, fully initialized and valid, {@code non-null}
+     * {@link OutputStream} instance that will run the input data through a
+     * compression algorithm before writing it to the file based on implementation
+     * @throws IOException if an I/O exception occurs
+     */
     @NonNull
     OutputStream newCompressingOutputStream(@NonNull final Path pathToFile) throws IOException;
 }

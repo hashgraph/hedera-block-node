@@ -23,9 +23,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * TODO: add documentation
+ * An implementation of {@link Compression} that does not compress the data. It
+ * does not use any algorithm, but simply generates a stream that writes the
+ * data to it`s destination, as it is received.
  */
 public class NoOpCompression implements Compression {
+    /**
+     * This method aims to create a new {@link OutputStream} instance that will
+     * write the input data to it`s destination without any compression.
+     *
+     * @param pathToFile valid {@code non-null} {@link Path} instance that will
+     * be used to create the resulting {@link OutputStream} instance
+     * @return a newly created, fully initialized and valid, {@code non-null}
+     * {@link OutputStream} instance that will write the input data to it`s
+     * destination without any compression
+     * @throws IOException if an I/O exception occurs
+     */
     @NonNull
     @Override
     public OutputStream newCompressingOutputStream(@NonNull final Path pathToFile) throws IOException {
