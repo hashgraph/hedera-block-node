@@ -62,6 +62,7 @@ class NoOpCompressionTest {
      * contract for the precondition of the input path not being a directory.
      */
     @Test
+    @SuppressWarnings("resource")
     void testPreconditionDirectoryNotAllowed() throws IOException {
         final Path directory = testTempDir.resolve("path_as_dir");
         Files.createDirectories(directory);
@@ -82,6 +83,7 @@ class NoOpCompressionTest {
      * input path existing.
      */
     @Test
+    @SuppressWarnings("resource")
     void testPreconditionParentDirectoryMustExist() {
         final Path pathWithNonExistentParent =
                 testTempDir.resolve("path_as_dir").resolve("tmp.txt");
