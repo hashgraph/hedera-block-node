@@ -103,6 +103,7 @@ dependencyResolutionManagement {
             version("org.apache.commons.lang3", "3.14.0")
             version("org.apache.commons.compress", "1.26.0")
             version("org.apache.logging.log4j.slf4j2.impl", "2.21.1")
+            version("com.github.luben.zstd_jni","1.5.6-8")
 
             // needed for dagger
             version("dagger", daggerVersion)

@@ -6,6 +6,7 @@ module com.hedera.block.server {
     exports com.hedera.block.server.consumer;
     exports com.hedera.block.server.exception;
     exports com.hedera.block.server.persistence.storage;
+    exports com.hedera.block.server.persistence.storage.compression;
     exports com.hedera.block.server.persistence.storage.path;
     exports com.hedera.block.server.persistence.storage.write;
     exports com.hedera.block.server.persistence.storage.read;
@@ -23,6 +24,7 @@ module com.hedera.block.server {
 
     requires com.hedera.block.common;
     requires com.hedera.block.stream;
+    requires com.github.luben.zstd_jni;
     requires com.hedera.pbj.grpc.helidon.config;
     requires com.hedera.pbj.grpc.helidon;
     requires com.hedera.pbj.runtime;

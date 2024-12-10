@@ -34,7 +34,8 @@ import java.util.Objects;
  *
  * @param liveRootPath provides the root path for saving blocks live
  * @param archiveRootPath provides the root path for archived blocks
- * @param type use a predefined type string to replace the persistence component implementation.
+ * @param type storage type
+ * @param compression compression type to use for the storage
  * Non-PRODUCTION values should only be used for troubleshooting and development purposes.
  */
 @ConfigData("persistence.storage")
@@ -43,7 +44,8 @@ public record PersistenceStorageConfig(
         @ConfigProperty(defaultValue = "") String liveRootPath,
         // @todo(#371) - the default life/archive root path must be absolute starting from /opt
         @ConfigProperty(defaultValue = "") String archiveRootPath,
-        @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type) {
+        @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type,
+        @ConfigProperty(defaultValue = "ZSTD") CompressionType compression) {
     // @todo(#371) - the default life/archive root path must be absolute starting from /opt
     private static final String LIVE_ROOT_PATH =
             Path.of("hashgraph/blocknode/data/live/").toAbsolutePath().toString();
@@ -56,6 +58,7 @@ public record PersistenceStorageConfig(
      */
     public PersistenceStorageConfig {
         Objects.requireNonNull(type);
+        Objects.requireNonNull(compression);
         liveRootPath = resolvePath(liveRootPath, LIVE_ROOT_PATH, BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
         archiveRootPath =
                 resolvePath(archiveRootPath, ARCHIVE_ROOT_PATH, BLOCK_NODE_ARCHIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
@@ -145,5 +148,21 @@ public record PersistenceStorageConfig(
          * This type of storage does nothing.
          */
         NO_OP
+    }
+
+    /**
+     * An enum that reflects the type of compression that is used to compress
+     * the blocks that are stored within the persistence storage.
+     */
+    public enum CompressionType {
+        /**
+         * This type of compression is used to compress the blocks using the
+         * `Zstandard` algorithm.
+         */
+        ZSTD,
+        /**
+         * This type means no compression will be done.
+         */
+        NONE
     }
 }
