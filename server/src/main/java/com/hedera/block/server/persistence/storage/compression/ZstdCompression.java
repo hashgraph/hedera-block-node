@@ -24,11 +24,25 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * TODO: add documentation
+ * An implementation of {@link Compression} that compresses the data using the
+ * Zstandard (Zstd) compression algorithm.
  */
 public class ZstdCompression implements Compression {
     private static final String ZSTD_EXTENSION = ".zstd";
 
+    /**
+     * This method aims to create a new {@link OutputStream} instance that will
+     * run the input data through the Zstandard (Zstd) compression algorithm
+     * before writing it to it`s destination.
+     *
+     * @param pathToFile valid {@code non-null} {@link Path} instance that will
+     * be used to create the resulting {@link OutputStream} instance
+     * @return a newly created, fully initialized and valid, {@code non-null}
+     * {@link OutputStream} instance that will run the input data through the
+     * Zstandard (Zstd) compression algorithm before writing it to it`s
+     * destination
+     * @throws IOException if an I/O exception occurs
+     */
     @NonNull
     @Override
     public OutputStream newCompressingOutputStream(@NonNull final Path pathToFile) throws IOException {

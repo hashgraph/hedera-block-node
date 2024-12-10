@@ -111,7 +111,7 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
         final Path blockToWritePathResolved = blockPathResolver.resolvePathToBlock(currentBlockNumber);
         if (Files.exists(blockToWritePathResolved)) {
             // todo the file must not exist, the stream below must create the file itself since it might add a
-            // file extension, here is a good idea to implement the proposal of resovler.findBlock and only if not
+            // file extension, here is a good idea to implement the proposal of resolver.findBlock and only if not
             // found then we proceed, else throw
             throw new IOException("Block file already exists: " + blockToWritePathResolved);
         }
