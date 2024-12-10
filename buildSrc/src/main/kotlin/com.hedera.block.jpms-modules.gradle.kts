@@ -184,11 +184,11 @@ extraJavaModuleInfo {
     }
 
     // used in tools
-    module("org.apache.httpcomponents:httpclient", "org.apache.httpcomponents.httpclient")
-    module("org.apache.httpcomponents:httpcore", "org.apache.httpcomponents.httpcore")
 
     module("com.google.cloud:google-cloud-storage", "com.google.cloud.storage")
     // dependencies for google cloud storage API
+    module("org.apache.httpcomponents:httpclient", "org.apache.httpcomponents.httpclient")
+    module("org.apache.httpcomponents:httpcore", "org.apache.httpcomponents.httpcore")
     module("com.google.api-client:google-api-client", "google.api.client")
     module("com.google.api.grpc:gapic-google-cloud-storage-v2", "com.google.api.grpc.cloud.storage.v2")
     module("com.google.api.grpc:grpc-google-cloud-storage-v2", "com.google.api.grpc.cloud.storage.v2")
@@ -215,7 +215,6 @@ extraJavaModuleInfo {
         mergeJar("com.google.api.grpc:proto-google-common-protos")
         exportAllPackages()
     }
-
 //    module("com.google.api.grpc:proto-google-common-protos", "com.google.api.grpc.common")
     module("com.google.cloud:google-cloud-core-grpc", "com.google.cloud.core.grpc")
     module("com.google.cloud:google-cloud-core-http", "com.google.cloud.core.http")
