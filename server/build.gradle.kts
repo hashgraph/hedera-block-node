@@ -24,9 +24,6 @@ application {
     mainClass = "com.hedera.block.server.Server"
 }
 
-// todo what is the correct way to add this dependency?
-dependencies { implementation("com.github.luben:zstd-jni:1.5.6-8") }
-
 mainModuleInfo {
     annotationProcessor("dagger.compiler")
     annotationProcessor("com.google.auto.service.processor")
