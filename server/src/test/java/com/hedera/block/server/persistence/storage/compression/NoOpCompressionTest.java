@@ -17,6 +17,7 @@
 package com.hedera.block.server.persistence.storage.compression;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -53,6 +54,46 @@ class NoOpCompressionTest {
     @Test
     void testGetCompressionFileExtension() {
         assertThat(toTest.getCompressionFileExtension()).isNotNull().isBlank();
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link NoOpCompression#newCompressingOutputStream} enforce the API
+     * contract for the precondition of the input path not being a directory.
+     */
+    @Test
+    void testPreconditionDirectoryNotAllowed() throws IOException {
+        final Path directory = testTempDir.resolve("path_as_dir");
+        Files.createDirectories(directory);
+
+        // assert that the target directory exists
+        assertThat(directory).exists().isDirectory();
+
+        final String expectedErrorMessage = "The input path [%s] must not be a directory!".formatted(directory);
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> toTest.newCompressingOutputStream(directory))
+                .withMessage(expectedErrorMessage);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link NoOpCompression#newCompressingOutputStream} enforce the API
+     * contract for the precondition of the path to the parent directory of the
+     * input path existing.
+     */
+    @Test
+    void testPreconditionParentDirectoryMustExist() {
+        final Path pathWithNonExistentParent =
+                testTempDir.resolve("path_as_dir").resolve("tmp.txt");
+
+        // assert that the parent directory does not exist
+        assertThat(pathWithNonExistentParent.getParent()).doesNotExist();
+
+        final String expectedErrorMessage = "The path to the parent directory of the input path [%s] must exist!"
+                .formatted(pathWithNonExistentParent);
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> toTest.newCompressingOutputStream(pathWithNonExistentParent))
+                .withMessage(expectedErrorMessage);
     }
 
     /**

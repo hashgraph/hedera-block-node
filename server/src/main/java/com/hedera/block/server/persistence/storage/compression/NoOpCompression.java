@@ -27,21 +27,16 @@ import java.nio.file.Path;
  * does not use any algorithm, but simply generates a stream that writes the
  * data to it`s destination, as it is received.
  */
-public class NoOpCompression implements Compression {
+public class NoOpCompression extends AbstractCompression {
     /**
-     * This method aims to create a new {@link OutputStream} instance that will
-     * write the input data to it`s destination without any compression.
-     *
-     * @param pathToFile valid {@code non-null} {@link Path} instance that will
-     * be used to create the resulting {@link OutputStream} instance
-     * @return a newly created, fully initialized and valid, {@code non-null}
-     * {@link OutputStream} instance that will write the input data to it`s
-     * destination without any compression
-     * @throws IOException if an I/O exception occurs
+     * This implementation does not compress the data. It uses no compression
+     * algorithm, but simply generates a stream that writes the data to it`s
+     * destination, as it is received.
+     * @see Compression#newCompressingOutputStream(Path) for API contract
      */
     @NonNull
     @Override
-    public OutputStream newCompressingOutputStream(@NonNull final Path pathToFile) throws IOException {
+    protected OutputStream createNewCompressingOutputStream(@NonNull final Path pathToFile) throws IOException {
         return Files.newOutputStream(pathToFile);
     }
 

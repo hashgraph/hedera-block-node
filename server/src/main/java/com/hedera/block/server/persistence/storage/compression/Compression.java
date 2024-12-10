@@ -29,14 +29,21 @@ public interface Compression {
     /**
      * This method aims to create a new {@link OutputStream} instance that will
      * run the input data through a compression algorithm (algorithm is based on
-     * specific implementation) before writing it to the input path.
+     * specific implementation) before writing it to the input path. The input
+     * path must be a file and not a directory. This method and all it`s
+     * implementations are NOT responsible for creating the path to
+     * the parent directory of the input file path provided, but WILL create the
+     * actual file if it does not exist.
      *
      * @param pathToFile valid {@code non-null} {@link Path} instance that will
      * be used to create the resulting {@link OutputStream} instance
      * @return a newly created, fully initialized and valid, {@code non-null}
      * {@link OutputStream} instance that will run the input data through a
-     * compression algorithm before writing it to the file based on implementation
+     * compression algorithm before writing it to the file based on
+     * implementation
      * @throws IOException if an I/O exception occurs
+     * @throws IllegalArgumentException if the input path is a directory or if
+     * the path to the parent directory of the input path does not exist
      */
     @NonNull
     OutputStream newCompressingOutputStream(@NonNull final Path pathToFile) throws IOException;
