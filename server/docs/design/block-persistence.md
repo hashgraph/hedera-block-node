@@ -197,7 +197,7 @@ The algorithm for resolving the path to a `Block` is defined roughly as follows:
 
 #### Configurable Parameters
 
-<!-- todo add basePath, archiveBatchSize, liveGroupSize, archiveGroupSize compressionMode when defined -->
+<!-- todo add basePath, archiveBatchSize, compressionMode, liveGroupSize, archiveGroupSize (or one group size if that should be the case) when defined -->
 - `persistence.storage.liveRootPath` - the root path where all `Block`s are
   stored.
 - `persistence.storage.archiveRootPath` - the root path where all `Block`s are
