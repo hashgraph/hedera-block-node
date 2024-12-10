@@ -44,4 +44,10 @@ public class NoOpCompression implements Compression {
     public OutputStream newCompressingOutputStream(@NonNull final Path pathToFile) throws IOException {
         return Files.newOutputStream(pathToFile);
     }
+
+    @NonNull
+    @Override
+    public String getCompressionFileExtension() {
+        return "";
+    }
 }

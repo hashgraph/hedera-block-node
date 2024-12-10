@@ -40,4 +40,16 @@ public interface Compression {
      */
     @NonNull
     OutputStream newCompressingOutputStream(@NonNull final Path pathToFile) throws IOException;
+
+    /**
+     * This method aims to return a valid, {@code non-blank} {@link String} that
+     * represents the file extension for the given specific implementation,
+     * based on the compression algorithm used.
+     *
+     * @return a valid, {@code non-blank} {@link String} that represents the
+     * file extension for the given specific implementation, based on the
+     * compression algorithm used
+     */
+    @NonNull
+    String getCompressionFileExtension();
 }

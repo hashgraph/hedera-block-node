@@ -28,8 +28,6 @@ import java.nio.file.Path;
  * Zstandard (Zstd) compression algorithm.
  */
 public class ZstdCompression implements Compression {
-    private static final String ZSTD_EXTENSION = ".zstd";
-
     /**
      * This method aims to create a new {@link OutputStream} instance that will
      * run the input data through the Zstandard (Zstd) compression algorithm
@@ -46,7 +44,14 @@ public class ZstdCompression implements Compression {
     @NonNull
     @Override
     public OutputStream newCompressingOutputStream(@NonNull final Path pathToFile) throws IOException {
-        final Path localPathToFile = pathToFile.resolveSibling(pathToFile.getFileName() + ZSTD_EXTENSION);
+        final Path localPathToFile =
+                pathToFile.resolveSibling(pathToFile.getFileName() + getCompressionFileExtension());
         return new ZstdOutputStream(Files.newOutputStream(localPathToFile));
+    }
+
+    @NonNull
+    @Override
+    public String getCompressionFileExtension() {
+        return ".zstd";
     }
 }
