@@ -21,14 +21,13 @@ import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * An implementation of {@link Compression} that compresses the data using the
  * Zstandard (Zstd) compression algorithm.
  */
-public class ZstdCompression extends AbstractCompression {
+public class ZstdCompression implements Compression {
     private final int compressionLevel;
 
     /**
@@ -59,14 +58,12 @@ public class ZstdCompression extends AbstractCompression {
      * This implementation uses the compression
      * algorithm, but simply generates a stream that writes the data to it`s
      * destination, as it is received.
-     * @see Compression#newCompressingOutputStream(Path) for API contract
+     * @see Compression#wrap(OutputStream) for API contract
      */
     @NonNull
     @Override
-    protected OutputStream createNewCompressingOutputStream(@NonNull final Path pathToFile) throws IOException {
-        final Path localPathToFile =
-                pathToFile.resolveSibling(pathToFile.getFileName() + getCompressionFileExtension());
-        return new ZstdOutputStream(Files.newOutputStream(localPathToFile), compressionLevel);
+    public OutputStream wrap(@NonNull final OutputStream streamToWrap) throws IOException {
+        return new ZstdOutputStream(Objects.requireNonNull(streamToWrap), compressionLevel);
     }
 
     @NonNull

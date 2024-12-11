@@ -18,6 +18,7 @@ package com.hedera.block.server.persistence.storage.path;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * A no-op path resolver.
@@ -42,11 +43,31 @@ public final class NoOpBlockPathResolver implements BlockPathResolver {
     /**
      * No-op resolver. Does nothing and always returns a path under '/tmp' that
      * resolves to 'blockNumber.tmp.blk'. No preconditions check also.
+     *
+     * @param blockNumber to be resolved the path for
+     * @return the resolved path to a given block by a number
      */
     @NonNull
     @Override
     public Path resolvePathToBlock(final long blockNumber) {
-        final String blockName = String.format("%d.tmp.blk", blockNumber);
+        return resolvePathToBlock(blockNumber, "");
+    }
+
+    /**
+     * No-op resolver. Does nothing and always returns a path under '/tmp' that
+     * resolves to 'blockNumber.tmp.blk' appended with compressionExtension.
+     * No preconditions check also.
+     *
+     * @param blockNumber to be resolved the path for
+     * @param compressionExtension the extension to be appended based on
+     * compression algorithm
+     * @return the resolved path to a given block by a number
+     */
+    @NonNull
+    @Override
+    public Path resolvePathToBlock(final long blockNumber, @NonNull final String compressionExtension) {
+        Objects.requireNonNull(compressionExtension);
+        final String blockName = String.format("%d.tmp.blk%s", blockNumber, compressionExtension);
         return Path.of("/tmp/hashgraph/blocknode/data/").resolve(blockName);
     }
 }

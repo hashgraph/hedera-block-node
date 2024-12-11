@@ -19,7 +19,6 @@ package com.hedera.block.server.persistence.storage.compression;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Path;
 
 /**
  * A compression abstractions that allows for the compression of bytes using
@@ -27,26 +26,16 @@ import java.nio.file.Path;
  */
 public interface Compression {
     /**
-     * This method aims to create a new {@link OutputStream} instance that will
-     * run the input data through a compression algorithm (algorithm is based on
-     * specific implementation) before writing it to the input path. The input
-     * path must be a file and not a directory. This method and all it`s
-     * implementations are NOT responsible for creating the path to
-     * the parent directory of the input file path provided, but WILL create the
-     * actual file if it does not exist.
+     * This method takes a valid, {@code non-null} {@link OutputStream} instance
+     * and wraps it with the specific compression algorithm implementation. The
+     * resulting {@link OutputStream} is then returned.
      *
-     * @param pathToFile valid {@code non-null} {@link Path} instance that will
-     * be used to create the resulting {@link OutputStream} instance
-     * @return a newly created, fully initialized and valid, {@code non-null}
-     * {@link OutputStream} instance that will run the input data through a
-     * compression algorithm before writing it to the file based on
-     * implementation
+     * @param streamToWrap a valid {@code non-null} {@link OutputStream} to wrap
+     * @return a {@code non-null} {@link OutputStream} that wraps the in
      * @throws IOException if an I/O exception occurs
-     * @throws IllegalArgumentException if the input path is a directory or if
-     * the path to the parent directory of the input path does not exist
      */
     @NonNull
-    OutputStream newCompressingOutputStream(@NonNull final Path pathToFile) throws IOException;
+    OutputStream wrap(@NonNull final OutputStream streamToWrap) throws IOException;
 
     /**
      * This method aims to return a valid, {@code non-blank} {@link String} that

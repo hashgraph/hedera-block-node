@@ -28,7 +28,7 @@ public interface BlockPathResolver {
      * This method resolves the fs {@link Path} to a Block by a given input
      * number. This method does not guarantee that the returned {@link Path}
      * exists! This method is guaranteed to return a {@code non-null}
-     * {@link Path}.
+     * {@link Path}. No compression extension is appended to the file name.
      *
      * @param blockNumber to be resolved the path for
      * @return the resolved path to the given Block by a number
@@ -36,4 +36,19 @@ public interface BlockPathResolver {
      */
     @NonNull
     Path resolvePathToBlock(final long blockNumber);
+
+    /**
+     * This method resolves the fs {@link Path} to a Block by a given input
+     * number. This method does not guarantee that the returned {@link Path}
+     * exists! This method is guaranteed to return a {@code non-null}
+     * {@link Path}. The compressionExtension is appended to the file name.
+     *
+     * @param blockNumber to be resolved the path for
+     * @param compressionExtension the extension to be appended based on
+     * compression algorithm
+     * @return the resolved path to the given Block by a number
+     * @throws IllegalArgumentException if the blockNumber IS NOT a whole number
+     */
+    @NonNull
+    Path resolvePathToBlock(final long blockNumber, @NonNull final String compressionExtension);
 }

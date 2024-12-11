@@ -17,17 +17,15 @@
 package com.hedera.block.server.persistence.storage.compression;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * An implementation of {@link Compression} that does not compress the data. It
  * does not use any algorithm, but simply generates a stream that writes the
  * data to it`s destination, as it is received.
  */
-public class NoOpCompression extends AbstractCompression {
+public class NoOpCompression implements Compression {
     /**
      * Constructor.
      */
@@ -48,12 +46,12 @@ public class NoOpCompression extends AbstractCompression {
      * This implementation does not compress the data. It uses no compression
      * algorithm, but simply generates a stream that writes the data to it`s
      * destination, as it is received.
-     * @see Compression#newCompressingOutputStream(Path) for API contract
+     * @see Compression#wrap(OutputStream) for API contract
      */
     @NonNull
     @Override
-    protected OutputStream createNewCompressingOutputStream(@NonNull final Path pathToFile) throws IOException {
-        return Files.newOutputStream(pathToFile);
+    public OutputStream wrap(@NonNull final OutputStream streamToWrap) {
+        return Objects.requireNonNull(streamToWrap);
     }
 
     @NonNull

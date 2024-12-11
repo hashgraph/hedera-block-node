@@ -53,6 +53,12 @@ public final class BlockAsLocalDirPathResolver implements BlockPathResolver {
     @NonNull
     @Override
     public Path resolvePathToBlock(final long blockNumber) {
+        return resolvePathToBlock(blockNumber, "");
+    }
+
+    @NonNull
+    @Override
+    public Path resolvePathToBlock(final long blockNumber, @NonNull final String compressionExtension) {
         Preconditions.requireWhole(blockNumber);
         return liveRootPath.resolve(String.valueOf(blockNumber));
     }

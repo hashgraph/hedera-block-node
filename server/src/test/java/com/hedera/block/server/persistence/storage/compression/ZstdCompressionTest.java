@@ -18,9 +18,9 @@ package com.hedera.block.server.persistence.storage.compression;
 
 import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_COMPRESSION_LEVEL;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import com.github.luben.zstd.ZstdOutputStream;
+import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.util.TestConfigUtil;
@@ -69,52 +69,9 @@ class ZstdCompressionTest {
 
     /**
      * This test aims to verify that the
-     * {@link NoOpCompression#newCompressingOutputStream} enforce the API
-     * contract for the precondition of the input path not being a directory.
-     */
-    @Test
-    @SuppressWarnings("resource")
-    void testPreconditionDirectoryNotAllowed() throws IOException {
-        final Path directory = testTempDir.resolve("path_as_dir");
-        Files.createDirectories(directory);
-
-        // assert that the target directory exists
-        assertThat(directory).exists().isDirectory();
-
-        final String expectedErrorMessage = "The input path [%s] must not be a directory!".formatted(directory);
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> toTest.newCompressingOutputStream(directory))
-                .withMessage(expectedErrorMessage);
-    }
-
-    /**
-     * This test aims to verify that the
-     * {@link NoOpCompression#newCompressingOutputStream} enforce the API
-     * contract for the precondition of the path to the parent directory of the
-     * input path existing.
-     */
-    @Test
-    @SuppressWarnings("resource")
-    void testPreconditionParentDirectoryMustExist() {
-        final Path pathWithNonExistentParent =
-                testTempDir.resolve("path_as_dir").resolve("tmp.txt");
-
-        // assert that the parent directory does not exist
-        assertThat(pathWithNonExistentParent.getParent()).doesNotExist();
-
-        final String expectedErrorMessage = "The path to the parent directory of the input path [%s] must exist!"
-                .formatted(pathWithNonExistentParent);
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> toTest.newCompressingOutputStream(pathWithNonExistentParent))
-                .withMessage(expectedErrorMessage);
-    }
-
-    /**
-     * This test aims to verify that the
-     * {@link ZstdCompression#newCompressingOutputStream(Path)} creates a new
-     * {@link OutputStream} instance that will run the input data through the
-     * Zstandard (Zstd) compression algorithm before writing it to it`s
-     * destination.
+     * {@link NoOpCompression#wrap(OutputStream)} correctly wraps a valid
+     * provided {@link OutputStream} and utilizes the Zstandard compression
+     * algorithm when writing the data to it`s destination.
      *
      * @param testData parameterized, test data
      * @throws IOException if an I/O exception occurs
@@ -122,17 +79,15 @@ class ZstdCompressionTest {
     @ParameterizedTest
     @MethodSource("testData")
     void testSuccessfulCompression(final String testData) throws IOException {
-        final Path rawTargetPath = testTempDir.resolve("successfulCompression.txt");
-        // assert that the raw target file does not exist
-        assertThat(rawTargetPath).doesNotExist();
+        final Path actual = testTempDir.resolve(FileUtilities.appendExtension(
+                Path.of("successfulCompression.txt"), toTest.getCompressionFileExtension()));
+        Files.createFile(actual);
 
-        final Path actual =
-                rawTargetPath.resolveSibling(rawTargetPath.getFileName() + toTest.getCompressionFileExtension());
-        // assert that the target file does not exist yet
-        assertThat(actual).doesNotExist();
+        // assert that the raw target file exists
+        assertThat(actual).exists();
 
         final byte[] byteArrayTestData = testData.getBytes(StandardCharsets.UTF_8);
-        try (final OutputStream out = toTest.newCompressingOutputStream(rawTargetPath)) {
+        try (final OutputStream out = toTest.wrap(Files.newOutputStream(actual))) {
             out.write(byteArrayTestData);
         }
         assertThat(actual)
@@ -141,11 +96,11 @@ class ZstdCompressionTest {
                 .isRegularFile()
                 .isNotEmptyFile()
                 .hasSameBinaryContentAs(actualZstdCompression(byteArrayTestData));
-        assertThat(rawTargetPath).doesNotExist();
     }
 
     private Path actualZstdCompression(final byte[] byteArrayTestData) throws IOException {
-        final Path tempFile = testTempDir.resolve("tempComparisonFile.txt.zstd");
+        final Path tempFile = testTempDir.resolve(
+                FileUtilities.appendExtension(Path.of("tempComparisonFile.txt"), toTest.getCompressionFileExtension()));
         try (final ZstdOutputStream out =
                 new ZstdOutputStream(Files.newOutputStream(tempFile), testConfig.compressionLevel())) {
             out.write(byteArrayTestData);

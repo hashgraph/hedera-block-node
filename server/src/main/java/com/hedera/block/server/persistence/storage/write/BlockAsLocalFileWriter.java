@@ -18,6 +18,7 @@ package com.hedera.block.server.persistence.storage.write;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 
+import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
@@ -108,15 +109,11 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
     }
 
     private List<BlockItemUnparsed> writeToFs() throws IOException {
-        final Path blockToWritePathResolved = blockPathResolver.resolvePathToBlock(currentBlockNumber);
-        if (Files.exists(blockToWritePathResolved)) {
-            // todo the file must not exist, the stream below must create the file itself since it might add a
-            // file extension, here is a good idea to implement the proposal of resolver.findBlock and only if not
-            // found then we proceed, else throw
-            throw new IOException("Block file already exists: " + blockToWritePathResolved);
-        }
-        Files.createDirectories(blockToWritePathResolved.getParent());
-        try (final OutputStream out = compression.newCompressingOutputStream(blockToWritePathResolved)) {
+        final Path rawBlockPath = blockPathResolver.resolvePathToBlock(currentBlockNumber);
+        final Path blockToWritePathResolved =
+                FileUtilities.appendExtension(rawBlockPath, compression.getCompressionFileExtension());
+        FileUtilities.createFile(blockToWritePathResolved);
+        try (final OutputStream out = compression.wrap(Files.newOutputStream(blockToWritePathResolved))) {
             final BlockUnparsed blockToWrite =
                     BlockUnparsed.newBuilder().blockItems(currentBlockItems).build();
             BlockUnparsed.PROTOBUF.toBytes(blockToWrite).writeTo(out);

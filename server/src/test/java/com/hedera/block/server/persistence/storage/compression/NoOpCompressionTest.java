@@ -17,7 +17,6 @@
 package com.hedera.block.server.persistence.storage.compression;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -58,51 +57,9 @@ class NoOpCompressionTest {
 
     /**
      * This test aims to verify that the
-     * {@link NoOpCompression#newCompressingOutputStream} enforce the API
-     * contract for the precondition of the input path not being a directory.
-     */
-    @Test
-    @SuppressWarnings("resource")
-    void testPreconditionDirectoryNotAllowed() throws IOException {
-        final Path directory = testTempDir.resolve("path_as_dir");
-        Files.createDirectories(directory);
-
-        // assert that the target directory exists
-        assertThat(directory).exists().isDirectory();
-
-        final String expectedErrorMessage = "The input path [%s] must not be a directory!".formatted(directory);
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> toTest.newCompressingOutputStream(directory))
-                .withMessage(expectedErrorMessage);
-    }
-
-    /**
-     * This test aims to verify that the
-     * {@link NoOpCompression#newCompressingOutputStream} enforce the API
-     * contract for the precondition of the path to the parent directory of the
-     * input path existing.
-     */
-    @Test
-    @SuppressWarnings("resource")
-    void testPreconditionParentDirectoryMustExist() {
-        final Path pathWithNonExistentParent =
-                testTempDir.resolve("path_as_dir").resolve("tmp.txt");
-
-        // assert that the parent directory does not exist
-        assertThat(pathWithNonExistentParent.getParent()).doesNotExist();
-
-        final String expectedErrorMessage = "The path to the parent directory of the input path [%s] must exist!"
-                .formatted(pathWithNonExistentParent);
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> toTest.newCompressingOutputStream(pathWithNonExistentParent))
-                .withMessage(expectedErrorMessage);
-    }
-
-    /**
-     * This test aims to verify that the
-     * {@link NoOpCompression#newCompressingOutputStream(Path)} creates a new
-     * {@link OutputStream} instance that writes the input data to it`s
-     * destination as it is received, without any compression.
+     * {@link NoOpCompression#wrap(OutputStream)} correctly wraps a valid
+     * provided {@link OutputStream} and writes the test data to it`s
+     * destination as it is provided, no compression is done.
      *
      * @param testData parameterized, test data
      * @throws IOException if an I/O exception occurs
@@ -111,12 +68,13 @@ class NoOpCompressionTest {
     @MethodSource("testData")
     void testSuccessfulCompression(final String testData) throws IOException {
         final Path actual = testTempDir.resolve("successfulCompression.txt");
+        Files.createFile(actual);
 
-        // assert that the target file does not exist yet
-        assertThat(actual).doesNotExist();
+        // assert that the target file exists
+        assertThat(actual).exists();
 
         final byte[] byteArrayTestData = testData.getBytes(StandardCharsets.UTF_8);
-        try (final OutputStream out = toTest.newCompressingOutputStream(actual)) {
+        try (final OutputStream out = toTest.wrap(Files.newOutputStream(actual))) {
             out.write(byteArrayTestData);
         }
         assertThat(actual)
