@@ -18,8 +18,10 @@ package com.hedera.block.server.persistence.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.from;
 
+import com.github.luben.zstd.Zstd;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
 import java.io.IOException;
@@ -43,6 +45,7 @@ class PersistenceStorageConfigTest {
             Path.of("hashgraph/").toAbsolutePath();
     private static final Path PERSISTENCE_STORAGE_ROOT_ABSOLUTE_PATH =
             HASHGRAPH_ROOT_ABSOLUTE_PATH.resolve("blocknode/data/");
+    private static final int DEFAULT_COMPRESSION_LEVEL = 6;
 
     @AfterEach
     void tearDown() {
@@ -71,7 +74,8 @@ class PersistenceStorageConfigTest {
     @ParameterizedTest
     @MethodSource("storageTypes")
     void testPersistenceStorageConfigStorageTypes(final StorageType storageType) {
-        final PersistenceStorageConfig actual = new PersistenceStorageConfig("", "", storageType, CompressionType.NONE);
+        final PersistenceStorageConfig actual =
+                new PersistenceStorageConfig("", "", storageType, CompressionType.NONE, DEFAULT_COMPRESSION_LEVEL);
         assertThat(actual).returns(storageType, from(PersistenceStorageConfig::type));
     }
 
@@ -93,7 +97,11 @@ class PersistenceStorageConfigTest {
             final String archiveRootPathToTest,
             final String expectedArchiveRootPathToTest) {
         final PersistenceStorageConfig actual = new PersistenceStorageConfig(
-                liveRootPathToTest, archiveRootPathToTest, StorageType.BLOCK_AS_LOCAL_FILE, CompressionType.NONE);
+                liveRootPathToTest,
+                archiveRootPathToTest,
+                StorageType.BLOCK_AS_LOCAL_FILE,
+                CompressionType.NONE,
+                DEFAULT_COMPRESSION_LEVEL);
         assertThat(actual)
                 .returns(expectedLiveRootPathToTest, from(PersistenceStorageConfig::liveRootPath))
                 .returns(expectedArchiveRootPathToTest, from(PersistenceStorageConfig::archiveRootPath));
@@ -118,7 +126,37 @@ class PersistenceStorageConfigTest {
                         invalidLiveRootPathToTest,
                         invalidArchiveRootPathToTest,
                         StorageType.BLOCK_AS_LOCAL_FILE,
-                        CompressionType.NONE));
+                        CompressionType.NONE,
+                        DEFAULT_COMPRESSION_LEVEL));
+    }
+
+    /**
+     * This test aims to verify that the {@link PersistenceStorageConfig} class
+     * correctly returns the compression level that was set in the constructor.
+     *
+     * @param compressionLevel parameterized, the compression level to test
+     */
+    @ParameterizedTest
+    @MethodSource("validCompressionLevels")
+    void testPersistenceStorageConfigValidCompressionLevel(final int compressionLevel) {
+        final PersistenceStorageConfig actual = new PersistenceStorageConfig(
+                "", "", StorageType.BLOCK_AS_LOCAL_FILE, CompressionType.ZSTD, compressionLevel);
+        assertThat(actual).returns(compressionLevel, from(PersistenceStorageConfig::compressionLevel));
+    }
+
+    /**
+     * This test aims to verify that the {@link PersistenceStorageConfig} class
+     * correctly throws an {@link IllegalArgumentException} when the compression
+     * level is invalid.
+     *
+     * @param compressionLevel parameterized, the compression level to test
+     */
+    @ParameterizedTest
+    @MethodSource("invalidCompressionLevels")
+    void testPersistenceStorageConfigInvalidCompressionLevel(final int compressionLevel) {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new PersistenceStorageConfig(
+                        "", "", StorageType.BLOCK_AS_LOCAL_FILE, CompressionType.ZSTD, compressionLevel));
     }
 
     /**
@@ -226,5 +264,18 @@ class PersistenceStorageConfigTest {
         final String invalidPath = "/invalid_path/:invalid_directory";
         return Stream.of(
                 Arguments.of("", invalidPath), Arguments.of(invalidPath, ""), Arguments.of(invalidPath, invalidPath));
+    }
+
+    private static Stream<Arguments> validCompressionLevels() {
+        return Stream.of(
+                Arguments.of(Zstd.minCompressionLevel()),
+                Arguments.of(Zstd.minCompressionLevel() + 1),
+                Arguments.of(Zstd.maxCompressionLevel()),
+                Arguments.of(Zstd.maxCompressionLevel() - 1),
+                Arguments.of(Zstd.defaultCompressionLevel()));
+    }
+
+    private static Stream<Arguments> invalidCompressionLevels() {
+        return Stream.of(Arguments.of(Zstd.minCompressionLevel() - 1), Arguments.of(Zstd.maxCompressionLevel() + 1));
     }
 }
