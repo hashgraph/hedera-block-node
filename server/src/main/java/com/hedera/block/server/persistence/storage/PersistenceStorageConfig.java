@@ -37,7 +37,7 @@ import java.util.Objects;
  * @param liveRootPath provides the root path for saving blocks live
  * @param archiveRootPath provides the root path for archived blocks
  * @param type storage type
- * @param compressionType compression type to use for the storage
+ * @param compression compression type to use for the storage
  * Non-PRODUCTION values should only be used for troubleshooting and development purposes.
  */
 @ConfigData("persistence.storage")
@@ -47,7 +47,7 @@ public record PersistenceStorageConfig(
         // @todo(#371) - the default life/archive root path must be absolute starting from /opt
         @ConfigProperty(defaultValue = "") String archiveRootPath,
         @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type,
-        @ConfigProperty(defaultValue = "ZSTD") CompressionType compressionType,
+        @ConfigProperty(defaultValue = "ZSTD") CompressionType compression,
         // todo for the default compression level, should we use the Zstd#defaultCompressionLevel()
         //  (should be 3 based on some docs) or should we go with 6 as proposed in PR review?
         @ConfigProperty(defaultValue = "6") int compressionLevel) {
@@ -63,7 +63,7 @@ public record PersistenceStorageConfig(
      */
     public PersistenceStorageConfig {
         Objects.requireNonNull(type);
-        Objects.requireNonNull(compressionType);
+        Objects.requireNonNull(compression);
         // todo should we use the Zstd#minCompressionLevel() and Zstd#maxCompressionLevel() or do we?
         //  have a range that is defined by us internally that should be allowed, as proposed in one
         //  PR comment, 0 - 9 with 6 default?

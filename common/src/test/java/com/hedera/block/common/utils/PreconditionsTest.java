@@ -268,7 +268,7 @@ class PreconditionsTest {
 
     /**
      * This test aims to verify that the
-     * {@link Preconditions#requireInRange(long, long, long)} will return the
+     * {@link Preconditions#requireInRange(int, int, int)} will return the
      * input 'toTest' parameter if the range check passes. Test includes
      * overloads.
      *
@@ -278,21 +278,21 @@ class PreconditionsTest {
      */
     @ParameterizedTest
     @MethodSource("validRequireInRangeValues")
-    void testRequireInRangePass(final long toTest, final long lowerBoundary, final long upperBoundary) {
-        final Consumer<Long> asserts = actual ->
+    void testRequireInRangePass(final int toTest, final int lowerBoundary, final int upperBoundary) {
+        final Consumer<Integer> asserts = actual ->
                 assertThat(actual).isBetween(lowerBoundary, upperBoundary).isEqualTo(toTest);
 
-        final long actual = Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary);
+        final int actual = Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary);
         assertThat(actual).satisfies(asserts);
 
-        final long actualOverload =
+        final int actualOverload =
                 Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary, "test error message");
         assertThat(actualOverload).satisfies(asserts);
     }
 
     /**
      * This test aims to verify that the
-     * {@link Preconditions#requireInRange(long, long, long)} will throw an
+     * {@link Preconditions#requireInRange(int, int, int)} will throw an
      * {@link IllegalArgumentException} if the range check fails. Test includes
      * overloads.
      *
@@ -302,7 +302,7 @@ class PreconditionsTest {
      */
     @ParameterizedTest
     @MethodSource("invalidRequireInRangeValues")
-    void testRequireInRangeFail(final long toTest, final long lowerBoundary, final long upperBoundary) {
+    void testRequireInRangeFail(final int toTest, final int lowerBoundary, final int upperBoundary) {
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary));
 

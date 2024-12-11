@@ -163,7 +163,7 @@ public interface PersistenceInjectionModule {
     @Provides
     @Singleton
     static Compression providesCompression(@NonNull final PersistenceStorageConfig config) {
-        final CompressionType compressionType = config.compressionType();
+        final CompressionType compressionType = config.compression();
         return switch (compressionType) {
             case ZSTD -> new ZstdCompression();
             case NONE -> new NoOpCompression();
