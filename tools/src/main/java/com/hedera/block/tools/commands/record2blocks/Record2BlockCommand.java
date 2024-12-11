@@ -112,8 +112,7 @@ public class Record2BlockCommand implements Runnable {
             }
             // map the block_times.bin file
             final BlockTimes blockTimes = new BlockTimes(blockTimesFile);
-            // Start at OA in block time which is 0
-            final long startBlockTime = 0;
+            // iterate over the blocks
             Instant currentHour = null;
             List<ChainFile> currentHoursFiles = null;
             for (int blockNumber = startBlock; blockNumber <= endBlock; blockNumber++) {
