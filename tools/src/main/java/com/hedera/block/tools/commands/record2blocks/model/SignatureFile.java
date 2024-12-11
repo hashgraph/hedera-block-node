@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hedera.block.tools.commands.record2blocks.model;
 
 import java.util.HexFormat;
@@ -47,10 +63,7 @@ import java.util.HexFormat;
  * @param fileHash SHA384 hash of corresponding *.rcd file
  * @param signature Signature bytes or RSA signature of the file hash, signed by the node's private key
  */
-public record SignatureFile(
-        byte[] fileHash,
-        byte[] signature
-) {
+public record SignatureFile(byte[] fileHash, byte[] signature) {
     public static final byte FILE_HASH_MARKER = 4;
     public static final byte SIGNATURE_MARKER = 3;
 
@@ -62,10 +75,9 @@ public record SignatureFile(
     @Override
     public String toString() {
         final HexFormat hexFormat = HexFormat.of();
-        return "SignatureFile[" +
-               "fileHash=" + hexFormat.formatHex(fileHash) +
-               ", signature=" + hexFormat.formatHex(signature) +
-               ']';
+        return "SignatureFile[" + "fileHash="
+                + hexFormat.formatHex(fileHash) + ", signature="
+                + hexFormat.formatHex(signature) + ']';
     }
 
     /**
@@ -85,8 +97,10 @@ public record SignatureFile(
         if (bytes[index++] != SIGNATURE_MARKER) {
             throw new IllegalArgumentException("Invalid signature marker");
         }
-        final int signatureLength = (bytes[index++] & 0xFF) << 24 | (bytes[index++] & 0xFF) << 16 |
-                              (bytes[index++] & 0xFF) << 8 | (bytes[index++] & 0xFF);
+        final int signatureLength = (bytes[index++] & 0xFF) << 24
+                | (bytes[index++] & 0xFF) << 16
+                | (bytes[index++] & 0xFF) << 8
+                | (bytes[index++] & 0xFF);
         final byte[] signature = new byte[signatureLength];
         System.arraycopy(bytes, index, signature, 0, signature.length);
         return new SignatureFile(fileHash, signature);

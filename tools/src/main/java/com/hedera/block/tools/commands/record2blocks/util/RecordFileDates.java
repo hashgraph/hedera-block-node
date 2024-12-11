@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hedera.block.tools.commands.record2blocks.util;
 
 import java.time.Duration;
@@ -14,6 +30,7 @@ import java.time.Instant;
  *     in the Hedera blockchain history.
  * </p>
  */
+@SuppressWarnings("unused")
 public final class RecordFileDates {
     /** the record file time of the first block after OA */
     public static final String FIRST_BLOCK_TIME = "2019-09-13T21_53_51.396440Z";
@@ -31,8 +48,8 @@ public final class RecordFileDates {
      * @return the record file time as an Instant
      */
     public static Instant extractRecordFileTime(String recordFileName) {
-        return Instant.parse(recordFileName.substring(0, recordFileName.indexOf(".rcd"))
-                .replace('_', ':'));
+        return Instant.parse(
+                recordFileName.substring(0, recordFileName.indexOf(".rcd")).replace('_', ':'));
     }
 
     /**

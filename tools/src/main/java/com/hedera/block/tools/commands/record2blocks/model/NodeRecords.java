@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hedera.block.tools.commands.record2blocks.model;
 
 import com.google.api.gax.paging.Page;
@@ -21,6 +37,7 @@ public class NodeRecords {
     private final Path nextPageFile;
     /** Cached listing files of all paths in bucket. Avoid extra list costs */
     private final Path listingFile;
+
     private String nextPageToken;
 
     public NodeRecords(int nodeAccountNumber, Bucket bucket, Path dataDir) {
@@ -64,9 +81,9 @@ public class NodeRecords {
      * entries.
      */
     public void readNextPage() {
-        final Page<Blob> page = nextPageToken == null ?
-                bucket.list(BlobListOption.prefix(nodeRecordsBucketPath)):
-                bucket.list(BlobListOption.prefix(nodeRecordsBucketPath), BlobListOption.pageToken(nextPageToken));
+        final Page<Blob> page = nextPageToken == null
+                ? bucket.list(BlobListOption.prefix(nodeRecordsBucketPath))
+                : bucket.list(BlobListOption.prefix(nodeRecordsBucketPath), BlobListOption.pageToken(nextPageToken));
         // update nextPageToken, local and in file
         nextPageToken = page.getNextPageToken();
         try {
@@ -75,7 +92,7 @@ public class NodeRecords {
             throw new RuntimeException(e);
         }
         // list page and save to listing file and process
-        try (FileWriter listingFileWrite = new FileWriter(listingFile.toFile(),true)) {
+        try (FileWriter listingFileWrite = new FileWriter(listingFile.toFile(), true)) {
             for (Blob blob : page.getValues()) {
                 String filePath = blob.getName();
                 long fileSize = blob.getSize();
@@ -95,6 +112,6 @@ public class NodeRecords {
     }
 
     private void handleNewBucketFile(String filePath, long fileSize, String fileMD5) {
-        System.out.println("filePath = " + filePath+", fileSize = " + fileSize+", fileMD5 = " + fileMD5);
+        System.out.println("filePath = " + filePath + ", fileSize = " + fileSize + ", fileMD5 = " + fileMD5);
     }
 }

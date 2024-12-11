@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hedera.block.tools.commands.record2blocks.gcp;
 
 import com.google.cloud.storage.Bucket;
@@ -35,8 +51,8 @@ public class MainNetBucket {
     /** The mainnet bucket name*/
     private static final String HEDERA_MAINNET_STREAMS_BUCKET = "hedera-mainnet-streams";
     /** The mainnet bucket GCP API instance */
-    private static final Bucket STREAMS_BUCKET = StorageOptions.getDefaultInstance().getService()
-            .get(HEDERA_MAINNET_STREAMS_BUCKET);
+    private static final Bucket STREAMS_BUCKET =
+            StorageOptions.getDefaultInstance().getService().get(HEDERA_MAINNET_STREAMS_BUCKET);
 
     /**
      * The cache enabled switch. When caching is enabled all fetched data is saved on disk and reused between runs. This
@@ -46,7 +62,7 @@ public class MainNetBucket {
     private final boolean cacheEnabled;
 
     /** The cache directory, where we store all downloaded content for reuse if CACHE_ENABLED is true. */
-    private final Path cacheDir;// = DATA_DIR.resolve("gcp-cache");
+    private final Path cacheDir; // = DATA_DIR.resolve("gcp-cache");
 
     /** The minimum node account id in the network. */
     private final int minNodeAccountId;
@@ -134,10 +150,10 @@ public class MainNetBucket {
     private List<ChainFile> listWithFilePrefix(String filePrefix) {
         try {
             // read from cache if it already exists in cache
-            final Path listCacheFilePath = cacheDir.resolve("list-"+filePrefix+".bin.gz");
+            final Path listCacheFilePath = cacheDir.resolve("list-" + filePrefix + ".bin.gz");
             if (cacheEnabled && Files.exists(listCacheFilePath)) {
-                try(ObjectInputStream ois = new ObjectInputStream(
-                        new GZIPInputStream(Files.newInputStream(listCacheFilePath)))) {
+                try (ObjectInputStream ois =
+                        new ObjectInputStream(new GZIPInputStream(Files.newInputStream(listCacheFilePath)))) {
                     final int fileCount = ois.readInt();
                     final List<ChainFile> chainFiles = new ArrayList<>(fileCount);
                     for (int i = 0; i < fileCount; i++) {
@@ -149,28 +165,33 @@ public class MainNetBucket {
             // create a list of ChainFiles
             List<ChainFile> chainFiles = IntStream.range(minNodeAccountId, maxNodeAccountId + 1)
                     .parallel()
-                    .mapToObj(nodeAccountId ->
-                            Stream.concat(
-                                            STREAMS_BUCKET.list(
-                                                    BlobListOption.prefix("recordstreams/record0.0."+nodeAccountId+"/"+filePrefix),
-                                                    REQUIRED_FIELDS
-                                            ).streamAll(),
-                                            STREAMS_BUCKET.list(
-                                                    BlobListOption.prefix("recordstreams/record0.0."+nodeAccountId+"/sidecar/"+filePrefix),
-                                                    REQUIRED_FIELDS
-                                            ).streamAll()
-                                    )
-                                    .map(blob -> new ChainFile(nodeAccountId, blob.getName(),
-                                            blob.getSize().intValue(), blob.getMd5()))
-                    ).flatMap(Function.identity())
+                    .mapToObj(nodeAccountId -> Stream.concat(
+                                    STREAMS_BUCKET
+                                            .list(
+                                                    BlobListOption.prefix("recordstreams/record0.0." + nodeAccountId
+                                                            + "/" + filePrefix),
+                                                    REQUIRED_FIELDS)
+                                            .streamAll(),
+                                    STREAMS_BUCKET
+                                            .list(
+                                                    BlobListOption.prefix("recordstreams/record0.0." + nodeAccountId
+                                                            + "/sidecar/" + filePrefix),
+                                                    REQUIRED_FIELDS)
+                                            .streamAll())
+                            .map(blob -> new ChainFile(
+                                    nodeAccountId,
+                                    blob.getName(),
+                                    blob.getSize().intValue(),
+                                    blob.getMd5())))
+                    .flatMap(Function.identity())
                     .toList();
             // save the list to cache
             if (cacheEnabled) {
                 Files.createDirectories(listCacheFilePath.getParent());
-                try(ObjectOutputStream oos = new ObjectOutputStream(
-                        new GZIPOutputStream(Files.newOutputStream(listCacheFilePath)))) {
+                try (ObjectOutputStream oos =
+                        new ObjectOutputStream(new GZIPOutputStream(Files.newOutputStream(listCacheFilePath)))) {
                     oos.writeInt(chainFiles.size());
-                    for(ChainFile chainFile : chainFiles) {
+                    for (ChainFile chainFile : chainFiles) {
                         oos.writeObject(chainFile);
                     }
                 }

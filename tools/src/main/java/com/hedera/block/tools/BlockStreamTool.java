@@ -32,8 +32,13 @@ import picocli.CommandLine.Command;
         name = "subcommands",
         mixinStandardHelpOptions = true,
         version = "BlockStreamTool 0.1",
-        subcommands = {ConvertToJson.class, BlockInfo.class, Record2BlockCommand.class,
-                ExtractBlockTimes.class, ValidateBlockTimes.class})
+        subcommands = {
+            ConvertToJson.class,
+            BlockInfo.class,
+            Record2BlockCommand.class,
+            ExtractBlockTimes.class,
+            ValidateBlockTimes.class
+        })
 public final class BlockStreamTool {
 
     /**
