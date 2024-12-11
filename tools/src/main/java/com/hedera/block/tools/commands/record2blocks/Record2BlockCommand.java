@@ -38,6 +38,14 @@ import picocli.CommandLine.Option;
 @Command(name = "record2block", description = "Converts a record stream files into blocks")
 public class Record2BlockCommand implements Runnable {
 
+    @Option(names = {"-s", "--start-block"},
+            description = "The block to start converting from")
+    private int startBlock = 0;
+
+    @Option(names = {"-e", "--end-block"},
+            description = "The block to end converting at")
+    private int endBlock = 3001;
+
     @Option(names = {"-j", "--json"},
             description = "also output blocks as json")
     private boolean jsonEnabled = false;
@@ -94,13 +102,21 @@ public class Record2BlockCommand implements Runnable {
             if(jsonEnabled) {
                 Files.createDirectories(blocksJsonDir);
             }
+            // check start block is less than end block
+            if (startBlock > endBlock) {
+                throw new IllegalArgumentException("Start block must be less than end block");
+            }
+            // check blockTimesFile exists
+            if (!Files.exists(blockTimesFile)) {
+                throw new IllegalArgumentException("Block times file does not exist: " + blockTimesFile);
+            }
             // map the block_times.bin file
             final BlockTimes blockTimes = new BlockTimes(blockTimesFile);
             // Start at OA in block time which is 0
             final long startBlockTime = 0;
             Instant currentHour = null;
             List<ChainFile> currentHoursFiles = null;
-            for (int blockNumber = 0; blockNumber < 3002; blockNumber++) {
+            for (int blockNumber = startBlock; blockNumber <= endBlock; blockNumber++) {
                 // get the time of the record file for this block, from converted mirror node data
                 final long blockTime = blockTimes.getBlockTime(blockNumber);
                 final Instant blockTimeInstant = blockTimeLongToInstant(blockTime);
