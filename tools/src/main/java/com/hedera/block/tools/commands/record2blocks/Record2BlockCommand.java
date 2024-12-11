@@ -35,7 +35,7 @@ import picocli.CommandLine.Option;
  * Command line command that converts a record stream to blocks
  */
 @SuppressWarnings("FieldCanBeLocal")
-@Command(name = "json", description = "Converts a record stream files into blocks")
+@Command(name = "record2block", description = "Converts a record stream files into blocks")
 public class Record2BlockCommand implements Runnable {
 
     @Option(names = {"-j", "--json"},
@@ -57,6 +57,11 @@ public class Record2BlockCommand implements Runnable {
     @Option(names = {"-d","--data-dir"},
             description = "the data directory for output and temporary files")
     private Path dataDir = Path.of("data");
+
+    /** The path to the block times file. */
+    @Option(names = {"--block-times"},
+            description = "Path to the block times \".bin\" file.")
+    private Path blockTimesFile = Path.of("data/block_times.bin");
 
     /**
      * Path to the output blocks directory
@@ -82,14 +87,15 @@ public class Record2BlockCommand implements Runnable {
             blocksDir = dataDir.resolve("blocks");
             blocksJsonDir = dataDir.resolve("blocks-json");
             // enable cache, disable if doing large batches
-            MainNetBucket.CACHE_ENABLED.set(cacheEnabled);
+            final MainNetBucket mainNetBucket = new MainNetBucket(cacheEnabled, dataDir.resolve("gcp-cache"),
+                    minNodeAccountId, maxNodeAccountId);
             // create blocks dir
             Files.createDirectories(blocksDir);
             if(jsonEnabled) {
                 Files.createDirectories(blocksJsonDir);
             }
             // map the block_times.bin file
-            final BlockTimes blockTimes = new BlockTimes();
+            final BlockTimes blockTimes = new BlockTimes(blockTimesFile);
             // Start at OA in block time which is 0
             final long startBlockTime = 0;
             Instant currentHour = null;
@@ -106,11 +112,11 @@ public class Record2BlockCommand implements Runnable {
                 if (currentHour == null || !currentHour.equals(blockTimeHour)) {
                     currentHour = blockTimeHour;
                     System.out.println("    Listing files from GCP ...");
-                    currentHoursFiles = MainNetBucket.listHour(blockTime);
+                    currentHoursFiles = mainNetBucket.listHour(blockTime);
                     System.out.println("    Listed "+currentHoursFiles.size()+" files from GCP");
                 }
                 // create block info
-                BlockInfo blockInfo = new BlockInfo(blockNumber, blockTime);
+                BlockInfo blockInfo = new BlockInfo(blockNumber, blockTime, minNodeAccountId, maxNodeAccountId);
                 currentHoursFiles.stream()
                         .filter(cf -> cf.blockTime() == blockTime)
                         .forEach(blockInfo::addChainFile);
@@ -119,12 +125,12 @@ public class Record2BlockCommand implements Runnable {
                 System.out.println("        blockInfo = " + blockInfo);
                 // now we need to download the most common record file
                 // we will use the GCP bucket to download the file
-                byte[] recordFileBytes = blockInfo.getMostCommonRecordFileBytes();
+                byte[] recordFileBytes = blockInfo.getMostCommonRecordFileBytes(mainNetBucket);
 
                 // download and parse all signature files
                 SignatureFile[] signatureFileBytes = blockInfo.signatureFiles().stream()
                         .parallel()
-                        .map(ChainFile::download)
+                        .map(chainFile -> chainFile.download(mainNetBucket))
                         .map(SignatureFile::parse)
                         .toArray(SignatureFile[]::new);
                 for(SignatureFile signatureFile : signatureFileBytes) {
@@ -133,7 +139,7 @@ public class Record2BlockCommand implements Runnable {
 
                 // download most common sidecar file
                 List<Bytes> sideCars = new ArrayList<>();
-                byte[] sidecarFileBytes = blockInfo.getMostCommonSidecarFileBytes();
+                byte[] sidecarFileBytes = blockInfo.getMostCommonSidecarFileBytes(mainNetBucket);
 
                 // build new Block File
                 final RecordFileItem recordFileItem = new RecordFileItem(

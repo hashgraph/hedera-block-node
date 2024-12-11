@@ -20,8 +20,8 @@ public record ChainFile(
                 size, md5);
     }
 
-    public byte[] download() {
-        return MainNetBucket.download(path);
+    public byte[] download(MainNetBucket mainNetBucket) {
+        return mainNetBucket.download(path);
     }
 
     enum Kind {
