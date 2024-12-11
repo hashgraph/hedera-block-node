@@ -150,9 +150,7 @@ class BlockAsLocalFileReaderTest {
     @MethodSource("validBlockNumbers")
     void testEmptyOptWhenNoBLockFileFound(final long blockNumber) throws IOException, ParseException {
         final Optional<BlockUnparsed> actual = toTest.read(blockNumber);
-        assertThat(actual)
-            .isNotNull()
-            .isEmpty();
+        assertThat(actual).isNotNull().isEmpty();
     }
 
     /**
