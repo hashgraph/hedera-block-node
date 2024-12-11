@@ -1,9 +1,30 @@
+/*
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hedera.block.tools.commands.record2blocks;
 
 import static com.hedera.block.tools.commands.record2blocks.util.BlockWriter.BLOCK_NUMBER_FORMAT;
 import static com.hedera.block.tools.commands.record2blocks.util.BlockWriter.writeBlock;
 import static com.hedera.block.tools.commands.record2blocks.util.RecordFileDates.blockTimeLongToInstant;
 
+import com.hedera.block.tools.commands.record2blocks.gcp.MainNetBucket;
+import com.hedera.block.tools.commands.record2blocks.mirrornode.BlockTimes;
+import com.hedera.block.tools.commands.record2blocks.model.BlockInfo;
+import com.hedera.block.tools.commands.record2blocks.model.ChainFile;
+import com.hedera.block.tools.commands.record2blocks.model.SignatureFile;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.BlockItem.ItemOneOfType;
@@ -13,11 +34,6 @@ import com.hedera.hapi.node.base.Timestamp;
 import com.hedera.pbj.runtime.OneOf;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.hedera.pbj.runtime.io.stream.WritableStreamingData;
-import com.hedera.block.tools.commands.record2blocks.gcp.MainNetBucket;
-import com.hedera.block.tools.commands.record2blocks.mirrornode.BlockTimes;
-import com.hedera.block.tools.commands.record2blocks.model.BlockInfo;
-import com.hedera.block.tools.commands.record2blocks.model.ChainFile;
-import com.hedera.block.tools.commands.record2blocks.model.SignatureFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,36 +54,44 @@ import picocli.CommandLine.Option;
 @Command(name = "record2block", description = "Converts a record stream files into blocks")
 public class Record2BlockCommand implements Runnable {
 
-    @Option(names = {"-s", "--start-block"},
+    @Option(
+            names = {"-s", "--start-block"},
             description = "The block to start converting from")
     private int startBlock = 0;
 
-    @Option(names = {"-e", "--end-block"},
+    @Option(
+            names = {"-e", "--end-block"},
             description = "The block to end converting at")
     private int endBlock = 3001;
 
-    @Option(names = {"-j", "--json"},
+    @Option(
+            names = {"-j", "--json"},
             description = "also output blocks as json")
     private boolean jsonEnabled = false;
 
-    @Option(names = {"-c", "--cache-enabled"},
+    @Option(
+            names = {"-c", "--cache-enabled"},
             description = "Use local cache for downloaded content")
     private boolean cacheEnabled = false;
 
-    @Option(names = {"--min-node-account-id"},
+    @Option(
+            names = {"--min-node-account-id"},
             description = "the account id of the first node in the network")
     private int minNodeAccountId = 3;
 
-    @Option(names = {"--max-node-account-id"},
+    @Option(
+            names = {"--max-node-account-id"},
             description = "the account id of the last node in the network")
     private int maxNodeAccountId = 34;
 
-    @Option(names = {"-d","--data-dir"},
+    @Option(
+            names = {"-d", "--data-dir"},
             description = "the data directory for output and temporary files")
     private Path dataDir = Path.of("data");
 
     /** The path to the block times file. */
-    @Option(names = {"--block-times"},
+    @Option(
+            names = {"--block-times"},
             description = "Path to the block times \".bin\" file.")
     private Path blockTimesFile = Path.of("data/block_times.bin");
 
@@ -95,11 +119,11 @@ public class Record2BlockCommand implements Runnable {
             blocksDir = dataDir.resolve("blocks");
             blocksJsonDir = dataDir.resolve("blocks-json");
             // enable cache, disable if doing large batches
-            final MainNetBucket mainNetBucket = new MainNetBucket(cacheEnabled, dataDir.resolve("gcp-cache"),
-                    minNodeAccountId, maxNodeAccountId);
+            final MainNetBucket mainNetBucket =
+                    new MainNetBucket(cacheEnabled, dataDir.resolve("gcp-cache"), minNodeAccountId, maxNodeAccountId);
             // create blocks dir
             Files.createDirectories(blocksDir);
-            if(jsonEnabled) {
+            if (jsonEnabled) {
                 Files.createDirectories(blocksJsonDir);
             }
             // check start block is less than end block
@@ -119,16 +143,16 @@ public class Record2BlockCommand implements Runnable {
                 // get the time of the record file for this block, from converted mirror node data
                 final long blockTime = blockTimes.getBlockTime(blockNumber);
                 final Instant blockTimeInstant = blockTimeLongToInstant(blockTime);
-                System.out.println("Processing block ["+blockNumber+"] blockTime " + blockTimeInstant + " ...");
+                System.out.println("Processing block [" + blockNumber + "] blockTime " + blockTimeInstant + " ...");
                 // round instant to nearest hour
                 Instant blockTimeHour = blockTimeInstant.truncatedTo(ChronoUnit.HOURS);
-                System.out.println("        blockTimeHour = " + blockTimeHour+" currentHour = "+currentHour);
+                System.out.println("        blockTimeHour = " + blockTimeHour + " currentHour = " + currentHour);
                 // check if we are the same hour as last block, if not load the new hour
                 if (currentHour == null || !currentHour.equals(blockTimeHour)) {
                     currentHour = blockTimeHour;
                     System.out.println("    Listing files from GCP ...");
                     currentHoursFiles = mainNetBucket.listHour(blockTime);
-                    System.out.println("    Listed "+currentHoursFiles.size()+" files from GCP");
+                    System.out.println("    Listed " + currentHoursFiles.size() + " files from GCP");
                 }
                 // create block info
                 BlockInfo blockInfo = new BlockInfo(blockNumber, blockTime, minNodeAccountId, maxNodeAccountId);
@@ -148,7 +172,7 @@ public class Record2BlockCommand implements Runnable {
                         .map(chainFile -> chainFile.download(mainNetBucket))
                         .map(SignatureFile::parse)
                         .toArray(SignatureFile[]::new);
-                for(SignatureFile signatureFile : signatureFileBytes) {
+                for (SignatureFile signatureFile : signatureFileBytes) {
                     System.out.println("        signatureFile = " + signatureFile);
                 }
 
@@ -165,20 +189,18 @@ public class Record2BlockCommand implements Runnable {
                         BlockHashAlgorithm.SHA2_384,
                         Arrays.stream(signatureFileBytes)
                                 .map(sigFile -> Bytes.wrap(sigFile.signature()))
-                                .toList()
-                );
+                                .toList());
                 final Block block = new Block(Collections.singletonList(
                         new BlockItem(new OneOf<>(ItemOneOfType.RECORD_FILE, recordFileItem))));
                 // write block to disk
                 writeBlock(blocksDir, block);
                 // write as json for now as well
-                if(jsonEnabled) {
-                    final Path blockJsonPath = blocksJsonDir.resolve(
-                            BLOCK_NUMBER_FORMAT.format(blockNumber) + ".blk.json");
+                if (jsonEnabled) {
+                    final Path blockJsonPath =
+                            blocksJsonDir.resolve(BLOCK_NUMBER_FORMAT.format(blockNumber) + ".blk.json");
                     Files.createDirectories(blockJsonPath.getParent());
-                    try (WritableStreamingData out = new WritableStreamingData(
-                            Files.newOutputStream(blockJsonPath, StandardOpenOption.CREATE,
-                                    StandardOpenOption.WRITE))) {
+                    try (WritableStreamingData out = new WritableStreamingData(Files.newOutputStream(
+                            blockJsonPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE))) {
                         Block.JSON.write(block, out);
                     }
                 }

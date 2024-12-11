@@ -1,5 +1,20 @@
-package com.hedera.block.tools.commands.record2blocks.mirrornode;
+/*
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+package com.hedera.block.tools.commands.record2blocks.mirrornode;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.ServiceOptions;
@@ -18,7 +33,7 @@ import picocli.CommandLine.Option;
 /**
  * Download mirror node record table CSV dump from GCP bucket
  */
-@SuppressWarnings("CallToPrintStackTrace")
+@SuppressWarnings({"CallToPrintStackTrace", "unused"})
 @Command(name = "fetchRecordsCsv", description = "Download mirror node record table CSV dump from GCP bucket")
 public class FetchMirrorNodeRecordsCsv implements Runnable {
     /** The GCP bucket name that contains CSV dumps of mirror node */
@@ -28,7 +43,8 @@ public class FetchMirrorNodeRecordsCsv implements Runnable {
     private static final String objectPath = "0.113.2/record_file.csv.gz";
 
     /** The path to the record table CSV from mirror node, gzipped. */
-    @Option(names = {"--record-csv"},
+    @Option(
+            names = {"--record-csv"},
             description = "Path to the record table CSV from mirror node, gzipped.")
     private Path recordsCsvFile = Path.of("data/record_file.csv.gz");
 
@@ -39,7 +55,7 @@ public class FetchMirrorNodeRecordsCsv implements Runnable {
     public void run() {
         try {
             // Load the current credentials
-            GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
+            GoogleCredentials.getApplicationDefault();
 
             // Get the project ID from the credentials
             String projectId = ServiceOptions.getDefaultProjectId();
@@ -48,6 +64,7 @@ public class FetchMirrorNodeRecordsCsv implements Runnable {
                 System.out.println("Project ID: " + projectId);
             } else {
                 System.out.println("Project ID not found.");
+                System.exit(1);
             }
 
             // Instantiates a GCP Storage client
@@ -56,13 +73,17 @@ public class FetchMirrorNodeRecordsCsv implements Runnable {
             final Bucket bucket = storage.get(bucketName, Storage.BucketGetOption.userProject(projectId));
 
             bucket.list(Storage.BlobListOption.prefix("0.113.2"), Storage.BlobListOption.userProject(projectId))
-                    .streamValues().map(Blob::getName).forEach(System.out::println);
+                    .streamValues()
+                    .map(Blob::getName)
+                    .forEach(System.out::println);
 
             // Read the object from the bucket with requester pays option
             Blob blob = bucket.get(objectPath, Storage.BlobGetOption.userProject(projectId));
             // download file
-            try (ProgressOutputStream out = new ProgressOutputStream(new FileOutputStream(recordsCsvFile.toFile()),
-                    blob.getSize(), recordsCsvFile.getFileName().toString())) {
+            try (ProgressOutputStream out = new ProgressOutputStream(
+                    new FileOutputStream(recordsCsvFile.toFile()),
+                    blob.getSize(),
+                    recordsCsvFile.getFileName().toString())) {
                 blob.downloadTo(out);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -78,9 +99,9 @@ public class FetchMirrorNodeRecordsCsv implements Runnable {
      */
     public static class ProgressOutputStream extends FilterOutputStream {
         private static final long MB = 1024 * 1024;
-        private long bytesWritten = 0;
-        private long size;
+        private final long size;
         private final String name;
+        private long bytesWritten = 0;
 
         public ProgressOutputStream(OutputStream out, long size, String name) {
             super(out);
@@ -104,10 +125,9 @@ public class FetchMirrorNodeRecordsCsv implements Runnable {
 
         private void printProgress() {
             if (bytesWritten % MB == 0) {
-                System.out.printf("\rProgress: %.0f%% - %,d MB written of %s",
-                        bytesWritten/(double)size,
-                        bytesWritten / MB,
-                        name);
+                System.out.printf(
+                        "\rProgress: %.0f%% - %,d MB written of %s",
+                        bytesWritten / (double) size, bytesWritten / MB, name);
             }
         }
     }
