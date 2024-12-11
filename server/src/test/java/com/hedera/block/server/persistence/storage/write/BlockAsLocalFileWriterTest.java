@@ -71,7 +71,7 @@ class BlockAsLocalFileWriterTest {
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
         pathResolverMock = spy(BlockAsLocalFilePathResolver.of(testLiveRootPath));
 
-        compressionMock = spy(new NoOpCompression());
+        compressionMock = spy(NoOpCompression.newInstance());
 
         toTest = BlockAsLocalFileWriter.of(blockNodeContext, pathResolverMock, compressionMock);
     }

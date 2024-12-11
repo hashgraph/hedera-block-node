@@ -43,7 +43,7 @@ class NoOpCompressionTest {
 
     @BeforeEach
     void setUp() {
-        toTest = new NoOpCompression();
+        toTest = NoOpCompression.newInstance();
     }
 
     /**

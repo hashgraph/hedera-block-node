@@ -42,6 +42,9 @@ public class ZstdCompression extends AbstractCompression {
     }
 
     /**
+     * Factory method. Returns a new, fully initialized instance of
+     * {@link ZstdCompression}.
+     *
      * @param config the {@link PersistenceStorageConfig} instance that provides
      * the configuration for the compression algorithm
      * @return a new, fully initialized and valid instance of

@@ -29,6 +29,22 @@ import java.nio.file.Path;
  */
 public class NoOpCompression extends AbstractCompression {
     /**
+     * Constructor.
+     */
+    private NoOpCompression() {}
+
+    /**
+     * Factory method. Returns a new, fully initialized instance of
+     * {@link NoOpCompression}.
+     *
+     * @return a new, fully initialized instance of {@link NoOpCompression}
+     */
+    @NonNull
+    public static NoOpCompression newInstance() {
+        return new NoOpCompression();
+    }
+
+    /**
      * This implementation does not compress the data. It uses no compression
      * algorithm, but simply generates a stream that writes the data to it`s
      * destination, as it is received.

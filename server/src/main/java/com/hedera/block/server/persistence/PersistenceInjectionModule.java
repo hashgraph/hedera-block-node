@@ -166,7 +166,7 @@ public interface PersistenceInjectionModule {
         final CompressionType compressionType = config.compression();
         return switch (compressionType) {
             case ZSTD -> ZstdCompression.of(config);
-            case NONE -> new NoOpCompression();
+            case NONE -> NoOpCompression.newInstance();
         };
     }
 
