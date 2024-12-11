@@ -18,14 +18,14 @@ The purpose of the Block Verification feature is to ensure that blocks received 
 1. The block-node must re-create the block hash from the block items and verify that it matches the hash implied by the signature. 
 1. If verification fails, the block should be considered invalid, and appropriate error-handling procedures must be triggered.
 
-
 ## Terms
-- Consensus Node (CN): A node that produces and provides blocks.
-- Block Items: The block data pieces (header, events, transactions, transaction result, state changes, proof) that make up a block.
-- Block Hash: A cryptographic hash representing the block’s integrity.
-- Signature: The cryptographic signature of the block hash created by Network private key (aka: LedgerId)
-- Public Key: The public key of the LedgerId that signed the block.
-
+<dl>
+<dt>Consensus Node (CN)</dt><dd>A node that produces and provides blocks.</dd>
+<dt>Block Items</dt><dd>The block data pieces (header, events, transactions, transaction result, state changes, proof) that make up a block.</dd>
+<dt>Block Hash</dt><dd>A cryptographic hash representing the block’s integrity.</dd>
+<dt>Signature</dt><dd>The cryptographic signature of the block hash created by Network private key (aka: LedgerId).</dd>
+<dt>Public Key</dt><dd>The public key of the LedgerId that signed the block.</dd>
+</dl>
 
 ## Entities
 
@@ -42,7 +42,7 @@ The purpose of the Block Verification feature is to ensure that blocks received 
   - Once the block_proof is provided, finalizes the hash computation asynchronously.
   - After computing the final hash, calls SignatureVerifier for verification.
 - ### SignatureVerifier
-  - Verifies the signature by comparing the computed hash to the hash implied by the signature (using the public key).
+  - Verifies the block signature is valid (using the ledger ID) and signed the same hash that was computed by the `BlockHashingSession`.
   - Report results to BlockStatusManager.
 - ### BlockStatusManager
   - Receives verification results from SignatureVerifier.
@@ -54,7 +54,7 @@ The purpose of the Block Verification feature is to ensure that blocks received 
 1. The `BlockHashingSession` accepts subsequent block items incrementally.
 1. Once the block_proof is received, the `BlockHashingSession` calls `completeHashing()` to finalize the hash computation.
 1. Upon completion of computing the final block hash, the `BlockHashingSession` calls the `SignatureVerifier` to verify the signature.
-1. The `SignatureVerifier` compares the computed hash to the hash implied by the signature using the public key.
+1. The `SignatureVerifier` compares the computed hash to the hash signed by the Block Proof signature.
 1. If the verification fails, the `SignatureVerifier` calls the `BlockStatusManager` to update the block status as SIGNATURE_INVALID.
 1. If the verification succeeds, the `SignatureVerifier` calls the `BlockStatusManager` to update the block status as VERIFIED.
 1. The `BlockStatusManager` initiates any necessary recovery or follow-up processes depending on the verification result.
@@ -66,14 +66,12 @@ sequenceDiagram
     participant V as VerificationHandler
     participant F as BlockHashingSessionFactory
     participant S as BlockHashingSession
-    participant SV as SignaturesequenceDiagram
     participant U as UnverifiedRingBuffer
     participant V as VerificationHandler
     participant F as BlockHashingSessionFactory
     participant S as BlockHashingSession
     participant SV as SignatureVerifier
     participant BSM as BlockStatusManager
-
         
     U->>V: (1) onBlockItemsReceived(List<BlockItem>)        
     
@@ -97,7 +95,6 @@ sequenceDiagram
     V->>S: addBlockItems(items with block_proof)
     V-->>U: return without blocking    
     S->>S: async completeHashing()   
-
     S->>SV: (5) verifySignature(signature, computedHash, blockNumber)    
 
     Note over SV,BSM: (6) Compare computed hash and signature
