@@ -22,13 +22,11 @@ import java.util.zip.GZIPOutputStream;
 /**
  * A class to list and download files from the mainnet bucket. This is designed to be thread safe.
  * <p>
- *    <b>Example bucket paths</b>
- *    <ul>
- *       <li><code>gs://hedera-mainnet-streams/recordstreams/record0.0.3/2019-09-13T21_53_51.396440Z.rcd</code></li>
- *       <li><code>gs://hedera-mainnet-streams/recordstreams/record0.0.3/sidecar/2023-04-25T17_42_16.032498578Z_01.rcd.gz</code></li>
- *    </ul>
- *    <ul><code></code></ul>
- * </p>
+ * <b>Example bucket paths</b>
+ * <ul>
+ *    <li><code>gs://hedera-mainnet-streams/recordstreams/record0.0.3/2019-09-13T21_53_51.396440Z.rcd</code></li>
+ *    <li><code>gs://hedera-mainnet-streams/recordstreams/record0.0.3/sidecar/2023-04-25T17_42_16.032498578Z_01.rcd.gz</code></li>
+ * </ul>
  */
 public class MainNetBucket {
     /** The required fields we need from blobs */
@@ -95,6 +93,7 @@ public class MainNetBucket {
             throw new RuntimeException(e);
         }
     }
+
     /**
      * List all the ChainFiles in the bucket that have a start time within the given day that contains the given
      * blockStartTime. This fetches blobs for all record files, signature files and sidecar files. For all nodes.
@@ -102,6 +101,7 @@ public class MainNetBucket {
      * @param blockStartTime the start time of a block, in nanoseconds since OA
      * @return a stream of ChainFiles that contain the records for the given day.
      */
+    @SuppressWarnings("unused")
     public List<ChainFile> listDay(long blockStartTime) {
         final String datePrefix = RecordFileDates.blockTimeLongToRecordFilePrefix(blockStartTime);
         // crop to the hour
@@ -181,21 +181,4 @@ public class MainNetBucket {
             throw new RuntimeException(e);
         }
     }
-
-//    /**
-//     * Main method to test the listing of blobs for a given hour.
-//     *
-//     * @param args the command line arguments
-//     */
-//    public static void main(String[] args) {
-//        long oneHourInNanos = 3_600_000_000_000L;
-//        long hours = Long.MAX_VALUE / oneHourInNanos;
-//        System.out.println("hours = " + hours);
-//        long days = hours / 24;
-//        System.out.println("days = " + days);
-//        long years = days / 365;
-//        System.out.println("years = " + years);
-////        listHour(oneHourInNanos*24*365*5).forEach(chainFile -> {
-//        listHour(0).forEach(System.out::println);
-//    }
 }

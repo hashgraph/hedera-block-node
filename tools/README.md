@@ -3,10 +3,10 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-1. [Subcommands](#subcommands)
+2. [Running from command line](#running-from-command-line)
+3. [Subcommands](#subcommands)
    1. [The `json` Subcommand](#the-json-subcommand)
-   1. [The `info` Subcommand](#the-info-subcommand)
-1. [Running from command line](#running-from-command-line)
+   2. [The `info` Subcommand](#the-info-subcommand)
 
 ## Overview
 
@@ -14,11 +14,19 @@ This subproject provides command line tools for working with block stream files 
 uses [picocli](https://picocli.info) to provide a command line interface which makes it easy to extend and add new
 subcommands or options.
 
+## Running from command line
+
+Refer to the [Quickstart](docs/quickstart.md) for a quick guide on how to run the tools CLI.
+
 ## Subcommands
 
 The following subcommands are available:
 - `json` - Converts a binary block stream to JSON
 - `info` - Prints info for block files
+- `record2block` - Converts a historical record stream files into blocks
+- `fetchRecordsCsv` - Download mirror node record table CSV dump from GCP bucket
+- `extractBlockTimes` - Extract block times from mirror node records csv file
+- `validateBlockTimes` - Validates a block times file
 
 ### The `json` Subcommand
 
@@ -58,6 +66,3 @@ Prints info for block files
 - `<files>...`
    - The block files or directories of block files to print info for
 
-## Running from command line
-
-Refer to the [Quickstart](docs/quickstart.md) for a quick guide on how to run the tools CLI.
