@@ -16,15 +16,20 @@
 
 package com.hedera.block.server.persistence.storage.compression;
 
+import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_COMPRESSION_LEVEL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import com.github.luben.zstd.ZstdOutputStream;
+import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.util.TestConfigUtil;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,11 +42,16 @@ class ZstdCompressionTest {
     @TempDir
     private Path testTempDir = Path.of("src/test/resources/tempDir");
 
+    private BlockNodeContext blockNodeContext;
+    private PersistenceStorageConfig testConfig;
     private ZstdCompression toTest;
 
     @BeforeEach
-    void setUp() {
-        toTest = new ZstdCompression();
+    void setUp() throws IOException {
+        blockNodeContext = TestConfigUtil.getTestBlockNodeContext(
+                Map.of(PERSISTENCE_STORAGE_COMPRESSION_LEVEL, String.valueOf(6)));
+        testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
+        toTest = ZstdCompression.of(testConfig);
     }
 
     /**
@@ -136,7 +146,8 @@ class ZstdCompressionTest {
 
     private Path actualZstdCompression(final byte[] byteArrayTestData) throws IOException {
         final Path tempFile = testTempDir.resolve("tempComparisonFile.txt.zstd");
-        try (final ZstdOutputStream out = new ZstdOutputStream(Files.newOutputStream(tempFile))) {
+        try (final ZstdOutputStream out =
+                new ZstdOutputStream(Files.newOutputStream(tempFile), testConfig.compressionLevel())) {
             out.write(byteArrayTestData);
             return tempFile;
         }

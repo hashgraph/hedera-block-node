@@ -17,6 +17,7 @@
 package com.hedera.block.server.persistence.storage.compression;
 
 import com.github.luben.zstd.ZstdOutputStream;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,6 +29,29 @@ import java.nio.file.Path;
  * Zstandard (Zstd) compression algorithm.
  */
 public class ZstdCompression extends AbstractCompression {
+    private final int compressionLevel;
+
+    /**
+     * Constructor.
+     *
+     * @param config the {@link PersistenceStorageConfig} instance that provides
+     * the configuration for the compression algorithm
+     */
+    private ZstdCompression(@NonNull final PersistenceStorageConfig config) {
+        this.compressionLevel = config.compressionLevel();
+    }
+
+    /**
+     * @param config the {@link PersistenceStorageConfig} instance that provides
+     * the configuration for the compression algorithm
+     * @return a new, fully initialized and valid instance of
+     * {@link ZstdCompression}
+     */
+    @NonNull
+    public static ZstdCompression of(@NonNull final PersistenceStorageConfig config) {
+        return new ZstdCompression(config);
+    }
+
     /**
      * This implementation uses the compression
      * algorithm, but simply generates a stream that writes the data to it`s
@@ -39,7 +63,7 @@ public class ZstdCompression extends AbstractCompression {
     protected OutputStream createNewCompressingOutputStream(@NonNull final Path pathToFile) throws IOException {
         final Path localPathToFile =
                 pathToFile.resolveSibling(pathToFile.getFileName() + getCompressionFileExtension());
-        return new ZstdOutputStream(Files.newOutputStream(localPathToFile));
+        return new ZstdOutputStream(Files.newOutputStream(localPathToFile), compressionLevel);
     }
 
     @NonNull
