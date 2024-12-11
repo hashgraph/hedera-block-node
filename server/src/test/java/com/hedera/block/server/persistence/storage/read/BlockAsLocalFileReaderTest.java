@@ -142,6 +142,21 @@ class BlockAsLocalFileReaderTest {
 
     /**
      * This test aims to verify that the
+     * {@link BlockAsLocalFileReader#read(long) correctly returns an empty
+     * {@link Optional} when no block file is found for the given valid block
+     * number.
+     */
+    @ParameterizedTest
+    @MethodSource("validBlockNumbers")
+    void testEmptyOptWhenNoBLockFileFound(final long blockNumber) throws IOException, ParseException {
+        final Optional<BlockUnparsed> actual = toTest.read(blockNumber);
+        assertThat(actual)
+            .isNotNull()
+            .isEmpty();
+    }
+
+    /**
+     * This test aims to verify that the
      * {@link BlockAsLocalFileReader#read(long)} correctly throws an
      * {@link IllegalArgumentException} when an invalid block number is
      * provided. A block number is invalid if it is a strictly negative number.
