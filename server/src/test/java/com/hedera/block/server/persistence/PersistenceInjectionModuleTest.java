@@ -270,7 +270,7 @@ class PersistenceInjectionModuleTest {
     @ParameterizedTest
     @MethodSource("compressionTypes")
     void testProvidesCompression(final CompressionType compressionType) {
-        when(persistenceStorageConfigMock.compression()).thenReturn(compressionType);
+        when(persistenceStorageConfigMock.compressionType()).thenReturn(compressionType);
         final Compression actual = PersistenceInjectionModule.providesCompression(persistenceStorageConfigMock);
 
         final Class<?> targetInstanceType =

@@ -186,6 +186,50 @@ public final class Preconditions { // @todo(381) change the APIs to accept non-n
     }
 
     /**
+     * This method asserts a given long is within a range (boundaries
+     * included). If the given long is within the range, then we return it,
+     * else, an {@link IllegalArgumentException} is thrown.
+     *
+     * @param toCheck the long value to test
+     * @param lowerBoundary the lower boundary
+     * @param upperBoundary the upper boundary
+     * @return the input {@code toCheck} if it is within the range (boundaries
+     * included)
+     * @throws IllegalArgumentException if the input long does not pass the test
+     */
+    public static long requireInRange(final long toCheck, final long lowerBoundary, final long upperBoundary) {
+        return requireInRange(toCheck, lowerBoundary, upperBoundary, null);
+    }
+
+    /**
+     * This method asserts a given long is within a range (boundaries
+     * included). If the given long is within the range, then we return it,
+     * else, an {@link IllegalArgumentException} is thrown.
+     *
+     * @param toCheck the long value to check
+     * @param lowerBoundary the lower boundary
+     * @param upperBoundary the upper boundary
+     * @param errorMessage the error message to be used in the exception if the
+     * input long to test is not within the range, if null, a default message
+     * will be used
+     * @return the input {@code toCheck} if it is within the range (boundaries
+     * included)
+     * @throws IllegalArgumentException if the input long does not pass the test
+     */
+    public static long requireInRange(
+            final long toCheck, final long lowerBoundary, final long upperBoundary, final String errorMessage) {
+        if (toCheck >= lowerBoundary && toCheck <= upperBoundary) {
+            return toCheck;
+        } else {
+            final String message = Objects.isNull(errorMessage)
+                    ? "The input long [%d] is required to be in the range [%d, %d] boundaries included."
+                            .formatted(toCheck, lowerBoundary, upperBoundary)
+                    : errorMessage;
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    /**
      * This method asserts a given long is a whole number. A long is whole
      * if it is greater or equal to zero.
      *

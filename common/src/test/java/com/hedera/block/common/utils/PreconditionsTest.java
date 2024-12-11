@@ -20,7 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /**
@@ -262,5 +264,72 @@ class PreconditionsTest {
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> Preconditions.requirePowerOfTwo(toTest, testErrorMessage))
                 .withMessage(testErrorMessage);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link Preconditions#requireInRange(long, long, long)} will return the
+     * input 'toTest' parameter if the range check passes. Test includes
+     * overloads.
+     *
+     * @param toTest parameterized, the number to test
+     * @param lowerBoundary parameterized, the lower boundary
+     * @param upperBoundary parameterized, the upper boundary
+     */
+    @ParameterizedTest
+    @MethodSource("validRequireInRangeValues")
+    void testRequireInRangePass(final long toTest, final long lowerBoundary, final long upperBoundary) {
+        final Consumer<Long> asserts = actual ->
+                assertThat(actual).isBetween(lowerBoundary, upperBoundary).isEqualTo(toTest);
+
+        final long actual = Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary);
+        assertThat(actual).satisfies(asserts);
+
+        final long actualOverload =
+                Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary, "test error message");
+        assertThat(actualOverload).satisfies(asserts);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link Preconditions#requireInRange(long, long, long)} will throw an
+     * {@link IllegalArgumentException} if the range check fails. Test includes
+     * overloads.
+     *
+     * @param toTest parameterized, the number to test
+     * @param lowerBoundary parameterized, the lower boundary
+     * @param upperBoundary parameterized, the upper boundary
+     */
+    @ParameterizedTest
+    @MethodSource("invalidRequireInRangeValues")
+    void testRequireInRangeFail(final long toTest, final long lowerBoundary, final long upperBoundary) {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary));
+
+        final String testErrorMessage = "test error message";
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary, testErrorMessage))
+                .withMessage(testErrorMessage);
+    }
+
+    private static Stream<Arguments> validRequireInRangeValues() {
+        return Stream.of(
+                Arguments.of(0, 0, 0),
+                Arguments.of(0, 0, 1),
+                Arguments.of(1, 0, 1),
+                Arguments.of(1, 0, 2),
+                Arguments.of(-1, -1, -1),
+                Arguments.of(-2, -2, -1),
+                Arguments.of(-1, -2, -1),
+                Arguments.of(-1, -2, 0));
+    }
+
+    private static Stream<Arguments> invalidRequireInRangeValues() {
+        return Stream.of(
+                Arguments.of(0, 1, 1),
+                Arguments.of(0, 1, 2),
+                Arguments.of(1, 2, 3),
+                Arguments.of(-1, 0, 1),
+                Arguments.of(-1, 0, 0));
     }
 }

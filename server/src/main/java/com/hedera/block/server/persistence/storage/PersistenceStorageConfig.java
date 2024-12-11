@@ -19,6 +19,8 @@ package com.hedera.block.server.persistence.storage;
 import static com.hedera.block.server.Constants.BLOCK_NODE_ARCHIVE_ROOT_DIRECTORY_SEMANTIC_NAME;
 import static com.hedera.block.server.Constants.BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME;
 
+import com.github.luben.zstd.Zstd;
+import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.common.utils.StringUtilities;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
@@ -35,7 +37,7 @@ import java.util.Objects;
  * @param liveRootPath provides the root path for saving blocks live
  * @param archiveRootPath provides the root path for archived blocks
  * @param type storage type
- * @param compression compression type to use for the storage
+ * @param compressionType compression type to use for the storage
  * Non-PRODUCTION values should only be used for troubleshooting and development purposes.
  */
 @ConfigData("persistence.storage")
@@ -45,7 +47,10 @@ public record PersistenceStorageConfig(
         // @todo(#371) - the default life/archive root path must be absolute starting from /opt
         @ConfigProperty(defaultValue = "") String archiveRootPath,
         @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type,
-        @ConfigProperty(defaultValue = "ZSTD") CompressionType compression) {
+        @ConfigProperty(defaultValue = "ZSTD") CompressionType compressionType,
+        // todo for the default compression level, should we use the Zstd#defaultCompressionLevel()
+        //  (should be 3 based on some docs) or should we go with 6 as proposed in PR review?
+        @ConfigProperty(defaultValue = "6") int compressionLevel) {
     // @todo(#371) - the default life/archive root path must be absolute starting from /opt
     private static final String LIVE_ROOT_PATH =
             Path.of("hashgraph/blocknode/data/live/").toAbsolutePath().toString();
@@ -58,7 +63,11 @@ public record PersistenceStorageConfig(
      */
     public PersistenceStorageConfig {
         Objects.requireNonNull(type);
-        Objects.requireNonNull(compression);
+        Objects.requireNonNull(compressionType);
+        // todo should we use the Zstd#minCompressionLevel() and Zstd#maxCompressionLevel() or do we?
+        //  have a range that is defined by us internally that should be allowed, as proposed in one
+        //  PR comment, 0 - 9 with 6 default?
+        Preconditions.requireInRange(compressionLevel, Zstd.minCompressionLevel(), Zstd.maxCompressionLevel());
         liveRootPath = resolvePath(liveRootPath, LIVE_ROOT_PATH, BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
         archiveRootPath =
                 resolvePath(archiveRootPath, ARCHIVE_ROOT_PATH, BLOCK_NODE_ARCHIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
