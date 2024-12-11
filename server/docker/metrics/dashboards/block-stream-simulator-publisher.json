@@ -91,7 +91,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "hedera_block_node_simulator_live_block_items_sent_total",
+          "expr": "hedera_block_node_simulator_live_block_items_sent_total{instance_type=\"$instance_type\"}",
           "instant": false,
           "legendFormat": "Block Items Sent",
           "range": true,
@@ -183,7 +183,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(hedera_block_node_simulator_live_block_items_sent_total[$__rate_interval])",
+          "expr": "rate(hedera_block_node_simulator_live_block_items_sent_total{instance_type=\"$instance_type\"}[$__rate_interval])",
           "instant": false,
           "legendFormat": "Block Items Send Rate",
           "range": true,
@@ -262,7 +262,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "hedera_block_node_simulator_live_blocks_sent_total",
+          "expr": "hedera_block_node_simulator_live_blocks_sent_total{instance_type=\"$instance_type\"}",
           "instant": false,
           "legendFormat": "Blocks Sent",
           "range": true,
@@ -354,7 +354,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(hedera_block_node_simulator_live_blocks_sent_total[$__rate_interval])",
+          "expr": "rate(hedera_block_node_simulator_live_blocks_sent_total{instance_type=\"$instance_type\"}[$__rate_interval])",
           "instant": false,
           "legendFormat": "Blocks Send Rate",
           "range": true,
@@ -369,7 +369,35 @@
   "schemaVersion": 39,
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "publisher",
+          "value": "publisher"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values(instance_type)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Instance Type",
+        "multi": false,
+        "name": "instance_type",
+        "options": [],
+        "query": {
+          "query": "label_values(instance_type)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
   },
   "time": {
     "from": "now-5m",

@@ -11,9 +11,17 @@ scrape_configs:
       - targets: ['host.docker.internal:9998']
     metrics_path: '/metrics'
     scheme: 'http'
+    relabel_configs:
+      - source_labels: [__name__]
+        target_label: instance_type
+        replacement: 'publisher'
 
   - job_name: 'simulator-consumer'
     static_configs:
       - targets: ['host.docker.internal:9997']
     metrics_path: '/metrics'
     scheme: 'http'
+    relabel_configs:
+      - source_labels: [__name__]
+        target_label: instance_type
+        replacement: 'consumer'
