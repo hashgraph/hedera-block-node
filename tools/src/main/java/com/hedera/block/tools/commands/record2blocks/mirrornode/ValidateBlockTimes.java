@@ -14,7 +14,7 @@ import picocli.CommandLine.Option;
 /**
  * Validate the block times in the block_times.bin file by comparing them to the record file names in CSV.
  */
-@Command(name = "validateBlockTimes", description = "validates a block times file")
+@Command(name = "validateBlockTimes", description = "Validates a block times file")
 public class ValidateBlockTimes implements Runnable {
 
     /** The path to the record table CSV from mirror node, gzipped. */

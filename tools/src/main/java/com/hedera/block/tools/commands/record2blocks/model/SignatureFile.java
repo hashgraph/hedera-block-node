@@ -7,6 +7,7 @@ import java.util.HexFormat;
  * The below table describes the content that can be parsed from a record signature file.
  *
  * <table>
+ * <caption>Signature File Format</caption>
  * <thead>
  * <tr>
  * <th><strong>Name</strong></th>
