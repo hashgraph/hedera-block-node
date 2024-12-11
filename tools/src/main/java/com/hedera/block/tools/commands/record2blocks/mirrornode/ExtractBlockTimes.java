@@ -25,7 +25,7 @@ import picocli.CommandLine.Option;
  */
 @SuppressWarnings({"DuplicatedCode", "CallToPrintStackTrace"})
 @Command(name = "extractBlockTimes", description = "Extract block times from mirror node records csv file")
-public class RecordFileCsvExtractBlockTimes implements Runnable {
+public class ExtractBlockTimes implements Runnable {
     /** the number of blocks in the record CSV file roughly, used for progress estimation */
     private static final int NUMBER_OF_BLOCKS_ROUNDED_UP = 70_000_000;
 
