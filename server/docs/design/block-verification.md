@@ -163,6 +163,18 @@ public enum VerificationError {
 }
 ```
 
+## Configuration
+As with other services already implemented in the Block Node system, the current Block Verification Service should be able to be configurable via a Config Object `VerificationConfig` and all the configuration properties defined in here and the configuration document.
+<dl>
+  <dt>verification.enabled</dt> 
+    <dd> enables or disables the verification handler as another subscriber of the unverified ring buffer.</dd>
+  <dt>verification.hashAlgorithm</dt>
+    <dd>by default and for starters there will only be support for `SHA389`.</dd>
+  <dt>verification.executorWorkers</dt>
+    <dd> how many workers to create with the verification async pool. by default five (5). </dd>
+</dl>
+*note: after the actual implementation these properties could change, however they should have its own configuration object, all the added properties should be updated here and in the configuration doc.
+
 ## Metrics
 <dl>
 <dt>blocks_received</dt><dd>Counter of the number of blocks received for verification.</dd>
