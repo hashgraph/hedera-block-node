@@ -1,8 +1,6 @@
 package com.hedera.block.tools.commands.record2blocks.model;
 
-import static com.hedera.block.tools.commands.record2blocks.Main.MAX_NODE_ACCOUNT_ID;
-import static com.hedera.block.tools.commands.record2blocks.Main.MIN_NODE_ACCOUNT_ID;
-
+import com.hedera.block.tools.commands.record2blocks.gcp.MainNetBucket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,17 +10,21 @@ import java.util.stream.Collectors;
 public class BlockInfo {
     private final long blockNum;
     private final long blockTime;
-    private final List<ChainFile> recordFiles = new ArrayList<>(MAX_NODE_ACCOUNT_ID - MIN_NODE_ACCOUNT_ID);
-    private final List<ChainFile> signatureFiles = new ArrayList<>(MAX_NODE_ACCOUNT_ID - MIN_NODE_ACCOUNT_ID);
-    private final List<ChainFile> sidecarFiles = new ArrayList<>(MAX_NODE_ACCOUNT_ID - MIN_NODE_ACCOUNT_ID);
+    private final List<ChainFile> recordFiles;
+    private final List<ChainFile> signatureFiles;
+    private final List<ChainFile> sidecarFiles;
     private Map.Entry<String, Long> mostCommonRecordFileMd5EntryAndCount;
     private ChainFile mostCommonRecordFile;
     private Map.Entry<String, Long> mostCommonSidecarFileMd5EntryAndCount;
     private ChainFile mostCommonSideCarFile;
 
-    public BlockInfo(long blockNum, long blockTime) {
+    public BlockInfo(long blockNum, long blockTime, int minNodeAccountId, int maxNodeAccountId) {
         this.blockNum = blockNum;
         this.blockTime = blockTime;
+        final int nodeCount = maxNodeAccountId - minNodeAccountId;
+        this.recordFiles = new ArrayList<>(minNodeAccountId - maxNodeAccountId);
+        this.signatureFiles = new ArrayList<>(minNodeAccountId - maxNodeAccountId);
+        this.sidecarFiles = new ArrayList<>(minNodeAccountId - maxNodeAccountId);
     }
 
     public long blockNum() {
@@ -90,8 +92,8 @@ public class BlockInfo {
     /**
      * Get the most common record file bytes, or null if there are no record files.
      */
-    public byte[] getMostCommonRecordFileBytes() {
-        return mostCommonRecordFile == null ? null : mostCommonRecordFile.download();
+    public byte[] getMostCommonRecordFileBytes(MainNetBucket mainNetBucket) {
+        return mostCommonRecordFile == null ? null : mostCommonRecordFile.download(mainNetBucket);
     }
 
     public List<ChainFile> signatureFiles() {
@@ -101,8 +103,8 @@ public class BlockInfo {
     /**
      * Get the most common sidecar file bytes, or null if there are no sidecar files.
      */
-    public byte[] getMostCommonSidecarFileBytes() {
-        return mostCommonSideCarFile == null ? null : mostCommonSideCarFile.download();
+    public byte[] getMostCommonSidecarFileBytes(MainNetBucket mainNetBucket) {
+        return mostCommonSideCarFile == null ? null : mostCommonSideCarFile.download(mainNetBucket);
     }
 
     @Override

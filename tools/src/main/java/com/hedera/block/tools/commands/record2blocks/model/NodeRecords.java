@@ -1,7 +1,5 @@
 package com.hedera.block.tools.commands.record2blocks.model;
 
-import static com.hedera.block.tools.commands.record2blocks.Main.DATA_DIR;
-
 import com.google.api.gax.paging.Page;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
@@ -25,11 +23,11 @@ public class NodeRecords {
     private final Path listingFile;
     private String nextPageToken;
 
-    public NodeRecords(int nodeAccountNumber, Bucket bucket) {
+    public NodeRecords(int nodeAccountNumber, Bucket bucket, Path dataDir) {
         this.nodeAccountNumber = nodeAccountNumber;
         this.bucket = bucket;
         nodeRecordsBucketPath = PATH_PREFIX + nodeAccountNumber;
-        nodeLocalDir = DATA_DIR.resolve("node-" + nodeAccountNumber);
+        nodeLocalDir = dataDir.resolve("node-" + nodeAccountNumber);
         recordFilesDir = nodeLocalDir.resolve(RECORD_FILES_DIR);
         nextPageFile = nodeLocalDir.resolve("next-page-id.txt");
         listingFile = nodeLocalDir.resolve("listing.csv");

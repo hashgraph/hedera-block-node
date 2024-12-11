@@ -1,11 +1,10 @@
 package com.hedera.block.tools.commands.record2blocks.mirrornode;
 
-import static com.hedera.block.tools.commands.record2blocks.mirrornode.RecordFileCsvExtractBlockTimes.BLOCK_TIMES_FILE;
-
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 /**
@@ -17,13 +16,15 @@ public class BlockTimes {
 
     /**
      * Load and map the block_times.bin file into memory.
+     *
+     * @param blockTimesFile the path to the block_times.bin file
      */
-    public BlockTimes() {
+    public BlockTimes(Path blockTimesFile) {
         try {
             // map file into bytebuffer
-            final FileChannel fileChannel = FileChannel.open(BLOCK_TIMES_FILE, StandardOpenOption.READ);
+            final FileChannel fileChannel = FileChannel.open(blockTimesFile, StandardOpenOption.READ);
             final ByteBuffer blockTimesBytes = fileChannel
-                    .map(FileChannel.MapMode.READ_ONLY, 0, Files.size(BLOCK_TIMES_FILE));
+                    .map(FileChannel.MapMode.READ_ONLY, 0, Files.size(blockTimesFile));
             fileChannel.close();
             // wrap the ByteBuffer as a LongBuffer so we can easily read longs
             blockTimes = blockTimesBytes.asLongBuffer();
