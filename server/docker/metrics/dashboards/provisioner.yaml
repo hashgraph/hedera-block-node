@@ -4,8 +4,11 @@ providers:
   - name: 'default'
     orgId: 1
     folder: ''
+    folderUid: ''
     type: file
     disableDeletion: false
     updateIntervalSeconds: 10
+    allowUiUpdates: true
     options:
       path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: true

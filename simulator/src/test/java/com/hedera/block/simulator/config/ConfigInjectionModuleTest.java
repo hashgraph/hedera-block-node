@@ -80,6 +80,6 @@ class ConfigInjectionModuleTest {
 
         assertNotNull(prometheusConfig);
         assertFalse(prometheusConfig.endpointEnabled());
-        assertEquals(9999, prometheusConfig.endpointPortNumber());
+        assertEquals(9998, prometheusConfig.endpointPortNumber());
     }
 }
