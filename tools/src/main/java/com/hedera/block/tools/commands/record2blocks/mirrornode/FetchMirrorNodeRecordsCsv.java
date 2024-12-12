@@ -19,13 +19,16 @@ package com.hedera.block.tools.commands.record2blocks.mirrornode;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.ServiceOptions;
 import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.Storage.BlobGetOption;
 import com.google.cloud.storage.StorageOptions;
+import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -69,19 +72,20 @@ public class FetchMirrorNodeRecordsCsv implements Runnable {
 
             // Instantiates a GCP Storage client
             final Storage storage = StorageOptions.getDefaultInstance().getService();
-            // Get the bucket
-            final Bucket bucket = storage.get(bucketName, Storage.BucketGetOption.userProject(projectId));
-
-            bucket.list(Storage.BlobListOption.prefix("0.113.2"), Storage.BlobListOption.userProject(projectId))
-                    .streamValues()
-                    .map(Blob::getName)
-                    .forEach(System.out::println);
-
             // Read the object from the bucket with requester pays option
-            Blob blob = bucket.get(objectPath, Storage.BlobGetOption.userProject(projectId));
+            BlobId blobId = BlobId.of(bucketName, objectPath);
+            Blob blob = storage.get(blobId, BlobGetOption.userProject(projectId));
+            // print error if file already exists
+            if (Files.exists(recordsCsvFile)) {
+                System.err.println("Output file already exists: " + recordsCsvFile);
+                System.exit(1);
+            }
+            // create parent directories
+            //noinspection ResultOfMethodCallIgnored
+            recordsCsvFile.toFile().getParentFile().mkdirs();
             // download file
             try (ProgressOutputStream out = new ProgressOutputStream(
-                    new FileOutputStream(recordsCsvFile.toFile()),
+                    new BufferedOutputStream(new FileOutputStream(recordsCsvFile.toFile()),1024*1024*32),
                     blob.getSize(),
                     recordsCsvFile.getFileName().toString())) {
                 blob.downloadTo(out);
@@ -127,7 +131,7 @@ public class FetchMirrorNodeRecordsCsv implements Runnable {
             if (bytesWritten % MB == 0) {
                 System.out.printf(
                         "\rProgress: %.0f%% - %,d MB written of %s",
-                        bytesWritten / (double) size, bytesWritten / MB, name);
+                        (bytesWritten / (double) size)*100d, bytesWritten / MB, name);
             }
         }
     }
