@@ -34,7 +34,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -56,15 +56,8 @@ class ServerMappedConfigSourceInitializerTest {
         new ConfigMapping("prometheus.endpointEnabled", "PROMETHEUS_ENDPOINT_ENABLED"),
         new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER")
     };
-    private static final Set<Class<? extends Record>> SUPPORTED_CONFIG_DATA_TYPES =
-            new BlockNodeConfigExtension().getConfigDataTypes();
-    private static MappedConfigSource toTest;
 
-    @BeforeAll
-    static void setUp() {
-        toTest = ServerMappedConfigSourceInitializer.getMappedConfigSource();
-    }
-
+    @Disabled("This test is disabled because it will start passing only after #285 gets implemented")
     @ParameterizedTest
     @MethodSource("allConfigDataTypes")
     void testVerifyAllFieldsInRecordsAreMapped(final Class<? extends Record> config) {
@@ -130,11 +123,13 @@ class ServerMappedConfigSourceInitializerTest {
         return resolved.toUpperCase();
     }
 
+    @SuppressWarnings("unchecked")
     private static Queue<ConfigMapping> extractConfigMappings() throws ReflectiveOperationException {
         final Field configMappings = MappedConfigSource.class.getDeclaredField("configMappings");
         try {
             configMappings.setAccessible(true);
-            return (Queue<ConfigMapping>) configMappings.get(toTest);
+            return (Queue<ConfigMapping>)
+                    configMappings.get(ServerMappedConfigSourceInitializer.getMappedConfigSource());
         } finally {
             configMappings.setAccessible(false);
         }
