@@ -24,7 +24,6 @@ plugins {
 description = "Hedera Block Stream Tools"
 
 application {
-    mainModule = "com.hedera.block.tools"
     mainClass = "com.hedera.block.tools.BlockStreamTool"
 }
 
