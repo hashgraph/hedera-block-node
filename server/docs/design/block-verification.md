@@ -30,7 +30,7 @@ The purpose of the Block Verification feature is to ensure that blocks received 
 ## Entities
 
 - #### VerificationHandler
-  - Receives the stream of block items in the form of List<BlockItemsUnparsed> from the unparsed and unverified block items ring buffer. 
+  - Receives the stream of block items from the (partially) parsed and unverified block items ring buffer. 
   - When it detects a block_header, it creates a BlockHashingSession using the BlockHashingSessionFactory, providing it with the initial block items (and internally, the session will handle asynchronous hashing).
   - Adds subsequent block items to the session, including the block_proof.
   - Does not block waiting for verification; the hash computation and verification continue asynchronously.  
@@ -49,7 +49,7 @@ The purpose of the Block Verification feature is to ensure that blocks received 
   - Updates block status and triggers any necessary recovery or follow-up processes depending on the outcome.
 
 ## Design
-1. The `VerificationHandler` receives the list of block items from the unverified ring buffer.
+1. The `VerificationHandler` receives the block items from the unverified ring buffer.
 1. When the block_header is detected, the `VerificationHandler` creates a `BlockHashingSession` using the `BlockHashingSessionFactory`.
 1. The `BlockHashingSession` accepts subsequent block items incrementally.
 1. Once the block_proof is received, the `BlockHashingSession` calls `completeHashing()` to finalize the hash computation.
@@ -73,7 +73,7 @@ sequenceDiagram
     participant SV as SignatureVerifier
     participant BSM as BlockStatusManager
         
-    U->>V: (1) onBlockItemsReceived(List<BlockItem>)        
+    U->>V: (1) onBlockItemsReceived(blockItems)        
     
     alt (2) Detects block_header
     
@@ -119,8 +119,6 @@ public interface VerificationHandler {
 
 ### BlockHashingSessionFactory
 ```java
-import java.util.concurrent.ExecutorService;
-
 public interface BlockHashingSessionFactory {
   BlockHashingSession createSession(List<BlockItem> initialBlockItems, ExecutorService executorService, SignatureVerifier signatureVerifier);
 }
@@ -143,7 +141,6 @@ public interface SignatureVerifier {
 
 ### BlockStatusManager
 ```java
-
 public interface BlockStatusManager {
     void updateBlockStatus(long blockNumber, BlockVerificationStatus status, VerificationError error);
 }
