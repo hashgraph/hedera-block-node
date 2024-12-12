@@ -40,6 +40,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+/**
+ * Tests for {@link ServerMappedConfigSourceInitializer}.
+ */
 class ServerMappedConfigSourceInitializerTest {
     private static final ConfigMapping[] SUPPORTED_MAPPINGS = {
         new ConfigMapping("consumer.timeoutThresholdMillis", "CONSUMER_TIMEOUT_THRESHOLD_MILLIS"),
@@ -57,6 +60,21 @@ class ServerMappedConfigSourceInitializerTest {
         new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER")
     };
 
+    /**
+     * This test aims to verify the state of all config extensions we have
+     * added. These configs are the ones that are returned from
+     * {@link BlockNodeConfigExtension#getConfigDataTypes()}. This test will
+     * verify:
+     * <pre>
+     *     - all added config classes are annotated with the {@link ConfigData}
+     *       annotation.
+     *     - all fields in all config classes are annotated with the
+     *       {@link ConfigProperty} annotation.
+     *     - a mapping for all fields in all config classes is present in the
+     *       {@link ServerMappedConfigSourceInitializer#MAPPINGS()}.
+     * </pre>
+     * @param config parameterized, config class to test
+     */
     @Disabled("This test is disabled because it will start passing only after #285 gets implemented")
     @ParameterizedTest
     @MethodSource("allConfigDataTypes")
@@ -101,7 +119,7 @@ class ServerMappedConfigSourceInitializerTest {
      * ServerMappedConfigSourceInitializer#MAPPINGS} to make this pass.
      */
     @Test
-    void test_VerifyAllSupportedMappingsAreAddedToInstance() throws ReflectiveOperationException {
+    void testVerifyAllSupportedMappingsAreAddedToInstance() throws ReflectiveOperationException {
         final Queue<ConfigMapping> actual = extractConfigMappings();
 
         assertEquals(SUPPORTED_MAPPINGS.length, actual.size());
