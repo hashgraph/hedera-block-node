@@ -160,10 +160,31 @@ class PersistenceStorageConfigTest {
     }
 
     /**
+     * This test aims to verify that the {@link PersistenceStorageConfig} class
+     * correctly returns the compression type that was set in the constructor.
+     *
+     * @param compressionType parameterized, the compression type to test
+     */
+    @ParameterizedTest
+    @MethodSource("compressionTypes")
+    void testPersistenceStorageConfigCompressionTypes(final CompressionType compressionType) {
+        final PersistenceStorageConfig actual =
+                new PersistenceStorageConfig("", "", StorageType.NO_OP, compressionType, DEFAULT_COMPRESSION_LEVEL);
+        assertThat(actual).returns(compressionType, from(PersistenceStorageConfig::compression));
+    }
+
+    /**
      * All storage types dynamically provided.
      */
     private static Stream<Arguments> storageTypes() {
         return Arrays.stream(StorageType.values()).map(Arguments::of);
+    }
+
+    /**
+     * All compression types dynamically provided.
+     */
+    private static Stream<Arguments> compressionTypes() {
+        return Arrays.stream(CompressionType.values()).map(Arguments::of);
     }
 
     /**
