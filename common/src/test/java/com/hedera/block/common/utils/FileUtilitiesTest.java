@@ -205,7 +205,7 @@ class FileUtilitiesTest {
      */
     @ParameterizedTest
     @MethodSource("filesToCreate")
-    void testCreateFolderPathIfNotExistsThrows(final Path toCreate, @TempDir final Path tempDir) throws IOException {
+    void testCreateFile(final Path toCreate, @TempDir final Path tempDir) throws IOException {
         final Path expected = tempDir.resolve(toCreate);
         assertThat(expected).doesNotExist();
         FileUtilities.createFile(expected);
@@ -222,7 +222,7 @@ class FileUtilitiesTest {
      */
     @ParameterizedTest
     @MethodSource("filesWithExtensions")
-    void testGetFileExtension(final Path filePath, final String extension) {
+    void testAppendFileExtension(final Path filePath, final String extension) {
         final Path pathToTest = tempDir.resolve(filePath);
         final Path actual = FileUtilities.appendExtension(pathToTest, extension);
         assertThat(actual).hasFileName(filePath + extension);
