@@ -155,7 +155,7 @@ public interface PersistenceInjectionModule {
     }
 
     /**
-     * Provides a compression singleton using the compression config.
+     * Provides a compression singleton using the persistence config.
      *
      * @param config the persistence storage configuration needed to build the
      * compression

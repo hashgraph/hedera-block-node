@@ -63,10 +63,25 @@ public record PersistenceStorageConfig(
     public PersistenceStorageConfig {
         Objects.requireNonNull(type);
         Objects.requireNonNull(compression);
-        Preconditions.requireInRange(compressionLevel, Zstd.minCompressionLevel(), Zstd.maxCompressionLevel());
+        verifyCompressionLevel(compression, compressionLevel);
         liveRootPath = resolvePath(liveRootPath, LIVE_ROOT_PATH, BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
         archiveRootPath =
                 resolvePath(archiveRootPath, ARCHIVE_ROOT_PATH, BLOCK_NODE_ARCHIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
+    }
+
+    /**
+     * This method verifies that the compression level is within the bounds of
+     * the given compression type.
+     *
+     * @param compressionType the compression type
+     * @param compressionLevelToCheck the compression level to check
+     */
+    private void verifyCompressionLevel(final CompressionType compressionType, final int compressionLevelToCheck) {
+        switch (compressionType) {
+            case ZSTD -> Preconditions.requireInRange(
+                    compressionLevelToCheck, Zstd.minCompressionLevel(), Zstd.maxCompressionLevel());
+            case NONE -> Preconditions.requireInRange(compressionLevelToCheck, Integer.MIN_VALUE, Integer.MAX_VALUE);
+        }
     }
 
     /**

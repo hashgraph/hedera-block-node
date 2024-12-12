@@ -14,6 +14,8 @@ defaults and can be left unchanged. It is recommended to browse the properties b
 | PERSISTENCE_STORAGE_LIVE_ROOT_PATH | The root path for the live storage. | |
 | PERSISTENCE_STORAGE_ARCHIVE_ROOT_PATH | The root path for the archive storage. | |
 | PERSISTENCE_STORAGE_TYPE | Type of the persistence storage | BLOCK_AS_LOCAL_FILE |
+| PERSISTENCE_STORAGE_COMPRESSION | Compression algorithm used during persistence (could be none as well) | ZSTD |
+| PERSISTENCE_STORAGE_COMPRESSION_LEVEL | Compression level to be used by the compression algorithm | 3 |
 | CONSUMER_TIMEOUT_THRESHOLD_MILLIS | Time to wait for subscribers before disconnecting in milliseconds | 1500 |
 | SERVICE_DELAY_MILLIS | Service shutdown delay in milliseconds | 500 |
 | MEDIATOR_RING_BUFFER_SIZE | Size of the ring buffer used by the mediator (must be a power of 2) | 67108864 |
