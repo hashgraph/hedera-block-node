@@ -38,9 +38,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+/**
+ * Tests for the {@link ZstdCompression} class.
+ */
+@SuppressWarnings("FieldCanBeLocal")
 class ZstdCompressionTest {
     @TempDir
-    private Path testTempDir = Path.of("src/test/resources/tempDir");
+    private Path testTempDir;
 
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig testConfig;

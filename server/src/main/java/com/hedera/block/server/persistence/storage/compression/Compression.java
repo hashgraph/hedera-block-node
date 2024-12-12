@@ -31,7 +31,9 @@ public interface Compression {
      * resulting {@link OutputStream} is then returned.
      *
      * @param streamToWrap a valid {@code non-null} {@link OutputStream} to wrap
-     * @return a {@code non-null} {@link OutputStream} that wraps the in
+     * @return a {@code non-null} {@link OutputStream} that wraps the provided
+     * {@link OutputStream} with the specific compression algorithm
+     * implementation
      * @throws IOException if an I/O exception occurs
      */
     @NonNull

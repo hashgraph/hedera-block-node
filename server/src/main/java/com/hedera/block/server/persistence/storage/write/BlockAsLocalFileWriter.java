@@ -110,10 +110,10 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
 
     private List<BlockItemUnparsed> writeToFs() throws IOException {
         final Path rawBlockPath = blockPathResolver.resolvePathToBlock(currentBlockNumber);
-        final Path blockToWritePathResolved =
+        final Path resolvedBlockPath =
                 FileUtilities.appendExtension(rawBlockPath, compression.getCompressionFileExtension());
-        FileUtilities.createFile(blockToWritePathResolved);
-        try (final OutputStream out = compression.wrap(Files.newOutputStream(blockToWritePathResolved))) {
+        FileUtilities.createFile(resolvedBlockPath);
+        try (final OutputStream out = compression.wrap(Files.newOutputStream(resolvedBlockPath))) {
             final BlockUnparsed blockToWrite =
                     BlockUnparsed.newBuilder().blockItems(currentBlockItems).build();
             BlockUnparsed.PROTOBUF.toBytes(blockToWrite).writeTo(out);

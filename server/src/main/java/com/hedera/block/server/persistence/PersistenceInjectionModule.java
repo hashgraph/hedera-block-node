@@ -64,6 +64,7 @@ public interface PersistenceInjectionModule {
      * @param blockNodeContext the application context
      * @param blockRemover the block remover
      * @param blockPathResolver the block path resolver
+     * @param compression the compression used
      * @return a block writer singleton
      */
     @Provides

@@ -187,7 +187,9 @@ public final class FileUtilities {
     }
 
     /**
-     * This method creates a new file at the given path.
+     * This method creates a new file at the given path. The method ensures that
+     * the full path to the target file will be created, including all missing
+     * intermediary directories.
      *
      * @param pathToCreate the path to create
      * @throws IOException if the file cannot be created or if it already exists
@@ -206,7 +208,7 @@ public final class FileUtilities {
      */
     @NonNull
     public static Path appendExtension(@NonNull final Path path, @NonNull final String extension) {
-        return path.resolveSibling(path.getFileName() + extension); // todo add startswith . if not add it
+        return path.resolveSibling(path.getFileName() + Objects.requireNonNull(extension));
     }
 
     private FileUtilities() {}

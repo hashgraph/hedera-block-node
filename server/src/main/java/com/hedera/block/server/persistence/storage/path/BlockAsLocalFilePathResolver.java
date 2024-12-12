@@ -16,7 +16,6 @@
 
 package com.hedera.block.server.persistence.storage.path;
 
-import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.Constants;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -56,19 +55,11 @@ public final class BlockAsLocalFilePathResolver implements BlockPathResolver {
     @NonNull
     @Override
     public Path resolvePathToBlock(final long blockNumber) {
-        return resolvePathToBlock(blockNumber, "");
-    }
-
-    @NonNull
-    @Override
-    public Path resolvePathToBlock(final long blockNumber, @NonNull final String compressionExtension) {
         Preconditions.requireWhole(blockNumber);
-        Objects.requireNonNull(compressionExtension);
         final String rawBlockNumber = String.format("%0" + MAX_LONG_DIGITS + "d", blockNumber);
         final String[] blockPath = rawBlockNumber.split("");
         final String blockFileName = rawBlockNumber.concat(Constants.BLOCK_FILE_EXTENSION);
         blockPath[blockPath.length - 1] = blockFileName;
-        final Path rawPath = Path.of(liveRootPath.toString(), blockPath);
-        return FileUtilities.appendExtension(rawPath, compressionExtension);
+        return Path.of(liveRootPath.toString(), blockPath);
     }
 }
