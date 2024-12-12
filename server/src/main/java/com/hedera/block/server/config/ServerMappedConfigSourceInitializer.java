@@ -31,6 +31,8 @@ public final class ServerMappedConfigSourceInitializer {
             new ConfigMapping("persistence.storage.liveRootPath", "PERSISTENCE_STORAGE_LIVE_ROOT_PATH"),
             new ConfigMapping("persistence.storage.archiveRootPath", "PERSISTENCE_STORAGE_ARCHIVE_ROOT_PATH"),
             new ConfigMapping("persistence.storage.type", "PERSISTENCE_STORAGE_TYPE"),
+            new ConfigMapping("persistence.storage.compression", "PERSISTENCE_STORAGE_COMPRESSION"),
+            new ConfigMapping("persistence.storage.compressionLevel", "PERSISTENCE_STORAGE_COMPRESSION_LEVEL"),
             new ConfigMapping("service.delayMillis", "SERVICE_DELAY_MILLIS"),
             new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),
             new ConfigMapping("mediator.type", "MEDIATOR_TYPE"),

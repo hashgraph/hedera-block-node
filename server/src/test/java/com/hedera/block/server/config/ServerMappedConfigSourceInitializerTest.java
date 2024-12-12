@@ -18,8 +18,6 @@ package com.hedera.block.server.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.swirlds.common.metrics.config.MetricsConfig;
 import com.swirlds.config.api.ConfigData;
@@ -49,6 +47,8 @@ class ServerMappedConfigSourceInitializerTest {
         new ConfigMapping("persistence.storage.liveRootPath", "PERSISTENCE_STORAGE_LIVE_ROOT_PATH"),
         new ConfigMapping("persistence.storage.archiveRootPath", "PERSISTENCE_STORAGE_ARCHIVE_ROOT_PATH"),
         new ConfigMapping("persistence.storage.type", "PERSISTENCE_STORAGE_TYPE"),
+        new ConfigMapping("persistence.storage.compression", "PERSISTENCE_STORAGE_COMPRESSION"),
+        new ConfigMapping("persistence.storage.compressionLevel", "PERSISTENCE_STORAGE_COMPRESSION_LEVEL"),
         new ConfigMapping("service.delayMillis", "SERVICE_DELAY_MILLIS"),
         new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),
         new ConfigMapping("mediator.type", "MEDIATOR_TYPE"),
@@ -122,16 +122,34 @@ class ServerMappedConfigSourceInitializerTest {
     void testVerifyAllSupportedMappingsAreAddedToInstance() throws ReflectiveOperationException {
         final Queue<ConfigMapping> actual = extractConfigMappings();
 
-        assertEquals(SUPPORTED_MAPPINGS.length, actual.size());
+        // fail if the actual and this test have a different number of mappings
+        assertThat(SUPPORTED_MAPPINGS.length)
+                .withFailMessage(
+                        "The number of supported mappings has changed! Please update the test to reflect the change.\nRUNTIME_MAPPING: %s\nTEST_MAPPING: %s",
+                        actual, Arrays.toString(SUPPORTED_MAPPINGS))
+                .isEqualTo(actual.size());
 
+        // test this test against actual
         for (final ConfigMapping current : SUPPORTED_MAPPINGS) {
             final Predicate<ConfigMapping> predicate =
                     cm -> current.mappedName().equals(cm.mappedName())
                             && current.originalName().equals(cm.originalName());
-            assertTrue(
-                    actual.stream().anyMatch(predicate),
-                    () -> "when testing for: [%s] it is not contained in mappings of the actual initialized object %s"
-                            .formatted(current, actual));
+            assertThat(actual.stream().anyMatch(predicate))
+                    .withFailMessage(
+                            "When testing for: [%s] it is not contained in mappings of the actual initialized object %s",
+                            current, actual)
+                    .isTrue();
+        }
+
+        // test actual against this test
+        for (final ConfigMapping current : actual) {
+            final Predicate<ConfigMapping> predicate =
+                    cm -> current.mappedName().equals(cm.mappedName())
+                            && current.originalName().equals(cm.originalName());
+            assertThat(Arrays.stream(SUPPORTED_MAPPINGS).anyMatch(predicate))
+                    .withFailMessage(
+                            "When testing for: [%s] it is not contained in mappings of this test %s", current, actual)
+                    .isTrue();
         }
     }
 
