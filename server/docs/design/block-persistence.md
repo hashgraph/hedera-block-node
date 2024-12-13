@@ -3,9 +3,9 @@
 ## Table of Contents
 
 1. [Purpose](#purpose)
+1. [Goals](#goals)
 1. [Terminology](#terminology)
 1. [Abstractions](#abstractions)
-1. [Goals](#goals)
 1. [Overview](#overview)
 1. [Implementations](#implementations)
    1. [Block as Local Directory (a.k.a. `block-as-local-dir`)](#block-as-local-directory-aka-block-as-local-dir)
@@ -29,6 +29,16 @@ S3) with a solution managed by the Block Node server. This document aims to
 describe the high-level design of how the Block Node persists and retrieves
 Blocks and how it handles exception cases when they arise.
 
+## Goals
+
+1. `BlockItems` streamed from a producer (e.g. Consensus Node) must be collated
+   and persisted as a `Block`. Per the specification, a `Block` is an ordered
+   list of `BlockItems`. How the `Block` is persisted is an implementation
+   detail.
+1. A `Block` must be efficiently retrieved by block number.
+1. Certain aspects of the `Block` persistence implementation must be
+   configurable.
+
 ## Terminology
 
 <dl>
@@ -37,14 +47,16 @@ Blocks and how it handles exception cases when they arise.
   `hedera-protobuf` <a href="https://github.com/hashgraph/hedera-protobufs/blob/continue-block-node/documents/api/block/stream/block.md">project</a>.</dd>
 
   <dt>BlockItemUnparsed</dt>
-  <dd>An unparsed, raw version of a `BlockItem`.</dd>
+  <dd>A partially parsed version of a `BlockItem` that can be stored, hashed, or
+  retrieved, but retains detail data in byte array form.</dd>
 
   <dt>BlockUnparsed</dt>
-  <dd>An unparsed, raw version of a `Block`.</dd>
+  <dd>A partially parsed version of a `Block` that can be stored, hashed, or
+  retrieved, but retains detail data in byte array form.</dd>
 
   <dt>BlockNumber</dt>
   <dd>A value that represents the unique number (identifier) of a given `Block`.
-  It is an auto-incrementing `long` value, starting from `0` (zero).</dd>
+  It is a strictly increasing `long` value, starting from zero (`0`).</dd>
 
   <dt>StorageType</dt>
   <dd>A value that represents the type of storage used to persist/retrieve a `Block`.</dd>
@@ -75,33 +87,26 @@ Blocks and how it handles exception cases when they arise.
   `StorageType`.</dd>
 </dl>
 
-## Goals
-
-1. `BlockItems` streamed from a producer (e.g. Consensus Node) must be collated
-   and persisted as a `Block`. Per the specification, a `Block` is an ordered
-   list of `BlockItems`. How the `Block` is persisted is an implementation 
-   detail.
-1. A `Block` must be efficiently retrieved by block number.
-1. Certain aspects of the `Block` persistence implementation must be
-   configurable.
-
 ## Overview
 
 The design for `Block` persistence is fairly straightforward. `Block` server 
 objects should use the persistence abstractions to read, write and remove 
-`Block`s from storage, as well as resolve the paths to `Block`s. `BlockItem`s
-streamed from a producer  are read off the wire one by one and passed to an
-implementation of `BlockWriter`. The `BlockWriter` is responsible for collecting
-related `BlockItem`s into a `Block` and persisting the `Block` to storage in a
-way that  is efficient for both long-term storage and rapid retrieval at a later
-time. The `BlockWriter` is also  responsible for removing a partially written
-`Block` if an exception occurs  while writing it. For example, if half the
-`BlockItem`s of a `Block` are written  when an `IOException` occurs, the
-`BlockWriter`should remove all the `BlockItem`s of the partially written `Block`
-and pass the exception up to the  caller. Services requiring one or more `Block`
-s should leverage a `BlockReader` implementation. The `BlockReader` should be
-able to efficiently retrieve a `Block` by block number.  The `BlockReader`
-should pass unrecoverable exceptions  when reading a `Block` up to the caller.
+`Block`s from storage, as well as resolve the paths to `Block`s.
+
+`BlockItem`s streamed from a producer are read off the wire one by one and
+passed to an implementation of `BlockWriter`. The `BlockWriter` is responsible
+for collecting related `BlockItem`s into a `Block` and persisting the `Block` to
+storage in a way that is efficient for both long-term storage and rapid
+retrieval at a later time. The `BlockWriter` is also responsible for removing a
+partially written `Block` if an exception occurs while writing it. For example,
+if half the `BlockItem`s of a `Block` are written when an `IOException` occurs,
+the `BlockWriter`should remove all the `BlockItem`s of the partially written
+`Block` and pass the exception up to the caller.
+
+Services requiring one or more`Block`s should use a `BlockReader`
+implementation. The `BlockReader` will be able to efficiently retrieve a `Block`
+by block number. The `BlockReader` will pass unrecoverable exceptions when
+reading a `Block` up to the caller.
 
 ## Implementations
 
@@ -137,13 +142,12 @@ local storage. Intended as a production default.
 
 This type of storage implementation persists `Block`s to a local filesystem.
 A`Block` is persisted as a file containing all the `BlockItem`s that comprise
-the given `Block`. This storage options has a root directory. The root directory
+the given `Block`. This storage option has a root directory. The root directory
 is the directory that contains all the subdirectories containing actual block
 data. A specific `Block` is stored as a file, resolved under the storage root by
 utilizing a `trie` structure. The name of the file is the respective `Block`'s
-`BlockNumber`. Optionally, the `Block` can be file is the respective `Block`'s
-`BlockNumber`. The `Block` can be compressed before being written to storage
-and, the `Block`s can be archived periodically in batches of configurable size.
+`BlockNumber`. Each `Block` can be compressed before being written to storage,
+and the `Block`s can be archived periodically in batches of configurable size.
 Both compression and archive are optional.
 
 #### Trie Structure & Algorithm for Block Path Resolution
