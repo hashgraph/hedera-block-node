@@ -33,9 +33,13 @@ public final class ServerMappedConfigSourceInitializer {
             new ConfigMapping("persistence.storage.type", "PERSISTENCE_STORAGE_TYPE"),
             new ConfigMapping("service.delayMillis", "SERVICE_DELAY_MILLIS"),
             new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),
+            new ConfigMapping("mediator.type", "MEDIATOR_TYPE"),
             new ConfigMapping("notifier.ringBufferSize", "NOTIFIER_RING_BUFFER_SIZE"),
+            new ConfigMapping("producer.type", "PRODUCER_TYPE"),
             new ConfigMapping("server.maxMessageSizeBytes", "SERVER_MAX_MESSAGE_SIZE_BYTES"),
-            new ConfigMapping("server.port", "SERVER_PORT"));
+            new ConfigMapping("server.port", "SERVER_PORT"),
+            new ConfigMapping("prometheus.endpointEnabled", "PROMETHEUS_ENDPOINT_ENABLED"),
+            new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER"));
 
     private ServerMappedConfigSourceInitializer() {}
 
