@@ -80,6 +80,12 @@ public class PbjBlockAccessServiceProxy implements PbjBlockAccessService {
         }
     }
 
+    /**
+     * Executes the unary singleBlock gRPC method.
+     *
+     * @param singleBlockRequest the single block request
+     * @return the single block response
+     */
     SingleBlockResponseUnparsed singleBlock(SingleBlockRequest singleBlockRequest) {
 
         LOGGER.log(DEBUG, "Executing Unary singleBlock gRPC method");

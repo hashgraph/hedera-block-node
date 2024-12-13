@@ -64,7 +64,12 @@ class ServerMappedConfigSourceInitializerTest {
 
         // Prometheus Config (externally managed, but we need this mapping)
         new ConfigMapping("prometheus.endpointEnabled", "PROMETHEUS_ENDPOINT_ENABLED"),
-        new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER")
+        new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER"),
+
+        // Verification Config
+        new ConfigMapping("verification.enabled", "VERIFICATION_ENABLED"),
+        new ConfigMapping("verification.sessionType", "VERIFICATION_SESSION_TYPE"),
+        new ConfigMapping("verification.hashCombineBatchSize", "VERIFICATION_HASH_COMBINE_BATCH_SIZE")
     };
 
     /**

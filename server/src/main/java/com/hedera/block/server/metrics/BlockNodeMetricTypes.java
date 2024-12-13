@@ -44,6 +44,23 @@ public final class BlockNodeMetricTypes {
         /** The number of single blocks not found via the singleBlock rpc service. */
         SingleBlocksNotFound("single_blocks_not_found", "Single Blocks Not Found"),
 
+        // Verification counters
+
+        /** The number of blocks received for verification. */
+        VerificationBlocksReceived("verification_blocks_received", "Blocks Received for Verification"),
+
+        /** The number of blocks verified successfully. */
+        VerificationBlocksVerified("verification_blocks_verified", "Blocks Verified"),
+
+        /** The number of blocks that failed verification. */
+        VerificationBlocksFailed("verification_blocks_failed", "Blocks Failed Verification"),
+
+        /** The number of blocks that failed verification due to an error. */
+        VerificationBlocksError("verification_blocks_error", "Blocks Verification Error"),
+
+        /** The time in nanoseconds taken to verify a block */
+        VerificationBlockTime("verification_block_time", "Block Verification Time"),
+
         // Error counters
 
         /** The number of errors encountered by the live block stream mediator. */

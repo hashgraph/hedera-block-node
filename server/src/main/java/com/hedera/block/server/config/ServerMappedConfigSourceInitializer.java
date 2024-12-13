@@ -26,7 +26,10 @@ public final class ServerMappedConfigSourceInitializer {
             new ConfigMapping("server.maxMessageSizeBytes", "SERVER_MAX_MESSAGE_SIZE_BYTES"),
             new ConfigMapping("server.port", "SERVER_PORT"),
             new ConfigMapping("prometheus.endpointEnabled", "PROMETHEUS_ENDPOINT_ENABLED"),
-            new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER"));
+            new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER"),
+            new ConfigMapping("verification.enabled", "VERIFICATION_ENABLED"),
+            new ConfigMapping("verification.sessionType", "VERIFICATION_SESSION_TYPE"),
+            new ConfigMapping("verification.hashCombineBatchSize", "VERIFICATION_HASH_COMBINE_BATCH_SIZE"));
 
     private ServerMappedConfigSourceInitializer() {}
 

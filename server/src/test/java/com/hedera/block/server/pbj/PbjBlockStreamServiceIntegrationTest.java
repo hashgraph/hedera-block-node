@@ -34,6 +34,8 @@ import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.block.server.verification.StreamVerificationHandlerImpl;
+import com.hedera.block.server.verification.service.BlockVerificationService;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.BlockItemSetUnparsed;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -377,8 +379,21 @@ public class PbjBlockStreamServiceIntegrationTest {
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);
         final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
                 streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+
+        final StreamVerificationHandlerImpl streamVerificationHandler = new StreamVerificationHandlerImpl(
+                streamMediator,
+                notifier,
+                blockNodeContext.metricsService(),
+                serviceStatus,
+                mock(BlockVerificationService.class));
+
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = new PbjBlockStreamServiceProxy(
-                streamMediator, serviceStatus, blockNodeEventHandler, notifier, blockNodeContext);
+                streamMediator,
+                serviceStatus,
+                blockNodeEventHandler,
+                streamVerificationHandler,
+                notifier,
+                blockNodeContext);
 
         final Pipeline<? super Bytes> producerPipeline = pbjBlockStreamServiceProxy.open(
                 PbjBlockStreamService.BlockStreamMethod.publishBlockStream, options, helidonPublishStreamObserver1);
@@ -504,8 +519,21 @@ public class PbjBlockStreamServiceIntegrationTest {
         final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
         final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
                 streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+
+        final StreamVerificationHandlerImpl streamVerificationHandler = new StreamVerificationHandlerImpl(
+                streamMediator,
+                notifier,
+                blockNodeContext.metricsService(),
+                serviceStatus,
+                mock(BlockVerificationService.class));
+
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = new PbjBlockStreamServiceProxy(
-                streamMediator, serviceStatus, blockNodeEventHandler, notifier, blockNodeContext);
+                streamMediator,
+                serviceStatus,
+                blockNodeEventHandler,
+                streamVerificationHandler,
+                notifier,
+                blockNodeContext);
 
         // Register a producer
         final Pipeline<? super Bytes> producerPipeline = pbjBlockStreamServiceProxy.open(
@@ -524,7 +552,7 @@ public class PbjBlockStreamServiceIntegrationTest {
                 .onNext(buildEmptySubscribeStreamRequest());
 
         // 3 subscribers + 1 streamPersistenceHandler
-        assertEquals(4, consumers.size());
+        assertEquals(5, consumers.size());
 
         // Transmit a BlockItem
         final Bytes publishStreamRequest =
@@ -655,11 +683,24 @@ public class PbjBlockStreamServiceIntegrationTest {
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);
         final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
+
         final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
                 streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
 
+        final StreamVerificationHandlerImpl streamVerificationHandler = new StreamVerificationHandlerImpl(
+                streamMediator,
+                notifier,
+                blockNodeContext.metricsService(),
+                serviceStatus,
+                mock(BlockVerificationService.class));
+
         return new PbjBlockStreamServiceProxy(
-                streamMediator, serviceStatus, blockNodeEventHandler, notifier, blockNodeContext);
+                streamMediator,
+                serviceStatus,
+                blockNodeEventHandler,
+                streamVerificationHandler,
+                notifier,
+                blockNodeContext);
     }
 
     private LiveStreamMediator buildStreamMediator(
