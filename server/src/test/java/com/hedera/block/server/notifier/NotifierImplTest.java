@@ -44,6 +44,7 @@ import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
+import com.hedera.block.server.verification.StreamVerificationHandlerImpl;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.PublishStreamResponse;
@@ -273,8 +274,16 @@ public class NotifierImplTest {
         final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
                 streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
 
+        final var streamVerificationHandler =
+                new StreamVerificationHandlerImpl(streamMediator, blockNodeContext.metricsService(), serviceStatus);
+
         return new PbjBlockStreamServiceProxy(
-                streamMediator, serviceStatus, blockNodeEventHandler, notifier, blockNodeContext);
+                streamMediator,
+                serviceStatus,
+                blockNodeEventHandler,
+                streamVerificationHandler,
+                notifier,
+                blockNodeContext);
     }
 
     private LiveStreamMediator buildStreamMediator(
