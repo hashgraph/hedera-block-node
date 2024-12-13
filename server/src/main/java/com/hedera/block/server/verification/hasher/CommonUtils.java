@@ -27,6 +27,8 @@ public final class CommonUtils {
         throw new UnsupportedOperationException("Utility Class");
     }
 
+    public static final int HASH_SIZE = DigestType.SHA_384.digestLength();
+
     private static String sha384HashTag = "SHA-384";
 
     public static Bytes noThrowSha384HashOf(final Bytes bytes) {

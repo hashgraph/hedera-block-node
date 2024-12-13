@@ -16,11 +16,13 @@
 
 package com.hedera.block.server.verification;
 
+import static com.hedera.block.server.verification.hasher.CommonUtils.HASH_SIZE;
 import static com.hedera.block.server.verification.hasher.CommonUtils.combine;
 import static com.hedera.block.server.verification.hasher.CommonUtils.sha384DigestOrThrow;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.common.utils.Preconditions;
+import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.verification.hasher.NaiveStreamingTreeHasher;
 import com.hedera.block.server.verification.hasher.StreamingTreeHasher;
@@ -29,7 +31,6 @@ import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
-import com.swirlds.common.crypto.DigestType;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -47,27 +48,37 @@ public class BlockHashService {
     private final int hashCombineBatchSize = 32;
 
     private long currentBlockNumber = -1;
+    private Bytes lastBlockHash;
     private StreamingTreeHasher inputTreeHasher;
     private StreamingTreeHasher outputTreeHasher;
+
+    private long blockWorkStartTime = 0L;
 
     @Inject
     public BlockHashService(@NonNull final MetricsService metricsService) {
         this.metricsService = metricsService;
     }
 
-    public static final int HASH_SIZE = DigestType.SHA_384.digestLength();
-
     public void onBlockItemsReceived(List<BlockItemUnparsed> blockItems)
             throws ParseException, ExecutionException, InterruptedException {
 
-        long startTime = System.nanoTime();
         final BlockItemUnparsed firstItem = blockItems.getFirst();
         if (firstItem.hasBlockHeader()) {
+            metricsService
+                    .get(BlockNodeMetricTypes.Counter.VerificationBlocksReceived)
+                    .increment();
             BlockHeader blockHeader = BlockHeader.PROTOBUF.parse(firstItem.blockHeader());
             currentBlockNumber = Preconditions.requireWhole(blockHeader.number());
             inputTreeHasher = new NaiveStreamingTreeHasher();
             outputTreeHasher = new NaiveStreamingTreeHasher();
+            blockWorkStartTime = System.nanoTime();
             LOGGER.log(INFO, "Starting new Hash for block number: " + blockHeader.number());
+
+            if (lastBlockHash != blockHeader.previousBlockHash()) {
+                metricsService
+                        .get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed)
+                        .increment();
+            }
         }
 
         LOGGER.log(INFO, "Working on batch size: " + blockItems.size());
@@ -90,20 +101,28 @@ public class BlockHashService {
 
             // Parse BlockProof.
             BlockProof blockProof = BlockProof.PROTOBUF.parse(lastItem.blockProof());
-            Bytes lastBlockHash = blockProof.previousBlockRootHash();
-            Bytes blockStartStateHash = blockProof.startOfBlockStateRootHash();
+            Bytes providedLasBlockHash = blockProof.previousBlockRootHash();
+            Bytes providedBlockStartStateHash = blockProof.startOfBlockStateRootHash();
 
-            final var leftParent = combine(lastBlockHash, inputHash);
-            final var rightParent = combine(outputHash, blockStartStateHash);
+            final var leftParent = combine(providedLasBlockHash, inputHash);
+            final var rightParent = combine(outputHash, providedBlockStartStateHash);
             final var blockHash = combine(leftParent, rightParent);
 
-            LOGGER.log(INFO, "Previous Block Hash: " + lastBlockHash);
-            LOGGER.log(INFO, "Calculated Block Hash: " + blockHash);
+            // set to last block hash for next block verification.
+            this.lastBlockHash = blockHash;
+
+            // Call SignatureVerifier to verify the signature of the block.
+            // SignatureVerifier.verify(blockProof.signature(), blockHash.toByteArray());
+
+            // Call the BlockStatusService to notify the block status.
+
+            metricsService
+                    .get(BlockNodeMetricTypes.Counter.VerificationBlocksVerified)
+                    .increment();
         }
 
-        long elapsedTime = System.nanoTime() - startTime;
-        long elapsedTimeMillis = elapsedTime / 1_000_000;
-        LOGGER.log(INFO, "processing batch took: " + elapsedTime + "ns   ( " + elapsedTimeMillis + "ms )");
+        long elapsedTime = System.nanoTime() - blockWorkStartTime;
+        metricsService.get(BlockNodeMetricTypes.Counter.VerificationBlockTime).add(elapsedTime);
     }
 
     private ByteBuffer getBlockItemHash(BlockItemUnparsed blockItemUnparsed) {
