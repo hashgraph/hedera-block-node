@@ -27,6 +27,7 @@ import com.hedera.hapi.block.stream.protoc.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import java.util.ArrayDeque;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -42,7 +43,8 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
 
     // State
     private final CountDownLatch streamLatch;
-    private final List<String> lastKnownStatuses;
+    private final int lastKnownStatusesCapacity;
+    private final ArrayDeque<String> lastKnownStatuses;
 
     /**
      * Constructs a new ConsumerStreamObserver.
@@ -55,10 +57,12 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
     public ConsumerStreamObserver(
             @NonNull final MetricsService metricsService,
             @NonNull final CountDownLatch streamLatch,
-            @NonNull final List<String> lastKnownStatuses) {
+            @NonNull final ArrayDeque<String> lastKnownStatuses,
+            @NonNull final int lastKnownStatusesCapacity) {
         this.metricsService = requireNonNull(metricsService);
         this.streamLatch = requireNonNull(streamLatch);
         this.lastKnownStatuses = requireNonNull(lastKnownStatuses);
+        this.lastKnownStatusesCapacity = lastKnownStatusesCapacity;
     }
 
     /**
@@ -70,6 +74,9 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
     @Override
     public void onNext(SubscribeStreamResponse subscribeStreamResponse) {
         final SubscribeStreamResponse.ResponseCase responseType = subscribeStreamResponse.getResponseCase();
+        if (lastKnownStatuses.size() == lastKnownStatusesCapacity) {
+            lastKnownStatuses.removeFirst();
+        }
         lastKnownStatuses.add(subscribeStreamResponse.toString());
 
         switch (responseType) {

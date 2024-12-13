@@ -34,6 +34,7 @@ import com.swirlds.config.api.ConfigProperty;
 @ConfigData("blockStream")
 public record BlockStreamConfig(
         @ConfigProperty(defaultValue = "PUBLISHER") SimulatorMode simulatorMode,
+        @ConfigProperty(defaultValue = "10") int lastKnownStatusesCapacity,
         @ConfigProperty(defaultValue = "1_500_000") int delayBetweenBlockItems,
         @ConfigProperty(defaultValue = "100_000") int maxBlockItemsToStream,
         @ConfigProperty(defaultValue = "MILLIS_PER_BLOCK") StreamingMode streamingMode,
@@ -54,6 +55,7 @@ public record BlockStreamConfig(
      */
     public static class Builder {
         private SimulatorMode simulatorMode = SimulatorMode.PUBLISHER;
+        private int lastKnownStatusesCapacity = 10;
         private int delayBetweenBlockItems = 1_500_000;
         private int maxBlockItemsToStream = 10_000;
         private StreamingMode streamingMode = StreamingMode.MILLIS_PER_BLOCK;
@@ -75,6 +77,17 @@ public record BlockStreamConfig(
          */
         public Builder simulatorMode(SimulatorMode simulatorMode) {
             this.simulatorMode = simulatorMode;
+            return this;
+        }
+
+        /**
+         * Sets the capacity of the last known statuses.
+         *
+         * @param lastKnownStatusesCapacity the capacity
+         * @return this {@code Builder} instance
+         */
+        public Builder lastKnownStatusesCapacity(int lastKnownStatusesCapacity) {
+            this.lastKnownStatusesCapacity = lastKnownStatusesCapacity;
             return this;
         }
 
@@ -141,6 +154,7 @@ public record BlockStreamConfig(
         public BlockStreamConfig build() {
             return new BlockStreamConfig(
                     simulatorMode,
+                    lastKnownStatusesCapacity,
                     delayBetweenBlockItems,
                     maxBlockItemsToStream,
                     streamingMode,

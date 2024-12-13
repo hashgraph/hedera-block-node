@@ -20,6 +20,7 @@ import static com.hedera.block.simulator.TestUtils.getTestMetrics;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -300,7 +301,7 @@ class BlockStreamSimulatorTest {
 
         assertNotNull(streamStatus, "StreamStatus should not be null");
         assertEquals(expectedPublishedBlocks, streamStatus.publishedBlocks(), "Published blocks should match");
-        assertEquals(
+        assertIterableEquals(
                 expectedLastKnownStatuses,
                 streamStatus.lastKnownPublisherStatuses(),
                 "Last known statuses should match");

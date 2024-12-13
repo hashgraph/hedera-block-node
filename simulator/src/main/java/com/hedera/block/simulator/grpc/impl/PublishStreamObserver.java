@@ -24,7 +24,7 @@ import com.hedera.hapi.block.protoc.PublishStreamResponse;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import java.util.List;
+import java.util.ArrayDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -36,7 +36,8 @@ public class PublishStreamObserver implements StreamObserver<PublishStreamRespon
 
     // State
     private final AtomicBoolean streamEnabled;
-    private final List<String> lastKnownStatuses;
+    private final int lastKnownStatusesCapacity;
+    private final ArrayDeque<String> lastKnownStatuses;
 
     /**
      * Creates a new PublishStreamObserver instance.
@@ -46,9 +47,12 @@ public class PublishStreamObserver implements StreamObserver<PublishStreamRespon
      * @throws NullPointerException if any parameter is null
      */
     public PublishStreamObserver(
-            @NonNull final AtomicBoolean streamEnabled, @NonNull final List<String> lastKnownStatuses) {
+            @NonNull final AtomicBoolean streamEnabled,
+            @NonNull final ArrayDeque<String> lastKnownStatuses,
+            @NonNull final int lastKnownStatusesCapacity) {
         this.streamEnabled = requireNonNull(streamEnabled);
         this.lastKnownStatuses = requireNonNull(lastKnownStatuses);
+        this.lastKnownStatusesCapacity = lastKnownStatusesCapacity;
     }
 
     /**
@@ -58,6 +62,9 @@ public class PublishStreamObserver implements StreamObserver<PublishStreamRespon
      */
     @Override
     public void onNext(PublishStreamResponse publishStreamResponse) {
+        if (lastKnownStatuses.size() == lastKnownStatusesCapacity) {
+            lastKnownStatuses.removeFirst();
+        }
         lastKnownStatuses.add(publishStreamResponse.toString());
         LOGGER.log(INFO, "Received Response: " + publishStreamResponse.toString());
     }
