@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.config;
+package com.hedera.block.simulator.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,19 +27,30 @@ import java.util.function.Predicate;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-class ServerMappedConfigSourceInitializerTest {
+class SimulatorMappedConfigSourceInitializerTest {
     private static final ConfigMapping[] SUPPORTED_MAPPINGS = {
-        new ConfigMapping("consumer.timeoutThresholdMillis", "CONSUMER_TIMEOUT_THRESHOLD_MILLIS"),
-        new ConfigMapping("persistence.storage.liveRootPath", "PERSISTENCE_STORAGE_LIVE_ROOT_PATH"),
-        new ConfigMapping("persistence.storage.archiveRootPath", "PERSISTENCE_STORAGE_ARCHIVE_ROOT_PATH"),
-        new ConfigMapping("persistence.storage.type", "PERSISTENCE_STORAGE_TYPE"),
-        new ConfigMapping("service.delayMillis", "SERVICE_DELAY_MILLIS"),
-        new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),
-        new ConfigMapping("mediator.type", "MEDIATOR_TYPE"),
-        new ConfigMapping("notifier.ringBufferSize", "NOTIFIER_RING_BUFFER_SIZE"),
-        new ConfigMapping("producer.type", "PRODUCER_TYPE"),
-        new ConfigMapping("server.maxMessageSizeBytes", "SERVER_MAX_MESSAGE_SIZE_BYTES"),
-        new ConfigMapping("server.port", "SERVER_PORT"),
+        // gRPC configuration
+        new ConfigMapping("grpc.serverAddress", "GRPC_SERVER_ADDRESS"),
+        new ConfigMapping("grpc.port", "GRPC_PORT"),
+
+        // Block stream configuration
+        new ConfigMapping("blockStream.simulatorMode", "BLOCK_STREAM_SIMULATOR_MODE"),
+        new ConfigMapping("blockStream.delayBetweenBlockItems", "BLOCK_STREAM_DELAY_BETWEEN_BLOCK_ITEMS"),
+        new ConfigMapping("blockStream.maxBlockItemsToStream", "BLOCK_STREAM_MAX_BLOCK_ITEMS_TO_STREAM"),
+        new ConfigMapping("blockStream.streamingMode", "BLOCK_STREAM_STREAMING_MODE"),
+        new ConfigMapping("blockStream.millisecondsPerBlock", "BLOCK_STREAM_MILLISECONDS_PER_BLOCK"),
+        new ConfigMapping("blockStream.blockItemsBatchSize", "BLOCK_STREAM_BLOCK_ITEMS_BATCH_SIZE"),
+
+        // Block generator configuration
+        new ConfigMapping("generator.generationMode", "GENERATOR_GENERATION_MODE"),
+        new ConfigMapping("generator.folderRootPath", "GENERATOR_FOLDER_ROOT_PATH"),
+        new ConfigMapping("generator.managerImplementation", "GENERATOR_MANAGER_IMPLEMENTATION"),
+        new ConfigMapping("generator.paddedLength", "GENERATOR_PADDED_LENGTH"),
+        new ConfigMapping("generator.fileExtension", "GENERATOR_FILE_EXTENSION"),
+        new ConfigMapping("generator.startBlockNumber", "GENERATOR_START_BLOCK_NUMBER"),
+        new ConfigMapping("generator.endBlockNumber", "GENERATOR_END_BLOCK_NUMBER"),
+
+        // Prometheus configuration
         new ConfigMapping("prometheus.endpointEnabled", "PROMETHEUS_ENDPOINT_ENABLED"),
         new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER")
     };
@@ -47,17 +58,17 @@ class ServerMappedConfigSourceInitializerTest {
 
     @BeforeAll
     static void setUp() {
-        toTest = ServerMappedConfigSourceInitializer.getMappedConfigSource();
+        toTest = SimulatorMappedConfigSourceInitializer.getMappedConfigSource();
     }
 
     /**
      * This test aims to fail if we have added or removed any {@link ConfigMapping} that will be
-     * initialized by the {@link ServerMappedConfigSourceInitializer#getMappedConfigSource()}
+     * initialized by the {@link SimulatorMappedConfigSourceInitializer#getMappedConfigSource()}
      * without reflecting it here in the test. The purpose is to bring attention to any changes to
      * the developer so we can make sure we are aware of them in order to be sure we require the
      * change. This test is more to bring attention than to test actual logic. So if this fails, we
      * either change the {@link #SUPPORTED_MAPPINGS} here or the {@link
-     * ServerMappedConfigSourceInitializer#MAPPINGS} to make this pass.
+     * SimulatorMappedConfigSourceInitializer#MAPPINGS} to make this pass.
      */
     @Test
     void test_VerifyAllSupportedMappingsAreAddedToInstance() throws ReflectiveOperationException {

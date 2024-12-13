@@ -44,6 +44,34 @@ testModuleInfo {
     requires("com.google.protobuf")
 }
 
+// Task to run simulator in Publisher mode
+tasks.register<JavaExec>("runPublisher") {
+    description = "Run the simulator in Publisher mode"
+    group = "application"
+
+    mainClass = application.mainClass
+    mainModule = application.mainModule
+    classpath = sourceSets["main"].runtimeClasspath
+
+    environment("BLOCK_STREAM_SIMULATOR_MODE", "PUBLISHER")
+    environment("PROMETHEUS_ENDPOINT_ENABLED", "true")
+    environment("PROMETHEUS_ENDPOINT_PORT_NUMBER", "9998")
+}
+
+// Task to run simulator in Consumer mode
+tasks.register<JavaExec>("runConsumer") {
+    description = "Run the simulator in Consumer mode"
+    group = "application"
+
+    mainClass = application.mainClass
+    mainModule = application.mainModule
+    classpath = sourceSets["main"].runtimeClasspath
+
+    environment("BLOCK_STREAM_SIMULATOR_MODE", "CONSUMER")
+    environment("PROMETHEUS_ENDPOINT_ENABLED", "true")
+    environment("PROMETHEUS_ENDPOINT_PORT_NUMBER", "9997")
+}
+
 tasks.register<Copy>("untarTestBlockStream") {
     description = "Untar the test block stream data"
     group = "build"
