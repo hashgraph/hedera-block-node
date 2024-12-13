@@ -79,6 +79,16 @@ class BlockStreamConfigTest {
     }
 
     @Test
+    void testLastKnownStatusesCapacity() {
+        final int capacity = 20;
+        BlockStreamConfig config = getBlockStreamConfigBuilder()
+                .lastKnownStatusesCapacity(capacity)
+                .build();
+
+        assertEquals(capacity, config.lastKnownStatusesCapacity());
+    }
+
+    @Test
     void testValidAbsolutePath() {
         // Setup valid folder path and generation mode
         String gzRootFolder = "src/main/resources/block-0.0.3/";

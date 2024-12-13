@@ -74,8 +74,9 @@ public class PositiveEndpointBehaviourTests extends BaseSuite {
         blockStreamSimulatorApp.stop();
         StreamStatus streamStatus = blockStreamSimulatorApp.getStreamStatus();
         assertTrue(streamStatus.publishedBlocks() > 0);
-        assertEquals(
-                streamStatus.publishedBlocks(),
+        // We just need to make sure that number of published blocks is equal or greater than the statuses. Statuses are tracked in a queue to avoid unnecessary memory usage, therefore will always be less or equal to published.
+        assertTrue(
+                streamStatus.publishedBlocks() >=
                 streamStatus.lastKnownPublisherStatuses().size());
 
         // Verify each status contains the word "acknowledgement"
