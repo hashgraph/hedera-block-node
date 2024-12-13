@@ -31,7 +31,25 @@ plugins {
 
 group = "com.hedera.block"
 
+val javaVersionMajor = JavaVersion.VERSION_21
+val javaVersionPatch = "0.4"
+
+val currentJavaVersionMajor = JavaVersion.current()
 val currentJavaVersion = providers.systemProperty("java.version").get()
+val expectedJavaVersion = "$javaVersionMajor.$javaVersionPatch"
+
+if (currentJavaVersion != expectedJavaVersion) {
+    val message =
+        "Gradle runs with Java $currentJavaVersion. This project works best running with Java $expectedJavaVersion. " +
+            "\n - From commandline: change JAVA_HOME and/or PATH to point at Java $expectedJavaVersion installation." +
+            "\n - From IntelliJ: change 'Gradle JVM' in 'Gradle Settings' to point at Java $expectedJavaVersion installation."
+
+    if (currentJavaVersionMajor.ordinal < javaVersionMajor.ordinal) { // fail if version is too old
+        throw (RuntimeException(message))
+    } else {
+        logger.lifecycle("WARN: $message")
+    }
+}
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
