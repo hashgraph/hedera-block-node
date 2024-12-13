@@ -21,6 +21,7 @@ module com.hedera.block.server {
     exports com.hedera.block.server.service;
     exports com.hedera.block.server.pbj;
     exports com.hedera.block.server.producer;
+    exports com.hedera.block.server.verification;
 
     requires com.hedera.block.common;
     requires com.hedera.block.stream;
