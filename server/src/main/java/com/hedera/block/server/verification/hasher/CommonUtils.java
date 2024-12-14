@@ -16,11 +16,14 @@
 
 package com.hedera.block.server.verification.hasher;
 
+import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.swirlds.common.crypto.DigestType;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 public final class CommonUtils {
     private CommonUtils() {
@@ -81,5 +84,47 @@ public final class CommonUtils {
         } catch (final NoSuchAlgorithmException fatal) {
             throw new IllegalStateException(fatal);
         }
+    }
+
+    public static Hashes getBlockHashes(List<BlockItemUnparsed> blockItems) {
+        int numInputs = 0;
+        int numOutputs = 0;
+        int itemSize = blockItems.size();
+        for (int i = 0; i < itemSize; i++) {
+            final BlockItemUnparsed item = blockItems.get(i);
+            final BlockItemUnparsed.ItemOneOfType kind = item.item().kind();
+            switch (kind) {
+                case EVENT_HEADER, EVENT_TRANSACTION -> numInputs++;
+                case TRANSACTION_RESULT, TRANSACTION_OUTPUT, STATE_CHANGES -> numOutputs++;
+            }
+        }
+
+        final var inputHashes = ByteBuffer.allocate(HASH_SIZE * numInputs);
+        final var outputHashes = ByteBuffer.allocate(HASH_SIZE * numOutputs);
+        final var digest = sha384DigestOrThrow();
+        for (int i = 0; i < itemSize; i++) {
+            final BlockItemUnparsed item = blockItems.get(i);
+            final BlockItemUnparsed.ItemOneOfType kind = item.item().kind();
+            switch (kind) {
+                case EVENT_HEADER, EVENT_TRANSACTION -> inputHashes.put(
+                        digest.digest(BlockItemUnparsed.PROTOBUF.toBytes(item).toByteArray()));
+                case TRANSACTION_RESULT, TRANSACTION_OUTPUT, STATE_CHANGES -> outputHashes.put(
+                        digest.digest(BlockItemUnparsed.PROTOBUF.toBytes(item).toByteArray()));
+            }
+        }
+
+        inputHashes.flip();
+        outputHashes.flip();
+
+        return new Hashes(inputHashes, outputHashes);
+    }
+
+    public static ByteBuffer getBlockItemHash(BlockItemUnparsed blockItemUnparsed) {
+        final var digest = sha384DigestOrThrow();
+        ByteBuffer buffer = ByteBuffer.allocate(HASH_SIZE);
+        buffer.put(digest.digest(
+                BlockItemUnparsed.PROTOBUF.toBytes(blockItemUnparsed).toByteArray()));
+        buffer.flip();
+        return buffer;
     }
 }

@@ -42,7 +42,7 @@ public class StreamVerificationHandlerImpl
     private final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
     private final MetricsService metricsService;
     private final ServiceStatus serviceStatus;
-    private final BlockHashService blockHashService;
+    private final BlockVerificationService blockVerificationService;
 
     private static final String PROTOCOL_VIOLATION_MESSAGE =
             "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
@@ -52,12 +52,12 @@ public class StreamVerificationHandlerImpl
             @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,
             @NonNull final MetricsService metricsService,
             @NonNull final ServiceStatus serviceStatus,
-            @NonNull final BlockHashService blockHashService) {
+            @NonNull final BlockVerificationService blockVerificationService) {
 
         this.subscriptionHandler = subscriptionHandler;
         this.metricsService = metricsService;
         this.serviceStatus = serviceStatus;
-        this.blockHashService = blockHashService;
+        this.blockVerificationService = blockVerificationService;
     }
 
     @Override
@@ -80,7 +80,7 @@ public class StreamVerificationHandlerImpl
                 } else {
                     List<BlockItemUnparsed> blockItems =
                             subscribeStreamResponse.blockItems().blockItems();
-                    blockHashService.onBlockItemsReceived(blockItems);
+                    blockVerificationService.onBlockItemsReceived(blockItems);
                 }
             }
             case STATUS -> LOGGER.log(DEBUG, "Unexpected received a status message rather than a block item");

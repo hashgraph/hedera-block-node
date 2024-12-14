@@ -35,6 +35,6 @@ public interface VerificationInjectionModule {
 
     /*@Binds
     @Singleton
-    BlockHashService bindBlockHashService(@NonNull final BlockHashService blockHashService);*/
+    BlockVerificationService bindBlockHashService(@NonNull final BlockVerificationService blockHashService);*/
 
 }

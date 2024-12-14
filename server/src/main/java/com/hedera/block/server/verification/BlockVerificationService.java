@@ -16,9 +16,8 @@
 
 package com.hedera.block.server.verification;
 
-import static com.hedera.block.server.verification.hasher.CommonUtils.HASH_SIZE;
 import static com.hedera.block.server.verification.hasher.CommonUtils.combine;
-import static com.hedera.block.server.verification.hasher.CommonUtils.sha384DigestOrThrow;
+import static com.hedera.block.server.verification.hasher.CommonUtils.getBlockItemHash;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.common.utils.Preconditions;
@@ -32,20 +31,17 @@ import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ForkJoinPool;
 import javax.inject.Inject;
 
-public class BlockHashService {
+public class BlockVerificationService {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
     private final MetricsService metricsService;
 
-    private final ExecutorService executor = ForkJoinPool.commonPool();
-    private final int hashCombineBatchSize = 32;
+    // private final ExecutorService executor = ForkJoinPool.commonPool();
+    // private final int hashCombineBatchSize = 32;
 
     private long currentBlockNumber = -1;
     private Bytes lastBlockHash;
@@ -55,7 +51,7 @@ public class BlockHashService {
     private long blockWorkStartTime = 0L;
 
     @Inject
-    public BlockHashService(@NonNull final MetricsService metricsService) {
+    public BlockVerificationService(@NonNull final MetricsService metricsService) {
         this.metricsService = metricsService;
     }
 
@@ -72,16 +68,27 @@ public class BlockHashService {
             inputTreeHasher = new NaiveStreamingTreeHasher();
             outputTreeHasher = new NaiveStreamingTreeHasher();
             blockWorkStartTime = System.nanoTime();
-            LOGGER.log(INFO, "Starting new Hash for block number: " + blockHeader.number());
 
-            if (lastBlockHash != blockHeader.previousBlockHash()) {
+            LOGGER.log(INFO, "Test 3");
+            LOGGER.log(INFO, "Processing block number: {0}", currentBlockNumber);
+            LOGGER.log(INFO, "Previous block hash: {0}", blockHeader.previousBlockHash());
+
+            // if lastBlockHash is not null, means is the first block we are processing.
+            // this is a double check to ensure that the new block_header previousBlockHash is the same we processed.
+            if (lastBlockHash != null && !lastBlockHash.equals(blockHeader.previousBlockHash())) {
                 metricsService
                         .get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed)
                         .increment();
             }
         }
 
-        LOGGER.log(INFO, "Working on batch size: " + blockItems.size());
+        //        final Hashes hashes = getBlockHashes(blockItems);
+        //        while (hashes.inputHashes().hasRemaining()) {
+        //            inputTreeHasher.addLeaf(hashes.inputHashes());
+        //        }
+        //        while (hashes.outputHashes().hasRemaining()) {
+        //            outputTreeHasher.addLeaf(hashes.outputHashes());
+        //        }
 
         for (BlockItemUnparsed item : blockItems) {
             final BlockItemUnparsed.ItemOneOfType kind = item.item().kind();
@@ -111,26 +118,23 @@ public class BlockHashService {
             // set to last block hash for next block verification.
             this.lastBlockHash = blockHash;
 
+            LOGGER.log(INFO, "Calculated Block hash: {0}", blockHash);
+
             // Call SignatureVerifier to verify the signature of the block.
             // SignatureVerifier.verify(blockProof.signature(), blockHash.toByteArray());
 
             // Call the BlockStatusService to notify the block status.
+            LOGGER.log(INFO, "Block verification completed successfully for block number: {0}", currentBlockNumber);
+
+            // measure the time taken to verify the block.
+            long elapsedTime = System.nanoTime() - blockWorkStartTime;
+            metricsService
+                    .get(BlockNodeMetricTypes.Counter.VerificationBlockTime)
+                    .add(elapsedTime);
 
             metricsService
                     .get(BlockNodeMetricTypes.Counter.VerificationBlocksVerified)
                     .increment();
         }
-
-        long elapsedTime = System.nanoTime() - blockWorkStartTime;
-        metricsService.get(BlockNodeMetricTypes.Counter.VerificationBlockTime).add(elapsedTime);
-    }
-
-    private ByteBuffer getBlockItemHash(BlockItemUnparsed blockItemUnparsed) {
-        final var digest = sha384DigestOrThrow();
-        ByteBuffer buffer = ByteBuffer.allocate(HASH_SIZE);
-        buffer.put(digest.digest(
-                BlockItemUnparsed.PROTOBUF.toBytes(blockItemUnparsed).toByteArray()));
-        buffer.flip();
-        return buffer;
     }
 }
