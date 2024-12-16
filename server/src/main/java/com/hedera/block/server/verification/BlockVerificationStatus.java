@@ -16,13 +16,7 @@
 
 package com.hedera.block.server.verification;
 
-import com.hedera.hapi.block.BlockItemUnparsed;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
-public interface BlockVerificationSession {
-
-    void appendBlockItems(List<BlockItemUnparsed> blockItems);
-
-    CompletableFuture<VerificationResult> getVerificationResult();
+public enum BlockVerificationStatus {
+    VERIFIED,
+    SIGNATURE_INVALID
 }

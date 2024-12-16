@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.verification;
+package com.hedera.block.server.verification.signature;
 
-import com.hedera.hapi.block.BlockItemUnparsed;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 
-public interface BlockVerificationSession {
+public interface SignatureVerifier {
 
-    void appendBlockItems(List<BlockItemUnparsed> blockItems);
-
-    CompletableFuture<VerificationResult> getVerificationResult();
+    Boolean verifySignature(Bytes hash, Bytes signature);
 }
