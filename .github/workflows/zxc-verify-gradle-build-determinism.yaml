@@ -61,6 +61,11 @@ jobs:
   generate-baseline:
     name: Generate Baseline
     runs-on: block-node-linux-medium
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+      path: ${{ steps.baseline.outputs.path }}
+      file: ${{ steps.baseline.outputs.file }}
+      name: ${{ steps.baseline.outputs.name }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
@@ -86,6 +91,23 @@ jobs:
       - name: Retrieve Commit Hash
         id: commit
         run: echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
+      - name: Baseline Existence Check
+        id: baseline
+        run: |
+          BASELINE_NAME="${{ steps.commit.outputs.sha }}.tar.gz"
+          BASELINE_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/gradle/baselines"
+          BASELINE_FILE="${BASELINE_PATH}/${BASELINE_NAME}"
+          BASELINE_EXISTS="false"
+
+          if gsutil ls "${BASELINE_FILE}" >/dev/null 2>&1; then
+             BASELINE_EXISTS="true"
+          fi
+
+          echo "exists=${BASELINE_EXISTS}" >> "${GITHUB_OUTPUT}"
+          echo "path=${BASELINE_PATH}" >> "${GITHUB_OUTPUT}"
+          echo "name=${BASELINE_NAME}" >> "${GITHUB_OUTPUT}"
+          echo "file=${BASELINE_FILE}" >> "${GITHUB_OUTPUT}"
 
       - name: Build Artifacts
         id: gradle-build

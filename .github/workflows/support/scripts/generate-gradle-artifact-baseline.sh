@@ -2,7 +2,6 @@
 set -o pipefail
 set +e
 
-#readonly RELEASE_LIB_PATH="server/build/libs"
 readonly RELEASE_APPS_PATH="server/build/libs"
 
 GROUP_ACTIVE="false"
