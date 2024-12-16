@@ -32,6 +32,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import javax.inject.Inject;
@@ -56,13 +57,14 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
 
     // State
     private final int lastKnownStatusesCapacity;
-    private final ArrayDeque<String> lastKnownStatuses;
+    private final Deque<String> lastKnownStatuses;
     private CountDownLatch streamLatch;
 
     /**
      * Constructs a new ConsumerStreamGrpcClientImpl with the specified configuration and metrics service.
      *
      * @param grpcConfig The configuration for gRPC connection settings
+     * @param blockStreamConfig The configuration for the block stream
      * @param metricsService The service for recording consumption metrics
      * @throws NullPointerException if any parameter is null
      */

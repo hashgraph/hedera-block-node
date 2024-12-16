@@ -38,6 +38,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
@@ -64,7 +65,7 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
     // State
     private final AtomicBoolean streamEnabled;
     private final int lastKnownStatusesCapacity;
-    private final ArrayDeque<String> lastKnownStatuses;
+    private final Deque<String> lastKnownStatuses;
 
     /**
      * Creates a new PublishStreamGrpcClientImpl with the specified dependencies.

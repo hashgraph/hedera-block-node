@@ -27,7 +27,7 @@ import com.hedera.hapi.block.stream.protoc.BlockItem;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -44,7 +44,7 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
     // State
     private final CountDownLatch streamLatch;
     private final int lastKnownStatusesCapacity;
-    private final ArrayDeque<String> lastKnownStatuses;
+    private final Deque<String> lastKnownStatuses;
 
     /**
      * Constructs a new ConsumerStreamObserver.
@@ -52,13 +52,14 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
      * @param metricsService The service for recording consumption metrics
      * @param streamLatch A latch used to coordinate stream completion
      * @param lastKnownStatuses List to store the most recent status messages
+     * @param lastKnownStatusesCapacity the capacity of the last known statuses
      * @throws NullPointerException if any parameter is null
      */
     public ConsumerStreamObserver(
             @NonNull final MetricsService metricsService,
             @NonNull final CountDownLatch streamLatch,
-            @NonNull final ArrayDeque<String> lastKnownStatuses,
-            @NonNull final int lastKnownStatusesCapacity) {
+            @NonNull final Deque<String> lastKnownStatuses,
+            final int lastKnownStatusesCapacity) {
         this.metricsService = requireNonNull(metricsService);
         this.streamLatch = requireNonNull(streamLatch);
         this.lastKnownStatuses = requireNonNull(lastKnownStatuses);
@@ -75,7 +76,7 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
     public void onNext(SubscribeStreamResponse subscribeStreamResponse) {
         final SubscribeStreamResponse.ResponseCase responseType = subscribeStreamResponse.getResponseCase();
         if (lastKnownStatuses.size() == lastKnownStatusesCapacity) {
-            lastKnownStatuses.removeFirst();
+            lastKnownStatuses.pollFirst();
         }
         lastKnownStatuses.add(subscribeStreamResponse.toString());
 
