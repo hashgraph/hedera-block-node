@@ -28,7 +28,7 @@ public interface BlockPathResolver {
      * This method resolves the fs {@link Path} to a Block by a given input
      * number. This method does not guarantee that the returned {@link Path}
      * exists! This method is guaranteed to return a {@code non-null}
-     * {@link Path}.
+     * {@link Path}. No compression extension is appended to the file name.
      *
      * @param blockNumber to be resolved the path for
      * @return the resolved path to the given Block by a number

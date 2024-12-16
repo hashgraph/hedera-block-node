@@ -19,9 +19,12 @@ package com.hedera.block.server.persistence.storage;
 import static com.hedera.block.server.Constants.BLOCK_NODE_ARCHIVE_ROOT_DIRECTORY_SEMANTIC_NAME;
 import static com.hedera.block.server.Constants.BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME;
 
+import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.common.utils.StringUtilities;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
+import com.swirlds.config.api.validation.annotation.Max;
+import com.swirlds.config.api.validation.annotation.Min;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -34,7 +37,9 @@ import java.util.Objects;
  *
  * @param liveRootPath provides the root path for saving blocks live
  * @param archiveRootPath provides the root path for archived blocks
- * @param type use a predefined type string to replace the persistence component implementation.
+ * @param type storage type
+ * @param compression compression type to use for the storage
+ * @param compressionLevel compression level used by the compression algorithm
  * Non-PRODUCTION values should only be used for troubleshooting and development purposes.
  */
 @ConfigData("persistence.storage")
@@ -43,7 +48,9 @@ public record PersistenceStorageConfig(
         @ConfigProperty(defaultValue = "") String liveRootPath,
         // @todo(#371) - the default life/archive root path must be absolute starting from /opt
         @ConfigProperty(defaultValue = "") String archiveRootPath,
-        @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type) {
+        @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type,
+        @ConfigProperty(defaultValue = "ZSTD") CompressionType compression,
+        @ConfigProperty(defaultValue = "3") @Min(0) @Max(20) int compressionLevel) {
     // @todo(#371) - the default life/archive root path must be absolute starting from /opt
     private static final String LIVE_ROOT_PATH =
             Path.of("hashgraph/blocknode/data/live/").toAbsolutePath().toString();
@@ -56,6 +63,7 @@ public record PersistenceStorageConfig(
      */
     public PersistenceStorageConfig {
         Objects.requireNonNull(type);
+        compression.verifyCompressionLevel(compressionLevel);
         liveRootPath = resolvePath(liveRootPath, LIVE_ROOT_PATH, BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
         archiveRootPath =
                 resolvePath(archiveRootPath, ARCHIVE_ROOT_PATH, BLOCK_NODE_ARCHIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
@@ -145,5 +153,33 @@ public record PersistenceStorageConfig(
          * This type of storage does nothing.
          */
         NO_OP
+    }
+
+    /**
+     * An enum that reflects the type of compression that is used to compress
+     * the blocks that are stored within the persistence storage.
+     */
+    public enum CompressionType {
+        /**
+         * This type of compression is used to compress the blocks using the
+         * `Zstandard` algorithm.
+         */
+        ZSTD(0, 20),
+        /**
+         * This type means no compression will be done.
+         */
+        NONE(Integer.MIN_VALUE, Integer.MAX_VALUE);
+
+        private final int minCompressionLevel;
+        private final int maxCompressionLevel;
+
+        CompressionType(final int minCompressionLevel, final int maxCompressionLevel) {
+            this.minCompressionLevel = minCompressionLevel;
+            this.maxCompressionLevel = maxCompressionLevel;
+        }
+
+        public void verifyCompressionLevel(final int levelToCheck) {
+            Preconditions.requireInRange(levelToCheck, minCompressionLevel, maxCompressionLevel);
+        }
     }
 }

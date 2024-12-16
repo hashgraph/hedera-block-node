@@ -186,5 +186,30 @@ public final class FileUtilities {
         }
     }
 
+    /**
+     * This method creates a new file at the given path. The method ensures that
+     * the full path to the target file will be created, including all missing
+     * intermediary directories.
+     *
+     * @param pathToCreate the path to create
+     * @throws IOException if the file cannot be created or if it already exists
+     */
+    public static void createFile(@NonNull final Path pathToCreate) throws IOException {
+        Files.createDirectories(pathToCreate.getParent());
+        Files.createFile(pathToCreate);
+    }
+
+    /**
+     * This method appends an extension to a given path.
+     *
+     * @param path to append the extension to
+     * @param extension to append to the path
+     * @return a new path with the extension appended
+     */
+    @NonNull
+    public static Path appendExtension(@NonNull final Path path, @NonNull final String extension) {
+        return path.resolveSibling(path.getFileName() + Objects.requireNonNull(extension));
+    }
+
     private FileUtilities() {}
 }

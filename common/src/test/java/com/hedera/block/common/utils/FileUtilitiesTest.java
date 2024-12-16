@@ -36,6 +36,9 @@ import org.junit.jupiter.params.provider.MethodSource;
  * Tests for {@link FileUtilities} functionality.
  */
 class FileUtilitiesTest {
+    @TempDir
+    private Path tempDir;
+
     /**
      * This test aims to verify that a folder path will be created for a given
      * path if it does not exist. First we assert that the path we want to make
@@ -192,6 +195,39 @@ class FileUtilitiesTest {
         assertThatIOException().isThrownBy(() -> FileUtilities.readFileBytesUnsafe(filePath, ".blk", ".gz"));
     }
 
+    /**
+     * This test aims to verify that {@link FileUtilities#createFile(Path)}
+     * correctly creates a file at the given path alongside with any missing
+     * intermediary directories.
+     *
+     * @param toCreate parameterized, target to create
+     * @param tempDir junit temp dir
+     */
+    @ParameterizedTest
+    @MethodSource("filesToCreate")
+    void testCreateFile(final Path toCreate, @TempDir final Path tempDir) throws IOException {
+        final Path expected = tempDir.resolve(toCreate);
+        assertThat(expected).doesNotExist();
+        FileUtilities.createFile(expected);
+        assertThat(expected).exists().isRegularFile();
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link FileUtilities#appendExtension(Path, String)} method correctly
+     * appends the given extension to the given path.
+     *
+     * @param filePath parameterized, to append extensions to
+     * @param extension parameterized, extension to append
+     */
+    @ParameterizedTest
+    @MethodSource("filesWithExtensions")
+    void testAppendFileExtension(final Path filePath, final String extension) {
+        final Path pathToTest = tempDir.resolve(filePath);
+        final Path actual = FileUtilities.appendExtension(pathToTest, extension);
+        assertThat(actual).hasFileName(filePath + extension);
+    }
+
     private static Stream<Arguments> validGzipFiles() {
         return Stream.of(
                 Arguments.of("src/test/resources/valid1.txt.gz", "valid1"),
@@ -209,5 +245,17 @@ class FileUtilitiesTest {
                 Arguments.of("src/test/resources/invalid1.gz"),
                 Arguments.of("src/test/resources/nonexistent.gz"),
                 Arguments.of("src/test/resources/nonexistent.blk"));
+    }
+
+    private static Stream<Arguments> filesToCreate() {
+        return Stream.of(Arguments.of("temp1.txt"), Arguments.of("some_folder/temp2.txt"));
+    }
+
+    private static Stream<Arguments> filesWithExtensions() {
+        return Stream.of(
+                Arguments.of("valid1", ".blk"),
+                Arguments.of("valid1", ""),
+                Arguments.of("valid2", ".gz"),
+                Arguments.of("valid2", ".zstd"));
     }
 }

@@ -18,8 +18,10 @@ package com.hedera.block.server.persistence.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.from;
 
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -42,6 +44,16 @@ class PersistenceStorageConfigTest {
             Path.of("hashgraph/").toAbsolutePath();
     private static final Path PERSISTENCE_STORAGE_ROOT_ABSOLUTE_PATH =
             HASHGRAPH_ROOT_ABSOLUTE_PATH.resolve("blocknode/data/");
+    // Default compression level (as set in the config annotation)
+    private static final int DEFAULT_COMPRESSION_LEVEL = 3;
+    // NoOp compression level boundaries
+    private static final int LOWER_BOUNDARY_FOR_NO_OP_COMPRESSION = Integer.MIN_VALUE;
+    private static final int DEFAULT_VALUE_FOR_NO_OP_COMPRESSION = DEFAULT_COMPRESSION_LEVEL;
+    private static final int UPPER_BOUNDARY_FOR_NO_OP_COMPRESSION = Integer.MAX_VALUE;
+    // Zstd compression level boundaries
+    private static final int LOWER_BOUNDARY_FOR_ZSTD_COMPRESSION = 0;
+    private static final int DEFAULT_VALUE_FOR_ZSTD_COMPRESSION = DEFAULT_COMPRESSION_LEVEL;
+    private static final int UPPER_BOUNDARY_FOR_ZSTD_COMPRESSION = 20;
 
     @AfterEach
     void tearDown() {
@@ -70,7 +82,8 @@ class PersistenceStorageConfigTest {
     @ParameterizedTest
     @MethodSource("storageTypes")
     void testPersistenceStorageConfigStorageTypes(final StorageType storageType) {
-        final PersistenceStorageConfig actual = new PersistenceStorageConfig("", "", storageType);
+        final PersistenceStorageConfig actual =
+                new PersistenceStorageConfig("", "", storageType, CompressionType.NONE, DEFAULT_COMPRESSION_LEVEL);
         assertThat(actual).returns(storageType, from(PersistenceStorageConfig::type));
     }
 
@@ -92,7 +105,11 @@ class PersistenceStorageConfigTest {
             final String archiveRootPathToTest,
             final String expectedArchiveRootPathToTest) {
         final PersistenceStorageConfig actual = new PersistenceStorageConfig(
-                liveRootPathToTest, archiveRootPathToTest, StorageType.BLOCK_AS_LOCAL_FILE);
+                liveRootPathToTest,
+                archiveRootPathToTest,
+                StorageType.BLOCK_AS_LOCAL_FILE,
+                CompressionType.NONE,
+                DEFAULT_COMPRESSION_LEVEL);
         assertThat(actual)
                 .returns(expectedLiveRootPathToTest, from(PersistenceStorageConfig::liveRootPath))
                 .returns(expectedArchiveRootPathToTest, from(PersistenceStorageConfig::archiveRootPath));
@@ -114,7 +131,56 @@ class PersistenceStorageConfigTest {
             final String invalidLiveRootPathToTest, final String invalidArchiveRootPathToTest) {
         assertThatExceptionOfType(UncheckedIOException.class)
                 .isThrownBy(() -> new PersistenceStorageConfig(
-                        invalidLiveRootPathToTest, invalidArchiveRootPathToTest, StorageType.BLOCK_AS_LOCAL_FILE));
+                        invalidLiveRootPathToTest,
+                        invalidArchiveRootPathToTest,
+                        StorageType.BLOCK_AS_LOCAL_FILE,
+                        CompressionType.NONE,
+                        DEFAULT_COMPRESSION_LEVEL));
+    }
+
+    /**
+     * This test aims to verify that the {@link PersistenceStorageConfig} class
+     * correctly returns the compression level that was set in the constructor.
+     *
+     * @param compressionLevel parameterized, the compression level to test
+     */
+    @ParameterizedTest
+    @MethodSource("validCompressionLevels")
+    void testPersistenceStorageConfigValidCompressionLevel(
+            final CompressionType compressionType, final int compressionLevel) {
+        final PersistenceStorageConfig actual = new PersistenceStorageConfig(
+                "", "", StorageType.BLOCK_AS_LOCAL_FILE, compressionType, compressionLevel);
+        assertThat(actual).returns(compressionLevel, from(PersistenceStorageConfig::compressionLevel));
+    }
+
+    /**
+     * This test aims to verify that the {@link PersistenceStorageConfig} class
+     * correctly throws an {@link IllegalArgumentException} when the compression
+     * level is invalid.
+     *
+     * @param compressionLevel parameterized, the compression level to test
+     */
+    @ParameterizedTest
+    @MethodSource("invalidCompressionLevels")
+    void testPersistenceStorageConfigInvalidCompressionLevel(
+            final CompressionType compressionType, final int compressionLevel) {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new PersistenceStorageConfig(
+                        "", "", StorageType.BLOCK_AS_LOCAL_FILE, compressionType, compressionLevel));
+    }
+
+    /**
+     * This test aims to verify that the {@link PersistenceStorageConfig} class
+     * correctly returns the compression type that was set in the constructor.
+     *
+     * @param compressionType parameterized, the compression type to test
+     */
+    @ParameterizedTest
+    @MethodSource("compressionTypes")
+    void testPersistenceStorageConfigCompressionTypes(final CompressionType compressionType) {
+        final PersistenceStorageConfig actual =
+                new PersistenceStorageConfig("", "", StorageType.NO_OP, compressionType, DEFAULT_COMPRESSION_LEVEL);
+        assertThat(actual).returns(compressionType, from(PersistenceStorageConfig::compression));
     }
 
     /**
@@ -122,6 +188,13 @@ class PersistenceStorageConfigTest {
      */
     private static Stream<Arguments> storageTypes() {
         return Arrays.stream(StorageType.values()).map(Arguments::of);
+    }
+
+    /**
+     * All compression types dynamically provided.
+     */
+    private static Stream<Arguments> compressionTypes() {
+        return Arrays.stream(CompressionType.values()).map(Arguments::of);
     }
 
     /**
@@ -222,5 +295,33 @@ class PersistenceStorageConfigTest {
         final String invalidPath = "/invalid_path/:invalid_directory";
         return Stream.of(
                 Arguments.of("", invalidPath), Arguments.of(invalidPath, ""), Arguments.of(invalidPath, invalidPath));
+    }
+
+    private static Stream<Arguments> validCompressionLevels() {
+        return Stream.of(
+                Arguments.of(
+                        CompressionType.NONE,
+                        LOWER_BOUNDARY_FOR_NO_OP_COMPRESSION), // lower boundary for NO_OP compression
+                Arguments.of(
+                        CompressionType.NONE,
+                        DEFAULT_VALUE_FOR_NO_OP_COMPRESSION), // default value for NO_OP compression
+                Arguments.of(
+                        CompressionType.NONE,
+                        UPPER_BOUNDARY_FOR_NO_OP_COMPRESSION), // upper boundary for NO_OP compression
+                Arguments.of(
+                        CompressionType.ZSTD,
+                        LOWER_BOUNDARY_FOR_ZSTD_COMPRESSION), // lower boundary for ZSTD compression
+                Arguments.of(
+                        CompressionType.ZSTD, DEFAULT_VALUE_FOR_ZSTD_COMPRESSION), // default value for ZSTD compression
+                Arguments.of(
+                        CompressionType.ZSTD,
+                        UPPER_BOUNDARY_FOR_ZSTD_COMPRESSION) // upper boundary for ZSTD compression
+                );
+    }
+
+    private static Stream<Arguments> invalidCompressionLevels() {
+        return Stream.of(
+                Arguments.of(CompressionType.ZSTD, LOWER_BOUNDARY_FOR_ZSTD_COMPRESSION - 1),
+                Arguments.of(CompressionType.ZSTD, UPPER_BOUNDARY_FOR_ZSTD_COMPRESSION + 1));
     }
 }
