@@ -202,7 +202,7 @@ jobs:
         run: ${{ env.GRADLE_MANIFEST_GENERATOR }}
 
       - name: Validate Applications
-        working-directory: ${{ github.workspace }}/hedera-node/data/apps
+        working-directory: ${{ github.workspace }}/server/build/libs
         run: sha256sum -c "${GRADLE_MANIFEST_PATH}/applications.sha256"
 
 #      - name: Compare Library Manifests
