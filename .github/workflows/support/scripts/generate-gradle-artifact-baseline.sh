@@ -2,8 +2,8 @@
 set -o pipefail
 set +e
 
-readonly RELEASE_LIB_PATH="hedera-node/data/lib"
-readonly RELEASE_APPS_PATH="hedera-node/data/apps"
+readonly RELEASE_LIB_PATH="server/build/libs"
+readonly RELEASE_APPS_PATH="server/build/libs"
 
 GROUP_ACTIVE="false"
 
@@ -103,9 +103,9 @@ start_group "Configuring Environment"
     fi
   end_task "DONE (Found: ${SHA256SUM})"
 
-  start_task "Checking for prebuilt libraries"
-    ls -al "${GITHUB_WORKSPACE}/${RELEASE_LIB_PATH}"/*.jar >/dev/null 2>&1 || fail "ERROR (Exit Code: ${?})" "${?}"
-  end_task "FOUND (Path: ${GITHUB_WORKSPACE}/${RELEASE_LIB_PATH}/*.jar)"
+#  start_task "Checking for prebuilt libraries"
+#    ls -al "${GITHUB_WORKSPACE}/${RELEASE_LIB_PATH}"/*.jar >/dev/null 2>&1 || fail "ERROR (Exit Code: ${?})" "${?}"
+#  end_task "FOUND (Path: ${GITHUB_WORKSPACE}/${RELEASE_LIB_PATH}/*.jar)"
 
   start_task "Checking for prebuilt applications"
     ls -al "${GITHUB_WORKSPACE}/${RELEASE_APPS_PATH}"/*.jar >/dev/null 2>&1 || fail "ERROR (Exit Code: ${?})" "${?}"
