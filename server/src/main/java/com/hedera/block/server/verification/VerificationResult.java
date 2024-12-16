@@ -16,13 +16,10 @@
 
 package com.hedera.block.server.verification;
 
-import com.hedera.hapi.block.BlockItemUnparsed;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
-public interface BlockVerificationSession {
-
-    void appendBlockItems(List<BlockItemUnparsed> blockItems);
-
-    CompletableFuture<VerificationResult> getVerificationResult();
-}
+public record VerificationResult(
+        @NonNull Long blockNumber,
+        @NonNull Bytes blockHash,
+        @NonNull BlockVerificationStatus status) {}

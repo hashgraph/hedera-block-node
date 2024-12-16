@@ -21,4 +21,4 @@ import com.swirlds.config.api.ConfigProperty;
 
 @ConfigData("verification")
 public record VerificationConfig(
-        @ConfigProperty(defaultValue = "true") boolean enabled, @ConfigProperty(defaultValue = "") int workers) {}
+        @ConfigProperty(defaultValue = "true") boolean enabled) {}

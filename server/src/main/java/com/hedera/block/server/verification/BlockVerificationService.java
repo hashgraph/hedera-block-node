@@ -16,17 +16,12 @@
 
 package com.hedera.block.server.verification;
 
-import static com.hedera.block.server.verification.hasher.CommonUtils.combine;
-import static com.hedera.block.server.verification.hasher.CommonUtils.getBlockItemHash;
-import static java.lang.System.Logger.Level.INFO;
+import static java.lang.System.Logger.Level.WARNING;
 
-import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.verification.hasher.NaiveStreamingTreeHasher;
-import com.hedera.block.server.verification.hasher.StreamingTreeHasher;
+import com.hedera.block.server.verification.signature.SignatureVerifier;
 import com.hedera.hapi.block.BlockItemUnparsed;
-import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
@@ -39,102 +34,53 @@ public class BlockVerificationService {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
     private final MetricsService metricsService;
+    private final SignatureVerifier signatureVerifier;
 
-    // private final ExecutorService executor = ForkJoinPool.commonPool();
-    // private final int hashCombineBatchSize = 32;
-
-    private long currentBlockNumber = -1;
-    private Bytes lastBlockHash;
-    private StreamingTreeHasher inputTreeHasher;
-    private StreamingTreeHasher outputTreeHasher;
-
-    private long blockWorkStartTime = 0L;
+    private BlockVerificationSession currentSession;
+    private Bytes lastBlockHash = Bytes.EMPTY;
 
     @Inject
-    public BlockVerificationService(@NonNull final MetricsService metricsService) {
+    public BlockVerificationService(
+            @NonNull final MetricsService metricsService,
+            @NonNull final SignatureVerifier signatureVerifier) {
         this.metricsService = metricsService;
+        this.signatureVerifier = signatureVerifier;
     }
 
-    public void onBlockItemsReceived(List<BlockItemUnparsed> blockItems)
-            throws ParseException, ExecutionException, InterruptedException {
+    public void onBlockItemsReceived(List<BlockItemUnparsed> blockItems) throws ParseException, ExecutionException, InterruptedException {
 
         final BlockItemUnparsed firstItem = blockItems.getFirst();
+
+        // If we have a new block header, that means a new block has started
         if (firstItem.hasBlockHeader()) {
             metricsService
                     .get(BlockNodeMetricTypes.Counter.VerificationBlocksReceived)
                     .increment();
             BlockHeader blockHeader = BlockHeader.PROTOBUF.parse(firstItem.blockHeader());
-            currentBlockNumber = Preconditions.requireWhole(blockHeader.number());
-            inputTreeHasher = new NaiveStreamingTreeHasher();
-            outputTreeHasher = new NaiveStreamingTreeHasher();
-            blockWorkStartTime = System.nanoTime();
+            // double check last block hash with prev of current block
+            if(currentSession != null) {
+                lastBlockHash = currentSession.getVerificationResult().get().blockHash();
 
-            LOGGER.log(INFO, "Test 3");
-            LOGGER.log(INFO, "Processing block number: {0}", currentBlockNumber);
-            LOGGER.log(INFO, "Previous block hash: {0}", blockHeader.previousBlockHash());
+                    if (!lastBlockHash.equals(blockHeader.previousBlockHash())) {
+                        LOGGER.log(WARNING, "Block header previous hash does not match last calculated block hash.");
+                        metricsService
+                                .get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed)
+                                .increment();
+                    }
 
-            // if lastBlockHash is not null, means is the first block we are processing.
-            // this is a double check to ensure that the new block_header previousBlockHash is the same we processed.
-            if (lastBlockHash != null && !lastBlockHash.equals(blockHeader.previousBlockHash())) {
-                metricsService
-                        .get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed)
-                        .increment();
+            } else {
+                LOGGER.log(WARNING, "No previous session to compare block hashes.");
             }
-        }
 
-        //        final Hashes hashes = getBlockHashes(blockItems);
-        //        while (hashes.inputHashes().hasRemaining()) {
-        //            inputTreeHasher.addLeaf(hashes.inputHashes());
-        //        }
-        //        while (hashes.outputHashes().hasRemaining()) {
-        //            outputTreeHasher.addLeaf(hashes.outputHashes());
-        //        }
+            // start new session
+            currentSession = new BlockVerificationSessionImpl(blockHeader, blockItems, metricsService, signatureVerifier);
 
-        for (BlockItemUnparsed item : blockItems) {
-            final BlockItemUnparsed.ItemOneOfType kind = item.item().kind();
-            switch (kind) {
-                case EVENT_HEADER, EVENT_TRANSACTION -> inputTreeHasher.addLeaf(getBlockItemHash(item));
-                case TRANSACTION_RESULT, TRANSACTION_OUTPUT, STATE_CHANGES -> outputTreeHasher.addLeaf(
-                        getBlockItemHash(item));
+        } else {
+            if (currentSession == null) {
+                LOGGER.log(WARNING, "Received block items before a block header. Ignoring.");
+                return;
             }
-        }
-
-        // process block items hashes.
-        final BlockItemUnparsed lastItem = blockItems.getLast();
-        if (lastItem.hasBlockProof()) {
-
-            Bytes inputHash = inputTreeHasher.rootHash().get();
-            Bytes outputHash = outputTreeHasher.rootHash().get();
-
-            // Parse BlockProof.
-            BlockProof blockProof = BlockProof.PROTOBUF.parse(lastItem.blockProof());
-            Bytes providedLasBlockHash = blockProof.previousBlockRootHash();
-            Bytes providedBlockStartStateHash = blockProof.startOfBlockStateRootHash();
-
-            final var leftParent = combine(providedLasBlockHash, inputHash);
-            final var rightParent = combine(outputHash, providedBlockStartStateHash);
-            final var blockHash = combine(leftParent, rightParent);
-
-            // set to last block hash for next block verification.
-            this.lastBlockHash = blockHash;
-
-            LOGGER.log(INFO, "Calculated Block hash: {0}", blockHash);
-
-            // Call SignatureVerifier to verify the signature of the block.
-            // SignatureVerifier.verify(blockProof.signature(), blockHash.toByteArray());
-
-            // Call the BlockStatusService to notify the block status.
-            LOGGER.log(INFO, "Block verification completed successfully for block number: {0}", currentBlockNumber);
-
-            // measure the time taken to verify the block.
-            long elapsedTime = System.nanoTime() - blockWorkStartTime;
-            metricsService
-                    .get(BlockNodeMetricTypes.Counter.VerificationBlockTime)
-                    .add(elapsedTime);
-
-            metricsService
-                    .get(BlockNodeMetricTypes.Counter.VerificationBlocksVerified)
-                    .increment();
+            currentSession.appendBlockItems(blockItems);
         }
     }
 }

@@ -16,25 +16,18 @@
 
 package com.hedera.block.server.verification;
 
+import com.hedera.block.server.verification.signature.SignatureVerifier;
+import com.hedera.block.server.verification.signature.SignatureVerifierDummy;
+import dagger.Binds;
 import dagger.Module;
+
+import javax.inject.Singleton;
 
 @Module
 public interface VerificationInjectionModule {
 
-    /*@Binds
-    @Singleton
-    StreamVerificationHandlerImpl bindVerificationHandler(
-            @NonNull final StreamVerificationHandlerImpl verificationHandler);*/
 
-    /*@Provides
+    @Binds
     @Singleton
-    public static StreamVerificationHandlerImpl streamVerificationHandler(LiveStreamMediator mediator, MetricsService metricsService, ServiceStatus serviceStatus){
-        StreamVerificationHandlerImpl streamVerificationHandler = new StreamVerificationHandlerImpl(mediator, metricsService, serviceStatus);
-        return streamVerificationHandler;
-    }*/
-
-    /*@Binds
-    @Singleton
-    BlockVerificationService bindBlockHashService(@NonNull final BlockVerificationService blockHashService);*/
-
+    SignatureVerifier bindSignatureVerifier(SignatureVerifierDummy signatureVerifier);
 }
