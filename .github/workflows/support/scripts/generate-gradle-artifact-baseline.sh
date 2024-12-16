@@ -63,32 +63,32 @@ start_group "Configuring Environment"
     trap 'rm -rf "${TEMP_DIR}"' EXIT
   end_task "DONE (Path: ${TEMP_DIR})"
 
-#  start_task "Resolving the GITHUB_WORKSPACE path"
-#    # Ensure GITHUB_WORKSPACE is provided or default to the repository root
-#    if [[ -z "${GITHUB_WORKSPACE}" || ! -d "${GITHUB_WORKSPACE}" ]]; then
-#      GITHUB_WORKSPACE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../../" && pwd)"
-#    fi
-#  end_task "DONE (Path: ${GITHUB_WORKSPACE})"
-#
-#  start_task "Resolving the GITHUB_OUTPUT path"
-#    # Ensure GITHUB_OUTPUT is provided or default to the repository root
-#    if [[ -z "${GITHUB_OUTPUT}" ]]; then
-#      GITHUB_OUTPUT="${TEMP_DIR}/workflow-output.txt"
-#    fi
-#  end_task "DONE (Path: ${GITHUB_OUTPUT})"
-#
-#  start_task "Resolving the GITHUB_SHA hash"
-#    if [[ -z "${GITHUB_SHA}" ]]; then
-#      GITHUB_SHA="$(git rev-parse HEAD | tr -d '[:space:]')" || fail "ERROR (Exit Code: ${?})" "${?}"
-#    fi
-#  end_task "DONE (Commit: ${GITHUB_SHA})"
-#
-#  start_task "Resolving the MANIFEST_PATH variable"
-#    if [[ -z "${MANIFEST_PATH}" ]]; then
-#      MANIFEST_PATH="${GITHUB_WORKSPACE}/.manifests/gradle"
-#    fi
-#  end_task "DONE (Path: ${MANIFEST_PATH})"
-#
+  start_task "Resolving the GITHUB_WORKSPACE path"
+    # Ensure GITHUB_WORKSPACE is provided or default to the repository root
+    if [[ -z "${GITHUB_WORKSPACE}" || ! -d "${GITHUB_WORKSPACE}" ]]; then
+      GITHUB_WORKSPACE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../../" && pwd)"
+    fi
+  end_task "DONE (Path: ${GITHUB_WORKSPACE})"
+
+  start_task "Resolving the GITHUB_OUTPUT path"
+    # Ensure GITHUB_OUTPUT is provided or default to the repository root
+    if [[ -z "${GITHUB_OUTPUT}" ]]; then
+      GITHUB_OUTPUT="${TEMP_DIR}/workflow-output.txt"
+    fi
+  end_task "DONE (Path: ${GITHUB_OUTPUT})"
+
+  start_task "Resolving the GITHUB_SHA hash"
+    if [[ -z "${GITHUB_SHA}" ]]; then
+      GITHUB_SHA="$(git rev-parse HEAD | tr -d '[:space:]')" || fail "ERROR (Exit Code: ${?})" "${?}"
+    fi
+  end_task "DONE (Commit: ${GITHUB_SHA})"
+
+  start_task "Resolving the MANIFEST_PATH variable"
+    if [[ -z "${MANIFEST_PATH}" ]]; then
+      MANIFEST_PATH="${GITHUB_WORKSPACE}/.manifests/gradle"
+    fi
+  end_task "DONE (Path: ${MANIFEST_PATH})"
+
 #  start_task "Ensuring the MANIFEST_PATH location is present"
 #    if [[ ! -d "${MANIFEST_PATH}" ]]; then
 #      mkdir -p "${MANIFEST_PATH}" || fail "ERROR (Exit Code: ${?})" "${?}"
