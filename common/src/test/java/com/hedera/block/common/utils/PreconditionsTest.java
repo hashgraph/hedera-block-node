@@ -330,6 +330,7 @@ class PreconditionsTest {
                 Arguments.of(0, 1, 2),
                 Arguments.of(1, 2, 3),
                 Arguments.of(-1, 0, 1),
-                Arguments.of(-1, 0, 0));
+                Arguments.of(-1, 0, 0),
+                Arguments.of(1, 0, 0));
     }
 }
