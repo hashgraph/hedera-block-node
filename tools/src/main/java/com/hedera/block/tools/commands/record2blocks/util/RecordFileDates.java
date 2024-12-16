@@ -18,6 +18,7 @@ package com.hedera.block.tools.commands.record2blocks.util;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 
 /**
  * Utility class to store help with record file dates.
@@ -44,12 +45,24 @@ public final class RecordFileDates {
     /**
      * Extract the record file time from a record file name.
      *
-     * @param recordFileName the record file name, like "2024-07-06T16_42_40.006863632Z.rcd.gz"
+     * @param recordOrSidecarFileName the record file name, like "2024-07-06T16_42_40.006863632Z.rcd.gz" or a sidecar
+     *                                file name like "2024-07-06T16_42_40.006863632Z_02.rcd.gz"
      * @return the record file time as an Instant
      */
-    public static Instant extractRecordFileTime(String recordFileName) {
-        return Instant.parse(
-                recordFileName.substring(0, recordFileName.indexOf(".rcd")).replace('_', ':'));
+    public static Instant extractRecordFileTime(String recordOrSidecarFileName) {
+        String dateString;
+        // check if a sidecar file
+        if (recordOrSidecarFileName.contains("Z_")) {
+            dateString = recordOrSidecarFileName.substring(0, recordOrSidecarFileName.lastIndexOf("_")).replace('_', ':');
+        } else {
+            dateString = recordOrSidecarFileName.substring(0, recordOrSidecarFileName.indexOf(".rcd")).replace('_', ':');
+        }
+        try {
+            return Instant.parse(dateString);
+        } catch (DateTimeParseException e) {
+            throw new RuntimeException("Invalid record file name: \"" + recordOrSidecarFileName +
+                    "\" - dateString=\""+dateString+"\"", e);
+        }
     }
 
     /**
@@ -63,13 +76,23 @@ public final class RecordFileDates {
     }
 
     /**
-     * Convert a block time instant to a long.
+     * Convert an instant to a block time long.
      *
-     * @param blockTime the block time instant
+     * @param instant the instant
      * @return the block time in nanoseconds since the first block after OA
      */
-    public static long blockTimeInstantToLong(Instant blockTime) {
-        return Duration.between(FIRST_BLOCK_TIME_INSTANT, blockTime).toNanos();
+    public static long instantToBlockTimeLong(Instant instant) {
+        return Duration.between(FIRST_BLOCK_TIME_INSTANT, instant).toNanos();
+    }
+
+    /**
+     * Convert an instant in time to a block time long.
+     *
+     * @param dateTime the time instant
+     * @return the block time in nanoseconds since the first block after OA
+     */
+    public static long blockTimeInstantToLong(Instant dateTime) {
+        return Duration.between(FIRST_BLOCK_TIME_INSTANT, dateTime).toNanos();
     }
 
     /**

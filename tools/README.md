@@ -26,7 +26,8 @@ The following subcommands are available:
 - `record2block` - Converts a historical record stream files into blocks
 - `fetchRecordsCsv` - Download mirror node record table CSV dump from GCP bucket
 - `extractBlockTimes` - Extract block times from mirror node records csv file
-- `validateBlockTimes` - Validates a block times file
+- `validateBlockTimes` - Validates a block times file as produced by `extractBlockTimes`
+- `addNewerBlockTimes` - Extends the block times file with newer block times
 
 ### The `json` Subcommand
 
@@ -70,7 +71,7 @@ Prints info for block files
 
 Converts a historical record stream files into blocks. This depends on the `block_times.bin` file being present. It can 
 be created by running the other commands `fetchRecordsCsv` and `extractBlockTimes`. It can also be validated by running
-the `validateBlockTimes` command.
+the `validateBlockTimes` command. Then extended with newer block times by running the `addNewerBlockTimes` command.
 
 This command depends on reading data from public requester pays Google Cloud buckets. To do that it needs you to be 
 authenticated with the Google Cloud SDK. You can authenticate with `gcloud auth application-default login` or 
@@ -149,3 +150,36 @@ number(array offset) into block time, i.e. record file name.
 - `--block-times=<blockTimesFile>`
    - Path to the block times ".bin" file.
    - Default: "data/block_times.bin"
+
+
+### The `addNewerBlockTimes` Subcommand
+
+Extends the block times file with newer block times. This is done by listing the record files in the bucket and 
+counting them for block numbers. It processes day by day, listing one day then appending block times to the block times
+file. Then at the end of each day it checks the block number it has computed still matches mirror node by using the
+mirror node REST API. This whole process can take a long time if the mirror node CSV dump is old.
+
+This command depends on reading data from public requester pays Google Cloud buckets. To do that it needs you to be
+authenticated with the Google Cloud SDK. You can authenticate with `gcloud auth application-default login` or
+`gcloud auth login` see [Google Documentation](https://cloud.google.com/storage/docs/reference/libraries#authentication)
+for more info.
+
+`Usage: addNewerBlockTimes [-c]  [--min-node-account-id=3] [--max-node-account-id=34] [-d <dataDir>] [--block-times=<blockTimesFile>]`
+
+**Options:**
+
+- `-c` or `--cache-enabled`
+  - Use local cache for downloaded content, saves cloud costs and bandwidth when testing
+  - Default: true
+- `--min-node-account-id=<minNodeAccountId>`
+  - the account id of the first node in the network
+  - Default: 3
+- `--max-node-account-id=<maxNodeAccountId>`
+  - the account id of the last node in the network
+  - Default: 34
+- `--data-dir=<dataDir>`
+  - the data directory for output and temporary files
+  - Default: "data"
+- `--block-times=<blockTimesFile>`
+  - Path to the block times ".bin" file.
+  - Default: "data/block_times.bin"

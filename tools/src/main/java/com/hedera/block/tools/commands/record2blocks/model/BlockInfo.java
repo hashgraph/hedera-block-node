@@ -16,161 +16,90 @@
 
 package com.hedera.block.tools.commands.record2blocks.model;
 
-import com.hedera.block.tools.commands.record2blocks.gcp.MainNetBucket;
-import java.util.ArrayList;
+import com.hedera.block.tools.commands.record2blocks.model.ChainFile.Kind;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
+import picocli.CommandLine.Help.Ansi;
 
+/**
+ * BlockInfo represents a Hedera block with its associated record files, sidecar files and signature files.
+ */
 @SuppressWarnings("unused")
-public class BlockInfo {
-    private final long blockNum;
-    private final long blockTime;
-    private final List<ChainFile> recordFiles;
-    private final List<ChainFile> signatureFiles;
-    private final List<ChainFile> sidecarFiles;
-    private Map.Entry<String, Long> mostCommonRecordFileMd5EntryAndCount;
-    private ChainFile mostCommonRecordFile;
-    private Map.Entry<String, Long> mostCommonSidecarFileMd5EntryAndCount;
-    private ChainFile mostCommonSideCarFile;
+public record BlockInfo(
+    long blockNum,
+    long blockTime,
+    List<ChainFile> recordFiles,
+    ChainFileAndCount mostCommonRecordFile,
+    SortedMap<Integer, NumberedSidecarFile> sidecarFiles,
+    List<ChainFile> signatureFiles
+){
 
-    public BlockInfo(long blockNum, long blockTime, int minNodeAccountId, int maxNodeAccountId) {
-        this.blockNum = blockNum;
-        this.blockTime = blockTime;
-        final int nodeCount = maxNodeAccountId - minNodeAccountId;
-        this.recordFiles = new ArrayList<>(nodeCount);
-        this.signatureFiles = new ArrayList<>(nodeCount);
-        this.sidecarFiles = new ArrayList<>(nodeCount);
+    public BlockInfo(long blockNum, long blockTime, List<ChainFile> allBlockFiles) {
+        this(
+                blockNum,
+                blockTime,
+                allBlockFiles.stream().filter(cf -> cf.kind() == Kind.RECORD).collect(Collectors.toList()),
+                mostCommonRecordFileMd5EntryAndCount(allBlockFiles),
+                collectSidecarFiles(allBlockFiles),
+                allBlockFiles.stream().filter(cf -> cf.kind() == Kind.SIGNATURE).collect(Collectors.toList())
+        );
     }
 
-    public long blockNum() {
-        return blockNum;
-    }
-
-    public long blockTime() {
-        return blockTime;
-    }
-
-    public List<ChainFile> recordFiles() {
-        return recordFiles;
-    }
-
-    public List<ChainFile> sidecarFiles() {
-        return sidecarFiles;
-    }
-
-    /**
-     * Collect chain files into the appropriate list.
-     */
-    public void addChainFile(ChainFile chainFile) {
-        switch (chainFile.kind()) {
-            case RECORD -> recordFiles.add(chainFile);
-            case SIGNATURE -> signatureFiles.add(chainFile);
-            case SIDECAR -> sidecarFiles.add(chainFile);
-        }
-    }
-
-    /**
-     * Find the most common md5 hash in all record files and signature files.
-     */
-    public void finishAddingFiles() {
-        // find most common md5 hash in all record files
+    private static ChainFileAndCount mostCommonRecordFileMd5EntryAndCount(List<ChainFile> allBlockFiles){
         final Map<String, Long> md5Counts =
-                recordFiles.stream().collect(Collectors.groupingBy(ChainFile::md5, Collectors.counting()));
-        mostCommonRecordFileMd5EntryAndCount =
-                md5Counts.entrySet().stream().max(Map.Entry.comparingByValue()).orElse(null);
-        if (mostCommonRecordFileMd5EntryAndCount == null) {
+                allBlockFiles.stream()
+                        .filter(cf -> cf.kind() == Kind.RECORD)
+                        .collect(Collectors.groupingBy(ChainFile::md5, Collectors.counting()));
+        final var maxCountentry = md5Counts.entrySet().stream().max(Map.Entry.comparingByValue()).orElse(null);
+        if (maxCountentry == null) {
             throw new IllegalStateException("No record files found");
         }
-        // find the first record file with the most common md5 hash
-        mostCommonRecordFile = recordFiles.stream()
-                .filter(cf -> cf.md5().equals(mostCommonRecordFileMd5EntryAndCount.getKey()))
+        final ChainFile maxCountRecordFile = allBlockFiles.stream()
+                .filter(cf -> cf.md5().equals(maxCountentry.getKey()))
                 .findFirst()
                 .orElse(null);
-        // find most common md5 hash in all sidecar files
-        final Map<String, Long> sidecarMd5Counts =
-                sidecarFiles.stream().collect(Collectors.groupingBy(ChainFile::md5, Collectors.counting()));
-        mostCommonSidecarFileMd5EntryAndCount = sidecarMd5Counts.entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .orElse(null);
-        if (mostCommonSidecarFileMd5EntryAndCount != null) {
-            // find the first sidecar file with the most common md5 hash
-            mostCommonSideCarFile = sidecarFiles.stream()
-                    .filter(cf -> cf.md5().equals(mostCommonSidecarFileMd5EntryAndCount.getKey()))
-                    .findFirst()
-                    .orElse(null);
-        }
+        return new ChainFileAndCount(maxCountRecordFile, maxCountentry.getValue().intValue());
     }
 
-    /**
-     * Get the most common record file bytes, or null if there are no record files.
-     */
-    public byte[] getMostCommonRecordFileBytes(MainNetBucket mainNetBucket) {
-        return mostCommonRecordFile == null ? null : mostCommonRecordFile.download(mainNetBucket);
+    private static SortedMap<Integer, NumberedSidecarFile> collectSidecarFiles(List<ChainFile> allBlockFiles){
+        // group sidecar files by sidecar index
+        final Map<Integer, List<ChainFile>> sidecarFiles = allBlockFiles.stream()
+                .filter(cf -> cf.kind() == Kind.SIDECAR)
+                .collect(Collectors.groupingBy(ChainFile::sidecarIndex));
+        final TreeMap<Integer, NumberedSidecarFile> sortedSidecarFiles = new TreeMap<Integer, NumberedSidecarFile>();
+        sidecarFiles.forEach((sidecarIndex, sidecarFileList) -> {
+            sortedSidecarFiles.put(sidecarIndex, new NumberedSidecarFile(sidecarFileList));
+        });
+        return sortedSidecarFiles;
     }
 
-    public List<ChainFile> signatureFiles() {
-        return signatureFiles;
-    }
-
-    /**
-     * Get the most common sidecar file bytes, or null if there are no sidecar files.
-     */
-    public byte[] getMostCommonSidecarFileBytes(MainNetBucket mainNetBucket) {
-        return mostCommonSideCarFile == null ? null : mostCommonSideCarFile.download(mainNetBucket);
-    }
+    /** Template used for rendering to string. */
+    private static final String TEMPLATE = Ansi.AUTO.string(
+            "@|bold,yellow BlockInfo{|@  @|yellow blockNum=|@$blockNum, @|yellow blockTime=|@$blockTime "+
+            "@|bold,yellow recordFiles|@ @|yellow total=|@$recordFileCount @|yellow " +
+            "matching=|@$recordFilesMatching @|cyan -> $recordFilePercent%|@ " +
+            "@|bold,yellow sidecarFiles=|@  $sidecarFiles" +
+            "@|bold,yellow signatureFiles|@ @|yellow total=|@$signatureFilesSize " +
+            "@|bold,yellow }|@");
 
     @Override
     public String toString() {
         // check
-        return """
-               BlockInfo{
-                   blockNum=$blockNum
-                   blockTime=$blockTime
-                   recordFiles[$recordFileCount]=$recordFiles
-                       mostCommonRecordFileMd5=$mostCommonRecordFileMd5
-                       filesMatching=$filesMatching of $recordFileCount = $filesMatchingPercent%
-                       mostCommonRecordFile=$mostCommonRecordFile
-                   signatureFiles[$signatureFilesSize]=$signatureFiles
-                   sidecarFiles[$sidecarFilesSize]=$sidecarFiles
-                       mostCommonSidecarFileMd5=$mostCommonSidecarFileMd5
-                       filesMatching=$sidecarFilesMatching
-               }"""
+        return TEMPLATE
                 .replace("$blockNum", String.valueOf(blockNum))
                 .replace("$blockTime", String.valueOf(blockTime))
                 .replace("$recordFileCount", String.valueOf(recordFiles.size()))
-                .replace(
-                        "$recordFiles",
-                        recordFiles.stream().map(Objects::toString).collect(Collectors.joining(", ")))
-                .replace("$mostCommonRecordFileMd5", mostCommonRecordFileMd5EntryAndCount.getKey())
-                .replace(
-                        "$filesMatching",
-                        mostCommonRecordFileMd5EntryAndCount.getValue().toString())
-                .replace(
-                        "$filesMatchingPercent",
-                        String.valueOf(((mostCommonRecordFileMd5EntryAndCount.getValue() / (double) recordFiles.size())
-                                * 100)))
+                .replace("$recordFilesMatching",String.valueOf(mostCommonRecordFile.count()))
+                .replace("$recordFilePercent",
+                        String.valueOf(((mostCommonRecordFile.count() / (double) recordFiles.size()) * 100)))
                 .replace("$mostCommonRecordFile", mostCommonRecordFile.toString())
-                .replace("$signatureFilesSize", String.valueOf(signatureFiles.size()))
-                .replace(
-                        "$signatureFiles",
-                        signatureFiles.stream().map(Objects::toString).collect(Collectors.joining(", ")))
-                .replace("$sidecarFilesSize", String.valueOf(sidecarFiles.size()))
                 .replace(
                         "$sidecarFiles",
-                        sidecarFiles.stream().map(Objects::toString).collect(Collectors.joining(", ")))
-                .replace(
-                        "$mostCommonSidecarFileMd5",
-                        mostCommonSidecarFileMd5EntryAndCount == null
-                                ? "none"
-                                : mostCommonSidecarFileMd5EntryAndCount.getKey())
-                .replace(
-                        "$sidecarFilesMatching",
-                        mostCommonSidecarFileMd5EntryAndCount == null
-                                ? "none"
-                                : mostCommonSidecarFileMd5EntryAndCount
-                                        .getValue()
-                                        .toString());
+                        sidecarFiles.isEmpty() ? "none" :
+                        sidecarFiles.values().stream().map(NumberedSidecarFile::toString).collect(Collectors.joining(", ")))
+                .replace("$signatureFilesSize", String.valueOf(signatureFiles.size()));
     }
 }

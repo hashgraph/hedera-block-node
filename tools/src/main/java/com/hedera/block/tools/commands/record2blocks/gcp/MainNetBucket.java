@@ -16,6 +16,7 @@
 
 package com.hedera.block.tools.commands.record2blocks.gcp;
 
+import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.Storage.BlobField;
@@ -27,6 +28,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -48,6 +50,8 @@ public class MainNetBucket {
     /** The required fields we need from blobs */
     private static final Storage.BlobListOption REQUIRED_FIELDS =
             BlobListOption.fields(BlobField.NAME, BlobField.SIZE, BlobField.MD5HASH);
+    /** Blob name field only */
+    private static final Storage.BlobListOption NAME_FIELD_ONLY = BlobListOption.fields(BlobField.NAME);
     /** The mainnet bucket name*/
     private static final String HEDERA_MAINNET_STREAMS_BUCKET = "hedera-mainnet-streams";
     /** The mainnet bucket GCP API instance */
@@ -122,8 +126,21 @@ public class MainNetBucket {
         final String datePrefix = RecordFileDates.blockTimeLongToRecordFilePrefix(blockStartTime);
         // crop to the hour
         final String dayPrefix = datePrefix.substring(0, datePrefix.indexOf('T'));
-        System.out.println("dayPrefix = " + dayPrefix);
         return listWithFilePrefix(dayPrefix);
+    }
+
+    /**
+     * List all the record file names in the bucket that have a start time within the given day that contains the given
+     * blockStartTime.
+     *
+     * @param blockStartTime the start time of a block, in nanoseconds since OA
+     * @return a list of unique names of all record files starting with the given file name prefix.
+     */
+    public List<String> listDayFileNames(long blockStartTime) {
+        final String datePrefix = RecordFileDates.blockTimeLongToRecordFilePrefix(blockStartTime);
+        // crop to the hour
+        final String dayPrefix = datePrefix.substring(0, datePrefix.indexOf('T'));
+        return listNamesWithFilePrefix(dayPrefix);
     }
 
     /**
@@ -201,5 +218,62 @@ public class MainNetBucket {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * List all the record file names in the bucket that have this file name prefix. This fetches blobs for all record files,
+     * signature files and sidecar files. For all nodes.
+     *
+     * @param filePrefix the prefix of the file name to search for
+     * @return a list of unique names of all record files starting with the given file name prefix.
+     */
+    private List<String> listNamesWithFilePrefix(String filePrefix) {
+        try {
+            // read from cache if it already exists in cache
+            final Path listCacheFilePath = cacheDir.resolve("list-names-" + filePrefix + ".txt.gz");
+            if (cacheEnabled && Files.exists(listCacheFilePath)) {
+                try (var lineStream = Files.lines(listCacheFilePath)) {
+                    return lineStream.toList();
+                }
+            }
+            // create a list of ChainFiles
+            List<String> fileNames = IntStream.range(minNodeAccountId, maxNodeAccountId + 1)
+                    .parallel()
+                    .mapToObj(nodeAccountId ->
+                                    STREAMS_BUCKET
+                                            .list(
+                                                    BlobListOption.prefix("recordstreams/record0.0." + nodeAccountId
+                                                            + "/" + filePrefix),
+                                                    NAME_FIELD_ONLY)
+                                            .streamAll()
+                            .map(BlobInfo::getName)
+                            .map(name -> name.substring(name.lastIndexOf('/') + 1))
+                            .filter(name -> name.endsWith(".rcd") || name.endsWith(".rcd.gz")))
+                    .flatMap(Function.identity())
+                    .sorted()
+                    .distinct()
+                    .toList();
+            // save the list to cache
+            if (cacheEnabled) {
+                Files.createDirectories(listCacheFilePath.getParent());
+                Files.write(listCacheFilePath, fileNames);
+            }
+            // return all the file names
+            return fileNames;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * The main method test listing all the files in the bucket for the given day and hour.
+     */
+    public static void main(String[] args) {
+        MainNetBucket mainNetBucket = new MainNetBucket(true, Path.of("data/gcp-cache"), 0, 34);
+        mainNetBucket.listHour(0).forEach(System.out::println);
+        System.out.println("==========================================================================");
+        final Instant dec1st2024 = Instant.parse("2024-12-01T00:00:00Z");
+        final long dec1st2024BlockTime = RecordFileDates.instantToBlockTimeLong(dec1st2024);
+        mainNetBucket.listHour(dec1st2024BlockTime).forEach(System.out::println);
     }
 }
