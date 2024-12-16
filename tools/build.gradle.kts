@@ -19,12 +19,24 @@ import org.gradlex.javamodule.dependencies.tasks.ModuleDirectivesScopeCheck
 plugins {
     id("application")
     id("com.hedera.block.tools")
+    id("com.gradleup.shadow") version "8.3.5"
 }
 
 description = "Hedera Block Stream Tools"
 
 application {
     mainClass = "com.hedera.block.tools.BlockStreamTool"
+}
+
+// Generate Manifest with Main-Class and Implementation-Title
+tasks.withType<Jar> {
+    manifest {
+        attributes(
+            "Main-Class" to application.mainClass.get(),
+            "Implementation-Title" to project.name,
+            "Implementation-Version" to project.version
+        )
+    }
 }
 
 // Switch compilation from modules back to classpath because 3rd party libraries are not modularized

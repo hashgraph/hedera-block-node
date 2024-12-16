@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.tools.commands.record2blocks.mirrornode;
+package com.hedera.block.tools.commands.record2blocks.model;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
@@ -66,6 +66,6 @@ public class BlockTimes {
      * @return the maximum block number
      */
     public long getMaxBlockNumber() {
-        return blockTimes.capacity();
+        return blockTimes.capacity() - 1;
     }
 }

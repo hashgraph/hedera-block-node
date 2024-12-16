@@ -18,6 +18,7 @@ package com.hedera.block.tools.commands.record2blocks.mirrornode;
 
 import static com.hedera.block.tools.commands.record2blocks.util.RecordFileDates.blockTimeLongToRecordFilePrefix;
 
+import com.hedera.block.tools.commands.record2blocks.model.BlockTimes;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
