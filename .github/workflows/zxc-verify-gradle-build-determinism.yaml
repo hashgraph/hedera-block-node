@@ -53,6 +53,7 @@ permissions:
   packages: write
 
 env:
+  GRADLE_MANIFEST_PATH: ${{ github.workspace }}/.manifests/gradle
   GRADLE_MANIFEST_GENERATOR: .github/workflows/support/scripts/generate-gradle-artifact-baseline.sh
   LC_ALL: C.UTF-8
 
