@@ -63,7 +63,7 @@ public class PublishStreamObserver implements StreamObserver<PublishStreamRespon
      */
     @Override
     public void onNext(PublishStreamResponse publishStreamResponse) {
-        if (lastKnownStatuses.size() == lastKnownStatusesCapacity) {
+        if (lastKnownStatuses.size() >= lastKnownStatusesCapacity) {
             lastKnownStatuses.pollFirst();
         }
         lastKnownStatuses.add(publishStreamResponse.toString());

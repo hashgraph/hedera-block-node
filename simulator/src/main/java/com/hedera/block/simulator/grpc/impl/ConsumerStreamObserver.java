@@ -75,7 +75,7 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
     @Override
     public void onNext(SubscribeStreamResponse subscribeStreamResponse) {
         final SubscribeStreamResponse.ResponseCase responseType = subscribeStreamResponse.getResponseCase();
-        if (lastKnownStatuses.size() == lastKnownStatusesCapacity) {
+        if (lastKnownStatuses.size() >= lastKnownStatusesCapacity) {
             lastKnownStatuses.pollFirst();
         }
         lastKnownStatuses.add(subscribeStreamResponse.toString());
