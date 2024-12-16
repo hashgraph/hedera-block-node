@@ -2,7 +2,7 @@
 set -o pipefail
 set +e
 
-readonly RELEASE_LIB_PATH="server/build/libs"
+#readonly RELEASE_LIB_PATH="server/build/libs"
 readonly RELEASE_APPS_PATH="server/build/libs"
 
 GROUP_ACTIVE="false"
@@ -103,12 +103,14 @@ start_group "Configuring Environment"
     fi
   end_task "DONE (Found: ${SHA256SUM})"
 
-#  start_task "Checking for prebuilt libraries"
+  start_task "Checking for prebuilt libraries"
 #    ls -al "${GITHUB_WORKSPACE}/${RELEASE_LIB_PATH}"/*.jar >/dev/null 2>&1 || fail "ERROR (Exit Code: ${?})" "${?}"
-#  end_task "FOUND (Path: ${GITHUB_WORKSPACE}/${RELEASE_LIB_PATH}/*.jar)"
+    ls -la "${GITHUB_WORKSPACE}/${RELEASE_LIB_PATH}"/
+  end_task "FOUND (Path: ${GITHUB_WORKSPACE}/${RELEASE_LIB_PATH}/*.jar)"
 
   start_task "Checking for prebuilt applications"
     ls -al "${GITHUB_WORKSPACE}/${RELEASE_APPS_PATH}"/*.jar >/dev/null 2>&1 || fail "ERROR (Exit Code: ${?})" "${?}"
+    ls -la "${GITHUB_WORKSPACE}/${RELEASE_APPS_PATH}"/
   end_task "FOUND (Path: ${GITHUB_WORKSPACE}/${RELEASE_APPS_PATH}/*.jar)"
 end_group
 
@@ -117,19 +119,19 @@ end_group
 #  ${SHA256SUM} -b -- *.jar | sort -k 2 | tee -a "${TEMP_DIR}"/libraries.sha256
 #  popd >/dev/null 2>&1 || fail "POPD ERROR (Exit Code: ${?})" "${?}"
 #end_group
-#
-#start_group "Generating Application Hashes (${GITHUB_WORKSPACE}/${RELEASE_APPS_PATH}/*.jar)"
-#  pushd "${GITHUB_WORKSPACE}/${RELEASE_APPS_PATH}" >/dev/null 2>&1 || fail "PUSHD ERROR (Exit Code: ${?})" "${?}"
-#  ${SHA256SUM} -b -- *.jar | sort -k 2 | tee -a "${TEMP_DIR}"/applications.sha256
-#  popd >/dev/null 2>&1 || fail "POPD ERROR (Exit Code: ${?})" "${?}"
-#end_group
-#
-#start_group "Generating Final Release Manifests"
-#
-#  start_task "Generating the manifest archive"
-#  tar -czf "${TEMP_DIR}/manifest.tar.gz" -C "${TEMP_DIR}" libraries.sha256 applications.sha256 >/dev/null 2>&1 || fail "TAR ERROR (Exit Code: ${?})" "${?}"
-#  end_task
-#
+
+start_group "Generating Application Hashes (${GITHUB_WORKSPACE}/${RELEASE_APPS_PATH}/*.jar)"
+  pushd "${GITHUB_WORKSPACE}/${RELEASE_APPS_PATH}" >/dev/null 2>&1 || fail "PUSHD ERROR (Exit Code: ${?})" "${?}"
+  ${SHA256SUM} -b -- *.jar | sort -k 2 | tee -a "${TEMP_DIR}"/applications.sha256
+  popd >/dev/null 2>&1 || fail "POPD ERROR (Exit Code: ${?})" "${?}"
+end_group
+
+start_group "Generating Final Release Manifests"
+
+  start_task "Generating the manifest archive"
+  tar -czf "${TEMP_DIR}/manifest.tar.gz" -C "${TEMP_DIR}" libraries.sha256 applications.sha256 >/dev/null 2>&1 || fail "TAR ERROR (Exit Code: ${?})" "${?}"
+  end_task
+
 #  start_task "Copying the manifest files"
 #  cp "${TEMP_DIR}/manifest.tar.gz" "${MANIFEST_PATH}/${GITHUB_SHA}.tar.gz" || fail "COPY ERROR (Exit Code: ${?})" "${?}"
 #  cp "${TEMP_DIR}/libraries.sha256" "${MANIFEST_PATH}/libraries.sha256" || fail "COPY ERROR (Exit Code: ${?})" "${?}"
@@ -145,4 +147,4 @@ end_group
 #      printf "libraries=%s\n" "${MANIFEST_PATH}/libraries.sha256"
 #    } >> "${GITHUB_OUTPUT}"
 #  end_task
-#end_group
+end_group
