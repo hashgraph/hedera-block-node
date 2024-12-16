@@ -43,6 +43,14 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  check-gradle:
+    name: Gradle
+    uses: ./.github/workflows/zxc-verify-gradle-build-determinism.yaml
+    with:
+      ref: ${{ github.event.inputs.ref || '' }}
+      java-distribution: ${{ inputs.java-distribution || 'temurin' }}
+      java-version: ${{ inputs.java-version || '21.0.4' }}
+
   publish:
     runs-on: block-node-linux-medium
 
