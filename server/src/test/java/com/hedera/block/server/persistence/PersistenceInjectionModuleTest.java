@@ -179,7 +179,7 @@ class PersistenceInjectionModuleTest {
         when(persistenceStorageConfigMock.type()).thenReturn(storageType);
 
         final BlockReader<BlockUnparsed> actual =
-                PersistenceInjectionModule.providesBlockReader(persistenceStorageConfigMock);
+                PersistenceInjectionModule.providesBlockReader(persistenceStorageConfigMock, blockPathResolverMock);
 
         final Class<?> targetInstanceType =
                 switch (storageType) {

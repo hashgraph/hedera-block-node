@@ -92,14 +92,17 @@ public interface PersistenceInjectionModule {
      *
      * @param config the persistence storage configuration needed to build the
      * block reader
+     * @param blockPathResolver the block path resolver needed to build
+     * the block reader
      * @return a block reader singleton
      */
     @Provides
     @Singleton
-    static BlockReader<BlockUnparsed> providesBlockReader(@NonNull final PersistenceStorageConfig config) {
+    static BlockReader<BlockUnparsed> providesBlockReader(
+            @NonNull final PersistenceStorageConfig config, @NonNull final BlockPathResolver blockPathResolver) {
         final StorageType persistenceType = config.type();
         return switch (persistenceType) {
-            case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileReader.newInstance();
+            case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileReader.of(blockPathResolver);
             case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirReader.of(config);
             case NO_OP -> NoOpBlockReader.newInstance();
         };
