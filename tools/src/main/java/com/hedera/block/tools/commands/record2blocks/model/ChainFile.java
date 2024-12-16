@@ -21,7 +21,6 @@ import static com.hedera.block.tools.commands.record2blocks.util.RecordFileDates
 
 import com.hedera.block.tools.commands.record2blocks.gcp.MainNetBucket;
 import java.io.Serializable;
-import java.time.Instant;
 import java.util.regex.Pattern;
 
 /**
@@ -35,12 +34,12 @@ import java.util.regex.Pattern;
  * @param md5 the MD5 hash of the file
  * @param sidecarIndex the sidecar index, if this file is a sidecar file
  */
-public record ChainFile(Kind kind, int nodeAccountId, String path, long blockTime, int size, String md5,
-                        int sidecarIndex)
+public record ChainFile(
+        Kind kind, int nodeAccountId, String path, long blockTime, int size, String md5, int sidecarIndex)
         implements Serializable {
     /** The pattern for sidecar file numbers. */
-    private static final Pattern SIDECAR_NUMBER_PATTERN = Pattern.compile(
-            "sidecar/\\d{4}-\\d{2}-\\d{2}T\\d{2}_\\d{2}_\\d{2}\\.\\d{9}Z_(\\d{2})\\.rcd\\.gz");
+    private static final Pattern SIDECAR_NUMBER_PATTERN =
+            Pattern.compile("sidecar/\\d{4}-\\d{2}-\\d{2}T\\d{2}_\\d{2}_\\d{2}\\.\\d{9}Z_(\\d{2})\\.rcd\\.gz");
 
     /**
      * Creates a new chain file.
@@ -70,8 +69,12 @@ public record ChainFile(Kind kind, int nodeAccountId, String path, long blockTim
      * @return the sidecar index
      */
     private static int extractSidecarIndex(String filePath) {
-        return SIDECAR_NUMBER_PATTERN.matcher(filePath).results().map(m -> Integer.parseInt(m.group(1)))
-                .findFirst().orElse(-1);
+        return SIDECAR_NUMBER_PATTERN
+                .matcher(filePath)
+                .results()
+                .map(m -> Integer.parseInt(m.group(1)))
+                .findFirst()
+                .orElse(-1);
     }
 
     /**

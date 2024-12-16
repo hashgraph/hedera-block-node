@@ -85,7 +85,7 @@ public class FetchMirrorNodeRecordsCsv implements Runnable {
             recordsCsvFile.toFile().getParentFile().mkdirs();
             // download file
             try (ProgressOutputStream out = new ProgressOutputStream(
-                    new BufferedOutputStream(new FileOutputStream(recordsCsvFile.toFile()),1024*1024*32),
+                    new BufferedOutputStream(new FileOutputStream(recordsCsvFile.toFile()), 1024 * 1024 * 32),
                     blob.getSize(),
                     recordsCsvFile.getFileName().toString())) {
                 blob.downloadTo(out);
@@ -131,7 +131,7 @@ public class FetchMirrorNodeRecordsCsv implements Runnable {
             if (bytesWritten % MB == 0) {
                 System.out.printf(
                         "\rProgress: %.0f%% - %,d MB written of %s",
-                        (bytesWritten / (double) size)*100d, bytesWritten / MB, name);
+                        (bytesWritten / (double) size) * 100d, bytesWritten / MB, name);
             }
         }
     }

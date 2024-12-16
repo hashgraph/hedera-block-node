@@ -53,15 +53,20 @@ public final class RecordFileDates {
         String dateString;
         // check if a sidecar file
         if (recordOrSidecarFileName.contains("Z_")) {
-            dateString = recordOrSidecarFileName.substring(0, recordOrSidecarFileName.lastIndexOf("_")).replace('_', ':');
+            dateString = recordOrSidecarFileName
+                    .substring(0, recordOrSidecarFileName.lastIndexOf("_"))
+                    .replace('_', ':');
         } else {
-            dateString = recordOrSidecarFileName.substring(0, recordOrSidecarFileName.indexOf(".rcd")).replace('_', ':');
+            dateString = recordOrSidecarFileName
+                    .substring(0, recordOrSidecarFileName.indexOf(".rcd"))
+                    .replace('_', ':');
         }
         try {
             return Instant.parse(dateString);
         } catch (DateTimeParseException e) {
-            throw new RuntimeException("Invalid record file name: \"" + recordOrSidecarFileName +
-                    "\" - dateString=\""+dateString+"\"", e);
+            throw new RuntimeException(
+                    "Invalid record file name: \"" + recordOrSidecarFileName + "\" - dateString=\"" + dateString + "\"",
+                    e);
         }
     }
 

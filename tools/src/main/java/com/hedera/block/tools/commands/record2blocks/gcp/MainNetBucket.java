@@ -239,13 +239,12 @@ public class MainNetBucket {
             // create a list of ChainFiles
             List<String> fileNames = IntStream.range(minNodeAccountId, maxNodeAccountId + 1)
                     .parallel()
-                    .mapToObj(nodeAccountId ->
-                                    STREAMS_BUCKET
-                                            .list(
-                                                    BlobListOption.prefix("recordstreams/record0.0." + nodeAccountId
-                                                            + "/" + filePrefix),
-                                                    NAME_FIELD_ONLY)
-                                            .streamAll()
+                    .mapToObj(nodeAccountId -> STREAMS_BUCKET
+                            .list(
+                                    BlobListOption.prefix(
+                                            "recordstreams/record0.0." + nodeAccountId + "/" + filePrefix),
+                                    NAME_FIELD_ONLY)
+                            .streamAll()
                             .map(BlobInfo::getName)
                             .map(name -> name.substring(name.lastIndexOf('/') + 1))
                             .filter(name -> name.endsWith(".rcd") || name.endsWith(".rcd.gz")))

@@ -20,8 +20,8 @@ import static com.hedera.block.tools.commands.record2blocks.util.BlockWriter.wri
 import static com.hedera.block.tools.commands.record2blocks.util.RecordFileDates.blockTimeLongToInstant;
 
 import com.hedera.block.tools.commands.record2blocks.gcp.MainNetBucket;
-import com.hedera.block.tools.commands.record2blocks.model.BlockTimes;
 import com.hedera.block.tools.commands.record2blocks.model.BlockInfo;
+import com.hedera.block.tools.commands.record2blocks.model.BlockTimes;
 import com.hedera.block.tools.commands.record2blocks.model.ChainFile;
 import com.hedera.block.tools.commands.record2blocks.model.SignatureFile;
 import com.hedera.block.tools.commands.record2blocks.util.BlockWriter.BlockPath;
@@ -144,8 +144,8 @@ public class Record2BlockCommand implements Runnable {
                 // get the time of the record file for this block, from converted mirror node data
                 final long blockTime = blockTimes.getBlockTime(blockNumber);
                 final Instant blockTimeInstant = blockTimeLongToInstant(blockTime);
-                System.out.println(Ansi.AUTO.string("@|bold,green,underline Processing block|@ " + blockNumber +
-                        " @|green at blockTime|@ " + blockTimeInstant));
+                System.out.println(Ansi.AUTO.string("@|bold,green,underline Processing block|@ " + blockNumber
+                        + " @|green at blockTime|@ " + blockTimeInstant));
                 // round instant to nearest hour
                 Instant blockTimeHour = blockTimeInstant.truncatedTo(ChronoUnit.HOURS);
                 // check if we are the same hour as last block, if not load the new hour
@@ -157,13 +157,18 @@ public class Record2BlockCommand implements Runnable {
                             "\r@|bold,yellow    Listed " + currentHoursFiles.size() + " files from GCP|@"));
                 }
                 // create block info
-                BlockInfo blockInfo = new BlockInfo( blockNumber, blockTime,
-                        currentHoursFiles.stream().filter(cf -> cf.blockTime() == blockTime).toList());
+                BlockInfo blockInfo = new BlockInfo(
+                        blockNumber,
+                        blockTime,
+                        currentHoursFiles.stream()
+                                .filter(cf -> cf.blockTime() == blockTime)
+                                .toList());
                 // print block info
                 System.out.println("   " + blockInfo);
                 // now we need to download the most common record file
                 // we will use the GCP bucket to download the file
-                byte[] recordFileBytes = blockInfo.mostCommonRecordFile().chainFile().download(mainNetBucket);
+                byte[] recordFileBytes =
+                        blockInfo.mostCommonRecordFile().chainFile().download(mainNetBucket);
 
                 // download and parse all signature files
                 SignatureFile[] signatureFileBytes = blockInfo.signatureFiles().stream()
@@ -172,12 +177,12 @@ public class Record2BlockCommand implements Runnable {
                         .map(SignatureFile::parse)
                         .toArray(SignatureFile[]::new);
                 for (SignatureFile signatureFile : signatureFileBytes) {
-                    //System.out.println("        signatureFile = " + signatureFile);
+                    // System.out.println("        signatureFile = " + signatureFile);
                 }
 
                 // download most common sidecar file
                 List<Bytes> sideCars = new ArrayList<>();
-//                byte[] sidecarFileBytes = blockInfo.getMostCommonSidecarFileBytes(mainNetBucket);
+                //                byte[] sidecarFileBytes = blockInfo.getMostCommonSidecarFileBytes(mainNetBucket);
 
                 // build new Block File
                 final RecordFileItem recordFileItem = new RecordFileItem(
@@ -193,13 +198,12 @@ public class Record2BlockCommand implements Runnable {
                         new BlockItem(new OneOf<>(ItemOneOfType.RECORD_FILE, recordFileItem))));
                 // write block to disk
                 final BlockPath blockPath = writeBlock(blocksDir, block);
-                System.out.println(Ansi.AUTO.string("@|bold,yellow    Wrote block to|@ " +
-                        blockPath.dirPath()+"/"+blockPath.zipFileName()+
-                        "@|bold,cyan :|@" + blockPath.blockFileName()));
+                System.out.println(Ansi.AUTO.string("@|bold,yellow    Wrote block to|@ " + blockPath.dirPath()
+                        + "/" + blockPath.zipFileName() + "@|bold,cyan :|@"
+                        + blockPath.blockFileName()));
                 // write as json for now as well
                 if (jsonEnabled) {
-                    final Path blockJsonPath =
-                            blocksJsonDir.resolve(blockPath.blockNumStr() + ".blk.json");
+                    final Path blockJsonPath = blocksJsonDir.resolve(blockPath.blockNumStr() + ".blk.json");
                     Files.createDirectories(blockJsonPath.getParent());
                     try (WritableStreamingData out = new WritableStreamingData(Files.newOutputStream(
                             blockJsonPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE))) {
