@@ -24,6 +24,8 @@ import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.compression.Compression;
+import com.hedera.block.server.persistence.storage.compression.NoOpCompression;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalFilePathResolver;
 import com.hedera.block.server.persistence.storage.write.BlockAsLocalFileWriter;
 import com.hedera.block.server.util.PersistTestUtils;
@@ -49,8 +51,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 /**
  * Tests for the {@link BlockAsLocalFileReader} class.
  */
+@SuppressWarnings("FieldCanBeLocal")
 class BlockAsLocalFileReaderTest {
     private BlockAsLocalFileWriter blockAsLocalFileWriterMock;
+    private Compression compressionMock;
     private BlockAsLocalFileReader toTest;
 
     @TempDir
@@ -66,9 +70,11 @@ class BlockAsLocalFileReaderTest {
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
 
+        compressionMock = spy(NoOpCompression.newInstance());
         final BlockAsLocalFilePathResolver blockAsLocalFileResolverMock =
                 spy(BlockAsLocalFilePathResolver.of(testLiveRootPath));
-        blockAsLocalFileWriterMock = spy(BlockAsLocalFileWriter.of(blockNodeContext, blockAsLocalFileResolverMock));
+        blockAsLocalFileWriterMock =
+                spy(BlockAsLocalFileWriter.of(blockNodeContext, blockAsLocalFileResolverMock, compressionMock));
         toTest = BlockAsLocalFileReader.of(blockAsLocalFileResolverMock);
     }
 

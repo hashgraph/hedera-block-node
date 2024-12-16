@@ -50,6 +50,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 /**
  * Test class for {@link BlockAsLocalFileWriter}.
  */
+@SuppressWarnings("FieldCanBeLocal")
 class BlockAsLocalFileWriterTest {
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig testConfig;
