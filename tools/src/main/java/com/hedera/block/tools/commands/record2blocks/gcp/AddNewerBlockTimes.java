@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.hedera.block.tools.commands.record2blocks.gcp;
 
 import static com.hedera.block.tools.commands.record2blocks.util.RecordFileDates.blockTimeLongToInstant;
@@ -57,22 +73,21 @@ public class AddNewerBlockTimes implements Runnable {
     @Override
     public void run() {
         try {
-            System.out.println(Ansi.AUTO.string("@|bold,green AddNewerBlockTimes - reading existing block times file data|@"));
+            System.out.println(
+                    Ansi.AUTO.string("@|bold,green AddNewerBlockTimes - reading existing block times file data|@"));
             System.out.println(Ansi.AUTO.string("@|yellow blockTimesFile =|@ " + blockTimesFile));
             final long binFileSize = Files.size(blockTimesFile);
             // get last block number
-            final int lastBlockNumberInFile = (int)(binFileSize / Long.BYTES) -1;
-            System.out.println(Ansi.AUTO.string("@|yellow lastBlockNumberInFile =|@ " +
-                    lastBlockNumberInFile));
+            final int lastBlockNumberInFile = (int) (binFileSize / Long.BYTES) - 1;
+            System.out.println(Ansi.AUTO.string("@|yellow lastBlockNumberInFile =|@ " + lastBlockNumberInFile));
             // read last long in block_times.bin
             final long lastBlockTime;
             try (RandomAccessFile raf = new RandomAccessFile(blockTimesFile.toFile(), "r")) {
                 raf.seek(binFileSize - Long.BYTES);
                 lastBlockTime = raf.readLong();
             }
-            System.out.println(Ansi.AUTO.string("@|yellow lastBlockTime = |@" +
-                    lastBlockTime+" nanos @|yellow =|@ "+
-                    RecordFileDates.blockTimeLongToInstant(lastBlockTime)));
+            System.out.println(Ansi.AUTO.string("@|yellow lastBlockTime = |@" + lastBlockTime + " nanos @|yellow =|@ "
+                    + RecordFileDates.blockTimeLongToInstant(lastBlockTime)));
             // Open connection to get data from mainnet GCP bucket
             final MainNetBucket mainNetBucket =
                     new MainNetBucket(cacheEnabled, dataDir.resolve("gcp-cache"), minNodeAccountId, maxNodeAccountId);
@@ -82,26 +97,28 @@ public class AddNewerBlockTimes implements Runnable {
             final Instant lastBlockDay = lastBlockTimeInstant.truncatedTo(ChronoUnit.DAYS);
             System.out.println(Ansi.AUTO.string("@|yellow lastBlockDay = |@" + lastBlockDay));
             // create date formatter for output
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.of("UTC"));
+            DateTimeFormatter dateFormatter =
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.of("UTC"));
             // loop over days from lastBlockDay to today
             Instant day = lastBlockDay;
             long blockNumber = lastBlockNumberInFile;
             try (RandomAccessFile raf = new RandomAccessFile(blockTimesFile.toFile(), "rw")) {
                 raf.seek(raf.length());
                 while (day.isBefore(Instant.now().truncatedTo(ChronoUnit.DAYS))) {
-                    System.out.println(Ansi.AUTO.string("@|bold,green,underline Processing day |@" +
-                            dateFormatter.format(day)));
+                    System.out.println(
+                            Ansi.AUTO.string("@|bold,green,underline Processing day |@" + dateFormatter.format(day)));
                     // get listing of all files in bucket for current day
-                    final List<String> allFilesInDay = mainNetBucket.listDayFileNames(
-                            RecordFileDates.blockTimeInstantToLong(day));
+                    final List<String> allFilesInDay =
+                            mainNetBucket.listDayFileNames(RecordFileDates.blockTimeInstantToLong(day));
                     for (String recordFileName : allFilesInDay) {
                         final Instant fileTime = extractRecordFileTime(recordFileName);
                         if (fileTime.isAfter(lastBlockTimeInstant)) {
                             blockNumber++;
                             if (blockNumber < (lastBlockNumberInFile + 5) || blockNumber % 1_000 == 0) {
-                                System.out.println(Ansi.AUTO.string("@|yellow blockNumber = |@" + blockNumber +
-                                        " @|yellow fileTime = |@" + fileTime + " @|yellow recordFileName = |@"
-                                        + recordFileName));
+                                System.out.println(Ansi.AUTO.string(
+                                        "@|yellow blockNumber = |@" + blockNumber + " @|yellow fileTime = |@"
+                                                + fileTime + " @|yellow recordFileName = |@"
+                                                + recordFileName));
                             }
                             final long currentBlockTime = RecordFileDates.instantToBlockTimeLong(fileTime);
                             // append block time to block_times.bin
@@ -113,10 +130,10 @@ public class AddNewerBlockTimes implements Runnable {
                     // double check last block number once each day
                     String blockFileNameFromMirrorNode = FetchBlockQuery.getRecordFileNameForBlock(blockNumber);
                     String lastRecordFileName = allFilesInDay.getLast();
-                    System.out.println(Ansi.AUTO.string(
-                            "@|cyan,bold Checking|@ @|yellow lastBlockNumberOfDay = |@" + blockNumber +
-                                    " @|yellow blockFileNameFromMirrorNode = |@" + blockFileNameFromMirrorNode +
-                                    " @|yellow lastRecordFileName = |@" + lastRecordFileName));
+                    System.out.println(Ansi.AUTO.string("@|cyan,bold Checking|@ @|yellow lastBlockNumberOfDay = |@"
+                            + blockNumber + " @|yellow blockFileNameFromMirrorNode = |@"
+                            + blockFileNameFromMirrorNode + " @|yellow lastRecordFileName = |@"
+                            + lastRecordFileName));
                     if (!blockFileNameFromMirrorNode.equals(lastRecordFileName)) {
                         throw new RuntimeException("Last block of day number mismatch");
                     }

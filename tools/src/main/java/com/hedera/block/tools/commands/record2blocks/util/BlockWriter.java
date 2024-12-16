@@ -53,8 +53,9 @@ public class BlockWriter {
     /** The number of digits per directory */
     private static final int DEFAULT_DIGITS_PER_DIR = 3;
     /** The number of digits per zip file name */
-    private static final int DEFAULT_DIGEST_PER_ZIP = 3;
-    private static final int DEFAULT_DIGEST_PER_ZIP_FILE_NAME = 1;
+    private static final int DEFAULT_DIGITS_PER_ZIP_FILE_NAME = 1;
+    /** The number of digits per file name in each zip */
+    private static final int DEFAULT_DIGITS_PER_ZIP = 3;
 
     /**
      * Write a block to a zip file
@@ -73,21 +74,24 @@ public class BlockWriter {
                     default -> throw new IllegalArgumentException(
                             "Block first item is not a block header or record file");
                 };
-//        // convert block number to string
-//        final String blockNumberStr = BLOCK_NUMBER_FORMAT.format(blockNumber);
-//        // split string into digits for zip and for directories
-//        final int offsetToZip = blockNumberStr.length() - DEFAULT_DIGEST_PER_ZIP_FILE_NAME - DEFAULT_DIGITS_PER_DIR;
-//        final String directoryDigits = blockNumberStr.substring(0, offsetToZip);
-//        final String zipFileNameDigits =
-//                blockNumberStr.substring(offsetToZip, offsetToZip + DEFAULT_DIGEST_PER_ZIP_FILE_NAME);
-//        final String zipContentsDigits = blockNumberStr.substring(blockNumberStr.length() - DEFAULT_DIGEST_PER_ZIP);
-//        // start building path to zip file
-//        Path dirPath = baseDirectory;
-//        for (int i = 0; i < directoryDigits.length(); i += DEFAULT_DIGITS_PER_DIR) {
-//            final String dirName =
-//                    directoryDigits.substring(i, Math.min(i + DEFAULT_DIGITS_PER_DIR, directoryDigits.length()));
-//            dirPath = dirPath.resolve(dirName);
-//        }
+        //        // convert block number to string
+        //        final String blockNumberStr = BLOCK_NUMBER_FORMAT.format(blockNumber);
+        //        // split string into digits for zip and for directories
+        //        final int offsetToZip = blockNumberStr.length() - DEFAULT_DIGEST_PER_ZIP_FILE_NAME -
+        // DEFAULT_DIGITS_PER_DIR;
+        //        final String directoryDigits = blockNumberStr.substring(0, offsetToZip);
+        //        final String zipFileNameDigits =
+        //                blockNumberStr.substring(offsetToZip, offsetToZip + DEFAULT_DIGEST_PER_ZIP_FILE_NAME);
+        //        final String zipContentsDigits = blockNumberStr.substring(blockNumberStr.length() -
+        // DEFAULT_DIGEST_PER_ZIP);
+        //        // start building path to zip file
+        //        Path dirPath = baseDirectory;
+        //        for (int i = 0; i < directoryDigits.length(); i += DEFAULT_DIGITS_PER_DIR) {
+        //            final String dirName =
+        //                    directoryDigits.substring(i, Math.min(i + DEFAULT_DIGITS_PER_DIR,
+        // directoryDigits.length()));
+        //            dirPath = dirPath.resolve(dirName);
+        //        }
         // compute block path
         final BlockPath blockPath = computeBlockPath(baseDirectory, blockNumber);
         // create directories
@@ -118,10 +122,10 @@ public class BlockWriter {
         // convert block number to string
         final String blockNumberStr = BLOCK_NUMBER_FORMAT.format(blockNumber);
         // split string into digits for zip and for directories
-        final int offsetToZip = blockNumberStr.length() - DEFAULT_DIGEST_PER_ZIP_FILE_NAME - DEFAULT_DIGITS_PER_DIR;
+        final int offsetToZip = blockNumberStr.length() - DEFAULT_DIGITS_PER_ZIP_FILE_NAME - DEFAULT_DIGITS_PER_DIR;
         final String directoryDigits = blockNumberStr.substring(0, offsetToZip);
         final String zipFileNameDigits =
-                blockNumberStr.substring(offsetToZip, offsetToZip + DEFAULT_DIGEST_PER_ZIP_FILE_NAME);
+                blockNumberStr.substring(offsetToZip, offsetToZip + DEFAULT_DIGITS_PER_ZIP_FILE_NAME);
         // start building path to zip file
         Path dirPath = baseDirectory;
         for (int i = 0; i < directoryDigits.length(); i += DEFAULT_DIGITS_PER_DIR) {
