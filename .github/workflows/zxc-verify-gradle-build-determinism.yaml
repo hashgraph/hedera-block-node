@@ -13,12 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-
+name: "ZXC: Verify Gradle Build Determinism"
 # Here, the ZXC prefix:
 # Z - Ensures sort order such that this script appears at the bottom of the UI
 # X - Indicates it's not for direct user consumption
 # C - Indicates this is a 'workflow_call' based reusable workflow
-name: "ZXC: Verify Gradle Build Determinism"
 
 on:
   workflow_call:
