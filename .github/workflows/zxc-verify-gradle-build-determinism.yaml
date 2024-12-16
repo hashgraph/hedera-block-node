@@ -56,7 +56,7 @@ permissions:
 jobs:
   generate-baseline:
     name: Generate Baseline
-    runs-on: network-node-linux-medium
+    runs-on: block-node-linux-medium
     steps:
       - name: Print
         run: echo "Hello, baseline!"
