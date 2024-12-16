@@ -19,11 +19,12 @@ package com.hedera.block.server.persistence.storage;
 import static com.hedera.block.server.Constants.BLOCK_NODE_ARCHIVE_ROOT_DIRECTORY_SEMANTIC_NAME;
 import static com.hedera.block.server.Constants.BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME;
 
-import com.github.luben.zstd.Zstd;
 import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.common.utils.StringUtilities;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
+import com.swirlds.config.api.validation.annotation.Max;
+import com.swirlds.config.api.validation.annotation.Min;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -49,7 +50,7 @@ public record PersistenceStorageConfig(
         @ConfigProperty(defaultValue = "") String archiveRootPath,
         @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type,
         @ConfigProperty(defaultValue = "ZSTD") CompressionType compression,
-        @ConfigProperty(defaultValue = "3") int compressionLevel) {
+        @ConfigProperty(defaultValue = "3") @Min(0) @Max(20) int compressionLevel) {
     // @todo(#371) - the default life/archive root path must be absolute starting from /opt
     private static final String LIVE_ROOT_PATH =
             Path.of("hashgraph/blocknode/data/live/").toAbsolutePath().toString();
@@ -62,26 +63,10 @@ public record PersistenceStorageConfig(
      */
     public PersistenceStorageConfig {
         Objects.requireNonNull(type);
-        Objects.requireNonNull(compression);
-        verifyCompressionLevel(compression, compressionLevel);
+        Objects.requireNonNull(compression).verifyCompressionLevel(compressionLevel);
         liveRootPath = resolvePath(liveRootPath, LIVE_ROOT_PATH, BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
         archiveRootPath =
                 resolvePath(archiveRootPath, ARCHIVE_ROOT_PATH, BLOCK_NODE_ARCHIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
-    }
-
-    /**
-     * This method verifies that the compression level is within the bounds of
-     * the given compression type.
-     *
-     * @param compressionType the compression type
-     * @param compressionLevelToCheck the compression level to check
-     */
-    private void verifyCompressionLevel(final CompressionType compressionType, final int compressionLevelToCheck) {
-        switch (compressionType) {
-            case ZSTD -> Preconditions.requireInRange(
-                    compressionLevelToCheck, Zstd.minCompressionLevel(), Zstd.maxCompressionLevel());
-            case NONE -> Preconditions.requireInRange(compressionLevelToCheck, Integer.MIN_VALUE, Integer.MAX_VALUE);
-        }
     }
 
     /**
@@ -179,10 +164,22 @@ public record PersistenceStorageConfig(
          * This type of compression is used to compress the blocks using the
          * `Zstandard` algorithm.
          */
-        ZSTD,
+        ZSTD(0, 20),
         /**
          * This type means no compression will be done.
          */
-        NONE
+        NONE(Integer.MIN_VALUE, Integer.MAX_VALUE);
+
+        private final int minCompressionLevel;
+        private final int maxCompressionLevel;
+
+        CompressionType(final int minCompressionLevel, final int maxCompressionLevel) {
+            this.minCompressionLevel = minCompressionLevel;
+            this.maxCompressionLevel = maxCompressionLevel;
+        }
+
+        public void verifyCompressionLevel(final int levelToCheck) {
+            Preconditions.requireInRange(levelToCheck, minCompressionLevel, maxCompressionLevel);
+        }
     }
 }

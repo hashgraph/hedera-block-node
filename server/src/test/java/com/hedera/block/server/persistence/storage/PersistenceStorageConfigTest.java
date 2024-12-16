@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.from;
 
-import com.github.luben.zstd.Zstd;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
 import java.io.IOException;
@@ -45,7 +44,16 @@ class PersistenceStorageConfigTest {
             Path.of("hashgraph/").toAbsolutePath();
     private static final Path PERSISTENCE_STORAGE_ROOT_ABSOLUTE_PATH =
             HASHGRAPH_ROOT_ABSOLUTE_PATH.resolve("blocknode/data/");
-    private static final int DEFAULT_COMPRESSION_LEVEL = 6;
+    // Default compression level (as set in the config annotation)
+    private static final int DEFAULT_COMPRESSION_LEVEL = 3;
+    // NoOp compression level boundaries
+    private static final int LOWER_BOUNDARY_FOR_NO_OP_COMPRESSION = Integer.MIN_VALUE;
+    private static final int DEFAULT_VALUE_FOR_NO_OP_COMPRESSION = DEFAULT_COMPRESSION_LEVEL;
+    private static final int UPPER_BOUNDARY_FOR_NO_OP_COMPRESSION = Integer.MAX_VALUE;
+    // Zstd compression level boundaries
+    private static final int LOWER_BOUNDARY_FOR_ZSTD_COMPRESSION = 0;
+    private static final int DEFAULT_VALUE_FOR_ZSTD_COMPRESSION = DEFAULT_COMPRESSION_LEVEL;
+    private static final int UPPER_BOUNDARY_FOR_ZSTD_COMPRESSION = 20;
 
     @AfterEach
     void tearDown() {
@@ -138,9 +146,10 @@ class PersistenceStorageConfigTest {
      */
     @ParameterizedTest
     @MethodSource("validCompressionLevels")
-    void testPersistenceStorageConfigValidCompressionLevel(final int compressionLevel) {
+    void testPersistenceStorageConfigValidCompressionLevel(
+            final CompressionType compressionType, final int compressionLevel) {
         final PersistenceStorageConfig actual = new PersistenceStorageConfig(
-                "", "", StorageType.BLOCK_AS_LOCAL_FILE, CompressionType.ZSTD, compressionLevel);
+                "", "", StorageType.BLOCK_AS_LOCAL_FILE, compressionType, compressionLevel);
         assertThat(actual).returns(compressionLevel, from(PersistenceStorageConfig::compressionLevel));
     }
 
@@ -153,10 +162,11 @@ class PersistenceStorageConfigTest {
      */
     @ParameterizedTest
     @MethodSource("invalidCompressionLevels")
-    void testPersistenceStorageConfigInvalidCompressionLevel(final int compressionLevel) {
+    void testPersistenceStorageConfigInvalidCompressionLevel(
+            final CompressionType compressionType, final int compressionLevel) {
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> new PersistenceStorageConfig(
-                        "", "", StorageType.BLOCK_AS_LOCAL_FILE, CompressionType.ZSTD, compressionLevel));
+                        "", "", StorageType.BLOCK_AS_LOCAL_FILE, compressionType, compressionLevel));
     }
 
     /**
@@ -289,14 +299,29 @@ class PersistenceStorageConfigTest {
 
     private static Stream<Arguments> validCompressionLevels() {
         return Stream.of(
-                Arguments.of(Zstd.minCompressionLevel()),
-                Arguments.of(Zstd.minCompressionLevel() + 1),
-                Arguments.of(Zstd.maxCompressionLevel()),
-                Arguments.of(Zstd.maxCompressionLevel() - 1),
-                Arguments.of(Zstd.defaultCompressionLevel()));
+                Arguments.of(
+                        CompressionType.NONE,
+                        LOWER_BOUNDARY_FOR_NO_OP_COMPRESSION), // lower boundary for NO_OP compression
+                Arguments.of(
+                        CompressionType.NONE,
+                        DEFAULT_VALUE_FOR_NO_OP_COMPRESSION), // default value for NO_OP compression
+                Arguments.of(
+                        CompressionType.NONE,
+                        UPPER_BOUNDARY_FOR_NO_OP_COMPRESSION), // upper boundary for NO_OP compression
+                Arguments.of(
+                        CompressionType.ZSTD,
+                        LOWER_BOUNDARY_FOR_ZSTD_COMPRESSION), // lower boundary for ZSTD compression
+                Arguments.of(
+                        CompressionType.ZSTD, DEFAULT_VALUE_FOR_ZSTD_COMPRESSION), // default value for ZSTD compression
+                Arguments.of(
+                        CompressionType.ZSTD,
+                        UPPER_BOUNDARY_FOR_ZSTD_COMPRESSION) // upper boundary for ZSTD compression
+                );
     }
 
     private static Stream<Arguments> invalidCompressionLevels() {
-        return Stream.of(Arguments.of(Zstd.minCompressionLevel() - 1), Arguments.of(Zstd.maxCompressionLevel() + 1));
+        return Stream.of(
+                Arguments.of(CompressionType.ZSTD, LOWER_BOUNDARY_FOR_ZSTD_COMPRESSION - 1),
+                Arguments.of(CompressionType.ZSTD, UPPER_BOUNDARY_FOR_ZSTD_COMPRESSION + 1));
     }
 }
