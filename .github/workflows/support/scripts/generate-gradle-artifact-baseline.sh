@@ -89,27 +89,27 @@ start_group "Configuring Environment"
     fi
   end_task "DONE (Path: ${MANIFEST_PATH})"
 
-#  start_task "Ensuring the MANIFEST_PATH location is present"
-#    if [[ ! -d "${MANIFEST_PATH}" ]]; then
-#      mkdir -p "${MANIFEST_PATH}" || fail "ERROR (Exit Code: ${?})" "${?}"
-#    fi
-#  end_task
-#
-#  start_task "Checking for the sha256sum command"
-#    if command -v sha256sum >/dev/null 2>&1; then
-#      SHA256SUM="$(command -v sha256sum)" || fail "ERROR (Exit Code: ${?})" "${?}"
-#    else
-#      fail "ERROR (Exit Code: ${?})" "${?}"
-#    fi
-#  end_task "DONE (Found: ${SHA256SUM})"
-#
-#  start_task "Checking for prebuilt libraries"
-#    ls -al "${GITHUB_WORKSPACE}/${RELEASE_LIB_PATH}"/*.jar >/dev/null 2>&1 || fail "ERROR (Exit Code: ${?})" "${?}"
-#  end_task "FOUND (Path: ${GITHUB_WORKSPACE}/${RELEASE_LIB_PATH}/*.jar)"
-#
-#  start_task "Checking for prebuilt applications"
-#    ls -al "${GITHUB_WORKSPACE}/${RELEASE_APPS_PATH}"/*.jar >/dev/null 2>&1 || fail "ERROR (Exit Code: ${?})" "${?}"
-#  end_task "FOUND (Path: ${GITHUB_WORKSPACE}/${RELEASE_APPS_PATH}/*.jar)"
+  start_task "Ensuring the MANIFEST_PATH location is present"
+    if [[ ! -d "${MANIFEST_PATH}" ]]; then
+      mkdir -p "${MANIFEST_PATH}" || fail "ERROR (Exit Code: ${?})" "${?}"
+    fi
+  end_task
+
+  start_task "Checking for the sha256sum command"
+    if command -v sha256sum >/dev/null 2>&1; then
+      SHA256SUM="$(command -v sha256sum)" || fail "ERROR (Exit Code: ${?})" "${?}"
+    else
+      fail "ERROR (Exit Code: ${?})" "${?}"
+    fi
+  end_task "DONE (Found: ${SHA256SUM})"
+
+  start_task "Checking for prebuilt libraries"
+    ls -al "${GITHUB_WORKSPACE}/${RELEASE_LIB_PATH}"/*.jar >/dev/null 2>&1 || fail "ERROR (Exit Code: ${?})" "${?}"
+  end_task "FOUND (Path: ${GITHUB_WORKSPACE}/${RELEASE_LIB_PATH}/*.jar)"
+
+  start_task "Checking for prebuilt applications"
+    ls -al "${GITHUB_WORKSPACE}/${RELEASE_APPS_PATH}"/*.jar >/dev/null 2>&1 || fail "ERROR (Exit Code: ${?})" "${?}"
+  end_task "FOUND (Path: ${GITHUB_WORKSPACE}/${RELEASE_APPS_PATH}/*.jar)"
 end_group
 
 #start_group "Generating Library Hashes (${GITHUB_WORKSPACE}/${RELEASE_LIB_PATH}/*.jar)"
