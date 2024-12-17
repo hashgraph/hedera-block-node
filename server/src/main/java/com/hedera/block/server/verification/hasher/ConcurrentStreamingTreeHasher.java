@@ -16,7 +16,6 @@
 
 package com.hedera.block.server.verification.hasher;
 
-import static com.hedera.block.server.verification.hasher.CommonUtils.combine;
 import static com.hedera.block.server.verification.hasher.CommonUtils.noThrowSha384HashOf;
 import static java.util.Objects.requireNonNull;
 
@@ -37,7 +36,6 @@ import java.util.concurrent.ExecutorService;
  * {@link StreamingTreeHasher#addLeaf(ByteBuffer)} or {@link #rootHash()}.
  */
 public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
-
     /**
      * The default number of leaves to batch before combining the resulting hashes.
      */
@@ -134,9 +132,9 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
         for (int i = 0; i < rootHeight; i++) {
             final var rightmostHash = penultimateStatus.rightmostHashes().get(i);
             if (rightmostHash.length() == 0) {
-                hash = combine(hash, HashCombiner.EMPTY_HASHES[i]);
+                hash = CommonUtils.combine(hash, HashCombiner.EMPTY_HASHES[i]);
             } else {
-                hash = combine(rightmostHash.toByteArray(), hash);
+                hash = CommonUtils.combine(rightmostHash.toByteArray(), hash);
             }
         }
         return Bytes.wrap(hash);
