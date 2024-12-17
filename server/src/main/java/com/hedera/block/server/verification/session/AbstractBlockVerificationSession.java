@@ -1,7 +1,28 @@
-package com.hedera.block.server.verification;
+/*
+ * Copyright (C) 2024 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.hedera.block.server.verification.session;
+
+import static com.hedera.block.server.verification.hasher.CommonUtils.getBlockItemHash;
+import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.verification.BlockVerificationStatus;
+import com.hedera.block.server.verification.VerificationResult;
 import com.hedera.block.server.verification.hasher.CommonUtils;
 import com.hedera.block.server.verification.hasher.StreamingTreeHasher;
 import com.hedera.block.server.verification.signature.SignatureVerifier;
@@ -11,13 +32,9 @@ import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-
-import static com.hedera.block.server.verification.hasher.CommonUtils.getBlockItemHash;
-import static java.lang.System.Logger.Level.INFO;
 
 /**
  * An abstract base class providing common functionality for block verification sessions.
@@ -41,7 +58,6 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
      * Constructs the session with shared initialization logic.
      *
      * @param blockHeader the block header
-     * @param initialBlockItems the initial block items
      * @param metricsService the metrics service
      * @param signatureVerifier the signature verifier
      * @param inputTreeHasher the input tree hasher (e.g. naive or concurrent)
@@ -49,7 +65,6 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
      */
     protected AbstractBlockVerificationSession(
             @NonNull final BlockHeader blockHeader,
-            @NonNull final List<BlockItemUnparsed> initialBlockItems,
             @NonNull final MetricsService metricsService,
             @NonNull final SignatureVerifier signatureVerifier,
             @NonNull final StreamingTreeHasher inputTreeHasher,
@@ -61,7 +76,6 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
         this.outputTreeHasher = outputTreeHasher;
 
         this.blockWorkStartTime = System.nanoTime();
-        appendBlockItems(initialBlockItems);
     }
 
     @Override
@@ -90,8 +104,8 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
             final BlockItemUnparsed.ItemOneOfType kind = item.item().kind();
             switch (kind) {
                 case EVENT_HEADER, EVENT_TRANSACTION -> inputTreeHasher.addLeaf(getBlockItemHash(item));
-                case TRANSACTION_RESULT, TRANSACTION_OUTPUT, STATE_CHANGES ->
-                        outputTreeHasher.addLeaf(getBlockItemHash(item));
+                case TRANSACTION_RESULT, TRANSACTION_OUTPUT, STATE_CHANGES -> outputTreeHasher.addLeaf(
+                        getBlockItemHash(item));
             }
         }
 
@@ -117,11 +131,17 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
             verificationResultFuture.complete(
                     new VerificationResult(blockNumber, blockHash, BlockVerificationStatus.VERIFIED));
             long verificationLatency = System.nanoTime() - blockWorkStartTime;
-            metricsService.get(BlockNodeMetricTypes.Counter.VerificationBlockTime).add(verificationLatency);
-            metricsService.get(BlockNodeMetricTypes.Counter.VerificationBlocksVerified).increment();
+            metricsService
+                    .get(BlockNodeMetricTypes.Counter.VerificationBlockTime)
+                    .add(verificationLatency);
+            metricsService
+                    .get(BlockNodeMetricTypes.Counter.VerificationBlocksVerified)
+                    .increment();
         } else {
             LOGGER.log(INFO, "Block verification failed for block number: {0}", blockNumber);
-            metricsService.get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed).increment();
+            metricsService
+                    .get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed)
+                    .increment();
             verificationResultFuture.complete(
                     new VerificationResult(blockNumber, blockHash, BlockVerificationStatus.SIGNATURE_INVALID));
         }

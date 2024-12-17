@@ -20,12 +20,18 @@ import com.hedera.block.server.verification.signature.SignatureVerifier;
 import com.hedera.block.server.verification.signature.SignatureVerifierDummy;
 import dagger.Binds;
 import dagger.Module;
-
+import dagger.Provides;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import javax.inject.Singleton;
 
 @Module
 public interface VerificationInjectionModule {
 
+    @Provides
+    static ExecutorService provideExecutorService() {
+        return ForkJoinPool.commonPool();
+    }
 
     @Binds
     @Singleton

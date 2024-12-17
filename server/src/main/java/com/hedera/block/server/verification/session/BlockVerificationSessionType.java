@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.verification;
+package com.hedera.block.server.verification.session;
 
-import com.hedera.block.server.verification.session.BlockVerificationSessionType;
-import com.swirlds.config.api.ConfigData;
-import com.swirlds.config.api.ConfigProperty;
-
-@ConfigData("verification")
-public record VerificationConfig(
-        @ConfigProperty(defaultValue = "true") boolean enabled,
-        @ConfigProperty(defaultValue = "ASYNC") BlockVerificationSessionType sessionType,
-        @ConfigProperty(defaultValue = "32") int hashCombineBatchSize) {}
+public enum BlockVerificationSessionType {
+    ASYNC,
+    SYNC
+}

@@ -20,6 +20,4 @@ import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 public record VerificationResult(
-        @NonNull Long blockNumber,
-        @NonNull Bytes blockHash,
-        @NonNull BlockVerificationStatus status) {}
+        @NonNull Long blockNumber, @NonNull Bytes blockHash, @NonNull BlockVerificationStatus status) {}
