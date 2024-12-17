@@ -65,7 +65,7 @@ public class StreamVerificationHandlerImpl
     }
 
     @Override
-    public void onEvent(ObjectEvent<SubscribeStreamResponseUnparsed> event, long l, boolean b) throws Exception {
+    public void onEvent(ObjectEvent<SubscribeStreamResponseUnparsed> event, long l, boolean b) {
 
         try {
 
