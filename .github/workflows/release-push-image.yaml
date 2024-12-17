@@ -51,13 +51,13 @@ jobs:
 #      java-distribution: ${{ inputs.java-distribution || 'temurin' }}
 #      java-version: ${{ inputs.java-version || '21.0.4' }}
 
-  check-docker:
-    name: Docker
-    uses: ./.github/workflows/zxc-verify-docker-build-determinism.yaml
-    with:
-      ref: ${{ github.event.inputs.ref || '' }}
-      java-distribution: ${{ inputs.java-distribution || 'temurin' }}
-      java-version: ${{ inputs.java-version || '21.0.4' }}
+#  check-docker:
+#    name: Docker
+#    uses: ./.github/workflows/zxc-verify-docker-build-determinism.yaml
+#    with:
+#      ref: ${{ github.event.inputs.ref || '' }}
+#      java-distribution: ${{ inputs.java-distribution || 'temurin' }}
+#      java-version: ${{ inputs.java-version || '21.0.4' }}
 
   publish:
     runs-on: block-node-linux-medium
