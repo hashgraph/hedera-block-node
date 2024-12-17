@@ -61,7 +61,7 @@ class VerificationInjectionModuleTest {
     }
 
     @Test
-    void testProvideExecutorService () {
+    void testProvideExecutorService() {
         // when
         var executorService = VerificationInjectionModule.provideExecutorService();
         // then
