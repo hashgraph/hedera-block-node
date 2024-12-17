@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.verification;
+package com.hedera.block.server.verification.service;
 
 import com.hedera.hapi.block.BlockItemUnparsed;
 import java.util.List;
 
-public class BlockVerificationServiceNoOp implements BlockVerificationService {
+public class NoOpBlockVerificationService implements BlockVerificationService {
     @Override
     public void onBlockItemsReceived(List<BlockItemUnparsed> blockItems) {
         // no-op

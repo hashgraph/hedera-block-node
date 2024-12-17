@@ -38,19 +38,6 @@ public class NaiveStreamingTreeHasher implements StreamingTreeHasher {
     private final List<byte[]> leafHashes = new ArrayList<>();
     private boolean rootHashRequested = false;
 
-    /**
-     * Computes the root hash of a perfect binary Merkle tree of {@link ByteBuffer} leaves using a naive algorithm.
-     * @param leafHashes the leaf hashes of the tree
-     * @return the root hash of the tree
-     */
-    public static Bytes computeRootHash(@NonNull final List<byte[]> leafHashes) {
-        final var hasher = new NaiveStreamingTreeHasher();
-        for (final var hash : leafHashes) {
-            hasher.addLeaf(ByteBuffer.wrap(hash));
-        }
-        return hasher.rootHash().join();
-    }
-
     @Override
     public void addLeaf(@NonNull final ByteBuffer hash) {
         if (rootHashRequested) {
