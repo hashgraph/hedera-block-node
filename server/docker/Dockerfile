@@ -73,7 +73,7 @@ COPY --from=openjdk-builder /usr/local/java/ /usr/local/java/
 
 # Install Basic OS Requirements
 RUN apt-get update && \
-	apt-get install --yes --no-install-recommends tar gzip openssl  && \
+	apt-get install --yes --no-install-recommends tar gzip openssl curl && \
 	apt-get autoremove --yes && \
 	apt-get autoclean --yes && \
 	apt-get clean all --yes && \
