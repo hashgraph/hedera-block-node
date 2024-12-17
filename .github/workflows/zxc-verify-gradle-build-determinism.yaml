@@ -205,15 +205,6 @@ jobs:
         working-directory: ${{ github.workspace }}/server/build/libs
         run: sha256sum -c "${GRADLE_MANIFEST_PATH}/applications.sha256"
 
-#      - name: Compare Library Manifests
-#        run: |
-#          if ! diff -u "${GRADLE_MANIFEST_PATH}/libraries.sha256" "${{ steps.regen-manifest.outputs.libraries }}" >/dev/null 2>&1; then
-#            echo "::group::Library Manifest Differences"
-#            diff -u "${GRADLE_MANIFEST_PATH}/libraries.sha256" "${{ steps.regen-manifest.outputs.libraries }}"
-#            echo "::endgroup::"
-#            exit 1
-#          fi
-#
 #      - name: Compare Application Manifests
 #        run: |
 #          if ! diff -u "${GRADLE_MANIFEST_PATH}/applications.sha256" "${{ steps.regen-manifest.outputs.applications }}" >/dev/null 2>&1; then
