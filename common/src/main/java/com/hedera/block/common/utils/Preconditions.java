@@ -22,7 +22,11 @@ import java.util.Objects;
 /** A utility class used to assert various preconditions. */
 public final class Preconditions {
     private static final String DEFAULT_NOT_BLANK_MESSAGE = "The input String is required to be non-blank.";
-    private static final String DEFAULT_REQUIRED_POSITIVE_MESSAGE = "The input number [%d] is required to be positive.";
+    private static final String DEFAULT_REQUIRE_POSITIVE_MESSAGE = "The input number [%d] is required to be positive.";
+    private static final String DEFAULT_GT_OR_EQ_MESSAGE =
+            "The input number [%d] is required to be greater or equal than [%d].";
+    private static final String DEFAULT_REQUIRE_WHOLE_MESSAGE =
+            "The input number [%d] is required to be a whole number.";
 
     /**
      * This method asserts a given {@link String} is not blank, meaning it is
@@ -50,7 +54,7 @@ public final class Preconditions {
      * @param toCheck a {@link String} to be checked if is blank as defined
      * above
      * @param errorMessage the error message to be used if the precondition
-     * check fails. Must not be {@code null}!
+     * check fails, must not be {@code null}
      * @return the {@link String} to be checked if it is not blank as defined
      * above
      * @throws IllegalArgumentException if the input {@link String} to be
@@ -74,7 +78,7 @@ public final class Preconditions {
      * positive
      */
     public static int requirePositive(final int toCheck) {
-        return requirePositive(toCheck, DEFAULT_REQUIRED_POSITIVE_MESSAGE);
+        return requirePositive(toCheck, DEFAULT_REQUIRE_POSITIVE_MESSAGE);
     }
 
     /**
@@ -83,7 +87,7 @@ public final class Preconditions {
      *
      * @param toCheck the integer to check if it is a positive power of two
      * @param errorMessage a formatted string with one decimal parameters for
-     * {@code toCheck}.<br/>
+     * {@code toCheck}, must not be {@code null}.<br/>
      * Example error message: {@code "The input number (%d) must be positive."}
      * @return the number to check if it is positive
      * @throws IllegalArgumentException if the input integer to check is not
@@ -92,7 +96,7 @@ public final class Preconditions {
      */
     public static int requirePositive(final int toCheck, @NonNull final String errorMessage) {
         if (0 >= toCheck) {
-            throw new IllegalArgumentException(errorMessage);
+            throw new IllegalArgumentException(errorMessage.formatted(toCheck));
         } else {
             return toCheck;
         }
@@ -108,7 +112,7 @@ public final class Preconditions {
      * positive
      */
     public static long requirePositive(final long toCheck) {
-        return requirePositive(toCheck, DEFAULT_REQUIRED_POSITIVE_MESSAGE);
+        return requirePositive(toCheck, DEFAULT_REQUIRE_POSITIVE_MESSAGE);
     }
 
     /**
@@ -117,7 +121,7 @@ public final class Preconditions {
      *
      * @param toCheck the long to check if it is a positive power of two
      * @param errorMessage a formatted string with one decimal parameters for
-     * {@code toCheck}.<br/>
+     * {@code toCheck}, must not be {@code null}.<br/>
      * Example error message: {@code "The input number (%d) must be positive."}
      * @return the number to check if it is positive
      * @throws IllegalArgumentException if the input long to check is not
@@ -147,11 +151,12 @@ public final class Preconditions {
      * @param toTest the long value to test
      * @param base   the base value to compare against
      * @return the input {@code toTest} if it is greater than or equal to
-     *         {@code base}
-     * @throws IllegalArgumentException if {@code toTest} is less than {@code base}
+     * {@code base}
+     * @throws IllegalArgumentException if {@code toTest} is less than
+     * {@code base}
      */
     public static long requireGreaterOrEqual(final long toTest, final long base) {
-        return requireGreaterOrEqual(toTest, base, null);
+        return requireGreaterOrEqual(toTest, base, DEFAULT_GT_OR_EQ_MESSAGE);
     }
 
     /**
@@ -160,24 +165,23 @@ public final class Preconditions {
      * If the value does not meet the requirement, an
      * {@link IllegalArgumentException} is thrown.
      *
-     * @param toTest       the long value to test
-     * @param base         the base value to compare against
-     * @param errorMessage the error message to include in the exception if the
-     *                     check fails;
-     *                     if {@code null}, a default message is used
-     * @return the input {@code toTest} if it is greater than or equal to
-     *         {@code base}
-     * @throws IllegalArgumentException if {@code toTest} is less than {@code base}
+     * @param toTest the long value to test
+     * @param base the base value to compare against
+     * @param errorMessage a formatted string with two decimal parameters for
+     * {@code toTest} and {@code base}, must not be {@code null}.<br/>
+     * Example error message: {@code "The input number (%d) must be '>=' than
+     * (%d)."}
+     * @return the number to check if it is greater than or equal to the base
+     * @throws IllegalArgumentException if the input long toTest is not greater
+     * than or equal to the base
+     * @see java.util.Formatter for more information on error message formatting
      */
-    public static long requireGreaterOrEqual(final long toTest, final long base, final String errorMessage) {
+    public static long requireGreaterOrEqual(final long toTest, final long base, @NonNull final String errorMessage) {
         if (toTest >= base) {
             return toTest;
+        } else {
+            throw new IllegalArgumentException(errorMessage.formatted(toTest, base));
         }
-
-        final String message = Objects.isNull(errorMessage)
-                ? "The input integer [%d] is required be greater or equal than [%d].".formatted(toTest, base)
-                : errorMessage;
-        throw new IllegalArgumentException(message);
     }
 
     /**
@@ -231,33 +235,30 @@ public final class Preconditions {
      * @param toCheck the long to check if it is a whole number
      * @return the number to check if it is whole number
      * @throws IllegalArgumentException if the input number to check is not
-     *                                  positive
+     * positive
      */
     public static long requireWhole(final long toCheck) {
-        return requireWhole(toCheck, null);
+        return requireWhole(toCheck, DEFAULT_REQUIRE_WHOLE_MESSAGE);
     }
 
     /**
      * This method asserts a given long is a whole number. A long is whole
      * if it is greater or equal to zero.
      *
-     * @param toCheck      the long to check if it is a whole number
-     * @param errorMessage the error message to be used in the exception if the
-     *                     input long to check is not a whole number, if null, a
-     *                     default message will
-     *                     be used
+     * @param toCheck the long to check if it is a whole number
+     * @param errorMessage a formatted string with one decimal parameters for
+     * {@code toCheck}, must not be {@code null}.<br/>
+     * Example error message: {@code "The input number (%d) must be whole."}
      * @return the number to check if it is whole number
      * @throws IllegalArgumentException if the input number to check is not
-     *                                  positive
+     * positive
+     * @see java.util.Formatter for more information on error message formatting
      */
-    public static long requireWhole(final long toCheck, final String errorMessage) {
+    public static long requireWhole(final long toCheck, @NonNull final String errorMessage) {
         if (toCheck >= 0) {
             return toCheck;
         } else {
-            final String message = Objects.isNull(errorMessage)
-                    ? "The input integer [%d] is required be whole.".formatted(toCheck)
-                    : errorMessage;
-            throw new IllegalArgumentException(message);
+            throw new IllegalArgumentException(errorMessage.formatted(toCheck));
         }
     }
 
