@@ -16,7 +16,6 @@
 
 package com.hedera.block.server.verification;
 
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.StreamPersistenceHandlerError;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.VerificationBlocksError;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -25,7 +24,6 @@ import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.exception.BlockStreamProtocolException;
 import com.hedera.block.server.mediator.SubscriptionHandler;
-import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.service.ServiceStatus;
@@ -100,7 +98,7 @@ public class StreamVerificationHandlerImpl
                     throw new BlockStreamProtocolException(message);
                 }
             }
-        } catch(final Exception e) {
+        } catch (final Exception e) {
 
             LOGGER.log(ERROR, "Failed to verify BlockItems: ", e);
             // Trigger the server to stop accepting new requests
@@ -111,7 +109,6 @@ public class StreamVerificationHandlerImpl
 
             // Broadcast the problem to the notifier
             notifier.notifyUnrecoverableError();
-
         }
     }
 }
