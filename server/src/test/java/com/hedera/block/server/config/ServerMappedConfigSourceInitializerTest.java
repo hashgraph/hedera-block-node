@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.swirlds.common.metrics.config.MetricsConfig;
+import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 import com.swirlds.config.extensions.sources.ConfigMapping;
@@ -32,7 +33,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -75,7 +75,6 @@ class ServerMappedConfigSourceInitializerTest {
      * </pre>
      * @param config parameterized, config class to test
      */
-    @Disabled("This test is disabled because it will start passing only after #285 gets implemented")
     @ParameterizedTest
     @MethodSource("allConfigDataTypes")
     void testVerifyAllFieldsInRecordsAreMapped(final Class<? extends Record> config) {
@@ -173,8 +172,8 @@ class ServerMappedConfigSourceInitializerTest {
 
     private static Stream<Arguments> allConfigDataTypes() {
         // Add any classes that should be excluded from the test for any reason in the set below
-        // MetricsConfig is not supported by us
-        final Set<Class<? extends Record>> excluded = Set.of(MetricsConfig.class);
+        // MetricsConfig and PrometheusConfig are not managed by us
+        final Set<Class<? extends Record>> excluded = Set.of(MetricsConfig.class, PrometheusConfig.class);
         return new BlockNodeConfigExtension()
                 .getConfigDataTypes().stream()
                         .filter(configType -> !excluded.contains(configType))
