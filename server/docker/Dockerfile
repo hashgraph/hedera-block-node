@@ -88,7 +88,7 @@ ARG VERSION
 
 # Configure the standard user account
 RUN groupadd --gid 2000 hedera && \
-    useradd --no-user-group --create-home --uid 2000 --gid 2000 --shell /bin/bash hedera && \
+    useradd --no-user-group --create-home --uid 2000 --gid 2000 --shell /bin/bash hedera
 
 USER $UNAME
 
