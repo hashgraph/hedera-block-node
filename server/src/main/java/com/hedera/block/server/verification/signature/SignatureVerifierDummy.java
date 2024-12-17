@@ -22,7 +22,7 @@ import javax.inject.Inject;
 public class SignatureVerifierDummy implements SignatureVerifier {
 
     @Inject
-    // TODO we need to provide the public key (aka LedgerID)
+    // on actual impl we would need to provide the public key (aka LedgerID)
     public SignatureVerifierDummy() {}
 
     @Override

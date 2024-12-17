@@ -44,7 +44,6 @@ module com.hedera.block.server {
     requires javax.inject;
     requires static com.github.spotbugs.annotations;
     requires static com.google.auto.service;
-    requires org.checkerframework.checker.qual;
 
     provides com.swirlds.config.api.ConfigurationExtension with
             BlockNodeConfigExtension;
