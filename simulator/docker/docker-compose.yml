@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  block-simulator:
+    container_name: block-simulator
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hedera-block-simulator:latest
+    networks:
+      - block-node_default
+    environment:
+      - GRPC_SERVER_ADDRESS=block-node-server
+
+networks:
+  block-node_default:
+    external: true
