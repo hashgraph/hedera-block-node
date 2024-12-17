@@ -16,10 +16,14 @@
 
 package com.hedera.block.common.utils;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 
 /** A utility class used to assert various preconditions. */
-public final class Preconditions { // @todo(381) change the APIs to accept non-null error messages
+public final class Preconditions {
+    private static final String DEFAULT_NOT_BLANK_MESSAGE = "The input String is required to be non-blank.";
+    private static final String DEFAULT_REQUIRED_POSITIVE_MESSAGE = "The input number [%d] is required to be positive.";
+
     /**
      * This method asserts a given {@link String} is not blank, meaning it is
      * not {@code null} or does not contain only whitespaces as defined by
@@ -27,14 +31,14 @@ public final class Preconditions { // @todo(381) change the APIs to accept non-n
      * we return it, else we throw {@link IllegalArgumentException}.
      *
      * @param toCheck a {@link String} to be checked if is blank as defined
-     *                above
+     * above
      * @return the {@link String} to be checked if it is not blank as defined
-     *         above
+     * above
      * @throws IllegalArgumentException if the input {@link String} to be
-     *                                  checked is blank
+     * checked is blank
      */
     public static String requireNotBlank(final String toCheck) {
-        return requireNotBlank(toCheck, null);
+        return requireNotBlank(toCheck, DEFAULT_NOT_BLANK_MESSAGE);
     }
 
     /**
@@ -43,21 +47,18 @@ public final class Preconditions { // @todo(381) change the APIs to accept non-n
      * {@link String#isBlank()}. If the given {@link String} is not blank, then
      * we return it, else we throw {@link IllegalArgumentException}.
      *
-     * @param toCheck      a {@link String} to be checked if is blank as defined
-     *                     above
-     * @param errorMessage the error message to be used in the exception if the
-     *                     input {@link String} to be checked is blank, if null, a
-     *                     default message
+     * @param toCheck a {@link String} to be checked if is blank as defined
+     * above
+     * @param errorMessage the error message to be used if the precondition
+     * check fails. Must not be {@code null}!
      * @return the {@link String} to be checked if it is not blank as defined
-     *         above
+     * above
      * @throws IllegalArgumentException if the input {@link String} to be
-     *                                  checked is blank
+     * checked is blank
      */
-    public static String requireNotBlank(final String toCheck, final String errorMessage) {
+    public static String requireNotBlank(final String toCheck, @NonNull final String errorMessage) {
         if (StringUtilities.isBlank(toCheck)) {
-            final String message =
-                    Objects.isNull(errorMessage) ? "The input String is required to be non-blank." : errorMessage;
-            throw new IllegalArgumentException(message);
+            throw new IllegalArgumentException(errorMessage);
         } else {
             return toCheck;
         }
@@ -70,31 +71,28 @@ public final class Preconditions { // @todo(381) change the APIs to accept non-n
      * @param toCheck the number to check if it is a positive power of two
      * @return the number to check if it is positive
      * @throws IllegalArgumentException if the input number to check is not
-     *                                  positive
+     * positive
      */
     public static int requirePositive(final int toCheck) {
-        return requirePositive(toCheck, null);
+        return requirePositive(toCheck, DEFAULT_REQUIRED_POSITIVE_MESSAGE);
     }
 
     /**
      * This method asserts a given integer is a positive. An integer is positive
      * if it is NOT equal to zero and is greater than zero.
      *
-     * @param toCheck      the integer to check if it is a positive power of two
-     * @param errorMessage the error message to be used in the exception if the
-     *                     input integer to check is not positive, if null, a
-     *                     default message will
-     *                     be used
+     * @param toCheck the integer to check if it is a positive power of two
+     * @param errorMessage a formatted string with one decimal parameters for
+     * {@code toCheck}.<br/>
+     * Example error message: {@code "The input number (%d) must be positive."}
      * @return the number to check if it is positive
-     * @throws IllegalArgumentException if the input number to check is not
-     *                                  positive
+     * @throws IllegalArgumentException if the input integer to check is not
+     * positive
+     * @see java.util.Formatter for more information on error message formatting
      */
-    public static int requirePositive(final int toCheck, final String errorMessage) {
+    public static int requirePositive(final int toCheck, @NonNull final String errorMessage) {
         if (0 >= toCheck) {
-            final String message = Objects.isNull(errorMessage)
-                    ? "The input integer [%d] is required be positive.".formatted(toCheck)
-                    : errorMessage;
-            throw new IllegalArgumentException(message);
+            throw new IllegalArgumentException(errorMessage);
         } else {
             return toCheck;
         }
@@ -107,31 +105,28 @@ public final class Preconditions { // @todo(381) change the APIs to accept non-n
      * @param toCheck the long to check if it is a positive power of two
      * @return the long to check if it is positive
      * @throws IllegalArgumentException if the input long to check is not
-     *                                  positive
+     * positive
      */
     public static long requirePositive(final long toCheck) {
-        return requirePositive(toCheck, null);
+        return requirePositive(toCheck, DEFAULT_REQUIRED_POSITIVE_MESSAGE);
     }
 
     /**
      * This method asserts a given long is a positive. A long is positive
      * if it is NOT equal to zero and is greater than zero.
      *
-     * @param toCheck      the long to check if it is a positive power of two
-     * @param errorMessage the error message to be used in the exception if the
-     *                     input long to check is not positive, if null, a default
-     *                     message will
-     *                     be used
-     * @return the long to check if it is positive
+     * @param toCheck the long to check if it is a positive power of two
+     * @param errorMessage a formatted string with one decimal parameters for
+     * {@code toCheck}.<br/>
+     * Example error message: {@code "The input number (%d) must be positive."}
+     * @return the number to check if it is positive
      * @throws IllegalArgumentException if the input long to check is not
-     *                                  positive
+     * positive
+     * @see java.util.Formatter for more information on error message formatting
      */
-    public static long requirePositive(final long toCheck, final String errorMessage) {
+    public static long requirePositive(final long toCheck, @NonNull final String errorMessage) {
         if (0L >= toCheck) {
-            final String message = Objects.isNull(errorMessage)
-                    ? "The input long [%d] is required be positive.".formatted(toCheck)
-                    : errorMessage;
-            throw new IllegalArgumentException(message);
+            throw new IllegalArgumentException(errorMessage);
         } else {
             return toCheck;
         }
