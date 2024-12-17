@@ -17,9 +17,11 @@
 package com.hedera.block.server.verification;
 
 import com.hedera.hapi.block.BlockItemUnparsed;
-import com.hedera.pbj.runtime.ParseException;
 import java.util.List;
 
-public interface BlockVerificationService {
-    void onBlockItemsReceived(List<BlockItemUnparsed> blockItems) throws ParseException;
+public class BlockVerificationServiceNoOp implements BlockVerificationService {
+    @Override
+    public void onBlockItemsReceived(List<BlockItemUnparsed> blockItems) {
+        // no-op
+    }
 }
