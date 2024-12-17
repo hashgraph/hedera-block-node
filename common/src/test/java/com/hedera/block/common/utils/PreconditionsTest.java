@@ -117,12 +117,11 @@ class PreconditionsTest {
                 .isThrownBy(() -> Preconditions.requireWhole(toTest))
                 .withMessage(DEFAULT_REQUIRE_WHOLE_MESSAGE.formatted(toTest));
 
-        final String testErrorMessage = DEFAULT_REQUIRE_WHOLE_MESSAGE
-                .concat(" custom test error message")
-                .formatted(toTest);
+        final String testMessage = DEFAULT_REQUIRE_WHOLE_MESSAGE.concat(" custom test error message");
+        final String expectedTestMessage = testMessage.formatted(toTest);
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> Preconditions.requireWhole(toTest, testErrorMessage))
-                .withMessage(testErrorMessage);
+                .isThrownBy(() -> Preconditions.requireWhole(toTest, testMessage))
+                .withMessage(expectedTestMessage);
     }
 
     /**
@@ -159,11 +158,11 @@ class PreconditionsTest {
                 .isThrownBy(() -> Preconditions.requireGreaterOrEqual(toTest, base))
                 .withMessage(DEFAULT_GT_OR_EQ_MESSAGE.formatted(toTest, base));
 
-        final String testErrorMessage =
-                DEFAULT_GT_OR_EQ_MESSAGE.concat(" custom test error message").formatted(toTest, base);
+        final String testMessage = DEFAULT_GT_OR_EQ_MESSAGE.concat(" custom test error message");
+        final String expectedTestMessage = testMessage.formatted(toTest, base);
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> Preconditions.requireGreaterOrEqual(toTest, base, testErrorMessage))
-                .withMessage(testErrorMessage);
+                .isThrownBy(() -> Preconditions.requireGreaterOrEqual(toTest, base, testMessage))
+                .withMessage(expectedTestMessage);
     }
 
     /**
@@ -201,12 +200,11 @@ class PreconditionsTest {
                 .isThrownBy(() -> Preconditions.requirePositive(toTest))
                 .withMessage(DEFAULT_REQUIRE_POSITIVE_MESSAGE.formatted(toTest));
 
-        final String testErrorMessage = DEFAULT_REQUIRE_POSITIVE_MESSAGE
-                .concat(" custom test error message")
-                .formatted(toTest);
+        final String testMessage = DEFAULT_REQUIRE_POSITIVE_MESSAGE.concat(" custom test error message");
+        final String expectedTestMessage = testMessage.formatted(toTest);
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> Preconditions.requirePositive(toTest, testErrorMessage))
-                .withMessage(testErrorMessage);
+                .isThrownBy(() -> Preconditions.requirePositive(toTest, testMessage))
+                .withMessage(expectedTestMessage);
     }
 
     /**
@@ -243,12 +241,11 @@ class PreconditionsTest {
                 .isThrownBy(() -> Preconditions.requirePositive(toTest))
                 .withMessage(DEFAULT_REQUIRE_POSITIVE_MESSAGE.formatted(toTest));
 
-        final String testErrorMessage = DEFAULT_REQUIRE_POSITIVE_MESSAGE
-                .concat(" custom test error message")
-                .formatted(toTest);
+        final String testMessage = DEFAULT_REQUIRE_POSITIVE_MESSAGE.concat(" custom test error message");
+        final String expectedTestMessage = testMessage.formatted(toTest);
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> Preconditions.requirePositive(toTest, testErrorMessage))
-                .withMessage(testErrorMessage);
+                .isThrownBy(() -> Preconditions.requirePositive(toTest, testMessage))
+                .withMessage(expectedTestMessage);
     }
 
     /**
@@ -290,12 +287,11 @@ class PreconditionsTest {
                 .isThrownBy(() -> Preconditions.requirePowerOfTwo(toTest))
                 .withMessage(DEFAULT_REQUIRE_POWER_OF_TWO_MESSAGE.formatted(toTest));
 
-        final String testErrorMessage = DEFAULT_REQUIRE_POWER_OF_TWO_MESSAGE
-                .concat(" custom test error message")
-                .formatted(toTest);
+        final String testMessage = DEFAULT_REQUIRE_POWER_OF_TWO_MESSAGE.concat(" custom test error message");
+        final String expectedTestMessage = testMessage.formatted(toTest);
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> Preconditions.requirePowerOfTwo(toTest, testErrorMessage))
-                .withMessage(testErrorMessage);
+                .isThrownBy(() -> Preconditions.requirePowerOfTwo(toTest, testMessage))
+                .withMessage(expectedTestMessage);
     }
 
     /**
@@ -339,12 +335,11 @@ class PreconditionsTest {
                 .isThrownBy(() -> Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary))
                 .withMessage(DEFAULT_REQUIRE_IN_RANGE_MESSAGE.formatted(toTest, lowerBoundary, upperBoundary));
 
-        final String testErrorMessage = DEFAULT_REQUIRE_IN_RANGE_MESSAGE
-                .concat(" custom test error message")
-                .formatted(toTest, lowerBoundary, upperBoundary);
+        final String testMessage = DEFAULT_REQUIRE_IN_RANGE_MESSAGE.concat(" custom test error message");
+        final String expectedTestMessage = testMessage.formatted(toTest, lowerBoundary, upperBoundary);
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary, testErrorMessage))
-                .withMessage(testErrorMessage);
+                .isThrownBy(() -> Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary, testMessage))
+                .withMessage(expectedTestMessage);
     }
 
     private static Stream<Arguments> validRequireInRangeValues() {
