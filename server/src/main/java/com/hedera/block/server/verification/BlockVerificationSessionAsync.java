@@ -16,12 +16,12 @@
 
 package com.hedera.block.server.verification;
 
-import static com.hedera.block.server.verification.hasher.CommonUtils.combine;
 import static com.hedera.block.server.verification.hasher.CommonUtils.getBlockItemHash;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.verification.hasher.CommonUtils;
 import com.hedera.block.server.verification.hasher.ConcurrentStreamingTreeHasher;
 import com.hedera.block.server.verification.hasher.StreamingTreeHasher;
 import com.hedera.block.server.verification.signature.SignatureVerifier;
@@ -39,7 +39,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 
-public class BlockVerificationSessionImpl implements BlockVerificationSession {
+public class BlockVerificationSessionAsync implements BlockVerificationSession {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
     private final MetricsService metricsService;
@@ -48,7 +48,6 @@ public class BlockVerificationSessionImpl implements BlockVerificationSession {
     private final int hashCombineBatchSize = 32;
 
     private final long blockNumber;
-    // ASYNC
     private final ExecutorService executor;
     private final StreamingTreeHasher inputTreeHasher;
     private final StreamingTreeHasher outputTreeHasher;
@@ -58,7 +57,7 @@ public class BlockVerificationSessionImpl implements BlockVerificationSession {
 
     private final CompletableFuture<VerificationResult> verificationResultFuture = new CompletableFuture<>();
 
-    public BlockVerificationSessionImpl(
+    public BlockVerificationSessionAsync(
             @NonNull final BlockHeader blockHeader,
             @NonNull final List<BlockItemUnparsed> initialBlockItems,
             @NonNull final MetricsService metricsService,
@@ -77,8 +76,6 @@ public class BlockVerificationSessionImpl implements BlockVerificationSession {
             return t;
         });
 
-        //inputTreeHasher = new NaiveStreamingTreeHasher();
-        //outputTreeHasher = new NaiveStreamingTreeHasher();
         inputTreeHasher = new ConcurrentStreamingTreeHasher(executorService, hashCombineBatchSize);
         outputTreeHasher = new ConcurrentStreamingTreeHasher(executorService, hashCombineBatchSize);
 
@@ -107,18 +104,6 @@ public class BlockVerificationSessionImpl implements BlockVerificationSession {
             return null;
         };
         executor.submit(task);
-
-        // SYNC
-//        try {
-//            processBlockItems(blockItems);
-//        } catch (ParseException | ExecutionException | InterruptedException ex) {
-//            LOGGER.log(System.Logger.Level.ERROR, "Error processing block items", ex);
-//            metricsService
-//                    .get(BlockNodeMetricTypes.Counter.VerificationBlocksError)
-//                    .increment();
-//            verificationResultFuture.completeExceptionally(ex);
-//        }
-
     }
 
     private void processBlockItems(List<BlockItemUnparsed> blockItems)
@@ -140,24 +125,10 @@ public class BlockVerificationSessionImpl implements BlockVerificationSession {
         }
     }
 
-    private Bytes computeRootHash(BlockProof blockProof) throws ExecutionException, InterruptedException {
-        Bytes inputHash = inputTreeHasher.rootHash().get();
-        Bytes outputHash = outputTreeHasher.rootHash().get();
-        Bytes providedLasBlockHash = blockProof.previousBlockRootHash();
-        Bytes providedBlockStartStateHash = blockProof.startOfBlockStateRootHash();
-
-        final var leftParent = combine(providedLasBlockHash, inputHash);
-        final var rightParent = combine(outputHash, providedBlockStartStateHash);
-        return combine(leftParent, rightParent);
-    }
 
     private void finalizeVerification(BlockProof blockProof) throws ExecutionException, InterruptedException {
-        // gather 4 hashes
-        Bytes blockHash = computeRootHash(blockProof);
-        LOGGER.log(INFO, "Calculated Block hash: {0}", blockHash);
-        LOGGER.log(INFO, "Previous Block hash: {0}", blockProof.previousBlockRootHash());
-        LOGGER.log(INFO, "Block verification completed successfully for block number: {0}", blockNumber);
-
+        // compute the final block hash
+        Bytes blockHash = CommonUtils.computeFinalBlockHash(blockProof, inputTreeHasher, outputTreeHasher);
         // Verify the block hash against the signature.
         Boolean verified = signatureVerifier.verifySignature(blockHash, blockProof.blockSignature());
         if (verified) {

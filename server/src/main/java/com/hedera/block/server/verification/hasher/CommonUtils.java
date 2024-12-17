@@ -17,6 +17,7 @@
 package com.hedera.block.server.verification.hasher;
 
 import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.swirlds.common.crypto.DigestType;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -24,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public final class CommonUtils {
     private CommonUtils() {
@@ -126,5 +128,19 @@ public final class CommonUtils {
                 BlockItemUnparsed.PROTOBUF.toBytes(blockItemUnparsed).toByteArray()));
         buffer.flip();
         return buffer;
+    }
+
+    public static Bytes computeFinalBlockHash(
+            @NonNull final BlockProof blockProof,
+            @NonNull final StreamingTreeHasher inputTreeHasher,
+            @NonNull final StreamingTreeHasher outputTreeHasher) {
+        Bytes inputHash = inputTreeHasher.rootHash().join();
+        Bytes outputHash = outputTreeHasher.rootHash().join();
+        Bytes providedLasBlockHash = blockProof.previousBlockRootHash();
+        Bytes providedBlockStartStateHash = blockProof.startOfBlockStateRootHash();
+
+        final var leftParent = combine(providedLasBlockHash, inputHash);
+        final var rightParent = combine(outputHash, providedBlockStartStateHash);
+        return combine(leftParent, rightParent);
     }
 }

@@ -24,7 +24,6 @@ import com.hedera.block.server.verification.signature.SignatureVerifier;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.ParseException;
-import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -37,7 +36,6 @@ public class BlockVerificationService {
     private final SignatureVerifier signatureVerifier;
 
     private BlockVerificationSession currentSession;
-    private Bytes lastBlockHash = Bytes.EMPTY;
 
     @Inject
     public BlockVerificationService(
@@ -47,7 +45,7 @@ public class BlockVerificationService {
         this.signatureVerifier = signatureVerifier;
     }
 
-    public void onBlockItemsReceived(List<BlockItemUnparsed> blockItems) throws ParseException, ExecutionException, InterruptedException {
+    public void onBlockItemsReceived(List<BlockItemUnparsed> blockItems) throws ParseException {
 
         final BlockItemUnparsed firstItem = blockItems.getFirst();
 
@@ -59,21 +57,22 @@ public class BlockVerificationService {
             BlockHeader blockHeader = BlockHeader.PROTOBUF.parse(firstItem.blockHeader());
             // double check last block hash with prev of current block
             if(currentSession != null) {
-                lastBlockHash = currentSession.getVerificationResult().get().blockHash();
-
-                    if (!lastBlockHash.equals(blockHeader.previousBlockHash())) {
-                        LOGGER.log(WARNING, "Block header previous hash does not match last calculated block hash.");
+                currentSession.getVerificationResult().thenAccept(result -> {
+                    if(!result.blockHash().equals(blockHeader.previousBlockHash())) {
+                        LOGGER.log(WARNING, "blockHeader.previousBlockHash does not match calculated previous hash.");
                         metricsService
                                 .get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed)
                                 .increment();
                     }
+                });
+
 
             } else {
                 LOGGER.log(WARNING, "No previous session to compare block hashes.");
             }
 
             // start new session
-            currentSession = new BlockVerificationSessionImpl(blockHeader, blockItems, metricsService, signatureVerifier);
+            currentSession = new BlockVerificationSessionAsync(blockHeader, blockItems, metricsService, signatureVerifier);
 
         } else {
             if (currentSession == null) {
