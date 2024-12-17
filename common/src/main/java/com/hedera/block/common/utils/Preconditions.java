@@ -17,7 +17,6 @@
 package com.hedera.block.common.utils;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.util.Objects;
 
 /** A utility class used to assert various preconditions. */
 public final class Preconditions {
@@ -25,8 +24,12 @@ public final class Preconditions {
     private static final String DEFAULT_REQUIRE_POSITIVE_MESSAGE = "The input number [%d] is required to be positive.";
     private static final String DEFAULT_GT_OR_EQ_MESSAGE =
             "The input number [%d] is required to be greater or equal than [%d].";
+    private static final String DEFAULT_REQUIRE_IN_RANGE_MESSAGE =
+            "The input number [%d] is required to be in the range [%d, %d] boundaries included.";
     private static final String DEFAULT_REQUIRE_WHOLE_MESSAGE =
             "The input number [%d] is required to be a whole number.";
+    private static final String DEFAULT_REQUIRE_POWER_OF_TWO_MESSAGE =
+            "The input number [%d] is required to be a power of two.";
 
     /**
      * This method asserts a given {@link String} is not blank, meaning it is
@@ -130,15 +133,15 @@ public final class Preconditions {
      */
     public static long requirePositive(final long toCheck, @NonNull final String errorMessage) {
         if (0L >= toCheck) {
-            throw new IllegalArgumentException(errorMessage);
+            throw new IllegalArgumentException(errorMessage.formatted(toCheck));
         } else {
             return toCheck;
         }
     }
 
     /**
-     * Ensures that a given long value is greater than or equal to a specified base
-     * value.
+     * Ensures that a given long value is greater than or equal to a specified
+     * base value.
      * If the value does not meet the requirement, an
      * {@link IllegalArgumentException} is thrown.
      *
@@ -160,8 +163,8 @@ public final class Preconditions {
     }
 
     /**
-     * Ensures that a given long value is greater than or equal to a specified base
-     * value.
+     * Ensures that a given long value is greater than or equal to a specified
+     * base value.
      * If the value does not meet the requirement, an
      * {@link IllegalArgumentException} is thrown.
      *
@@ -197,7 +200,7 @@ public final class Preconditions {
      * @throws IllegalArgumentException if the input int does not pass the test
      */
     public static int requireInRange(final int toCheck, final int lowerBoundary, final int upperBoundary) {
-        return requireInRange(toCheck, lowerBoundary, upperBoundary, null);
+        return requireInRange(toCheck, lowerBoundary, upperBoundary, DEFAULT_REQUIRE_IN_RANGE_MESSAGE);
     }
 
     /**
@@ -208,23 +211,22 @@ public final class Preconditions {
      * @param toCheck the int value to check
      * @param lowerBoundary the lower boundary
      * @param upperBoundary the upper boundary
-     * @param errorMessage the error message to be used in the exception if the
-     * input int to test is not within the range, if null, a default message
-     * will be used
+     * @param errorMessage a formatted string with three decimal parameters for
+     * {@code toTest}, {@code upperBoundary} and {@code lowerBoundary}, must not
+     * be {@code null}.<br/>
+     * Example error message: {@code "The input number (%d) must be between
+     * (%d) and (%d)."}
      * @return the input {@code toCheck} if it is within the range (boundaries
      * included)
      * @throws IllegalArgumentException if the input int does not pass the test
+     * @see java.util.Formatter for more information on error message formatting
      */
     public static int requireInRange(
-            final int toCheck, final int lowerBoundary, final int upperBoundary, final String errorMessage) {
+            final int toCheck, final int lowerBoundary, final int upperBoundary, @NonNull final String errorMessage) {
         if (toCheck >= lowerBoundary && toCheck <= upperBoundary) {
             return toCheck;
         } else {
-            final String message = Objects.isNull(errorMessage)
-                    ? "The input int [%d] is required to be in the range [%d, %d] boundaries included."
-                            .formatted(toCheck, lowerBoundary, upperBoundary)
-                    : errorMessage;
-            throw new IllegalArgumentException(message);
+            throw new IllegalArgumentException(errorMessage.formatted(toCheck, lowerBoundary, upperBoundary));
         }
     }
 
@@ -268,30 +270,28 @@ public final class Preconditions {
      * @param toCheck the number to check if it is a power of two
      * @return the number to check if it is a power of two
      * @throws IllegalArgumentException if the input number to check is not a
-     *                                  power of two
+     * power of two
      */
     public static int requirePowerOfTwo(final int toCheck) {
-        return requirePowerOfTwo(toCheck, null);
+        return requirePowerOfTwo(toCheck, DEFAULT_REQUIRE_POWER_OF_TWO_MESSAGE);
     }
 
     /**
      * This method asserts a given integer is a power of two.
      *
-     * @param toCheck      the number to check if it is a power of two
-     * @param errorMessage the error message to be used in the exception if the
-     *                     input integer to check is not a power of two, if null, a
-     *                     default message
-     *                     will be used
+     * @param toCheck the number to check if it is a power of two
+     * @param errorMessage a formatted string with one decimal parameter for
+     * {@code toCheck}, must not be {@code null}.<br/>
+     * Example error message: {@code "The input number (%d) must be a power of
+     * two."}
      * @return the number to check if it is a power of two
      * @throws IllegalArgumentException if the input number to check is not a
-     *                                  power of two
+     * power of two
+     * @see java.util.Formatter for more information on error message formatting
      */
-    public static int requirePowerOfTwo(final int toCheck, final String errorMessage) {
+    public static int requirePowerOfTwo(final int toCheck, @NonNull final String errorMessage) {
         if (!MathUtilities.isPowerOfTwo(toCheck)) {
-            final String message = Objects.isNull(errorMessage)
-                    ? "The input integer [%d] is required to be a power of two.".formatted(toCheck)
-                    : errorMessage;
-            throw new IllegalArgumentException(message);
+            throw new IllegalArgumentException(errorMessage.formatted(toCheck));
         } else {
             return toCheck;
         }
