@@ -29,6 +29,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import javax.inject.Inject;
 
+/**
+ * Service that handles the verification of block items, it receives items from the handler.
+ */
 public class BlockVerificationServiceImpl implements BlockVerificationService {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
