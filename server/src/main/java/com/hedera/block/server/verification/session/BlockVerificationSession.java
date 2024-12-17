@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.verification;
+package com.hedera.block.server.verification.session;
 
+import com.hedera.block.server.verification.VerificationResult;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

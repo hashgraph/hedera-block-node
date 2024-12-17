@@ -20,29 +20,29 @@ import static java.lang.System.Logger.Level.WARNING;
 
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.verification.signature.SignatureVerifier;
+import com.hedera.block.server.verification.session.BlockVerificationSession;
+import com.hedera.block.server.verification.session.BlockVerificationSessionFactory;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
 
 public class BlockVerificationService {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
     private final MetricsService metricsService;
-    private final SignatureVerifier signatureVerifier;
 
+    private BlockVerificationSessionFactory sessionFactory;
     private BlockVerificationSession currentSession;
 
     @Inject
     public BlockVerificationService(
             @NonNull final MetricsService metricsService,
-            @NonNull final SignatureVerifier signatureVerifier) {
+            @NonNull final BlockVerificationSessionFactory sessionFactory) {
         this.metricsService = metricsService;
-        this.signatureVerifier = signatureVerifier;
+        this.sessionFactory = sessionFactory;
     }
 
     public void onBlockItemsReceived(List<BlockItemUnparsed> blockItems) throws ParseException {
@@ -55,30 +55,31 @@ public class BlockVerificationService {
                     .get(BlockNodeMetricTypes.Counter.VerificationBlocksReceived)
                     .increment();
             BlockHeader blockHeader = BlockHeader.PROTOBUF.parse(firstItem.blockHeader());
+
             // double check last block hash with prev of current block
-            if(currentSession != null) {
+            if (currentSession != null) {
                 currentSession.getVerificationResult().thenAccept(result -> {
-                    if(!result.blockHash().equals(blockHeader.previousBlockHash())) {
+                    if (!result.blockHash().equals(blockHeader.previousBlockHash())) {
                         LOGGER.log(WARNING, "blockHeader.previousBlockHash does not match calculated previous hash.");
                         metricsService
                                 .get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed)
                                 .increment();
                     }
                 });
-
-
             } else {
                 LOGGER.log(WARNING, "No previous session to compare block hashes.");
             }
 
-            // start new session
-            currentSession = new BlockVerificationSessionAsync(blockHeader, blockItems, metricsService, signatureVerifier);
+            // start new session and set it as current
+            currentSession = sessionFactory.createSession(blockHeader);
+            currentSession.appendBlockItems(blockItems);
 
-        } else {
+        } else { // If we don't have a block header, we should have a current session, otherwise ignore
             if (currentSession == null) {
                 LOGGER.log(WARNING, "Received block items before a block header. Ignoring.");
                 return;
             }
+            // Append to current session
             currentSession.appendBlockItems(blockItems);
         }
     }
