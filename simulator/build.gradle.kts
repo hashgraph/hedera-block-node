@@ -93,3 +93,23 @@ tasks.register<Copy>("untarTestBlockStream") {
 tasks.named("processResources") { dependsOn(tasks.named("untarTestBlockStream")) }
 
 tasks.named("sourcesJar") { dependsOn(tasks.named("untarTestBlockStream")) }
+
+// Task to prepare and run Docker container
+tasks.register("startDockerContainer") {
+    description = "Prepare and run the simulator containers in publisher and consumer mode"
+    group = "docker"
+
+    doLast {
+        exec { commandLine("./docker/prepare-docker.sh") }
+
+        exec {
+            workingDir("docker")
+            commandLine("sh", "-c", "docker compose -p simulator up --build -d")
+        }
+
+        exec { commandLine("./docker/cleanup-docker.sh") }
+
+        println("✅ Docker simulator is now running!")
+        println("🧹 Build artifacts have been cleaned up")
+    }
+}

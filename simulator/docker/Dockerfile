@@ -1,4 +1,3 @@
-# Use Eclipse Temurin with Java 21 as the base image
 FROM eclipse-temurin:21
 
 # Create a non-root user and group
@@ -8,7 +7,6 @@ ARG GID=2000
 RUN groupadd -g $GID -o $UNAME
 RUN useradd -m -u $UID -g $GID -o -s /bin/bash $UNAME
 
-# Set the working directory inside the container
 WORKDIR /app
 
 # Copy the distribution and resources

@@ -9,10 +9,10 @@ echo "🚀 Preparing Docker build environment..."
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$SCRIPT_DIR/../.."
 
-# Clean and build new distribution
+# Build new distribution
 echo "📦 Building simulator distribution..."
 cd "$PROJECT_ROOT"
-./gradlew clean :simulator:assemble
+./gradlew :simulator:assemble
 
 # Create docker directory if it doesn't exist
 mkdir -p "$SCRIPT_DIR"
