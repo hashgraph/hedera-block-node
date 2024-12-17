@@ -79,7 +79,7 @@ class ServerMappedConfigSourceInitializerTest {
     @MethodSource("allConfigDataTypes")
     void testVerifyAllFieldsInRecordsAreMapped(final Class<? extends Record> config) {
         if (!config.isAnnotationPresent(ConfigData.class)) {
-            fail("Class %s is missing the ConfigData annotation! All config classes MUST have that annotation present!"
+            fail("Class [%s] is missing the ConfigData annotation! All config classes MUST have that annotation present!"
                     .formatted(config.getSimpleName()));
         } else {
             final ConfigData configDataAnnotation = config.getDeclaredAnnotation(ConfigData.class);
@@ -87,7 +87,7 @@ class ServerMappedConfigSourceInitializerTest {
             for (final RecordComponent recordComponent : config.getRecordComponents()) {
                 if (!recordComponent.isAnnotationPresent(ConfigProperty.class)) {
                     fail(
-                            "Field %s in %s is missing the ConfigProperty annotation! All fields in config classes MUST have that annotation present!"
+                            "Field [%s] in [%s] is missing the ConfigProperty annotation! All fields in config classes MUST have that annotation present!"
                                     .formatted(recordComponent.getName(), config.getSimpleName()));
                 } else {
                     final String expectedMappedName = "%s.%s".formatted(prefix, recordComponent.getName());
