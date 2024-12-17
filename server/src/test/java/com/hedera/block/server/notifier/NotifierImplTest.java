@@ -44,8 +44,8 @@ import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.util.TestUtils;
-import com.hedera.block.server.verification.BlockVerificationService;
-import com.hedera.block.server.verification.BlockVerificationServiceNoOp;
+import com.hedera.block.server.verification.service.BlockVerificationService;
+import com.hedera.block.server.verification.service.NoOpBlockVerificationService;
 import com.hedera.block.server.verification.StreamVerificationHandlerImpl;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -275,7 +275,7 @@ public class NotifierImplTest {
         final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);
         final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
                 streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
-        final BlockVerificationService blockVerificationService = new BlockVerificationServiceNoOp();
+        final BlockVerificationService blockVerificationService = new NoOpBlockVerificationService();
 
         final var streamVerificationHandler = new StreamVerificationHandlerImpl(
                 streamMediator, notifier, blockNodeContext.metricsService(), serviceStatus, blockVerificationService);

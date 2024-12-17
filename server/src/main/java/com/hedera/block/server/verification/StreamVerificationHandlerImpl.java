@@ -27,6 +27,7 @@ import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.block.server.verification.service.BlockVerificationService;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.runtime.OneOf;

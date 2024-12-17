@@ -49,7 +49,7 @@ import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
-import com.hedera.block.server.verification.BlockVerificationService;
+import com.hedera.block.server.verification.service.BlockVerificationService;
 import com.hedera.block.server.verification.StreamVerificationHandlerImpl;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.BlockItemSetUnparsed;

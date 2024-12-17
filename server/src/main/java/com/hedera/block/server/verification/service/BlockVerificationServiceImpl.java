@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.verification;
+package com.hedera.block.server.verification.service;
 
 import static java.lang.System.Logger.Level.WARNING;
 

@@ -17,6 +17,9 @@
 package com.hedera.block.server.verification;
 
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.verification.service.BlockVerificationService;
+import com.hedera.block.server.verification.service.BlockVerificationServiceImpl;
+import com.hedera.block.server.verification.service.NoOpBlockVerificationService;
 import com.hedera.block.server.verification.session.BlockVerificationSessionFactory;
 import com.hedera.block.server.verification.signature.SignatureVerifier;
 import com.hedera.block.server.verification.signature.SignatureVerifierDummy;
@@ -49,7 +52,7 @@ public interface VerificationInjectionModule {
         if (verificationConfig.enabled()) {
             return new BlockVerificationServiceImpl(metricsService, blockVerificationSessionFactory);
         } else {
-            return new BlockVerificationServiceNoOp();
+            return new NoOpBlockVerificationService();
         }
     }
 }
