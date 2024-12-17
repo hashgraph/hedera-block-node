@@ -77,7 +77,7 @@ RUN apt-get update && \
 	apt-get autoremove --yes && \
 	apt-get autoclean --yes && \
 	apt-get clean all --yes && \
-    rm -rf /var/lib/{apt,dpkg,cache,log}/ \
+    rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 
 # Expose the port that the application will run on
@@ -86,9 +86,14 @@ EXPOSE 8080
 # Define version
 ARG VERSION
 
+# Create a non-root user and group
+ARG UNAME=hedera
+ARG UID=2000
+ARG GID=2000
+
 # Configure the standard user account
-RUN groupadd --gid 2000 hedera && \
-    useradd --no-user-group --create-home --uid 2000 --gid 2000 --shell /bin/bash hedera
+RUN groupadd --gid ${GID} ${UNAME} && \
+    useradd --no-user-group --create-home --uid ${UID} --gid ${GID} --shell /bin/bash ${UNAME}
 
 USER $UNAME
 
