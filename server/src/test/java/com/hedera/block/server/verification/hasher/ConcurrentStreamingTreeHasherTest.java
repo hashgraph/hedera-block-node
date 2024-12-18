@@ -27,9 +27,12 @@ import java.nio.ByteBuffer;
 import java.util.SplittableRandom;
 import java.util.concurrent.ForkJoinPool;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class ConcurrentStreamingTreeHasherTest {
     private static final SplittableRandom RANDOM = new SplittableRandom();
 

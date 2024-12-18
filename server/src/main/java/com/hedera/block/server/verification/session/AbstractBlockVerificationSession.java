@@ -121,11 +121,9 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
      */
     protected void finalizeVerification(BlockProof blockProof) {
         Bytes blockHash = CommonUtils.computeFinalBlockHash(blockProof, inputTreeHasher, outputTreeHasher);
-
+        VerificationResult result;
         boolean verified = signatureVerifier.verifySignature(blockHash, blockProof.blockSignature());
         if (verified) {
-            verificationResultFuture.complete(
-                    new VerificationResult(blockNumber, blockHash, BlockVerificationStatus.VERIFIED));
             long verificationLatency = System.nanoTime() - blockWorkStartTime;
             metricsService
                     .get(BlockNodeMetricTypes.Counter.VerificationBlockTime)
@@ -133,16 +131,18 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
             metricsService
                     .get(BlockNodeMetricTypes.Counter.VerificationBlocksVerified)
                     .increment();
+
+            result = new VerificationResult(blockNumber, blockHash, BlockVerificationStatus.VERIFIED);
         } else {
             LOGGER.log(INFO, "Block verification failed for block number: {0}", blockNumber);
             metricsService
                     .get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed)
                     .increment();
-            verificationResultFuture.complete(
-                    new VerificationResult(blockNumber, blockHash, BlockVerificationStatus.SIGNATURE_INVALID));
-        }
 
+            result = new VerificationResult(blockNumber, blockHash, BlockVerificationStatus.SIGNATURE_INVALID);
+        }
         shutdownSession();
+        verificationResultFuture.complete(result);
     }
 
     /**
