@@ -18,7 +18,17 @@ package com.hedera.block.server.verification.signature;
 
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 
+/**
+ * An interface for verifying signatures.
+ */
 public interface SignatureVerifier {
 
+    /**
+     * Verifies the signature of a hash.
+     *
+     * @param hash the hash to verify
+     * @param signature the signature to verify
+     * @return true if the signature is valid, false otherwise
+     */
     Boolean verifySignature(Bytes hash, Bytes signature);
 }

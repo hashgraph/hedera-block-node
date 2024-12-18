@@ -26,19 +26,38 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
+/**
+ * Provides common utility methods for hashing and combining hashes.
+ */
 public final class CommonUtils {
     private CommonUtils() {
         throw new UnsupportedOperationException("Utility Class");
     }
 
+    /**
+     * The size of an SHA-384 hash in bytes.
+     */
     public static final int HASH_SIZE = DigestType.SHA_384.digestLength();
 
+    /**
+     * The tag for the SHA-384 algorithm.
+     */
     private static String sha384HashTag = "SHA-384";
 
+    /**
+     * Returns the SHA-384 hash of the given bytes.
+     * @param bytes the bytes to hash
+     * @return the SHA-384 hash of the given bytes
+     */
     public static Bytes noThrowSha384HashOf(final Bytes bytes) {
         return Bytes.wrap(noThrowSha384HashOf(bytes.toByteArray()));
     }
 
+    /**
+     * Returns the SHA-384 hash of the given byte array.
+     * @param byteArray the byte array to hash
+     * @return the SHA-384 hash of the given byte array
+     */
     public static byte[] noThrowSha384HashOf(final byte[] byteArray) {
         try {
             return MessageDigest.getInstance(sha384HashTag).digest(byteArray);
@@ -87,6 +106,9 @@ public final class CommonUtils {
         }
     }
 
+    /**
+     * Returns the Hashes (input and output) of a list of block items.
+     */
     public static Hashes getBlockHashes(List<BlockItemUnparsed> blockItems) {
         int numInputs = 0;
         int numOutputs = 0;
@@ -120,6 +142,9 @@ public final class CommonUtils {
         return new Hashes(inputHashes, outputHashes);
     }
 
+    /**
+     * returns the ByteBuffer of the hash of the given block item.
+     */
     public static ByteBuffer getBlockItemHash(BlockItemUnparsed blockItemUnparsed) {
         final var digest = sha384DigestOrThrow();
         ByteBuffer buffer = ByteBuffer.allocate(HASH_SIZE);
@@ -129,6 +154,13 @@ public final class CommonUtils {
         return buffer;
     }
 
+    /**
+     * Computes the final block hash from the given block proof and tree hashers.
+     * @param blockProof the block proof
+     * @param inputTreeHasher the input tree hasher
+     * @param outputTreeHasher the output tree hasher
+     * @return the final block hash
+     */
     public static Bytes computeFinalBlockHash(
             @NonNull final BlockProof blockProof,
             @NonNull final StreamingTreeHasher inputTreeHasher,

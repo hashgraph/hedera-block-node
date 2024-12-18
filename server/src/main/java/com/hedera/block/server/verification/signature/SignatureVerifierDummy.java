@@ -19,12 +19,25 @@ package com.hedera.block.server.verification.signature;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import javax.inject.Inject;
 
+/**
+ * A dummy implementation of {@link SignatureVerifier} that always returns true.
+ */
 public class SignatureVerifierDummy implements SignatureVerifier {
 
+    /**
+     * Constructs the dummy verifier.
+     */
     @Inject
     // on actual impl we would need to provide the public key (aka LedgerID)
     public SignatureVerifierDummy() {}
 
+    /**
+     * Verifies the signature of a hash, for the dummy implementation this always returns true.
+     *
+     * @param hash the hash to verify
+     * @param signature the signature to verify
+     * @return true if the signature is valid, false otherwise
+     */
     @Override
     public Boolean verifySignature(Bytes hash, Bytes signature) {
         // Dummy implementation that always returns true
