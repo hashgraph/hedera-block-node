@@ -16,11 +16,15 @@
 
 package com.hedera.block.server.verification.session;
 
+import static com.hedera.block.server.verification.hasher.CommonUtils.getBlockItemHash;
+
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.verification.hasher.NaiveStreamingTreeHasher;
 import com.hedera.block.server.verification.signature.SignatureVerifier;
 import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 
@@ -61,6 +65,25 @@ public class BlockVerificationSessionSync extends AbstractBlockVerificationSessi
             processBlockItems(blockItems);
         } catch (Exception ex) {
             handleProcessingError(ex);
+        }
+    }
+
+    @Override
+    protected void processBlockItems(List<BlockItemUnparsed> blockItems) throws ParseException {
+        for (BlockItemUnparsed item : blockItems) {
+            final BlockItemUnparsed.ItemOneOfType kind = item.item().kind();
+            switch (kind) {
+                case EVENT_HEADER, EVENT_TRANSACTION -> inputTreeHasher.addLeaf(getBlockItemHash(item));
+                case TRANSACTION_RESULT, TRANSACTION_OUTPUT, STATE_CHANGES -> outputTreeHasher.addLeaf(
+                        getBlockItemHash(item));
+            }
+        }
+
+        // Check if this batch contains the final block proof
+        final BlockItemUnparsed lastItem = blockItems.getLast();
+        if (lastItem.hasBlockProof()) {
+            BlockProof blockProof = BlockProof.PROTOBUF.parse(lastItem.blockProof());
+            finalizeVerification(blockProof);
         }
     }
 }

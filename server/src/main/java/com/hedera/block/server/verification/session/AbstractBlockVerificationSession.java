@@ -16,7 +16,6 @@
 
 package com.hedera.block.server.verification.session;
 
-import static com.hedera.block.server.verification.hasher.CommonUtils.getBlockItemHash;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
@@ -24,6 +23,7 @@ import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.verification.BlockVerificationStatus;
 import com.hedera.block.server.verification.VerificationResult;
 import com.hedera.block.server.verification.hasher.CommonUtils;
+import com.hedera.block.server.verification.hasher.Hashes;
 import com.hedera.block.server.verification.hasher.StreamingTreeHasher;
 import com.hedera.block.server.verification.signature.SignatureVerifier;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -96,13 +96,12 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
      */
     protected void processBlockItems(List<BlockItemUnparsed> blockItems) throws ParseException {
 
-        for (BlockItemUnparsed item : blockItems) {
-            final BlockItemUnparsed.ItemOneOfType kind = item.item().kind();
-            switch (kind) {
-                case EVENT_HEADER, EVENT_TRANSACTION -> inputTreeHasher.addLeaf(getBlockItemHash(item));
-                case TRANSACTION_RESULT, TRANSACTION_OUTPUT, STATE_CHANGES -> outputTreeHasher.addLeaf(
-                        getBlockItemHash(item));
-            }
+        Hashes hashes = CommonUtils.getBlockHashes(blockItems);
+        while (hashes.inputHashes().hasRemaining()) {
+            inputTreeHasher.addLeaf(hashes.inputHashes());
+        }
+        while (hashes.outputHashes().hasRemaining()) {
+            outputTreeHasher.addLeaf(hashes.outputHashes());
         }
 
         // Check if this batch contains the final block proof
