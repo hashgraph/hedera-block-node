@@ -49,8 +49,8 @@ defaults:
     shell: bash
 
 permissions:
+  id-token: write
   contents: read
-  packages: write
 
 env:
   GRADLE_MANIFEST_PATH: ${{ github.workspace }}/.manifests/gradle
