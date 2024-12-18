@@ -198,8 +198,8 @@ class ServerMappedConfigSourceInitializerTest {
     }
 
     private static String transformToEnvVarConvention(final String input) {
-        String underscored = input.replace(".", "_");
-        String resolved = underscored.replaceAll("(?<!_)([A-Z])", "_$1");
+        final String underscored = input.replace(".", "_");
+        final String resolved = underscored.replaceAll("(?<!_)([A-Z])", "_$1");
         return resolved.toUpperCase();
     }
 
