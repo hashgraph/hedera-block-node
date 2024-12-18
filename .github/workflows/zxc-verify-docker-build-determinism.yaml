@@ -1,0 +1,81 @@
+##
+# Copyright (C) 2023-2024 Hedera Hashgraph, LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##
+name: "ZXC: Verify Docker Build Determinism"
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: "The branch, tag, or commit to checkout:"
+        type: string
+        required: false
+        default: ""
+      java-distribution:
+        description: "Java JDK Distribution:"
+        type: string
+        required: false
+        default: "temurin"
+      java-version:
+        description: "Java JDK Version:"
+        type: string
+        required: false
+        default: "21.0.4"
+
+#    secrets:
+#      gradle-cache-username:
+#        description: "The username used to authenticate with the Gradle Build Cache Node."
+#        required: true
+#      gradle-cache-password:
+#        description: "The password used to authenticate with the Gradle Build Cache Node."
+#        required: true
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+#  GRADLE_CACHE_USERNAME: ${{ secrets.gradle-cache-username }}
+#  GRADLE_CACHE_PASSWORD: ${{ secrets.gradle-cache-password }}
+  DOCKER_MANIFEST_GENERATOR: .github/workflows/support/scripts/generate-docker-artifact-baseline.sh
+  DOCKER_MANIFEST_PATH: ${{ github.workspace }}/.manifests/docker
+  DOCKER_REGISTRY: localhost:5000
+  DOCKER_IMAGE_NAME: consensus-node
+  DOCKER_CONTEXT_PATH: hedera-node/infrastructure/docker/containers/production-next/consensus-node
+  SKOPEO_VERSION: v1.14.0
+
+jobs:
+  generate-baseline:
+    name: Generate Baseline
+    runs-on: block-node-linux-medium
+#    outputs:
+#      sha: ${{ steps.commit.outputs.sha }}
+#      sha-abbrev: ${{ steps.commit.outputs.sha-abbrev }}
+#      source-date: ${{ steps.commit.outputs.source-date }}
+#      path: ${{ steps.baseline.outputs.path }}
+#      file: ${{ steps.baseline.outputs.file }}
+#      name: ${{ steps.baseline.outputs.name }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
+        with:
+          egress-policy: audit
+
+      - name: Hello World
+        run: echo "Testing Docker Build Determinism"
