@@ -17,7 +17,6 @@
 package com.hedera.block.simulator.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import com.swirlds.common.metrics.config.MetricsConfig;
 import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
@@ -25,20 +24,27 @@ import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 import com.swirlds.config.extensions.sources.ConfigMapping;
 import com.swirlds.config.extensions.sources.MappedConfigSource;
+import java.lang.System.Logger.Level;
 import java.lang.reflect.Field;
 import java.lang.reflect.RecordComponent;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class SimulatorMappedConfigSourceInitializerTest {
+    private static final System.Logger LOGGER =
+            System.getLogger(SimulatorMappedConfigSourceInitializerTest.class.getName());
     private static final ConfigMapping[] SUPPORTED_MAPPINGS = {
         // gRPC configuration
         new ConfigMapping("grpc.serverAddress", "GRPC_SERVER_ADDRESS"),
@@ -77,27 +83,37 @@ class SimulatorMappedConfigSourceInitializerTest {
      *     - all fields in all config classes are annotated with the
      *       {@link ConfigProperty} annotation.
      *     - a mapping for all fields in all config classes is present in the
-     *       {@link SimulatorMappedConfigSourceInitializer#MAPPINGS()}.
+     *       {@link SimulatorMappedConfigSourceInitializer#MAPPINGS()}, as
+     *       defined in {@link #allManagedConfigDataTypes()}.
      * </pre>
      * @param config parameterized, config class to test
      */
     @ParameterizedTest
-    @MethodSource("allConfigDataTypes")
-    void testVerifyAllFieldsInRecordsAreMapped(final Class<? extends Record> config) {
+    @MethodSource("allManagedConfigDataTypes")
+    void testVerifyAllFieldsInRecordsAreMapped(
+            final Class<? extends Record> config, final List<String> fieldNamesToExclude) {
         if (!config.isAnnotationPresent(ConfigData.class)) {
-            fail(
+            Assertions.fail(
                     "Class [%s] is missing the ConfigData annotation! All config classes MUST have that annotation present!"
                             .formatted(config.getSimpleName()));
         } else {
             final ConfigData configDataAnnotation = config.getDeclaredAnnotation(ConfigData.class);
             final String prefix = configDataAnnotation.value();
-            for (final RecordComponent recordComponent : config.getRecordComponents()) {
+            final RecordComponent[] fieldsToVerify = Arrays.stream(config.getRecordComponents())
+                    .filter(recordComponent -> !fieldNamesToExclude.contains(recordComponent.getName()))
+                    .toArray(RecordComponent[]::new);
+            LOGGER.log(
+                    Level.INFO,
+                    "Checking fields %s\nfor config class [%s]."
+                            .formatted(Arrays.toString(fieldsToVerify), config.getSimpleName()));
+            for (final RecordComponent recordComponent : fieldsToVerify) {
+                final String fieldName = recordComponent.getName();
                 if (!recordComponent.isAnnotationPresent(ConfigProperty.class)) {
-                    fail(
+                    Assertions.fail(
                             "Field [%s] in [%s] is missing the ConfigProperty annotation! All fields in config classes MUST have that annotation present!"
-                                    .formatted(recordComponent.getName(), config.getSimpleName()));
+                                    .formatted(fieldName, config.getSimpleName()));
                 } else {
-                    final String expectedMappedName = "%s.%s".formatted(prefix, recordComponent.getName());
+                    final String expectedMappedName = "%s.%s".formatted(prefix, fieldName);
                     final Optional<ConfigMapping> matchingMapping = Arrays.stream(SUPPORTED_MAPPINGS)
                             .filter(mapping -> mapping.mappedName().equals(expectedMappedName))
                             .findFirst();
@@ -105,7 +121,7 @@ class SimulatorMappedConfigSourceInitializerTest {
                             .isNotNull()
                             .withFailMessage(
                                     "Field [%s] in [%s] is not present in the environment variable mappings! Expected config key [%s] to be present and to be mapped to [%s]",
-                                    recordComponent.getName(),
+                                    fieldName,
                                     config.getSimpleName(),
                                     expectedMappedName,
                                     transformToEnvVarConvention(expectedMappedName))
@@ -177,13 +193,30 @@ class SimulatorMappedConfigSourceInitializerTest {
         return resolved.toUpperCase();
     }
 
-    private static Stream<Arguments> allConfigDataTypes() {
+    private static Stream<Arguments> allManagedConfigDataTypes() {
         // Add any classes that should be excluded from the test for any reason in the set below
-        // MetricsConfig and PrometheusConfig are not managed by us
-        final Set<Class<? extends Record>> excluded = Set.of(MetricsConfig.class, PrometheusConfig.class);
-        return new SimulatorConfigExtension()
+        // MetricsConfig is not managed by us.
+        final Set<Class<? extends Record>> excluded = Set.of(MetricsConfig.class);
+
+        // Add any classes that should be partially checked in the map below
+        // for example, we do not manage PrometheusConfig, but we need the endpointEnabled and endpointPortNumber
+        // mappings to be present in our scope, so we exclude all other fields. We must do the strategy
+        // of exclusion and not inclusion because fields in the config classes can be added or removed, we want
+        // to detect that.
+        final Map<Class<? extends Record>, List<String>> fieldNamesToExcludeForConfig =
+                Map.ofEntries(Map.entry(PrometheusConfig.class, List.of("endpointMaxBacklogAllowed")));
+
+        // Here are all the config classes that we need to check mappings for
+        final Set<Class<? extends Record>> allRegisteredRecordsFilteredWithExcluded = new SimulatorConfigExtension()
                 .getConfigDataTypes().stream()
                         .filter(configType -> !excluded.contains(configType))
-                        .map(Arguments::of);
+                        .collect(Collectors.toSet());
+
+        // Here we return all config classes that we need to check mappings for and a list of field names to check
+        // for the given config class, if list is empty, we check all fields
+        return allRegisteredRecordsFilteredWithExcluded.stream().map(config -> {
+            final List<String> fieldsToExclude = fieldNamesToExcludeForConfig.getOrDefault(config, List.of());
+            return Arguments.of(config, fieldsToExclude);
+        });
     }
 }
