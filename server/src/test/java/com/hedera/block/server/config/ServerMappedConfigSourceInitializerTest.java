@@ -31,6 +31,7 @@ import java.lang.reflect.RecordComponent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
@@ -213,8 +214,10 @@ class ServerMappedConfigSourceInitializerTest {
         // mappings to be present in our scope, so we exclude all other fields. We must do the strategy
         // of exclusion and not inclusion because fields in the config classes can be added or removed, we want
         // to detect that.
+        final Entry<Class<PrometheusConfig>, List<String>> prometheusFieldsToExclude =
+                Map.entry(PrometheusConfig.class, List.of("endpointMaxBacklogAllowed"));
         final Map<Class<? extends Record>, List<String>> fieldNamesToExcludeForConfig =
-                Map.ofEntries(Map.entry(PrometheusConfig.class, List.of("endpointMaxBacklogAllowed")));
+                Map.ofEntries(prometheusFieldsToExclude);
 
         // Here are all the config classes that we need to check mappings for
         final Set<Class<? extends Record>> allRegisteredRecordsFilteredWithExcluded = new BlockNodeConfigExtension()
