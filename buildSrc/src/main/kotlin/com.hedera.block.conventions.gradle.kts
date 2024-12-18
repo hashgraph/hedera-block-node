@@ -142,7 +142,8 @@ tasks.withType<Javadoc>().configureEach {
         )
         options.windowTitle = "Hedera Block Node"
         options.memberLevel = JavadocMemberLevel.PACKAGE
-        addStringOption("Xdoclint:all,-missing", "-Xwerror")
+        // Commenting this so we still get missing javadocs warnings
+        // addStringOption("Xdoclint:all,-missing", "-Xwerror")
     }
 }
 
