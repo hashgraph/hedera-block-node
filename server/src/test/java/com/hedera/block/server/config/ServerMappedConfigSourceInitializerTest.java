@@ -43,19 +43,34 @@ import org.junit.jupiter.params.provider.MethodSource;
  */
 class ServerMappedConfigSourceInitializerTest {
     private static final ConfigMapping[] SUPPORTED_MAPPINGS = {
+        // Consumer Config
         new ConfigMapping("consumer.timeoutThresholdMillis", "CONSUMER_TIMEOUT_THRESHOLD_MILLIS"),
+
+        // Persistence Config
         new ConfigMapping("persistence.storage.liveRootPath", "PERSISTENCE_STORAGE_LIVE_ROOT_PATH"),
         new ConfigMapping("persistence.storage.archiveRootPath", "PERSISTENCE_STORAGE_ARCHIVE_ROOT_PATH"),
         new ConfigMapping("persistence.storage.type", "PERSISTENCE_STORAGE_TYPE"),
         new ConfigMapping("persistence.storage.compression", "PERSISTENCE_STORAGE_COMPRESSION"),
         new ConfigMapping("persistence.storage.compressionLevel", "PERSISTENCE_STORAGE_COMPRESSION_LEVEL"),
+
+        // Service Config
         new ConfigMapping("service.delayMillis", "SERVICE_DELAY_MILLIS"),
+
+        // Mediator Config
         new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),
         new ConfigMapping("mediator.type", "MEDIATOR_TYPE"),
+
+        // Notifier Config
         new ConfigMapping("notifier.ringBufferSize", "NOTIFIER_RING_BUFFER_SIZE"),
+
+        // Producer Config
         new ConfigMapping("producer.type", "PRODUCER_TYPE"),
+
+        // Server Config
         new ConfigMapping("server.maxMessageSizeBytes", "SERVER_MAX_MESSAGE_SIZE_BYTES"),
         new ConfigMapping("server.port", "SERVER_PORT"),
+
+        // Prometheus Config (external)
         new ConfigMapping("prometheus.endpointEnabled", "PROMETHEUS_ENDPOINT_ENABLED"),
         new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER")
     };
@@ -79,8 +94,9 @@ class ServerMappedConfigSourceInitializerTest {
     @MethodSource("allConfigDataTypes")
     void testVerifyAllFieldsInRecordsAreMapped(final Class<? extends Record> config) {
         if (!config.isAnnotationPresent(ConfigData.class)) {
-            fail("Class [%s] is missing the ConfigData annotation! All config classes MUST have that annotation present!"
-                    .formatted(config.getSimpleName()));
+            fail(
+                    "Class [%s] is missing the ConfigData annotation! All config classes MUST have that annotation present!"
+                            .formatted(config.getSimpleName()));
         } else {
             final ConfigData configDataAnnotation = config.getDeclaredAnnotation(ConfigData.class);
             final String prefix = configDataAnnotation.value();
@@ -152,12 +168,6 @@ class ServerMappedConfigSourceInitializerTest {
         }
     }
 
-    private static String transformToEnvVarConvention(final String input) {
-        String underscored = input.replace(".", "_");
-        String resolved = underscored.replaceAll("(?<!_)([A-Z])", "_$1");
-        return resolved.toUpperCase();
-    }
-
     @SuppressWarnings("unchecked")
     private static Queue<ConfigMapping> extractConfigMappings() throws ReflectiveOperationException {
         final Field configMappings = MappedConfigSource.class.getDeclaredField("configMappings");
@@ -168,6 +178,12 @@ class ServerMappedConfigSourceInitializerTest {
         } finally {
             configMappings.setAccessible(false);
         }
+    }
+
+    private static String transformToEnvVarConvention(final String input) {
+        String underscored = input.replace(".", "_");
+        String resolved = underscored.replaceAll("(?<!_)([A-Z])", "_$1");
+        return resolved.toUpperCase();
     }
 
     private static Stream<Arguments> allConfigDataTypes() {

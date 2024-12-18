@@ -40,6 +40,7 @@ testModuleInfo {
     requires("org.junit.jupiter.api")
     requires("org.mockito")
     requires("org.mockito.junit.jupiter")
+    requires("org.assertj.core")
     requiresStatic("com.github.spotbugs.annotations")
     requires("com.google.protobuf")
 }
