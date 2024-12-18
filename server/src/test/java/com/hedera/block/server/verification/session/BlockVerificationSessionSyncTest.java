@@ -23,8 +23,6 @@ import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.Verif
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.VerificationBlocksVerified;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -36,33 +34,20 @@ import com.hedera.block.server.verification.VerificationResult;
 import com.hedera.block.server.verification.signature.SignatureVerifier;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
-import com.hedera.hapi.block.stream.Block;
-import com.hedera.hapi.block.stream.BlockProof;
-import com.hedera.hapi.block.stream.input.EventHeader;
 import com.hedera.hapi.block.stream.output.BlockHeader;
-import com.hedera.hapi.block.stream.output.StateChange;
-import com.hedera.hapi.block.stream.output.TransactionOutput;
-import com.hedera.hapi.block.stream.output.TransactionResult;
-import com.hedera.hapi.platform.event.EventTransaction;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
-
+import com.swirlds.metrics.api.Counter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-
-import com.swirlds.metrics.api.Counter;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.verification.VerificationMode;
 
 class BlockVerificationSessionSyncTest {
 
@@ -81,9 +66,11 @@ class BlockVerificationSessionSyncTest {
     @Mock
     private Counter verificationBlockTime;
 
-    @Mock Counter verificationBlocksError;
+    @Mock
+    Counter verificationBlocksError;
 
-    final Bytes hashing01BlockHash = Bytes.fromHex("006ae77f87ff57df598f4d6536dcb5c0a5c1f840c2fef817b2faebd554d32cfc9a4eaee1d873ed88de668b53b7839117");
+    final Bytes hashing01BlockHash = Bytes.fromHex(
+            "006ae77f87ff57df598f4d6536dcb5c0a5c1f840c2fef817b2faebd554d32cfc9a4eaee1d873ed88de668b53b7839117");
 
     @BeforeEach
     void setUp() {
@@ -96,7 +83,8 @@ class BlockVerificationSessionSyncTest {
     }
 
     private List<BlockItemUnparsed> getTestBlock1Items() throws IOException, ParseException, URISyntaxException {
-        Path block01Path = Path.of(getClass().getResource("/test-blocks/hashing-01.blk.gz").toURI());
+        Path block01Path =
+                Path.of(getClass().getResource("/test-blocks/hashing-01.blk.gz").toURI());
         Bytes block01Bytes = Bytes.wrap(readGzipFileUnsafe(block01Path));
         BlockUnparsed blockUnparsed = BlockUnparsed.PROTOBUF.parse(block01Bytes);
 
@@ -107,10 +95,12 @@ class BlockVerificationSessionSyncTest {
     void testSuccessfulVerification() throws Exception {
         // Given
         List<BlockItemUnparsed> blockItems = getTestBlock1Items();
-        BlockHeader blockHeader = BlockHeader.PROTOBUF.parse(blockItems.getFirst().blockHeader());
+        BlockHeader blockHeader =
+                BlockHeader.PROTOBUF.parse(blockItems.getFirst().blockHeader());
         BlockVerificationSessionSync session =
                 new BlockVerificationSessionSync(blockHeader, metricsService, signatureVerifier);
-        when(signatureVerifier.verifySignature(any(Bytes.class), any(Bytes.class))).thenReturn(true);
+        when(signatureVerifier.verifySignature(any(Bytes.class), any(Bytes.class)))
+                .thenReturn(true);
 
         // When
         session.appendBlockItems(blockItems);
@@ -134,10 +124,12 @@ class BlockVerificationSessionSyncTest {
         // Slice list into 2 parts of different sizes
         List<BlockItemUnparsed> blockItems1 = blockItems.subList(0, 3);
         List<BlockItemUnparsed> blockItems2 = blockItems.subList(3, blockItems.size());
-        BlockHeader blockHeader = BlockHeader.PROTOBUF.parse(blockItems.getFirst().blockHeader());
+        BlockHeader blockHeader =
+                BlockHeader.PROTOBUF.parse(blockItems.getFirst().blockHeader());
         BlockVerificationSessionSync session =
                 new BlockVerificationSessionSync(blockHeader, metricsService, signatureVerifier);
-        when(signatureVerifier.verifySignature(any(Bytes.class), any(Bytes.class))).thenReturn(true);
+        when(signatureVerifier.verifySignature(any(Bytes.class), any(Bytes.class)))
+                .thenReturn(true);
 
         // When
         session.appendBlockItems(blockItems1);
@@ -159,11 +151,14 @@ class BlockVerificationSessionSyncTest {
     void testVerificationFailure() throws Exception {
         // Given
         List<BlockItemUnparsed> blockItems = getTestBlock1Items();
-        final Bytes hashing01BlockHash = Bytes.fromHex("006ae77f87ff57df598f4d6536dcb5c0a5c1f840c2fef817b2faebd554d32cfc9a4eaee1d873ed88de668b53b7839117");
-        BlockHeader blockHeader = BlockHeader.PROTOBUF.parse(blockItems.getFirst().blockHeader());
+        final Bytes hashing01BlockHash = Bytes.fromHex(
+                "006ae77f87ff57df598f4d6536dcb5c0a5c1f840c2fef817b2faebd554d32cfc9a4eaee1d873ed88de668b53b7839117");
+        BlockHeader blockHeader =
+                BlockHeader.PROTOBUF.parse(blockItems.getFirst().blockHeader());
         BlockVerificationSessionSync session =
                 new BlockVerificationSessionSync(blockHeader, metricsService, signatureVerifier);
-        when(signatureVerifier.verifySignature(any(Bytes.class), any(Bytes.class))).thenReturn(false);
+        when(signatureVerifier.verifySignature(any(Bytes.class), any(Bytes.class)))
+                .thenReturn(false);
 
         // When
         session.appendBlockItems(blockItems);
@@ -183,10 +178,12 @@ class BlockVerificationSessionSyncTest {
     void testAppendBlockItemsNotRunning() throws Exception {
         // Given
         List<BlockItemUnparsed> blockItems = getTestBlock1Items();
-        BlockHeader blockHeader = BlockHeader.PROTOBUF.parse(blockItems.getFirst().blockHeader());
+        BlockHeader blockHeader =
+                BlockHeader.PROTOBUF.parse(blockItems.getFirst().blockHeader());
         BlockVerificationSessionSync session =
                 new BlockVerificationSessionSync(blockHeader, metricsService, signatureVerifier);
-        when(signatureVerifier.verifySignature(any(Bytes.class), any(Bytes.class))).thenReturn(true);
+        when(signatureVerifier.verifySignature(any(Bytes.class), any(Bytes.class)))
+                .thenReturn(true);
         // send a whole block and wait for the result, the session should be completed.
         session.appendBlockItems(blockItems);
         CompletableFuture<VerificationResult> future = session.getVerificationResult();
@@ -207,11 +204,15 @@ class BlockVerificationSessionSyncTest {
     }
 
     @Test
-    void testParseException() throws IOException, ParseException, URISyntaxException, ExecutionException, InterruptedException {
+    void testParseException()
+            throws IOException, ParseException, URISyntaxException, ExecutionException, InterruptedException {
         // Given
         List<BlockItemUnparsed> blockItems = getTestBlock1Items();
-        BlockHeader blockHeader = BlockHeader.PROTOBUF.parse(blockItems.getFirst().blockHeader());
-        blockItems.set(blockItems.size()-1, BlockItemUnparsed.newBuilder().blockProof(Bytes.wrap("invalid")).build());
+        BlockHeader blockHeader =
+                BlockHeader.PROTOBUF.parse(blockItems.getFirst().blockHeader());
+        blockItems.set(
+                blockItems.size() - 1,
+                BlockItemUnparsed.newBuilder().blockProof(Bytes.wrap("invalid")).build());
         BlockVerificationSessionSync session =
                 new BlockVerificationSessionSync(blockHeader, metricsService, signatureVerifier);
 
@@ -223,5 +224,4 @@ class BlockVerificationSessionSyncTest {
         assertTrue(future.isCompletedExceptionally());
         verify(verificationBlocksError, times(1)).increment();
     }
-
 }
