@@ -29,6 +29,17 @@ import org.junit.jupiter.params.provider.MethodSource;
  * Tests for {@link Preconditions} functionality.
  */
 class PreconditionsTest {
+    private static final String DEFAULT_NOT_BLANK_MESSAGE = "The input String is required to be non-blank.";
+    private static final String DEFAULT_REQUIRE_POSITIVE_MESSAGE = "The input number [%d] is required to be positive.";
+    private static final String DEFAULT_GT_OR_EQ_MESSAGE =
+            "The input number [%d] is required to be greater or equal than [%d].";
+    private static final String DEFAULT_REQUIRE_IN_RANGE_MESSAGE =
+            "The input number [%d] is required to be in the range [%d, %d] boundaries included.";
+    private static final String DEFAULT_REQUIRE_WHOLE_MESSAGE =
+            "The input number [%d] is required to be a whole number.";
+    private static final String DEFAULT_REQUIRE_POWER_OF_TWO_MESSAGE =
+            "The input number [%d] is required to be a power of two.";
+
     /**
      * This test aims to verify that the
      * {@link Preconditions#requireNotBlank(String)} will return the input
@@ -61,9 +72,11 @@ class PreconditionsTest {
     @ParameterizedTest
     @MethodSource("com.hedera.block.common.CommonsTestUtility#blankStrings")
     void testRequireNotBlankFail(final String toTest) {
-        assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requireNotBlank(toTest));
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requireNotBlank(toTest))
+                .withMessage(DEFAULT_NOT_BLANK_MESSAGE);
 
-        final String testErrorMessage = "test error message";
+        final String testErrorMessage = DEFAULT_NOT_BLANK_MESSAGE.concat(" custom test error message");
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> Preconditions.requireNotBlank(toTest, testErrorMessage))
                 .withMessage(testErrorMessage);
@@ -100,12 +113,15 @@ class PreconditionsTest {
     @ParameterizedTest
     @MethodSource("com.hedera.block.common.CommonsTestUtility#negativeIntegers")
     void testRequireWholeFail(final int toTest) {
-        assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requireWhole(toTest));
-
-        final String testErrorMessage = "test error message";
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> Preconditions.requireWhole(toTest, testErrorMessage))
-                .withMessage(testErrorMessage);
+                .isThrownBy(() -> Preconditions.requireWhole(toTest))
+                .withMessage(DEFAULT_REQUIRE_WHOLE_MESSAGE.formatted(toTest));
+
+        final String testMessage = DEFAULT_REQUIRE_WHOLE_MESSAGE.concat(" custom test error message");
+        final String expectedTestMessage = testMessage.formatted(toTest);
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requireWhole(toTest, testMessage))
+                .withMessage(expectedTestMessage);
     }
 
     /**
@@ -138,12 +154,15 @@ class PreconditionsTest {
     @ParameterizedTest
     @MethodSource("com.hedera.block.common.CommonsTestUtility#invalidGreaterOrEqualValues")
     void testRequireGreaterOrEqualFail(final long toTest, final long base) {
-        assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requireGreaterOrEqual(toTest, base));
-
-        final String testErrorMessage = "test error message";
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> Preconditions.requireGreaterOrEqual(toTest, base, testErrorMessage))
-                .withMessage(testErrorMessage);
+                .isThrownBy(() -> Preconditions.requireGreaterOrEqual(toTest, base))
+                .withMessage(DEFAULT_GT_OR_EQ_MESSAGE.formatted(toTest, base));
+
+        final String testMessage = DEFAULT_GT_OR_EQ_MESSAGE.concat(" custom test error message");
+        final String expectedTestMessage = testMessage.formatted(toTest, base);
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requireGreaterOrEqual(toTest, base, testMessage))
+                .withMessage(expectedTestMessage);
     }
 
     /**
@@ -177,12 +196,15 @@ class PreconditionsTest {
     @ParameterizedTest
     @MethodSource("com.hedera.block.common.CommonsTestUtility#zeroAndNegativeIntegers")
     void testRequirePositiveFail(final int toTest) {
-        assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requirePositive(toTest));
-
-        final String testErrorMessage = "test error message";
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> Preconditions.requirePositive(toTest, testErrorMessage))
-                .withMessage(testErrorMessage);
+                .isThrownBy(() -> Preconditions.requirePositive(toTest))
+                .withMessage(DEFAULT_REQUIRE_POSITIVE_MESSAGE.formatted(toTest));
+
+        final String testMessage = DEFAULT_REQUIRE_POSITIVE_MESSAGE.concat(" custom test error message");
+        final String expectedTestMessage = testMessage.formatted(toTest);
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requirePositive(toTest, testMessage))
+                .withMessage(expectedTestMessage);
     }
 
     /**
@@ -215,12 +237,15 @@ class PreconditionsTest {
     @ParameterizedTest
     @MethodSource("com.hedera.block.common.CommonsTestUtility#zeroAndNegativeIntegers")
     void testRequirePositiveLongFail(final long toTest) {
-        assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requirePositive(toTest));
-
-        final String testErrorMessage = "test error message";
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> Preconditions.requirePositive(toTest, testErrorMessage))
-                .withMessage(testErrorMessage);
+                .isThrownBy(() -> Preconditions.requirePositive(toTest))
+                .withMessage(DEFAULT_REQUIRE_POSITIVE_MESSAGE.formatted(toTest));
+
+        final String testMessage = DEFAULT_REQUIRE_POSITIVE_MESSAGE.concat(" custom test error message");
+        final String expectedTestMessage = testMessage.formatted(toTest);
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requirePositive(toTest, testMessage))
+                .withMessage(expectedTestMessage);
     }
 
     /**
@@ -258,12 +283,15 @@ class PreconditionsTest {
         "com.hedera.block.common.CommonsTestUtility#negativePowerOfTwoIntegers"
     })
     void testRequirePowerOfTwoFail(final int toTest) {
-        assertThatIllegalArgumentException().isThrownBy(() -> Preconditions.requirePowerOfTwo(toTest));
-
-        final String testErrorMessage = "test error message";
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> Preconditions.requirePowerOfTwo(toTest, testErrorMessage))
-                .withMessage(testErrorMessage);
+                .isThrownBy(() -> Preconditions.requirePowerOfTwo(toTest))
+                .withMessage(DEFAULT_REQUIRE_POWER_OF_TWO_MESSAGE.formatted(toTest));
+
+        final String testMessage = DEFAULT_REQUIRE_POWER_OF_TWO_MESSAGE.concat(" custom test error message");
+        final String expectedTestMessage = testMessage.formatted(toTest);
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requirePowerOfTwo(toTest, testMessage))
+                .withMessage(expectedTestMessage);
     }
 
     /**
@@ -304,12 +332,14 @@ class PreconditionsTest {
     @MethodSource("invalidRequireInRangeValues")
     void testRequireInRangeFail(final int toTest, final int lowerBoundary, final int upperBoundary) {
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary));
+                .isThrownBy(() -> Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary))
+                .withMessage(DEFAULT_REQUIRE_IN_RANGE_MESSAGE.formatted(toTest, lowerBoundary, upperBoundary));
 
-        final String testErrorMessage = "test error message";
+        final String testMessage = DEFAULT_REQUIRE_IN_RANGE_MESSAGE.concat(" custom test error message");
+        final String expectedTestMessage = testMessage.formatted(toTest, lowerBoundary, upperBoundary);
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary, testErrorMessage))
-                .withMessage(testErrorMessage);
+                .isThrownBy(() -> Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary, testMessage))
+                .withMessage(expectedTestMessage);
     }
 
     private static Stream<Arguments> validRequireInRangeValues() {
