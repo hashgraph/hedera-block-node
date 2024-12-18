@@ -34,7 +34,6 @@ import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 /**
  * An abstract base class providing common functionality for block verification sessions.
@@ -94,11 +93,8 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
      *
      * @param blockItems the block items to process
      * @throws ParseException if a parsing error occurs
-     * @throws ExecutionException if a concurrency error occurs
-     * @throws InterruptedException if the operation is interrupted
      */
-    protected void processBlockItems(List<BlockItemUnparsed> blockItems)
-            throws ParseException, ExecutionException, InterruptedException {
+    protected void processBlockItems(List<BlockItemUnparsed> blockItems) throws ParseException {
 
         for (BlockItemUnparsed item : blockItems) {
             final BlockItemUnparsed.ItemOneOfType kind = item.item().kind();
