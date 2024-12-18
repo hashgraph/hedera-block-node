@@ -165,7 +165,7 @@ jobs:
           mkdir -p "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/data"
 
           echo "::group::Copying Application Artifacts"
-            cp -Rvf "${{ github.workspace }}/hedera-node/data/apps" "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/data/"
+            cp -Rvf "${{ github.workspace }}/server/build/libs" "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/data/"
           echo "::endgroup::"
 
       - name: Write Artifact Version Descriptor
