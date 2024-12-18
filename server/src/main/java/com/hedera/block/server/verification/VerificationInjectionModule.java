@@ -31,18 +31,40 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import javax.inject.Singleton;
 
+/**
+ * The module used to inject the verification service and signature verifier into the application.
+ */
 @Module
 public interface VerificationInjectionModule {
 
+    /**
+     * Provides the executor service.
+     *
+     * @return the executor service
+     */
     @Provides
     static ExecutorService provideExecutorService() {
         return ForkJoinPool.commonPool();
     }
 
+    /**
+     * Provides the signature verifier.
+     *
+     * @param signatureVerifier the signature verifier to be used
+     * @return the signature verifier
+     */
     @Binds
     @Singleton
     SignatureVerifier bindSignatureVerifier(SignatureVerifierDummy signatureVerifier);
 
+    /**
+     * Provides the block verification service.
+     *
+     * @param verificationConfig the verification configuration to be used
+     * @param metricsService the metrics service to be used
+     * @param blockVerificationSessionFactory the block verification session factory to be used
+     * @return the block verification service
+     */
     @Provides
     @Singleton
     static BlockVerificationService provideBlockVerificationService(

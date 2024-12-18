@@ -133,6 +133,12 @@ public interface ConfigInjectionModule {
         return configuration.getConfigData(ServerConfig.class);
     }
 
+    /**
+     * Provides a verification configuration singleton using the configuration.
+     *
+     * @param configuration is the configuration singleton
+     * @return a verification configuration singleton
+     */
     @Singleton
     @Provides
     static VerificationConfig provideVerificationConfig(Configuration configuration) {

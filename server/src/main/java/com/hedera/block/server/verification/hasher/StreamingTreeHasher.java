@@ -29,6 +29,9 @@ import java.util.concurrent.CompletableFuture;
  * a perfect binary tree.
  */
 public interface StreamingTreeHasher {
+    /**
+     * The length of the hash produced by this hasher.
+     */
     int HASH_LENGTH = DigestType.SHA_384.digestLength();
 
     /**
@@ -39,6 +42,10 @@ public interface StreamingTreeHasher {
     record Status(int numLeaves, @NonNull List<Bytes> rightmostHashes) {
         public static Status EMPTY = new Status(0, List.of());
 
+        /**
+         * Returns whether the tree is empty.
+         * @return whether the tree is empty
+         */
         public boolean isEmpty() {
             return numLeaves == 0;
         }

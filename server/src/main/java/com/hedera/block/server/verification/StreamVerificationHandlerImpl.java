@@ -36,6 +36,9 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+/**
+ * Verification Handler, receives the block items from the ring buffer, validates their type and uses the BlockVerificationService to verify the block items.
+ */
 @Singleton
 public class StreamVerificationHandlerImpl
         implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> {
@@ -50,6 +53,15 @@ public class StreamVerificationHandlerImpl
     private static final String PROTOCOL_VIOLATION_MESSAGE =
             "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
 
+    /**
+     * Constructs a new instance of {@link StreamVerificationHandlerImpl}.
+     *
+     * @param subscriptionHandler     the subscription handler
+     * @param notifier                the notifier
+     * @param metricsService          the metrics service
+     * @param serviceStatus           the service status
+     * @param blockVerificationService the block verification service
+     */
     @Inject
     public StreamVerificationHandlerImpl(
             @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,
@@ -65,6 +77,9 @@ public class StreamVerificationHandlerImpl
         this.blockVerificationService = blockVerificationService;
     }
 
+    /**
+     * Handles the event from the ring buffer, unpacks it and uses the BlockVerificationService to verify the block items.
+     */
     @Override
     public void onEvent(ObjectEvent<SubscribeStreamResponseUnparsed> event, long l, boolean b) {
 

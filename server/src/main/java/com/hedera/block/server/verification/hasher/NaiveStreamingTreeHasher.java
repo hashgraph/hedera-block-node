@@ -38,6 +38,12 @@ public class NaiveStreamingTreeHasher implements StreamingTreeHasher {
     private final List<byte[]> leafHashes = new ArrayList<>();
     private boolean rootHashRequested = false;
 
+    /**
+     * Constructor for the {@link NaiveStreamingTreeHasher}.
+     */
+    public NaiveStreamingTreeHasher() {
+    }
+
     @Override
     public void addLeaf(@NonNull final ByteBuffer hash) {
         if (rootHashRequested) {

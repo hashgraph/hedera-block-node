@@ -20,14 +20,31 @@ import com.hedera.block.server.verification.session.BlockVerificationSessionType
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 
+/**
+ * Configuration for the verification module.
+ *
+ * @param enabled whether the verification module is enabled
+ * @param sessionType the type of the verification session
+ * @param hashCombineBatchSize the size of the batch used to combine hashes
+ */
 @ConfigData("verification")
 public record VerificationConfig(
         @ConfigProperty(defaultValue = "true") boolean enabled,
         @ConfigProperty(defaultValue = "ASYNC") BlockVerificationSessionType sessionType,
         @ConfigProperty(defaultValue = "32") int hashCombineBatchSize) {
 
+    /**
+     * Constructs a new instance of {@link VerificationConfig}.
+     */
     private static final System.Logger LOGGER = System.getLogger(VerificationConfig.class.getName());
 
+    /**
+     * Constructs a new instance of {@link VerificationConfig}.
+     *
+     * @param enabled              whether the verification module is enabled
+     * @param sessionType          the type of the verification session
+     * @param hashCombineBatchSize the size of the batch used to combine hashes
+     */
     public VerificationConfig {
         // hashCombineBatchSize must be even and greater than 2
         if (hashCombineBatchSize % 2 != 0 || hashCombineBatchSize < 2) {
