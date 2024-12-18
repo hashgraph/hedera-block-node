@@ -24,4 +24,20 @@ import com.swirlds.config.api.ConfigProperty;
 public record VerificationConfig(
         @ConfigProperty(defaultValue = "true") boolean enabled,
         @ConfigProperty(defaultValue = "ASYNC") BlockVerificationSessionType sessionType,
-        @ConfigProperty(defaultValue = "32") int hashCombineBatchSize) {}
+        @ConfigProperty(defaultValue = "32") int hashCombineBatchSize) {
+
+    private static final System.Logger LOGGER = System.getLogger(VerificationConfig.class.getName());
+
+    public VerificationConfig {
+        // hashCombineBatchSize must be even and greater than 2
+        if (hashCombineBatchSize % 2 != 0 || hashCombineBatchSize < 2) {
+            throw new IllegalArgumentException("hashCombineBatchSize must be even and greater than 2");
+        }
+
+        // Log the actual configuration
+        LOGGER.log(System.Logger.Level.INFO, "Verification configuration enabled: " + enabled);
+        LOGGER.log(System.Logger.Level.INFO, "Verification configuration sessionType: " + sessionType);
+        LOGGER.log(
+                System.Logger.Level.INFO, "Verification configuration hashCombineBatchSize: " + hashCombineBatchSize);
+    }
+}
