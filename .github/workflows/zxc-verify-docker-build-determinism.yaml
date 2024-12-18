@@ -142,3 +142,32 @@ jobs:
           buildkitd-config-inline: |
             [registry."docker.io"]
               mirrors = ["https://hub.mirror.docker.lat.ope.eng.hashgraph.io"]
+
+      - name: Setup Local Docker Registry
+        if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
+        run: docker run -d -p 5000:5000 --restart=always --name registry registry:latest
+
+      - name: Show Docker Version
+        if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
+        run: docker version
+
+      - name: Show Docker Info
+        if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
+        run: docker info
+
+      - name: Build Gradle Artifacts
+        if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
+        run: ./gradlew assemble --scan
+
+      - name: Prepare for Docker Build
+        if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
+        run: |
+          mkdir -p "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/data"
+
+          echo "::group::Copying Library Artifacts"
+            cp -Rvf "${{ github.workspace }}/hedera-node/data/lib" "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/data/"
+          echo "::endgroup::"
+
+          echo "::group::Copying Application Artifacts"
+            cp -Rvf "${{ github.workspace }}/hedera-node/data/apps" "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/data/"
+          echo "::endgroup::"
