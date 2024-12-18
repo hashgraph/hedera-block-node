@@ -103,10 +103,11 @@ class ServerMappedConfigSourceInitializerTest {
     @MethodSource("allManagedConfigDataTypes")
     void testVerifyAllFieldsInRecordsAreMapped(
             final Class<? extends Record> config, final List<String> fieldNamesToExclude) {
+        final String configClassName = config.getSimpleName();
         if (!config.isAnnotationPresent(ConfigData.class)) {
             fail(
                     "Class [%s] is missing the ConfigData annotation! All config classes MUST have that annotation present!"
-                            .formatted(config.getSimpleName()));
+                            .formatted(configClassName));
         } else {
             final ConfigData configDataAnnotation = config.getDeclaredAnnotation(ConfigData.class);
             final String prefix = configDataAnnotation.value();
@@ -116,13 +117,13 @@ class ServerMappedConfigSourceInitializerTest {
             LOGGER.log(
                     Level.INFO,
                     "Checking fields %s\nfor config class [%s]."
-                            .formatted(Arrays.toString(fieldsToVerify), config.getSimpleName()));
+                            .formatted(Arrays.toString(fieldsToVerify), configClassName));
             for (final RecordComponent recordComponent : fieldsToVerify) {
                 final String fieldName = recordComponent.getName();
                 if (!recordComponent.isAnnotationPresent(ConfigProperty.class)) {
                     fail(
                             "Field [%s] in [%s] is missing the ConfigProperty annotation! All fields in config classes MUST have that annotation present!"
-                                    .formatted(fieldName, config.getSimpleName()));
+                                    .formatted(fieldName, configClassName));
                 } else {
                     final String expectedMappedName = "%s.%s".formatted(prefix, fieldName);
                     final Optional<ConfigMapping> matchingMapping = Arrays.stream(SUPPORTED_MAPPINGS)
@@ -133,7 +134,7 @@ class ServerMappedConfigSourceInitializerTest {
                             .withFailMessage(
                                     "Field [%s] in [%s] is not present in the environment variable mappings! Expected config key [%s] to be present and to be mapped to [%s]",
                                     fieldName,
-                                    config.getSimpleName(),
+                                    configClassName,
                                     expectedMappedName,
                                     transformToEnvVarConvention(expectedMappedName))
                             .isPresent();
