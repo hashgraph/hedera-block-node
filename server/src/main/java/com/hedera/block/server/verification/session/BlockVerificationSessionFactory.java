@@ -54,7 +54,6 @@ public class BlockVerificationSessionFactory {
             case ASYNC -> new BlockVerificationSessionAsync(
                     blockHeader, metricsService, signatureVerifier, executorService, hashCombineBatchSize);
             case SYNC -> new BlockVerificationSessionSync(blockHeader, metricsService, signatureVerifier);
-            default -> throw new IllegalArgumentException("Unsupported session type: " + type);
         };
     }
 }

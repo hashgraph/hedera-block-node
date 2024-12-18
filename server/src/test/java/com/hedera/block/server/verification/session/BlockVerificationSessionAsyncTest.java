@@ -17,11 +17,13 @@
 package com.hedera.block.server.verification.session;
 
 import com.hedera.hapi.block.stream.output.BlockHeader;
+import java.util.concurrent.Executors;
 
-class BlockVerificationSessionSyncTest extends AbstractBlockVerificationSessionTest {
+class BlockVerificationSessionAsyncTest extends AbstractBlockVerificationSessionTest {
 
     @Override
     protected BlockVerificationSession createSession(BlockHeader blockHeader) {
-        return new BlockVerificationSessionSync(blockHeader, metricsService, signatureVerifier);
+        return new BlockVerificationSessionAsync(
+                blockHeader, metricsService, signatureVerifier, Executors.newSingleThreadExecutor(), 32);
     }
 }
