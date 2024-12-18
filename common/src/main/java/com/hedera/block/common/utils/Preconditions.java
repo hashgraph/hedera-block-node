@@ -32,15 +32,14 @@ public final class Preconditions {
             "The input number [%d] is required to be a power of two.";
 
     /**
-     * This method asserts a given {@link String} is not blank, meaning it is
-     * not {@code null} or does not contain only whitespaces as defined by
-     * {@link String#isBlank()}. If the given {@link String} is not blank, then
-     * we return it, else we throw {@link IllegalArgumentException}.
+     * This method asserts a given {@link String} is not blank.
+     * A blank {@link String} is one that is either {@code null} or contains
+     * only whitespaces as defined by {@link String#isBlank()}. If the given
+     * {@link String} is not blank, then we return it, else we throw an
+     * {@link IllegalArgumentException}.
      *
-     * @param toCheck a {@link String} to be checked if is blank as defined
-     * above
-     * @return the {@link String} to be checked if it is not blank as defined
-     * above
+     * @param toCheck a {@link String} to be checked if is blank as defined above
+     * @return the {@link String} to be checked if it is not blank as defined above
      * @throws IllegalArgumentException if the input {@link String} to be
      * checked is blank
      */
@@ -49,17 +48,16 @@ public final class Preconditions {
     }
 
     /**
-     * This method asserts a given {@link String} is not blank, meaning it is
-     * not {@code null} or does not contain only whitespaces as defined by
-     * {@link String#isBlank()}. If the given {@link String} is not blank, then
-     * we return it, else we throw {@link IllegalArgumentException}.
+     * This method asserts a given {@link String} is not blank.
+     * A blank {@link String} is one that is either {@code null} or contains
+     * only whitespaces as defined by {@link String#isBlank()}. If the given
+     * {@link String} is not blank, then we return it, else we throw an
+     * {@link IllegalArgumentException}.
      *
-     * @param toCheck a {@link String} to be checked if is blank as defined
-     * above
+     * @param toCheck a {@link String} to be checked if is blank as defined above
      * @param errorMessage the error message to be used if the precondition
      * check fails, must not be {@code null}
-     * @return the {@link String} to be checked if it is not blank as defined
-     * above
+     * @return the {@link String} to be checked if it is not blank as defined above
      * @throws IllegalArgumentException if the input {@link String} to be
      * checked is blank
      */
@@ -72,29 +70,27 @@ public final class Preconditions {
     }
 
     /**
-     * This method asserts a given integer is a positive. An integer is positive
-     * if it is NOT equal to zero and is greater than zero.
+     * This method asserts a given integer is a positive.
+     * An integer is positive if it is NOT equal to zero and is greater than zero.
      *
      * @param toCheck the number to check if it is a positive power of two
      * @return the number to check if it is positive
-     * @throws IllegalArgumentException if the input number to check is not
-     * positive
+     * @throws IllegalArgumentException if the input number to check is not positive
      */
     public static int requirePositive(final int toCheck) {
         return requirePositive(toCheck, DEFAULT_REQUIRE_POSITIVE_MESSAGE);
     }
 
     /**
-     * This method asserts a given integer is a positive. An integer is positive
-     * if it is NOT equal to zero and is greater than zero.
+     * This method asserts a given integer is a positive.
+     * An integer is positive if it is NOT equal to zero and is greater than zero.
      *
      * @param toCheck the integer to check if it is a positive power of two
      * @param errorMessage a formatted string with one decimal parameters for
      * {@code toCheck}, must not be {@code null}.<br/>
-     * Example error message: {@code "The input number (%d) must be positive."}
+     * Example error message: {@value #DEFAULT_REQUIRE_POSITIVE_MESSAGE}
      * @return the number to check if it is positive
-     * @throws IllegalArgumentException if the input integer to check is not
-     * positive
+     * @throws IllegalArgumentException if the input integer to check is not positive
      * @see java.util.Formatter for more information on error message formatting
      */
     public static int requirePositive(final int toCheck, @NonNull final String errorMessage) {
@@ -106,29 +102,27 @@ public final class Preconditions {
     }
 
     /**
-     * This method asserts a given long is a positive. A long is positive
-     * if it is NOT equal to zero and is greater than zero.
+     * This method asserts a given long is a positive.
+     * A long is positive if it is NOT equal to zero and is greater than zero.
      *
      * @param toCheck the long to check if it is a positive power of two
      * @return the long to check if it is positive
-     * @throws IllegalArgumentException if the input long to check is not
-     * positive
+     * @throws IllegalArgumentException if the input long to check is not positive
      */
     public static long requirePositive(final long toCheck) {
         return requirePositive(toCheck, DEFAULT_REQUIRE_POSITIVE_MESSAGE);
     }
 
     /**
-     * This method asserts a given long is a positive. A long is positive
-     * if it is NOT equal to zero and is greater than zero.
+     * This method asserts a given long is a positive.
+     * A long is positive if it is NOT equal to zero and is greater than zero.
      *
      * @param toCheck the long to check if it is a positive power of two
      * @param errorMessage a formatted string with one decimal parameters for
      * {@code toCheck}, must not be {@code null}.<br/>
-     * Example error message: {@code "The input number (%d) must be positive."}
+     * Example error message: {@value #DEFAULT_REQUIRE_POSITIVE_MESSAGE}
      * @return the number to check if it is positive
-     * @throws IllegalArgumentException if the input long to check is not
-     * positive
+     * @throws IllegalArgumentException if the input long to check is not positive
      * @see java.util.Formatter for more information on error message formatting
      */
     public static long requirePositive(final long toCheck, @NonNull final String errorMessage) {
@@ -153,10 +147,8 @@ public final class Preconditions {
      *
      * @param toTest the long value to test
      * @param base   the base value to compare against
-     * @return the input {@code toTest} if it is greater than or equal to
-     * {@code base}
-     * @throws IllegalArgumentException if {@code toTest} is less than
-     * {@code base}
+     * @return the input {@code toTest} if it is greater than or equal to {@code base}
+     * @throws IllegalArgumentException if {@code toTest} is less than {@code base}
      */
     public static long requireGreaterOrEqual(final long toTest, final long base) {
         return requireGreaterOrEqual(toTest, base, DEFAULT_GT_OR_EQ_MESSAGE);
@@ -172,8 +164,7 @@ public final class Preconditions {
      * @param base the base value to compare against
      * @param errorMessage a formatted string with two decimal parameters for
      * {@code toTest} and {@code base}, must not be {@code null}.<br/>
-     * Example error message: {@code "The input number (%d) must be '>=' than
-     * (%d)."}
+     * Example error message: {@value #DEFAULT_GT_OR_EQ_MESSAGE}
      * @return the number to check if it is greater than or equal to the base
      * @throws IllegalArgumentException if the input long toTest is not greater
      * than or equal to the base
@@ -188,15 +179,14 @@ public final class Preconditions {
     }
 
     /**
-     * This method asserts a given int is within a range (boundaries
-     * included). If the given int is within the range, then we return it,
-     * else, an {@link IllegalArgumentException} is thrown.
+     * This method asserts a given int is within a range (boundaries included).
+     * If the given int is within the range, then we return it, else, an
+     * {@link IllegalArgumentException} is thrown.
      *
      * @param toCheck the int value to test
      * @param lowerBoundary the lower boundary
      * @param upperBoundary the upper boundary
-     * @return the input {@code toCheck} if it is within the range (boundaries
-     * included)
+     * @return the input {@code toCheck} if it is within the range (boundaries included)
      * @throws IllegalArgumentException if the input int does not pass the test
      */
     public static int requireInRange(final int toCheck, final int lowerBoundary, final int upperBoundary) {
@@ -204,9 +194,9 @@ public final class Preconditions {
     }
 
     /**
-     * This method asserts a given int is within a range (boundaries
-     * included). If the given int is within the range, then we return it,
-     * else, an {@link IllegalArgumentException} is thrown.
+     * This method asserts a given int is within a range (boundaries included).
+     * If the given int is within the range, then we return it, else, an
+     * {@link IllegalArgumentException} is thrown.
      *
      * @param toCheck the int value to check
      * @param lowerBoundary the lower boundary
@@ -214,10 +204,8 @@ public final class Preconditions {
      * @param errorMessage a formatted string with three decimal parameters for
      * {@code toTest}, {@code upperBoundary} and {@code lowerBoundary}, must not
      * be {@code null}.<br/>
-     * Example error message: {@code "The input number (%d) must be between
-     * (%d) and (%d)."}
-     * @return the input {@code toCheck} if it is within the range (boundaries
-     * included)
+     * Example error message: {@value #DEFAULT_REQUIRE_IN_RANGE_MESSAGE}
+     * @return the input {@code toCheck} if it is within the range (boundaries included)
      * @throws IllegalArgumentException if the input int does not pass the test
      * @see java.util.Formatter for more information on error message formatting
      */
@@ -231,29 +219,27 @@ public final class Preconditions {
     }
 
     /**
-     * This method asserts a given long is a whole number. A long is whole
-     * if it is greater or equal to zero.
+     * This method asserts a given long is a whole number.
+     * A long is whole if it is greater or equal to zero.
      *
      * @param toCheck the long to check if it is a whole number
      * @return the number to check if it is whole number
-     * @throws IllegalArgumentException if the input number to check is not
-     * positive
+     * @throws IllegalArgumentException if the input number to check is not positive
      */
     public static long requireWhole(final long toCheck) {
         return requireWhole(toCheck, DEFAULT_REQUIRE_WHOLE_MESSAGE);
     }
 
     /**
-     * This method asserts a given long is a whole number. A long is whole
-     * if it is greater or equal to zero.
+     * This method asserts a given long is a whole number.
+     * A long is whole if it is greater or equal to zero.
      *
      * @param toCheck the long to check if it is a whole number
      * @param errorMessage a formatted string with one decimal parameters for
      * {@code toCheck}, must not be {@code null}.<br/>
-     * Example error message: {@code "The input number (%d) must be whole."}
+     * Example error message: {@value #DEFAULT_REQUIRE_WHOLE_MESSAGE}
      * @return the number to check if it is whole number
-     * @throws IllegalArgumentException if the input number to check is not
-     * positive
+     * @throws IllegalArgumentException if the input number to check is not positive
      * @see java.util.Formatter for more information on error message formatting
      */
     public static long requireWhole(final long toCheck, @NonNull final String errorMessage) {
@@ -282,8 +268,7 @@ public final class Preconditions {
      * @param toCheck the number to check if it is a power of two
      * @param errorMessage a formatted string with one decimal parameter for
      * {@code toCheck}, must not be {@code null}.<br/>
-     * Example error message: {@code "The input number (%d) must be a power of
-     * two."}
+     * Example error message: {@value #DEFAULT_REQUIRE_POWER_OF_TWO_MESSAGE}
      * @return the number to check if it is a power of two
      * @throws IllegalArgumentException if the input number to check is not a
      * power of two
