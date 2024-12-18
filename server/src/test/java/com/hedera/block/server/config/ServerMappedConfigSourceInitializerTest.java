@@ -222,8 +222,8 @@ class ServerMappedConfigSourceInitializerTest {
                         .filter(configType -> !excluded.contains(configType))
                         .collect(Collectors.toSet());
 
-        // Here we return all config classes that we need to check mappings for and a list of field names to check
-        // for the given config class, if list is empty, we check all fields
+        // Here we return all config classes that we need to check mappings for and a list of field names to
+        // exclude from the test for the given config class. If the list is empty, all fields will be checked.
         return allRegisteredRecordsFilteredWithExcluded.stream().map(config -> {
             final List<String> fieldsToExclude = fieldNamesToExcludeForConfig.getOrDefault(config, List.of());
             return Arguments.of(config, fieldsToExclude);
