@@ -87,6 +87,7 @@ class SimulatorMappedConfigSourceInitializerTest {
      *       defined in {@link #allManagedConfigDataTypes()}.
      * </pre>
      * @param config parameterized, config class to test
+     * @param fieldNamesToExclude parameterized, fields to exclude from the test
      */
     @ParameterizedTest
     @MethodSource("allManagedConfigDataTypes")
