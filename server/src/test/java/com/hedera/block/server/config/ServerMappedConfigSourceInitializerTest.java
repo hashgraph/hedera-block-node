@@ -76,7 +76,7 @@ class ServerMappedConfigSourceInitializerTest {
         new ConfigMapping("server.maxMessageSizeBytes", "SERVER_MAX_MESSAGE_SIZE_BYTES"),
         new ConfigMapping("server.port", "SERVER_PORT"),
 
-        // Prometheus Config (external)
+        // Prometheus Config (externally managed, but we need this mapping)
         new ConfigMapping("prometheus.endpointEnabled", "PROMETHEUS_ENDPOINT_ENABLED"),
         new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER")
     };

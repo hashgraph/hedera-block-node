@@ -67,7 +67,7 @@ class SimulatorMappedConfigSourceInitializerTest {
         new ConfigMapping("generator.startBlockNumber", "GENERATOR_START_BLOCK_NUMBER"),
         new ConfigMapping("generator.endBlockNumber", "GENERATOR_END_BLOCK_NUMBER"),
 
-        // Prometheus configuration
+        // Prometheus configuration (externally managed, but we need this mapping)
         new ConfigMapping("prometheus.endpointEnabled", "PROMETHEUS_ENDPOINT_ENABLED"),
         new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER")
     };
