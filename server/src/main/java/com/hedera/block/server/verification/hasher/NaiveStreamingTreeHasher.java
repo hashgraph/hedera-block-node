@@ -41,8 +41,7 @@ public class NaiveStreamingTreeHasher implements StreamingTreeHasher {
     /**
      * Constructor for the {@link NaiveStreamingTreeHasher}.
      */
-    public NaiveStreamingTreeHasher() {
-    }
+    public NaiveStreamingTreeHasher() {}
 
     @Override
     public void addLeaf(@NonNull final ByteBuffer hash) {
