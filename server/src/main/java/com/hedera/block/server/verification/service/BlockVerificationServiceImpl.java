@@ -40,6 +40,12 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
     private final BlockVerificationSessionFactory sessionFactory;
     private BlockVerificationSession currentSession;
 
+    /**
+     * Constructs a new BlockVerificationServiceImpl.
+     *
+     * @param metricsService the metrics service
+     * @param sessionFactory the session factory
+     */
     @Inject
     public BlockVerificationServiceImpl(
             @NonNull final MetricsService metricsService,
@@ -48,6 +54,12 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
         this.sessionFactory = sessionFactory;
     }
 
+    /**
+     * Everytime the handler receives block items, it will call this method to verify the block items.
+     *
+     * @param blockItems the block items to add to the verification service
+     * @throws ParseException if the block items are invalid
+     */
     @Override
     public void onBlockItemsReceived(List<BlockItemUnparsed> blockItems) throws ParseException {
 

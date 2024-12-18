@@ -19,4 +19,7 @@ package com.hedera.block.server.verification.hasher;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 
+/**
+ * Holds the input and output hashes of a list of block items.
+ */
 public record Hashes(@NonNull ByteBuffer inputHashes, @NonNull ByteBuffer outputHashes) {}

@@ -16,6 +16,9 @@
 
 package com.hedera.block.server.verification.session;
 
+/**
+ * Defines the types of block verification sessions.
+ */
 public enum BlockVerificationSessionType {
     ASYNC,
     SYNC

@@ -64,6 +64,12 @@ public class BlockVerificationSessionAsync extends AbstractBlockVerificationSess
         });
     }
 
+    /**
+     * Appends new block items to be processed by this verification session.
+     * The block items are processed asynchronously.
+     *
+     * @param blockItems the list of block items to process.
+     */
     @Override
     public void appendBlockItems(List<BlockItemUnparsed> blockItems) {
         if (!isRunning()) {
