@@ -123,6 +123,12 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         }
     }
 
+    /**
+     * Publishes the block stream.
+     *
+     * @param helidonProducerObserver the helidon producer observer
+     * @return the pipeline
+     */
     Pipeline<List<BlockItemUnparsed>> publishBlockStream(
             Pipeline<? super PublishStreamResponse> helidonProducerObserver) {
         LOGGER.log(DEBUG, "Executing bidirectional publishBlockStream gRPC method");
@@ -157,6 +163,12 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         }
     }
 
+    /**
+     * Subscribes to the block stream.
+     *
+     * @param subscribeStreamRequest the subscribe stream request
+     * @param subscribeStreamResponseObserver the subscribe stream response observer
+     */
     void subscribeBlockStream(
             SubscribeStreamRequest subscribeStreamRequest,
             Pipeline<? super SubscribeStreamResponseUnparsed> subscribeStreamResponseObserver) {

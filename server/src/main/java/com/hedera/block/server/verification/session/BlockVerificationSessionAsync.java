@@ -42,6 +42,8 @@ public class BlockVerificationSessionAsync extends AbstractBlockVerificationSess
      * @param blockHeader        the header of the block being verified
      * @param metricsService     the service to record metrics
      * @param signatureVerifier  the signature verifier
+     * @param executorService    the executor service to use for processing block items
+     * @param hashCombineBatchSize the batch size for combining hashes
      */
     public BlockVerificationSessionAsync(
             @NonNull final BlockHeader blockHeader,

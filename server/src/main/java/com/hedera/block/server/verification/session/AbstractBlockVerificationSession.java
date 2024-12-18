@@ -41,16 +41,42 @@ import java.util.concurrent.CompletableFuture;
  */
 public abstract class AbstractBlockVerificationSession implements BlockVerificationSession {
 
+    /**
+     * The logger for this class.
+     */
     protected final System.Logger LOGGER = System.getLogger(getClass().getName());
 
+    /**
+     * The metrics service.
+     */
     protected final MetricsService metricsService;
+    /**
+     * The signature verifier.
+     */
     protected final SignatureVerifier signatureVerifier;
+    /**
+     * The block number being verified.
+     */
     protected final long blockNumber;
+    /**
+     * The tree hasher for input hashes.
+     */
     protected final StreamingTreeHasher inputTreeHasher;
+    /**
+     * The tree hasher for output hashes.
+     */
     protected final StreamingTreeHasher outputTreeHasher;
+    /**
+     * The time when block verification started.
+     */
     protected final long blockWorkStartTime;
-
+    /**
+     * A flag indicating whether the session is running.
+     */
     protected volatile boolean running = true;
+    /**
+     * The future for the verification result.
+     */
     protected final CompletableFuture<VerificationResult> verificationResultFuture = new CompletableFuture<>();
 
     /**

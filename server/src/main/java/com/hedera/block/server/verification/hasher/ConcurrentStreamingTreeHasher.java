@@ -70,10 +70,23 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
      */
     private boolean rootHashRequested = false;
 
+    /**
+     * Constructs a new {@link ConcurrentStreamingTreeHasher} with the given {@link ExecutorService}.
+     *
+     * @param executorService the executor service to use for parallelizing the hashing and combining of the tree
+     */
     public ConcurrentStreamingTreeHasher(@NonNull final ExecutorService executorService) {
         this(executorService, DEFAULT_HASH_COMBINE_BATCH_SIZE);
     }
 
+    /**
+     * Constructs a new {@link ConcurrentStreamingTreeHasher} with the given {@link ExecutorService} and hash combine
+     * batch size.
+     *
+     * @param executorService the executor service to use for parallelizing the hashing and combining of the tree
+     * @param hashCombineBatchSize the size of the batches of hashes to schedule for combination
+     * @throws IllegalArgumentException if the hash combine batch size is an odd number
+     */
     public ConcurrentStreamingTreeHasher(
             @NonNull final ExecutorService executorService, final int hashCombineBatchSize) {
         this.executorService = requireNonNull(executorService);

@@ -21,6 +21,14 @@ import java.util.List;
 
 /** No-op implementation of the {@link BlockVerificationService}. */
 public class NoOpBlockVerificationService implements BlockVerificationService {
+
+    /**
+     * Constructs a no-op block verification service.
+     */
+    public NoOpBlockVerificationService() {
+        // no-op
+    }
+
     /**
      * Does nothing
      */

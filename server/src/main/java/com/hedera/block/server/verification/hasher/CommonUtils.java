@@ -108,6 +108,8 @@ public final class CommonUtils {
 
     /**
      * Returns the Hashes (input and output) of a list of block items.
+     * @param blockItems the block items
+     * @return the Hashes of the block items
      */
     public static Hashes getBlockHashes(List<BlockItemUnparsed> blockItems) {
         int numInputs = 0;
@@ -144,6 +146,8 @@ public final class CommonUtils {
 
     /**
      * returns the ByteBuffer of the hash of the given block item.
+     * @param blockItemUnparsed the block item
+     * @return the ByteBuffer of the hash of the given block item
      */
     public static ByteBuffer getBlockItemHash(BlockItemUnparsed blockItemUnparsed) {
         final var digest = sha384DigestOrThrow();
