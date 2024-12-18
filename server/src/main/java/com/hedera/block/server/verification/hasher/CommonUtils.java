@@ -42,7 +42,7 @@ public final class CommonUtils {
     /**
      * The tag for the SHA-384 algorithm.
      */
-    private static String sha384HashTag = "SHA-384";
+    private static final String sha384HashTag = "SHA-384";
 
     /**
      * Returns the SHA-384 hash of the given bytes.
