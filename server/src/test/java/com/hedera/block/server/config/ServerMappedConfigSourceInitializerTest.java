@@ -20,19 +20,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.swirlds.common.metrics.config.MetricsConfig;
+import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 import com.swirlds.config.extensions.sources.ConfigMapping;
 import com.swirlds.config.extensions.sources.MappedConfigSource;
+import java.lang.System.Logger.Level;
 import java.lang.reflect.Field;
 import java.lang.reflect.RecordComponent;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -42,20 +47,37 @@ import org.junit.jupiter.params.provider.MethodSource;
  * Tests for {@link ServerMappedConfigSourceInitializer}.
  */
 class ServerMappedConfigSourceInitializerTest {
+    private static final System.Logger LOGGER =
+            System.getLogger(ServerMappedConfigSourceInitializerTest.class.getName());
     private static final ConfigMapping[] SUPPORTED_MAPPINGS = {
+        // Consumer Config
         new ConfigMapping("consumer.timeoutThresholdMillis", "CONSUMER_TIMEOUT_THRESHOLD_MILLIS"),
+
+        // Persistence Config
         new ConfigMapping("persistence.storage.liveRootPath", "PERSISTENCE_STORAGE_LIVE_ROOT_PATH"),
         new ConfigMapping("persistence.storage.archiveRootPath", "PERSISTENCE_STORAGE_ARCHIVE_ROOT_PATH"),
         new ConfigMapping("persistence.storage.type", "PERSISTENCE_STORAGE_TYPE"),
         new ConfigMapping("persistence.storage.compression", "PERSISTENCE_STORAGE_COMPRESSION"),
         new ConfigMapping("persistence.storage.compressionLevel", "PERSISTENCE_STORAGE_COMPRESSION_LEVEL"),
+
+        // Service Config
         new ConfigMapping("service.delayMillis", "SERVICE_DELAY_MILLIS"),
+
+        // Mediator Config
         new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),
         new ConfigMapping("mediator.type", "MEDIATOR_TYPE"),
+
+        // Notifier Config
         new ConfigMapping("notifier.ringBufferSize", "NOTIFIER_RING_BUFFER_SIZE"),
+
+        // Producer Config
         new ConfigMapping("producer.type", "PRODUCER_TYPE"),
+
+        // Server Config
         new ConfigMapping("server.maxMessageSizeBytes", "SERVER_MAX_MESSAGE_SIZE_BYTES"),
         new ConfigMapping("server.port", "SERVER_PORT"),
+
+        // Prometheus Config (externally managed, but we need this mapping)
         new ConfigMapping("prometheus.endpointEnabled", "PROMETHEUS_ENDPOINT_ENABLED"),
         new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER")
     };
@@ -71,27 +93,39 @@ class ServerMappedConfigSourceInitializerTest {
      *     - all fields in all config classes are annotated with the
      *       {@link ConfigProperty} annotation.
      *     - a mapping for all fields in all config classes is present in the
-     *       {@link ServerMappedConfigSourceInitializer#MAPPINGS()}.
+     *       {@link ServerMappedConfigSourceInitializer#MAPPINGS()}, as defined
+     *       in {@link #allManagedConfigDataTypes()}.
      * </pre>
      * @param config parameterized, config class to test
+     * @param fieldNamesToExclude parameterized, fields to exclude from the test
      */
-    @Disabled("This test is disabled because it will start passing only after #285 gets implemented")
     @ParameterizedTest
-    @MethodSource("allConfigDataTypes")
-    void testVerifyAllFieldsInRecordsAreMapped(final Class<? extends Record> config) {
+    @MethodSource("allManagedConfigDataTypes")
+    void testVerifyAllFieldsInRecordsAreMapped(
+            final Class<? extends Record> config, final List<String> fieldNamesToExclude) {
+        final String configClassName = config.getSimpleName();
         if (!config.isAnnotationPresent(ConfigData.class)) {
-            fail("Class %s is missing the ConfigData annotation! All config classes MUST have that annotation present!"
-                    .formatted(config.getSimpleName()));
+            fail(
+                    "Class [%s] is missing the ConfigData annotation! All config classes MUST have that annotation present!"
+                            .formatted(configClassName));
         } else {
             final ConfigData configDataAnnotation = config.getDeclaredAnnotation(ConfigData.class);
             final String prefix = configDataAnnotation.value();
-            for (final RecordComponent recordComponent : config.getRecordComponents()) {
+            final RecordComponent[] fieldsToVerify = Arrays.stream(config.getRecordComponents())
+                    .filter(recordComponent -> !fieldNamesToExclude.contains(recordComponent.getName()))
+                    .toArray(RecordComponent[]::new);
+            LOGGER.log(
+                    Level.INFO,
+                    "Checking fields %s\nfor config class [%s]."
+                            .formatted(Arrays.toString(fieldsToVerify), configClassName));
+            for (final RecordComponent recordComponent : fieldsToVerify) {
+                final String fieldName = recordComponent.getName();
                 if (!recordComponent.isAnnotationPresent(ConfigProperty.class)) {
                     fail(
-                            "Field %s in %s is missing the ConfigProperty annotation! All fields in config classes MUST have that annotation present!"
-                                    .formatted(recordComponent.getName(), config.getSimpleName()));
+                            "Field [%s] in [%s] is missing the ConfigProperty annotation! All fields in config classes MUST have that annotation present!"
+                                    .formatted(fieldName, configClassName));
                 } else {
-                    final String expectedMappedName = "%s.%s".formatted(prefix, recordComponent.getName());
+                    final String expectedMappedName = "%s.%s".formatted(prefix, fieldName);
                     final Optional<ConfigMapping> matchingMapping = Arrays.stream(SUPPORTED_MAPPINGS)
                             .filter(mapping -> mapping.mappedName().equals(expectedMappedName))
                             .findFirst();
@@ -99,8 +133,8 @@ class ServerMappedConfigSourceInitializerTest {
                             .isNotNull()
                             .withFailMessage(
                                     "Field [%s] in [%s] is not present in the environment variable mappings! Expected config key [%s] to be present and to be mapped to [%s]",
-                                    recordComponent.getName(),
-                                    config.getSimpleName(),
+                                    fieldName,
+                                    configClassName,
                                     expectedMappedName,
                                     transformToEnvVarConvention(expectedMappedName))
                             .isPresent();
@@ -153,12 +187,6 @@ class ServerMappedConfigSourceInitializerTest {
         }
     }
 
-    private static String transformToEnvVarConvention(final String input) {
-        String underscored = input.replace(".", "_");
-        String resolved = underscored.replaceAll("(?<!_)([A-Z])", "_$1");
-        return resolved.toUpperCase();
-    }
-
     @SuppressWarnings("unchecked")
     private static Queue<ConfigMapping> extractConfigMappings() throws ReflectiveOperationException {
         final Field configMappings = MappedConfigSource.class.getDeclaredField("configMappings");
@@ -171,13 +199,38 @@ class ServerMappedConfigSourceInitializerTest {
         }
     }
 
-    private static Stream<Arguments> allConfigDataTypes() {
+    private static String transformToEnvVarConvention(final String input) {
+        final String underscored = input.replace(".", "_");
+        final String resolved = underscored.replaceAll("(?<!_)([A-Z])", "_$1");
+        return resolved.toUpperCase();
+    }
+
+    private static Stream<Arguments> allManagedConfigDataTypes() {
         // Add any classes that should be excluded from the test for any reason in the set below
-        // MetricsConfig is not supported by us
+        // MetricsConfig is not managed by us.
         final Set<Class<? extends Record>> excluded = Set.of(MetricsConfig.class);
-        return new BlockNodeConfigExtension()
+
+        // Add any classes that should be partially checked in the map below
+        // for example, we do not manage PrometheusConfig, but we need the endpointEnabled and endpointPortNumber
+        // mappings to be present in our scope, so we exclude all other fields. We must do the strategy
+        // of exclusion and not inclusion because fields in the config classes can be added or removed, we want
+        // to detect that.
+        final Entry<Class<PrometheusConfig>, List<String>> prometheusFieldsToExclude =
+                Map.entry(PrometheusConfig.class, List.of("endpointMaxBacklogAllowed"));
+        final Map<Class<? extends Record>, List<String>> fieldNamesToExcludeForConfig =
+                Map.ofEntries(prometheusFieldsToExclude);
+
+        // Here are all the config classes that we need to check mappings for
+        final Set<Class<? extends Record>> allRegisteredRecordsFilteredWithExcluded = new BlockNodeConfigExtension()
                 .getConfigDataTypes().stream()
                         .filter(configType -> !excluded.contains(configType))
-                        .map(Arguments::of);
+                        .collect(Collectors.toSet());
+
+        // Here we return all config classes that we need to check mappings for and a list of field names to
+        // exclude from the test for the given config class. If the list is empty, all fields will be checked.
+        return allRegisteredRecordsFilteredWithExcluded.stream().map(config -> {
+            final List<String> fieldsToExclude = fieldNamesToExcludeForConfig.getOrDefault(config, List.of());
+            return Arguments.of(config, fieldsToExclude);
+        });
     }
 }
