@@ -18,10 +18,12 @@ package com.hedera.block.tools.commands.record2blocks.mirrornode;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.net.URL;
+import java.util.HexFormat;
 
 /**
  * Query Mirror Node and fetch block information
@@ -38,6 +40,19 @@ public class FetchBlockQuery {
         final String url = "https://mainnet-public.mirrornode.hedera.com/api/v1/blocks/" + blockNumber;
         final JsonObject json = readUrl(url);
         return json.get("name").getAsString();
+    }
+
+    /**
+     * Get the previous hash for a block number from the mirror node.
+     *
+     * @param blockNumber the block number
+     * @return the record file name
+     */
+    public static Bytes getPreviousHashForBlock(long blockNumber) {
+        final String url = "https://mainnet-public.mirrornode.hedera.com/api/v1/blocks/" + blockNumber;
+        final JsonObject json = readUrl(url);
+        final String hashStr =  json.get("previous_hash").getAsString();
+        return Bytes.wrap(HexFormat.of().parseHex(hashStr.substring(2))); // remove 0x prefix and parse
     }
 
     /**

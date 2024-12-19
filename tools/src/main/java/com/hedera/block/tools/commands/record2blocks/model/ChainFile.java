@@ -20,6 +20,7 @@ import static com.hedera.block.tools.commands.record2blocks.util.RecordFileDates
 import static com.hedera.block.tools.commands.record2blocks.util.RecordFileDates.extractRecordFileTime;
 
 import com.hedera.block.tools.commands.record2blocks.gcp.MainNetBucket;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.regex.Pattern;
 
@@ -85,6 +86,16 @@ public record ChainFile(
      */
     public byte[] download(MainNetBucket mainNetBucket) {
         return mainNetBucket.download(path);
+    }
+
+    /**
+     * Downloads the file from the bucket as a stream.
+     *
+     * @param mainNetBucket the main net bucket that contains the file
+     * @return the file as a stream
+     */
+    public InputStream downloadStreaming(MainNetBucket mainNetBucket) {
+        return mainNetBucket.downloadStreaming(path);
     }
 
     /**

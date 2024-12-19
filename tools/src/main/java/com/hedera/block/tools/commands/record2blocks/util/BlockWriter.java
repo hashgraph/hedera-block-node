@@ -67,13 +67,7 @@ public class BlockWriter {
     public static BlockPath writeBlock(final Path baseDirectory, final Block block) throws IOException {
         // get block number from block header
         final var firstBlockItem = block.items().getFirst();
-        final long blockNumber =
-                switch (firstBlockItem.item().kind()) {
-                    case BLOCK_HEADER -> firstBlockItem.blockHeader().number();
-                    case RECORD_FILE -> firstBlockItem.recordFile().number();
-                    default -> throw new IllegalArgumentException(
-                            "Block first item is not a block header or record file");
-                };
+        final long blockNumber = firstBlockItem.blockHeader().number();
         //        // convert block number to string
         //        final String blockNumberStr = BLOCK_NUMBER_FORMAT.format(blockNumber);
         //        // split string into digits for zip and for directories

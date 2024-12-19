@@ -16,6 +16,7 @@
 
 package com.hedera.block.tools.commands.record2blocks;
 
+import static com.hedera.block.tools.commands.record2blocks.mirrornode.FetchBlockQuery.getPreviousHashForBlock;
 import static com.hedera.block.tools.commands.record2blocks.util.BlockWriter.writeBlock;
 import static com.hedera.block.tools.commands.record2blocks.util.RecordFileDates.blockTimeLongToInstant;
 
@@ -23,15 +24,21 @@ import com.hedera.block.tools.commands.record2blocks.gcp.MainNetBucket;
 import com.hedera.block.tools.commands.record2blocks.model.BlockInfo;
 import com.hedera.block.tools.commands.record2blocks.model.BlockTimes;
 import com.hedera.block.tools.commands.record2blocks.model.ChainFile;
-import com.hedera.block.tools.commands.record2blocks.model.SignatureFile;
+import com.hedera.block.tools.commands.record2blocks.model.ParsedSignatureFile;
+import com.hedera.block.tools.commands.record2blocks.model.RecordFileVersionInfo;
 import com.hedera.block.tools.commands.record2blocks.util.BlockWriter.BlockPath;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
 import com.hedera.hapi.block.stream.BlockItem.ItemOneOfType;
 import com.hedera.hapi.block.stream.RecordFileItem;
+import com.hedera.hapi.block.stream.RecordFileSignature;
+import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.hapi.node.base.BlockHashAlgorithm;
+import com.hedera.hapi.node.base.SemanticVersion;
 import com.hedera.hapi.node.base.Timestamp;
+import com.hedera.hapi.streams.SidecarFile;
 import com.hedera.pbj.runtime.OneOf;
+import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.hedera.pbj.runtime.io.stream.WritableStreamingData;
 import java.io.IOException;
@@ -42,7 +49,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HexFormat;
 import java.util.List;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Ansi;
@@ -50,6 +57,15 @@ import picocli.CommandLine.Option;
 
 /**
  * Command line command that converts a record stream to blocks
+ * <p>
+ *     Example block ranges for testing:
+ *     <ul>
+ *         <li><code>-s 0 -e 10</code> - Record File v2</li>
+ *         <li><code>-s 12877843 -e 12877853</code> - Record File v5</li>
+ *         <li><code>-s 72756872 -e 72756882</code> - Record File v6 with sidecars</li>
+ *     </ul>
+ *     Record files start at V2 at block 0 then change to V5 at block 12370838 and V6 at block 38210031
+ * </p>
  */
 @SuppressWarnings("FieldCanBeLocal")
 @Command(name = "record2block", description = "Converts a record stream files into blocks")
@@ -137,6 +153,14 @@ public class Record2BlockCommand implements Runnable {
             }
             // map the block_times.bin file
             final BlockTimes blockTimes = new BlockTimes(blockTimesFile);
+            // get previous block hash
+            Bytes previousBlockHash;
+            if (startBlock == 0) {
+                previousBlockHash = Bytes.wrap(new byte[48]); // empty hash for first block
+            } else {
+                // get previous block hash from mirror node
+                previousBlockHash = getPreviousHashForBlock(startBlock);
+            }
             // iterate over the blocks
             Instant currentHour = null;
             List<ChainFile> currentHoursFiles = null;
@@ -166,35 +190,48 @@ public class Record2BlockCommand implements Runnable {
                 // print block info
                 System.out.println("   " + blockInfo);
                 // now we need to download the most common record file
-                // we will use the GCP bucket to download the file
                 byte[] recordFileBytes =
                         blockInfo.mostCommonRecordFile().chainFile().download(mainNetBucket);
 
+                // parse version information out of record file
+                final RecordFileVersionInfo recordFileVersionInfo = RecordFileVersionInfo.parse(recordFileBytes);
+
                 // download and parse all signature files
-                SignatureFile[] signatureFileBytes = blockInfo.signatureFiles().stream()
+                ParsedSignatureFile[] signatureFileBytes = blockInfo.signatureFiles().stream()
                         .parallel()
-                        .map(chainFile -> chainFile.download(mainNetBucket))
-                        .map(SignatureFile::parse)
-                        .toArray(SignatureFile[]::new);
-                for (SignatureFile signatureFile : signatureFileBytes) {
-                    // System.out.println("        signatureFile = " + signatureFile);
-                }
+                        .map(cf -> ParsedSignatureFile.downloadAndParse(cf, mainNetBucket))
+                        .toArray(ParsedSignatureFile[]::new);
+                // convert signature files to list of RecordFileSignatures
+                final List<RecordFileSignature> recordFileSignatures = Arrays.stream(signatureFileBytes)
+                        .map(sigFile -> new RecordFileSignature(Bytes.wrap(sigFile.signature()), sigFile.nodeId()))
+                        .toList();
 
                 // download most common sidecar file
-                List<Bytes> sideCars = new ArrayList<>();
-                //                byte[] sidecarFileBytes = blockInfo.getMostCommonSidecarFileBytes(mainNetBucket);
+                List<SidecarFile> sideCars = blockInfo.sidecarFiles().values().stream()
+                        .map(sidecarFile -> {
+                            byte[] sidecarFileBytes = sidecarFile.mostCommonSidecarFile().chainFile().download(mainNetBucket);
+                            try {
+                                return SidecarFile.PROTOBUF.parse(Bytes.wrap(sidecarFileBytes));
+                            } catch (ParseException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }).toList();
 
                 // build new Block File
+                final BlockHeader blockHeader = new BlockHeader(
+                        recordFileVersionInfo.hapiProtoVersion(),
+                        recordFileVersionInfo.hapiProtoVersion(),
+                        blockNumber,
+                        previousBlockHash,
+                        new Timestamp(blockTimeInstant.getEpochSecond(), blockTimeInstant.getNano()),
+                        BlockHashAlgorithm.SHA2_384);
                 final RecordFileItem recordFileItem = new RecordFileItem(
-                        blockInfo.blockNum(),
                         new Timestamp(blockTimeInstant.getEpochSecond(), blockTimeInstant.getNano()),
                         Bytes.wrap(recordFileBytes),
-                        sideCars,
-                        BlockHashAlgorithm.SHA2_384,
-                        Arrays.stream(signatureFileBytes)
-                                .map(sigFile -> Bytes.wrap(sigFile.signature()))
-                                .toList());
-                final Block block = new Block(Collections.singletonList(
+                        sideCars,recordFileSignatures
+                        );
+                final Block block = new Block(List.of(
+                        new BlockItem(new OneOf<>(ItemOneOfType.BLOCK_HEADER, blockHeader)),
                         new BlockItem(new OneOf<>(ItemOneOfType.RECORD_FILE, recordFileItem))));
                 // write block to disk
                 final BlockPath blockPath = writeBlock(blocksDir, block);
@@ -211,6 +248,8 @@ public class Record2BlockCommand implements Runnable {
                     }
                     System.out.println(Ansi.AUTO.string("@|bold,yellow    Wrote block json to|@ " + blockJsonPath));
                 }
+                // update previous block hash
+                previousBlockHash = recordFileVersionInfo.blockHash();
             }
 
         } catch (IOException e) {
