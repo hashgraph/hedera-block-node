@@ -50,7 +50,7 @@ env:
   DOCKER_MANIFEST_PATH: ${{ github.workspace }}/.manifests/docker
   DOCKER_REGISTRY: localhost:5000
   DOCKER_IMAGE_NAME: block-node-server
-#  DOCKER_CONTEXT_PATH: hedera-node/infrastructure/docker/containers/production-next/consensus-node
+  DOCKER_CONTEXT_PATH: server/docker
   SKOPEO_VERSION: v1.14.0
 
 jobs:
@@ -183,7 +183,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             SOURCE_DATE_EPOCH=${{ steps.commit.outputs.source-date }}
-          context: ${{ env.DOCKER_CONTEXT_PATH }}
+          context: ./${{ env.DOCKER_CONTEXT_PATH }}
+          file: ./${{ env.DOCKER_CONTEXT_PATH }}/Dockerfile
           tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.commit.outputs.sha-abbrev }}
 
       - name: Generate Manifest
