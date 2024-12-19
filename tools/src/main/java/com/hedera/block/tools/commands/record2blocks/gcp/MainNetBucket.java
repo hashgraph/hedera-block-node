@@ -24,10 +24,12 @@ import com.google.cloud.storage.Storage.BlobListOption;
 import com.google.cloud.storage.StorageOptions;
 import com.hedera.block.tools.commands.record2blocks.model.ChainFile;
 import com.hedera.block.tools.commands.record2blocks.util.RecordFileDates;
+import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -96,18 +98,52 @@ public class MainNetBucket {
      */
     public byte[] download(String path) {
         try {
+            final Path cachedFilePath = cacheDir.resolve(path);
+            byte[] rawBytes;
+            if (cacheEnabled && Files.exists(cachedFilePath)) {
+                rawBytes =  Files.readAllBytes(cachedFilePath);
+            } else {
+                rawBytes = STREAMS_BUCKET.get(path).getContent();
+                if (cacheEnabled) {
+                    Files.createDirectories(cachedFilePath.getParent());
+                    Path tempCachedFilePath = Files.createTempFile(cacheDir, null, ".tmp");
+                    Files.write(tempCachedFilePath, rawBytes);
+                    Files.move(tempCachedFilePath, cachedFilePath);
+                }
+            }
+            // if file is gzipped, unzip it
+            if (path.endsWith(".gz")) {
+                try (GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(rawBytes))) {
+                    return gzipInputStream.readAllBytes();
+                }
+            } else {
+                return rawBytes;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Download a file from GCP as a stream, caching if CACHE_ENABLED is true. This is designed to be thread safe.
+     *
+     * @param path the path to the file in the bucket
+     * @return the stream of the file
+     */
+    public java.io.InputStream downloadStreaming(String path) {
+        try {
             Path cachedFilePath = cacheDir.resolve(path);
             if (cacheEnabled && Files.exists(cachedFilePath)) {
-                return Files.readAllBytes(cachedFilePath);
+                return Files.newInputStream(cachedFilePath, StandardOpenOption.READ);
             } else {
-                byte[] bytes = STREAMS_BUCKET.get(path).getContent();
+                final byte[] bytes = STREAMS_BUCKET.get(path).getContent();
                 if (cacheEnabled) {
                     Files.createDirectories(cachedFilePath.getParent());
                     Path tempCachedFilePath = Files.createTempFile(cacheDir, null, ".tmp");
                     Files.write(tempCachedFilePath, bytes);
                     Files.move(tempCachedFilePath, cachedFilePath);
                 }
-                return bytes;
+                return new ByteArrayInputStream(bytes);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
