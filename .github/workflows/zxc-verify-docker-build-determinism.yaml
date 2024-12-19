@@ -218,7 +218,7 @@ jobs:
         run: |
           EXTRACTED_FILE_NAME="${{ steps.commit.outputs.sha }}.tar"
           gunzip "${{ steps.manifest.outputs.name }}"
-          tar -rvf "${EXTRACTED_FILE_NAME}" -C "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}"
+          tar -rvf "${EXTRACTED_FILE_NAME}" -C "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}" server/build/libs
           gzip "${EXTRACTED_FILE_NAME}"
 
       - name: Upload Baseline
@@ -299,7 +299,7 @@ jobs:
           tar -xzf "${{ needs.generate-baseline.outputs.name }}"
           pwd
           ls -la
-          mv "sdk" "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
+          mv "server/build/libs" "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
 
       #      - name: Create Docker Working Directory
       #        if: ${{ runner.os == 'Linux' }}
@@ -310,22 +310,22 @@ jobs:
       #          sudo chown -vR ${USER}:${GROUP} /x
       #          sudo ls -lah /x
 
-      - name: Remove Preinstalled Docker
-        if: ${{ runner.os == 'macOS' }}
-        run: |
-          set -x
-          sudo killall dockerd || true
-          sudo killall containerd || true
-          sudo rm -rvf /usr/bin/*containerd* || true
-          sudo rm -rvf /usr/bin/docker* || true
-          sudo rm -rvf /usr/local/bin/docker* || true
-          sudo rm -rvf /usr/local/bin/*lima* || true
-
-      - name: Install Lima (macOS)
-        if: ${{ runner.os == 'macOS' }}
-        run: |
-          VERSION="v0.20.0"
-          curl -fsSL "https://github.com/lima-vm/lima/releases/download/${VERSION}/lima-${VERSION:1}-$(uname -s)-$(uname -m).tar.gz" | sudo tar Cxzvm /usr/local
+#      - name: Remove Preinstalled Docker
+#        if: ${{ runner.os == 'macOS' }}
+#        run: |
+#          set -x
+#          sudo killall dockerd || true
+#          sudo killall containerd || true
+#          sudo rm -rvf /usr/bin/*containerd* || true
+#          sudo rm -rvf /usr/bin/docker* || true
+#          sudo rm -rvf /usr/local/bin/docker* || true
+#          sudo rm -rvf /usr/local/bin/*lima* || true
+#
+#      - name: Install Lima (macOS)
+#        if: ${{ runner.os == 'macOS' }}
+#        run: |
+#          VERSION="v0.20.0"
+#          curl -fsSL "https://github.com/lima-vm/lima/releases/download/${VERSION}/lima-${VERSION:1}-$(uname -s)-$(uname -m).tar.gz" | sudo tar Cxzvm /usr/local
 
       - name: Determine Home Directory
         id: home
