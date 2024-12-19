@@ -2,7 +2,7 @@
 set -o pipefail
 set +e
 
-readonly DOCKER_IMAGE_NAME="server"
+readonly DOCKER_IMAGE_NAME="hedera-block-node"
 
 GROUP_ACTIVE="false"
 
