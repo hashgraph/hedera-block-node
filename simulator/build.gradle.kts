@@ -117,3 +117,12 @@ val startDockerContainer: TaskProvider<Exec> =
         workingDir(dockerBuildRootDirectory)
         commandLine("sh", "-c", "./prepare-docker.sh")
     }
+
+tasks.register<Exec>("stopDockerContainer") {
+    description = "Stops running docker containers of the Block Stream Simulator"
+    group = "docker"
+
+    dependsOn(copyDockerFolder)
+    workingDir(dockerBuildRootDirectory)
+    commandLine("sh", "-c", "docker compose -p simulator stop")
+}
