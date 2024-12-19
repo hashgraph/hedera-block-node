@@ -301,7 +301,7 @@ jobs:
           tar -xzf "${{ needs.generate-baseline.outputs.name }}"
           pwd
           ls -la
-          mv "*.json" "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
+          mv *.json "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
 
       - name: Determine Home Directory
         id: home
