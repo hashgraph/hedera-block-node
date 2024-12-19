@@ -14,12 +14,26 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage.write;
+package com.hedera.block.server.verification.service;
 
-/**
- * A marker interface that groups all writers that operate on a local file
- * system.
- *
- * @param <V> the type of the value to be written
- */
-interface LocalBlockWriter<V> extends BlockWriter<V> {}
+import com.hedera.hapi.block.BlockItemUnparsed;
+import java.util.List;
+
+/** No-op implementation of the {@link BlockVerificationService}. */
+public class NoOpBlockVerificationService implements BlockVerificationService {
+
+    /**
+     * Constructs a no-op block verification service.
+     */
+    public NoOpBlockVerificationService() {
+        // no-op
+    }
+
+    /**
+     * Does nothing
+     */
+    @Override
+    public void onBlockItemsReceived(List<BlockItemUnparsed> blockItems) {
+        // no-op
+    }
+}

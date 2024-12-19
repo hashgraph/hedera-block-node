@@ -22,6 +22,7 @@ import com.hedera.block.server.mediator.MediatorConfig;
 import com.hedera.block.server.notifier.NotifierConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.producer.ProducerConfig;
+import com.hedera.block.server.verification.VerificationConfig;
 import com.swirlds.common.metrics.config.MetricsConfig;
 import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.Configuration;
@@ -130,5 +131,17 @@ public interface ConfigInjectionModule {
     @Provides
     static ServerConfig provideServerConfig(Configuration configuration) {
         return configuration.getConfigData(ServerConfig.class);
+    }
+
+    /**
+     * Provides a verification configuration singleton using the configuration.
+     *
+     * @param configuration is the configuration singleton
+     * @return a verification configuration singleton
+     */
+    @Singleton
+    @Provides
+    static VerificationConfig provideVerificationConfig(Configuration configuration) {
+        return configuration.getConfigData(VerificationConfig.class);
     }
 }

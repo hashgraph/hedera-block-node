@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage.write;
+package com.hedera.block.server.verification.service;
 
-/**
- * A marker interface that groups all writers that operate on a local file
- * system.
- *
- * @param <V> the type of the value to be written
- */
-interface LocalBlockWriter<V> extends BlockWriter<V> {}
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class NoOpBlockVerificationServiceTest {
+
+    @Test
+    void onBlockItemsReceived() {
+        NoOpBlockVerificationService noOpBlockVerificationService = new NoOpBlockVerificationService();
+        noOpBlockVerificationService.onBlockItemsReceived(null);
+    }
+}

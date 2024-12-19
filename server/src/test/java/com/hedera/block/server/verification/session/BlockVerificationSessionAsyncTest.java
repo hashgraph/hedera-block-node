@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage.write;
+package com.hedera.block.server.verification.session;
 
-/**
- * A marker interface that groups all writers that operate on a local file
- * system.
- *
- * @param <V> the type of the value to be written
- */
-interface LocalBlockWriter<V> extends BlockWriter<V> {}
+import com.hedera.hapi.block.stream.output.BlockHeader;
+import java.util.concurrent.Executors;
+
+class BlockVerificationSessionAsyncTest extends AbstractBlockVerificationSessionTest {
+
+    @Override
+    protected BlockVerificationSession createSession(BlockHeader blockHeader) {
+        return new BlockVerificationSessionAsync(
+                blockHeader, metricsService, signatureVerifier, Executors.newSingleThreadExecutor(), 32);
+    }
+}

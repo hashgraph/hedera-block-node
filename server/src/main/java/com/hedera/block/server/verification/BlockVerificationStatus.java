@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage.write;
+package com.hedera.block.server.verification;
 
 /**
- * A marker interface that groups all writers that operate on a local file
- * system.
- *
- * @param <V> the type of the value to be written
+ * An enum representing the status of block verification.
  */
-interface LocalBlockWriter<V> extends BlockWriter<V> {}
+public enum BlockVerificationStatus {
+    /**
+     * The Block has been verified.
+     */
+    VERIFIED,
+    /**
+     * The Block failed verification, either due to an invalid signature or an invalid hash.
+     */
+    SIGNATURE_INVALID
+}

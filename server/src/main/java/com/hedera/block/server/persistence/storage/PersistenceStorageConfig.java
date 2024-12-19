@@ -173,11 +173,25 @@ public record PersistenceStorageConfig(
         private final int minCompressionLevel;
         private final int maxCompressionLevel;
 
+        /**
+         * Constructs a new instance of {@link CompressionType}.
+         *
+         * @param minCompressionLevel the minimum compression level
+         * @param maxCompressionLevel the maximum compression level
+         */
         CompressionType(final int minCompressionLevel, final int maxCompressionLevel) {
             this.minCompressionLevel = minCompressionLevel;
             this.maxCompressionLevel = maxCompressionLevel;
         }
 
+        /**
+         * This method verifies that the compression level is within the
+         * acceptable range for the given compression type.
+         *
+         * @param levelToCheck the compression level to check
+         * @throws IllegalArgumentException if the compression level is not within
+         * the acceptable range
+         */
         public void verifyCompressionLevel(final int levelToCheck) {
             Preconditions.requireInRange(levelToCheck, minCompressionLevel, maxCompressionLevel);
         }

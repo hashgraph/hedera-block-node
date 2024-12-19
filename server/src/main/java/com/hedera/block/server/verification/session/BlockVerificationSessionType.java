@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage.write;
+package com.hedera.block.server.verification.session;
 
 /**
- * A marker interface that groups all writers that operate on a local file
- * system.
- *
- * @param <V> the type of the value to be written
+ * Defines the types of block verification sessions.
  */
-interface LocalBlockWriter<V> extends BlockWriter<V> {}
+public enum BlockVerificationSessionType {
+    /**
+     * An asynchronous block verification session, where the verification is done in a separate thread.
+     */
+    ASYNC,
+    /**
+     * A synchronous block verification session, where the verification is done in the same thread.
+     */
+    SYNC
+}

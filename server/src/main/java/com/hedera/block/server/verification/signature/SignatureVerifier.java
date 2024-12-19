@@ -14,12 +14,21 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage.write;
+package com.hedera.block.server.verification.signature;
+
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 
 /**
- * A marker interface that groups all writers that operate on a local file
- * system.
- *
- * @param <V> the type of the value to be written
+ * An interface for verifying signatures.
  */
-interface LocalBlockWriter<V> extends BlockWriter<V> {}
+public interface SignatureVerifier {
+
+    /**
+     * Verifies the signature of a hash.
+     *
+     * @param hash the hash to verify
+     * @param signature the signature to verify
+     * @return true if the signature is valid, false otherwise
+     */
+    Boolean verifySignature(Bytes hash, Bytes signature);
+}

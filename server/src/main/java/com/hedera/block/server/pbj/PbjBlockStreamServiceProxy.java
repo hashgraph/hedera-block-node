@@ -29,6 +29,7 @@ import com.hedera.block.server.producer.NoOpProducerObserver;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
 import com.hedera.block.server.producer.ProducerConfig;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.block.server.verification.StreamVerificationHandlerImpl;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.PublishStreamRequestUnparsed;
 import com.hedera.hapi.block.PublishStreamResponse;
@@ -65,6 +66,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
      * @param streamMediator the live stream mediator
      * @param serviceStatus the service status
      * @param streamPersistenceHandler the stream persistence handler
+     * @param streamVerificationHandler the stream verification handler
      * @param notifier the notifier
      * @param blockNodeContext the block node context
      */
@@ -73,6 +75,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
             @NonNull final LiveStreamMediator streamMediator,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> streamPersistenceHandler,
+            @NonNull final StreamVerificationHandlerImpl streamVerificationHandler,
             @NonNull final Notifier notifier,
             @NonNull final BlockNodeContext blockNodeContext) {
         this.serviceStatus = serviceStatus;
@@ -80,6 +83,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         this.blockNodeContext = blockNodeContext;
 
         streamMediator.subscribe(streamPersistenceHandler);
+        streamMediator.subscribe(streamVerificationHandler);
         this.streamMediator = streamMediator;
     }
 
@@ -119,6 +123,12 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         }
     }
 
+    /**
+     * Publishes the block stream.
+     *
+     * @param helidonProducerObserver the helidon producer observer
+     * @return the pipeline
+     */
     Pipeline<List<BlockItemUnparsed>> publishBlockStream(
             Pipeline<? super PublishStreamResponse> helidonProducerObserver) {
         LOGGER.log(DEBUG, "Executing bidirectional publishBlockStream gRPC method");
@@ -153,6 +163,12 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         }
     }
 
+    /**
+     * Subscribes to the block stream.
+     *
+     * @param subscribeStreamRequest the subscribe stream request
+     * @param subscribeStreamResponseObserver the subscribe stream response observer
+     */
     void subscribeBlockStream(
             SubscribeStreamRequest subscribeStreamRequest,
             Pipeline<? super SubscribeStreamResponseUnparsed> subscribeStreamResponseObserver) {

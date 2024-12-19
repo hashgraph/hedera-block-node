@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage.write;
+package com.hedera.block.server.verification.hasher;
+
+import edu.umd.cs.findbugs.annotations.NonNull;
+import java.nio.ByteBuffer;
 
 /**
- * A marker interface that groups all writers that operate on a local file
- * system.
+ * Holds the input and output hashes of a list of block items.
  *
- * @param <V> the type of the value to be written
+ * @param inputHashes the input hashes
+ * @param outputHashes the output hashes
  */
-interface LocalBlockWriter<V> extends BlockWriter<V> {}
+public record Hashes(@NonNull ByteBuffer inputHashes, @NonNull ByteBuffer outputHashes) {}

@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package com.hedera.block.server.persistence.storage.write;
+package com.hedera.block.server.verification;
+
+import com.hedera.pbj.runtime.io.buffer.Bytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
- * A marker interface that groups all writers that operate on a local file
- * system.
+ * A record representing the result of a block verification.
  *
- * @param <V> the type of the value to be written
+ * @param blockNumber the block number
+ * @param blockHash the block hash
+ * @param status the verification status
  */
-interface LocalBlockWriter<V> extends BlockWriter<V> {}
+public record VerificationResult(
+        @NonNull Long blockNumber, @NonNull Bytes blockHash, @NonNull BlockVerificationStatus status) {}
