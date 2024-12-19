@@ -49,8 +49,8 @@ permissions:
 env:
   DOCKER_MANIFEST_GENERATOR: .github/workflows/support/scripts/generate-docker-artifact-baseline.sh
   DOCKER_MANIFEST_PATH: ${{ github.workspace }}/.manifests/docker
-#  DOCKER_REGISTRY: localhost:5000
-#  DOCKER_IMAGE_NAME: block-node-server
+  DOCKER_REGISTRY: localhost:5000
+  DOCKER_IMAGE_NAME: hedera-block-node
   DOCKER_CONTEXT_PATH: server/docker
   SKOPEO_VERSION: v1.14.0
   OWNER: hashgraph
@@ -163,12 +163,12 @@ jobs:
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
         run: ./gradlew clean build
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+#        with:
+#          registry: ${{ env.REGISTRY }}
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
 
 #      - name: Prepare for Docker Build
 #        if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
@@ -195,7 +195,7 @@ jobs:
           SOURCE_DATE_EPOCH: ${{ steps.commit.outputs.source-date }}
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
         with:
-          push: true
+          push: false
           no-cache: true
           platforms: linux/amd64,linux/arm64
           build-args: |
@@ -203,7 +203,7 @@ jobs:
             VERSION=${{ env.VERSION }}
           context: ./${{ env.DOCKER_CONTEXT_PATH }}
           file: ./${{ env.DOCKER_CONTEXT_PATH }}/Dockerfile
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.VERSION }}
+          tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.VERSION }}
           build-contexts: |
             distributions=./server/build/distributions
 
