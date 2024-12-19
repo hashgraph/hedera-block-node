@@ -48,10 +48,13 @@ permissions:
 env:
   DOCKER_MANIFEST_GENERATOR: .github/workflows/support/scripts/generate-docker-artifact-baseline.sh
   DOCKER_MANIFEST_PATH: ${{ github.workspace }}/.manifests/docker
-  DOCKER_REGISTRY: localhost:5000
-  DOCKER_IMAGE_NAME: block-node-server
+#  DOCKER_REGISTRY: localhost:5000
+#  DOCKER_IMAGE_NAME: block-node-server
   DOCKER_CONTEXT_PATH: server/docker
   SKOPEO_VERSION: v1.14.0
+  OWNER: hashgraph
+  PACKAGE_NAME: hedera-block-node
+  REGISTRY: ghcr.io
 
 jobs:
   generate-baseline:
@@ -183,9 +186,12 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             SOURCE_DATE_EPOCH=${{ steps.commit.outputs.source-date }}
+            VERSION=${{ env.VERSION }}
           context: ./${{ env.DOCKER_CONTEXT_PATH }}
           file: ./${{ env.DOCKER_CONTEXT_PATH }}/Dockerfile
-          tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.commit.outputs.sha-abbrev }}
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.VERSION }}
+          build-contexts: |
+            distributions=./server/build/distributions
 
       - name: Generate Manifest
         id: manifest
