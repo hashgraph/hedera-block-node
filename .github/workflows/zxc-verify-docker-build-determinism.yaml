@@ -177,15 +177,15 @@ jobs:
 #            cp -Rvf "${{ github.workspace }}/server/build/libs" "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/data/"
 #          echo "::endgroup::"
 
-#      - name: Write Artifact Version Descriptor
-#        run: |
-#          printf "VERSION=%s\nCOMMIT=%s\nDATE=%s" "$(./gradlew -q showVersion)" "$(git log -1 --format='%H' | cut -c1-8)" "$(date -u)" | tee "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/VERSION"
+      - name: Write Artifact Version Descriptor
+        run: |
+          printf "VERSION=%s\nCOMMIT=%s\nDATE=%s" "$(./gradlew -q showVersion)" "$(git log -1 --format='%H' | cut -c1-8)" "$(date -u)" | tee "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/VERSION"
 
-#      - name: Extract version
-#        id: extract_version
-#        run: |
-#          VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
-#          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+      - name: Extract version
+        id: extract_version
+        run: |
+          VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
       - name: Build Docker Image
         uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
@@ -201,7 +201,7 @@ jobs:
             VERSION=${{ env.VERSION }}
           context: ./${{ env.DOCKER_CONTEXT_PATH }}
           file: ./${{ env.DOCKER_CONTEXT_PATH }}/Dockerfile
-          tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.generate-baseline.outputs.sha-abbrev }}
+          tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.VERSION }}
           build-contexts: |
             distributions=./server/build/distributions
 
