@@ -2,8 +2,8 @@
 set -o pipefail
 set +e
 
-readonly DOCKER_IMAGE_NAME="hedera-block-node"
-readonly DOCKER_REGISTRY="ghcr.io"
+#readonly DOCKER_IMAGE_NAME="hedera-block-node"
+#readonly DOCKER_REGISTRY="ghcr.io"
 
 GROUP_ACTIVE="false"
 
@@ -149,9 +149,12 @@ start_group "Configuring Environment"
 end_group
 
 start_group "Prepare the Docker Image Information"
+  export DOCKER_REGISTRY DOCKER_TAG
+
   start_task "Resolving the DOCKER_REGISTRY variable"
     if [[ -z "${DOCKER_REGISTRY}" ]]; then
-      DOCKER_REGISTRY="localhost:5000"
+      echo "default DOCKER_REGISTRY!!"
+      DOCKER_REGISTRY="grpc.io"
     fi
   end_task "DONE (Registry: ${DOCKER_REGISTRY})"
 

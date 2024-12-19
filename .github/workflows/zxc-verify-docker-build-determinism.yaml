@@ -49,13 +49,11 @@ permissions:
 env:
   DOCKER_MANIFEST_GENERATOR: .github/workflows/support/scripts/generate-docker-artifact-baseline.sh
   DOCKER_MANIFEST_PATH: ${{ github.workspace }}/.manifests/docker
-#  DOCKER_REGISTRY: localhost:5000
   DOCKER_REGISTRY: ghcr.io
   DOCKER_IMAGE_NAME: hedera-block-node
   DOCKER_CONTEXT_PATH: server/docker
   SKOPEO_VERSION: v1.14.0
   OWNER: hashgraph
-#  PACKAGE_NAME: hedera-block-node
 
 jobs:
   generate-baseline:
