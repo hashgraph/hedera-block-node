@@ -20,6 +20,7 @@ import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.Li
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.common.utils.Preconditions;
+import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
 import com.hedera.block.simulator.metrics.MetricsService;
@@ -30,7 +31,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import javax.inject.Inject;
@@ -43,6 +45,7 @@ import javax.inject.Inject;
 public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
     // Configuration
     private final GrpcConfig grpcConfig;
+    private final BlockStreamConfig blockStreamConfig;
 
     // Service dependencies
     private final MetricsService metricsService;
@@ -53,22 +56,28 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
     private StreamObserver<SubscribeStreamResponse> consumerStreamObserver;
 
     // State
-    private final List<String> lastKnownStatuses;
+    private final int lastKnownStatusesCapacity;
+    private final Deque<String> lastKnownStatuses;
     private CountDownLatch streamLatch;
 
     /**
      * Constructs a new ConsumerStreamGrpcClientImpl with the specified configuration and metrics service.
      *
      * @param grpcConfig The configuration for gRPC connection settings
+     * @param blockStreamConfig The configuration for the block stream
      * @param metricsService The service for recording consumption metrics
      * @throws NullPointerException if any parameter is null
      */
     @Inject
     public ConsumerStreamGrpcClientImpl(
-            @NonNull final GrpcConfig grpcConfig, @NonNull final MetricsService metricsService) {
+            @NonNull final GrpcConfig grpcConfig,
+            @NonNull final BlockStreamConfig blockStreamConfig,
+            @NonNull final MetricsService metricsService) {
         this.grpcConfig = requireNonNull(grpcConfig);
         this.metricsService = requireNonNull(metricsService);
-        this.lastKnownStatuses = new ArrayList<>();
+        this.blockStreamConfig = requireNonNull(blockStreamConfig);
+        this.lastKnownStatusesCapacity = blockStreamConfig.lastKnownStatusesCapacity();
+        this.lastKnownStatuses = new ArrayDeque<>(lastKnownStatusesCapacity);
     }
 
     @Override
@@ -87,7 +96,8 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
         Preconditions.requireWhole(endBlock);
         Preconditions.requireGreaterOrEqual(endBlock, startBlock);
 
-        consumerStreamObserver = new ConsumerStreamObserver(metricsService, streamLatch, lastKnownStatuses);
+        consumerStreamObserver =
+                new ConsumerStreamObserver(metricsService, streamLatch, lastKnownStatuses, lastKnownStatusesCapacity);
 
         SubscribeStreamRequest request = SubscribeStreamRequest.newBuilder()
                 .setStartBlockNumber(startBlock)

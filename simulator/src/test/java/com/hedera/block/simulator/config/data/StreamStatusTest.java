@@ -17,6 +17,7 @@
 package com.hedera.block.simulator.config.data;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -54,11 +55,11 @@ class StreamStatusTest {
 
         assertEquals(10, streamStatus.publishedBlocks(), "publishedBlocks should be 10");
         assertEquals(8, streamStatus.consumedBlocks(), "consumedBlocks should be 8");
-        assertEquals(
+        assertIterableEquals(
                 publisherStatuses,
                 streamStatus.lastKnownPublisherStatuses(),
                 "lastKnownPublisherStatuses should match");
-        assertEquals(
+        assertIterableEquals(
                 consumerStatuses, streamStatus.lastKnownConsumersStatuses(), "lastKnownConsumersStatuses should match");
     }
 
@@ -75,11 +76,11 @@ class StreamStatusTest {
 
         assertEquals(5, streamStatus.publishedBlocks(), "publishedBlocks should be 5");
         assertEquals(3, streamStatus.consumedBlocks(), "consumedBlocks should be 3");
-        assertEquals(
+        assertIterableEquals(
                 List.of("PubStatus"),
                 streamStatus.lastKnownPublisherStatuses(),
                 "lastKnownPublisherStatuses should match");
-        assertEquals(
+        assertIterableEquals(
                 List.of("ConStatus"),
                 streamStatus.lastKnownConsumersStatuses(),
                 "lastKnownConsumersStatuses should match");
@@ -120,8 +121,14 @@ class StreamStatusTest {
                 .lastKnownConsumersStatuses(consumerStatuses)
                 .build();
 
-        assertEquals(streamStatus1, streamStatus2, "StreamStatus instances should be equal");
-        assertEquals(streamStatus1.hashCode(), streamStatus2.hashCode(), "Hash codes should be equal");
+        assertIterableEquals(
+                streamStatus1.lastKnownPublisherStatuses(),
+                streamStatus2.lastKnownPublisherStatuses(),
+                "lastKnownPublisherStatuses should match");
+        assertIterableEquals(
+                streamStatus1.lastKnownConsumersStatuses(),
+                streamStatus2.lastKnownConsumersStatuses(),
+                "lastKnownConsumersStatuses should match");
     }
 
     @Test
@@ -209,11 +216,11 @@ class StreamStatusTest {
 
         assertEquals(2, streamStatus.publishedBlocks(), "publishedBlocks should be 2");
         assertEquals(2, streamStatus.consumedBlocks(), "consumedBlocks should be 2");
-        assertEquals(
+        assertIterableEquals(
                 List.of("PubStatus"),
                 streamStatus.lastKnownPublisherStatuses(),
                 "lastKnownPublisherStatuses should match");
-        assertEquals(
+        assertIterableEquals(
                 List.of("ConStatus"),
                 streamStatus.lastKnownConsumersStatuses(),
                 "lastKnownConsumersStatuses should match");

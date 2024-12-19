@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.hedera.block.simulator.TestUtils;
+import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
 import com.hedera.block.simulator.metrics.MetricsService;
@@ -50,6 +51,9 @@ import org.mockito.MockitoAnnotations;
 public class ConsumerStreamGrpcClientImplTest {
     @Mock
     private GrpcConfig grpcConfig;
+
+    @Mock
+    private BlockStreamConfig blockStreamConfig;
 
     private ConsumerStreamGrpcClient consumerStreamGrpcClientImpl;
     private Server server;
@@ -102,10 +106,11 @@ public class ConsumerStreamGrpcClientImplTest {
 
         when(grpcConfig.serverAddress()).thenReturn("localhost");
         when(grpcConfig.port()).thenReturn(serverPort);
+        when(blockStreamConfig.lastKnownStatusesCapacity()).thenReturn(10);
 
         final Configuration config = TestUtils.getTestConfiguration();
         final MetricsService metricsService = new MetricsServiceImpl(getTestMetrics(config));
-        consumerStreamGrpcClientImpl = new ConsumerStreamGrpcClientImpl(grpcConfig, metricsService);
+        consumerStreamGrpcClientImpl = new ConsumerStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService);
         consumerStreamGrpcClientImpl.init();
     }
 
