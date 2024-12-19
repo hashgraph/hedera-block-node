@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   simulator-publisher:
     container_name: simulator-publisher
@@ -9,11 +7,13 @@ services:
     image: hedera-block-simulator:latest
     networks:
       - block-node_default
+    env_file:
+      - .env
     environment:
-      - GRPC_SERVER_ADDRESS=block-node-server
-      - BLOCK_STREAM_SIMULATOR_MODE=PUBLISHER
-      - PROMETHEUS_ENDPOINT_ENABLED=true
-      - PROMETHEUS_ENDPOINT_PORT_NUMBER=9998
+      - GRPC_SERVER_ADDRESS=${GRPC_SERVER_ADDRESS}
+      - BLOCK_STREAM_SIMULATOR_MODE=${PUBLISHER_BLOCK_STREAM_SIMULATOR_MODE}
+      - PROMETHEUS_ENDPOINT_ENABLED=${PROMETHEUS_ENDPOINT_ENABLED}
+      - PROMETHEUS_ENDPOINT_PORT_NUMBER=${PUBLISHER_PROMETHEUS_ENDPOINT_PORT_NUMBER}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9998/metrics"]
       interval: 3s
@@ -28,11 +28,13 @@ services:
     image: hedera-block-simulator:latest
     networks:
       - block-node_default
+    env_file:
+      - .env
     environment:
-      - GRPC_SERVER_ADDRESS=block-node-server
-      - BLOCK_STREAM_SIMULATOR_MODE=CONSUMER
-      - PROMETHEUS_ENDPOINT_ENABLED=true
-      - PROMETHEUS_ENDPOINT_PORT_NUMBER=9997
+      - GRPC_SERVER_ADDRESS=${GRPC_SERVER_ADDRESS}
+      - BLOCK_STREAM_SIMULATOR_MODE=${CONSUMER_BLOCK_STREAM_SIMULATOR_MODE}
+      - PROMETHEUS_ENDPOINT_ENABLED=${PROMETHEUS_ENDPOINT_ENABLED}
+      - PROMETHEUS_ENDPOINT_PORT_NUMBER=${CONSUMER_PROMETHEUS_ENDPOINT_PORT_NUMBER}
     depends_on:
       simulator-publisher:
         condition: service_healthy

@@ -66,19 +66,13 @@ get started with the application.
 
 The simulator can run in two modes (Publisher and Consumer) and provides metrics for both configurations. To view the metrics:
 
-1. Start the block node server first:
+1. Start the block node server and simulator first:
 
    ```bash
    ./gradlew startDockerContainer
    ```
 
-2. Start the simulator containers (both Publisher and Consumer):
-
-   ```bash
-   ./gradlew startSimulatorDockerContainers
-   ```
-
-3. Access the metrics:
+2. Access the metrics:
    - Open Grafana at http://localhost:3000
    - Navigate to Dashboards
    - You'll find two dashboards:
