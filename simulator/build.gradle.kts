@@ -132,25 +132,15 @@ val createDockerImage: TaskProvider<Exec> =
         commandLine("sh", "-c", "docker buildx build -t hedera-block-simulator:latest .")
     }
 
-val createDotEnv: TaskProvider<Exec> =
-    tasks.register<Exec>("createDotEnv") {
-        description = "Creates .env file with needed environment variables for the simulator"
-        group = "docker"
-
-        dependsOn(createDockerImage, tasks.assemble)
-        workingDir(dockerBuildRootDirectory)
-        commandLine("sh", "-c", "./update-env.sh")
-    }
-
 val startDockerContainer: TaskProvider<Exec> =
     tasks.register<Exec>("startDockerContainer") {
         description = "Creates and starts the docker image of the Block Stream Simulator"
         group = "docker"
 
-        dependsOn(createDotEnv, tasks.assemble)
+        dependsOn(createDockerImage, tasks.assemble)
         workingDir(dockerBuildRootDirectory)
 
-        commandLine("sh", "-c", "docker compose -p simulator up -d")
+        commandLine("sh", "-c", "./update-env.sh && docker compose -p simulator up -d")
     }
 
 tasks.register<Exec>("stopDockerContainer") {

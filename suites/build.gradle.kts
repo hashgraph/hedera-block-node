@@ -44,7 +44,7 @@ tasks.register<Test>("runSuites") {
     modularity.inferModulePath = false
 
     // @todo(#343) - :server:createDotEnv should disappear
-    dependsOn(":server:createDockerImage", ":server:createDotEnv")
+    dependsOn(":server:createDockerImage", ":server:createProductionDotEnv")
 
     useJUnitPlatform()
     testLogging { events("passed", "skipped", "failed") }
