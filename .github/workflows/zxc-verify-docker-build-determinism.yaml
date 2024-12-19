@@ -220,9 +220,7 @@ jobs:
           gunzip "${{ steps.manifest.outputs.name }}"
           pwd
           ls -la
-          tar -rvf "${EXTRACTED_FILE_NAME}" -C "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}" server/build/libs
-          echo "--------------------"
-          ls -la
+          tar -rvf "${EXTRACTED_FILE_NAME}" -C "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}"
           gzip "${EXTRACTED_FILE_NAME}"
 
       - name: Upload Baseline
@@ -303,7 +301,7 @@ jobs:
           tar -xzf "${{ needs.generate-baseline.outputs.name }}"
           pwd
           ls -la
-          mv "server/build/libs" "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
+          mv "*.json" "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
 
       - name: Determine Home Directory
         id: home
