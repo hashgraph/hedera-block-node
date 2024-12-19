@@ -1,3 +1,5 @@
+import org.gradlex.javamodule.dependencies.tasks.ModuleDirectivesScopeCheck
+
 /*
  * Copyright (C) 2022-2024 Hedera Hashgraph, LLC
  *
@@ -17,13 +19,43 @@
 plugins {
     id("application")
     id("com.hedera.block.tools")
+    id("com.gradleup.shadow") version "8.3.5"
 }
 
 description = "Hedera Block Stream Tools"
 
 application {
-    mainModule = "com.hedera.block.tools"
     mainClass = "com.hedera.block.tools.BlockStreamTool"
+}
+
+// Generate Manifest with Main-Class and Implementation-Title
+tasks.withType<Jar> {
+    manifest {
+        attributes(
+            "Main-Class" to application.mainClass.get(),
+            "Implementation-Title" to project.name,
+            "Implementation-Version" to project.version
+        )
+    }
+}
+
+// Switch compilation from modules back to classpath because 3rd party libraries are not modularized
+tasks.compileJava {
+    // Do not use '--module-path' despite `module-info.java`
+    modularity.inferModulePath = false
+    // Do not compile module-info, we use it only to extract dependencies for now
+    exclude("module-info.java")
+}
+
+// Allow non-module Jar
+extraJavaModuleInfo {
+    failOnMissingModuleInfo = false
+    failOnAutomaticModules = false
+}
+
+// Disable module directives scope check as we are not using modules
+tasks.withType<ModuleDirectivesScopeCheck>().configureEach {
+    enabled = false
 }
 
 mainModuleInfo {
@@ -33,3 +65,12 @@ mainModuleInfo {
 }
 
 testModuleInfo { requiresStatic("com.github.spotbugs.annotations") }
+
+dependencies {
+    implementation(platform("com.google.cloud:libraries-bom:26.49.0"))
+    implementation("com.google.cloud:google-cloud-storage")
+    implementation("com.github.luben:zstd-jni:1.5.6-6")
+    implementation("info.picocli:picocli:4.7.6")
+    // depend on peer streams gradle module to get access to protobuf generated classes
+    implementation(project(":stream"))
+}

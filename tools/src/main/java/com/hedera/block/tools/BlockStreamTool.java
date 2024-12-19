@@ -18,6 +18,11 @@ package com.hedera.block.tools;
 
 import com.hedera.block.tools.commands.BlockInfo;
 import com.hedera.block.tools.commands.ConvertToJson;
+import com.hedera.block.tools.commands.record2blocks.Record2BlockCommand;
+import com.hedera.block.tools.commands.record2blocks.gcp.AddNewerBlockTimes;
+import com.hedera.block.tools.commands.record2blocks.mirrornode.ExtractBlockTimes;
+import com.hedera.block.tools.commands.record2blocks.mirrornode.FetchMirrorNodeRecordsCsv;
+import com.hedera.block.tools.commands.record2blocks.mirrornode.ValidateBlockTimes;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
@@ -29,7 +34,15 @@ import picocli.CommandLine.Command;
         name = "subcommands",
         mixinStandardHelpOptions = true,
         version = "BlockStreamTool 0.1",
-        subcommands = {ConvertToJson.class, BlockInfo.class})
+        subcommands = {
+            ConvertToJson.class,
+            BlockInfo.class,
+            Record2BlockCommand.class,
+            FetchMirrorNodeRecordsCsv.class,
+            ExtractBlockTimes.class,
+            ValidateBlockTimes.class,
+            AddNewerBlockTimes.class
+        })
 public final class BlockStreamTool {
 
     /**
