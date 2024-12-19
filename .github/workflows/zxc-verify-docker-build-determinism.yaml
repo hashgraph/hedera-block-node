@@ -159,7 +159,7 @@ jobs:
 
       - name: Build Gradle Artifacts
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
-        run: ./gradlew clean build
+        run: ./gradlew assemble --scan
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
@@ -177,9 +177,9 @@ jobs:
 #            cp -Rvf "${{ github.workspace }}/server/build/libs" "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/data/"
 #          echo "::endgroup::"
 
-      - name: Write Artifact Version Descriptor
-        run: |
-          printf "VERSION=%s\nCOMMIT=%s\nDATE=%s" "$(./gradlew -q showVersion)" "$(git log -1 --format='%H' | cut -c1-8)" "$(date -u)" | tee "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/VERSION"
+#      - name: Write Artifact Version Descriptor
+#        run: |
+#          printf "VERSION=%s\nCOMMIT=%s\nDATE=%s" "$(./gradlew -q showVersion)" "$(git log -1 --format='%H' | cut -c1-8)" "$(date -u)" | tee "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/VERSION"
 
       - name: Extract version
         id: extract_version
