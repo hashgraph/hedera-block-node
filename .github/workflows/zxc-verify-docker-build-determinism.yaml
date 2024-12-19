@@ -44,6 +44,7 @@ defaults:
 permissions:
   id-token: write
   contents: read
+  packages: write
 
 env:
   DOCKER_MANIFEST_GENERATOR: .github/workflows/support/scripts/generate-docker-artifact-baseline.sh
