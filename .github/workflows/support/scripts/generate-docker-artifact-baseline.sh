@@ -3,6 +3,7 @@ set -o pipefail
 set +e
 
 readonly DOCKER_IMAGE_NAME="hedera-block-node"
+readonly DOCKER_REGISTRY="ghcr.io"
 
 GROUP_ACTIVE="false"
 
