@@ -297,6 +297,8 @@ jobs:
           cd "${DOCKER_MANIFEST_PATH}"
           gsutil cp "${{ needs.generate-baseline.outputs.file }}" .
           tar -xzf "${{ needs.generate-baseline.outputs.name }}"
+          pwd
+          ls -la
           mv "sdk" "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
 
       #      - name: Create Docker Working Directory
