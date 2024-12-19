@@ -346,6 +346,13 @@ jobs:
 #          build-contexts: |
 #            distributions=./server/build/distributions
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Extract version
         id: extract_version
         run: |
