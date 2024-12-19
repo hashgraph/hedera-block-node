@@ -38,3 +38,12 @@ Uses the prefix `grpc` so all properties should start with `grpc.`
 |:---|:---|---:|
 | `serverAddress` | The host of the Block-Node | `localhost` |
 | `port` | The port of the Block-Node | `8080` |
+
+## PrometheusConfig
+
+Uses the prefix `prometheus` so all properties should start with `prometheus.`
+
+| Key | Description | Default Value |
+|:---|:---|--------------:|
+| `endpointEnabled` | Whether Prometheus endpoint is enabled |       `false` |
+| `endpointPortNumber` | Port number for Prometheus endpoint |        `9998` |

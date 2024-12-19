@@ -93,3 +93,36 @@ tasks.register<Copy>("untarTestBlockStream") {
 tasks.named("processResources") { dependsOn(tasks.named("untarTestBlockStream")) }
 
 tasks.named("sourcesJar") { dependsOn(tasks.named("untarTestBlockStream")) }
+
+// Vals
+val dockerProjectRootDirectory: Directory = layout.projectDirectory.dir("docker")
+val dockerBuildRootDirectory: Directory = layout.buildDirectory.dir("docker").get()
+
+// Docker related tasks
+val copyDockerFolder: TaskProvider<Copy> =
+    tasks.register<Copy>("copyDockerFolder") {
+        description = "Copies the docker folder to the build root directory"
+        group = "docker"
+
+        from(dockerProjectRootDirectory)
+        into(dockerBuildRootDirectory)
+    }
+
+val startDockerContainer: TaskProvider<Exec> =
+    tasks.register<Exec>("startDockerContainer") {
+        description = "Creates and starts the docker image of the Block Stream Simulator"
+        group = "docker"
+
+        dependsOn(copyDockerFolder, tasks.assemble)
+        workingDir(dockerBuildRootDirectory)
+        commandLine("sh", "-c", "./prepare-docker.sh")
+    }
+
+tasks.register<Exec>("stopDockerContainer") {
+    description = "Stops running docker containers of the Block Stream Simulator"
+    group = "docker"
+
+    dependsOn(copyDockerFolder)
+    workingDir(dockerBuildRootDirectory)
+    commandLine("sh", "-c", "docker compose -p simulator stop")
+}
