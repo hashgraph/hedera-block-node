@@ -153,19 +153,18 @@ start_group "Prepare the Docker Image Information"
 
   start_task "Resolving the DOCKER_REGISTRY variable"
     if [[ -z "${DOCKER_REGISTRY}" ]]; then
-      echo "default DOCKER_REGISTRY!!"
       DOCKER_REGISTRY="grpc.io"
     fi
   end_task "DONE (Registry: ${DOCKER_REGISTRY})"
 
-  start_task "Resolving the DOCKER_TAG variable"
-    if [[ -z "${DOCKER_TAG}" ]]; then
-      DOCKER_TAG="$(echo "${GITHUB_SHA}" | tr -d '[:space:]' | cut -c1-8)"
-    fi
-  end_task "DONE (Tag: ${DOCKER_TAG})"
+#  start_task "Resolving the DOCKER_TAG variable"
+#    if [[ -z "${DOCKER_TAG}" ]]; then
+#      DOCKER_TAG="$(echo "${GITHUB_SHA}" | tr -d '[:space:]' | cut -c1-8)"
+#    fi
+#  end_task "DONE (Tag: ${DOCKER_TAG})"
 
   start_task "Resolving the Fully Qualified Image Name"
-    FQ_IMAGE_NAME="${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_TAG}"
+    FQ_IMAGE_NAME="${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:0.3.0-SNAPSHOT"
   end_task "DONE (Image: ${FQ_IMAGE_NAME})"
 end_group
 
