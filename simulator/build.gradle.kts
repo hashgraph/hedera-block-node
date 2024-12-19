@@ -96,6 +96,8 @@ tasks.named("sourcesJar") { dependsOn(tasks.named("untarTestBlockStream")) }
 
 // Vals
 val dockerProjectRootDirectory: Directory = layout.projectDirectory.dir("docker")
+var resourcesProjectRootDirectory: Directory = layout.projectDirectory.dir("src/main/resources")
+var distributionBuildRootDirectory: Directory = layout.buildDirectory.dir("distributions").get()
 val dockerBuildRootDirectory: Directory = layout.buildDirectory.dir("docker").get()
 
 // Docker related tasks
@@ -108,14 +110,47 @@ val copyDockerFolder: TaskProvider<Copy> =
         into(dockerBuildRootDirectory)
     }
 
+// Docker related tasks
+val copyDependenciesFolders: TaskProvider<Copy> =
+    tasks.register<Copy>("copyDependenciesFolders") {
+        description = "Copies the docker folder to the build root directory"
+        group = "docker"
+
+        dependsOn(copyDockerFolder, tasks.assemble)
+        from(resourcesProjectRootDirectory)
+        from(distributionBuildRootDirectory)
+        into(dockerBuildRootDirectory)
+    }
+
+val createDockerImage: TaskProvider<Exec> =
+    tasks.register<Exec>("createDockerImage") {
+        description = "Creates the docker image of the Block Stream Simulator"
+        group = "docker"
+
+        dependsOn(copyDependenciesFolders, tasks.assemble)
+        workingDir(dockerBuildRootDirectory)
+        commandLine("sh", "-c", "docker buildx build -t hedera-block-simulator:latest .")
+    }
+
+val createDotEnv: TaskProvider<Exec> =
+    tasks.register<Exec>("createDotEnv") {
+        description = "Creates .env file with needed environment variables for the simulator"
+        group = "docker"
+
+        dependsOn(createDockerImage, tasks.assemble)
+        workingDir(dockerBuildRootDirectory)
+        commandLine("sh", "-c", "./update-env.sh")
+    }
+
 val startDockerContainer: TaskProvider<Exec> =
     tasks.register<Exec>("startDockerContainer") {
         description = "Creates and starts the docker image of the Block Stream Simulator"
         group = "docker"
 
-        dependsOn(copyDockerFolder, tasks.assemble)
+        dependsOn(createDotEnv, tasks.assemble)
         workingDir(dockerBuildRootDirectory)
-        commandLine("sh", "-c", "./prepare-docker.sh")
+
+        commandLine("sh", "-c", "docker compose -p simulator up -d")
     }
 
 tasks.register<Exec>("stopDockerContainer") {
