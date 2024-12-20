@@ -36,6 +36,14 @@ public record BlockInfo(
         SortedMap<Integer, NumberedSidecarFile> sidecarFiles,
         List<ChainFile> signatureFiles) {
 
+    /**
+     * Create a new BlockInfo instance by passing in all files associated with the block. They are then divided into
+     * record files, sidecar files and signature files.
+     *
+     * @param blockNum the block number
+     * @param blockTime the block time
+     * @param allBlockFiles all files associated with the block
+     */
     public BlockInfo(long blockNum, long blockTime, List<ChainFile> allBlockFiles) {
         this(
                 blockNum,
@@ -46,6 +54,13 @@ public record BlockInfo(
                 allBlockFiles.stream().filter(cf -> cf.kind() == Kind.SIGNATURE).collect(Collectors.toList()));
     }
 
+    /**
+     * Find the record file with the most occurrences in the list of all block files. This works on the assumption that
+     * the record file with the most occurrences is the one that is most likely to be the correct record file.
+     *
+     * @param allBlockFiles all files associated with the block
+     * @return the record file with the most occurrences and the number of occurrences
+     */
     private static ChainFileAndCount mostCommonRecordFileMd5EntryAndCount(List<ChainFile> allBlockFiles) {
         final Map<String, Long> md5Counts = allBlockFiles.stream()
                 .filter(cf -> cf.kind() == Kind.RECORD)
@@ -63,15 +78,22 @@ public record BlockInfo(
                 maxCountRecordFile, maxCountentry.getValue().intValue());
     }
 
+    /**
+     * Collect sidecar files from all block files. There can be multiple sidecar files for a block, each with multiple
+     * copies for from each node. This groups them by sidecar index and returns the most common sidecar file for each
+     * index in a sorted map.
+     *
+     * @param allBlockFiles all files associated with the block
+     * @return a sorted map of sidecar files, keyed by sidecar index
+     */
     private static SortedMap<Integer, NumberedSidecarFile> collectSidecarFiles(List<ChainFile> allBlockFiles) {
         // group sidecar files by sidecar index
         final Map<Integer, List<ChainFile>> sidecarFiles = allBlockFiles.stream()
                 .filter(cf -> cf.kind() == Kind.SIDECAR)
                 .collect(Collectors.groupingBy(ChainFile::sidecarIndex));
-        final TreeMap<Integer, NumberedSidecarFile> sortedSidecarFiles = new TreeMap<Integer, NumberedSidecarFile>();
-        sidecarFiles.forEach((sidecarIndex, sidecarFileList) -> {
-            sortedSidecarFiles.put(sidecarIndex, new NumberedSidecarFile(sidecarFileList));
-        });
+        final TreeMap<Integer, NumberedSidecarFile> sortedSidecarFiles = new TreeMap<>();
+        sidecarFiles.forEach((sidecarIndex, sidecarFileList) ->
+                sortedSidecarFiles.put(sidecarIndex, new NumberedSidecarFile(sidecarFileList)));
         return sortedSidecarFiles;
     }
 
@@ -84,6 +106,11 @@ public record BlockInfo(
                     + "@|bold,yellow signatureFiles|@ @|yellow total=|@$signatureFilesSize "
                     + "@|bold,yellow }|@");
 
+    /**
+     * Render the block info as a string in nice colored output for the console.
+     *
+     * @return the block info as a string
+     */
     @Override
     public String toString() {
         // check

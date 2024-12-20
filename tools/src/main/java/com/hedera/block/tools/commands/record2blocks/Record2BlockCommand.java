@@ -25,7 +25,7 @@ import com.hedera.block.tools.commands.record2blocks.model.BlockInfo;
 import com.hedera.block.tools.commands.record2blocks.model.BlockTimes;
 import com.hedera.block.tools.commands.record2blocks.model.ChainFile;
 import com.hedera.block.tools.commands.record2blocks.model.ParsedSignatureFile;
-import com.hedera.block.tools.commands.record2blocks.model.RecordFileVersionInfo;
+import com.hedera.block.tools.commands.record2blocks.model.RecordFileInfo;
 import com.hedera.block.tools.commands.record2blocks.util.BlockWriter.BlockPath;
 import com.hedera.hapi.block.stream.Block;
 import com.hedera.hapi.block.stream.BlockItem;
@@ -34,7 +34,6 @@ import com.hedera.hapi.block.stream.RecordFileItem;
 import com.hedera.hapi.block.stream.RecordFileSignature;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.hapi.node.base.BlockHashAlgorithm;
-import com.hedera.hapi.node.base.SemanticVersion;
 import com.hedera.hapi.node.base.Timestamp;
 import com.hedera.hapi.streams.SidecarFile;
 import com.hedera.pbj.runtime.OneOf;
@@ -48,9 +47,11 @@ import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HexFormat;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.Option;
@@ -67,7 +68,7 @@ import picocli.CommandLine.Option;
  *     Record files start at V2 at block 0 then change to V5 at block 12370838 and V6 at block 38210031
  * </p>
  */
-@SuppressWarnings("FieldCanBeLocal")
+@SuppressWarnings({"FieldCanBeLocal", "CallToPrintStackTrace"})
 @Command(name = "record2block", description = "Converts a record stream files into blocks")
 public class Record2BlockCommand implements Runnable {
 
@@ -132,7 +133,9 @@ public class Record2BlockCommand implements Runnable {
      */
     @Override
     public void run() {
-        try {
+        // create executor service
+        try(final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
+            final ExecutorService singleThreadWritingExecutor = Executors.newSingleThreadExecutor()) {
             blocksDir = dataDir.resolve("blocks");
             blocksJsonDir = dataDir.resolve("blocks-json");
             // enable cache, disable if doing large batches
@@ -165,17 +168,25 @@ public class Record2BlockCommand implements Runnable {
             Instant currentHour = null;
             List<ChainFile> currentHoursFiles = null;
             for (int blockNumber = startBlock; blockNumber <= endBlock; blockNumber++) {
+                final int finalBlockNumber = blockNumber;
                 // get the time of the record file for this block, from converted mirror node data
                 final long blockTime = blockTimes.getBlockTime(blockNumber);
                 final Instant blockTimeInstant = blockTimeLongToInstant(blockTime);
-                System.out.println(Ansi.AUTO.string("@|bold,green,underline Processing block|@ " + blockNumber
-                        + " @|green at blockTime|@ " + blockTimeInstant));
+                System.out.printf(Ansi.AUTO.string("@|bold,green,underline Processing block|@ %d"
+                        + " @|green at blockTime|@ %s"
+                        + " @|cyan Progress = block %d of %d" +
+                        " = %.2f%% |@\n"),
+                        blockNumber,
+                        blockTimeInstant,
+                        blockNumber-startBlock+1,
+                        endBlock-startBlock+1,
+                        ((double)(blockNumber-startBlock)/(double)(endBlock-startBlock))*100d
+                );
                 // round instant to nearest hour
                 Instant blockTimeHour = blockTimeInstant.truncatedTo(ChronoUnit.HOURS);
                 // check if we are the same hour as last block, if not load the new hour
                 if (currentHour == null || !currentHour.equals(blockTimeHour)) {
                     currentHour = blockTimeHour;
-                    System.out.print(Ansi.AUTO.string("@|bold,yellow    Listing files from GCP ...|@"));
                     currentHoursFiles = mainNetBucket.listHour(blockTime);
                     System.out.println(Ansi.AUTO.string(
                             "\r@|bold,yellow    Listed " + currentHoursFiles.size() + " files from GCP|@"));
@@ -189,35 +200,42 @@ public class Record2BlockCommand implements Runnable {
                                 .toList());
                 // print block info
                 System.out.println("   " + blockInfo);
-                // now we need to download the most common record file
-                byte[] recordFileBytes =
-                        blockInfo.mostCommonRecordFile().chainFile().download(mainNetBucket);
 
-                // parse version information out of record file
-                final RecordFileVersionInfo recordFileVersionInfo = RecordFileVersionInfo.parse(recordFileBytes);
+                // The next 3 steps we do in background threads as they all download files from GCP which can be slow
 
-                // download and parse all signature files
-                ParsedSignatureFile[] signatureFileBytes = blockInfo.signatureFiles().stream()
-                        .parallel()
-                        .map(cf -> ParsedSignatureFile.downloadAndParse(cf, mainNetBucket))
-                        .toArray(ParsedSignatureFile[]::new);
-                // convert signature files to list of RecordFileSignatures
-                final List<RecordFileSignature> recordFileSignatures = Arrays.stream(signatureFileBytes)
-                        .map(sigFile -> new RecordFileSignature(Bytes.wrap(sigFile.signature()), sigFile.nodeId()))
+                // now we need to download the most common record file & parse version information out of record file
+                final Future<RecordFileInfo> recordFileInfoFuture = executorService.submit(() ->
+                        RecordFileInfo.parse(blockInfo.mostCommonRecordFile().chainFile().download(mainNetBucket)));
+
+                // download and parse all signature files then  convert signature files to list of RecordFileSignatures
+                final List<Future<RecordFileSignature>> recordFileSignatureFutures = blockInfo.signatureFiles().stream()
+                        .map(cf -> executorService.submit(() -> {
+                            final ParsedSignatureFile sigFile = ParsedSignatureFile.downloadAndParse(cf, mainNetBucket);
+                            return new RecordFileSignature(Bytes.wrap(sigFile.signature()), sigFile.nodeId());
+                        }))
                         .toList();
 
-                // download most common sidecar file
-                List<SidecarFile> sideCars = blockInfo.sidecarFiles().values().stream()
-                        .map(sidecarFile -> {
-                            byte[] sidecarFileBytes = sidecarFile.mostCommonSidecarFile().chainFile().download(mainNetBucket);
-                            try {
-                                return SidecarFile.PROTOBUF.parse(Bytes.wrap(sidecarFileBytes));
-                            } catch (ParseException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }).toList();
+                // download most common sidecar files, one for each numbered sidecar
+                final List<Future<SidecarFile>> sideCarsFutures =
+                        blockInfo.sidecarFiles().values().stream()
+                                .map(sidecarFile ->
+                                    executorService.submit(() -> {
+                                        byte[] sidecarFileBytes = sidecarFile.mostCommonSidecarFile().chainFile()
+                                                .download(mainNetBucket);
+                                        try {
+                                            return SidecarFile.PROTOBUF.parse(Bytes.wrap(sidecarFileBytes));
+                                        } catch (ParseException e) {
+                                            throw new RuntimeException(e);
+                                        }
+                                    })
+                                ).toList();
 
-                // build new Block File
+                // collect all background computed data from futures
+                final RecordFileInfo recordFileVersionInfo = recordFileInfoFuture.get();
+                final List<RecordFileSignature> recordFileSignatures = getResults(recordFileSignatureFutures);
+                final List<SidecarFile> sideCars = getResults(sideCarsFutures);
+
+                // build new block
                 final BlockHeader blockHeader = new BlockHeader(
                         recordFileVersionInfo.hapiProtoVersion(),
                         recordFileVersionInfo.hapiProtoVersion(),
@@ -227,32 +245,66 @@ public class Record2BlockCommand implements Runnable {
                         BlockHashAlgorithm.SHA2_384);
                 final RecordFileItem recordFileItem = new RecordFileItem(
                         new Timestamp(blockTimeInstant.getEpochSecond(), blockTimeInstant.getNano()),
-                        Bytes.wrap(recordFileBytes),
+                        Bytes.wrap(recordFileVersionInfo.recordFileContents()),
                         sideCars,recordFileSignatures
                         );
                 final Block block = new Block(List.of(
                         new BlockItem(new OneOf<>(ItemOneOfType.BLOCK_HEADER, blockHeader)),
                         new BlockItem(new OneOf<>(ItemOneOfType.RECORD_FILE, recordFileItem))));
-                // write block to disk
-                final BlockPath blockPath = writeBlock(blocksDir, block);
-                System.out.println(Ansi.AUTO.string("@|bold,yellow    Wrote block to|@ " + blockPath.dirPath()
-                        + "/" + blockPath.zipFileName() + "@|bold,cyan :|@"
-                        + blockPath.blockFileName()));
-                // write as json for now as well
-                if (jsonEnabled) {
-                    final Path blockJsonPath = blocksJsonDir.resolve(blockPath.blockNumStr() + ".blk.json");
-                    Files.createDirectories(blockJsonPath.getParent());
-                    try (WritableStreamingData out = new WritableStreamingData(Files.newOutputStream(
-                            blockJsonPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE))) {
-                        Block.JSON.write(block, out);
+
+                // write block to disk on a single threaded executor. This allows the loop to carry on and start
+                // downloading files for the next block. We should be download bound so optimizing to keep the queue of
+                // downloads as busy as possible.
+                singleThreadWritingExecutor.submit(() -> {
+                    try {
+                        final BlockPath blockPath = writeBlock(blocksDir, block);
+                        // write as json for now as well
+                        if (jsonEnabled) {
+                            final Path blockJsonPath = blocksJsonDir.resolve(blockPath.blockNumStr() + ".blk.json");
+                            Files.createDirectories(blockJsonPath.getParent());
+                            try (WritableStreamingData out = new WritableStreamingData(Files.newOutputStream(
+                                    blockJsonPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE))) {
+                                Block.JSON.write(block, out);
+                            }
+                            System.out.println(Ansi.AUTO.string("@|bold,yellow    Wrote block [|@"+finalBlockNumber+
+                                    "@|bold,yellow ]to|@ " + blockPath.dirPath()
+                                    + "/" + blockPath.zipFileName() + "@|bold,cyan :|@"
+                                    + blockPath.blockFileName() +
+                                    "@|bold,yellow ] and json to|@ " + blockJsonPath));
+                        } else {
+                            System.out.println(Ansi.AUTO.string("@|bold,yellow    Wrote block [|@"+finalBlockNumber+
+                                    "@|bold,yellow ]to|@ " + blockPath.dirPath()
+                                    + "/" + blockPath.zipFileName() + "@|bold,cyan :|@"
+                                    + blockPath.blockFileName()));
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        System.exit(1);
                     }
-                    System.out.println(Ansi.AUTO.string("@|bold,yellow    Wrote block json to|@ " + blockJsonPath));
-                }
+                });
                 // update previous block hash
                 previousBlockHash = recordFileVersionInfo.blockHash();
             }
+        } catch (IOException | InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-        } catch (IOException e) {
+    /**
+     * Get list results of a list of future
+     *
+     * @param futures list of futures to collect results from
+     * @return list of results
+     * @param <I> the type of the future
+     */
+    private static <I> List<I> getResults(List<Future<I>> futures) {
+        try {
+            List<I> results = new ArrayList<>(futures.size());
+            for (Future<I> future : futures) {
+                results.add(future.get());
+            }
+            return results;
+        } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
     }

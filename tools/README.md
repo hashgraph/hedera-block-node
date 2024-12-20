@@ -70,8 +70,8 @@ Prints info for block files
 ### The `record2block` Subcommand
 
 Converts a historical record stream files into blocks. This depends on the `block_times.bin` file being present. It can 
-be created by running the other commands `fetchRecordsCsv` and `extractBlockTimes`. It can also be validated by running
-the `validateBlockTimes` command. Then extended with newer block times by running the `addNewerBlockTimes` command.
+be created by running the other commands `fetchRecordsCsv`, `extractBlockTimes` and `addNewerBlockTimes` in that order. 
+It can also be validated by running the `validateBlockTimes` command. 
 
 This command depends on reading data from public requester pays Google Cloud buckets. To do that it needs you to be 
 authenticated with the Google Cloud SDK. You can authenticate with `gcloud auth application-default login` or 
