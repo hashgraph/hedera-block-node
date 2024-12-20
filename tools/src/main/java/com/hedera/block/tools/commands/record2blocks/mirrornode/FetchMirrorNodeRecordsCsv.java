@@ -107,12 +107,25 @@ public class FetchMirrorNodeRecordsCsv implements Runnable {
         private final String name;
         private long bytesWritten = 0;
 
+        /**
+         * Create new progress output stream.
+         *
+         * @param out the output stream to wrap
+         * @param size the size of the output stream
+         * @param name the name of the output stream
+         */
         public ProgressOutputStream(OutputStream out, long size, String name) {
             super(out);
             this.size = size;
             this.name = name;
         }
 
+        /**
+         * Write a byte to the output stream.
+         *
+         * @param b the byte to write
+         * @throws IOException if an error occurs writing the byte
+         */
         @Override
         public void write(int b) throws IOException {
             super.write(b);
@@ -120,6 +133,14 @@ public class FetchMirrorNodeRecordsCsv implements Runnable {
             printProgress();
         }
 
+        /**
+         * Write a byte array to the output stream.
+         *
+         * @param b the byte array to write
+         * @param off the offset in the byte array to start writing
+         * @param len the number of bytes to write
+         * @throws IOException if an error occurs writing the byte array
+         */
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
             super.write(b, off, len);
@@ -127,6 +148,9 @@ public class FetchMirrorNodeRecordsCsv implements Runnable {
             printProgress();
         }
 
+        /**
+         * Print the progress of the output stream to the console.
+         */
         private void printProgress() {
             if (bytesWritten % MB == 0) {
                 System.out.printf(

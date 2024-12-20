@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.internal.DefaultDependencyFilter
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradlex.javamodule.dependencies.tasks.ModuleDirectivesScopeCheck
 
 /*
@@ -29,7 +31,7 @@ application {
 }
 
 // Generate Manifest with Main-Class and Implementation-Title
-tasks.withType<Jar> {
+tasks.withType<Jar>().configureEach {
     manifest {
         attributes(
             "Main-Class" to application.mainClass.get(),
@@ -39,13 +41,6 @@ tasks.withType<Jar> {
     }
 }
 
-// Switch compilation from modules back to classpath because 3rd party libraries are not modularized
-tasks.compileJava {
-    // Do not use '--module-path' despite `module-info.java`
-    modularity.inferModulePath = false
-    // Do not compile module-info, we use it only to extract dependencies for now
-    exclude("module-info.java")
-}
 
 // Allow non-module Jar
 extraJavaModuleInfo {
@@ -73,4 +68,20 @@ dependencies {
     implementation("info.picocli:picocli:4.7.6")
     // depend on peer streams gradle module to get access to protobuf generated classes
     implementation(project(":stream"))
+}
+
+tasks.withType<ShadowJar>().configureEach {
+    group = "shadow"
+
+    // There is an issue in the shadow plugin that it automatically accesses the
+    // files in 'runtimeClasspath' while Gradle is building the task graph.
+    // See: https://github.com/GradleUp/shadow/issues/882
+    dependencyFilter = NoResolveDependencyFilter()
+}
+
+// Disable dependency resolution as it conflicts with shadow plugin
+class NoResolveDependencyFilter : DefaultDependencyFilter(project) {
+    override fun resolve(configuration: FileCollection): FileCollection {
+        return configuration
+    }
 }

@@ -28,7 +28,7 @@ import java.io.DataInputStream;
 import java.security.MessageDigest;
 
 /**
- * Represents the version & block hash information of a record file.
+ * Represents the version and block hash information of a record file.
  * <p>
  * The old record file formats are documented in the
  * <a href="https://github.com/search?q=repo%3Ahashgraph%2Fhedera-mirror-node%20%22implements%20RecordFileReader%22&type=code">
@@ -39,6 +39,7 @@ import java.security.MessageDigest;
  *
  * @param hapiProtoVersion the HAPI protocol version
  * @param blockHash the block hash
+ * @param recordFileContents the record file contents
  */
 public record RecordFileInfo(SemanticVersion hapiProtoVersion, Bytes blockHash, byte[] recordFileContents) {
     /* The length of the header in a v2 record file */

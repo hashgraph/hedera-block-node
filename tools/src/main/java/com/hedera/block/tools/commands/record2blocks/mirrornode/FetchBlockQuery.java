@@ -72,7 +72,11 @@ public class FetchBlockQuery {
         }
     }
 
-    /** Test main method */
+    /**
+     * Test main method
+     *
+     * @param args the command line arguments
+     */
     public static void main(String[] args) {
         System.out.println("Fetching block query...");
         int blockNumber = 69333000;

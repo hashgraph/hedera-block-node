@@ -137,7 +137,6 @@ public class AddNewerBlockTimes implements Runnable {
                     if (!blockFileNameFromMirrorNode.equals(lastRecordFileName)) {
                         throw new RuntimeException("Last block of day number mismatch");
                     }
-                    //                System.exit(0);
                     // next day
                     day = day.plus(1, ChronoUnit.DAYS);
                 }

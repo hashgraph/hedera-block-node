@@ -61,6 +61,7 @@ public class BlockWriter {
      * @param baseDirectory The base directory for the block files
      * @param block The block to write
      * @throws IOException If an error occurs writing the block
+     * @return The path to the block file
      */
     public static BlockPath writeBlock(final Path baseDirectory, final Block block) throws IOException {
         // get block number from block header
@@ -115,6 +116,8 @@ public class BlockWriter {
 
     /**
      * Simple main method to test the block path computation
+     *
+     * @param args The command line arguments
      */
     public static void main(String[] args) {
         for (long blockNumber = 0; blockNumber < 3002; blockNumber++) {

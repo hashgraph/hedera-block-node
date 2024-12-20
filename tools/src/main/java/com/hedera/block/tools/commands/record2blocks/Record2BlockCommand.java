@@ -59,14 +59,13 @@ import picocli.CommandLine.Option;
 /**
  * Command line command that converts a record stream to blocks
  * <p>
- *     Example block ranges for testing:
- *     <ul>
- *         <li><code>-s 0 -e 10</code> - Record File v2</li>
- *         <li><code>-s 12877843 -e 12877853</code> - Record File v5</li>
- *         <li><code>-s 72756872 -e 72756882</code> - Record File v6 with sidecars</li>
- *     </ul>
- *     Record files start at V2 at block 0 then change to V5 at block 12370838 and V6 at block 38210031
- * </p>
+ * Example block ranges for testing:
+ * <ul>
+ *     <li><code>-s 0 -e 10</code> - Record File v2</li>
+ *     <li><code>-s 12877843 -e 12877853</code> - Record File v5</li>
+ *     <li><code>-s 72756872 -e 72756882</code> - Record File v6 with sidecars</li>
+ * </ul>
+ * Record files start at V2 at block 0 then change to V5 at block 12370838 and V6 at block 38210031
  */
 @SuppressWarnings({"FieldCanBeLocal", "CallToPrintStackTrace"})
 @Command(name = "record2block", description = "Converts a record stream files into blocks")

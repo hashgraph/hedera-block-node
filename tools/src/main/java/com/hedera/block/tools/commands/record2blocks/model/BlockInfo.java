@@ -26,6 +26,13 @@ import picocli.CommandLine.Help.Ansi;
 
 /**
  * BlockInfo represents a Hedera block with its associated record files, sidecar files and signature files.
+ *
+ * @param blockNum the block number
+ * @param blockTime the block time
+ * @param recordFiles the record files associated with the block
+ * @param mostCommonRecordFile the record file with the most occurrences
+ * @param sidecarFiles the sidecar files associated with the block
+ * @param signatureFiles the signature files associated with the block
  */
 @SuppressWarnings("unused")
 public record BlockInfo(
