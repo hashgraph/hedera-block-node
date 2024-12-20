@@ -68,7 +68,7 @@ dependencyResolutionManagement {
             version("com.google.auto.service", "1.1.1")
             version("org.hyperledger.besu.nativelib.secp256k1", "0.8.2")
             version("info.picocli", "4.7.6")
-            version("com.github.luben.zstd_jni", "1.5.6-6")
+            version("com.github.luben.zstd_jni", "1.5.6-8")
             version("com.google.cloud.core", "2.48.0")
             version("com.google.cloud.storage", "2.45.0")
 
