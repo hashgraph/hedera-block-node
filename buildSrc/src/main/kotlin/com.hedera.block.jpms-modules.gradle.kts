@@ -68,6 +68,15 @@ jvmDependencyConflicts.patch {
     module("com.google.protobuf:protobuf-java-util") {
         annotationLibraries.forEach { removeDependency(it) }
     }
+    module("com.google.cloud:google-cloud-storage") {
+        annotationLibraries.forEach { removeDependency(it) }
+    }
+    module("com.google.api.grpc:proto-google-cloud-monitoring-v3") {
+        annotationLibraries.forEach { removeDependency(it) }
+    }
+    module("com.google.cloud:google-cloud-monitoring") {
+        annotationLibraries.forEach { removeDependency(it) }
+    }
     module("io.prometheus:simpleclient") {
         removeDependency("io.prometheus:simpleclient_tracer_otel")
         removeDependency("io.prometheus:simpleclient_tracer_otel_agent")
@@ -124,7 +133,10 @@ extraJavaModuleInfo {
         exportAllPackages()
         mergeJar("javax.annotation:javax.annotation-api")
     }
-    module("com.google.errorprone:error_prone_annotations", "com.google.errorprone.annotations")
+    module("com.google.errorprone:error_prone_annotations", "com.google.errorprone.annotations") {
+        exportAllPackages()
+        patchRealModule()
+    }
     module("com.google.j2objc:j2objc-annotations", "com.google.j2objc.annotations")
     module("com.google.protobuf:protobuf-java", "com.google.protobuf") {
         exportAllPackages()
@@ -142,12 +154,18 @@ extraJavaModuleInfo {
     module("io.perfmark:perfmark-api", "io.perfmark")
     module("javax.inject:javax.inject", "javax.inject")
 
-    module("commons-codec:commons-codec", "org.apache.commons.codec")
+    module("commons-codec:commons-codec", "org.apache.commons.codec") {
+        exportAllPackages()
+        patchRealModule()
+    }
     module("org.apache.commons:commons-math3", "org.apache.commons.math3")
     module("org.apache.commons:commons-collections4", "org.apache.commons.collections4")
     module("com.esaulpaugh:headlong", "headlong")
 
-    module("org.checkerframework:checker-qual", "org.checkerframework.checker.qual")
+    module("org.checkerframework:checker-qual", "org.checkerframework.checker.qual") {
+        exportAllPackages()
+        patchRealModule()
+    }
     module("net.i2p.crypto:eddsa", "net.i2p.crypto.eddsa")
     module("org.jetbrains:annotations", "org.jetbrains.annotations")
     module("org.antlr:antlr4-runtime", "org.antlr.antlr4.runtime")
@@ -167,7 +185,10 @@ extraJavaModuleInfo {
         requireAllDefinedDependencies()
         requires("jdk.httpserver")
     }
-
+    module("com.google.j2objc:j2objc-annotations", "com.google.j2objc.annotations") {
+        exportAllPackages()
+        patchRealModule()
+    }
     // Annotation processing only
     module("com.google.auto.service:auto-service-annotations", "com.google.auto.service")
     module("com.google.auto.service:auto-service", "com.google.auto.service.processor")
