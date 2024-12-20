@@ -269,7 +269,7 @@ public record ParsedSignatureFile(int nodeId, byte[] fileHash, byte[] signature)
                     // everything from here on is protobuf encoded
                     try {
                         SignatureFile signatureFile = SignatureFile.PROTOBUF.parse(new ReadableStreamingData(in));
-                        if(signatureFile.fileSignature() == null) {
+                        if (signatureFile.fileSignature() == null) {
                             throw new IllegalArgumentException("Invalid signature file, missing file signature");
                         }
                         if (signatureFile.fileSignature().hashObject() == null) {

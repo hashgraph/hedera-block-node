@@ -68,9 +68,15 @@ jvmDependencyConflicts.patch {
     module("com.google.protobuf:protobuf-java-util") {
         annotationLibraries.forEach { removeDependency(it) }
     }
-    module("com.google.cloud:google-cloud-storage") { annotationLibraries.forEach { removeDependency(it) } }
-    module("com.google.api.grpc:proto-google-cloud-monitoring-v3") { annotationLibraries.forEach { removeDependency(it) } }
-    module("com.google.cloud:google-cloud-monitoring") { annotationLibraries.forEach { removeDependency(it) } }
+    module("com.google.cloud:google-cloud-storage") {
+        annotationLibraries.forEach { removeDependency(it) }
+    }
+    module("com.google.api.grpc:proto-google-cloud-monitoring-v3") {
+        annotationLibraries.forEach { removeDependency(it) }
+    }
+    module("com.google.cloud:google-cloud-monitoring") {
+        annotationLibraries.forEach { removeDependency(it) }
+    }
     module("io.prometheus:simpleclient") {
         removeDependency("io.prometheus:simpleclient_tracer_otel")
         removeDependency("io.prometheus:simpleclient_tracer_otel_agent")
@@ -148,7 +154,7 @@ extraJavaModuleInfo {
     module("io.perfmark:perfmark-api", "io.perfmark")
     module("javax.inject:javax.inject", "javax.inject")
 
-    module("commons-codec:commons-codec", "org.apache.commons.codec"){
+    module("commons-codec:commons-codec", "org.apache.commons.codec") {
         exportAllPackages()
         patchRealModule()
     }
