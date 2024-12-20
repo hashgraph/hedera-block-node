@@ -51,8 +51,7 @@ public class HealthServiceImpl implements HealthService {
      * @param res the server response
      */
     @Override
-    public final void handleLivez(
-            @NonNull final ServerRequest req, @NonNull final ServerResponse res) {
+    public final void handleLivez(@NonNull final ServerRequest req, @NonNull final ServerResponse res) {
         if (serviceStatus.isRunning()) {
             res.status(200).send("OK");
         } else {
@@ -68,8 +67,7 @@ public class HealthServiceImpl implements HealthService {
      * @param res the server response
      */
     @Override
-    public final void handleReadyz(
-            @NonNull final ServerRequest req, @NonNull final ServerResponse res) {
+    public final void handleReadyz(@NonNull final ServerRequest req, @NonNull final ServerResponse res) {
         if (serviceStatus.isRunning()) {
             res.status(200).send("OK");
         } else {

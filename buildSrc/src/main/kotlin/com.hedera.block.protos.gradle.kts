@@ -5,13 +5,7 @@ plugins {
     id("com.hedera.block.conventions")
 }
 
-sourceSets {
-    main {
-        proto {
-            srcDir("src/main/protobuf")
-        }
-    }
-}
+sourceSets { main { proto { srcDir("src/main/protobuf") } } }
 
 protobuf {
     // Configure the protoc executable
@@ -20,4 +14,3 @@ protobuf {
         artifact = "com.google.protobuf:protoc:3.21.10"
     }
 }
-

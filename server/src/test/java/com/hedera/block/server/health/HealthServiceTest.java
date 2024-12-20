@@ -20,11 +20,14 @@ class HealthServiceTest {
     private static final String LIVENESS_PATH = "/livez";
     private static final String HEALTH_PATH = "/healthz";
 
-    @Mock private ServiceStatus serviceStatus;
+    @Mock
+    private ServiceStatus serviceStatus;
 
-    @Mock ServerRequest serverRequest;
+    @Mock
+    ServerRequest serverRequest;
 
-    @Mock ServerResponse serverResponse;
+    @Mock
+    ServerResponse serverResponse;
 
     @Test
     public void testHandleLivez() {

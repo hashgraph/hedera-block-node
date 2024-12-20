@@ -39,8 +39,7 @@ public class MetricsServiceTest {
         final BlockNodeContext context = TestConfigUtil.getTestBlockNodeContext();
         final Configuration configuration = context.configuration();
         final MetricsServiceTestComponent testComponent =
-                DaggerMetricsServiceTest_MetricsServiceTestComponent.factory()
-                        .create(configuration);
+                DaggerMetricsServiceTest_MetricsServiceTestComponent.factory().create(configuration);
         this.metricsService = testComponent.getMetricsService();
     }
 
@@ -51,7 +50,9 @@ public class MetricsServiceTest {
             metricsService.get(LiveBlockItems).increment();
         }
 
-        assertEquals(LiveBlockItems.grafanaLabel(), metricsService.get(LiveBlockItems).getName());
+        assertEquals(
+                LiveBlockItems.grafanaLabel(),
+                metricsService.get(LiveBlockItems).getName());
         assertEquals(
                 LiveBlockItems.description(), metricsService.get(LiveBlockItems).getDescription());
         assertEquals(10, metricsService.get(LiveBlockItems).get());
@@ -64,7 +65,9 @@ public class MetricsServiceTest {
             metricsService.get(BlocksPersisted).increment();
         }
 
-        assertEquals(BlocksPersisted.grafanaLabel(), metricsService.get(BlocksPersisted).getName());
+        assertEquals(
+                BlocksPersisted.grafanaLabel(),
+                metricsService.get(BlocksPersisted).getName());
         assertEquals(
                 BlocksPersisted.description(),
                 metricsService.get(BlocksPersisted).getDescription());

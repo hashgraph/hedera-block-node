@@ -33,8 +33,10 @@ public class ServiceStatusImpl implements ServiceStatus {
      */
     @Inject
     public ServiceStatusImpl(@NonNull final BlockNodeContext blockNodeContext) {
-        this.delayMillis =
-                blockNodeContext.configuration().getConfigData(ServiceConfig.class).delayMillis();
+        this.delayMillis = blockNodeContext
+                .configuration()
+                .getConfigData(ServiceConfig.class)
+                .delayMillis();
     }
 
     /**

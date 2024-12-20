@@ -14,47 +14,36 @@ class GeneratorInjectionModuleTest {
     @Test
     void providesBlockStreamManager_AsFileLargeDataSets() throws IOException {
 
-        BlockGeneratorConfig blockGeneratorConfig =
-                TestUtils.getTestConfiguration(
-                                Map.of(
-                                        "generator.managerImplementation",
-                                        "BlockAsFileLargeDataSets"))
-                        .getConfigData(BlockGeneratorConfig.class);
+        BlockGeneratorConfig blockGeneratorConfig = TestUtils.getTestConfiguration(
+                        Map.of("generator.managerImplementation", "BlockAsFileLargeDataSets"))
+                .getConfigData(BlockGeneratorConfig.class);
 
         BlockStreamManager blockStreamManager =
                 GeneratorInjectionModule.providesBlockStreamManager(blockGeneratorConfig);
 
-        assertEquals(
-                blockStreamManager.getClass().getName(), BlockAsFileLargeDataSets.class.getName());
+        assertEquals(blockStreamManager.getClass().getName(), BlockAsFileLargeDataSets.class.getName());
     }
 
     @Test
     void providesBlockStreamManager_AsFile() throws IOException {
-        BlockGeneratorConfig blockGeneratorConfig =
-                TestUtils.getTestConfiguration(
-                                Map.of(
-                                        "generator.managerImplementation",
-                                        "BlockAsFileBlockStreamManager",
-                                        "generator.folderRootPath",
-                                        ""))
-                        .getConfigData(BlockGeneratorConfig.class);
+        BlockGeneratorConfig blockGeneratorConfig = TestUtils.getTestConfiguration(Map.of(
+                        "generator.managerImplementation",
+                        "BlockAsFileBlockStreamManager",
+                        "generator.folderRootPath",
+                        ""))
+                .getConfigData(BlockGeneratorConfig.class);
 
         BlockStreamManager blockStreamManager =
                 GeneratorInjectionModule.providesBlockStreamManager(blockGeneratorConfig);
 
-        assertEquals(
-                blockStreamManager.getClass().getName(),
-                BlockAsFileBlockStreamManager.class.getName());
+        assertEquals(blockStreamManager.getClass().getName(), BlockAsFileBlockStreamManager.class.getName());
     }
 
     @Test
     void providesBlockStreamManager_AsDir() throws IOException {
-        BlockGeneratorConfig blockGeneratorConfig =
-                TestUtils.getTestConfiguration(
-                                Map.of(
-                                        "generator.managerImplementation",
-                                        "BlockAsDirBlockStreamManager"))
-                        .getConfigData(BlockGeneratorConfig.class);
+        BlockGeneratorConfig blockGeneratorConfig = TestUtils.getTestConfiguration(
+                        Map.of("generator.managerImplementation", "BlockAsDirBlockStreamManager"))
+                .getConfigData(BlockGeneratorConfig.class);
 
         BlockStreamManager blockStreamManager =
                 GeneratorInjectionModule.providesBlockStreamManager(blockGeneratorConfig);
@@ -66,20 +55,13 @@ class GeneratorInjectionModuleTest {
 
     @Test
     void providesBlockStreamManager_default() throws IOException {
-        BlockGeneratorConfig blockGeneratorConfig =
-                TestUtils.getTestConfiguration(
-                                Map.of(
-                                        "generator.managerImplementation",
-                                        "",
-                                        "generator.folderRootPath",
-                                        ""))
-                        .getConfigData(BlockGeneratorConfig.class);
+        BlockGeneratorConfig blockGeneratorConfig = TestUtils.getTestConfiguration(
+                        Map.of("generator.managerImplementation", "", "generator.folderRootPath", ""))
+                .getConfigData(BlockGeneratorConfig.class);
 
         BlockStreamManager blockStreamManager =
                 GeneratorInjectionModule.providesBlockStreamManager(blockGeneratorConfig);
 
-        assertEquals(
-                blockStreamManager.getClass().getName(),
-                BlockAsFileBlockStreamManager.class.getName());
+        assertEquals(blockStreamManager.getClass().getName(), BlockAsFileBlockStreamManager.class.getName());
     }
 }

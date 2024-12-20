@@ -22,16 +22,14 @@ public class ChunkUtilsTest {
     @Test
     public void testChunkSizeZero() {
         List<Integer> list = Arrays.asList(1, 2, 3);
-        Exception exception =
-                assertThrows(IllegalArgumentException.class, () -> ChunkUtils.chunkify(list, 0));
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> ChunkUtils.chunkify(list, 0));
         assertEquals("Chunk size must be greater than 0", exception.getMessage());
     }
 
     @Test
     public void testChunkSizeNegative() {
         List<Integer> list = Arrays.asList(1, 2, 3);
-        Exception exception =
-                assertThrows(IllegalArgumentException.class, () -> ChunkUtils.chunkify(list, -1));
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> ChunkUtils.chunkify(list, -1));
         assertEquals("Chunk size must be greater than 0", exception.getMessage());
     }
 

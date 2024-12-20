@@ -8,4 +8,3 @@ plugins {
 val maven = publishing.publications.create<MavenPublication>("maven") { from(components["java"]) }
 
 signing.sign(maven)
-

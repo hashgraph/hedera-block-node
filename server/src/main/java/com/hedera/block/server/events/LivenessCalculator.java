@@ -20,8 +20,7 @@ public final class LivenessCalculator {
      * @param clock the clock to use for time calculations
      * @param timeoutThresholdMillis the timeout threshold in milliseconds
      */
-    public LivenessCalculator(
-            @NonNull final InstantSource clock, final long timeoutThresholdMillis) {
+    public LivenessCalculator(@NonNull final InstantSource clock, final long timeoutThresholdMillis) {
 
         this.clock = clock;
         this.timeoutThresholdMillis = timeoutThresholdMillis;

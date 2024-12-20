@@ -25,8 +25,6 @@ public record ServiceConfig(@ConfigProperty(defaultValue = "500") int delayMilli
             throw new IllegalArgumentException("Delay milliseconds must be greater than 0");
         }
 
-        LOGGER.log(
-                System.Logger.Level.INFO,
-                "Service configuration service.delayMillis: " + delayMillis);
+        LOGGER.log(System.Logger.Level.INFO, "Service configuration service.delayMillis: " + delayMillis);
     }
 }

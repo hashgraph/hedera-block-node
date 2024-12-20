@@ -16,8 +16,7 @@ public class ConsumerConfigTest {
 
     @Test
     public void testConsumerConfig_negativeTimeoutThresholdMillis() {
-        IllegalArgumentException exception =
-                assertThrows(IllegalArgumentException.class, () -> new ConsumerConfig(-1));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new ConsumerConfig(-1));
         assertEquals("Timeout threshold must be greater than 0", exception.getMessage());
     }
 }

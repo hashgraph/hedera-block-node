@@ -15,8 +15,7 @@ public class ServiceConfigTest {
 
     @Test
     public void testServiceConfig_negativeDelayMillis() {
-        IllegalArgumentException exception =
-                assertThrows(IllegalArgumentException.class, () -> new ServiceConfig(-1));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new ServiceConfig(-1));
         assertEquals("Delay milliseconds must be greater than 0", exception.getMessage());
     }
 }

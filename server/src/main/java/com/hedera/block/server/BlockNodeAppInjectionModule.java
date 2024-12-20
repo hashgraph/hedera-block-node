@@ -25,8 +25,7 @@ public interface BlockNodeAppInjectionModule {
      */
     @Singleton
     @Provides
-    static BlockNodeContext provideBlockNodeContext(
-            Configuration config, MetricsService metricsService) {
+    static BlockNodeContext provideBlockNodeContext(Configuration config, MetricsService metricsService) {
         return new BlockNodeContext(metricsService, config);
     }
 

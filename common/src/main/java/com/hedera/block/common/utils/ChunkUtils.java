@@ -19,8 +19,7 @@ public final class ChunkUtils {
      * @param <T> the type of the collection
      * @return a list of lists of the specified size
      *  */
-    public static <T> List<List<T>> chunkify(
-            @NonNull final Collection<T> dataToSplit, final int chunkSize) {
+    public static <T> List<List<T>> chunkify(@NonNull final Collection<T> dataToSplit, final int chunkSize) {
         Objects.requireNonNull(dataToSplit);
         if (chunkSize <= 0) {
             throw new IllegalArgumentException("Chunk size must be greater than 0");
