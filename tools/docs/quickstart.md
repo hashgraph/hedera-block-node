@@ -17,6 +17,13 @@
 > recommended to use the project qualifier (i.e. `:tools:`) for
 > both simplicity and clarity.
 
+### Easy way for Unix based OSs
+There is a command line script for building and running tool, which is located in the root of the repository. It has the
+nice extra feature of giving you colored console output.
+```
+./tool.sh info --help
+```
+
 ### Build the Tools
 
 > **NOTE:** if you have not done so already, it is
