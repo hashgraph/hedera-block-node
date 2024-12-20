@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
 # run gradle jar build and send output to /dev/null
 ./gradlew -q tool:shadowJar > /dev/null
 # check if last command failed and exit if so
