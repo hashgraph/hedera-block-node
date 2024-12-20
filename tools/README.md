@@ -69,13 +69,13 @@ Prints info for block files
 
 ### The `record2block` Subcommand
 
-Converts a historical record stream files into blocks. This depends on the `block_times.bin` file being present. It can 
-be created by running the other commands `fetchRecordsCsv`, `extractBlockTimes` and `addNewerBlockTimes` in that order. 
-It can also be validated by running the `validateBlockTimes` command. 
+Converts a historical record stream files into blocks. This depends on the `block_times.bin` file being present. It can
+be created by running the other commands `fetchRecordsCsv`, `extractBlockTimes` and `addNewerBlockTimes` in that order.
+It can also be validated by running the `validateBlockTimes` command.
 
-This command depends on reading data from public requester pays Google Cloud buckets. To do that it needs you to be 
-authenticated with the Google Cloud SDK. You can authenticate with `gcloud auth application-default login` or 
-`gcloud auth login` see [Google Documentation](https://cloud.google.com/storage/docs/reference/libraries#authentication) 
+This command depends on reading data from public requester pays Google Cloud buckets. To do that it needs you to be
+authenticated with the Google Cloud SDK. You can authenticate with `gcloud auth application-default login` or
+`gcloud auth login` see [Google Documentation](https://cloud.google.com/storage/docs/reference/libraries#authentication)
 for more info.
 
 `Usage: record2block [-s 0] [-e 100] [-j] [-c] [--min-node-account-id=3] [--max-node-account-id=34] [-d <dataDir>] [--block-times=<blockTimesFile>] `
@@ -109,10 +109,10 @@ for more info.
 
 ### The `fetchRecordsCsv` Subcommand
 
-Download mirror node record table CSV dump from GCP bucket. The records table on mirror node has a row for every block 
-mirror node knows about. The CSV file is huge 11GB+ in November 2024. This data is important for records to blocks 
-conversion as we have to make sure the block number assigned for a record file matches what mirror node says as the 
-source of truth. 
+Download mirror node record table CSV dump from GCP bucket. The records table on mirror node has a row for every block
+mirror node knows about. The CSV file is huge 11GB+ in November 2024. This data is important for records to blocks
+conversion as we have to make sure the block number assigned for a record file matches what mirror node says as the
+source of truth.
 
 This command depends on reading data from public requester pays Google Cloud buckets. To do that it needs you to be
 authenticated with the Google Cloud SDK. You can authenticate with `gcloud auth application-default login` or
@@ -129,15 +129,15 @@ for more info.
 
 ### The `extractBlockTimes` Subcommand
 
-Extract block times from mirror node records csv file. Reads <recordFilePath> and produces <blockTimesFile>. We need to 
-convert the mirror node records CSV because it is huge 11GB+ compressed and too large to fit into RAM, and we can not 
-random access easily. The only part of the data needed for the records to blocks conversion is the block times. The 
-block time being the record file time for a given block. The record file consensus time is used as the file name of the 
+Extract block times from mirror node records csv file. Reads <recordFilePath> and produces <blockTimesFile>. We need to
+convert the mirror node records CSV because it is huge 11GB+ compressed and too large to fit into RAM, and we can not
+random access easily. The only part of the data needed for the records to blocks conversion is the block times. The
+block time being the record file time for a given block. The record file consensus time is used as the file name of the
 record file in the bucket.
 
-The block times file is a binary file of longs, each long is the number of nanoseconds for that block after first block 
-time. So first block = 0, second about 5 seconds later etc. The index is the block number, so block 0 is first long, 
-block 1 is second block and so on. This file can then be memory mapped and used as fast lookup for block 
+The block times file is a binary file of longs, each long is the number of nanoseconds for that block after first block
+time. So first block = 0, second about 5 seconds later etc. The index is the block number, so block 0 is first long,
+block 1 is second block and so on. This file can then be memory mapped and used as fast lookup for block
 number(array offset) into block time, i.e. record file name.
 
 `Usage: extractBlockTimes [--record-csv=<recordFilePath>] [--block-times=<blockTimesFile>]`
@@ -154,7 +154,7 @@ number(array offset) into block time, i.e. record file name.
 
 ### The `addNewerBlockTimes` Subcommand
 
-Extends the block times file with newer block times. This is done by listing the record files in the bucket and 
+Extends the block times file with newer block times. This is done by listing the record files in the bucket and
 counting them for block numbers. It processes day by day, listing one day then appending block times to the block times
 file. Then at the end of each day it checks the block number it has computed still matches mirror node by using the
 mirror node REST API. This whole process can take a long time if the mirror node CSV dump is old.
