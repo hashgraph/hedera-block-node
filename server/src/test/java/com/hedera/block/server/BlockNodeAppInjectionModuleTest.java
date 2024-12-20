@@ -21,11 +21,14 @@ import org.mockito.Mock;
 
 class BlockNodeAppInjectionModuleTest {
 
-    @Mock private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
+    @Mock
+    private StreamMediator<BlockItem, ObjectEvent<SubscribeStreamResponse>> streamMediator;
 
-    @Mock private BlockReader<Block> blockReader;
+    @Mock
+    private BlockReader<Block> blockReader;
 
-    @Mock private ServiceStatus serviceStatus;
+    @Mock
+    private ServiceStatus serviceStatus;
 
     private BlockNodeContext blockNodeContext;
 
@@ -43,16 +46,13 @@ class BlockNodeAppInjectionModuleTest {
                 BlockNodeAppInjectionModule.provideBlockNodeContext(configuration, metricsService);
 
         Assertions.assertEquals(blockNodeContext, providedBlockNodeContext);
-        Assertions.assertEquals(
-                blockNodeContext.configuration(), providedBlockNodeContext.configuration());
-        Assertions.assertEquals(
-                blockNodeContext.metricsService(), providedBlockNodeContext.metricsService());
+        Assertions.assertEquals(blockNodeContext.configuration(), providedBlockNodeContext.configuration());
+        Assertions.assertEquals(blockNodeContext.metricsService(), providedBlockNodeContext.metricsService());
     }
 
     @Test
     void testProvideWebServerConfigBuilder() {
-        WebServerConfig.Builder webServerConfigBuilder =
-                BlockNodeAppInjectionModule.provideWebServerConfigBuilder();
+        WebServerConfig.Builder webServerConfigBuilder = BlockNodeAppInjectionModule.provideWebServerConfigBuilder();
 
         Assertions.assertNotNull(webServerConfigBuilder);
     }

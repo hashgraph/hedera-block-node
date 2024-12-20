@@ -25,7 +25,6 @@ public record ConsumerConfig(@ConfigProperty(defaultValue = "1500") long timeout
         }
 
         LOGGER.log(
-                System.Logger.Level.INFO,
-                "Consumer configuration timeoutThresholdMillis: " + timeoutThresholdMillis);
+                System.Logger.Level.INFO, "Consumer configuration timeoutThresholdMillis: " + timeoutThresholdMillis);
     }
 }

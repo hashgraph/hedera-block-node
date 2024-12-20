@@ -75,8 +75,7 @@ public class TestConfigBuilder {
      * @return the {@link TestConfigBuilder} instance (for fluent API)
      */
     @NonNull
-    public TestConfigBuilder withValue(
-            @NonNull final String propertyName, @Nullable final String value) {
+    public TestConfigBuilder withValue(@NonNull final String propertyName, @Nullable final String value) {
         return withSource(new SimpleConfigSource(propertyName, value));
     }
 
@@ -136,8 +135,7 @@ public class TestConfigBuilder {
      * @return the {@link TestConfigBuilder} instance (for fluent API)
      */
     @NonNull
-    public TestConfigBuilder withValue(
-            @NonNull final String propertyName, @NonNull final Object value) {
+    public TestConfigBuilder withValue(@NonNull final String propertyName, @NonNull final Object value) {
         Objects.requireNonNull(value, "value must not be null");
         return withSource(new SimpleConfigSource(propertyName, value.toString()));
     }

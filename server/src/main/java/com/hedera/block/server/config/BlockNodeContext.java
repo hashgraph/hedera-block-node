@@ -12,5 +12,4 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * @param metricsService the service responsible for handling metrics
  * @param configuration the configuration settings for the block node
  */
-public record BlockNodeContext(
-        @NonNull MetricsService metricsService, @NonNull Configuration configuration) {}
+public record BlockNodeContext(@NonNull MetricsService metricsService, @NonNull Configuration configuration) {}
