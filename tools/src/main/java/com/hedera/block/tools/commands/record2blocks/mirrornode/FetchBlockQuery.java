@@ -51,7 +51,7 @@ public class FetchBlockQuery {
     public static Bytes getPreviousHashForBlock(long blockNumber) {
         final String url = "https://mainnet-public.mirrornode.hedera.com/api/v1/blocks/" + blockNumber;
         final JsonObject json = readUrl(url);
-        final String hashStr =  json.get("previous_hash").getAsString();
+        final String hashStr = json.get("previous_hash").getAsString();
         return Bytes.wrap(HexFormat.of().parseHex(hashStr.substring(2))); // remove 0x prefix and parse
     }
 

@@ -101,7 +101,7 @@ public class MainNetBucket {
             final Path cachedFilePath = cacheDir.resolve(path);
             byte[] rawBytes;
             if (cacheEnabled && Files.exists(cachedFilePath)) {
-                rawBytes =  Files.readAllBytes(cachedFilePath);
+                rawBytes = Files.readAllBytes(cachedFilePath);
             } else {
                 rawBytes = STREAMS_BUCKET.get(path).getContent();
                 if (cacheEnabled) {

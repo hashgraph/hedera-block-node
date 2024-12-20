@@ -134,8 +134,8 @@ public class Record2BlockCommand implements Runnable {
     @Override
     public void run() {
         // create executor service
-        try(final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
-            final ExecutorService singleThreadWritingExecutor = Executors.newSingleThreadExecutor()) {
+        try (final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
+                final ExecutorService singleThreadWritingExecutor = Executors.newSingleThreadExecutor()) {
             blocksDir = dataDir.resolve("blocks");
             blocksJsonDir = dataDir.resolve("blocks-json");
             // enable cache, disable if doing large batches
@@ -172,16 +172,15 @@ public class Record2BlockCommand implements Runnable {
                 // get the time of the record file for this block, from converted mirror node data
                 final long blockTime = blockTimes.getBlockTime(blockNumber);
                 final Instant blockTimeInstant = blockTimeLongToInstant(blockTime);
-                System.out.printf(Ansi.AUTO.string("@|bold,green,underline Processing block|@ %d"
-                        + " @|green at blockTime|@ %s"
-                        + " @|cyan Progress = block %d of %d" +
-                        " = %.2f%% |@\n"),
+                System.out.printf(
+                        Ansi.AUTO.string("@|bold,green,underline Processing block|@ %d"
+                                + " @|green at blockTime|@ %s"
+                                + " @|cyan Progress = block %d of %d" + " = %.2f%% |@\n"),
                         blockNumber,
                         blockTimeInstant,
-                        blockNumber-startBlock+1,
-                        endBlock-startBlock+1,
-                        ((double)(blockNumber-startBlock)/(double)(endBlock-startBlock))*100d
-                );
+                        blockNumber - startBlock + 1,
+                        endBlock - startBlock + 1,
+                        ((double) (blockNumber - startBlock) / (double) (endBlock - startBlock)) * 100d);
                 // round instant to nearest hour
                 Instant blockTimeHour = blockTimeInstant.truncatedTo(ChronoUnit.HOURS);
                 // check if we are the same hour as last block, if not load the new hour
@@ -204,8 +203,8 @@ public class Record2BlockCommand implements Runnable {
                 // The next 3 steps we do in background threads as they all download files from GCP which can be slow
 
                 // now we need to download the most common record file & parse version information out of record file
-                final Future<RecordFileInfo> recordFileInfoFuture = executorService.submit(() ->
-                        RecordFileInfo.parse(blockInfo.mostCommonRecordFile().chainFile().download(mainNetBucket)));
+                final Future<RecordFileInfo> recordFileInfoFuture = executorService.submit(() -> RecordFileInfo.parse(
+                        blockInfo.mostCommonRecordFile().chainFile().download(mainNetBucket)));
 
                 // download and parse all signature files then  convert signature files to list of RecordFileSignatures
                 final List<Future<RecordFileSignature>> recordFileSignatureFutures = blockInfo.signatureFiles().stream()
@@ -216,19 +215,19 @@ public class Record2BlockCommand implements Runnable {
                         .toList();
 
                 // download most common sidecar files, one for each numbered sidecar
-                final List<Future<SidecarFile>> sideCarsFutures =
-                        blockInfo.sidecarFiles().values().stream()
-                                .map(sidecarFile ->
-                                    executorService.submit(() -> {
-                                        byte[] sidecarFileBytes = sidecarFile.mostCommonSidecarFile().chainFile()
-                                                .download(mainNetBucket);
-                                        try {
-                                            return SidecarFile.PROTOBUF.parse(Bytes.wrap(sidecarFileBytes));
-                                        } catch (ParseException e) {
-                                            throw new RuntimeException(e);
-                                        }
-                                    })
-                                ).toList();
+                final List<Future<SidecarFile>> sideCarsFutures = blockInfo.sidecarFiles().values().stream()
+                        .map(sidecarFile -> executorService.submit(() -> {
+                            byte[] sidecarFileBytes = sidecarFile
+                                    .mostCommonSidecarFile()
+                                    .chainFile()
+                                    .download(mainNetBucket);
+                            try {
+                                return SidecarFile.PROTOBUF.parse(Bytes.wrap(sidecarFileBytes));
+                            } catch (ParseException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }))
+                        .toList();
 
                 // collect all background computed data from futures
                 final RecordFileInfo recordFileVersionInfo = recordFileInfoFuture.get();
@@ -246,8 +245,8 @@ public class Record2BlockCommand implements Runnable {
                 final RecordFileItem recordFileItem = new RecordFileItem(
                         new Timestamp(blockTimeInstant.getEpochSecond(), blockTimeInstant.getNano()),
                         Bytes.wrap(recordFileVersionInfo.recordFileContents()),
-                        sideCars,recordFileSignatures
-                        );
+                        sideCars,
+                        recordFileSignatures);
                 final Block block = new Block(List.of(
                         new BlockItem(new OneOf<>(ItemOneOfType.BLOCK_HEADER, blockHeader)),
                         new BlockItem(new OneOf<>(ItemOneOfType.RECORD_FILE, recordFileItem))));
@@ -266,16 +265,18 @@ public class Record2BlockCommand implements Runnable {
                                     blockJsonPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE))) {
                                 Block.JSON.write(block, out);
                             }
-                            System.out.println(Ansi.AUTO.string("@|bold,yellow    Wrote block [|@"+finalBlockNumber+
-                                    "@|bold,yellow ]to|@ " + blockPath.dirPath()
-                                    + "/" + blockPath.zipFileName() + "@|bold,cyan :|@"
-                                    + blockPath.blockFileName() +
-                                    "@|bold,yellow ] and json to|@ " + blockJsonPath));
+                            System.out.println(Ansi.AUTO.string(
+                                    "@|bold,yellow    Wrote block [|@" + finalBlockNumber + "@|bold,yellow ]to|@ "
+                                            + blockPath.dirPath()
+                                            + "/" + blockPath.zipFileName() + "@|bold,cyan :|@"
+                                            + blockPath.blockFileName() + "@|bold,yellow ] and json to|@ "
+                                            + blockJsonPath));
                         } else {
-                            System.out.println(Ansi.AUTO.string("@|bold,yellow    Wrote block [|@"+finalBlockNumber+
-                                    "@|bold,yellow ]to|@ " + blockPath.dirPath()
-                                    + "/" + blockPath.zipFileName() + "@|bold,cyan :|@"
-                                    + blockPath.blockFileName()));
+                            System.out.println(Ansi.AUTO.string(
+                                    "@|bold,yellow    Wrote block [|@" + finalBlockNumber + "@|bold,yellow ]to|@ "
+                                            + blockPath.dirPath()
+                                            + "/" + blockPath.zipFileName() + "@|bold,cyan :|@"
+                                            + blockPath.blockFileName()));
                         }
                     } catch (IOException e) {
                         e.printStackTrace();

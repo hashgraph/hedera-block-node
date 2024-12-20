@@ -187,6 +187,7 @@ public record ParsedSignatureFile(int nodeId, byte[] fileHash, byte[] signature)
      * The marker for the file hash in a V3 signature file. This is the first byte so also acts like a version number.
      */
     public static final byte V2_FILE_HASH_MARKER = 4;
+
     public static final byte FILE_VERSION_5 = 5;
     public static final byte FILE_VERSION_6 = 6;
     public static final byte V3_SIGNATURE_MARKER = 3;
@@ -199,9 +200,8 @@ public record ParsedSignatureFile(int nodeId, byte[] fileHash, byte[] signature)
     @Override
     public String toString() {
         final HexFormat hexFormat = HexFormat.of();
-        return "SignatureFile[" +
-                "nodeId=" + nodeId + ", " +
-                "fileHash="
+        return "SignatureFile[" + "nodeId="
+                + nodeId + ", " + "fileHash="
                 + hexFormat.formatHex(fileHash) + ", signature="
                 + hexFormat.formatHex(signature) + ']';
     }
@@ -215,13 +215,14 @@ public record ParsedSignatureFile(int nodeId, byte[] fileHash, byte[] signature)
      */
     public static ParsedSignatureFile downloadAndParse(ChainFile signatureChainFile, MainNetBucket mainNetBucket) {
         // first download
-        try(DataInputStream in = new DataInputStream(signatureChainFile.downloadStreaming(mainNetBucket))) {
-            // extract node ID from file path. This depends on the fixed relationship between node account ids and node ids.
+        try (DataInputStream in = new DataInputStream(signatureChainFile.downloadStreaming(mainNetBucket))) {
+            // extract node ID from file path. This depends on the fixed relationship between node account ids and node
+            // ids.
             final int nodeId = signatureChainFile.nodeAccountId() - 3;
             // now parse
             final int firstByte = in.read();
             // the first byte is either the file hash marker or a version number in V6 record stream
-            switch(firstByte) {
+            switch (firstByte) {
                 case V2_FILE_HASH_MARKER:
                     final byte[] fileHash = new byte[48];
                     in.readFully(fileHash);
@@ -266,16 +267,26 @@ public record ParsedSignatureFile(int nodeId, byte[] fileHash, byte[] signature)
                     // everything from here on is protobuf encoded
                     try {
                         SignatureFile signatureFile = SignatureFile.PROTOBUF.parse(new ReadableStreamingData(in));
+                        if(signatureFile.fileSignature() == null) {
+                            throw new IllegalArgumentException("Invalid signature file, missing file signature");
+                        }
+                        if (signatureFile.fileSignature().hashObject() == null) {
+                            throw new IllegalArgumentException("Invalid signature file, missing hash object");
+                        }
                         return new ParsedSignatureFile(
                                 nodeId,
-                                signatureFile.fileSignature().hashObject().hash().toByteArray(),
+                                signatureFile
+                                        .fileSignature()
+                                        .hashObject()
+                                        .hash()
+                                        .toByteArray(),
                                 signatureFile.fileSignature().signature().toByteArray());
                     } catch (ParseException e) {
                         throw new RuntimeException("Error protobuf parsing V6 signature file", e);
                     }
                 default:
-                    throw new IllegalArgumentException("Invalid first byte [" + firstByte + "] expected " +
-                            V2_FILE_HASH_MARKER + " or " + FILE_VERSION_6);
+                    throw new IllegalArgumentException("Invalid first byte [" + firstByte + "] expected "
+                            + V2_FILE_HASH_MARKER + " or " + FILE_VERSION_6);
             }
         } catch (IOException e) {
             throw new RuntimeException("Error downloading or parsing signature file", e);
@@ -298,7 +309,7 @@ public record ParsedSignatureFile(int nodeId, byte[] fileHash, byte[] signature)
             throw new IllegalArgumentException("Invalid hash class ID");
         }
         // read hash class version
-        if(in.readInt() != 1) {
+        if (in.readInt() != 1) {
             throw new IllegalArgumentException("Invalid hash class version");
         }
         // read hash object, starting with digest type SHA384
