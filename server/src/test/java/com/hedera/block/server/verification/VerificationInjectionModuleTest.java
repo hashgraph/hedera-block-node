@@ -61,10 +61,14 @@ class VerificationInjectionModuleTest {
     }
 
     @Test
-    void testProvideExecutorService() {
+    void testProvidesBlockVerificationSessionFactory() {
+        // given
+        VerificationConfig verificationConfig = new VerificationConfig(true, BlockVerificationSessionType.ASYNC, 32);
         // when
-        var executorService = VerificationInjectionModule.provideExecutorService();
+        BlockVerificationService blockVerificationService = VerificationInjectionModule.provideBlockVerificationService(
+                verificationConfig, metricsService, sessionFactory);
         // then
-        Assertions.assertNotNull(executorService);
+        Assertions.assertEquals(BlockVerificationServiceImpl.class, blockVerificationService.getClass());
     }
+
 }
