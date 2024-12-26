@@ -16,6 +16,7 @@
 
 package com.hedera.block.server.verification;
 
+import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.verification.session.BlockVerificationSessionType;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
@@ -47,9 +48,8 @@ public record VerificationConfig(
      */
     public VerificationConfig {
         // hashCombineBatchSize must be even and greater than 2
-        if (hashCombineBatchSize % 2 != 0 || hashCombineBatchSize < 2) {
-            throw new IllegalArgumentException("hashCombineBatchSize must be even and greater than 2");
-        }
+        Preconditions.requirePositive(hashCombineBatchSize, "hashCombineBatchSize must be positive");
+        Preconditions.requireEven(hashCombineBatchSize, "hashCombineBatchSize must be even and greater than 2");
 
         // Log the actual configuration
         LOGGER.log(System.Logger.Level.INFO, "Verification configuration enabled: " + enabled);

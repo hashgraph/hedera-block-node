@@ -70,5 +70,4 @@ class VerificationInjectionModuleTest {
         // then
         Assertions.assertEquals(BlockVerificationServiceImpl.class, blockVerificationService.getClass());
     }
-
 }
