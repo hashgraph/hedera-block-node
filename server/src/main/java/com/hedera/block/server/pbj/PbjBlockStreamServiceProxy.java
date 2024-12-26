@@ -43,6 +43,7 @@ import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Clock;
 import java.util.List;
+import java.util.Objects;
 import javax.inject.Inject;
 
 /**
@@ -78,6 +79,13 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
             @NonNull final StreamVerificationHandlerImpl streamVerificationHandler,
             @NonNull final Notifier notifier,
             @NonNull final BlockNodeContext blockNodeContext) {
+        Objects.requireNonNull(streamMediator);
+        Objects.requireNonNull(serviceStatus);
+        Objects.requireNonNull(streamPersistenceHandler);
+        Objects.requireNonNull(streamVerificationHandler);
+        Objects.requireNonNull(notifier);
+        Objects.requireNonNull(blockNodeContext);
+
         this.serviceStatus = serviceStatus;
         this.notifier = notifier;
         this.blockNodeContext = blockNodeContext;
