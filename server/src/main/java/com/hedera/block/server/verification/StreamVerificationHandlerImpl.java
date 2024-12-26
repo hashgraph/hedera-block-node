@@ -33,6 +33,7 @@ import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.runtime.OneOf;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -69,6 +70,11 @@ public class StreamVerificationHandlerImpl
             @NonNull final MetricsService metricsService,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockVerificationService blockVerificationService) {
+        Objects.requireNonNull(subscriptionHandler);
+        Objects.requireNonNull(notifier);
+        Objects.requireNonNull(metricsService);
+        Objects.requireNonNull(serviceStatus);
+        Objects.requireNonNull(blockVerificationService);
 
         this.subscriptionHandler = subscriptionHandler;
         this.notifier = notifier;
