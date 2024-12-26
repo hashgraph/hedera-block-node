@@ -21,7 +21,6 @@ import com.hedera.block.server.verification.VerificationConfig;
 import com.hedera.block.server.verification.signature.SignatureVerifier;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import edu.umd.cs.findbugs.annotations.NonNull;
-
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import javax.inject.Inject;
