@@ -73,14 +73,12 @@ public class StreamVerificationHandlerImplTest {
         final var response = SubscribeStreamResponseUnparsed.newBuilder().build(); // no block items, no status
         event.set(response);
 
-        when(metricsService.get(VerificationBlocksError)).thenReturn(verificationBlocksError);
-
         // Call the handler
         streamVerificationHandler.onEvent(event, 0, false);
 
-        verify(serviceStatus, timeout(testTimeout).times(1)).stopRunning(any());
-        verify(subscriptionHandler, timeout(testTimeout).times(1)).unsubscribe(any());
-        verify(notifier, timeout(testTimeout).times(1)).notifyUnrecoverableError();
+        verify(serviceStatus, timeout(testTimeout).times(0)).stopRunning(any());
+        verify(subscriptionHandler, timeout(testTimeout).times(0)).unsubscribe(any());
+        verify(notifier, timeout(testTimeout).times(0)).notifyUnrecoverableError();
     }
 
     @Test
