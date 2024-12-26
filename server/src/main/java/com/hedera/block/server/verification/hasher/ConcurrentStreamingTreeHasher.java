@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.verification.hasher;
 
-import static com.hedera.block.server.verification.hasher.CommonUtils.noThrowSha384HashOf;
+import static com.hedera.block.server.verification.hasher.HashingUtilities.noThrowSha384HashOf;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.pbj.runtime.io.buffer.Bytes;
@@ -145,9 +145,9 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
         for (int i = 0; i < rootHeight; i++) {
             final var rightmostHash = penultimateStatus.rightmostHashes().get(i);
             if (rightmostHash.length() == 0) {
-                hash = CommonUtils.combine(hash, HashCombiner.EMPTY_HASHES[i]);
+                hash = HashingUtilities.combine(hash, HashCombiner.EMPTY_HASHES[i]);
             } else {
-                hash = CommonUtils.combine(rightmostHash.toByteArray(), hash);
+                hash = HashingUtilities.combine(rightmostHash.toByteArray(), hash);
             }
         }
         return Bytes.wrap(hash);
@@ -155,7 +155,7 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
 
     private class HashCombiner {
         private static final ThreadLocal<MessageDigest> DIGESTS =
-                ThreadLocal.withInitial(CommonUtils::sha384DigestOrThrow);
+                ThreadLocal.withInitial(HashingUtilities::sha384DigestOrThrow);
         private static final int MAX_DEPTH = 24;
         private static final int MIN_TO_SCHEDULE = 16;
 
@@ -164,7 +164,7 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
         static {
             EMPTY_HASHES[0] = noThrowSha384HashOf(new byte[0]);
             for (int i = 1; i < MAX_DEPTH; i++) {
-                EMPTY_HASHES[i] = CommonUtils.combine(EMPTY_HASHES[i - 1], EMPTY_HASHES[i - 1]);
+                EMPTY_HASHES[i] = HashingUtilities.combine(EMPTY_HASHES[i - 1], EMPTY_HASHES[i - 1]);
             }
         }
 

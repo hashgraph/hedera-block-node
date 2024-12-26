@@ -26,5 +26,4 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * @param blockHash the block hash
  * @param status the verification status
  */
-public record VerificationResult(
-        long blockNumber, @NonNull Bytes blockHash, @NonNull BlockVerificationStatus status) {}
+public record VerificationResult(long blockNumber, @NonNull Bytes blockHash, @NonNull BlockVerificationStatus status) {}

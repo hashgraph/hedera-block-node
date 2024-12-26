@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.verification.hasher;
 
-import static com.hedera.block.server.verification.hasher.CommonUtils.noThrowSha384HashOf;
+import static com.hedera.block.server.verification.hasher.HashingUtilities.noThrowSha384HashOf;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.pbj.runtime.io.buffer.Bytes;

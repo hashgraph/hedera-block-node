@@ -22,8 +22,8 @@ import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.verification.BlockVerificationStatus;
 import com.hedera.block.server.verification.VerificationResult;
-import com.hedera.block.server.verification.hasher.CommonUtils;
 import com.hedera.block.server.verification.hasher.Hashes;
+import com.hedera.block.server.verification.hasher.HashingUtilities;
 import com.hedera.block.server.verification.hasher.StreamingTreeHasher;
 import com.hedera.block.server.verification.signature.SignatureVerifier;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -122,7 +122,7 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
      */
     protected void processBlockItems(List<BlockItemUnparsed> blockItems) throws ParseException {
 
-        Hashes hashes = CommonUtils.getBlockHashes(blockItems);
+        Hashes hashes = HashingUtilities.getBlockHashes(blockItems);
         while (hashes.inputHashes().hasRemaining()) {
             inputTreeHasher.addLeaf(hashes.inputHashes());
         }
@@ -145,7 +145,7 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
      * @param blockProof the block proof
      */
     protected void finalizeVerification(BlockProof blockProof) {
-        Bytes blockHash = CommonUtils.computeFinalBlockHash(blockProof, inputTreeHasher, outputTreeHasher);
+        Bytes blockHash = HashingUtilities.computeFinalBlockHash(blockProof, inputTreeHasher, outputTreeHasher);
         VerificationResult result;
         boolean verified = signatureVerifier.verifySignature(blockHash, blockProof.blockSignature());
         if (verified) {

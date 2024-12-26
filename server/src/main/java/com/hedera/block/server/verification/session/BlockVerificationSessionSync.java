@@ -16,7 +16,7 @@
 
 package com.hedera.block.server.verification.session;
 
-import static com.hedera.block.server.verification.hasher.CommonUtils.getBlockItemHash;
+import static com.hedera.block.server.verification.hasher.HashingUtilities.getBlockItemHash;
 
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.verification.hasher.NaiveStreamingTreeHasher;

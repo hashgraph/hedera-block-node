@@ -29,8 +29,8 @@ import java.util.List;
 /**
  * Provides common utility methods for hashing and combining hashes.
  */
-public final class CommonUtils {
-    private CommonUtils() {
+public final class HashingUtilities {
+    private HashingUtilities() {
         throw new UnsupportedOperationException("Utility Class");
     }
 
@@ -42,7 +42,7 @@ public final class CommonUtils {
     /**
      * The tag for the SHA-384 algorithm.
      */
-    private static final String sha384HashTag = "SHA-384";
+    private static final String SHA_384_HASH_TAG = "SHA-384";
 
     /**
      * Returns the SHA-384 hash of the given bytes.
@@ -60,7 +60,7 @@ public final class CommonUtils {
      */
     public static byte[] noThrowSha384HashOf(final byte[] byteArray) {
         try {
-            return MessageDigest.getInstance(sha384HashTag).digest(byteArray);
+            return MessageDigest.getInstance(SHA_384_HASH_TAG).digest(byteArray);
         } catch (final NoSuchAlgorithmException fatal) {
             throw new IllegalStateException(fatal);
         }
