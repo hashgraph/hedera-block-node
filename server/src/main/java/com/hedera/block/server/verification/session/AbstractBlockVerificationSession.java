@@ -33,6 +33,7 @@ import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -94,6 +95,12 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
             @NonNull final SignatureVerifier signatureVerifier,
             @NonNull final StreamingTreeHasher inputTreeHasher,
             @NonNull final StreamingTreeHasher outputTreeHasher) {
+        Objects.requireNonNull(blockHeader);
+        Objects.requireNonNull(metricsService);
+        Objects.requireNonNull(signatureVerifier);
+        Objects.requireNonNull(inputTreeHasher);
+        Objects.requireNonNull(outputTreeHasher);
+
         this.blockNumber = blockHeader.number();
         this.metricsService = metricsService;
         this.signatureVerifier = signatureVerifier;
