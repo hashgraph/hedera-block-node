@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Provides common utility methods for hashing and combining hashes.
@@ -49,7 +50,7 @@ public final class HashingUtilities {
      * @param bytes the bytes to hash
      * @return the SHA-384 hash of the given bytes
      */
-    public static Bytes noThrowSha384HashOf(final Bytes bytes) {
+    public static Bytes noThrowSha384HashOf(@NonNull final Bytes bytes) {
         return Bytes.wrap(noThrowSha384HashOf(bytes.toByteArray()));
     }
 
@@ -58,7 +59,7 @@ public final class HashingUtilities {
      * @param byteArray the byte array to hash
      * @return the SHA-384 hash of the given byte array
      */
-    public static byte[] noThrowSha384HashOf(final byte[] byteArray) {
+    public static byte[] noThrowSha384HashOf(@NonNull final byte[] byteArray) {
         try {
             return MessageDigest.getInstance(SHA_384_HASH_TAG).digest(byteArray);
         } catch (final NoSuchAlgorithmException fatal) {
@@ -95,7 +96,7 @@ public final class HashingUtilities {
      * @param rightHash the right hash
      * @return the combined hash
      */
-    public static byte[] combine(final byte[] leftHash, final byte[] rightHash) {
+    public static byte[] combine(@NonNull final byte[] leftHash, @NonNull final byte[] rightHash) {
         try {
             final var digest = MessageDigest.getInstance(DigestType.SHA_384.algorithmName());
             digest.update(leftHash);
@@ -111,7 +112,7 @@ public final class HashingUtilities {
      * @param blockItems the block items
      * @return the Hashes of the block items
      */
-    public static Hashes getBlockHashes(List<BlockItemUnparsed> blockItems) {
+    public static Hashes getBlockHashes(@NonNull List<BlockItemUnparsed> blockItems) {
         int numInputs = 0;
         int numOutputs = 0;
         int itemSize = blockItems.size();
@@ -149,7 +150,7 @@ public final class HashingUtilities {
      * @param blockItemUnparsed the block item
      * @return the ByteBuffer of the hash of the given block item
      */
-    public static ByteBuffer getBlockItemHash(BlockItemUnparsed blockItemUnparsed) {
+    public static ByteBuffer getBlockItemHash(@NonNull BlockItemUnparsed blockItemUnparsed) {
         final var digest = sha384DigestOrThrow();
         ByteBuffer buffer = ByteBuffer.allocate(HASH_SIZE);
         buffer.put(digest.digest(
@@ -169,6 +170,10 @@ public final class HashingUtilities {
             @NonNull final BlockProof blockProof,
             @NonNull final StreamingTreeHasher inputTreeHasher,
             @NonNull final StreamingTreeHasher outputTreeHasher) {
+        Objects.requireNonNull(blockProof);
+        Objects.requireNonNull(inputTreeHasher);
+        Objects.requireNonNull(outputTreeHasher);
+
         Bytes inputHash = inputTreeHasher.rootHash().join();
         Bytes outputHash = outputTreeHasher.rootHash().join();
         Bytes providedLasBlockHash = blockProof.previousBlockRootHash();

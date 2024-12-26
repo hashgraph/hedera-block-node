@@ -21,6 +21,8 @@ import com.hedera.block.server.verification.VerificationConfig;
 import com.hedera.block.server.verification.signature.SignatureVerifier;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import edu.umd.cs.findbugs.annotations.NonNull;
+
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import javax.inject.Inject;
 
@@ -49,6 +51,11 @@ public class BlockVerificationSessionFactory {
             @NonNull final MetricsService metricsService,
             @NonNull final SignatureVerifier signatureVerifier,
             @NonNull final ExecutorService executorService) {
+        Objects.requireNonNull(verificationConfig);
+        Objects.requireNonNull(metricsService);
+        Objects.requireNonNull(signatureVerifier);
+        Objects.requireNonNull(executorService);
+
         this.config = verificationConfig;
         this.metricsService = metricsService;
         this.signatureVerifier = signatureVerifier;
