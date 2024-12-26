@@ -38,16 +38,6 @@ import javax.inject.Singleton;
 public interface VerificationInjectionModule {
 
     /**
-     * Provides the executor service.
-     *
-     * @return the executor service
-     */
-    @Provides
-    static ExecutorService provideExecutorService() {
-        return ForkJoinPool.commonPool();
-    }
-
-    /**
      * Provides the signature verifier.
      *
      * @param signatureVerifier the signature verifier to be used
@@ -76,5 +66,25 @@ public interface VerificationInjectionModule {
         } else {
             return new NoOpBlockVerificationService();
         }
+    }
+
+    /**
+     * Provides the block verification session factory.
+     * Uses the common fork join pool for the executor service, of the concurrent hashing tree for now.
+     *
+     * @param verificationConfig the verification configuration to be used
+     * @param metricsService the metrics service to be used
+     * @param signatureVerifier the signature verifier to be used
+     * @return the block verification session factory
+     */
+    @Provides
+    @Singleton
+    static BlockVerificationSessionFactory provideBlockVerificationSessionFactory(
+            @NonNull final VerificationConfig verificationConfig,
+            @NonNull final MetricsService metricsService,
+            @NonNull final SignatureVerifier signatureVerifier) {
+        final ExecutorService executorService = ForkJoinPool.commonPool();
+        return new BlockVerificationSessionFactory(
+                verificationConfig, metricsService, signatureVerifier, executorService);
     }
 }
