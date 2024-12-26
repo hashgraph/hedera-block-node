@@ -164,7 +164,7 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
                     .get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed)
                     .increment();
 
-            result = new VerificationResult(blockNumber, blockHash, BlockVerificationStatus.SIGNATURE_INVALID);
+            result = new VerificationResult(blockNumber, blockHash, BlockVerificationStatus.INVALID_HASH_OR_SIGNATURE);
         }
         shutdownSession();
         verificationResultFuture.complete(result);

@@ -167,7 +167,7 @@ public abstract class AbstractBlockVerificationSessionTest {
         VerificationResult result = future.get();
 
         // Then
-        assertEquals(BlockVerificationStatus.SIGNATURE_INVALID, result.status());
+        assertEquals(BlockVerificationStatus.INVALID_HASH_OR_SIGNATURE, result.status());
         assertEquals(1L, result.blockNumber());
         assertEquals(hashing01BlockHash, result.blockHash());
         assertFalse(session.isRunning());

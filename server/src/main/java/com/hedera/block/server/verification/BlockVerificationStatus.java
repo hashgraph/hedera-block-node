@@ -27,5 +27,5 @@ public enum BlockVerificationStatus {
     /**
      * The Block failed verification, either due to an invalid signature or an invalid hash.
      */
-    SIGNATURE_INVALID
+    INVALID_HASH_OR_SIGNATURE
 }
