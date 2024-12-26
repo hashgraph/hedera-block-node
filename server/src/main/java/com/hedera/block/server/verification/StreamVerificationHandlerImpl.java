@@ -87,6 +87,7 @@ public class StreamVerificationHandlerImpl
 
             if (!serviceStatus.isRunning()) {
                 LOGGER.log(ERROR, "Service is not running. Block item will not be processed further.");
+                return;
             }
 
             final SubscribeStreamResponseUnparsed subscribeStreamResponse = event.get();
