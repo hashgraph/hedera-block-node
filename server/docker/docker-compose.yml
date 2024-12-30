@@ -9,6 +9,9 @@ services:
       - "5005:5005"
       - "9999:9999"
       - "8849:8849"
+    # Mount a named volume to persist and share logs
+    volumes:
+      - node-logs:/app/log/block-node
 
   cadvisor:
     image: "gcr.io/cadvisor/cadvisor:v0.47.0"
@@ -50,3 +53,23 @@ services:
     ports:
       - "3000:3000"
 
+  # Add Loki service
+  loki:
+    image: grafana/loki:2.9.2
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+
+  # Add Promtail service
+  promtail:
+    image: grafana/promtail:2.8.2
+    container_name: promtail
+    depends_on:
+      - loki
+    volumes:
+      - node-logs:/app/log/block-node   # Same volume as block-node-server
+      - ./promtail-config.yaml:/etc/promtail/config.yaml:ro
+    command: --config.file=/etc/promtail/config.yaml
+
+volumes:
+  node-logs:
