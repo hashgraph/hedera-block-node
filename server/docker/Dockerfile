@@ -109,9 +109,6 @@ RUN tar -xvf server-${VERSION}.tar
 # Copy the logging properties file
 COPY logging.properties logging.properties
 
-# make folder for logs /var/log/block-node/
-RUN mkdir -p /app/log/block-node/
-
 # HEALTHCHECK for liveness and readiness
 HEALTHCHECK --interval=30s --timeout=10s --start-period=3s --retries=3 \
   CMD curl -f http://localhost:8080/healthz/livez || exit 1 && \
