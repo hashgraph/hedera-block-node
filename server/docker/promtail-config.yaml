@@ -9,9 +9,31 @@ positions:
   filename: /tmp/positions.yaml
 
 scrape_configs:
-  - job_name: block-node-logs
-    static_configs:
-      - targets: ['localhost']
-        labels:
-          job: block-node
-          __path__: /app/log/block-node/application.*.log
+  # Docker Service Discovery
+  - job_name: docker-logs
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        # Optional filters:
+        # filters:
+        #  - label!=promtail # e.g. exclude containers with label promtail
+    pipeline_stages:
+      # The "docker" stage enriches logs with container metadata like name, image, etc.
+      - docker:
+          docker_url: unix:///var/run/docker.sock
+
+    # Optionally, relabel the discovered labels to something more readable
+    relabel_configs:
+      - source_labels: [__meta_docker_container_name]
+        # Docker names often come as "/my_container" so we use a regex to strip the leading slash.
+        regex: "/(.*)"
+        replacement: "$1"
+        target_label: container_name
+
+      - source_labels: [__meta_docker_container_image]
+        target_label: image
+
+      - source_labels: [__meta_docker_container_id]
+        target_label: container_id
+
+      - target_label: job
+        replacement: docker-logs

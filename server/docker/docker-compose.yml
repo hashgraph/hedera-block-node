@@ -9,9 +9,6 @@ services:
       - "5005:5005"
       - "9999:9999"
       - "8849:8849"
-    # Mount a named volume to persist and share logs
-    volumes:
-      - node-logs:/app/log/block-node
 
   cadvisor:
     image: "gcr.io/cadvisor/cadvisor:v0.47.0"
@@ -67,9 +64,6 @@ services:
     depends_on:
       - loki
     volumes:
-      - node-logs:/app/log/block-node   # Same volume as block-node-server
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # Mount Docker socket
       - ./promtail-config.yaml:/etc/promtail/config.yaml:ro
     command: --config.file=/etc/promtail/config.yaml
-
-volumes:
-  node-logs:
