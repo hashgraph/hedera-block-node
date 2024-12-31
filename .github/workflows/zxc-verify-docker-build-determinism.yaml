@@ -389,8 +389,8 @@ jobs:
           context: ./${{ env.DOCKER_CONTEXT_PATH }}
           file: ./${{ env.DOCKER_CONTEXT_PATH }}/Dockerfile
           tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.generate-baseline.outputs.sha-abbrev }}
-#          build-contexts: |
-#            distributions=./${{ env.DOCKER_CONTEXT_PATH }}
+          build-contexts: |
+            distributions=./${{ env.DOCKER_CONTEXT_PATH }}
 
       - name: Regenerate Manifest
         id: regen-manifest
