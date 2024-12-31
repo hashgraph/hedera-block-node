@@ -371,8 +371,8 @@ jobs:
           echo "second ---------------------"
           ls -la ./server/
           echo "third ---------------------"
-#          ls -la ./server/build/
-#          echo "fourth ---------------------"
+          ls -la ../
+          echo "fourth ---------------------"
 #          ls -la ./server/build/distributions/
 #          echo "fifth ---------------------"
 
