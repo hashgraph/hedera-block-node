@@ -387,7 +387,7 @@ jobs:
           build-args: |
             SOURCE_DATE_EPOCH=${{ needs.generate-baseline.outputs.source-date }}
             VERSION=${{ env.VERSION }}
-          context: ${{ env.DOCKER_CONTEXT_PATH }}
+          context: ./${{ env.DOCKER_CONTEXT_PATH }}
           file: ./${{ env.DOCKER_CONTEXT_PATH }}/Dockerfile
           tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.VERSION }}
 #          build-contexts: |
