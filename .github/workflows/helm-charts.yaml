@@ -69,6 +69,7 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
         run:  |
           helm repo add prometheus-community  https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
           helm dependency update charts/hedera-block-node
 
       - name: Run chart-testing (install)

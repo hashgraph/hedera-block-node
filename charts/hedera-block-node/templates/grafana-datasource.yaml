@@ -17,5 +17,14 @@ data:
         editable: true
         jsonData:
           timeInterval: "15s"
+          
+    {{- if .Values.loki.enabled }}
+      - name: Loki
+        type: loki
+        url: http://{{ .Release.Name }}-loki:3100
+        access: proxy
+        isDefault: false
+        editable: true
+    {{- end }}
 
 {{- end }}

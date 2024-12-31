@@ -85,6 +85,17 @@ kubepromstack:
   enabled: false
 ```
 
+### Enable Loki + Promtail
+By default the stack includes chart dependencies for a loki + promtail stack, to collect logs from the Hedera Block Node and the K8 cluster.
+If you prefer to use your own loki+promtail stack, you can disable the stack by setting the following values:
+```yaml
+loki:
+  enabled: false
+
+promtail:
+  enabled: false
+```
+
 ## Using
 Follow the `NOTES` instructions after installing the chart to perform `port-forward` to the Hedera Block Node and be able to use it.
 
