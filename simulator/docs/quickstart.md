@@ -66,39 +66,13 @@ get started with the application.
 
 The simulator can run in two modes (Publisher and Consumer) and provides metrics for both configurations. To view the metrics:
 
-1. Start the block node server first:
+1. Start the block node server and simulator first:
 
    ```bash
    ./gradlew startDockerContainer
    ```
 
-2. Configure and run the simulator in Publisher mode:
-
-   - In `app.properties`, set:
-     ```properties
-     blockStream.simulatorMode=PUBLISHER
-     prometheus.endpointEnabled=true
-     prometheus.endpointPortNumber=9998
-     ```
-   - Start the simulator:
-     ```bash
-     ./gradlew :simulator:run
-     ```
-
-3. Configure and run the simulator in Consumer mode:
-
-   - In `app.properties`, update:
-     ```properties
-     blockStream.simulatorMode=CONSUMER
-     prometheus.endpointEnabled=true
-     prometheus.endpointPortNumber=9997
-     ```
-   - Start another instance of the simulator:
-     ```bash
-     ./gradlew :simulator:run
-     ```
-
-4. Access the metrics:
+2. Access the metrics:
    - Open Grafana at http://localhost:3000
    - Navigate to Dashboards
    - You'll find two dashboards:

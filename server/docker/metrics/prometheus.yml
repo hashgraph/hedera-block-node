@@ -8,7 +8,7 @@ scrape_configs:
 
   - job_name: 'simulator-publisher'
     static_configs:
-      - targets: ['host.docker.internal:9998']
+      - targets: ['simulator-publisher:9998']
     metrics_path: '/metrics'
     scheme: 'http'
     relabel_configs:
@@ -18,7 +18,7 @@ scrape_configs:
 
   - job_name: 'simulator-consumer'
     static_configs:
-      - targets: ['host.docker.internal:9997']
+      - targets: ['simulator-consumer:9997']
     metrics_path: '/metrics'
     scheme: 'http'
     relabel_configs:
