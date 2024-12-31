@@ -386,11 +386,12 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             SOURCE_DATE_EPOCH=${{ needs.generate-baseline.outputs.source-date }}
+            VERSION=${{ env.VERSION }}
           context: ./${{ env.DOCKER_CONTEXT_PATH }}
           file: ./${{ env.DOCKER_CONTEXT_PATH }}/Dockerfile
           tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.generate-baseline.outputs.sha-abbrev }}
           build-contexts: |
-            distributions=./${{ env.DOCKER_CONTEXT_PATH }}
+            distributions=../distributions
 
       - name: Regenerate Manifest
         id: regen-manifest
