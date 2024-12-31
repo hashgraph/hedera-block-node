@@ -87,7 +87,7 @@ jobs:
           VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
-      - name: Build and push image
+      - name: Build and push SERVER image
         uses: docker/build-push-action@1ca370b3a9802c92e886402e0dd88098a2533b12 # v6.4.1
         with:
           context: ./server/docker
@@ -96,11 +96,30 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64, linux/arm64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.VERSION }}
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}/simulator-image:${{ env.VERSION }}
           build-args: |
             VERSION=${{ env.VERSION }}
           build-contexts: |
             distributions=./server/build/distributions
+
+      # Build and push SIMULATOR image
+
+      - name: Prepare docker directory
+        run: |
+          ./gradlew :simulator:docker
+
+      - name: Build and push SIMULATOR image
+        uses: docker/build-push-action@1ca370b3a9802c92e886402e0dd88098a2533b12 # v6.4.1
+        with:
+          context: ./simulator/docker
+          file: ./simulator/docker/Dockerfile
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64, linux/arm64
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.VERSION }}
+          build-args: |
+            VERSION=${{ env.VERSION }}
 
   helm-chart-release:
     needs: publish
