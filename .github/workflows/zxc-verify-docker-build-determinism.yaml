@@ -371,17 +371,17 @@ jobs:
           echo "second ---------------------"
           ls -la ./server/
           echo "third ---------------------"
-          ls -la ./server/build/
-          echo "fourth ---------------------"
-          ls -la ./server/build/distributions/
-          echo "fifth ---------------------"
+#          ls -la ./server/build/
+#          echo "fourth ---------------------"
+#          ls -la ./server/build/distributions/
+#          echo "fifth ---------------------"
 
       - name: Build Docker Image
         uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
         env:
           SOURCE_DATE_EPOCH: ${{ needs.generate-baseline.outputs.source-date }}
         with:
-          push: true
+          push: false
           no-cache: true
           platforms: linux/amd64,linux/arm64
           build-args: |
