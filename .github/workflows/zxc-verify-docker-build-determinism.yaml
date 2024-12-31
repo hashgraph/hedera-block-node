@@ -361,6 +361,10 @@ jobs:
 
       - name: Docker Image Debugging
         run: |
+          echo "zero ---------------------"
+          echo "${{ env.VERSION }}\n"
+          echo "${{ env.DOCKER_CONTEXT_PATH }}\n"
+          ls -la "${{ env.DOCKER_CONTEXT_PATH }}/"
           echo "first ---------------------"
           pwd
           ls -la
@@ -386,8 +390,8 @@ jobs:
           context: ${{ env.DOCKER_CONTEXT_PATH }}
           file: ./${{ env.DOCKER_CONTEXT_PATH }}/Dockerfile
           tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.VERSION }}
-          build-contexts: |
-            distributions=./server/build/distributions
+#          build-contexts: |
+#            distributions=./server/build/distributions
 
       - name: Regenerate Manifest
         id: regen-manifest
