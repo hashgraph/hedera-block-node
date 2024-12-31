@@ -359,6 +359,13 @@ jobs:
           VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
+      - name: Docker Image Debugging
+        run: |
+          echo "---------------------"
+          pwd
+          ls -la
+          echo "---------------------"
+
       - name: Build Docker Image
         uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
         env:
