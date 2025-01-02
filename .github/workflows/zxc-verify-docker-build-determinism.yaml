@@ -214,18 +214,16 @@ jobs:
         working-directory: ${{ env.DOCKER_MANIFEST_PATH }}
         run: |
           EXTRACTED_FILE_NAME="${{ steps.commit.outputs.sha }}.tar"
-          echo "Part 1 ----------"
+          echo "Before manifest operations ----------"
           pwd
           ls -la
           gunzip "${{ steps.manifest.outputs.name }}"
-          echo "Part 2 ----------"
+          echo "After gunzip ----------"
           ls -la
-          tar -rvf "${EXTRACTED_FILE_NAME}" -C "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}" ../../server/build/distributions
+          tar -rvf "${EXTRACTED_FILE_NAME}" -C "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}" ../../server/build/
           gzip "${EXTRACTED_FILE_NAME}"
-          echo "Part 3 ----------"
+          echo "After augmenting and gzipping ----------"
           ls -la
-          echo "Part 4 ----------"
-          ls -la ../../server/build/distributions/
 
       - name: Upload Baseline
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
@@ -306,7 +304,7 @@ jobs:
           pwd
           ls -la
           mv *.json "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
-          mv *.tar.gz "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
+          mv ./server/build/distributions/*.tar.gz "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
           echo "Moved files to: ${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
 
       - name: Determine Home Directory
@@ -352,16 +350,17 @@ jobs:
         run: |
           echo "zero ---------------------"
           echo "${{ env.VERSION }}\n"
-          echo "${{ env.DOCKER_CONTEXT_PATH }}\n"
-          ls -la "${{ env.DOCKER_CONTEXT_PATH }}/"
-          echo "first ---------------------"
+          cd ${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/
+#          echo "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
+#          ls -la "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
+#          echo "first ---------------------"
           pwd
           ls -la
-          echo "second ---------------------"
-          ls -la ./server/
-          echo "third ---------------------"
-          ls -la ../
-          echo "fourth ---------------------"
+#          echo "second ---------------------"
+#          ls -la ./server/
+#          echo "third ---------------------"
+#          ls -la ../
+#          echo "fourth ---------------------"
 #          ls -la ./server/build/distributions/
 #          echo "fifth ---------------------"
 
@@ -380,7 +379,7 @@ jobs:
           file: ./${{ env.DOCKER_CONTEXT_PATH }}/Dockerfile
           tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.generate-baseline.outputs.sha-abbrev }}
           build-contexts: |
-            distributions=./server/build/distributions
+            distributions=./
 
       - name: Regenerate Manifest
         id: regen-manifest
