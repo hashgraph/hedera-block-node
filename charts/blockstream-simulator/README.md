@@ -24,10 +24,28 @@ To pull the packaged chart from the public repo:
 helm pull oci://ghcr.io/hashgraph/hedera-block-node/charts/blockstream-simulator-chart--version "${VERSION}"
 ```
 
-# Install the chart in Producer Mode
+## Install using a local chart cloned from the repo
 ```bash
-helm install "${RELEASE}" hedera-block-node/charts/blockstream-simulator-chart-$VERSION.tgz
+git clone git@github.com:hashgraph/hedera-block-node.git
+cd hedera-block-node
+helm install "${RELEASE}" charts/blockstream-simulator -f <path-to-custom-values-file>
 ```
 
+## Configure
+The chart comes with a set of default `Values.yaml` file that sets it in ProducerMode and looks for GRPC BN Server with the following service name `hedera-block-node-grpc-service` within the same cluster, ready to start streaming blocks.
+However, is also possible to use the simulator in ConsumerMode, to do so, you need to set the following values in the `values.yaml` file:
+```yaml
+simulator:
+  config:
+    BLOCK_STREAM_SIMULATOR_MODE: "CONSUMER"
+    # Further custom configuration...
+    <ENV_VARIABLE>: "<Value>" 
+```
+and if your BlockNode RELEASE name is different from the assumed: `blkNod`, you need to set the following value in the `values.yaml` file:
+```yaml
+simulator:
+  config:
+    GRPC_SERVER_ADDRESS: "<BlockNode_HostName(K8 ServiceName)>"
+```
 
-
+Refer to the Simulator configuration for further configuration options, any configuration that can be changed via ENV variables should be set in the `values.yaml` file under the `config' section in a directory for config and a separate one for secrets (if needed). 
