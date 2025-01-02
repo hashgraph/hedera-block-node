@@ -314,7 +314,7 @@ jobs:
 
           mv *.json "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
           cd ./server/build/distributions
-          mv *.tar.gz "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
+          mv *.tar "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
 
           echo "Moved files to: ${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
 
