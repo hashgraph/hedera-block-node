@@ -214,13 +214,16 @@ jobs:
         working-directory: ${{ env.DOCKER_MANIFEST_PATH }}
         run: |
           EXTRACTED_FILE_NAME="${{ steps.commit.outputs.sha }}.tar"
-          gunzip "${{ steps.manifest.outputs.name }}"
           echo "Part 1 ----------"
           pwd
           ls -la
+          gunzip "${{ steps.manifest.outputs.name }}"
+          echo "Part 2 ----------"
+          ls -la
           tar -rvf "${EXTRACTED_FILE_NAME}" -C "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}"
           gzip "${EXTRACTED_FILE_NAME}"
-          echo "Part 2 ----------"
+          echo "Part 3 ----------"
+          ls -la
 
       - name: Upload Baseline
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
