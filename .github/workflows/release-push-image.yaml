@@ -96,7 +96,7 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64, linux/arm64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}/simulator-image:${{ env.VERSION }}
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.VERSION }}
           build-args: |
             VERSION=${{ env.VERSION }}
           build-contexts: |
@@ -104,7 +104,7 @@ jobs:
 
       # Build and push SIMULATOR image
 
-      - name: Prepare docker directory
+      - name: Prepare SIMULATOR docker directory
         run: |
           ./gradlew :simulator:copyDependenciesFolders
 
@@ -117,7 +117,7 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64, linux/arm64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.VERSION }}
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}/simulator-image:${{ env.VERSION }}
           build-args: |
             VERSION=${{ env.VERSION }}
 
