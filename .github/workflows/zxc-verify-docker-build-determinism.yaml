@@ -304,7 +304,7 @@ jobs:
           pwd
           ls -la
           mv *.json "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
-          mv ./server/build/distributions/*.tar.gz "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
+          mv "./server/build/distributions/*.tar.gz" "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
           echo "Moved files to: ${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
 
       - name: Determine Home Directory
@@ -349,13 +349,13 @@ jobs:
       - name: Docker Image Debugging
         run: |
           echo "zero ---------------------"
-          echo "${{ env.VERSION }}\n"
-          cd "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
-#          echo "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
-#          ls -la "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
-#          echo "first ---------------------"
           pwd
           ls -la
+          echo "${{ env.VERSION }}\n"
+#          cd "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
+#          echo "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
+          ls -la "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
+#          echo "first ---------------------"
 #          echo "second ---------------------"
 #          ls -la ./server/
 #          echo "third ---------------------"
