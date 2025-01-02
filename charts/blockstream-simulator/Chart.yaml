@@ -1,0 +1,18 @@
+apiVersion: v2
+appVersion: 0.3.0-SNAPSHOT
+description: A Helm chart for Hedera Blockstream Simulator.
+home: https://github.com/hashgraph/hedera-block-node
+keywords:
+  - blocknode
+  - dlt
+  - hedera
+  - hashgraph
+  - blockstream
+  - simulator
+maintainers:
+  - name: Hedera Block Node Team
+    email: blocknode@hashgraph.com
+name: blockstream-simulator-chart
+sources:
+  - https://github.com/hashgraph/hedera-block-node
+version: 0.3.0-SNAPSHOT
