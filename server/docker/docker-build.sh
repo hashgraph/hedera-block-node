@@ -12,7 +12,10 @@ echo
 
 SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
 # run docker build
-docker buildx build --load -t "block-node-server:${VERSION}" --build-context distributions=../distributions --build-arg VERSION="${VERSION}" --build-arg SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH}" . || exit "${?}"
+docker buildx build --load -t "block-node-server:${VERSION}" \
+ --build-context distributions=../distributions \
+ --build-arg VERSION="${VERSION}" \
+ --build-arg SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH}" . || exit "${?}"
 
 echo
 echo "Image [block-node-server:${VERSION}] built successfully!"

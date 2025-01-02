@@ -17,8 +17,8 @@ ARG SOURCE_DATE_EPOCH
 
 # Define Standard Environment Variables
 ENV DEBIAN_FRONTEND=noninteractive
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 # Install basic OS utilities for building
 RUN --mount=type=bind,source=./repro-sources-list.sh,target=/usr/local/bin/repro-sources-list.sh \
@@ -95,13 +95,13 @@ FROM java-builder AS production-image
 ARG SOURCE_DATE_EPOCH
 
 # Define Standard Environment Variables
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
-ENV DEBIAN_FRONTEND noninteractive
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV DEBIAN_FRONTEND=noninteractive
 
-ENV JAVA_VERSION "jdk-21.0.4+7"
-ENV JAVA_HOME /usr/local/java
-ENV PATH ${JAVA_HOME}/bin:${PATH}
+ENV JAVA_VERSION="jdk-21.0.4+7"
+ENV JAVA_HOME=/usr/local/java
+ENV PATH=${JAVA_HOME}/bin:${PATH}
 
 # Install Java
 COPY --from=java-builder ${JAVA_HOME}/ ${JAVA_HOME}/
