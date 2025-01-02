@@ -297,9 +297,9 @@ jobs:
         env:
           CLOUDSDK_PYTHON: ${{ format('{0}{1}', env.pythonLocation, runner.os == 'Windows' && '\python.exe' || '/bin/python3') }}
         run: |
-          echo "Making: ${{ DOCKER_MANIFEST_PATH }}"
-          mkdir -p "${{ DOCKER_MANIFEST_PATH }}"
-          cd "${{ DOCKER_MANIFEST_PATH }}"
+          echo "Making: ${{ env.DOCKER_MANIFEST_PATH }}"
+          mkdir -p "${{ env.DOCKER_MANIFEST_PATH }}"
+          cd "${{ env.DOCKER_MANIFEST_PATH }}"
 
           echo "Copying: ${{ needs.generate-baseline.outputs.file }}"
           gsutil cp "${{ needs.generate-baseline.outputs.file }}" .
