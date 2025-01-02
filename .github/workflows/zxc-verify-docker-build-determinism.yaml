@@ -350,7 +350,7 @@ jobs:
         run: |
           echo "zero ---------------------"
           echo "${{ env.VERSION }}\n"
-          cd ${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/
+          cd "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
 #          echo "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
 #          ls -la "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
 #          echo "first ---------------------"
