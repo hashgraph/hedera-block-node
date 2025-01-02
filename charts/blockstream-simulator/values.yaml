@@ -20,6 +20,6 @@ simulator:
   config:
     # either CONSUMER or PUBLISHER
     BLOCK_STREAM_SIMULATOR_MODE: "PUBLISHER"
-    GRPC_SERVER_ADDRESS: "bn1-block-node-helm-chart"
+    GRPC_SERVER_ADDRESS: "blkNod-block-node-helm-chart"
   secret:
     PRIVATE_KEY: "fake_private_key"
