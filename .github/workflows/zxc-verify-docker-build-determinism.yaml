@@ -306,6 +306,7 @@ jobs:
           pwd
           ls -la
           mv *.json "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
+          mv *.tar.gz "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
 
       - name: Determine Home Directory
         id: home
