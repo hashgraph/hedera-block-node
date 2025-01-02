@@ -105,7 +105,7 @@ jobs:
       - name: Extract Source Date Epoch
         id: extract_source_date_epoch
         run: |
-          SOURCE_DATE_EPOCH=$(git show -s --format=%ct ${{ github.sha }})
+          SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
           echo "SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}"
 
       - name: Build and push image
