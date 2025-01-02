@@ -224,6 +224,8 @@ jobs:
           gzip "${EXTRACTED_FILE_NAME}"
           echo "Part 3 ----------"
           ls -la
+          echo "Part 4 ----------"
+          ls -la ../../server/build/distributions/
 
       - name: Upload Baseline
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
