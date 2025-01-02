@@ -307,6 +307,7 @@ jobs:
           ls -la
           mv *.json "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
           mv *.tar.gz "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
+          echo "Moved files to: ${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
 
       - name: Determine Home Directory
         id: home
@@ -379,7 +380,7 @@ jobs:
           file: ./${{ env.DOCKER_CONTEXT_PATH }}/Dockerfile
           tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.generate-baseline.outputs.sha-abbrev }}
           build-contexts: |
-            distributions=../distributions
+            distributions=./server/build/distributions
 
       - name: Regenerate Manifest
         id: regen-manifest
