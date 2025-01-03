@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Hedera Hashgraph, LLC
+ * Copyright (C) 2024-2025 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,11 @@ import java.util.concurrent.Executors;
  * asynchronously using an executor.
  */
 public class BlockVerificationSessionAsync extends AbstractBlockVerificationSession {
+
+    /**
+     * The logger for this class.
+     */
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final ExecutorService taskExecutor;
     private final int hashCombineBatchSize = 32;

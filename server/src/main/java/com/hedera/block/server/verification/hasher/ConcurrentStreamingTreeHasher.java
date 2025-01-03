@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Hedera Hashgraph, LLC
+ * Copyright (C) 2024-2025 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.hedera.block.server.verification.hasher;
 import static com.hedera.block.server.verification.hasher.HashingUtilities.noThrowSha384HashOf;
 import static java.util.Objects.requireNonNull;
 
+import com.hedera.block.common.utils.Preconditions;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
@@ -90,9 +91,7 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
     public ConcurrentStreamingTreeHasher(
             @NonNull final ExecutorService executorService, final int hashCombineBatchSize) {
         this.executorService = requireNonNull(executorService);
-        if (hashCombineBatchSize % 2 == 1) {
-            throw new IllegalArgumentException("Hash combine batch size must be an even number");
-        }
+        Preconditions.requirePositive(hashCombineBatchSize, "Hash combine batch size must be an even number");
         this.hashCombineBatchSize = hashCombineBatchSize;
     }
 
