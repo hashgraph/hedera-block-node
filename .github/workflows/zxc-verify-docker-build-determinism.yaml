@@ -393,7 +393,6 @@ jobs:
           if ! diff -u "${DOCKER_MANIFEST_PATH}/linux-amd64.layers.json" "${{ steps.regen-manifest.outputs.path }}/linux-amd64.layers.json" >/dev/null 2>&1; then
            echo "::group::Layer Differences"
            diff -u "${DOCKER_MANIFEST_PATH}/linux-amd64.layers.json" "${{ steps.regen-manifest.outputs.path }}/linux-amd64.layers.json"
-           echo "::endgroup::"
 
            BASELINE_NAME="${{ steps.commit.outputs.sha }}.tar.gz"
            BASELINE_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/baselines"
@@ -402,6 +401,8 @@ jobs:
            echo "Baseline Path: ${BASELINE_PATH}"
            gsutil ls "${BASELINE_PATH}"
            echo "end"
+
+           echo "::endgroup::"
            exit 1
           fi
 
