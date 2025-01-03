@@ -225,23 +225,23 @@ jobs:
           echo "After augmenting and gzipping ----------"
           ls -la
 
-      - name: Clear Bucket
-        run: |
-          echo "::group::Clear Bucket Group"
-          BASELINE_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/baselines"
-          DOCKER_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/"
-          gsutil ls "${DOCKER_PATH}"
-
-          echo "Baseline Path: ${BASELINE_PATH}"
-          gsutil ls "${BASELINE_PATH}/"
-          echo "end of ls"
-
-          gsutil rm "${BASELINE_PATH}/*"
-          echo "end of rm"
-
-          gsutil ls "${BASELINE_PATH}/"
-          echo "end of second ls"
-          echo "::endgroup::"
+#      - name: Clear Bucket
+#        run: |
+#          echo "::group::Clear Bucket Group"
+#          BASELINE_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/baselines"
+#          DOCKER_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/"
+#          gsutil ls "${DOCKER_PATH}"
+#
+#          echo "Baseline Path: ${BASELINE_PATH}"
+#          gsutil ls "${BASELINE_PATH}/"
+#          echo "end of ls"
+#
+#          gsutil rm "${BASELINE_PATH}/*"
+#          echo "end of rm"
+#
+#          gsutil ls "${BASELINE_PATH}/"
+#          echo "end of second ls"
+#          echo "::endgroup::"
 
       - name: Upload Baseline
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
