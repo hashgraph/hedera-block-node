@@ -228,17 +228,15 @@ jobs:
       - name: Clear Bucket
         run: |
           echo "::group::Clear Bucket Group"
-          BASELINE_NAME="${{ steps.commit.outputs.sha }}.tar.gz"
           BASELINE_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/baselines"
-          BASELINE_FILE="${BASELINE_PATH}/${BASELINE_NAME}"
           echo "Baseline Path: ${BASELINE_PATH}"
-          gsutil ls "${BASELINE_PATH}"
+          gsutil ls "${BASELINE_PATH}/"
           echo "end of ls"
 
           gsutil rm "${BASELINE_PATH}/*"
           echo "end of rm"
 
-          gsutil ls "${BASELINE_PATH}"
+          gsutil ls "${BASELINE_PATH}/"
           echo "end of second ls"
           echo "::endgroup::"
 
