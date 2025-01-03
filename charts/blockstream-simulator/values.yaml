@@ -1,4 +1,3 @@
-
 image:
   repository: ghcr.io/hashgraph/hedera-block-node/simulator-image
   pullPolicy: IfNotPresent
