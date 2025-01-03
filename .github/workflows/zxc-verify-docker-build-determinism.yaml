@@ -229,6 +229,9 @@ jobs:
         run: |
           echo "::group::Clear Bucket Group"
           BASELINE_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/baselines"
+          DOCKER_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/"
+          gsutil ls "${DOCKER_PATH}"
+
           echo "Baseline Path: ${BASELINE_PATH}"
           gsutil ls "${BASELINE_PATH}/"
           echo "end of ls"
