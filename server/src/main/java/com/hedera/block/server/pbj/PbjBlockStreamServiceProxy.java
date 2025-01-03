@@ -79,20 +79,13 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
             @NonNull final StreamVerificationHandlerImpl streamVerificationHandler,
             @NonNull final Notifier notifier,
             @NonNull final BlockNodeContext blockNodeContext) {
-        Objects.requireNonNull(streamMediator);
-        Objects.requireNonNull(serviceStatus);
-        Objects.requireNonNull(streamPersistenceHandler);
-        Objects.requireNonNull(streamVerificationHandler);
-        Objects.requireNonNull(notifier);
-        Objects.requireNonNull(blockNodeContext);
 
-        this.serviceStatus = serviceStatus;
-        this.notifier = notifier;
-        this.blockNodeContext = blockNodeContext;
-
-        streamMediator.subscribe(streamPersistenceHandler);
-        streamMediator.subscribe(streamVerificationHandler);
-        this.streamMediator = streamMediator;
+        this.serviceStatus = Objects.requireNonNull(serviceStatus);
+        this.notifier = Objects.requireNonNull(notifier);
+        this.blockNodeContext = Objects.requireNonNull(blockNodeContext);
+        streamMediator.subscribe(Objects.requireNonNull(streamPersistenceHandler));
+        streamMediator.subscribe(Objects.requireNonNull(streamVerificationHandler));
+        this.streamMediator = Objects.requireNonNull(streamMediator);
     }
 
     /**
