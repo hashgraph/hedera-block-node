@@ -31,5 +31,5 @@ public interface SignatureVerifier {
      * @param signature the signature to verify
      * @return true if the signature is valid, false otherwise
      */
-    Boolean verifySignature(@NonNull Bytes hash, Bytes signature);
+    Boolean verifySignature(@NonNull Bytes hash, @NonNull Bytes signature);
 }

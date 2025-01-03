@@ -95,28 +95,22 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
             @NonNull final SignatureVerifier signatureVerifier,
             @NonNull final StreamingTreeHasher inputTreeHasher,
             @NonNull final StreamingTreeHasher outputTreeHasher) {
-        Objects.requireNonNull(blockHeader);
-        Objects.requireNonNull(metricsService);
-        Objects.requireNonNull(signatureVerifier);
-        Objects.requireNonNull(inputTreeHasher);
-        Objects.requireNonNull(outputTreeHasher);
-
-        this.blockNumber = blockHeader.number();
-        this.metricsService = metricsService;
-        this.signatureVerifier = signatureVerifier;
-        this.inputTreeHasher = inputTreeHasher;
-        this.outputTreeHasher = outputTreeHasher;
+        this.blockNumber = Objects.requireNonNull(blockHeader).number();
+        this.metricsService = Objects.requireNonNull(metricsService);
+        this.signatureVerifier = Objects.requireNonNull(signatureVerifier);
+        this.inputTreeHasher = Objects.requireNonNull(inputTreeHasher);
+        this.outputTreeHasher = Objects.requireNonNull(outputTreeHasher);
 
         this.blockWorkStartTime = System.nanoTime();
     }
 
     @Override
-    public boolean isRunning() {
+    public final boolean isRunning() {
         return running;
     }
 
     @Override
-    public CompletableFuture<VerificationResult> getVerificationResult() {
+    public final CompletableFuture<VerificationResult> getVerificationResult() {
         return verificationResultFuture;
     }
 
