@@ -54,17 +54,10 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+resources:
+  requests:
+    cpu: "2"
+    memory: "8Gi"
 
 nodeSelector: {}
 
@@ -80,7 +73,6 @@ blockNode:
     # key: value
     BLOCKNODE_STORAGE_ROOT_PATH: "/app/storage"
   secret:
-    # if blank will use same as AppVersion of chart.
     PRIVATE_KEY: "fake_private_key"
   health:
     readiness:
@@ -89,13 +81,6 @@ blockNode:
       endpoint: "/healthz/livez"
     metrics:
       port: 9999
-  resources:
-    limits:
-      cpu: "8"
-      memory: "16Gi"
-    requests:
-      cpu: "2"
-      memory: "8Gi"
 
 kubepromstack:
   enabled: true
