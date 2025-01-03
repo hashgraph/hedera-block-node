@@ -190,7 +190,7 @@ jobs:
           SOURCE_DATE_EPOCH: ${{ steps.commit.outputs.source-date }}
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
         with:
-          push: true
+          push: false
           no-cache: true
           platforms: linux/amd64,linux/arm64
           build-args: |

@@ -65,6 +65,16 @@ RUN set -eux; \
     	  ; \
     rm -f /tmp/openjdk.tar.gz /usr/local/java/lib/src.zip;
 
+# Create a non-root user and group
+ARG UNAME=hedera
+ARG UID=2000
+ARG GID=2000
+
+# Configure the standard user account
+RUN groupadd --gid ${GID} ${UNAME} && \
+    useradd --no-user-group --create-home --uid ${UID} --gid ${GID} --shell /bin/bash ${UNAME}
+
+
 
 ########################################
 ####    Deterministic Build Hack    ####
@@ -111,15 +121,6 @@ EXPOSE 8080/tcp
 
 # Define version
 ARG VERSION
-
-# Create a non-root user and group
-ARG UNAME=hedera
-ARG UID=2000
-ARG GID=2000
-
-# Configure the standard user account
-RUN groupadd --gid ${GID} ${UNAME} && \
-    useradd --no-user-group --create-home --uid ${UID} --gid ${GID} --shell /bin/bash ${UNAME}
 
 USER $UNAME
 
