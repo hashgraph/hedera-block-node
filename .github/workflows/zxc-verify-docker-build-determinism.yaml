@@ -397,7 +397,13 @@ jobs:
            BASELINE_FILE="${BASELINE_PATH}/${BASELINE_NAME}"
            echo "Baseline Path: ${BASELINE_PATH}"
            gsutil ls "${BASELINE_PATH}"
-           echo "end"
+           echo "end of ls"
+
+           gsutil rm "${BASELINE_PATH}/*"
+           echo "end of rm"
+
+           gsutil ls "${BASELINE_PATH}"
+           echo "end of second ls"
            echo "::endgroup::"
           fi
       - name: Validate Layers (linux/amd64)
