@@ -388,19 +388,32 @@ jobs:
           MANIFEST_PATH: ${{ env.DOCKER_MANIFEST_PATH }}/regenerated
         run: GITHUB_SHA="${{ needs.generate-baseline.outputs.sha-abbrev }}" ${{ env.DOCKER_MANIFEST_GENERATOR }}
 
-      - name: Validate Layers (linux/amd64)
+      - name: Debug Bucket
         run: |
           if ! diff -u "${DOCKER_MANIFEST_PATH}/linux-amd64.layers.json" "${{ steps.regen-manifest.outputs.path }}/linux-amd64.layers.json" >/dev/null 2>&1; then
-           echo "::group::Layer Differences"
-           diff -u "${DOCKER_MANIFEST_PATH}/linux-amd64.layers.json" "${{ steps.regen-manifest.outputs.path }}/linux-amd64.layers.json"
-
+           echo "::group::Debug Bucket Group"
            BASELINE_NAME="${{ steps.commit.outputs.sha }}.tar.gz"
            BASELINE_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/baselines"
            BASELINE_FILE="${BASELINE_PATH}/${BASELINE_NAME}"
-
            echo "Baseline Path: ${BASELINE_PATH}"
            gsutil ls "${BASELINE_PATH}"
            echo "end"
+           echo "::endgroup::"
+          if
+      - name: Validate Layers (linux/amd64)
+        run: |
+          if ! diff -u "${DOCKER_MANIFEST_PATH}/linux-amd64.layers.json" "${{ steps.regen-manifest.outputs.path }}/linux-amd64.layers.json" >/dev/null 2>&1; then
+           echo "::group::Debug Bucket Group"
+           BASELINE_NAME="${{ steps.commit.outputs.sha }}.tar.gz"
+           BASELINE_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/baselines"
+           BASELINE_FILE="${BASELINE_PATH}/${BASELINE_NAME}"
+           echo "Baseline Path: ${BASELINE_PATH}"
+           gsutil ls "${BASELINE_PATH}"
+           echo "end"
+           echo "::endgroup::"
+
+           echo "::group::Layer Differences"
+           diff -u "${DOCKER_MANIFEST_PATH}/linux-amd64.layers.json" "${{ steps.regen-manifest.outputs.path }}/linux-amd64.layers.json"
 
            echo "::endgroup::"
            exit 1
