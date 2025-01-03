@@ -225,6 +225,23 @@ jobs:
           echo "After augmenting and gzipping ----------"
           ls -la
 
+      - name: Clear Bucket
+        run: |
+          echo "::group::Clear Bucket Group"
+          BASELINE_NAME="${{ steps.commit.outputs.sha }}.tar.gz"
+          BASELINE_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/baselines"
+          BASELINE_FILE="${BASELINE_PATH}/${BASELINE_NAME}"
+          echo "Baseline Path: ${BASELINE_PATH}"
+          gsutil ls "${BASELINE_PATH}"
+          echo "end of ls"
+
+          gsutil rm "${BASELINE_PATH}/*"
+          echo "end of rm"
+
+          gsutil ls "${BASELINE_PATH}"
+          echo "end of second ls"
+          echo "::endgroup::"
+
       - name: Upload Baseline
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
         run: gsutil cp "${{ steps.manifest.outputs.file }}" "${{ steps.baseline.outputs.file }}"
@@ -388,24 +405,6 @@ jobs:
           MANIFEST_PATH: ${{ env.DOCKER_MANIFEST_PATH }}/regenerated
         run: GITHUB_SHA="${{ needs.generate-baseline.outputs.sha-abbrev }}" ${{ env.DOCKER_MANIFEST_GENERATOR }}
 
-      - name: Debug Bucket
-        run: |
-          if ! diff -u "${DOCKER_MANIFEST_PATH}/linux-amd64.layers.json" "${{ steps.regen-manifest.outputs.path }}/linux-amd64.layers.json" >/dev/null 2>&1; then
-           echo "::group::Debug Bucket Group"
-           BASELINE_NAME="${{ steps.commit.outputs.sha }}.tar.gz"
-           BASELINE_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/baselines"
-           BASELINE_FILE="${BASELINE_PATH}/${BASELINE_NAME}"
-           echo "Baseline Path: ${BASELINE_PATH}"
-           gsutil ls "${BASELINE_PATH}"
-           echo "end of ls"
-
-           gsutil rm "${BASELINE_PATH}/*"
-           echo "end of rm"
-
-           gsutil ls "${BASELINE_PATH}"
-           echo "end of second ls"
-           echo "::endgroup::"
-          fi
       - name: Validate Layers (linux/amd64)
         run: |
           if ! diff -u "${DOCKER_MANIFEST_PATH}/linux-amd64.layers.json" "${{ steps.regen-manifest.outputs.path }}/linux-amd64.layers.json" >/dev/null 2>&1; then
