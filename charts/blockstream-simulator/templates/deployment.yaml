@@ -42,8 +42,8 @@ spec:
         {{- with .Values.resources }}
         resources:
           requests:
-            memory: {{ .Values.resources.requests.memory }}
-            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .requests.memory }}
+            cpu: {{ .requests.cpu }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
