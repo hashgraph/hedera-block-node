@@ -34,14 +34,6 @@ public class Server {
     public static void main(final String[] args) throws IOException {
         LOGGER.log(INFO, "Starting BlockNode Server");
 
-        // Set the global configuration
-        final Config config = Config.builder()
-                .sources(file(Paths.get("/app", LOGGING_PROPERTIES)).optional())
-                .sources(classpath("helidon.properties"))
-                .build();
-
-        Config.global(config);
-
         // Init BlockNode Configuration
         final Configuration configuration = ConfigurationBuilder.create()
                 .withSource(ServerMappedConfigSourceInitializer.getMappedConfigSource())
