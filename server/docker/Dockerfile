@@ -106,6 +106,9 @@ COPY --from=distributions server-${VERSION}.tar .
 # Extract the TAR file
 RUN tar -xvf server-${VERSION}.tar
 
+# Create a log directory
+RUN mkdir -p /app/logs
+
 # Copy the logging properties file
 COPY logging.properties logging.properties
 
