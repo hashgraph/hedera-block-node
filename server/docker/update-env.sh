@@ -38,6 +38,10 @@ else
   echo "JAVA_OPTS='-Xms16G -Xmx16G'" >> .env
 fi
 
+# Set the timezone to UTC and the logging properties file to /app/logging.properties
+# file is mounted in the docker-compose.yml, changes to the file will be reflected in the container
+echo "JAVA_TOOL_OPTIONS='-Djava.util.logging.config.file=/app/logging.properties -Duser.timezone=UTC'" >> .env
+
 # Output the values
 echo ".env properties:"
 cat .env
