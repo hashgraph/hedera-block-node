@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Hedera Hashgraph, LLC
+ * Copyright (C) 2024-2025 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,6 @@
 package com.hedera.block.server;
 
 import static com.hedera.block.common.constants.StringsConstants.APPLICATION_PROPERTIES;
-import static com.hedera.block.common.constants.StringsConstants.LOGGING_PROPERTIES;
-import static io.helidon.config.ConfigSources.classpath;
-import static io.helidon.config.ConfigSources.file;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 
@@ -28,10 +25,8 @@ import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
 import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
-import io.helidon.config.Config;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /** Main class for the block node server */
 public class Server {
