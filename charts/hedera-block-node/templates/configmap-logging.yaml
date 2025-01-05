@@ -6,8 +6,7 @@ data:
   logging.properties: |
     # Log properties
     .level= {{ .Values.blockNode.logs.level }}
-    java.util.logging.SimpleFormatter.format= {{ .Values.blockNode.logs.format }}
 
-    {{- range .Values.blockNode.logs.loggingProperties }}
-    {{ .name }}={{ .value }}
+    {{- range $key, $value := .Values.blockNode.logs.loggingProperties }}
+    {{ $key }}={{ $value }}
     {{- end }}

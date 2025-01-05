@@ -101,50 +101,36 @@ blockNode:
     # Available Levels are (from most verbose to least verbose):
     # ALL FINEST FINER FINE CONFIG INFO WARNING SEVERE OFF
     level: "INFO"
-    ################################################################################
-    # SimpleFormatter single-line format configuration
-    ################################################################################
-    # The format syntax uses java.util.Formatter.
-    # The parameters are:
-    #   %1$ - date/time (java.util.Date)
-    #   %2$ - source (usually class and method)
-    #   %3$ - logger?s name
-    #   %4$ - log level
-    #   %5$ - log message
-    #   %6$ - throwable trace
-    #
-    # Example to produce a line such as:
-    # 2025-01-04 00:34:43 INFO [com.hedera.block.server.Server main] Starting BlockNode Server
-    #
-    format: "%1$tF %1$tT %4$-7s [%2$s] %5$s %n"
     loggingProperties:
-      # Add any additional logging configuration properties here
-      - name: "io.helidon.webserver.level"
-        value: "INFO"
-      - name: "io.helidon.config.level"
-        value: "SEVERE"
-      - name: "io.helidon.security.level"
-        value: "INFO"
-      - name: "io.helidon.common.level"
-        value: "INFO"
-      - name: "handlers"
-        value: "java.util.logging.ConsoleHandler, java.util.logging.FileHandler"
-      - name: "java.util.logging.ConsoleHandler.level"
-        value: "FINE"
-      - name: "java.util.logging.ConsoleHandler.formatter"
-        value: "java.util.logging.SimpleFormatter"
-      - name: "java.util.logging.FileHandler.pattern"
-        value: "/app/logs/blocknode-%g.log"
-      - name: "java.util.logging.FileHandler.append"
-        value: "true"
-      - name: "java.util.logging.FileHandler.limit"
-        value: "5000000"
-      - name: "java.util.logging.FileHandler.count"
-        value: "5"
-      - name: "java.util.logging.FileHandler.level"
-        value: "FINE"
-      - name: "java.util.logging.FileHandler.formatter"
-        value: "java.util.logging.SimpleFormatter"
+      io.helidon.webserver.level: "INFO"
+      io.helidon.webserver.access.level: "INFO"
+      io.helidon.config.level: "SEVERE"
+      io.helidon.security.level: "INFO"
+      io.helidon.common.level: "INFO"
+      handlers: "java.util.logging.ConsoleHandler, java.util.logging.FileHandler"
+      java.util.logging.ConsoleHandler.level: "FINE"
+      java.util.logging.ConsoleHandler.formatter: "java.util.logging.SimpleFormatter"
+      java.util.logging.FileHandler.pattern: "/app/logs/blocknode-%g.log"
+      java.util.logging.FileHandler.append: "true"
+      java.util.logging.FileHandler.limit: "5_000_000"
+      java.util.logging.FileHandler.count: "5"
+      java.util.logging.FileHandler.level: "FINE"
+      java.util.logging.FileHandler.formatter: "java.util.logging.SimpleFormatter"
+      ################################################################################
+      # SimpleFormatter single-line format configuration
+      ################################################################################
+      # The format syntax uses java.util.Formatter.
+      # The parameters are:
+      #   %1$ - date/time (java.util.Date)
+      #   %2$ - source (usually class and method)
+      #   %3$ - logger?s name
+      #   %4$ - log level
+      #   %5$ - log message
+      #   %6$ - throwable trace
+      #
+      # Example to produce a line such as:
+      # 2025-01-04 00:34:43 INFO [com.hedera.block.server.Server main] Starting BlockNode Server
+      java.util.logging.SimpleFormatter.format: "%1$tF %1$tT %4$-7s [%2$s] %5$s %n"
 
 kubepromstack:
   enabled: false
