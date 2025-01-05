@@ -13,6 +13,13 @@ scrape_configs:
     pipeline_stages:
       - docker:
           docker_url: unix:///var/run/docker.sock
+          # This multiline stage merges multiple lines for one exception stack trace
+          # into a single log message.
+      - multiline:
+          # firstline: A regex that identifies the start of a new log entry
+          firstline: '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+          # Maximum wait time for more lines before sending the collected log upstream
+          max_wait_time: 3s
     relabel_configs:
       - source_labels: [__meta_docker_container_name]
         regex: "/(.*)"
