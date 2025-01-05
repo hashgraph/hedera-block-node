@@ -133,7 +133,7 @@ blockNode:
       java.util.logging.SimpleFormatter.format: "%1$tF %1$tT %4$-7s [%2$s] %5$s %n"
 
 kubepromstack:
-  enabled: false
+  enabled: true
   prometheusOperator:
     namespaces:
       releaseNamespace: true
