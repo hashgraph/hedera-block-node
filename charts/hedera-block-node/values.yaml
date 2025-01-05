@@ -182,3 +182,17 @@ promtail:
     serverPort: 3101
     clients:
       - url: http://{{ .Release.Name }}-loki:3100/loki/api/v1/push
+    snippets:
+      pipelineStages:
+        - docker:
+            label_fields:
+              stream: stream
+        - multiline:
+            # A regex that identifies the start of a new log entry
+            firstline: '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+            # Maximum wait time for more lines before sending the collected log upstream
+            max_wait_time: 3s
+            separator: ''
+        - replace:
+            expression: '(\n){2,}'
+            replace: ''
