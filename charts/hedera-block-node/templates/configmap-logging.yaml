@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hedera-block-node.fullname" . }}-logging-config
+data:
+  logging.properties: |
+    # Log properties
+    .level= {{ .Values.blockNode.logs.level }}
+    java.util.logging.SimpleFormatter.format= {{ .Values.blockNode.logs.format }}
+
+    {{- range .Values.blockNode.logs.loggingProperties }}
+    {{ .name }}={{ .value }}
+    {{- end }}
