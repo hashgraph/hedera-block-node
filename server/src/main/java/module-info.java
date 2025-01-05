@@ -35,7 +35,6 @@ module com.hedera.block.server {
     requires com.swirlds.metrics.api;
     requires dagger;
     requires io.helidon.common;
-    requires io.helidon.config;
     requires io.helidon.webserver;
     requires javax.inject;
     requires static com.github.spotbugs.annotations;
