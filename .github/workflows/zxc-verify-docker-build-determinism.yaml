@@ -149,12 +149,12 @@ jobs:
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
         run: ./gradlew assemble --scan
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
-        with:
-          registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+#        with:
+#          registry: ${{ env.DOCKER_REGISTRY }}
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract version
         id: extract_version
@@ -208,14 +208,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Windows is not supported due to GitHub not supporting Docker Desktop/Podman Desktop and Docker CE on Windows
-        # not supporting BuildKit and the Buildx plugin.
-        # GitHub hosted MacOS and Ubuntu runners are temporarily disabled.
         os:
           #- ubuntu-22.04
           #- ubuntu-20.04
-          #- macos-12
-          #- macos-11
           - block-node-linux-medium
     steps:
       - name: Harden Runner
@@ -302,33 +297,18 @@ jobs:
         run: docker info
 
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
-        with:
-          registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+#        with:
+#          registry: ${{ env.DOCKER_REGISTRY }}
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract version
         id: extract_version
         run: |
           VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
-
-#      - name: Docker Image Debugging
-#        run: |
-#          echo "zero ---------------------"
-#          pwd
-#          ls -la
-#          echo "${{ env.VERSION }}"
-#          ls -la "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
-#          echo "one ---------------------"
-#          echo "server/"
-#          ls -la ./server/
-#          echo "server/build/"
-#          ls -la ./server/build/
-#          echo "server/build/distributions/"
-#          ls -la ./server/build/distributions/
 
       - name: Build Docker Image
         uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
