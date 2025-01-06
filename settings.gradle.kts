@@ -47,9 +47,9 @@ dependencyResolutionManagement {
 
             // Define a constant for protobuf version.
             val protobufVersion = "4.28.2"
-            val helidonVersion = "4.1.1"
+            val helidonVersion = "4.1.6"
             val grpcIoVersion = "1.65.1"
-            val pbjVersion = "0.9.11"
+            val pbjVersion = "0.9.12"
 
             // Compile time dependencies
             version("io.helidon.webserver.http2", helidonVersion)
