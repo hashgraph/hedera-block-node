@@ -3,22 +3,32 @@
 # Define Global Build Arguments
 #
 ########################################################################################################################
-ARG UBUNTU_TAG="focal-20230605"
+ARG UBUNTU_TAG="mantic-20240216"
+ARG SOURCE_DATE_EPOCH="0"
 
 ########################################################################################################################
 #
 # Setup Builder Image
 #
 ########################################################################################################################
-FROM ubuntu:${UBUNTU_TAG} AS openjdk-builder
+FROM ubuntu:${UBUNTU_TAG} AS java-builder-interim
+# Define Build Arguments
+ARG SOURCE_DATE_EPOCH
 
 # Define Standard Environment Variables
-ENV LC_ALL=C.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 # Install basic OS utilities for building
-RUN apt-get update && \
-	apt-get install --yes tar gzip gnupg2 curl
+RUN --mount=type=bind,source=./repro-sources-list.sh,target=/usr/local/bin/repro-sources-list.sh \
+    repro-sources-list.sh && \
+    apt-get update && \
+	apt-get install --yes --no-install-recommends tar gzip curl ca-certificates && \
+    apt-get autoclean --yes && \
+    apt-get clean all --yes && \
+    rm -rf /var/log/ && \
+    rm -rf /var/cache/
 
 ##########################
 ####    Java Setup    ####
@@ -28,21 +38,21 @@ RUN set -eux; \
         ARCH="$(dpkg --print-architecture)"; \
         case "${ARCH}" in \
            aarch64|arm64) \
-             ESUM='e184dc29a6712c1f78754ab36fb48866583665fa345324f1a79e569c064f95e9'; \
-             BINARY_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.1%2B12/OpenJDK21U-jdk_aarch64_linux_hotspot_21.0.1_12.tar.gz'; \
-             ;; \
-           amd64|i386:x86-64) \
-             ESUM='1a6fa8abda4c5caed915cfbeeb176e7fbd12eb6b222f26e290ee45808b529aa1'; \
-             BINARY_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.1%2B12/OpenJDK21U-jdk_x64_linux_hotspot_21.0.1_12.tar.gz'; \
-             ;; \
+            ESUM='d768eecddd7a515711659e02caef8516b7b7177fa34880a56398fd9822593a79'; \
+            BINARY_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_aarch64_linux_hotspot_21.0.4_7.tar.gz'; \
+            ;; \
+          amd64|i386:x86-64) \
+            ESUM='51fb4d03a4429c39d397d3a03a779077159317616550e4e71624c9843083e7b9'; \
+            BINARY_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz'; \
+            ;; \
            ppc64el|powerpc:common64) \
-             ESUM='9574828ef3d735a25404ced82e09bf20e1614f7d6403956002de9cfbfcb8638f'; \
-             BINARY_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.1%2B12/OpenJDK21U-jdk_ppc64le_linux_hotspot_21.0.1_12.tar.gz'; \
-             ;; \
+            ESUM='c208cd0fb90560644a90f928667d2f53bfe408c957a5e36206585ad874427761'; \
+            BINARY_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_ppc64le_linux_hotspot_21.0.4_7.tar.gz'; \
+            ;; \
            *) \
-             echo "Unsupported arch: ${ARCH}"; \
-             exit 1; \
-             ;; \
+            echo "Unsupported arch: ${ARCH}"; \
+            exit 1; \
+            ;; \
         esac; \
     curl -LfsSo /tmp/openjdk.tar.gz ${BINARY_URL}; \
     echo "${ESUM} */tmp/openjdk.tar.gz" | sha256sum -c -; \
@@ -55,33 +65,48 @@ RUN set -eux; \
     	  ; \
     rm -f /tmp/openjdk.tar.gz /usr/local/java/lib/src.zip;
 
+########################################
+####    Deterministic Build Hack    ####
+########################################
+
+# === Workarounds below will not be needed when https://github.com/moby/buildkit/pull/4057 is merged ===
+# NOTE: PR #4057 has been merged but will not be available until the v0.13.x series of releases.
+# Limit the timestamp upper bound to SOURCE_DATE_EPOCH.
+# Workaround for https://github.com/moby/buildkit/issues/3180
+RUN find $( ls / | grep -E -v "^(dev|mnt|proc|sys)$" ) \
+  -newermt "@${SOURCE_DATE_EPOCH}" -writable -xdev \
+  | xargs touch --date="@${SOURCE_DATE_EPOCH}" --no-dereference
+
+##########################
+
+FROM scratch AS java-builder
+COPY --from=java-builder-interim / /
+
+
 ########################################################################################################################
 #
 # Build Final Image
 #
 ########################################################################################################################
-FROM ubuntu:${UBUNTU_TAG} AS openjdk-base
+FROM java-builder AS production-image
+
+# Define Build Arguments
+ARG SOURCE_DATE_EPOCH
 
 # Define Standard Environment Variables
+ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
-ENV JAVA_VERSION="jdk-21.0.1+12"
-ENV JAVA_HOME="/usr/local/java/"
 
-# Fetch Validated Java Binaries
-COPY --from=openjdk-builder /usr/local/java/ /usr/local/java/
+ENV JAVA_VERSION="jdk-21.0.4+7"
+ENV JAVA_HOME=/usr/local/java
+ENV PATH=${JAVA_HOME}/bin:${PATH}
 
-# Install Basic OS Requirements
-RUN apt-get update && \
-	apt-get install --yes --no-install-recommends tar gzip openssl curl && \
-	apt-get autoremove --yes && \
-	apt-get autoclean --yes && \
-	apt-get clean all --yes && \
-    rm -rf /var/lib/{apt,dpkg,cache,log}/
-
+# Install Java
+COPY --from=java-builder ${JAVA_HOME}/ ${JAVA_HOME}/
 
 # Expose the port that the application will run on
-EXPOSE 8080
+EXPOSE 8080/tcp
 
 # Define version
 ARG VERSION
