@@ -149,13 +149,6 @@ jobs:
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
         run: ./gradlew assemble --scan
 
-#      - name: Login to GitHub Container Registry
-#        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
-#        with:
-#          registry: ${{ env.DOCKER_REGISTRY }}
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Extract version
         id: extract_version
         run: |
@@ -209,8 +202,8 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          #- ubuntu-22.04
-          #- ubuntu-20.04
+          - ubuntu-22.04
+          - ubuntu-20.04
           - block-node-linux-medium
     steps:
       - name: Harden Runner
@@ -295,14 +288,6 @@ jobs:
 
       - name: Show Docker Info
         run: docker info
-
-
-#      - name: Login to GitHub Container Registry
-#        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
-#        with:
-#          registry: ${{ env.DOCKER_REGISTRY }}
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract version
         id: extract_version
