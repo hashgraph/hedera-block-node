@@ -46,7 +46,7 @@ jobs:
         uses: actions/setup-java@8df1039502a15bceb9433410b1a100fbe190c53b # v4.5.0
         with:
           distribution: "temurin"
-          java-version: "21.0.4"
+          java-version: "21.0.5"
 
       - name: Cache Gradle packages
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2

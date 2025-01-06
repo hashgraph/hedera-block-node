@@ -17,7 +17,7 @@ plugins {
 group = "com.hedera.block"
 
 val javaVersionMajor = JavaVersion.VERSION_21
-val javaVersionPatch = "0.4"
+val javaVersionPatch = "0.5"
 
 val currentJavaVersionMajor = JavaVersion.current()
 val currentJavaVersion = providers.systemProperty("java.version").get()

@@ -36,7 +36,7 @@ jobs:
     with:
       ref: ${{ github.event.inputs.ref || '' }}
       java-distribution: ${{ inputs.java-distribution || 'temurin' }}
-      java-version: ${{ inputs.java-version || '21.0.4' }}
+      java-version: ${{ inputs.java-version || '21.0.5' }}
 
   check-docker:
     name: Docker
@@ -44,7 +44,7 @@ jobs:
     with:
       ref: ${{ github.event.inputs.ref || '' }}
       java-distribution: ${{ inputs.java-distribution || 'temurin' }}
-      java-version: ${{ inputs.java-version || '21.0.4' }}
+      java-version: ${{ inputs.java-version || '21.0.5' }}
 
   publish:
     runs-on: block-node-linux-medium
@@ -62,7 +62,7 @@ jobs:
         uses: actions/setup-java@8df1039502a15bceb9433410b1a100fbe190c53b # v4.5.0
         with:
           distribution: "temurin"
-          java-version: "21.0.4"
+          java-version: "21.0.5"
 
       - name: Build
         run: ./gradlew clean build
