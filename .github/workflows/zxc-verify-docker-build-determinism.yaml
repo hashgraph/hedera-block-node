@@ -156,19 +156,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-#      - name: Prepare for Docker Build
-#        if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
-#        run: |
-#          mkdir -p "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/data"
-#
-#          echo "::group::Copying Application Artifacts"
-#            cp -Rvf "${{ github.workspace }}/server/build/libs" "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/data/"
-#          echo "::endgroup::"
-
-#      - name: Write Artifact Version Descriptor
-#        run: |
-#          printf "VERSION=%s\nCOMMIT=%s\nDATE=%s" "$(./gradlew -q showVersion)" "$(git log -1 --format='%H' | cut -c1-8)" "$(date -u)" | tee "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/sdk/VERSION"
-
       - name: Extract version
         id: extract_version
         run: |
@@ -204,37 +191,10 @@ jobs:
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
         working-directory: ${{ env.DOCKER_MANIFEST_PATH }}
         run: |
-          STARTING_DIR=$(pwd)
-          echo "Starting directory: ${STARTING_DIR}"
           EXTRACTED_FILE_NAME="${{ steps.commit.outputs.sha }}.tar"
-          echo "Before manifest operations ----------"
-          pwd
-          ls -la
           gunzip "${{ steps.manifest.outputs.name }}"
-          echo "After gunzip ----------"
-          ls -la
           tar -rvf "${EXTRACTED_FILE_NAME}" -C "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}" ../../server/build/
           gzip "${EXTRACTED_FILE_NAME}"
-          echo "After augmenting and gzipping ----------"
-          ls -la
-
-#      - name: Clear Bucket
-#        run: |
-#          echo "::group::Clear Bucket Group"
-#          BASELINE_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/baselines"
-#          DOCKER_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/"
-#          gsutil ls "${DOCKER_PATH}"
-#
-#          echo "Baseline Path: ${BASELINE_PATH}"
-#          gsutil ls "${BASELINE_PATH}/"
-#          echo "end of ls"
-#
-#          gsutil rm "${BASELINE_PATH}/*"
-#          echo "end of rm"
-#
-#          gsutil ls "${BASELINE_PATH}/"
-#          echo "end of second ls"
-#          echo "::endgroup::"
 
       - name: Upload Baseline
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
@@ -308,37 +268,16 @@ jobs:
         env:
           CLOUDSDK_PYTHON: ${{ format('{0}{1}', env.pythonLocation, runner.os == 'Windows' && '\python.exe' || '/bin/python3') }}
         run: |
-          echo "Starting directory: $(pwd)"
-
           echo "Creating build directory: ./server/build/distributions"
           mkdir -p ./server/build/distributions
-          echo $?
-          echo "Here is the server dir:"
-          ls -la ./server/
-          echo "Here is the server/build dir:"
-          ls -la ./server/build/
-          echo "Here is the server/build/distributions/ dir:"
-          ls -la ./server/build/distributions/
 
-          echo "Making: ${{ env.DOCKER_MANIFEST_PATH }}"
           mkdir -p "${{ env.DOCKER_MANIFEST_PATH }}"
           cd "${{ env.DOCKER_MANIFEST_PATH }}"
-
-          echo "Downloading: ${{ needs.generate-baseline.outputs.file }}"
           gsutil cp "${{ needs.generate-baseline.outputs.file }}" .
-          echo "Extracting: ${{ needs.generate-baseline.outputs.name }}"
           tar -xzf "${{ needs.generate-baseline.outputs.name }}"
-          pwd
-          ls -la
-          echo "listing sub dir ./server/build/distributions/"
-          ls -la ./server/build/distributions/
-
           cd ./server/build/distributions
           cp *.tar "${{ github.workspace }}/server/build/distributions/"
-          echo "Copied files to ${{ github.workspace }}/server/build/distributions/"
-
-          echo "Here is the directory again:"
-          ls -la /home/runner/_work/hedera-block-node/hedera-block-node/server/build/distributions/
+          echo "Copied Block Node server tar file to ${{ github.workspace }}/server/build/distributions/"
 
       - name: Determine Home Directory
         id: home
@@ -376,20 +315,20 @@ jobs:
           VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
-      - name: Docker Image Debugging
-        run: |
-          echo "zero ---------------------"
-          pwd
-          ls -la
-          echo "${{ env.VERSION }}"
-          ls -la "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
-          echo "one ---------------------"
-          echo "server/"
-          ls -la ./server/
-          echo "server/build/"
-          ls -la ./server/build/
-          echo "server/build/distributions/"
-          ls -la ./server/build/distributions/
+#      - name: Docker Image Debugging
+#        run: |
+#          echo "zero ---------------------"
+#          pwd
+#          ls -la
+#          echo "${{ env.VERSION }}"
+#          ls -la "${{ github.workspace }}/${{ env.DOCKER_CONTEXT_PATH }}/"
+#          echo "one ---------------------"
+#          echo "server/"
+#          ls -la ./server/
+#          echo "server/build/"
+#          ls -la ./server/build/
+#          echo "server/build/distributions/"
+#          ls -la ./server/build/distributions/
 
       - name: Build Docker Image
         uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
@@ -417,45 +356,35 @@ jobs:
       - name: Validate Layers (linux/amd64)
         run: |
           if ! diff -u "${{ env.DOCKER_MANIFEST_PATH }}/linux-amd64.layers.json" "${{ steps.regen-manifest.outputs.path }}/linux-amd64.layers.json" >/dev/null 2>&1; then
-           echo "::group::Debug Bucket Group"
-           BASELINE_NAME="${{ steps.commit.outputs.sha }}.tar.gz"
-           BASELINE_PATH="gs://hedera-ci-ephemeral-artifacts/${{ github.repository }}/docker/baselines"
-           BASELINE_FILE="${BASELINE_PATH}/${BASELINE_NAME}"
-           echo "Baseline Path: ${BASELINE_PATH}"
-           gsutil ls "${BASELINE_PATH}"
-           echo "end"
-           echo "::endgroup::"
-
            echo "::group::Layer Differences"
            diff -u "${{ env.DOCKER_MANIFEST_PATH }}/linux-amd64.layers.json" "${{ steps.regen-manifest.outputs.path }}/linux-amd64.layers.json"
-
            echo "::endgroup::"
            exit 1
           fi
 
       - name: Validate Layers (linux/arm64)
         run: |
-          if ! diff -u "${DOCKER_MANIFEST_PATH}/linux-arm64.layers.json" "${{ steps.regen-manifest.outputs.path }}/linux-arm64.layers.json" >/dev/null 2>&1; then
+          if ! diff -u "${{ env.DOCKER_MANIFEST_PATH }}/linux-arm64.layers.json" "${{ steps.regen-manifest.outputs.path }}/linux-arm64.layers.json" >/dev/null 2>&1; then
            echo "::group::Layer Differences"
-           diff -u "${DOCKER_MANIFEST_PATH}/linux-arm64.layers.json" "${{ steps.regen-manifest.outputs.path }}/linux-arm64.layers.json"
+           diff -u "${{ env.DOCKER_MANIFEST_PATH }}/linux-arm64.layers.json" "${{ steps.regen-manifest.outputs.path }}/linux-arm64.layers.json"
            echo "::endgroup::"
            exit 1
           fi
 
       - name: Validate Full Manifest (linux/amd64)
         run: |
-          if ! diff -u "${DOCKER_MANIFEST_PATH}/linux-amd64.comparable.json" "${{ steps.regen-manifest.outputs.path }}/linux-amd64.comparable.json" >/dev/null 2>&1; then
+          if ! diff -u "${{ env.DOCKER_MANIFEST_PATH }}/linux-amd64.comparable.json" "${{ steps.regen-manifest.outputs.path }}/linux-amd64.comparable.json" >/dev/null 2>&1; then
            echo "::group::Layer Differences"
-           diff -u "${DOCKER_MANIFEST_PATH}/linux-amd64.comparable.json" "${{ steps.regen-manifest.outputs.path }}/linux-amd64.comparable.json"
+           diff -u "${{ env.DOCKER_MANIFEST_PATH }}/linux-amd64.comparable.json" "${{ steps.regen-manifest.outputs.path }}/linux-amd64.comparable.json"
            echo "::endgroup::"
            exit 1
           fi
 
       - name: Validate Full Manifest (linux/arm64)
         run: |
-          if ! diff -u "${DOCKER_MANIFEST_PATH}/linux-arm64.comparable.json" "${{ steps.regen-manifest.outputs.path }}/linux-arm64.comparable.json" >/dev/null 2>&1; then
+          if ! diff -u "${{ env.DOCKER_MANIFEST_PATH }}/linux-arm64.comparable.json" "${{ steps.regen-manifest.outputs.path }}/linux-arm64.comparable.json" >/dev/null 2>&1; then
            echo "::group::Layer Differences"
-           diff -u "${DOCKER_MANIFEST_PATH}/linux-arm64.comparable.json" "${{ steps.regen-manifest.outputs.path }}/linux-arm64.comparable.json"
+           diff -u "${{ env.DOCKER_MANIFEST_PATH }}/linux-arm64.comparable.json" "${{ steps.regen-manifest.outputs.path }}/linux-arm64.comparable.json"
            echo "::endgroup::"
            exit 1
           fi
