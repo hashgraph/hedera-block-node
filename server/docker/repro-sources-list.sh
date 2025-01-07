@@ -41,7 +41,6 @@ keep_apt_cache() {
 
 case "${ID}" in
 "debian")
-  # : "${SNAPSHOT_ARCHIVE_BASE:=http://snapshot.debian.org/archive/}"
   : "${SNAPSHOT_ARCHIVE_BASE:=http://snapshot-cloudflare.debian.org/archive/}"
   : "${BACKPORTS:=}"
   case "${VERSION_ID}" in
@@ -54,7 +53,6 @@ case "${ID}" in
     ;;
   esac
   snapshot="$(printf "%(%Y%m%dT%H%M%SZ)T\n" "${SOURCE_DATE_EPOCH}")"
-  # TODO: use the new format for Debian >= 12
   echo "deb [check-valid-until=no] ${SNAPSHOT_ARCHIVE_BASE}debian/${snapshot} ${VERSION_CODENAME} main" >/etc/apt/sources.list
   echo "deb [check-valid-until=no] ${SNAPSHOT_ARCHIVE_BASE}debian-security/${snapshot} ${VERSION_CODENAME}-security main" >>/etc/apt/sources.list
   echo "deb [check-valid-until=no] ${SNAPSHOT_ARCHIVE_BASE}debian/${snapshot} ${VERSION_CODENAME}-updates main" >>/etc/apt/sources.list
