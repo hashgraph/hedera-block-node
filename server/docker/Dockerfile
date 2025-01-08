@@ -73,6 +73,16 @@ RUN find $( ls / | grep -E -v "^(dev|mnt|proc|sys)$" ) \
   -newermt "@${SOURCE_DATE_EPOCH}" -writable -xdev \
   | xargs touch --date="@${SOURCE_DATE_EPOCH}" --no-dereference
 
+# Create a non-root user and group
+ARG UNAME=hedera
+ARG UID=2000
+ARG GID=2000
+
+# Configure the standard user account
+RUN groupadd --gid ${GID} ${UNAME} && \
+    useradd --no-user-group --create-home --uid ${UID} --gid ${GID} --shell /bin/bash ${UNAME}
+
+
 ##########################
 
 FROM scratch AS java-builder
@@ -107,16 +117,7 @@ EXPOSE 8080/tcp
 # Define version
 ARG VERSION
 
-# Create a non-root user and group
-ARG UNAME=hedera
-ARG UID=2000
-ARG GID=2000
-
-# Configure the standard user account
-RUN groupadd --gid ${GID} ${UNAME} && \
-    useradd --no-user-group --create-home --uid ${UID} --gid ${GID} --shell /bin/bash ${UNAME}
-
-USER $UNAME
+USER hedera
 
 # Set the working directory inside the container
 WORKDIR /app
