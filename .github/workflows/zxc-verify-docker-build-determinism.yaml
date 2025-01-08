@@ -185,7 +185,7 @@ jobs:
         env:
           MANIFEST_PATH: ${{ env.DOCKER_MANIFEST_PATH }}
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
-        run: GITHUB_SHA="${{ needs.generate-baseline.outputs.sha-abbrev }}" ${{ env.DOCKER_MANIFEST_GENERATOR }}
+        run: GITHUB_SHA="${{ steps.commit.outputs.sha }}" ${{ env.DOCKER_MANIFEST_GENERATOR }}
 
       - name: Amend Manifest with Gradle Artifacts
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
@@ -301,11 +301,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-#      - name: Extract version
-#        id: extract_version
-#        run: |
-#          VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
-#          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+      - name: Extract version
+        id: extract_version
+        run: |
+          VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
       - name: Docker Debug
         id: docker_debug
@@ -322,7 +322,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             SOURCE_DATE_EPOCH=${{ needs.generate-baseline.outputs.source-date }}
-            VERSION=${{ needs.generate-baseline.outputs.sha-abbrev }}
+            VERSION=${{ env.VERSION }}
           context: ./${{ env.DOCKER_CONTEXT_PATH }}
           file: ./${{ env.DOCKER_CONTEXT_PATH }}/Dockerfile
           tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.generate-baseline.outputs.sha-abbrev }}
@@ -333,7 +333,7 @@ jobs:
         id: regen-manifest
         env:
           MANIFEST_PATH: ${{ env.DOCKER_MANIFEST_PATH }}/regenerated
-        run: GITHUB_SHA="${{ needs.generate-baseline.outputs.sha-abbrev }}" ${{ env.DOCKER_MANIFEST_GENERATOR }}
+        run: GITHUB_SHA="${{ needs.generate-baseline.outputs.sha }}" ${{ env.DOCKER_MANIFEST_GENERATOR }}
 
       - name: Validate Layers (linux/amd64)
         run: |
