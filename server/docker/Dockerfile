@@ -65,6 +65,9 @@ RUN set -eux; \
 ####    Deterministic Build Hack    ####
 ########################################
 
+RUN groupadd --gid 2000 hedera && \
+    useradd --no-user-group --create-home --uid 2000 --gid 2000 --shell /bin/bash hedera \
+
 # === Workarounds below will not be needed when https://github.com/moby/buildkit/pull/4057 is merged ===
 # NOTE: PR #4057 has been merged but will not be available until the v0.13.x series of releases.
 # Limit the timestamp upper bound to SOURCE_DATE_EPOCH.
@@ -72,9 +75,6 @@ RUN set -eux; \
 RUN find $( ls / | grep -E -v "^(dev|mnt|proc|sys)$" ) \
   -newermt "@${SOURCE_DATE_EPOCH}" -writable -xdev \
   | xargs touch --date="@${SOURCE_DATE_EPOCH}" --no-dereference
-
-RUN groupadd --gid 2000 hedera && \
-    useradd --no-user-group --create-home --uid 2000 --gid 2000 --shell /bin/bash hedera
 
 ##########################
 
