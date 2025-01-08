@@ -23,6 +23,24 @@ on:
         required: false
         default: "21.0.5"
 
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "The branch, tag, or commit to checkout:"
+        type: string
+        required: false
+        default: ""
+      java-distribution:
+        description: "Java JDK Distribution:"
+        type: string
+        required: false
+        default: "temurin"
+      java-version:
+        description: "Java JDK Version:"
+        type: string
+        required: false
+        default: "21.0.5"
+
 defaults:
   run:
     shell: bash
