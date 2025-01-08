@@ -76,7 +76,9 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
     public ConcurrentStreamingTreeHasher(
             @NonNull final ExecutorService executorService, final int hashCombineBatchSize) {
         this.executorService = requireNonNull(executorService);
-        this.hashCombineBatchSize = Preconditions.requireEven(hashCombineBatchSize, "Hash combine batch size must be an even number");;
+        this.hashCombineBatchSize =
+                Preconditions.requireEven(hashCombineBatchSize, "Hash combine batch size must be an even number");
+        ;
     }
 
     @Override
