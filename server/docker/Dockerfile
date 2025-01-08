@@ -73,15 +73,8 @@ RUN find $( ls / | grep -E -v "^(dev|mnt|proc|sys)$" ) \
   -newermt "@${SOURCE_DATE_EPOCH}" -writable -xdev \
   | xargs touch --date="@${SOURCE_DATE_EPOCH}" --no-dereference
 
-# Create a non-root user and group
-ARG UNAME=hedera
-ARG UID=2000
-ARG GID=2000
-
-# Configure the standard user account
-RUN groupadd --gid ${GID} ${UNAME} && \
-    useradd --no-user-group --create-home --uid ${UID} --gid ${GID} --shell /bin/bash ${UNAME}
-
+RUN groupadd --gid 2000 hedera && \
+    useradd --no-user-group --create-home --uid 2000 --gid 2000 --shell /bin/bash hedera
 
 ##########################
 
