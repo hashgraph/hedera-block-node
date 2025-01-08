@@ -313,11 +313,6 @@ jobs:
           VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
-      - name: Docker Debug
-        id: docker_debug
-        run: |
-          echo "sha-abbrev: ${{ needs.generate-baseline.outputs.sha-abbrev }}"
-
       - name: Build Docker Image
         uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
         env:
