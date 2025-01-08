@@ -71,8 +71,6 @@ RUN groupadd --gid 2000 hedera && \
 # Define version
 ARG VERSION
 
-#USER hedera
-
 # Set the working directory inside the container
 WORKDIR /app
 
@@ -86,6 +84,9 @@ RUN tar -xvf server-${VERSION}.tar
 COPY logging.properties logging.properties
 
 WORKDIR /
+
+# Ensure proper file permissions
+RUN chown -R 2000:2000 /app
 
 # === Workarounds below will not be needed when https://github.com/moby/buildkit/pull/4057 is merged ===
 # NOTE: PR #4057 has been merged but will not be available until the v0.13.x series of releases.
