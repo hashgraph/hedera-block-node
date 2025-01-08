@@ -63,7 +63,7 @@ public class BlockAsLocalDirWriterTest {
 
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
-        pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testLiveRootPath));
+        pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testConfig));
     }
 
     @Test
@@ -233,7 +233,7 @@ public class BlockAsLocalDirWriterTest {
                     return invocation.callRealMethod();
                 })
                 .when(pathResolverMock)
-                .resolvePathToBlock(3);
+                .resolveLiveRawPathToBlock(3);
 
         assertThatIOException().isThrownBy(() -> toTest.write(List.of(blockItems.get(23))));
 
@@ -242,13 +242,13 @@ public class BlockAsLocalDirWriterTest {
         Optional<BlockUnparsed> blockOpt = blockReader.read(3);
         assertTrue(blockOpt.isEmpty());
 
-        final Path targetPathForBlock1 = pathResolverMock.resolvePathToBlock(1);
+        final Path targetPathForBlock1 = pathResolverMock.resolveLiveRawPathToBlock(1);
         assertThat(targetPathForBlock1).isNotNull().exists().isDirectory();
 
-        final Path targetPathForBlock2 = pathResolverMock.resolvePathToBlock(2);
+        final Path targetPathForBlock2 = pathResolverMock.resolveLiveRawPathToBlock(2);
         assertThat(targetPathForBlock2).isNotNull().exists().isDirectory();
 
-        final Path targetPathForBlock3 = pathResolverMock.resolvePathToBlock(3);
+        final Path targetPathForBlock3 = pathResolverMock.resolveLiveRawPathToBlock(3);
         assertThat(targetPathForBlock3).isNotNull().doesNotExist();
 
         // Confirm blocks 1 and 2 still exist

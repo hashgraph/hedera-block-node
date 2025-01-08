@@ -3,6 +3,7 @@ package com.hedera.block.server.persistence.storage.compression;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
@@ -23,6 +24,20 @@ public interface Compression {
      */
     @NonNull
     OutputStream wrap(@NonNull final OutputStream streamToWrap) throws IOException;
+
+    /**
+     * This method takes a valid, {@code non-null} {@link InputStream} instance
+     * and wraps it with the specific compression algorithm implementation. The
+     * resulting {@link InputStream} is then returned.
+     *
+     * @param streamToWrap a valid {@code non-null} {@link InputStream} to wrap
+     * @return a {@code non-null} {@link InputStream} that wraps the provided
+     * {@link InputStream} with the specific compression algorithm
+     * implementation
+     * @throws IOException if an I/O exception occurs
+     */
+    @NonNull
+    InputStream wrap(@NonNull final InputStream streamToWrap) throws IOException;
 
     /**
      * This method aims to return a valid, {@code non-blank} {@link String} that

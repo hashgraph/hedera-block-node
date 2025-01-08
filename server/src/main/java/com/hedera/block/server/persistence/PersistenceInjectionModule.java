@@ -35,7 +35,6 @@ import dagger.Provides;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import javax.inject.Singleton;
@@ -55,16 +54,14 @@ public interface PersistenceInjectionModule {
     @Provides
     @Singleton
     static BlockWriter<List<BlockItemUnparsed>> providesBlockWriter(
+            @NonNull final PersistenceStorageConfig config,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
             @NonNull final BlockPathResolver blockPathResolver,
             @NonNull final Compression compression) {
         Objects.requireNonNull(blockRemover);
         Objects.requireNonNull(blockPathResolver);
-        final StorageType persistenceType = blockNodeContext
-                .configuration()
-                .getConfigData(PersistenceStorageConfig.class)
-                .type();
+        final StorageType persistenceType = config.type();
         try {
             return switch (persistenceType) {
                 case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileWriter.of(blockNodeContext, blockPathResolver, compression);
@@ -90,10 +87,12 @@ public interface PersistenceInjectionModule {
     @Provides
     @Singleton
     static BlockReader<BlockUnparsed> providesBlockReader(
-            @NonNull final PersistenceStorageConfig config, @NonNull final BlockPathResolver blockPathResolver) {
+            @NonNull final PersistenceStorageConfig config,
+            @NonNull final BlockPathResolver blockPathResolver,
+            @NonNull final Compression compression) {
         final StorageType persistenceType = config.type();
         return switch (persistenceType) {
-            case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileReader.of(blockPathResolver);
+            case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileReader.of(compression, blockPathResolver);
             case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirReader.of(config);
             case NO_OP -> NoOpBlockReader.newInstance();
         };
@@ -131,10 +130,9 @@ public interface PersistenceInjectionModule {
     @Singleton
     static BlockPathResolver providesPathResolver(@NonNull final PersistenceStorageConfig config) {
         final StorageType persistenceType = config.type();
-        final Path blockStorageRoot = Path.of(config.liveRootPath());
         return switch (persistenceType) {
-            case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFilePathResolver.of(blockStorageRoot);
-            case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirPathResolver.of(blockStorageRoot);
+            case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFilePathResolver.of(config);
+            case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirPathResolver.of(config);
             case NO_OP -> NoOpBlockPathResolver.newInstance();
         };
     }
