@@ -132,6 +132,9 @@ jobs:
         with:
           version: v0.16.2
           driver-opts: network=host
+          buildkitd-config-inline: |
+            [registry."docker.io"]
+              mirrors = ["https://hub.mirror.docker.lat.ope.eng.hashgraph.io"]
 
       - name: Setup Local Docker Registry
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
@@ -284,6 +287,9 @@ jobs:
         with:
           version: v0.16.2
           driver-opts: network=host
+          buildkitd-config-inline: |
+            [registry."docker.io"]
+              mirrors = ["https://hub.mirror.docker.lat.ope.eng.hashgraph.io"]
 
       - name: Setup Local Docker Registry
         run: docker run -d -p 5000:5000 --restart=always --name registry registry:latest
