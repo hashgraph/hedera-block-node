@@ -62,7 +62,7 @@ public final class BlockAsLocalFilePathResolver implements BlockPathResolver {
 
     @NonNull
     @Override
-    public Optional<Path> findBlock(final long blockNumber) { // todo add archive root search & abstract if common
+    public Optional<Path> findBlock(final long blockNumber) {
         Preconditions.requireWhole(blockNumber);
         final Path liveRawRootPath = resolveLiveRawPathToBlock(blockNumber);
         final Path compressionExtendedLiveRawRootPath =
@@ -74,5 +74,6 @@ public final class BlockAsLocalFilePathResolver implements BlockPathResolver {
         } else {
             return Optional.empty();
         }
-    }
+    } // todo consider to add additional handling here, like test for other compression types (currently not existing)
+    // and also look for archived blocks (will be implemented in a follow-up PR)
 }

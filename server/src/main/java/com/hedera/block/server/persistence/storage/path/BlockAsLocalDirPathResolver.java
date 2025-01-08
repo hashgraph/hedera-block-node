@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.persistence.storage.path;
 
-import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,7 +13,6 @@ import java.util.Optional;
  */
 public final class BlockAsLocalDirPathResolver implements BlockPathResolver {
     private final Path liveRootPath;
-    private final CompressionType compressionType;
 
     /**
      * Constructor.
@@ -25,7 +22,6 @@ public final class BlockAsLocalDirPathResolver implements BlockPathResolver {
      */
     private BlockAsLocalDirPathResolver(@NonNull final PersistenceStorageConfig config) {
         this.liveRootPath = Path.of(config.liveRootPath());
-        this.compressionType = config.compression();
     }
 
     /**
@@ -55,16 +51,21 @@ public final class BlockAsLocalDirPathResolver implements BlockPathResolver {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
+    /**
+     * The block-as-local-dir implementation does not support
+     * compression/decompression. A block will only be found if it exists and is
+     * not compressed.
+     *
+     * @param blockNumber the block number to find the block file for
+     * @return an {@link Optional} containing the path to the block file if it
+     * exists, otherwise an empty {@link Optional}
+     */
     @NonNull
     @Override
-    public Optional<Path> findBlock(final long blockNumber) { // todo add archive root search & abstract if common
+    public Optional<Path> findBlock(final long blockNumber) {
         Preconditions.requireWhole(blockNumber);
         final Path liveRawRootPath = resolveLiveRawPathToBlock(blockNumber);
-        final Path compressionExtendedLiveRawRootPath =
-                FileUtilities.appendExtension(liveRawRootPath, compressionType.getFileExtension());
-        if (Files.exists(compressionExtendedLiveRawRootPath)) {
-            return Optional.of(compressionExtendedLiveRawRootPath);
-        } else if (Files.exists(liveRawRootPath)) {
+        if (Files.exists(liveRawRootPath)) {
             return Optional.of(liveRawRootPath);
         } else {
             return Optional.empty();

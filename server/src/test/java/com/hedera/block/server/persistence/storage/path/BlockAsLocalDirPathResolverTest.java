@@ -9,10 +9,13 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.util.TestConfigUtil;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -104,6 +107,71 @@ class BlockAsLocalDirPathResolverTest {
     @MethodSource("invalidBlockNumbers")
     void testInvalidBlockNumberArchiveResolve(final long toResolve) {
         assertThatIllegalArgumentException().isThrownBy(() -> toTest.resolveArchiveRawPathToBlock(toResolve));
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link BlockAsLocalDirPathResolver#findBlock(long)} correctly finds a
+     * block with the given block number.
+     *
+     * @param blockNumber parameterized, valid block number
+     * @param expectedBlockFile parameterized, expected block file
+     */
+    @ParameterizedTest
+    @MethodSource("validBlockNumbers")
+    void testSuccessfulFindBlockNoCompression(final long blockNumber, final String expectedBlockFile)
+            throws IOException {
+        final Path expected = testLiveRootPath.resolve(expectedBlockFile);
+        Files.createDirectories(expected.getParent());
+        Files.createFile(expected);
+
+        // assert block was created successfully
+        assertThat(expected).exists().isRegularFile().isReadable();
+
+        final Optional<Path> actual = toTest.findBlock(blockNumber);
+        assertThat(actual)
+                .isNotNull()
+                .isPresent()
+                .get(InstanceOfAssertFactories.PATH)
+                .isAbsolute()
+                .exists()
+                .isReadable()
+                .isRegularFile()
+                .isEqualByComparingTo(expected);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link BlockAsLocalDirPathResolver#findBlock(long)} correctly returns an
+     * empty {@link Optional} when a block with the given block number does not
+     * exist.
+     *
+     * @param blockNumber parameterized, valid block number
+     * @param expectedBlockFile parameterized, expected block file
+     */
+    @ParameterizedTest
+    @MethodSource("validBlockNumbers")
+    void testBlockNotFound(final long blockNumber, final String expectedBlockFile) throws IOException {
+        final Path expected = testLiveRootPath.resolve(expectedBlockFile);
+
+        // assert block does not exist
+        assertThat(expected).doesNotExist();
+
+        final Optional<Path> actual = toTest.findBlock(blockNumber);
+        assertThat(actual).isNotNull().isEmpty();
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link BlockAsLocalDirPathResolver#findBlock(long)} correctly throws an
+     * {@link IllegalArgumentException} when an invalid block number is invalid.
+     *
+     * @param blockNumber parameterized, invalid block number
+     */
+    @ParameterizedTest
+    @MethodSource("invalidBlockNumbers")
+    void testInvalidBlockNumberFindBlock(final long blockNumber) {
+        assertThatIllegalArgumentException().isThrownBy(() -> toTest.findBlock(blockNumber));
     }
 
     /**
