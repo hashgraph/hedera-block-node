@@ -68,6 +68,25 @@ RUN set -eux; \
 RUN groupadd --gid 2000 hedera && \
     useradd --no-user-group --create-home --uid 2000 --gid 2000 --shell /bin/bash hedera
 
+# Define version
+ARG VERSION
+
+#USER hedera
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy Distribution TAR file
+COPY --from=distributions server-${VERSION}.tar .
+
+# Extract the TAR file
+RUN tar -xvf server-${VERSION}.tar
+
+# Copy the logging properties file
+COPY logging.properties logging.properties
+
+WORKDIR /
+
 # === Workarounds below will not be needed when https://github.com/moby/buildkit/pull/4057 is merged ===
 # NOTE: PR #4057 has been merged but will not be available until the v0.13.x series of releases.
 # Limit the timestamp upper bound to SOURCE_DATE_EPOCH.
@@ -107,22 +126,8 @@ COPY --from=java-builder ${JAVA_HOME}/ ${JAVA_HOME}/
 # Expose the port that the application will run on
 EXPOSE 8080/tcp
 
-# Define version
-ARG VERSION
-
 USER hedera
-
-# Set the working directory inside the container
 WORKDIR /app
-
-# Copy Distribution TAR file
-COPY --from=distributions server-${VERSION}.tar .
-
-# Extract the TAR file
-RUN tar -xvf server-${VERSION}.tar
-
-# Copy the logging properties file
-COPY logging.properties logging.properties
 
 # HEALTHCHECK for liveness and readiness
 HEALTHCHECK --interval=30s --timeout=10s --start-period=3s --retries=3 \
