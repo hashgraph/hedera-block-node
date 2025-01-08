@@ -33,16 +33,16 @@ by the consensus node.
 <dt>Block Items</dt><dd>The block data pieces (header, events, transactions, 
 transaction result, state changes, proof) that make up a block.</dd>
 <dt>Block Hash</dt><dd>A cryptographic hash representing the block’s integrity.</dd>
-<dt>Signature</dt><dd>The cryptographic signature of the block hash created by 
-Network private key (aka: LedgerId).</dd>
-<dt>Public Key</dt><dd>The public key of the LedgerId that signed the block.</dd>
+<dt>Signature</dt><dd>The cryptographic signature on the block hash, created by the 
+Network aggregation of "share" private keys, as described in the TSS design.</dd>
+<dt>Public Key</dt><dd>The public key (a.k.a. Ledger ID) of the network that signed the block.</dd>
 </dl>
 
 ## Entities
 
-- #### VerificationHandler
-    - Receives the stream of block items from the (partially) parsed and
-      unverified block items ring buffer.
+- ### VerificationHandler
+    - Receives the stream of block items from the unverified block items ring 
+      buffer.
     - When it detects a block_header, it creates a BlockHashingSession using the
       BlockHashingSessionFactory, providing it with the initial block items (and
       internally, the session will handle asynchronous hashing).
