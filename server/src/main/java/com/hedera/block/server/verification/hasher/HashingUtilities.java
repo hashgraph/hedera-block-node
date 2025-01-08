@@ -26,11 +26,6 @@ public final class HashingUtilities {
     public static final int HASH_SIZE = DigestType.SHA_384.digestLength();
 
     /**
-     * The tag for the SHA-384 algorithm.
-     */
-    private static final String SHA_384_HASH_TAG = "SHA-384";
-
-    /**
      * Returns the SHA-384 hash of the given bytes.
      * @param bytes the bytes to hash
      * @return the SHA-384 hash of the given bytes
@@ -46,7 +41,7 @@ public final class HashingUtilities {
      */
     public static byte[] noThrowSha384HashOf(@NonNull final byte[] byteArray) {
         try {
-            return MessageDigest.getInstance(SHA_384_HASH_TAG).digest(byteArray);
+            return MessageDigest.getInstance(DigestType.SHA_384.algorithmName()).digest(byteArray);
         } catch (final NoSuchAlgorithmException fatal) {
             throw new IllegalStateException(fatal);
         }
