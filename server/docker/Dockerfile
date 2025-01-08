@@ -66,7 +66,7 @@ RUN set -eux; \
 ########################################
 
 RUN groupadd --gid 2000 hedera && \
-    useradd --no-user-group --create-home --uid 2000 --gid 2000 --shell /bin/bash hedera \
+    useradd --no-user-group --create-home --uid 2000 --gid 2000 --shell /bin/bash hedera
 
 # === Workarounds below will not be needed when https://github.com/moby/buildkit/pull/4057 is merged ===
 # NOTE: PR #4057 has been merged but will not be available until the v0.13.x series of releases.
