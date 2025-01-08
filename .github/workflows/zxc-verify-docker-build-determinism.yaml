@@ -301,11 +301,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract version
-        id: extract_version
-        run: |
-          VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+#      - name: Extract version
+#        id: extract_version
+#        run: |
+#          VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
+#          echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
       - name: Docker Debug
         id: docker_debug
@@ -322,7 +322,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             SOURCE_DATE_EPOCH=${{ needs.generate-baseline.outputs.source-date }}
-            VERSION=${{ env.VERSION }}
+            VERSION=${{ needs.generate-baseline.outputs.sha-abbrev }}
           context: ./${{ env.DOCKER_CONTEXT_PATH }}
           file: ./${{ env.DOCKER_CONTEXT_PATH }}/Dockerfile
           tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.generate-baseline.outputs.sha-abbrev }}
