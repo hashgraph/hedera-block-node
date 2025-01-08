@@ -89,7 +89,7 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
             throw new IllegalArgumentException("Buffer has less than " + HASH_LENGTH + " bytes remaining");
         }
         numLeaves++;
-        final var bytes = new byte[HASH_LENGTH];
+        final byte[] bytes = new byte[HASH_LENGTH];
         hash.get(bytes);
         combiner.combine(bytes);
     }
@@ -106,7 +106,7 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
         if (numLeaves == 0) {
             return Status.EMPTY;
         } else {
-            final var rightmostHashes = new ArrayList<Bytes>();
+            final ArrayList<Bytes> rightmostHashes = new ArrayList<Bytes>();
             combiner.flushAvailable(rightmostHashes, rootHeightFor(numLeaves + 1));
             return new Status(numLeaves, rightmostHashes);
         }
@@ -123,10 +123,10 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
      */
     public static Bytes rootHashFrom(@NonNull final Status penultimateStatus, @NonNull final Bytes lastLeafHash) {
         requireNonNull(lastLeafHash);
-        var hash = lastLeafHash.toByteArray();
-        final var rootHeight = rootHeightFor(penultimateStatus.numLeaves() + 1);
+        byte[] hash = lastLeafHash.toByteArray();
+        final int rootHeight = rootHeightFor(penultimateStatus.numLeaves() + 1);
         for (int i = 0; i < rootHeight; i++) {
-            final var rightmostHash = penultimateStatus.rightmostHashes().get(i);
+            final Bytes rightmostHash = penultimateStatus.rightmostHashes().get(i);
             if (rightmostHash.length() == 0) {
                 hash = HashingUtilities.combine(hash, HashCombiner.EMPTY_HASHES[i]);
             } else {
@@ -173,7 +173,7 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
 
         public CompletableFuture<Bytes> finalCombination() {
             if (height == rootHeight) {
-                final var rootHash = pendingHashes.isEmpty() ? EMPTY_HASHES[0] : pendingHashes.getFirst();
+                final byte[] rootHash = pendingHashes.isEmpty() ? EMPTY_HASHES[0] : pendingHashes.getFirst();
                 return CompletableFuture.completedFuture(Bytes.wrap(rootHash));
             } else {
                 if (!pendingHashes.isEmpty()) {
@@ -185,7 +185,7 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
 
         public void flushAvailable(@NonNull final List<Bytes> rightmostHashes, final int stopHeight) {
             if (height < stopHeight) {
-                final var newPendingHash = pendingHashes.size() % 2 == 0 ? null : pendingHashes.removeLast();
+                final byte[] newPendingHash = pendingHashes.size() % 2 == 0 ? null : pendingHashes.removeLast();
                 schedulePendingWork();
                 combination.join();
                 if (newPendingHash != null) {
@@ -206,7 +206,7 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
             if (pendingHashes.size() < MIN_TO_SCHEDULE) {
                 pendingCombination = CompletableFuture.completedFuture(combine(pendingHashes));
             } else {
-                final var hashes = pendingHashes;
+                final List<byte[]> hashes = pendingHashes;
                 pendingCombination = CompletableFuture.supplyAsync(() -> combine(hashes), executorService);
             }
             combination = combination.thenCombine(pendingCombination, (ignore, combined) -> {
@@ -218,10 +218,10 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
 
         private List<byte[]> combine(@NonNull final List<byte[]> hashes) {
             final List<byte[]> result = new ArrayList<>();
-            final var digest = DIGESTS.get();
+            final MessageDigest digest = DIGESTS.get();
             for (int i = 0, m = hashes.size(); i < m; i += 2) {
-                final var left = hashes.get(i);
-                final var right = i + 1 < m ? hashes.get(i + 1) : EMPTY_HASHES[height];
+                final byte[] left = hashes.get(i);
+                final byte[] right = i + 1 < m ? hashes.get(i + 1) : EMPTY_HASHES[height];
                 digest.update(left);
                 digest.update(right);
                 result.add(digest.digest());
@@ -231,7 +231,7 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
     }
 
     private static int rootHeightFor(final int numLeaves) {
-        final var numPerfectLeaves = containingPowerOfTwo(numLeaves);
+        final int numPerfectLeaves = containingPowerOfTwo(numLeaves);
         return numPerfectLeaves == 0 ? 0 : Integer.numberOfTrailingZeros(numPerfectLeaves);
     }
 

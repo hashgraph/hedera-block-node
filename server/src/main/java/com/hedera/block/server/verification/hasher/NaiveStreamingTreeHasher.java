@@ -36,7 +36,7 @@ public class NaiveStreamingTreeHasher implements StreamingTreeHasher {
         if (hash.remaining() < HASH_LENGTH) {
             throw new IllegalArgumentException("Buffer has less than " + HASH_LENGTH + " bytes remaining");
         }
-        final var bytes = new byte[HASH_LENGTH];
+        final byte[] bytes = new byte[HASH_LENGTH];
         hash.get(bytes);
         leafHashes.add(bytes);
     }
@@ -50,7 +50,7 @@ public class NaiveStreamingTreeHasher implements StreamingTreeHasher {
         Queue<byte[]> hashes = new LinkedList<>(leafHashes);
         final int n = hashes.size();
         if ((n & (n - 1)) != 0) {
-            final var paddedN = Integer.highestOneBit(n) << 1;
+            final int paddedN = Integer.highestOneBit(n) << 1;
             while (hashes.size() < paddedN) {
                 hashes.add(EMPTY_HASH);
             }
