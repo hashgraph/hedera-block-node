@@ -56,12 +56,14 @@ public final class BlockAsLocalFilePathResolver implements BlockPathResolver {
     @NonNull
     @Override
     public Path resolveArchiveRawPathToBlock(final long blockNumber) {
+        Preconditions.requireWhole(blockNumber);
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @NonNull
     @Override
     public Optional<Path> findBlock(final long blockNumber) { // todo add archive root search & abstract if common
+        Preconditions.requireWhole(blockNumber);
         final Path liveRawRootPath = resolveLiveRawPathToBlock(blockNumber);
         final Path compressionExtendedLiveRawRootPath =
                 FileUtilities.appendExtension(liveRawRootPath, compressionType.getFileExtension());

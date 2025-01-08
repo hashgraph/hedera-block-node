@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.stream.Stream;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -44,8 +45,8 @@ class BlockAsLocalDirPathResolverTest {
 
     /**
      * This test aims to verify that the
-     * {@link BlockAsLocalDirPathResolver#resolveLiveRawPathToBlock(long)} correctly
-     * resolves the path to a block by a given number. For the
+     * {@link BlockAsLocalDirPathResolver#resolveLiveRawPathToBlock(long)}
+     * correctly resolves the path to a block by a given number. For the
      * block-as-local-directory storage strategy, the path to a block is simply
      * the live root path appended with the given block number.
      *
@@ -54,7 +55,7 @@ class BlockAsLocalDirPathResolverTest {
      */
     @ParameterizedTest
     @MethodSource("validBlockNumbers")
-    void testSuccessfulPathResolution(final long toResolve, final String expectedBlockFile) {
+    void testSuccessfulLiveRawPathResolution(final long toResolve, final String expectedBlockFile) {
         final Path actual = toTest.resolveLiveRawPathToBlock(toResolve);
         assertThat(actual).isNotNull().isAbsolute().isEqualByComparingTo(testLiveRootPath.resolve(expectedBlockFile));
     }
@@ -69,8 +70,40 @@ class BlockAsLocalDirPathResolverTest {
      */
     @ParameterizedTest
     @MethodSource("invalidBlockNumbers")
-    void testInvalidBlockNumber(final long toResolve) {
+    void testInvalidBlockNumberLiveResolve(final long toResolve) {
         assertThatIllegalArgumentException().isThrownBy(() -> toTest.resolveLiveRawPathToBlock(toResolve));
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link BlockAsLocalDirPathResolver#resolveArchiveRawPathToBlock(long)}
+     * correctly resolves the path to a block by a given number. For the
+     * block-as-local-directory storage strategy, the path to a block is simply
+     * the live root path appended with the given block number.
+     *
+     * @param toResolve parameterized, valid block number
+     * @param expectedBlockFile parameterized, expected block file
+     */
+    @ParameterizedTest
+    @MethodSource("validBlockNumbers")
+    void testSuccessfulArchiveRawPathResolution(final long toResolve, final String expectedBlockFile) {
+        // todo this test is not yet implemented
+        Assertions.assertThatExceptionOfType(UnsupportedOperationException.class)
+                .isThrownBy(() -> toTest.resolveArchiveRawPathToBlock(toResolve));
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link BlockAsLocalDirPathResolver#resolveArchiveRawPathToBlock(long)} correctly
+     * throws an {@link IllegalArgumentException} when an invalid block number
+     * is provided. A block number is invalid if it is a strictly negative number.
+     *
+     * @param toResolve parameterized, invalid block number
+     */
+    @ParameterizedTest
+    @MethodSource("invalidBlockNumbers")
+    void testInvalidBlockNumberArchiveResolve(final long toResolve) {
+        assertThatIllegalArgumentException().isThrownBy(() -> toTest.resolveArchiveRawPathToBlock(toResolve));
     }
 
     /**

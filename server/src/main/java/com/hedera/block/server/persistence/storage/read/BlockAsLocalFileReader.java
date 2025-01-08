@@ -63,6 +63,6 @@ public final class BlockAsLocalFileReader implements LocalBlockReader<BlockUnpar
                 new ReadableStreamingData(compression.wrap(Files.newInputStream(resolvedBlockPath)))) {
             return BlockUnparsed.PROTOBUF.parse(data);
         } // todo this method must be extended to try to read uncompressed data if compressed data is not found
-          // need some mechanism that would be convenient to use not only here but also in other places
+        // need some mechanism that would be convenient to use not only here but also in other places
     }
 }

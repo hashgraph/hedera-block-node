@@ -4,6 +4,7 @@ package com.hedera.block.server.persistence.storage.compression;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -67,6 +68,37 @@ class NoOpCompressionTest {
                 .isReadable()
                 .isRegularFile()
                 .hasSameBinaryContentAs(actualNoOpCompression(byteArrayTestData));
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link NoOpCompression#wrap(InputStream)} correctly wraps a valid
+     * provided {@link InputStream} and reads the test data from it`s
+     * destination as it is provided, no decompression is done.
+     *
+     * @param testData parameterized, test data
+     * @throws IOException if an I/O exception occurs
+     */
+    @ParameterizedTest
+    @MethodSource("testData")
+    void testSuccessfulDecompression(final String testData) throws IOException {
+        final Path toRead = testTempDir.resolve("successfulDecompression.txt");
+        Files.createFile(toRead);
+
+        final byte[] expected = testData.getBytes(StandardCharsets.UTF_8);
+        try (final OutputStream out = Files.newOutputStream(toRead)) {
+            out.write(expected);
+        }
+
+        // assert that the target file exists and is a regular, non-empty file
+        assertThat(toRead).exists().isReadable().isRegularFile();
+
+        // read data
+        final byte[] actual;
+        try (final InputStream in = toTest.wrap(Files.newInputStream(toRead))) {
+            actual = in.readAllBytes();
+        }
+        assertThat(actual).isNotNull().isEqualTo(expected);
     }
 
     private Path actualNoOpCompression(final byte[] byteArrayTestData) throws IOException {
