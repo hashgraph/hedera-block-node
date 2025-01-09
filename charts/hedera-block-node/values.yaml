@@ -156,3 +156,43 @@ kubepromstack:
 
   nodeExporter:
     enabled: true
+
+loki:
+  enabled: true
+  isDefault: true
+  url: http://{{(include "loki.serviceName" .)}}:{{ .Values.loki.service.port }}
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: http-metrics
+    initialDelaySeconds: 45
+  livenessProbe:
+    httpGet:
+      path: /ready
+      port: http-metrics
+    initialDelaySeconds: 45
+  datasource:
+    jsonData: "{}"
+    uid: ""
+
+promtail:
+  enabled: true
+  config:
+    logLevel: info
+    serverPort: 3101
+    clients:
+      - url: http://{{ .Release.Name }}-loki:3100/loki/api/v1/push
+    snippets:
+      pipelineStages:
+        - docker:
+            label_fields:
+              stream: stream
+        - multiline:
+            # A regex that identifies the start of a new log entry
+            firstline: '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+            # Maximum wait time for more lines before sending the collected log upstream
+            max_wait_time: 3s
+            separator: ''
+        - replace:
+            expression: '(\n){2,}'
+            replace: ''
