@@ -84,7 +84,7 @@ jobs:
       - name: Extract version
         id: extract_version
         run: |
-          VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
+          VERSION=$(cat version.txt)
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
       - name: Server - Build and push image
@@ -147,7 +147,7 @@ jobs:
       - name: Extract version
         id: extract_version
         run: |
-          VERSION=$(grep 'version=' gradle.properties | cut -d '=' -f2)
+          VERSION=$(cat version.txt)
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
       - name: Package helm chart
