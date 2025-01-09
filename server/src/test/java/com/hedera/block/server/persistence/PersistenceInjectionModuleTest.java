@@ -105,15 +105,20 @@ class PersistenceInjectionModuleTest {
     void testProvidesBlockWriter(final StorageType storageType) {
         final Configuration localConfigurationMock = mock(Configuration.class);
         lenient().when(blockNodeContextMock.metricsService()).thenReturn(mock(MetricsService.class));
-        when(blockNodeContextMock.configuration()).thenReturn(localConfigurationMock);
-        when(localConfigurationMock.getConfigData(PersistenceStorageConfig.class))
+        lenient().when(blockNodeContextMock.configuration()).thenReturn(localConfigurationMock);
+        lenient()
+                .when(localConfigurationMock.getConfigData(PersistenceStorageConfig.class))
                 .thenReturn(persistenceStorageConfigMock);
 
         lenient().when(persistenceStorageConfigMock.liveRootPath()).thenReturn(testLiveRootPath.toString());
         when(persistenceStorageConfigMock.type()).thenReturn(storageType);
 
         final BlockWriter<List<BlockItemUnparsed>> actual = PersistenceInjectionModule.providesBlockWriter(
-                blockNodeContextMock, blockRemoverMock, blockPathResolverMock, compressionMock);
+                persistenceStorageConfigMock,
+                blockNodeContextMock,
+                blockRemoverMock,
+                blockPathResolverMock,
+                compressionMock);
 
         final Class<?> targetInstanceType =
                 switch (storageType) {
@@ -148,7 +153,11 @@ class PersistenceInjectionModuleTest {
         // Expect an UncheckedIOException due to the IOException
         assertThatExceptionOfType(UncheckedIOException.class)
                 .isThrownBy(() -> PersistenceInjectionModule.providesBlockWriter(
-                        blockNodeContextMock, blockRemoverMock, blockPathResolverMock, compressionMock))
+                        localPersistenceStorageConfigMock,
+                        blockNodeContextMock,
+                        blockRemoverMock,
+                        blockPathResolverMock,
+                        compressionMock))
                 .withCauseInstanceOf(IOException.class)
                 .withMessage("Failed to create BlockWriter");
     }
@@ -170,8 +179,8 @@ class PersistenceInjectionModuleTest {
         lenient().when(persistenceStorageConfigMock.liveRootPath()).thenReturn(testLiveRootPath.toString());
         when(persistenceStorageConfigMock.type()).thenReturn(storageType);
 
-        final BlockReader<BlockUnparsed> actual =
-                PersistenceInjectionModule.providesBlockReader(persistenceStorageConfigMock, blockPathResolverMock);
+        final BlockReader<BlockUnparsed> actual = PersistenceInjectionModule.providesBlockReader(
+                persistenceStorageConfigMock, blockPathResolverMock, compressionMock);
 
         final Class<?> targetInstanceType =
                 switch (storageType) {

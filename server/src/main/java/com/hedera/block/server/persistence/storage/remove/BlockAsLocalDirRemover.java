@@ -54,7 +54,7 @@ public final class BlockAsLocalDirRemover implements LocalBlockRemover {
     @Override
     public void remove(final long blockNumber) throws IOException {
         Preconditions.requireWhole(blockNumber);
-        final Path blockPath = blockPathResolver.resolvePathToBlock(blockNumber);
+        final Path blockPath = blockPathResolver.resolveLiveRawPathToBlock(blockNumber);
         if (Files.notExists(blockPath)) {
             LOGGER.log(ERROR, "Block cannot be deleted as it does not exist: {0}", blockNumber);
         } else {

@@ -94,7 +94,7 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
     }
 
     private List<BlockItemUnparsed> writeToFs() throws IOException {
-        final Path rawBlockPath = blockPathResolver.resolvePathToBlock(currentBlockNumber);
+        final Path rawBlockPath = blockPathResolver.resolveLiveRawPathToBlock(currentBlockNumber);
         final Path resolvedBlockPath =
                 FileUtilities.appendExtension(rawBlockPath, compression.getCompressionFileExtension());
         FileUtilities.createFile(resolvedBlockPath);

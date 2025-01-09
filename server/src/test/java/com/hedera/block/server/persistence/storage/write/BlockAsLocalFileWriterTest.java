@@ -55,7 +55,7 @@ class BlockAsLocalFileWriterTest {
 
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
-        pathResolverMock = spy(BlockAsLocalFilePathResolver.of(testLiveRootPath));
+        pathResolverMock = spy(BlockAsLocalFilePathResolver.of(testConfig));
 
         compressionMock = spy(NoOpCompression.newInstance());
 
@@ -84,7 +84,7 @@ class BlockAsLocalFileWriterTest {
         final BlockHeader targetHeader =
                 BlockHeader.PROTOBUF.parse(toWrite.getFirst().blockHeader());
 
-        final Path expectedPath = pathResolverMock.resolvePathToBlock(targetHeader.number());
+        final Path expectedPath = pathResolverMock.resolveLiveRawPathToBlock(targetHeader.number());
         assertThat(expectedPath).isNotNull().doesNotExist();
 
         final BlockUnparsed expectedBlockToWrite =
@@ -141,7 +141,7 @@ class BlockAsLocalFileWriterTest {
         final BlockHeader targetHeader =
                 BlockHeader.PROTOBUF.parse(toWrite.getFirst().blockHeader());
 
-        final Path expectedPath = pathResolverMock.resolvePathToBlock(targetHeader.number());
+        final Path expectedPath = pathResolverMock.resolveLiveRawPathToBlock(targetHeader.number());
         assertThat(expectedPath).isNotNull().doesNotExist();
 
         final BlockUnparsed expectedBlockToWrite =

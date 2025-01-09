@@ -131,7 +131,7 @@ public class PbjBlockStreamServiceIntegrationTest {
 
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
-        pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testLiveRootPath));
+        pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testConfig));
     }
 
     @Test

@@ -149,22 +149,28 @@ public record PersistenceStorageConfig(
          * This type of compression is used to compress the blocks using the
          * `Zstandard` algorithm.
          */
-        ZSTD(0, 20),
+        ZSTD(0, 20, ".zstd"),
         /**
          * This type means no compression will be done.
          */
-        NONE(Integer.MIN_VALUE, Integer.MAX_VALUE);
+        NONE(Integer.MIN_VALUE, Integer.MAX_VALUE, "");
 
         private final int minCompressionLevel;
         private final int maxCompressionLevel;
+        private final String fileExtension;
 
-        CompressionType(final int minCompressionLevel, final int maxCompressionLevel) {
+        CompressionType(final int minCompressionLevel, final int maxCompressionLevel, final String fileExtension) {
             this.minCompressionLevel = minCompressionLevel;
             this.maxCompressionLevel = maxCompressionLevel;
+            this.fileExtension = fileExtension;
         }
 
         public void verifyCompressionLevel(final int levelToCheck) {
             Preconditions.requireInRange(levelToCheck, minCompressionLevel, maxCompressionLevel);
+        }
+
+        public String getFileExtension() {
+            return fileExtension;
         }
     }
 }
