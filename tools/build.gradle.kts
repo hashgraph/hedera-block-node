@@ -1,27 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 import com.github.jengelman.gradle.plugins.shadow.internal.DefaultDependencyFilter
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    id("application")
-    id("org.hiero.gradle.module.library")
+    id("org.hiero.gradle.module.application")
     id("com.gradleup.shadow") version "8.3.5"
 }
 
 description = "Hedera Block Stream Tools"
 
 application { mainClass = "com.hedera.block.tools.BlockStreamTool" }
-
-// Generate Manifest with Main-Class and Implementation-Title
-tasks.withType<Jar>().configureEach {
-    manifest {
-        attributes(
-            "Main-Class" to application.mainClass.get(),
-            "Implementation-Title" to project.name,
-            "Implementation-Version" to project.version
-        )
-    }
-}
 
 // Allow non-module Jar
 extraJavaModuleInfo {
@@ -50,8 +37,16 @@ dependencies {
     implementation("com.google.cloud:google-cloud-storage")
 }
 
-tasks.withType<ShadowJar>().configureEach {
-    group = "shadow"
+// == Shadow plugin configuration ==
+tasks.shadowJar {
+    // Generate Manifest with Main-Class and Implementation-Title
+    manifest {
+        attributes(
+            "Main-Class" to application.mainClass,
+            "Implementation-Title" to project.name,
+            "Implementation-Version" to project.version
+        )
+    }
 
     // There is an issue in the shadow plugin that it automatically accesses the
     // files in 'runtimeClasspath' while Gradle is building the task graph.
@@ -59,7 +54,6 @@ tasks.withType<ShadowJar>().configureEach {
     dependencyFilter = NoResolveDependencyFilter()
 }
 
-// Disable dependency resolution as it conflicts with shadow plugin
 class NoResolveDependencyFilter : DefaultDependencyFilter(project) {
     override fun resolve(configuration: FileCollection): FileCollection {
         return configuration
