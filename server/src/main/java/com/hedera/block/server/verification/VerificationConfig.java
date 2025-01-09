@@ -38,9 +38,11 @@ public record VerificationConfig(
                 hashCombineBatchSize, "[VERIFICATION_HASH_COMBINE_BATCH_SIZE] must be even and greater than 2");
 
         // Log the actual configuration
-        LOGGER.log(System.Logger.Level.INFO, "Verification configuration enabled: " + enabled);
-        LOGGER.log(System.Logger.Level.INFO, "Verification configuration sessionType: " + sessionType);
+        LOGGER.log(System.Logger.Level.INFO, "Verification Properties:");
+        LOGGER.log(System.Logger.Level.INFO, "verification.enabled - VERIFICATION_ENABLED : " + enabled);
+        LOGGER.log(System.Logger.Level.INFO, "verification.sessionType - VERIFICATION_SESSION_TYPE : " + sessionType);
         LOGGER.log(
-                System.Logger.Level.INFO, "Verification configuration hashCombineBatchSize: " + hashCombineBatchSize);
+                System.Logger.Level.INFO,
+                "verification.hashCombineBatchSize - VERIFICATION_HASH_COMBINE_BATCH_SIZE : " + hashCombineBatchSize);
     }
 }
