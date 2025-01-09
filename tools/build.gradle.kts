@@ -34,6 +34,10 @@ extraJavaModuleInfo {
 tasks.withType<ModuleDirectivesScopeCheck>().configureEach { enabled = false }
 
 mainModuleInfo {
+    // depend on peer streams gradle module to get access to protobuf generated classes
+    requires("com.hedera.block.stream")
+    requires("com.github.luben.zstd_jni")
+    requires("info.picocli")
     runtimeOnly("com.swirlds.config.impl")
     runtimeOnly("org.apache.logging.log4j.slf4j2.impl")
     runtimeOnly("io.grpc.netty")
@@ -41,13 +45,7 @@ mainModuleInfo {
 
 testModuleInfo { requiresStatic("com.github.spotbugs.annotations") }
 
-dependencies {
-    implementation("com.google.cloud:google-cloud-storage")
-    implementation("com.github.luben:zstd-jni:1.5.6-6")
-    implementation("info.picocli:picocli:4.7.6")
-    // depend on peer streams gradle module to get access to protobuf generated classes
-    implementation(project(":stream"))
-}
+dependencies { implementation("com.google.cloud:google-cloud-storage") }
 
 tasks.withType<ShadowJar>().configureEach {
     group = "shadow"
