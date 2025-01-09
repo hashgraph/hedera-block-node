@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.verification;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
@@ -138,12 +140,12 @@ class BlockVerificationServiceImplTest {
         BlockVerificationService service = new BlockVerificationServiceImpl(metricsService, sessionFactory);
 
         // When
-        service.onBlockItemsReceived(blockItems);
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> service.onBlockItemsReceived(blockItems));
 
         // Then
-        // Just logs a warning. No increments or sessions created.
         verifyNoInteractions(sessionFactory);
         verifyNoInteractions(verificationBlocksReceived, verificationBlocksFailed);
+        assertEquals("Received block items before a block header.", exception.getMessage());
     }
 
     @Test

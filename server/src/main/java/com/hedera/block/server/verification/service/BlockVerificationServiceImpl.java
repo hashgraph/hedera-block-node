@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.verification.service;
 
+import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.WARNING;
 import static java.util.Objects.requireNonNull;
 
@@ -76,10 +77,10 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
             currentSession = sessionFactory.createSession(blockHeader);
             currentSession.appendBlockItems(blockItems);
 
-        } else { // If we don't have a block header, we should have a current session, otherwise ignore
+        } else {
             if (currentSession == null) {
-                LOGGER.log(WARNING, "Received block items before a block header. Ignoring.");
-                return;
+                LOGGER.log(ERROR, "Received block items before a block header.");
+                throw new IllegalStateException("Received block items before a block header.");
             }
             // Append to current session
             currentSession.appendBlockItems(blockItems);
