@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 plugins {
-    id("application")
     id("org.hiero.gradle.module.library")
+    id("application")
 }
 
 description = "Hedera Block Node E2E Suites"

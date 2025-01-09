@@ -2,7 +2,8 @@
 import com.github.jengelman.gradle.plugins.shadow.internal.DefaultDependencyFilter
 
 plugins {
-    id("org.hiero.gradle.module.application")
+    id("org.hiero.gradle.module.library")
+    id("application")
     id("com.gradleup.shadow") version "8.3.5"
 }
 
