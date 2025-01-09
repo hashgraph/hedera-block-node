@@ -2,6 +2,7 @@
 package com.hedera.block.server.verification.service;
 
 import static java.lang.System.Logger.Level.WARNING;
+import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
@@ -35,8 +36,8 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
     public BlockVerificationServiceImpl(
             @NonNull final MetricsService metricsService,
             @NonNull final BlockVerificationSessionFactory sessionFactory) {
-        this.metricsService = metricsService;
-        this.sessionFactory = sessionFactory;
+        this.metricsService = requireNonNull(metricsService);
+        this.sessionFactory = requireNonNull(sessionFactory);
     }
 
     /**
