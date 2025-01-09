@@ -60,10 +60,12 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
             BlockHeader blockHeader = BlockHeader.PROTOBUF.parse(firstItem.blockHeader());
 
             // double check last block hash with prev of current block
+            // once we finish the block verification using signature, we need to re-think this as
+            // a side verification
             if (currentSession != null) {
                 currentSession.getVerificationResult().thenAccept(result -> {
                     if (!result.blockHash().equals(blockHeader.previousBlockHash())) {
-                        LOGGER.log(WARNING, "blockHeader.previousBlockHash does not match calculated previous hash.");
+                        LOGGER.log(ERROR, "blockHeader.previousBlockHash does not match calculated previous hash.");
                         metricsService
                                 .get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed)
                                 .increment();
