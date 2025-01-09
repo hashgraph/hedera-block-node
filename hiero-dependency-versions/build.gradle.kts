@@ -26,8 +26,8 @@ dependencies.constraints {
     // Platform SDK modules are all released together with matching versions.
     val daggerVersion = "2.42"
     val grpcIoVersion = "1.65.1"
-    val helidonVersion = "4.1.1"
-    val pbjVersion = "0.9.11"
+    val helidonVersion = "4.1.6"
+    val pbjVersion = "0.9.12"
     val protobufVersion = "4.28.2"
     val swirldsVersion = "0.51.5"
 
