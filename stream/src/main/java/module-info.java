@@ -1,6 +1,6 @@
 module com.hedera.block.stream {
     exports com.hedera.hapi.block;
-    exports com.hedera.hapi.block.protoc; // TODO move to test fixtures
+    exports com.hedera.hapi.block.protoc;
     exports com.hedera.hapi.block.stream.protoc;
     exports com.hedera.hapi.block.stream.input.protoc;
     exports com.hedera.hapi.block.stream.output.protoc;

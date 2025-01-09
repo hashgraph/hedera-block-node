@@ -4,8 +4,6 @@ plugins {
     id("application")
 }
 
-// dependencies { implementation(project(":common")) }
-
 description = "Hedera Block Stream Simulator"
 
 // Remove the following line to enable all 'javac' lint checks that we have turned on by default

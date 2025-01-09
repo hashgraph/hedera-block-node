@@ -1,6 +1,5 @@
 /** Runtime module of the suites. */
 module com.hedera.block.node.suites {
-    // Require testing libraries
     requires com.hedera.block.simulator;
     requires com.swirlds.config.api;
     requires com.swirlds.config.extensions;
