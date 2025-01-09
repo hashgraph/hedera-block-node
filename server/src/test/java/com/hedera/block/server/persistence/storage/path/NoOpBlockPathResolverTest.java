@@ -23,7 +23,7 @@ class NoOpBlockPathResolverTest {
 
     /**
      * This test aims to verify that the
-     * {@link NoOpBlockPathResolver#resolvePathToBlock(long)} correctly resolves
+     * {@link NoOpBlockPathResolver#resolveLiveRawPathToBlock(long)} correctly resolves
      * the path to a block by a given number. The no-op resolver does nothing,
      * always returns a path resolved under '/tmp' based on the blockNumber and
      * has no preconditions check. E.g. for blockNumber 0, the resolved path is
@@ -33,9 +33,39 @@ class NoOpBlockPathResolverTest {
      */
     @ParameterizedTest
     @MethodSource({"validBlockNumbers", "invalidBlockNumbers"})
-    void testSuccessfulPathResolution(final long toResolve, final Path expected) {
-        final Path actual = toTest.resolvePathToBlock(toResolve);
+    void testSuccessfulLiveRawPathResolution(final long toResolve, final Path expected) {
+        final Path actual = toTest.resolveLiveRawPathToBlock(toResolve);
         assertThat(actual).isNotNull().isAbsolute().isEqualByComparingTo(expected);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link NoOpBlockPathResolver#resolveArchiveRawPathToBlock(long)} correctly resolves
+     * the path to a block by a given number. The no-op resolver does nothing,
+     * always returns a path resolved under '/tmp' based on the blockNumber and
+     * has no preconditions check. E.g. for blockNumber 0, the resolved path is
+     * '/tmp/hashgraph/blocknode/data/0.tmp.blk'.
+     *
+     * @param toResolve parameterized, block number
+     */
+    @ParameterizedTest
+    @MethodSource({"validBlockNumbers", "invalidBlockNumbers"})
+    void testSuccessfulArchiveRawPathResolution(final long toResolve, final Path expected) {
+        final Path actual = toTest.resolveArchiveRawPathToBlock(toResolve);
+        assertThat(actual).isNotNull().isAbsolute().isEqualByComparingTo(expected);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link NoOpBlockPathResolver#findBlock(long)} always returns an empty
+     * optional.
+     *
+     * @param toResolve parameterized, block number
+     */
+    @ParameterizedTest
+    @MethodSource({"validBlockNumbers", "invalidBlockNumbers"})
+    void testSuccessfulFindBlock(final long toResolve) {
+        assertThat(toTest.findBlock(toResolve)).isNotNull().isEmpty();
     }
 
     /**

@@ -151,7 +151,7 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
                 throw e;
             } else {
                 repairPermissions(liveRootPath);
-                repairPermissions(blockPathResolver.resolvePathToBlock(currentBlockNumber));
+                repairPermissions(blockPathResolver.resolveLiveRawPathToBlock(currentBlockNumber));
                 LOGGER.log(INFO, "Retrying to write the BlockItem protobuf to a file");
                 doWrite(targetPath, toWrite, attempt + 1);
             }
@@ -170,7 +170,7 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
 
         // Construct the path to the block directory
         FileUtilities.createFolderPathIfNotExists(
-                blockPathResolver.resolvePathToBlock(currentBlockNumber),
+                blockPathResolver.resolveLiveRawPathToBlock(currentBlockNumber),
                 DEBUG,
                 DEFAULT_FOLDER_PERMISSIONS,
                 BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
@@ -192,7 +192,7 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
     @NonNull
     private Path calculateBlockItemPath() {
         // Build the path to a .blk file
-        final Path blockPath = blockPathResolver.resolvePathToBlock(currentBlockNumber);
+        final Path blockPath = blockPathResolver.resolveLiveRawPathToBlock(currentBlockNumber);
         blockNodeFileNameIndex++;
         return blockPath.resolve(blockNodeFileNameIndex + BLOCK_FILE_EXTENSION);
     }
