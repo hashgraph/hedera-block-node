@@ -9,8 +9,6 @@ plugins {
 dependencies { api(platform("com.google.cloud:libraries-bom:26.49.0")) }
 
 dependencies.constraints {
-    // Define a constant for the platform SDK version.
-    // Platform SDK modules are all released together with matching versions.
     val daggerVersion = "2.42"
     val grpcIoVersion = "1.65.1"
     val helidonVersion = "4.1.6"
