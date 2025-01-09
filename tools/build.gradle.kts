@@ -10,18 +10,20 @@ description = "Hedera Block Stream Tools"
 
 application { mainClass = "com.hedera.block.tools.BlockStreamTool" }
 
-// Allow non-module Jar
+// Allow non-module Jars
 extraJavaModuleInfo {
     failOnMissingModuleInfo = false
     failOnAutomaticModules = false
 }
 
 mainModuleInfo {
-    // depend on peer streams gradle module to get access to protobuf generated classes
-    requires("com.hedera.block.stream")
+    requires("com.hedera.block.stream") // use streams module to access protobuf generated classes
     requires("com.hedera.pbj.runtime")
     requires("com.github.luben.zstd_jni")
+    requires("com.google.api.gax")
     requires("com.google.auth.oauth2")
+    requires("com.google.cloud.core")
+    requires("com.google.cloud.storage")
     requires("com.google.gson")
     requires("info.picocli")
     runtimeOnly("com.swirlds.config.impl")
@@ -30,12 +32,6 @@ mainModuleInfo {
 }
 
 testModuleInfo { requiresStatic("com.github.spotbugs.annotations") }
-
-dependencies {
-    implementation("com.google.api:gax")
-    implementation("com.google.cloud:google-cloud-core")
-    implementation("com.google.cloud:google-cloud-storage")
-}
 
 // == Shadow plugin configuration ==
 tasks.shadowJar {
