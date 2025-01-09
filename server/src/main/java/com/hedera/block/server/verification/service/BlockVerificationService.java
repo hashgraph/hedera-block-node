@@ -3,6 +3,8 @@ package com.hedera.block.server.verification.service;
 
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.pbj.runtime.ParseException;
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 import java.util.List;
 
 /**
@@ -15,5 +17,5 @@ public interface BlockVerificationService {
      * @param blockItems the block items to add to the verification service
      * @throws ParseException if the block items are invalid
      */
-    void onBlockItemsReceived(List<BlockItemUnparsed> blockItems) throws ParseException;
+    void onBlockItemsReceived(@NonNull List<BlockItemUnparsed> blockItems) throws ParseException;
 }

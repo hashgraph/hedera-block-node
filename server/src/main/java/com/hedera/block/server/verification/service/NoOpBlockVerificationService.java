@@ -2,6 +2,8 @@
 package com.hedera.block.server.verification.service;
 
 import com.hedera.hapi.block.BlockItemUnparsed;
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 import java.util.List;
 
 /** No-op implementation of the {@link BlockVerificationService}. */
@@ -18,7 +20,7 @@ public class NoOpBlockVerificationService implements BlockVerificationService {
      * Does nothing
      */
     @Override
-    public void onBlockItemsReceived(List<BlockItemUnparsed> blockItems) {
+    public void onBlockItemsReceived(@NonNull List<BlockItemUnparsed> blockItems) {
         // no-op
     }
 }

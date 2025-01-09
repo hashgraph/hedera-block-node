@@ -46,7 +46,7 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
      * @throws ParseException if the block items are invalid
      */
     @Override
-    public void onBlockItemsReceived(List<BlockItemUnparsed> blockItems) throws ParseException {
+    public void onBlockItemsReceived(@NonNull List<BlockItemUnparsed> blockItems) throws ParseException {
 
         final BlockItemUnparsed firstItem = blockItems.getFirst();
 
