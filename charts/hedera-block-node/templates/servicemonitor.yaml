@@ -1,3 +1,7 @@
+{{- /*
+SPDX-License-Identifier: Apache-2.0
+*/}}
+
 {{ if .Values.kubepromstack.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor

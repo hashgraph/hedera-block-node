@@ -1,5 +1,5 @@
-Simulator Chart has been deployed successfully.
-The simulator does not exposes any services or API, but it automatically starts to work with the provided documentation.
+BlockStream Simulator Chart has been deployed successfully.
+The simulator does not expose any services or API, but it automatically starts to work with the provided documentation.
 
 The configuration can be overridden by providing a custom values.yaml with the following dictionary:
 simulator.config
