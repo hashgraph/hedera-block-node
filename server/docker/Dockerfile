@@ -106,8 +106,11 @@ COPY --from=distributions server-${VERSION}.tar .
 # Extract the TAR file
 RUN tar -xvf server-${VERSION}.tar
 
+# Create a log directory
+RUN mkdir -p /app/logs/config
+
 # Copy the logging properties file
-COPY logging.properties logging.properties
+COPY logging.properties /app/logs/config/logging.properties
 
 # HEALTHCHECK for liveness and readiness
 HEALTHCHECK --interval=30s --timeout=10s --start-period=3s --retries=3 \
