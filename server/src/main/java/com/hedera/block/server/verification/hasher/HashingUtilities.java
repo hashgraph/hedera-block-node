@@ -119,10 +119,7 @@ public final class HashingUtilities {
             }
         }
 
-        inputHashes.flip();
-        outputHashes.flip();
-
-        return new Hashes(inputHashes, outputHashes);
+        return new Hashes(inputHashes.flip(), outputHashes.flip());
     }
 
     /**
@@ -135,8 +132,8 @@ public final class HashingUtilities {
         ByteBuffer buffer = ByteBuffer.allocate(HASH_SIZE);
         buffer.put(digest.digest(
                 BlockItemUnparsed.PROTOBUF.toBytes(blockItemUnparsed).toByteArray()));
-        buffer.flip();
-        return buffer;
+
+        return buffer.flip();
     }
 
     /**

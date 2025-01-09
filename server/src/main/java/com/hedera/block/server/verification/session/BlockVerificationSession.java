@@ -4,7 +4,6 @@ package com.hedera.block.server.verification.session;
 import com.hedera.block.server.verification.VerificationResult;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
