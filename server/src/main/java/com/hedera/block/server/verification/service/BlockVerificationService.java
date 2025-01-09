@@ -4,7 +4,6 @@ package com.hedera.block.server.verification.service;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
-
 import java.util.List;
 
 /**

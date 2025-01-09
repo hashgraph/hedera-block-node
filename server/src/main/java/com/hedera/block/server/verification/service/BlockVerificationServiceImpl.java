@@ -79,6 +79,7 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
 
         } else {
             if (currentSession == null) {
+                // todo(452): correctly propagate this exception to the rest of the system, so it can be handled
                 LOGGER.log(ERROR, "Received block items before a block header.");
                 throw new IllegalStateException("Received block items before a block header.");
             }

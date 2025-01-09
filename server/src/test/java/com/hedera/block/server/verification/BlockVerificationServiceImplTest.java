@@ -140,7 +140,8 @@ class BlockVerificationServiceImplTest {
         BlockVerificationService service = new BlockVerificationServiceImpl(metricsService, sessionFactory);
 
         // When
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> service.onBlockItemsReceived(blockItems));
+        IllegalStateException exception =
+                assertThrows(IllegalStateException.class, () -> service.onBlockItemsReceived(blockItems));
 
         // Then
         verifyNoInteractions(sessionFactory);
