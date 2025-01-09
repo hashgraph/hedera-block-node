@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 module com.hedera.block.stream {
     exports com.hedera.hapi.block;
     exports com.hedera.hapi.block.protoc;

@@ -1,6 +1,4 @@
-/**
- * Module info for common module.
- */
+// SPDX-License-Identifier: Apache-2.0
 module com.hedera.block.common {
     exports com.hedera.block.common.constants;
     exports com.hedera.block.common.utils;

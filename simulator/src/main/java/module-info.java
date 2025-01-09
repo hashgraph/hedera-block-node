@@ -1,6 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
 import com.hedera.block.simulator.config.SimulatorConfigExtension;
 
-/** Runtime module of the simulator. */
 module com.hedera.block.simulator {
     exports com.hedera.block.simulator.config.data;
     exports com.hedera.block.simulator.exception;

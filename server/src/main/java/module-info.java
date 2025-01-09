@@ -1,6 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
 import com.hedera.block.server.config.BlockNodeConfigExtension;
 
-/** Runtime module of the server. */
 module com.hedera.block.server {
     exports com.hedera.block.server;
     exports com.hedera.block.server.consumer;
