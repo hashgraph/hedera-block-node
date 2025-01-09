@@ -9,4 +9,5 @@ dependencies {
     implementation(project(":server"))
     implementation(project(":simulator"))
     implementation(project(":suites"))
+    implementation(project(":tools"))
 }

@@ -42,7 +42,6 @@ mainModuleInfo {
 testModuleInfo { requiresStatic("com.github.spotbugs.annotations") }
 
 dependencies {
-    implementation(platform("com.google.cloud:libraries-bom:26.49.0"))
     implementation("com.google.cloud:google-cloud-storage")
     implementation("com.github.luben:zstd-jni:1.5.6-6")
     implementation("info.picocli:picocli:4.7.6")

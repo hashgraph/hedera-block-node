@@ -6,6 +6,8 @@ plugins {
     id("org.hiero.gradle.check.spotless-kotlin")
 }
 
+dependencies { api(platform("com.google.cloud:libraries-bom:26.49.0")) }
+
 dependencies.constraints {
     // Define a constant for the platform SDK version.
     // Platform SDK modules are all released together with matching versions.
@@ -46,6 +48,7 @@ dependencies.constraints {
     api("io.helidon.webserver:helidon-webserver:$helidonVersion") {
         because("io.helidon.webserver")
     }
+    api("org.jetbrains:annotations:26.0.1") { because("org.jetbrains.annotations") }
 
     // gRPC dependencies
     api("io.grpc:grpc-api:$grpcIoVersion") { because("io.grpc") }
