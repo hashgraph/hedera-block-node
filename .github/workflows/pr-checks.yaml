@@ -60,15 +60,15 @@ jobs:
 
       - name: Build
         id: gradle-build
-        run: ${GRADLE_EXEC} build
+        run: ${GRADLE_EXEC} assemble --scan
 
       - name: Style Check
         id: spotless-check
-        run: ${GRADLE_EXEC} spotlessCheck
+        run: ${GRADLE_EXEC} qualityCheck --continue --scan
 
       - name: Unit Tests
         id: unit-tests
-        run: ${GRADLE_EXEC} check
+        run: ${GRADLE_EXEC} check --scan
 
       - name: Upload coverage report
         uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0

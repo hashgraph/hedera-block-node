@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -11,7 +12,12 @@ updates:
     schedule:
       interval: daily
 
-  - package-ecosystem: "gradle"
-    directory: "/"
+  - package-ecosystem: gradle
+    directory: /hiero-dependency-versions
     schedule:
-      interval: "weekly"
+      interval: weekly
+
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
