@@ -45,7 +45,7 @@ public class BlockVerificationSessionSync extends AbstractBlockVerificationSessi
     }
 
     @Override
-    public void appendBlockItems(List<BlockItemUnparsed> blockItems) {
+    public void appendBlockItems(@NonNull List<BlockItemUnparsed> blockItems) {
         if (!isRunning()) {
             LOGGER.log(System.Logger.Level.ERROR, "Block verification session is not running");
             return;

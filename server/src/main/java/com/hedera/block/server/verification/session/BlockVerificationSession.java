@@ -3,6 +3,8 @@ package com.hedera.block.server.verification.session;
 
 import com.hedera.block.server.verification.VerificationResult;
 import com.hedera.hapi.block.BlockItemUnparsed;
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -16,7 +18,7 @@ public interface BlockVerificationSession {
      *
      * @param blockItems the list of block items to process.
      */
-    void appendBlockItems(List<BlockItemUnparsed> blockItems);
+    void appendBlockItems(@NonNull List<BlockItemUnparsed> blockItems);
 
     /**
      * Indicates whether the verification session is still running.
