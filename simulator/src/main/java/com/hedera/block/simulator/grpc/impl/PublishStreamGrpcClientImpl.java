@@ -37,7 +37,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
@@ -63,7 +64,8 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
 
     // State
     private final AtomicBoolean streamEnabled;
-    private final List<String> lastKnownStatuses = new ArrayList<>();
+    private final int lastKnownStatusesCapacity;
+    private final Deque<String> lastKnownStatuses;
 
     /**
      * Creates a new PublishStreamGrpcClientImpl with the specified dependencies.
@@ -84,6 +86,8 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
         this.blockStreamConfig = requireNonNull(blockStreamConfig);
         this.metricsService = requireNonNull(metricsService);
         this.streamEnabled = requireNonNull(streamEnabled);
+        this.lastKnownStatusesCapacity = blockStreamConfig.lastKnownStatusesCapacity();
+        lastKnownStatuses = new ArrayDeque<>(this.lastKnownStatusesCapacity);
     }
 
     /**
@@ -95,7 +99,8 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
                 .usePlaintext()
                 .build();
         BlockStreamServiceGrpc.BlockStreamServiceStub stub = BlockStreamServiceGrpc.newStub(channel);
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled, lastKnownStatuses);
+        PublishStreamObserver publishStreamObserver =
+                new PublishStreamObserver(streamEnabled, lastKnownStatuses, lastKnownStatusesCapacity);
         requestStreamObserver = stub.publishBlockStream(publishStreamObserver);
         lastKnownStatuses.clear();
     }

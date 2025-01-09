@@ -16,7 +16,6 @@
 
 package com.hedera.block.suites.grpc.positive;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.hedera.block.simulator.BlockStreamSimulatorApp;
@@ -74,9 +73,10 @@ public class PositiveEndpointBehaviourTests extends BaseSuite {
         blockStreamSimulatorApp.stop();
         StreamStatus streamStatus = blockStreamSimulatorApp.getStreamStatus();
         assertTrue(streamStatus.publishedBlocks() > 0);
-        assertEquals(
-                streamStatus.publishedBlocks(),
-                streamStatus.lastKnownPublisherStatuses().size());
+        // We just need to make sure that number of published blocks is equal or greater than the statuses. Statuses are
+        // tracked in a queue to avoid unnecessary memory usage, therefore will always be less or equal to published.
+        assertTrue(streamStatus.publishedBlocks()
+                >= streamStatus.lastKnownPublisherStatuses().size());
 
         // Verify each status contains the word "acknowledgement"
         streamStatus

@@ -36,8 +36,7 @@ import com.hedera.hapi.block.stream.protoc.BlockItem;
 import com.hedera.hapi.block.stream.protoc.BlockProof;
 import com.swirlds.config.api.Configuration;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayDeque;
 import java.util.concurrent.CountDownLatch;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,8 +45,9 @@ class ConsumerStreamObserverTest {
 
     private MetricsService metricsService;
     private CountDownLatch streamLatch;
-    private List<String> lastKnownStatuses;
+    private ArrayDeque<String> lastKnownStatuses;
     private ConsumerStreamObserver observer;
+    private int lastKnownStatusesCapacity;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -55,18 +55,24 @@ class ConsumerStreamObserverTest {
 
         metricsService = spy(new MetricsServiceImpl(getTestMetrics(config)));
         streamLatch = mock(CountDownLatch.class);
-        List<String> lastKnownStatuses = new ArrayList<>();
+        ArrayDeque<String> lastKnownStatuses = new ArrayDeque<>();
+        lastKnownStatusesCapacity = 10;
 
-        observer = new ConsumerStreamObserver(metricsService, streamLatch, lastKnownStatuses);
+        observer =
+                new ConsumerStreamObserver(metricsService, streamLatch, lastKnownStatuses, lastKnownStatusesCapacity);
     }
 
     @Test
     void testConstructorWithNullArguments() {
         assertThrows(
-                NullPointerException.class, () -> new ConsumerStreamObserver(null, streamLatch, lastKnownStatuses));
+                NullPointerException.class,
+                () -> new ConsumerStreamObserver(null, streamLatch, lastKnownStatuses, lastKnownStatusesCapacity));
         assertThrows(
-                NullPointerException.class, () -> new ConsumerStreamObserver(metricsService, null, lastKnownStatuses));
-        assertThrows(NullPointerException.class, () -> new ConsumerStreamObserver(metricsService, streamLatch, null));
+                NullPointerException.class,
+                () -> new ConsumerStreamObserver(metricsService, null, lastKnownStatuses, lastKnownStatusesCapacity));
+        assertThrows(
+                NullPointerException.class,
+                () -> new ConsumerStreamObserver(metricsService, streamLatch, null, lastKnownStatusesCapacity));
     }
 
     @Test

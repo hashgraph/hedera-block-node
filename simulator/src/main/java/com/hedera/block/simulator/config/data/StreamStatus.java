@@ -19,7 +19,8 @@ package com.hedera.block.simulator.config.data;
 import static com.hedera.block.common.utils.Preconditions.requireWhole;
 import static java.util.Objects.requireNonNull;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 
 /**
@@ -33,8 +34,8 @@ import java.util.List;
 public record StreamStatus(
         long publishedBlocks,
         long consumedBlocks,
-        List<String> lastKnownPublisherStatuses,
-        List<String> lastKnownConsumersStatuses) {
+        Deque<String> lastKnownPublisherStatuses,
+        Deque<String> lastKnownConsumersStatuses) {
 
     /**
      * Creates a new {@link Builder} instance for constructing a {@code StreamStatus}.
@@ -51,8 +52,8 @@ public record StreamStatus(
     public static class Builder {
         private long publishedBlocks = 0;
         private long consumedBlocks = 0;
-        private List<String> lastKnownPublisherStatuses = new ArrayList<>();
-        private List<String> lastKnownConsumersStatuses = new ArrayList<>();
+        private Deque<String> lastKnownPublisherStatuses = new ArrayDeque<>();
+        private Deque<String> lastKnownConsumersStatuses = new ArrayDeque<>();
 
         /**
          * Creates a new instance of the {@code Builder} class with default configuration values.
@@ -93,7 +94,7 @@ public record StreamStatus(
          */
         public Builder lastKnownPublisherStatuses(List<String> lastKnownPublisherStatuses) {
             requireNonNull(lastKnownPublisherStatuses);
-            this.lastKnownPublisherStatuses = new ArrayList<>(lastKnownPublisherStatuses);
+            this.lastKnownPublisherStatuses = new ArrayDeque<>(lastKnownPublisherStatuses);
             return this;
         }
 
@@ -105,7 +106,7 @@ public record StreamStatus(
          */
         public Builder lastKnownConsumersStatuses(List<String> lastKnownConsumersStatuses) {
             requireNonNull(lastKnownConsumersStatuses);
-            this.lastKnownConsumersStatuses = new ArrayList<>(lastKnownConsumersStatuses);
+            this.lastKnownConsumersStatuses = new ArrayDeque<>(lastKnownConsumersStatuses);
             return this;
         }
 

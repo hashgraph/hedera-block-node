@@ -21,8 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.hedera.hapi.block.protoc.PublishStreamResponse;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
@@ -32,8 +31,10 @@ class PublishStreamObserverTest {
     void onNext() {
         PublishStreamResponse response = PublishStreamResponse.newBuilder().build();
         AtomicBoolean streamEnabled = new AtomicBoolean(true);
-        List<String> lastKnownStatuses = new ArrayList<>();
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled, lastKnownStatuses);
+        ArrayDeque<String> lastKnownStatuses = new ArrayDeque<>();
+        final int lastKnownStatusesCapacity = 10;
+        PublishStreamObserver publishStreamObserver =
+                new PublishStreamObserver(streamEnabled, lastKnownStatuses, lastKnownStatusesCapacity);
 
         publishStreamObserver.onNext(response);
         assertTrue(streamEnabled.get(), "streamEnabled should remain true after onCompleted");
@@ -43,8 +44,10 @@ class PublishStreamObserverTest {
     @Test
     void onError() {
         AtomicBoolean streamEnabled = new AtomicBoolean(true);
-        List<String> lastKnownStatuses = new ArrayList<>();
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled, lastKnownStatuses);
+        ArrayDeque<String> lastKnownStatuses = new ArrayDeque<>();
+        final int lastKnownStatusesCapacity = 10;
+        PublishStreamObserver publishStreamObserver =
+                new PublishStreamObserver(streamEnabled, lastKnownStatuses, lastKnownStatusesCapacity);
 
         publishStreamObserver.onError(new Throwable());
         assertFalse(streamEnabled.get(), "streamEnabled should be set to false after onError");
@@ -54,8 +57,10 @@ class PublishStreamObserverTest {
     @Test
     void onCompleted() {
         AtomicBoolean streamEnabled = new AtomicBoolean(true);
-        List<String> lastKnownStatuses = new ArrayList<>();
-        PublishStreamObserver publishStreamObserver = new PublishStreamObserver(streamEnabled, lastKnownStatuses);
+        ArrayDeque<String> lastKnownStatuses = new ArrayDeque<>();
+        final int lastKnownStatusesCapacity = 10;
+        PublishStreamObserver publishStreamObserver =
+                new PublishStreamObserver(streamEnabled, lastKnownStatuses, lastKnownStatusesCapacity);
 
         publishStreamObserver.onCompleted();
         assertTrue(streamEnabled.get(), "streamEnabled should remain true after onCompleted");

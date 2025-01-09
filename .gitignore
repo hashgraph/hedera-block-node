@@ -55,6 +55,7 @@ gradle-app.setting
 .env
 
 server/data/
+/tools/data/
 
 # manual test files
 server/src/test/resources/test_output/
