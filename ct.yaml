@@ -1,3 +1,5 @@
 check-version-increment: false
 target-branch: main
 validate-maintainers: false
+install:
+  timeout: 600
