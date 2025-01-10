@@ -17,7 +17,7 @@ import java.util.List;
  * A synchronous implementation of the BlockVerificationSession. It processes the block items
  * synchronously in the calling thread.
  */
-public class BlockVerificationSessionSync extends AbstractBlockVerificationSession {
+public class BlockVerificationSessionSync extends BlockVerificationSessionBase {
 
     /**
      * The logger for this class.

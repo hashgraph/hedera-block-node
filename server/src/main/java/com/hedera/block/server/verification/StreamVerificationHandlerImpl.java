@@ -55,17 +55,11 @@ public class StreamVerificationHandlerImpl
             @NonNull final MetricsService metricsService,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockVerificationService blockVerificationService) {
-        Objects.requireNonNull(subscriptionHandler);
-        Objects.requireNonNull(notifier);
-        Objects.requireNonNull(metricsService);
-        Objects.requireNonNull(serviceStatus);
-        Objects.requireNonNull(blockVerificationService);
-
-        this.subscriptionHandler = subscriptionHandler;
-        this.notifier = notifier;
-        this.metricsService = metricsService;
-        this.serviceStatus = serviceStatus;
-        this.blockVerificationService = blockVerificationService;
+        this.subscriptionHandler = Objects.requireNonNull(subscriptionHandler);
+        this.notifier = Objects.requireNonNull(notifier);
+        this.metricsService = Objects.requireNonNull(metricsService);
+        this.serviceStatus = Objects.requireNonNull(serviceStatus);
+        this.blockVerificationService = Objects.requireNonNull(blockVerificationService);
     }
 
     /**

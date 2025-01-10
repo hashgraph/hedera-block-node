@@ -25,7 +25,7 @@ import java.util.concurrent.CompletableFuture;
  * An abstract base class providing common functionality for block verification sessions.
  * Concrete classes handle how block items are appended and processed (synchronously or asynchronously).
  */
-public abstract class AbstractBlockVerificationSession implements BlockVerificationSession {
+public abstract class BlockVerificationSessionBase implements BlockVerificationSession {
 
     /**
      * The logger for this class.
@@ -74,7 +74,7 @@ public abstract class AbstractBlockVerificationSession implements BlockVerificat
      * @param inputTreeHasher the input tree hasher (e.g. naive or concurrent)
      * @param outputTreeHasher the output tree hasher (e.g. naive or concurrent)
      */
-    protected AbstractBlockVerificationSession(
+    protected BlockVerificationSessionBase(
             @NonNull final BlockHeader blockHeader,
             @NonNull final MetricsService metricsService,
             @NonNull final SignatureVerifier signatureVerifier,

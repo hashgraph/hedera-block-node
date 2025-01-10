@@ -37,7 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-public abstract class AbstractBlockVerificationSessionTest {
+public abstract class BlockVerificationSessionBaseTest {
 
     @Mock
     protected MetricsService metricsService;

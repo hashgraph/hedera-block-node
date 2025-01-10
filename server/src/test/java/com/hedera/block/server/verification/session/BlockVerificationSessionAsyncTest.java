@@ -4,7 +4,7 @@ package com.hedera.block.server.verification.session;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import java.util.concurrent.Executors;
 
-class BlockVerificationSessionAsyncTest extends AbstractBlockVerificationSessionTest {
+class BlockVerificationSessionAsyncTest extends BlockVerificationSessionBaseTest {
 
     @Override
     protected BlockVerificationSession createSession(BlockHeader blockHeader) {

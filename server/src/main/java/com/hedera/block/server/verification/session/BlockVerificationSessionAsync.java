@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
  * An asynchronous implementation of the BlockVerificationSession. It processes the block items
  * asynchronously using an executor.
  */
-public class BlockVerificationSessionAsync extends AbstractBlockVerificationSession {
+public class BlockVerificationSessionAsync extends BlockVerificationSessionBase {
 
     /**
      * The logger for this class.
