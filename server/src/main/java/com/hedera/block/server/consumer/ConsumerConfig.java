@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.consumer;
 
+import com.hedera.block.server.config.logging.Loggable;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 
@@ -11,8 +12,7 @@ import com.swirlds.config.api.ConfigProperty;
  *     timed out and will be disconnected
  */
 @ConfigData("consumer")
-public record ConsumerConfig(@ConfigProperty(defaultValue = "1500") long timeoutThresholdMillis) {
-    private static final System.Logger LOGGER = System.getLogger(ConsumerConfig.class.getName());
+public record ConsumerConfig(@Loggable @ConfigProperty(defaultValue = "1500") long timeoutThresholdMillis) {
 
     /**
      * Validate the configuration.
@@ -23,8 +23,5 @@ public record ConsumerConfig(@ConfigProperty(defaultValue = "1500") long timeout
         if (timeoutThresholdMillis <= 0) {
             throw new IllegalArgumentException("Timeout threshold must be greater than 0");
         }
-
-        LOGGER.log(
-                System.Logger.Level.INFO, "Consumer configuration timeoutThresholdMillis: " + timeoutThresholdMillis);
     }
 }

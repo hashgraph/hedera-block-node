@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.mediator;
 
+import static com.hedera.block.server.mediator.MediatorConfig.MediatorType.NO_OP;
+
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.notifier.Notifiable;
 import com.hedera.block.server.service.ServiceStatus;
@@ -26,11 +28,11 @@ public interface MediatorInjectionModule {
     @Singleton
     static LiveStreamMediator providesLiveStreamMediator(
             @NonNull BlockNodeContext blockNodeContext, @NonNull ServiceStatus serviceStatus) {
-        final String mediatorType = blockNodeContext
+        final MediatorConfig.MediatorType mediatorType = blockNodeContext
                 .configuration()
                 .getConfigData(MediatorConfig.class)
                 .type();
-        if ("NOOP".equals(mediatorType)) {
+        if (mediatorType == NO_OP) {
             return new NoOpLiveStreamMediator(blockNodeContext);
         }
 

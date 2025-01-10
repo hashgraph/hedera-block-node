@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.verification;
 
+import static com.hedera.block.server.verification.VerificationConfig.VerificationServiceType.NO_OP;
+import static com.hedera.block.server.verification.session.BlockVerificationSessionType.ASYNC;
+
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.verification.service.BlockVerificationService;
 import com.hedera.block.server.verification.service.BlockVerificationServiceImpl;
 import com.hedera.block.server.verification.service.NoOpBlockVerificationService;
 import com.hedera.block.server.verification.session.BlockVerificationSessionFactory;
-import com.hedera.block.server.verification.session.BlockVerificationSessionType;
 import java.io.IOException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -26,7 +28,7 @@ class VerificationInjectionModuleTest {
     @Test
     void testProvideBlockVerificationService_enabled() throws IOException {
         // given
-        VerificationConfig verificationConfig = new VerificationConfig(true, BlockVerificationSessionType.ASYNC, 32);
+        VerificationConfig verificationConfig = new VerificationConfig(null, ASYNC, 32);
         // when
         BlockVerificationService blockVerificationService = VerificationInjectionModule.provideBlockVerificationService(
                 verificationConfig, metricsService, sessionFactory);
@@ -35,9 +37,9 @@ class VerificationInjectionModuleTest {
     }
 
     @Test
-    void testProvideBlockVerificationService_disabled() throws IOException {
+    void testProvideBlockVerificationService_no_op() throws IOException {
         // given
-        VerificationConfig verificationConfig = new VerificationConfig(false, BlockVerificationSessionType.ASYNC, 32);
+        VerificationConfig verificationConfig = new VerificationConfig(NO_OP, ASYNC, 32);
         // when
         BlockVerificationService blockVerificationService = VerificationInjectionModule.provideBlockVerificationService(
                 verificationConfig, metricsService, sessionFactory);
@@ -48,7 +50,7 @@ class VerificationInjectionModuleTest {
     @Test
     void testProvidesBlockVerificationSessionFactory() {
         // given
-        VerificationConfig verificationConfig = new VerificationConfig(true, BlockVerificationSessionType.ASYNC, 32);
+        VerificationConfig verificationConfig = new VerificationConfig(null, ASYNC, 32);
         // when
         BlockVerificationService blockVerificationService = VerificationInjectionModule.provideBlockVerificationService(
                 verificationConfig, metricsService, sessionFactory);

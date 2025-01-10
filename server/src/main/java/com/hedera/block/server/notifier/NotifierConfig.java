@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.notifier;
 
-import static java.lang.System.Logger.Level.INFO;
-
 import com.hedera.block.common.utils.Preconditions;
+import com.hedera.block.server.config.logging.Loggable;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 
@@ -15,8 +14,7 @@ import com.swirlds.config.api.ConfigProperty;
  * @param ringBufferSize the size of the ring buffer used by the notifier
  */
 @ConfigData("notifier")
-public record NotifierConfig(@ConfigProperty(defaultValue = "1024") int ringBufferSize) {
-    private static final System.Logger LOGGER = System.getLogger(NotifierConfig.class.getName());
+public record NotifierConfig(@Loggable @ConfigProperty(defaultValue = "1024") int ringBufferSize) {
 
     /**
      * Validate the configuration.
@@ -26,6 +24,5 @@ public record NotifierConfig(@ConfigProperty(defaultValue = "1024") int ringBuff
     public NotifierConfig {
         Preconditions.requirePositive(ringBufferSize, "Notifier Ring Buffer Size must be positive");
         Preconditions.requirePowerOfTwo(ringBufferSize, "Notifier Ring Buffer Size must be a power of 2");
-        LOGGER.log(INFO, "Notifier configuration notifier.ringBufferSize: " + ringBufferSize);
     }
 }

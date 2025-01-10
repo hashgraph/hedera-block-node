@@ -10,7 +10,7 @@ public class ServiceConfigTest {
     @Test
     public void testServiceConfig_happyPath() {
         ServiceConfig serviceConfig = new ServiceConfig(2000);
-        assertEquals(2000, serviceConfig.delayMillis());
+        assertEquals(2000, serviceConfig.shutdownDelayMillis());
     }
 
     @Test

@@ -122,31 +122,30 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         // Unsubscribe any expired notifiers
         notifier.unsubscribeAllExpired();
 
-        final String observerClassType = blockNodeContext
+        final ProducerConfig.ProducerType producerType = blockNodeContext
                 .configuration()
                 .getConfigData(ProducerConfig.class)
                 .type();
 
-        if ("NOOP".equalsIgnoreCase(observerClassType)) {
-            // No need to register with the notifier for NOOP
+        if (producerType == ProducerConfig.ProducerType.NO_OP) {
             return new NoOpProducerObserver(helidonProducerObserver, blockNodeContext);
-        } else {
-            final var producerBlockItemObserver = new ProducerBlockItemObserver(
-                    Clock.systemDefaultZone(),
-                    streamMediator,
-                    notifier,
-                    helidonProducerObserver,
-                    blockNodeContext,
-                    serviceStatus);
-
-            if (serviceStatus.isRunning()) {
-                // Register the producer observer with the notifier to publish responses back to the
-                // producer
-                notifier.subscribe(producerBlockItemObserver);
-            }
-
-            return producerBlockItemObserver;
         }
+
+        final var producerBlockItemObserver = new ProducerBlockItemObserver(
+                Clock.systemDefaultZone(),
+                streamMediator,
+                notifier,
+                helidonProducerObserver,
+                blockNodeContext,
+                serviceStatus);
+
+        if (serviceStatus.isRunning()) {
+            // Register the producer observer with the notifier to publish responses back to the
+            // producer
+            notifier.subscribe(producerBlockItemObserver);
+        }
+
+        return producerBlockItemObserver;
     }
 
     /**

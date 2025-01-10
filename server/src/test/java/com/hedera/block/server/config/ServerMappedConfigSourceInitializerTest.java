@@ -4,6 +4,7 @@ package com.hedera.block.server.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import com.hedera.block.server.config.logging.Loggable;
 import com.swirlds.common.metrics.config.MetricsConfig;
 import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.ConfigData;
@@ -34,6 +35,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 class ServerMappedConfigSourceInitializerTest {
     private static final System.Logger LOGGER =
             System.getLogger(ServerMappedConfigSourceInitializerTest.class.getName());
+
+    private static final Set<String> LOGGABLE_PACKAGES = Set.of("metrics", "prometheus");
     private static final ConfigMapping[] SUPPORTED_MAPPINGS = {
         // Consumer Config
         new ConfigMapping("consumer.timeoutThresholdMillis", "CONSUMER_TIMEOUT_THRESHOLD_MILLIS"),
@@ -46,7 +49,7 @@ class ServerMappedConfigSourceInitializerTest {
         new ConfigMapping("persistence.storage.compressionLevel", "PERSISTENCE_STORAGE_COMPRESSION_LEVEL"),
 
         // Service Config
-        new ConfigMapping("service.delayMillis", "SERVICE_DELAY_MILLIS"),
+        new ConfigMapping("service.shutdownDelayMillis", "SERVICE_SHUTDOWN_DELAY_MILLIS"),
 
         // Mediator Config
         new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),
@@ -67,7 +70,7 @@ class ServerMappedConfigSourceInitializerTest {
         new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER"),
 
         // Verification Config
-        new ConfigMapping("verification.enabled", "VERIFICATION_ENABLED"),
+        new ConfigMapping("verification.type", "VERIFICATION_TYPE"),
         new ConfigMapping("verification.sessionType", "VERIFICATION_SESSION_TYPE"),
         new ConfigMapping("verification.hashCombineBatchSize", "VERIFICATION_HASH_COMBINE_BATCH_SIZE")
     };
@@ -110,26 +113,47 @@ class ServerMappedConfigSourceInitializerTest {
                             .formatted(Arrays.toString(fieldsToVerify), configClassName));
             for (final RecordComponent recordComponent : fieldsToVerify) {
                 final String fieldName = recordComponent.getName();
-                if (!recordComponent.isAnnotationPresent(ConfigProperty.class)) {
-                    fail(
-                            "Field [%s] in [%s] is missing the ConfigProperty annotation! All fields in config classes MUST have that annotation present!"
-                                    .formatted(fieldName, configClassName));
-                } else {
-                    final String expectedMappedName = "%s.%s".formatted(prefix, fieldName);
-                    final Optional<ConfigMapping> matchingMapping = Arrays.stream(SUPPORTED_MAPPINGS)
-                            .filter(mapping -> mapping.mappedName().equals(expectedMappedName))
-                            .findFirst();
-                    assertThat(matchingMapping)
-                            .isNotNull()
-                            .withFailMessage(
-                                    "Field [%s] in [%s] is not present in the environment variable mappings! Expected config key [%s] to be present and to be mapped to [%s]",
-                                    fieldName,
-                                    configClassName,
-                                    expectedMappedName,
-                                    transformToEnvVarConvention(expectedMappedName))
-                            .isPresent();
-                }
+                verifyConfigPropertyAnnotation(recordComponent, fieldName, configClassName, prefix);
+                verifyLoggableAnnotation(recordComponent, fieldName, configClassName, prefix);
             }
+        }
+    }
+
+    private void verifyConfigPropertyAnnotation(
+            final RecordComponent recordComponent,
+            final String fieldName,
+            final String configClassName,
+            final String prefix) {
+        if (!recordComponent.isAnnotationPresent(ConfigProperty.class)) {
+            fail(
+                    "Field [%s] in [%s] is missing the ConfigProperty annotation! All fields in config classes MUST have that annotation present!"
+                            .formatted(fieldName, configClassName));
+        } else {
+            final String expectedMappedName = "%s.%s".formatted(prefix, fieldName);
+            final Optional<ConfigMapping> matchingMapping = Arrays.stream(SUPPORTED_MAPPINGS)
+                    .filter(mapping -> mapping.mappedName().equals(expectedMappedName))
+                    .findFirst();
+            assertThat(matchingMapping)
+                    .isNotNull()
+                    .withFailMessage(
+                            "Field [%s] in [%s] is not present in the environment variable mappings! Expected config key [%s] to be present and to be mapped to [%s]",
+                            fieldName,
+                            configClassName,
+                            expectedMappedName,
+                            transformToEnvVarConvention(expectedMappedName))
+                    .isPresent();
+        }
+    }
+
+    private void verifyLoggableAnnotation(
+            final RecordComponent recordComponent,
+            final String fieldName,
+            final String configClassName,
+            final String prefix) {
+        if (!recordComponent.isAnnotationPresent(Loggable.class) && !LOGGABLE_PACKAGES.contains(prefix)) {
+            fail(
+                    "Field [%s] in [%s] is missing the Loggable annotation! All fields in config classes MUST have that annotation present!"
+                            .formatted(fieldName, configClassName));
         }
     }
 

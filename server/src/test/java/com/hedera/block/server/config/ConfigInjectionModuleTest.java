@@ -4,10 +4,12 @@ package com.hedera.block.server.config;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.hedera.block.server.ServerConfig;
+import com.hedera.block.server.config.logging.ConfigurationLogging;
 import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.mediator.MediatorConfig;
 import com.hedera.block.server.notifier.NotifierConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.producer.ProducerConfig;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.verification.VerificationConfig;
 import com.swirlds.common.metrics.config.MetricsConfig;
@@ -128,5 +130,28 @@ class ConfigInjectionModuleTest {
         // Verify the config
         assertNotNull(providedConfig);
         assertSame(verificationConfig, providedConfig);
+    }
+
+    @Test
+    void testProducerConfig() throws IOException {
+        BlockNodeContext context = TestConfigUtil.getTestBlockNodeContext();
+        Configuration configuration = context.configuration();
+        ProducerConfig producerConfig = configuration.getConfigData(ProducerConfig.class);
+
+        ProducerConfig providedConfig = ConfigInjectionModule.provideProducerConfig(configuration);
+
+        // Verify the config
+        assertNotNull(providedConfig);
+        assertSame(producerConfig, providedConfig);
+    }
+
+    @Test
+    void testConfigurationLogging() throws IOException {
+        BlockNodeContext context = TestConfigUtil.getTestBlockNodeContext();
+        Configuration configuration = context.configuration();
+        ConfigurationLogging providedConfigurationLogging =
+                ConfigInjectionModule.provideConfigurationLogging(configuration);
+
+        assertNotNull(providedConfigurationLogging);
     }
 }

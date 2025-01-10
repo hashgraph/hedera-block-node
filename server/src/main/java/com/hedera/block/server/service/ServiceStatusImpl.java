@@ -36,7 +36,7 @@ public class ServiceStatusImpl implements ServiceStatus {
         this.delayMillis = blockNodeContext
                 .configuration()
                 .getConfigData(ServiceConfig.class)
-                .delayMillis();
+                .shutdownDelayMillis();
     }
 
     /**

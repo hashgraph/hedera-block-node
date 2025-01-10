@@ -2,6 +2,8 @@
 package com.hedera.block.server.config;
 
 import com.hedera.block.server.ServerConfig;
+import com.hedera.block.server.config.logging.ConfigurationLogging;
+import com.hedera.block.server.config.logging.ConfigurationLoggingImpl;
 import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.mediator.MediatorConfig;
 import com.hedera.block.server.notifier.NotifierConfig;
@@ -128,5 +130,11 @@ public interface ConfigInjectionModule {
     @Provides
     static VerificationConfig provideVerificationConfig(Configuration configuration) {
         return configuration.getConfigData(VerificationConfig.class);
+    }
+
+    @Singleton
+    @Provides
+    static ConfigurationLogging provideConfigurationLogging(Configuration configuration) {
+        return new ConfigurationLoggingImpl(configuration);
     }
 }
