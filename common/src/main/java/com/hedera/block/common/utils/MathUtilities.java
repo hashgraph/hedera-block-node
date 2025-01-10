@@ -26,7 +26,7 @@ public final class MathUtilities {
      * @return {@code true} if the given number is even
      */
     public static boolean isEven(final int toCheck) {
-        return (toCheck % 2) == 0;
+        return (toCheck & 1) == 0;
     }
 
     private MathUtilities() {}
