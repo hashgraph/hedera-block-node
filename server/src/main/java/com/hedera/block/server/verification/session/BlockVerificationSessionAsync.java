@@ -62,7 +62,7 @@ public class BlockVerificationSessionAsync extends BlockVerificationSessionBase 
      * @param blockItems the list of block items to process.
      */
     @Override
-    public void appendBlockItems(@NonNull List<BlockItemUnparsed> blockItems) {
+    public void appendBlockItems(@NonNull final List<BlockItemUnparsed> blockItems) {
         if (!isRunning()) {
             LOGGER.log(System.Logger.Level.ERROR, "Block verification session is not running");
             return;
