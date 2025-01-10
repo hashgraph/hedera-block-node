@@ -53,7 +53,7 @@ permissions:
 env:
   DOCKER_MANIFEST_GENERATOR: .github/workflows/support/scripts/generate-docker-artifact-baseline.sh
   DOCKER_MANIFEST_PATH: ${{ github.workspace }}/.manifests/docker
-  DOCKER_REGISTRY: ghcr.io
+  DOCKER_REGISTRY: localhost:5000
   DOCKER_IMAGE_NAME: hashgraph/hedera-block-node
   DOCKER_CONTEXT_PATH: server/docker
   SKOPEO_VERSION: v1.14.0
@@ -169,13 +169,6 @@ jobs:
       - name: Build Gradle Artifacts
         if: ${{ steps.baseline.outputs.exists == 'false' && !failure() && !cancelled() }}
         run: ./gradlew assemble --scan
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
-        with:
-          registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract version
         id: extract_version
@@ -317,13 +310,6 @@ jobs:
 
       - name: Show Docker Info
         run: docker info
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
-        with:
-          registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract version
         id: extract_version
