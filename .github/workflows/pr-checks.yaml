@@ -17,6 +17,7 @@ env:
   GRADLE_EXEC: ./gradlew
 
 permissions:
+  id-token: write
   contents: read
 
 jobs:
