@@ -2,9 +2,6 @@
 package com.hedera.block.server;
 
 import static com.hedera.block.common.constants.StringsConstants.APPLICATION_PROPERTIES;
-import static com.hedera.block.common.constants.StringsConstants.LOGGING_PROPERTIES;
-import static io.helidon.config.ConfigSources.classpath;
-import static io.helidon.config.ConfigSources.file;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
 
@@ -13,10 +10,8 @@ import com.swirlds.config.api.Configuration;
 import com.swirlds.config.api.ConfigurationBuilder;
 import com.swirlds.config.extensions.sources.ClasspathFileConfigSource;
 import com.swirlds.config.extensions.sources.SystemPropertiesConfigSource;
-import io.helidon.config.Config;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /** Main class for the block node server */
 public class Server {
@@ -33,14 +28,6 @@ public class Server {
      */
     public static void main(final String[] args) throws IOException {
         LOGGER.log(INFO, "Starting BlockNode Server");
-
-        // Set the global configuration
-        final Config config = Config.builder()
-                .sources(file(Paths.get("/app", LOGGING_PROPERTIES)).optional())
-                .sources(classpath("helidon.properties"))
-                .build();
-
-        Config.global(config);
 
         // Init BlockNode Configuration
         final Configuration configuration = ConfigurationBuilder.create()

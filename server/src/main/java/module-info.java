@@ -1,6 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
 import com.hedera.block.server.config.BlockNodeConfigExtension;
 
-/** Runtime module of the server. */
 module com.hedera.block.server {
     exports com.hedera.block.server;
     exports com.hedera.block.server.consumer;
@@ -24,22 +24,22 @@ module com.hedera.block.server {
 
     requires com.hedera.block.common;
     requires com.hedera.block.stream;
-    requires com.github.luben.zstd_jni;
     requires com.hedera.pbj.grpc.helidon.config;
     requires com.hedera.pbj.grpc.helidon;
     requires com.hedera.pbj.runtime;
-    requires com.lmax.disruptor;
     requires com.swirlds.common;
     requires com.swirlds.config.api;
     requires com.swirlds.config.extensions;
     requires com.swirlds.metrics.api;
+    requires com.github.luben.zstd_jni;
+    requires com.lmax.disruptor;
     requires dagger;
     requires io.helidon.common;
-    requires io.helidon.config;
     requires io.helidon.webserver;
     requires javax.inject;
-    requires static com.github.spotbugs.annotations;
-    requires static com.google.auto.service;
+    requires static transitive com.github.spotbugs.annotations;
+    requires static transitive com.google.auto.service;
+    requires static java.compiler; // javax.annotation.processing.Generated
 
     provides com.swirlds.config.api.ConfigurationExtension with
             BlockNodeConfigExtension;

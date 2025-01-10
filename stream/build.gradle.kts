@@ -1,42 +1,47 @@
 // SPDX-License-Identifier: Apache-2.0
-plugins {
-    id("com.hedera.block.protobuf")
-    alias(libs.plugins.pbj)
-}
+import org.hiero.gradle.tasks.GitClone
 
-group = "com.hedera.block"
+plugins {
+    id("org.hiero.gradle.module.library")
+    id("org.hiero.gradle.feature.protobuf")
+    id("com.hedera.pbj.pbj-compiler") version "0.9.2"
+}
 
 description = "Hedera API"
 
 // Remove the following line to enable all 'javac' lint checks that we have turned on by default
 // and then fix the reported issues.
 tasks.withType<JavaCompile>().configureEach {
-    options.compilerArgs.add("-Xlint:-exports,-deprecation,-removal")
+    options.compilerArgs.add("-Xlint:-exports,-deprecation,-removal,-dep-ann")
 }
 
 // Add downloaded HAPI repo protobuf files into build directory and add to sources to build them
-tasks.cloneHederaProtobufs {
-    // uncomment below to use a specific tag
-    // tag = "v0.53.0" or a specific commit like "0047255"
-    tag = "eab8b58e30336512bcf387c803e6fc86b6ebe010"
+val cloneHederaProtobufs =
+    tasks.register<GitClone>("cloneHederaProtobufs") {
+        url = "https://github.com/hashgraph/hedera-protobufs.git"
+        localCloneDirectory = layout.buildDirectory.dir("hedera-protobufs")
 
-    // uncomment below to use a specific branch
-    // branch = "main"
-}
+        // uncomment below to use a specific tag
+        // tag = "v0.53.0" or a specific commit like "0047255"
+        tag = "eab8b58e30336512bcf387c803e6fc86b6ebe010"
+
+        // uncomment below to use a specific branch
+        // branch = "main"
+    }
 
 sourceSets {
     main {
         pbj {
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("services") })
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("block") })
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("platform") })
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("streams") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("services") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("block") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("platform") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("streams") })
         }
         proto {
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("services") })
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("block") })
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("platform") })
-            srcDir(tasks.cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("streams") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("services") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("block") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("platform") })
+            srcDir(cloneHederaProtobufs.flatMap { it.localCloneDirectory.dir("streams") })
         }
     }
 }

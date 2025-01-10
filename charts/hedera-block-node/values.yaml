@@ -79,6 +79,7 @@ blockNode:
     # Add any additional env configuration here
     # key: value
     BLOCKNODE_STORAGE_ROOT_PATH: "/app/storage"
+    JAVA_TOOL_OPTIONS: "-Djava.util.logging.config.file=/app/logs/config/logging.properties -Duser.timezone=UTC"
   secret:
     # if blank will use same as AppVersion of chart.
     PRIVATE_KEY: "fake_private_key"
@@ -96,6 +97,40 @@ blockNode:
     requests:
       cpu: "2"
       memory: "8Gi"
+  logs:
+    # Available Levels are (from most verbose to least verbose):
+    # ALL FINEST FINER FINE CONFIG INFO WARNING SEVERE OFF
+    level: "INFO"
+    loggingProperties:
+      io.helidon.webserver.level: "INFO"
+      io.helidon.webserver.access.level: "INFO"
+      io.helidon.config.level: "SEVERE"
+      io.helidon.security.level: "INFO"
+      io.helidon.common.level: "INFO"
+      handlers: "java.util.logging.ConsoleHandler, java.util.logging.FileHandler"
+      java.util.logging.ConsoleHandler.level: "FINE"
+      java.util.logging.ConsoleHandler.formatter: "java.util.logging.SimpleFormatter"
+      java.util.logging.FileHandler.pattern: "/app/logs/blocknode-%g.log"
+      java.util.logging.FileHandler.append: "true"
+      java.util.logging.FileHandler.limit: "5_000_000"
+      java.util.logging.FileHandler.count: "5"
+      java.util.logging.FileHandler.level: "FINE"
+      java.util.logging.FileHandler.formatter: "java.util.logging.SimpleFormatter"
+      ################################################################################
+      # SimpleFormatter single-line format configuration
+      ################################################################################
+      # The format syntax uses java.util.Formatter.
+      # The parameters are:
+      #   %1$ - date/time (java.util.Date)
+      #   %2$ - source (usually class and method)
+      #   %3$ - logger?s name
+      #   %4$ - log level
+      #   %5$ - log message
+      #   %6$ - throwable trace
+      #
+      # Example to produce a line such as:
+      # 2025-01-04 00:34:43 INFO [com.hedera.block.server.Server main] Starting BlockNode Server
+      java.util.logging.SimpleFormatter.format: "%1$tF %1$tT %4$-7s [%2$s] %5$s %n"
 
 kubepromstack:
   enabled: true
@@ -121,3 +156,43 @@ kubepromstack:
 
   nodeExporter:
     enabled: true
+
+loki:
+  enabled: true
+  isDefault: true
+  url: http://{{(include "loki.serviceName" .)}}:{{ .Values.loki.service.port }}
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: http-metrics
+    initialDelaySeconds: 45
+  livenessProbe:
+    httpGet:
+      path: /ready
+      port: http-metrics
+    initialDelaySeconds: 45
+  datasource:
+    jsonData: "{}"
+    uid: ""
+
+promtail:
+  enabled: true
+  config:
+    logLevel: info
+    serverPort: 3101
+    clients:
+      - url: http://{{ .Release.Name }}-loki:3100/loki/api/v1/push
+    snippets:
+      pipelineStages:
+        - docker:
+            label_fields:
+              stream: stream
+        - multiline:
+            # A regex that identifies the start of a new log entry
+            firstline: '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+            # Maximum wait time for more lines before sending the collected log upstream
+            max_wait_time: 3s
+            separator: ''
+        - replace:
+            expression: '(\n){2,}'
+            replace: ''

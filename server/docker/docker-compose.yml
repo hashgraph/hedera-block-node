@@ -2,6 +2,8 @@ services:
   block-node-server:
     container_name: block-node-server
     image: block-node-server:${VERSION}
+    volumes:
+      - ./logging.properties:/app/logs/config/logging.properties
     env_file:
       - .env
     ports:
@@ -50,3 +52,20 @@ services:
     ports:
       - "3000:3000"
 
+  # Add Loki service
+  loki:
+    image: grafana/loki:2.9.2
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+
+  # Add Promtail service
+  promtail:
+    image: grafana/promtail:2.8.2
+    container_name: promtail
+    depends_on:
+      - loki
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # Mount Docker socket
+      - ./promtail-config.yaml:/etc/promtail/config.yaml:ro
+    command: --config.file=/etc/promtail/config.yaml
