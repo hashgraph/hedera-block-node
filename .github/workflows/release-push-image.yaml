@@ -47,6 +47,7 @@ jobs:
       java-version: ${{ inputs.java-version || '21.0.5' }}
 
   publish:
+    needs: [check-gradle, check-docker]
     runs-on: block-node-linux-medium
 
     steps:
