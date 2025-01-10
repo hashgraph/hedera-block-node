@@ -15,6 +15,7 @@ import com.hedera.block.server.pbj.PbjBlockAccessServiceProxy;
 import com.hedera.block.server.pbj.PbjBlockStreamServiceProxy;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.block.server.verification.StreamVerificationHandlerImpl;
 import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.grpc.helidon.PbjRouting;
@@ -54,6 +55,9 @@ class BlockNodeAppTest {
     private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> blockNodeEventHandler;
 
     @Mock
+    private StreamVerificationHandlerImpl streamVerificationHandler;
+
+    @Mock
     private Notifier notifier;
 
     @Mock
@@ -72,7 +76,12 @@ class BlockNodeAppTest {
                 serviceStatus,
                 healthService,
                 new PbjBlockStreamServiceProxy(
-                        liveStreamMediator, serviceStatus, blockNodeEventHandler, notifier, blockNodeContext),
+                        liveStreamMediator,
+                        serviceStatus,
+                        blockNodeEventHandler,
+                        streamVerificationHandler,
+                        notifier,
+                        blockNodeContext),
                 new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext),
                 webServerBuilder,
                 serverConfig);

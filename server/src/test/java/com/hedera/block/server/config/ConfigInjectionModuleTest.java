@@ -9,6 +9,7 @@ import com.hedera.block.server.mediator.MediatorConfig;
 import com.hedera.block.server.notifier.NotifierConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.block.server.verification.VerificationConfig;
 import com.swirlds.common.metrics.config.MetricsConfig;
 import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.Configuration;
@@ -114,5 +115,18 @@ class ConfigInjectionModuleTest {
         // Verify the config
         assertNotNull(providedConfig);
         assertSame(serverConfig, providedConfig);
+    }
+
+    @Test
+    void testVerificationConfig() throws IOException {
+        BlockNodeContext context = TestConfigUtil.getTestBlockNodeContext();
+        Configuration configuration = context.configuration();
+        VerificationConfig verificationConfig = configuration.getConfigData(VerificationConfig.class);
+
+        VerificationConfig providedConfig = ConfigInjectionModule.provideVerificationConfig(configuration);
+
+        // Verify the config
+        assertNotNull(providedConfig);
+        assertSame(verificationConfig, providedConfig);
     }
 }

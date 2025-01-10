@@ -19,5 +19,15 @@ public final class MathUtilities {
         return (0 < toCheck) && ((toCheck & (toCheck - 1)) == 0);
     }
 
+    /**
+     * This method checks if the given number is even.
+     *
+     * @param toCheck the number to check if it is even
+     * @return {@code true} if the given number is even
+     */
+    public static boolean isEven(final int toCheck) {
+        return (toCheck & 1) == 0;
+    }
+
     private MathUtilities() {}
 }

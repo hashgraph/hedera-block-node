@@ -9,6 +9,7 @@ import com.hedera.block.server.notifier.NotifierInjectionModule;
 import com.hedera.block.server.pbj.PbjInjectionModule;
 import com.hedera.block.server.persistence.PersistenceInjectionModule;
 import com.hedera.block.server.service.ServiceInjectionModule;
+import com.hedera.block.server.verification.VerificationInjectionModule;
 import com.swirlds.config.api.Configuration;
 import dagger.BindsInstance;
 import dagger.Component;
@@ -27,6 +28,7 @@ import javax.inject.Singleton;
             ConfigInjectionModule.class,
             MetricsInjectionModule.class,
             PbjInjectionModule.class,
+            VerificationInjectionModule.class,
         })
 public interface BlockNodeAppInjectionComponent {
     /**

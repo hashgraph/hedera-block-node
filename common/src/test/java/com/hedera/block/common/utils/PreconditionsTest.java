@@ -24,6 +24,7 @@ class PreconditionsTest {
             "The input number [%d] is required to be a whole number.";
     private static final String DEFAULT_REQUIRE_POWER_OF_TWO_MESSAGE =
             "The input number [%d] is required to be a power of two.";
+    private static final String DEFAULT_REQUIRE_IS_EVEN = "The input number [%d] is required to be even.";
 
     /**
      * This test aims to verify that the
@@ -324,6 +325,43 @@ class PreconditionsTest {
         final String expectedTestMessage = testMessage.formatted(toTest, lowerBoundary, upperBoundary);
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> Preconditions.requireInRange(toTest, lowerBoundary, upperBoundary, testMessage))
+                .withMessage(expectedTestMessage);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link Preconditions#requireEven(int)} will return the input 'toTest'
+     * parameter if the even check passes. Test includes overloads.
+     *
+     * @param toTest parameterized, the number to test
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#evenIntegers")
+    void testRequireEvenPass(final int toTest) {
+        final Consumer<Integer> asserts = actual -> assertThat(actual).isEven().isEqualTo(toTest);
+
+        final int actual = Preconditions.requireEven(toTest);
+        assertThat(actual).satisfies(asserts);
+
+        final int actualOverload = Preconditions.requireEven(toTest, "test error message");
+        assertThat(actualOverload).satisfies(asserts);
+    }
+
+    /** This test aims to verify that the {@link Preconditions#requireEven(int)} will throw an {@link IllegalArgumentException} if the even check fails. Test includes overloads.
+     *
+     * @param toTest parameterized, the number to test
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#oddIntegers")
+    void testRequireEvenFail(final int toTest) {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requireEven(toTest))
+                .withMessage(DEFAULT_REQUIRE_IS_EVEN.formatted(toTest));
+
+        final String testMessage = DEFAULT_REQUIRE_IS_EVEN.concat(" custom test error message");
+        final String expectedTestMessage = testMessage.formatted(toTest);
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requireEven(toTest, testMessage))
                 .withMessage(expectedTestMessage);
     }
 

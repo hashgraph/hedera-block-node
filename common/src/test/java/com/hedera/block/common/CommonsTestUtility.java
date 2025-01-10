@@ -193,6 +193,40 @@ public final class CommonsTestUtility {
     }
 
     /**
+     * Some even numbers.
+     */
+    public static Stream<Arguments> evenIntegers() {
+        return Stream.of(
+                Arguments.of(-4),
+                Arguments.of(-2),
+                Arguments.of(0),
+                Arguments.of(2),
+                Arguments.of(4),
+                Arguments.of(6),
+                Arguments.of(8),
+                Arguments.of(10),
+                Arguments.of(100),
+                Arguments.of(1_000));
+    }
+
+    /**
+     * Some odd numbers.
+     */
+    public static Stream<Arguments> oddIntegers() {
+        return Stream.of(
+                Arguments.of(-3),
+                Arguments.of(-1),
+                Arguments.of(1),
+                Arguments.of(3),
+                Arguments.of(5),
+                Arguments.of(7),
+                Arguments.of(9),
+                Arguments.of(11),
+                Arguments.of(101),
+                Arguments.of(1_001));
+    }
+
+    /**
      * Provides valid test data for cases where the value to test is greater than or equal to the base value.
      *
      * @return a stream of arguments where each argument is a pair of {@code (toTest, base)} values,

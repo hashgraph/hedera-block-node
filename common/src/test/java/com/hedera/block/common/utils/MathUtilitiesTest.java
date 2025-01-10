@@ -34,4 +34,26 @@ class MathUtilitiesTest {
         final boolean actual = MathUtilities.isPowerOfTwo(toTest);
         assertThat(actual).isFalse();
     }
+
+    /**
+     * This test aims to verify that the {@link MathUtilities#isEven(int)}
+     * returns {@code true} if the input number is even.
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#evenIntegers")
+    void testIsEvenPass(final int toTest) {
+        final boolean actual = MathUtilities.isEven(toTest);
+        assertThat(actual).isTrue();
+    }
+
+    /**
+     * This test aims to verify that the {@link MathUtilities#isEven(int)}
+     * returns {@code false} if the input number is odd.
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#oddIntegers")
+    void testIsEvenFail(final int toTest) {
+        final boolean actual = MathUtilities.isEven(toTest);
+        assertThat(actual).isFalse();
+    }
 }

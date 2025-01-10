@@ -15,6 +15,7 @@ public final class Preconditions {
             "The input number [%d] is required to be a whole number.";
     private static final String DEFAULT_REQUIRE_POWER_OF_TWO_MESSAGE =
             "The input number [%d] is required to be a power of two.";
+    private static final String DEFAULT_REQUIRE_IS_EVEN = "The input number [%d] is required to be even.";
 
     /**
      * This method asserts a given {@link String} is not blank.
@@ -265,6 +266,32 @@ public final class Preconditions {
         } else {
             return toCheck;
         }
+    }
+
+    /**
+     * This method asserts a given integer is even.
+     *
+     * @param toCheck the number to check if it is even
+     * @return the number to check if it is even
+     * @throws IllegalArgumentException if the input number to check is not even
+     */
+    public static int requireEven(final int toCheck, @NonNull final String errorMessage) {
+        if (!MathUtilities.isEven(toCheck)) {
+            throw new IllegalArgumentException(errorMessage.formatted(toCheck));
+        } else {
+            return toCheck;
+        }
+    }
+
+    /**
+     * This method asserts a given integer is even.
+     * Uses default error message DEFAULT_REQUIRE_IS_EVEN if the check fails.
+     *
+     * @param toCheck the number to check if it is even
+     * @return the number to check if it is even
+     */
+    public static int requireEven(final int toCheck) {
+        return requireEven(toCheck, DEFAULT_REQUIRE_IS_EVEN);
     }
 
     private Preconditions() {}

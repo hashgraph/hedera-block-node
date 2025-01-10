@@ -123,6 +123,11 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
         }
     }
 
+    /**
+     * Builds an error stream response.
+     *
+     * @return the error stream response
+     */
     @NonNull
     static PublishStreamResponse buildErrorStreamResponse() {
         // TODO: Replace this with a real error enum.
