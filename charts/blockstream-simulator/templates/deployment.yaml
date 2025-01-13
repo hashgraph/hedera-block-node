@@ -5,14 +5,14 @@ SPDX-License-Identifier: Apache-2.0
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "hedera-block-node.fullname" . }}
+  name: {{ include "blockstream-simulator-chart.fullname" . }}
   labels:
-    {{- include "hedera-block-node.labels" . | nindent 4 }}
+    {{- include "blockstream-simulator-chart.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "hedera-block-node.selectorLabels" . | nindent 6 }}
+      {{- include "blockstream-simulator-chart.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -20,19 +20,14 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "hedera-block-node.selectorLabels" . | nindent 8 }}
+        {{- include "blockstream-simulator-chart.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
+          {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "hedera-block-node.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      volumes:
-        - name: logging-config
-          configMap:
-            name: {{ include "hedera-block-node.fullname" . }}-logging-config
       containers:
       - name: {{ .Chart.Name }}
         securityContext:
@@ -40,35 +35,20 @@ spec:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
-          - name: http
-            containerPort: {{ .Values.service.port }}
-            protocol: TCP
           - name: metrics
             containerPort: 9999
             protocol: TCP
         envFrom:
           - configMapRef:
-              name: {{ include "hedera-block-node.fullname" . }}-config
+              name: {{ include "blockstream-simulator-chart.fullname" . }}-config
           - secretRef:
-              name: {{ include "hedera-block-node.fullname" . }}-secret
-        volumeMounts:
-          - name: logging-config
-            mountPath: /app/logs/config
-            readOnly: true
-        {{- with  .Values.resources }}
+              name: {{ include "blockstream-simulator-chart.fullname" . }}-secret
+        {{- with .Values.resources }}
         resources:
           requests:
             memory: {{ .requests.memory }}
             cpu: {{ .requests.cpu }}
         {{- end }}
-        livenessProbe:
-          httpGet:
-            path: {{ .Values.blockNode.health.liveness.endpoint }}
-            port: {{ .Values.service.port }}
-        readinessProbe:
-          httpGet:
-            path: {{ .Values.blockNode.health.readiness.endpoint }}
-            port: {{ .Values.service.port }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -81,4 +61,3 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-

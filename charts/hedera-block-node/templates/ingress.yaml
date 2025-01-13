@@ -1,3 +1,7 @@
+{{- /*
+SPDX-License-Identifier: Apache-2.0
+*/}}
+
 {{- if .Values.ingress.enabled -}}
 {{- $fullName := include "hedera-block-node.fullname" . -}}
 {{- $svcPort := .Values.service.port -}}
