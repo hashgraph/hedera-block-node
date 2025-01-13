@@ -14,7 +14,7 @@ dependencies.constraints {
     val helidonVersion = "4.1.6"
     val pbjVersion = "0.9.12"
     val protobufVersion = "4.28.2"
-    val swirldsVersion = "0.51.5"
+    val swirldsVersion = "0.58.1"
 
     api("com.github.luben:zstd-jni:1.5.6-8") { because("com.github.luben.zstd_jni") }
     api("com.github.spotbugs:spotbugs-annotations:4.7.3") {
