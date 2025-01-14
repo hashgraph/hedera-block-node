@@ -77,9 +77,11 @@ tasks.register<Copy>("untarTestBlockStream") {
     doLast { println("Untar task completed. Files should be in: ${targetDir.absolutePath}") }
 }
 
-tasks.named("processResources") { dependsOn(tasks.named("untarTestBlockStream")) }
+tasks.processResources { dependsOn(tasks.named("untarTestBlockStream")) }
 
-tasks.named("sourcesJar") { dependsOn(tasks.named("untarTestBlockStream")) }
+tasks.sourcesJar { dependsOn(tasks.named("untarTestBlockStream")) }
+
+tasks.spotlessJavaInfoFiles { dependsOn(tasks.named("untarTestBlockStream")) }
 
 // Vals
 val dockerProjectRootDirectory: Directory = layout.projectDirectory.dir("docker")
