@@ -180,4 +180,4 @@ jobs:
 
       - name: Simulator Chart - Push helm chart
         run: |
-          helm push bblockstream-simulator-chart-${{ env.VERSION }}.tgz oci://ghcr.io/hashgraph/hedera-block-node
+          helm push blockstream-simulator-chart-${{ env.VERSION }}.tgz oci://ghcr.io/hashgraph/hedera-block-node
