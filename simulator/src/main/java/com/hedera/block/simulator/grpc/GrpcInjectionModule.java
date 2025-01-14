@@ -3,6 +3,7 @@ package com.hedera.block.simulator.grpc;
 
 import com.hedera.block.simulator.grpc.impl.ConsumerStreamGrpcClientImpl;
 import com.hedera.block.simulator.grpc.impl.PublishStreamGrpcClientImpl;
+import com.hedera.block.simulator.grpc.impl.PublishStreamGrpcServerImpl;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
@@ -32,6 +33,16 @@ public interface GrpcInjectionModule {
     @Singleton
     @Binds
     ConsumerStreamGrpcClient bindConsumerStreamGrpcClient(ConsumerStreamGrpcClientImpl consumerStreamGrpcClient);
+
+    /**
+     * Binds the PublishStreamGrpcServer to the PublishStreamGrpcServerImpl.
+     *
+     * @param PublishStreamGrpcServer the PublishStreamGrpcServerImpl
+     * @return the ConsumerStreamGrpcClient
+     */
+    @Singleton
+    @Binds
+    PublishStreamGrpcServer bindPublishStreamGrpcServer(PublishStreamGrpcServerImpl PublishStreamGrpcServer);
 
     /**
      * Provides the stream enabled flag

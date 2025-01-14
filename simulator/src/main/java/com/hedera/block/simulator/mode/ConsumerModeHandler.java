@@ -7,6 +7,7 @@ import static java.util.Objects.requireNonNull;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.inject.Inject;
 
 /**
  * The {@code ConsumerModeHandler} class implements the {@link SimulatorModeHandler} interface
@@ -32,6 +33,7 @@ public class ConsumerModeHandler implements SimulatorModeHandler {
      * @param consumerStreamGrpcClient The client for consuming blocks via gRPC
      * @throws NullPointerException if any parameter is null
      */
+    @Inject
     public ConsumerModeHandler(@NonNull final ConsumerStreamGrpcClient consumerStreamGrpcClient) {
         this.consumerStreamGrpcClient = requireNonNull(consumerStreamGrpcClient);
     }

@@ -11,15 +11,19 @@ import java.util.List;
 /**
  * Represents the status of the stream.
  *
- * @param publishedBlocks the number of published blocks
+ * @param publishedBlocks the number of published blocks from publish client
+ * @param processedBlocks the number of processed blocks from publish server
  * @param consumedBlocks the number of consumed blocks
- * @param lastKnownPublisherStatuses the last known publisher statuses
+ * @param lastKnownPublisherClientStatuses the last known statuses from publish client
+ * @param lastKnownPublisherServerStatuses the last known statuses from publish server
  * @param lastKnownConsumersStatuses the last known consumers statuses
  */
 public record StreamStatus(
         long publishedBlocks,
+        long processedBlocks,
         long consumedBlocks,
-        Deque<String> lastKnownPublisherStatuses,
+        Deque<String> lastKnownPublisherClientStatuses,
+        Deque<String> lastKnownPublisherServerStatuses,
         Deque<String> lastKnownConsumersStatuses) {
 
     /**
@@ -36,8 +40,10 @@ public record StreamStatus(
      */
     public static class Builder {
         private long publishedBlocks = 0;
+        private long processedBlocks = 0;
         private long consumedBlocks = 0;
-        private Deque<String> lastKnownPublisherStatuses = new ArrayDeque<>();
+        private Deque<String> lastKnownPublisherClientStatuses = new ArrayDeque<>();
+        private Deque<String> lastKnownPublisherServerStatuses = new ArrayDeque<>();
         private Deque<String> lastKnownConsumersStatuses = new ArrayDeque<>();
 
         /**
@@ -48,7 +54,7 @@ public record StreamStatus(
         }
 
         /**
-         * Sets the number of published blocks.
+         * Sets the number of published blocks by publish client.
          *
          * @param publishedBlocks the number of published blocks
          * @return the builder instance
@@ -56,6 +62,18 @@ public record StreamStatus(
         public Builder publishedBlocks(long publishedBlocks) {
             requireWhole(publishedBlocks);
             this.publishedBlocks = publishedBlocks;
+            return this;
+        }
+
+        /**
+         * Sets the number of processed blocks by publish server.
+         *
+         * @param processedBlocks the number of processed blocks by publish server.
+         * @return the builder instance
+         */
+        public Builder processedBlocks(long processedBlocks) {
+            requireWhole(processedBlocks);
+            this.processedBlocks = processedBlocks;
             return this;
         }
 
@@ -72,14 +90,26 @@ public record StreamStatus(
         }
 
         /**
-         * Sets the last known publisher statuses.
+         * Sets the last known publisher client statuses.
          *
-         * @param lastKnownPublisherStatuses the last known publisher statuses
+         * @param lastKnownPublisherClientStatuses the last known publisher statuses from publish client
          * @return the builder instance
          */
-        public Builder lastKnownPublisherStatuses(List<String> lastKnownPublisherStatuses) {
-            requireNonNull(lastKnownPublisherStatuses);
-            this.lastKnownPublisherStatuses = new ArrayDeque<>(lastKnownPublisherStatuses);
+        public Builder lastKnownPublisherClientStatuses(List<String> lastKnownPublisherClientStatuses) {
+            requireNonNull(lastKnownPublisherClientStatuses);
+            this.lastKnownPublisherClientStatuses = new ArrayDeque<>(lastKnownPublisherClientStatuses);
+            return this;
+        }
+
+        /**
+         * Sets the last known publisher server statuses.
+         *
+         * @param lastKnownPublisherServerStatuses the last known publisher statuses from publish server
+         * @return the builder instance
+         */
+        public Builder lastKnownPublisherServerStatuses(List<String> lastKnownPublisherServerStatuses) {
+            requireNonNull(lastKnownPublisherServerStatuses);
+            this.lastKnownPublisherServerStatuses = new ArrayDeque<>(lastKnownPublisherServerStatuses);
             return this;
         }
 
@@ -102,7 +132,7 @@ public record StreamStatus(
          */
         public StreamStatus build() {
             return new StreamStatus(
-                    publishedBlocks, consumedBlocks, lastKnownPublisherStatuses, lastKnownConsumersStatuses);
+                    publishedBlocks, processedBlocks, consumedBlocks, lastKnownPublisherClientStatuses, lastKnownPublisherServerStatuses, lastKnownConsumersStatuses);
         }
     }
 }
