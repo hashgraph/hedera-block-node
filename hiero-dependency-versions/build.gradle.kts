@@ -61,7 +61,6 @@ dependencies.constraints {
     // needed for dagger
     api("com.google.dagger:dagger:$daggerVersion") { because("dagger") }
     api("com.google.dagger:dagger-compiler:$daggerVersion") { because("dagger.compiler") }
-    api("com.squareup:javapoet:1.13.0") { because("com.squareup.javapoet") }
 
     // Testing only versions
     api("com.github.docker-java:docker-java-api:3.4.0") { because("com.github.dockerjava.api") }
@@ -76,5 +75,4 @@ dependencies.constraints {
     api("com.google.auto.service:auto-service:1.1.1") {
         because("com.google.auto.service.processor")
     }
-    api("com.google.dagger:dagger-compiler:$daggerVersion") { because("dagger.compiler") }
 }
