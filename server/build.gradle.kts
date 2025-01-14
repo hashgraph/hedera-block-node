@@ -36,9 +36,9 @@ testModuleInfo {
 
 // Release related tasks
 
-fun replaceVersion(files: String, match: String) {
+fun replaceVersion(files: String, match: String, newVersion: String) {
     ant.withGroovyBuilder {
-        "replaceregexp"("match" to match, "replace" to project.version, "flags" to "gm") {
+        "replaceregexp"("match" to match, "replace" to newVersion, "flags" to "gm") {
             "fileset"(
                 "dir" to rootProject.projectDir,
                 "includes" to files,
@@ -52,8 +52,11 @@ tasks.register("bumpVersion") {
     description = "Bump versions of the project"
     group = "release"
 
-    replaceVersion("charts/**/Chart.yaml", "(?<=^(appVersion|version): ).+")
-    replaceVersion("gradle.properties", "(?<=^version=).+")
+    val newVersion = project.findProperty("newVersion") as String? ?: throw GradleException("Please provide -PnewVersion=<version>")
+
+
+    replaceVersion("charts/**/Chart.yaml", "(?<=^(appVersion|version): ).+", newVersion)
+    replaceVersion("version.txt", ".+", newVersion)
 }
 
 // Vals
