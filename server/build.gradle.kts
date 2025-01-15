@@ -34,32 +34,6 @@ testModuleInfo {
     requiresStatic("com.github.spotbugs.annotations")
 }
 
-// Release related tasks
-
-fun replaceVersion(files: String, match: String, newVersion: String) {
-    ant.withGroovyBuilder {
-        "replaceregexp"("match" to match, "replace" to newVersion, "flags" to "gm") {
-            "fileset"(
-                "dir" to rootProject.projectDir,
-                "includes" to files,
-                "excludes" to "**/node_modules/"
-            )
-        }
-    }
-}
-
-tasks.register("bumpVersion") {
-    description = "Bump versions of the project"
-    group = "release"
-
-    val newVersion =
-        project.findProperty("newVersion") as String?
-            ?: throw GradleException("Please provide -PnewVersion=<version>")
-
-    replaceVersion("charts/**/Chart.yaml", "(?<=^(appVersion|version): ).+", newVersion)
-    replaceVersion("version.txt", ".+", newVersion)
-}
-
 // Vals
 val dockerProjectRootDirectory: Directory = layout.projectDirectory.dir("docker")
 val dockerBuildRootDirectory: Directory = layout.buildDirectory.dir("docker").get()
