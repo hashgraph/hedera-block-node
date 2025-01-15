@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.simulator.mode;
 
+import static java.lang.System.Logger.Level.INFO;
+import static java.util.Objects.requireNonNull;
+
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcServer;
 import edu.umd.cs.findbugs.annotations.NonNull;
-
 import javax.inject.Inject;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * The {@code PublisherServerModeHandler} class implements the {@link SimulatorModeHandler} interface
@@ -33,25 +33,14 @@ public class PublisherServerModeHandler implements SimulatorModeHandler {
         this.publishStreamGrpcServer = requireNonNull(publishStreamGrpcServer);
     }
 
-    /**
-     * Initializes resources for both consuming and publishing blocks.
-     *
-     * @throws UnsupportedOperationException as this functionality is not yet implemented
-     */
     @Override
     public void init() {
-        throw new UnsupportedOperationException();
+        publishStreamGrpcServer.init();
+        LOGGER.log(INFO, "gRPC Server initialized for receiving blocks using publish protocol.");
     }
 
-    /**
-     * Starts both consuming and publishing blocks simultaneously.
-     *
-     * @throws UnsupportedOperationException as this functionality is not yet implemented
-     */
     @Override
-    public void start() {
-        throw new UnsupportedOperationException();
-    }
+    public void start() {}
 
     /**
      * Gracefully stops both consumption and publishing of blocks.
@@ -59,7 +48,7 @@ public class PublisherServerModeHandler implements SimulatorModeHandler {
      * @throws UnsupportedOperationException as this functionality is not yet implemented
      */
     @Override
-    public void stop() {
-        throw new UnsupportedOperationException();
+    public void stop() throws InterruptedException {
+        publishStreamGrpcServer.shutdown();
     }
 }

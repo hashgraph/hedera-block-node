@@ -47,6 +47,19 @@ tasks.register<JavaExec>("runPublisherClient") {
     environment("PROMETHEUS_ENDPOINT_PORT_NUMBER", "9998")
 }
 
+tasks.register<JavaExec>("runPublisherServer") {
+    description = "Run the simulator in Publisher Server mode"
+    group = "application"
+
+    mainClass = application.mainClass
+    mainModule = application.mainModule
+    classpath = sourceSets["main"].runtimeClasspath
+
+    environment("BLOCK_STREAM_SIMULATOR_MODE", "PUBLISHER_SERVER")
+    environment("PROMETHEUS_ENDPOINT_ENABLED", "true")
+    environment("PROMETHEUS_ENDPOINT_PORT_NUMBER", "9996")
+}
+
 // Task to run simulator in Consumer mode
 tasks.register<JavaExec>("runConsumer") {
     description = "Run the simulator in Consumer mode"

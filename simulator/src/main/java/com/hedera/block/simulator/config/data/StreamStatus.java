@@ -132,7 +132,12 @@ public record StreamStatus(
          */
         public StreamStatus build() {
             return new StreamStatus(
-                    publishedBlocks, processedBlocks, consumedBlocks, lastKnownPublisherClientStatuses, lastKnownPublisherServerStatuses, lastKnownConsumersStatuses);
+                    publishedBlocks,
+                    processedBlocks,
+                    consumedBlocks,
+                    lastKnownPublisherClientStatuses,
+                    lastKnownPublisherServerStatuses,
+                    lastKnownConsumersStatuses);
         }
     }
 }

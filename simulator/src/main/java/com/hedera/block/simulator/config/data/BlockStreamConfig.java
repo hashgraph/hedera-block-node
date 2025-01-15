@@ -19,7 +19,7 @@ import com.swirlds.config.api.ConfigProperty;
  */
 @ConfigData("blockStream")
 public record BlockStreamConfig(
-        @ConfigProperty(defaultValue = "PUBLISHER_CLIENT") SimulatorMode simulatorMode,
+        @ConfigProperty(defaultValue = "PUBLISHER_SERVER") SimulatorMode simulatorMode,
         @ConfigProperty(defaultValue = "10") int lastKnownStatusesCapacity,
         @ConfigProperty(defaultValue = "1_500_000") int delayBetweenBlockItems,
         @ConfigProperty(defaultValue = "100_000") int maxBlockItemsToStream,

@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
@@ -15,7 +14,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.StreamStatus;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
@@ -74,7 +72,12 @@ class BlockStreamSimulatorTest {
 
         metricsService = new MetricsServiceImpl(getTestMetrics(configuration));
         blockStreamSimulator = new BlockStreamSimulatorApp(
-                configuration, blockStreamManager, publishStreamGrpcClient, publishStreamGrpcServer, consumerStreamGrpcClient, simulatorModeHandler);
+                configuration,
+                blockStreamManager,
+                publishStreamGrpcClient,
+                publishStreamGrpcServer,
+                consumerStreamGrpcClient,
+                simulatorModeHandler);
     }
 
     @AfterEach
@@ -104,7 +107,12 @@ class BlockStreamSimulatorTest {
 
         metricsService = new MetricsServiceImpl(getTestMetrics(configuration));
         blockStreamSimulator = new BlockStreamSimulatorApp(
-                configuration, blockStreamManager, publishStreamGrpcClient, publishStreamGrpcServer, consumerStreamGrpcClient, simulatorModeHandler);
+                configuration,
+                blockStreamManager,
+                publishStreamGrpcClient,
+                publishStreamGrpcServer,
+                consumerStreamGrpcClient,
+                simulatorModeHandler);
         blockStreamSimulator.start();
 
         verify(consumerStreamGrpcClient).init();
@@ -143,7 +151,12 @@ class BlockStreamSimulatorTest {
                 "2"));
 
         BlockStreamSimulatorApp blockStreamSimulator = new BlockStreamSimulatorApp(
-                configuration, blockStreamManager, publishStreamGrpcClient, publishStreamGrpcServer, consumerStreamGrpcClient, simulatorModeHandler);
+                configuration,
+                blockStreamManager,
+                publishStreamGrpcClient,
+                publishStreamGrpcServer,
+                consumerStreamGrpcClient,
+                simulatorModeHandler);
 
         blockStreamSimulator.start();
         assertTrue(blockStreamSimulator.isRunning());
@@ -155,11 +168,17 @@ class BlockStreamSimulatorTest {
 
     @Test
     void stopPublishing_doesNotThrowException() throws InterruptedException, IOException {
-        Configuration configuration = TestUtils.getTestConfiguration(Map.of("blockStream.simulatorMode", "PUBLISHER_CLIENT"));
+        Configuration configuration =
+                TestUtils.getTestConfiguration(Map.of("blockStream.simulatorMode", "PUBLISHER_CLIENT"));
 
         metricsService = new MetricsServiceImpl(getTestMetrics(configuration));
         blockStreamSimulator = new BlockStreamSimulatorApp(
-                configuration, blockStreamManager, publishStreamGrpcClient, publishStreamGrpcServer, consumerStreamGrpcClient, simulatorModeHandler);
+                configuration,
+                blockStreamManager,
+                publishStreamGrpcClient,
+                publishStreamGrpcServer,
+                consumerStreamGrpcClient,
+                simulatorModeHandler);
 
         assertDoesNotThrow(() -> blockStreamSimulator.stop());
         assertFalse(blockStreamSimulator.isRunning());
@@ -172,7 +191,12 @@ class BlockStreamSimulatorTest {
 
         metricsService = new MetricsServiceImpl(getTestMetrics(configuration));
         blockStreamSimulator = new BlockStreamSimulatorApp(
-                configuration, blockStreamManager, publishStreamGrpcClient, publishStreamGrpcServer, consumerStreamGrpcClient, simulatorModeHandler);
+                configuration,
+                blockStreamManager,
+                publishStreamGrpcClient,
+                publishStreamGrpcServer,
+                consumerStreamGrpcClient,
+                simulatorModeHandler);
         assertDoesNotThrow(() -> blockStreamSimulator.stop());
         assertFalse(blockStreamSimulator.isRunning());
         verify(consumerStreamGrpcClient, atLeast(1)).completeStreaming();
@@ -200,7 +224,12 @@ class BlockStreamSimulatorTest {
                 "MILLIS_PER_BLOCK"));
 
         BlockStreamSimulatorApp blockStreamSimulator = new BlockStreamSimulatorApp(
-                configuration, blockStreamManager, publishStreamGrpcClient, publishStreamGrpcServer, consumerStreamGrpcClient, simulatorModeHandler);
+                configuration,
+                blockStreamManager,
+                publishStreamGrpcClient,
+                publishStreamGrpcServer,
+                consumerStreamGrpcClient,
+                simulatorModeHandler);
 
         blockStreamSimulator.start();
         assertTrue(blockStreamSimulator.isRunning());
@@ -244,7 +273,12 @@ class BlockStreamSimulatorTest {
                 "1"));
 
         BlockStreamSimulatorApp blockStreamSimulator = new BlockStreamSimulatorApp(
-                configuration, blockStreamManager, publishStreamGrpcClient, publishStreamGrpcServer, consumerStreamGrpcClient, simulatorModeHandler);
+                configuration,
+                blockStreamManager,
+                publishStreamGrpcClient,
+                publishStreamGrpcServer,
+                consumerStreamGrpcClient,
+                simulatorModeHandler);
         List<LogRecord> logRecords = captureLogs();
 
         blockStreamSimulator.start();
@@ -254,14 +288,6 @@ class BlockStreamSimulatorTest {
         boolean found_log = logRecords.stream()
                 .anyMatch(logRecord -> logRecord.getMessage().contains("Block Server is running behind"));
         assertTrue(found_log);
-    }
-
-    @Test
-    void start_withBothMode_throwsUnsupportedOperationException() throws Exception {
-        Configuration configuration = TestUtils.getTestConfiguration(Map.of("blockStream.simulatorMode", "BOTH"));
-        blockStreamSimulator = new BlockStreamSimulatorApp(
-                configuration, blockStreamManager, publishStreamGrpcClient, publishStreamGrpcServer, consumerStreamGrpcClient, simulatorModeHandler);
-        assertThrows(UnsupportedOperationException.class, () -> blockStreamSimulator.start());
     }
 
     @Test

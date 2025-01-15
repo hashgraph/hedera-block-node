@@ -24,6 +24,8 @@ public final class SimulatorMetricTypes {
         LiveBlockItemsSent("live_block_items_sent", "Live Block Items Sent"),
         /** The number of live blocks sent by the simulator */
         LiveBlocksSent("live_blocks_sent", "Live Blocks Sent"),
+        /** The number of live blocks processed by the simulator publish server */
+        LiveBlocksProcessed("live_blocks_processed_by_server", "Live Blocks Processed by Publish Server"),
         /** The number of live blocks consumed by the simulator */
         LiveBlocksConsumed("live_blocks_consumed", "Live Blocks Consumed");
 

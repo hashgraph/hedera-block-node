@@ -21,10 +21,16 @@ class StreamStatusTest {
         assertEquals(0, streamStatus.publishedBlocks(), "Default publishedBlocks should be 0");
         assertEquals(0, streamStatus.processedBlocks(), "Default processedBlocks should be 0");
         assertEquals(0, streamStatus.consumedBlocks(), "Default consumedBlocks should be 0");
-        assertNotNull(streamStatus.lastKnownPublisherClientStatuses(), "lastKnownPublisherClientStatuses should not be null");
-        assertTrue(streamStatus.lastKnownPublisherClientStatuses().isEmpty(), "lastKnownPublisherClientStatuses should be empty");
-        assertNotNull(streamStatus.lastKnownPublisherServerStatuses(), "lastKnownPublisherServerStatuses should not be null");
-        assertTrue(streamStatus.lastKnownPublisherServerStatuses().isEmpty(), "lastKnownPublisherServerStatuses should be empty");
+        assertNotNull(
+                streamStatus.lastKnownPublisherClientStatuses(), "lastKnownPublisherClientStatuses should not be null");
+        assertTrue(
+                streamStatus.lastKnownPublisherClientStatuses().isEmpty(),
+                "lastKnownPublisherClientStatuses should be empty");
+        assertNotNull(
+                streamStatus.lastKnownPublisherServerStatuses(), "lastKnownPublisherServerStatuses should not be null");
+        assertTrue(
+                streamStatus.lastKnownPublisherServerStatuses().isEmpty(),
+                "lastKnownPublisherServerStatuses should be empty");
         assertNotNull(streamStatus.lastKnownConsumersStatuses(), "lastKnownConsumersStatuses should not be null");
         assertTrue(streamStatus.lastKnownConsumersStatuses().isEmpty(), "lastKnownConsumersStatuses should be empty");
     }
@@ -54,9 +60,7 @@ class StreamStatusTest {
                 streamStatus.lastKnownPublisherServerStatuses(),
                 "lastKnownPublisherServerStatuses should match");
         assertIterableEquals(
-                consumerStatuses,
-                streamStatus.lastKnownConsumersStatuses(),
-                "lastKnownConsumersStatuses should match");
+                consumerStatuses, streamStatus.lastKnownConsumersStatuses(), "lastKnownConsumersStatuses should match");
     }
 
     @Test
@@ -98,10 +102,16 @@ class StreamStatusTest {
 
         assertEquals(0, streamStatus.publishedBlocks(), "Default publishedBlocks should be 0");
         assertEquals(0, streamStatus.consumedBlocks(), "Default consumedBlocks should be 0");
-        assertNotNull(streamStatus.lastKnownPublisherClientStatuses(), "lastKnownPublisherClientStatuses should not be null");
-        assertTrue(streamStatus.lastKnownPublisherClientStatuses().isEmpty(), "lastKnownPublisherClientStatuses should be empty");
-        assertNotNull(streamStatus.lastKnownPublisherServerStatuses(), "lastKnownPublisherServerStatuses should not be null");
-        assertTrue(streamStatus.lastKnownPublisherServerStatuses().isEmpty(), "lastKnownPublisherServerStatuses should be empty");
+        assertNotNull(
+                streamStatus.lastKnownPublisherClientStatuses(), "lastKnownPublisherClientStatuses should not be null");
+        assertTrue(
+                streamStatus.lastKnownPublisherClientStatuses().isEmpty(),
+                "lastKnownPublisherClientStatuses should be empty");
+        assertNotNull(
+                streamStatus.lastKnownPublisherServerStatuses(), "lastKnownPublisherServerStatuses should not be null");
+        assertTrue(
+                streamStatus.lastKnownPublisherServerStatuses().isEmpty(),
+                "lastKnownPublisherServerStatuses should be empty");
         assertNotNull(streamStatus.lastKnownConsumersStatuses(), "lastKnownConsumersStatuses should not be null");
         assertTrue(streamStatus.lastKnownConsumersStatuses().isEmpty(), "lastKnownConsumersStatuses should be empty");
     }
@@ -145,11 +155,17 @@ class StreamStatusTest {
 
     @Test
     void testNotEquals() {
-        StreamStatus streamStatus1 =
-                StreamStatus.builder().publishedBlocks(5).processedBlocks(5).consumedBlocks(3).build();
+        StreamStatus streamStatus1 = StreamStatus.builder()
+                .publishedBlocks(5)
+                .processedBlocks(5)
+                .consumedBlocks(3)
+                .build();
 
-        StreamStatus streamStatus2 =
-                StreamStatus.builder().publishedBlocks(6).processedBlocks(5).consumedBlocks(3).build();
+        StreamStatus streamStatus2 = StreamStatus.builder()
+                .publishedBlocks(6)
+                .processedBlocks(5)
+                .consumedBlocks(3)
+                .build();
 
         assertNotEquals(streamStatus1, streamStatus2, "StreamStatus instances should not be equal");
     }
