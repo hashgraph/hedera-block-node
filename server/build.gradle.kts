@@ -52,8 +52,9 @@ tasks.register("bumpVersion") {
     description = "Bump versions of the project"
     group = "release"
 
-    val newVersion = project.findProperty("newVersion") as String? ?: throw GradleException("Please provide -PnewVersion=<version>")
-
+    val newVersion =
+        project.findProperty("newVersion") as String?
+            ?: throw GradleException("Please provide -PnewVersion=<version>")
 
     replaceVersion("charts/**/Chart.yaml", "(?<=^(appVersion|version): ).+", newVersion)
     replaceVersion("version.txt", ".+", newVersion)
