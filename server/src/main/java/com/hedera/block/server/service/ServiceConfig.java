@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.service;
 
+import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.config.logging.Loggable;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
@@ -18,11 +19,9 @@ public record ServiceConfig(@Loggable @ConfigProperty(defaultValue = "500") int 
     /**
      * Validate the configuration.
      *
-     * @throws IllegalArgumentException if the configuration is invalid
+     * @throws IllegalArgumentException if the shutdownDelayMillis is not positive
      */
     public ServiceConfig {
-        if (shutdownDelayMillis <= 0) {
-            throw new IllegalArgumentException("Delay milliseconds must be greater than 0");
-        }
+        Preconditions.requirePositive(shutdownDelayMillis);
     }
 }
