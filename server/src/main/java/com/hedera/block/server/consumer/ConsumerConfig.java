@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.consumer;
 
+import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.config.logging.Loggable;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
@@ -17,11 +18,9 @@ public record ConsumerConfig(@Loggable @ConfigProperty(defaultValue = "1500") lo
     /**
      * Validate the configuration.
      *
-     * @throws IllegalArgumentException if the configuration is invalid
+     * @throws IllegalArgumentException if the timeoutThresholdMillis is not positive
      */
     public ConsumerConfig {
-        if (timeoutThresholdMillis <= 0) {
-            throw new IllegalArgumentException("Timeout threshold must be greater than 0");
-        }
+        Preconditions.requirePositive(timeoutThresholdMillis);
     }
 }

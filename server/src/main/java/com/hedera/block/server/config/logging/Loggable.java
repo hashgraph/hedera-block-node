@@ -8,6 +8,4 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.RECORD_COMPONENT})
-public @interface Loggable {
-    String value() default "";
-}
+public @interface Loggable {}
