@@ -123,6 +123,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
           MILESTONE_NUMBER: ${{ steps.milestone.outputs.milestone_id }}
 
+      - name: Spotless Apply (release_notes.md stylefix)
+        run: ./gradlew spotlessApply
+
       - name: Commit and Tag
         uses: stefanzweifel/git-auto-commit-action@e348103e9026cc0eee72ae06630dbe30c8bf7a79 # v5.1.0
         with:
