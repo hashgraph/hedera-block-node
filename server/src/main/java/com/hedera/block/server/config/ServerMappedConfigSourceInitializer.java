@@ -18,9 +18,9 @@ public final class ServerMappedConfigSourceInitializer {
             new ConfigMapping("mediator.type", "MEDIATOR_TYPE"),
             new ConfigMapping("notifier.ringBufferSize", "NOTIFIER_RING_BUFFER_SIZE"),
             new ConfigMapping("persistence.storage.archiveRootPath", "PERSISTENCE_STORAGE_ARCHIVE_ROOT_PATH"),
-            new ConfigMapping("persistence.storage.liveRootPath", "PERSISTENCE_STORAGE_LIVE_ROOT_PATH"),
             new ConfigMapping("persistence.storage.compression", "PERSISTENCE_STORAGE_COMPRESSION"),
             new ConfigMapping("persistence.storage.compressionLevel", "PERSISTENCE_STORAGE_COMPRESSION_LEVEL"),
+            new ConfigMapping("persistence.storage.liveRootPath", "PERSISTENCE_STORAGE_LIVE_ROOT_PATH"),
             new ConfigMapping("persistence.storage.type", "PERSISTENCE_STORAGE_TYPE"),
             new ConfigMapping("producer.type", "PRODUCER_TYPE"),
             new ConfigMapping("prometheus.endpointEnabled", "PROMETHEUS_ENDPOINT_ENABLED"),
@@ -28,9 +28,9 @@ public final class ServerMappedConfigSourceInitializer {
             new ConfigMapping("server.maxMessageSizeBytes", "SERVER_MAX_MESSAGE_SIZE_BYTES"),
             new ConfigMapping("server.port", "SERVER_PORT"),
             new ConfigMapping("service.shutdownDelayMillis", "SERVICE_SHUTDOWN_DELAY_MILLIS"),
-            new ConfigMapping("verification.type", "VERIFICATION_TYPE"),
             new ConfigMapping("verification.hashCombineBatchSize", "VERIFICATION_HASH_COMBINE_BATCH_SIZE"),
-            new ConfigMapping("verification.sessionType", "VERIFICATION_SESSION_TYPE"));
+            new ConfigMapping("verification.sessionType", "VERIFICATION_SESSION_TYPE"),
+            new ConfigMapping("verification.type", "VERIFICATION_TYPE"));
 
     private ServerMappedConfigSourceInitializer() {}
 

@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.config.logging;
 
+import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.INFO;
+import static java.lang.System.Logger.Level.TRACE;
 import static java.util.Objects.requireNonNull;
 
 import com.swirlds.common.metrics.config.MetricsConfig;
@@ -49,7 +51,7 @@ public class ConfigurationLoggingImpl implements ConfigurationLogging {
     @Override
     public void log() {
 
-        if (LOGGER.isLoggable(INFO)) {
+        if (LOGGER.isLoggable(INFO) || LOGGER.isLoggable(DEBUG) || LOGGER.isLoggable(TRACE)) {
             final Map<String, Object> config = collectConfig(configuration);
 
             // Header
