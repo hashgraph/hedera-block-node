@@ -4,6 +4,8 @@ package com.hedera.block.server.config.logging;
 import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
 
+import com.swirlds.common.metrics.config.MetricsConfig;
+import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 import com.swirlds.config.api.Configuration;
@@ -24,7 +26,7 @@ public class ConfigurationLoggingImpl implements ConfigurationLogging {
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final Configuration configuration;
-    private final Set<String> loggablePackages = new HashSet<>();
+    private final Set<Record> loggablePackages = new HashSet<>();
 
     /**
      * Create a new instance of ConfigurationLoggingImpl.
@@ -37,8 +39,8 @@ public class ConfigurationLoggingImpl implements ConfigurationLogging {
 
         // The configuration properties in these packages
         // are out of our control. So allow them to be logged.
-        loggablePackages.add("metrics");
-        loggablePackages.add("prometheus");
+        loggablePackages.add(configuration.getConfigData(MetricsConfig.class));
+        loggablePackages.add(configuration.getConfigData(PrometheusConfig.class));
     }
 
     /**
@@ -84,8 +86,7 @@ public class ConfigurationLoggingImpl implements ConfigurationLogging {
                         final String fieldName = component.getName();
 
                         if (component.getAnnotation(Loggable.class) == null
-                                && !loggablePackages.contains(
-                                        configDataAnnotation.value().toLowerCase())) {
+                                && !loggablePackages.contains(configuration.getConfigData(configType))) {
                             // If the field is not annotated as '@Loggable' and it's
                             // not exempted in loggablePackages, then log the value
                             // as sensitive.
