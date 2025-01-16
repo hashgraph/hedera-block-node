@@ -16,6 +16,9 @@ import java.util.Set;
 import java.util.TreeMap;
 import javax.inject.Inject;
 
+/**
+ * Use this class to log configuration data.
+ */
 public class ConfigurationLoggingImpl implements ConfigurationLogging {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
@@ -23,6 +26,11 @@ public class ConfigurationLoggingImpl implements ConfigurationLogging {
     private final Configuration configuration;
     private final Set<String> loggablePackages = new HashSet<>();
 
+    /**
+     * Create a new instance of ConfigurationLoggingImpl.
+     *
+     * @param configuration the resolved configuration to log
+     */
     @Inject
     public ConfigurationLoggingImpl(@NonNull final Configuration configuration) {
         this.configuration = requireNonNull(configuration);
@@ -33,6 +41,9 @@ public class ConfigurationLoggingImpl implements ConfigurationLogging {
         loggablePackages.add("prometheus");
     }
 
+    /**
+     * Log the configuration data.
+     */
     @Override
     public void log() {
 
