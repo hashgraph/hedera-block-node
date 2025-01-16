@@ -2,8 +2,6 @@
 package com.hedera.block.server.config.logging;
 
 import static java.lang.System.Logger.Level.DEBUG;
-import static java.lang.System.Logger.Level.INFO;
-import static java.lang.System.Logger.Level.TRACE;
 import static java.util.Objects.requireNonNull;
 
 import com.swirlds.common.metrics.config.MetricsConfig;
@@ -51,23 +49,24 @@ public class ConfigurationLoggingImpl implements ConfigurationLogging {
     @Override
     public void log() {
 
-        if (LOGGER.isLoggable(INFO) || LOGGER.isLoggable(DEBUG) || LOGGER.isLoggable(TRACE)) {
+        // FINE, FINER and FINEST will be allowed to log the configuration
+        if (LOGGER.isLoggable(DEBUG)) {
             final Map<String, Object> config = collectConfig(configuration);
 
             // Header
             final String bannerLine = "=".repeat(Math.max(0, calculateMaxLineLength(config)));
 
-            LOGGER.log(INFO, bannerLine);
-            LOGGER.log(INFO, "Block Node Configuration");
-            LOGGER.log(INFO, bannerLine);
+            LOGGER.log(DEBUG, bannerLine);
+            LOGGER.log(DEBUG, "Block Node Configuration");
+            LOGGER.log(DEBUG, bannerLine);
 
             // Log the configuration
             for (Map.Entry<String, Object> e : config.entrySet()) {
-                LOGGER.log(INFO, e.getKey() + "=" + e.getValue());
+                LOGGER.log(DEBUG, e.getKey() + "=" + e.getValue());
             }
 
             // Footer
-            LOGGER.log(INFO, bannerLine);
+            LOGGER.log(DEBUG, bannerLine);
         }
     }
 
