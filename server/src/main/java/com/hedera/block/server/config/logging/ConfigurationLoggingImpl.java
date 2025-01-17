@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.config.logging;
 
-import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
 
 import com.swirlds.common.metrics.config.MetricsConfig;
@@ -50,23 +50,23 @@ public class ConfigurationLoggingImpl implements ConfigurationLogging {
     public void log() {
 
         // FINE, FINER and FINEST will be allowed to log the configuration
-        if (LOGGER.isLoggable(DEBUG)) {
+        if (LOGGER.isLoggable(INFO)) {
             final Map<String, Object> config = collectConfig(configuration);
 
             // Header
             final String bannerLine = "=".repeat(Math.max(0, calculateMaxLineLength(config)));
 
-            LOGGER.log(DEBUG, bannerLine);
-            LOGGER.log(DEBUG, "Block Node Configuration");
-            LOGGER.log(DEBUG, bannerLine);
+            LOGGER.log(INFO, bannerLine);
+            LOGGER.log(INFO, "Block Node Configuration");
+            LOGGER.log(INFO, bannerLine);
 
             // Log the configuration
             for (Map.Entry<String, Object> e : config.entrySet()) {
-                LOGGER.log(DEBUG, e.getKey() + "=" + e.getValue());
+                LOGGER.log(INFO, e.getKey() + "=" + e.getValue());
             }
 
             // Footer
-            LOGGER.log(DEBUG, bannerLine);
+            LOGGER.log(INFO, bannerLine);
         }
     }
 
