@@ -42,9 +42,10 @@ public class ConfigurationLoggingImplTest {
         final ConfigurationLoggingImpl configurationLogging = new ConfigurationLoggingImpl(configuration);
         final Map<String, Object> config = configurationLogging.collectConfig(configuration);
         assertNotNull(config);
-        assertEquals(28, config.size());
+        assertEquals(29, config.size());
 
         assertEquals("*****", config.get("test.secret").toString());
+        assertEquals("", config.get("test.emptySecret").toString());
     }
 
     @Test
