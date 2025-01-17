@@ -84,25 +84,31 @@ public class ConfigurationLoggingImpl implements ConfigurationLogging {
                 // For each record component, check the field annotations
                 for (RecordComponent component : configType.getRecordComponents()) {
                     if (component.isAnnotationPresent(ConfigProperty.class)) {
-                        final String fieldName = component.getName();
 
-                        if (component.getAnnotation(Loggable.class) == null
-                                && !loggablePackages.contains(configuration.getConfigData(configType))) {
+                        final String fieldName = component.getName();
+                        final Record configRecord = configuration.getConfigData(configType);
+                        try {
+                            final Object value = component.getAccessor().invoke(configRecord);
+
                             // If the field is not annotated as '@Loggable' and it's
-                            // not exempted in loggablePackages, then log the value
-                            // as sensitive.
-                            config.put(configDataAnnotation.value() + "." + fieldName, "*****");
-                        } else {
-                            try {
+                            // not exempted in loggablePackages then it's a sensitive
+                            // value and needs to be handled differently.
+                            if (component.getAnnotation(Loggable.class) == null
+                                    && !loggablePackages.contains(configuration.getConfigData(configType))) {
+
+                                // If the field is blank then log the value as a blank string
+                                // to let an admin know the sensitive value was not injected.
+                                // Otherwise, log the value as '*****' to mask it.
+                                final String maskedValue = (value.toString().isEmpty()) ? "" : "*****";
+                                config.put(configDataAnnotation.value() + "." + fieldName, maskedValue);
+                            } else {
                                 // Log clear text values which were annotated with
                                 // '@Loggable' or which were explicitly added to
                                 // loggablePackages.
-                                final Record configRecord = configuration.getConfigData(configType);
-                                final Object value = component.getAccessor().invoke(configRecord);
                                 config.put(configDataAnnotation.value() + "." + fieldName, value);
-                            } catch (IllegalAccessException | InvocationTargetException e) {
-                                throw new RuntimeException(e);
                             }
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new RuntimeException(e);
                         }
                     }
                 }
