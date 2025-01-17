@@ -4,7 +4,7 @@ changelog:
     labels: ["wontfix", "question", "duplicate", "invalid"]
   categories:
     - title: "⭐ New Features"
-      labels: ["feature"]
+      labels: ["New Feature"]
     - title: "🚀 Enhancements"
       labels: ["Feature Enhancement"]
     - title: "🐛 Bug Fixes"
