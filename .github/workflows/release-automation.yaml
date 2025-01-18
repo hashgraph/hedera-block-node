@@ -115,17 +115,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
 
-      - name: Create Release Notes
-        if: ${{ steps.milestone.outputs.milestone_id != '' }}
-        uses: step-security/release-notes-generator-action@d7cdbb310d4aab8d98f273f4ae20fdd7cb055799 # v3.1.6
-        env:
-          FILENAME: ${{ env.RELEASE_NOTES_FILENAME }}
-          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
-          MILESTONE_NUMBER: ${{ steps.milestone.outputs.milestone_id }}
-
-      - name: Spotless Apply (release_notes.md stylefix)
-        run: ./gradlew spotlessApply
-
       - name: Commit and Tag
         uses: stefanzweifel/git-auto-commit-action@e348103e9026cc0eee72ae06630dbe30c8bf7a79 # v5.1.0
         with:
@@ -139,9 +128,10 @@ jobs:
       - name: Create Github Release
         uses: ncipollo/release-action@cdcc88a9acf3ca41c16c37bb7d21b9ad48560d87 # v1.15.0
         with:
-          bodyFile: ${{ env.RELEASE_NOTES_FILENAME }}.md
+          allowUpdates: true
           commit: ${{ env.RELEASE_BRANCH }}
           draft: ${{ steps.version_parser.outputs.prerelease == '' }}
+          generateReleaseNotes: true
           name: ${{ env.RELEASE_TAG }}
           omitBody: ${{ steps.milestone.outputs.milestone_id == '' }}
           prerelease: ${{ steps.version_parser.outputs.prerelease != '' }}
