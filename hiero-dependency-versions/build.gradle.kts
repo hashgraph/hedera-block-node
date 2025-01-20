@@ -12,7 +12,7 @@ dependencies.constraints {
     val daggerVersion = "2.55"
     val grpcIoVersion = "1.69.0"
     val helidonVersion = "4.1.6"
-    val pbjVersion = "0.9.12"
+    val pbjVersion = "0.9.14"
     val protobufVersion = "4.28.2"
     val swirldsVersion = "0.58.1"
 
