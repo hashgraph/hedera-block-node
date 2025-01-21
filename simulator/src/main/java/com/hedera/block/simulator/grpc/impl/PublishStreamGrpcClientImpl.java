@@ -80,7 +80,6 @@ public class PublishStreamGrpcClientImpl implements PublishStreamGrpcClient {
      */
     @Override
     public void init() {
-        System.out.println(grpcConfig);
         channel = ManagedChannelBuilder.forAddress(grpcConfig.serverAddress(), grpcConfig.port())
                 .usePlaintext()
                 .build();
