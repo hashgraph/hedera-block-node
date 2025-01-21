@@ -46,7 +46,7 @@ class MediatorInjectionModuleTest {
     @Test
     void testNoOpProvidesStreamMediator() throws IOException {
 
-        Map<String, String> properties = Map.of("mediator.type", "NOOP");
+        Map<String, String> properties = Map.of("mediator.type", MediatorConfig.MediatorType.NO_OP.toString());
         BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext(properties);
 
         // Call the method under test

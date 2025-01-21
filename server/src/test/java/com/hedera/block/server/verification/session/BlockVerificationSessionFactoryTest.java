@@ -35,7 +35,7 @@ class BlockVerificationSessionFactoryTest {
     @Test
     void createSession_whenSessionTypeIsAsync_returnsBlockVerificationSessionAsync() {
         // Given
-        VerificationConfig config = new VerificationConfig(true, BlockVerificationSessionType.ASYNC, 32);
+        VerificationConfig config = new VerificationConfig(null, BlockVerificationSessionType.ASYNC, 32);
         BlockHeader blockHeader = BlockHeader.newBuilder().number(1L).build();
 
         BlockVerificationSessionFactory sessionFactory = new BlockVerificationSessionFactory(
@@ -55,7 +55,7 @@ class BlockVerificationSessionFactoryTest {
     @Test
     void createSession_whenSessionTypeIsSync_returnsBlockVerificationSessionSync() {
         // Given
-        VerificationConfig config = new VerificationConfig(true, BlockVerificationSessionType.SYNC, 32);
+        VerificationConfig config = new VerificationConfig(null, BlockVerificationSessionType.SYNC, 32);
         BlockHeader blockHeader = BlockHeader.newBuilder().number(1L).build();
 
         BlockVerificationSessionFactory sessionFactory = new BlockVerificationSessionFactory(

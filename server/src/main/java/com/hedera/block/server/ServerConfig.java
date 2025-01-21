@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server;
 
+import com.hedera.block.server.config.logging.Loggable;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 import com.swirlds.config.api.validation.annotation.Max;
@@ -16,12 +17,12 @@ import com.swirlds.config.api.validation.annotation.Min;
  */
 @ConfigData("server")
 public record ServerConfig(
-        @ConfigProperty(defaultValue = defaultMaxMessageSizeBytes)
+        @Loggable
+                @ConfigProperty(defaultValue = defaultMaxMessageSizeBytes)
                 @Min(minMaxMessageSizeBytes)
                 @Max(maxMaxMessageSizeBytes)
                 int maxMessageSizeBytes,
-        @ConfigProperty(defaultValue = defaultPort) @Min(minPort) @Max(maxPort) int port) {
-    private static final System.Logger LOGGER = System.getLogger(ServerConfig.class.getName());
+        @Loggable @ConfigProperty(defaultValue = defaultPort) @Min(minPort) @Max(maxPort) int port) {
 
     // Constants for maxMessageSizeBytes property
     private static final String defaultMaxMessageSizeBytes = "4_194_304";
@@ -42,9 +43,6 @@ public record ServerConfig(
 
         validateMaxMessageSizeBytes(maxMessageSizeBytes);
         validatePort(port);
-
-        LOGGER.log(System.Logger.Level.INFO, "Server configuration server.maxMessageSizeBytes: " + maxMessageSizeBytes);
-        LOGGER.log(System.Logger.Level.INFO, "Server configuration server.port: " + port);
     }
 
     private void validatePort(int port) {

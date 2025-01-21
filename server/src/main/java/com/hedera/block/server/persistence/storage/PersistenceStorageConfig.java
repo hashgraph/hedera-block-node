@@ -6,6 +6,7 @@ import static com.hedera.block.server.Constants.BLOCK_NODE_LIVE_ROOT_DIRECTORY_S
 
 import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.common.utils.StringUtilities;
+import com.hedera.block.server.config.logging.Loggable;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 import com.swirlds.config.api.validation.annotation.Max;
@@ -30,12 +31,12 @@ import java.util.Objects;
 @ConfigData("persistence.storage")
 public record PersistenceStorageConfig(
         // @todo(#371) - the default life/archive root path must be absolute starting from /opt
-        @ConfigProperty(defaultValue = "") String liveRootPath,
+        @Loggable @ConfigProperty(defaultValue = "") String liveRootPath,
         // @todo(#371) - the default life/archive root path must be absolute starting from /opt
-        @ConfigProperty(defaultValue = "") String archiveRootPath,
-        @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type,
-        @ConfigProperty(defaultValue = "ZSTD") CompressionType compression,
-        @ConfigProperty(defaultValue = "3") @Min(0) @Max(20) int compressionLevel) {
+        @Loggable @ConfigProperty(defaultValue = "") String archiveRootPath,
+        @Loggable @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type,
+        @Loggable @ConfigProperty(defaultValue = "ZSTD") CompressionType compression,
+        @Loggable @ConfigProperty(defaultValue = "3") @Min(0) @Max(20) int compressionLevel) {
     // @todo(#371) - the default life/archive root path must be absolute starting from /opt
     private static final String LIVE_ROOT_PATH =
             Path.of("hashgraph/blocknode/data/live/").toAbsolutePath().toString();

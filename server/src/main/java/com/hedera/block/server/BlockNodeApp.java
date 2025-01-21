@@ -4,7 +4,9 @@ package com.hedera.block.server;
 import static com.hedera.block.server.Constants.PBJ_PROTOCOL_PROVIDER_CONFIG_NAME;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.INFO;
+import static java.util.Objects.requireNonNull;
 
+import com.hedera.block.server.config.logging.ConfigurationLogging;
 import com.hedera.block.server.health.HealthService;
 import com.hedera.block.server.pbj.PbjBlockAccessService;
 import com.hedera.block.server.pbj.PbjBlockStreamService;
@@ -34,6 +36,7 @@ public class BlockNodeApp {
     private final PbjBlockStreamService pbjBlockStreamService;
     private final PbjBlockAccessService pbjBlockAccessService;
     private final ServerConfig serverConfig;
+    private final ConfigurationLogging configurationLogging;
 
     /**
      * Constructs a new BlockNodeApp with the specified dependencies.
@@ -47,18 +50,20 @@ public class BlockNodeApp {
      */
     @Inject
     public BlockNodeApp(
-            @NonNull ServiceStatus serviceStatus,
-            @NonNull HealthService healthService,
-            @NonNull PbjBlockStreamService pbjBlockStreamService,
-            @NonNull PbjBlockAccessService pbjBlockAccessService,
-            @NonNull WebServerConfig.Builder webServerBuilder,
-            @NonNull ServerConfig serverConfig) {
-        this.serviceStatus = serviceStatus;
-        this.healthService = healthService;
-        this.pbjBlockStreamService = pbjBlockStreamService;
-        this.pbjBlockAccessService = pbjBlockAccessService;
-        this.webServerBuilder = webServerBuilder;
-        this.serverConfig = serverConfig;
+            @NonNull final ServiceStatus serviceStatus,
+            @NonNull final HealthService healthService,
+            @NonNull final PbjBlockStreamService pbjBlockStreamService,
+            @NonNull final PbjBlockAccessService pbjBlockAccessService,
+            @NonNull final WebServerConfig.Builder webServerBuilder,
+            @NonNull final ServerConfig serverConfig,
+            @NonNull final ConfigurationLogging configurationLogging) {
+        this.serviceStatus = requireNonNull(serviceStatus);
+        this.healthService = requireNonNull(healthService);
+        this.pbjBlockStreamService = requireNonNull(pbjBlockStreamService);
+        this.pbjBlockAccessService = requireNonNull(pbjBlockAccessService);
+        this.webServerBuilder = requireNonNull(webServerBuilder);
+        this.serverConfig = requireNonNull(serverConfig);
+        this.configurationLogging = requireNonNull(configurationLogging);
     }
 
     /**
@@ -67,6 +72,9 @@ public class BlockNodeApp {
      * @throws IOException if the server cannot be started
      */
     public void start() throws IOException {
+
+        // Log the configuration
+        configurationLogging.log();
 
         final HttpRouting.Builder httpRouting =
                 HttpRouting.builder().register(healthService.getHealthRootPath(), healthService);

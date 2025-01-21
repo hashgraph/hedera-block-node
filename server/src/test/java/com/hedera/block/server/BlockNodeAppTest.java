@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.config.logging.ConfigurationLogging;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.health.HealthService;
@@ -63,6 +64,9 @@ class BlockNodeAppTest {
     @Mock
     private BlockNodeContext blockNodeContext;
 
+    @Mock
+    private ConfigurationLogging configurationLogging;
+
     ServerConfig serverConfig;
 
     private BlockNodeApp blockNodeApp;
@@ -84,7 +88,8 @@ class BlockNodeAppTest {
                         blockNodeContext),
                 new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext),
                 webServerBuilder,
-                serverConfig);
+                serverConfig,
+                configurationLogging);
 
         when(webServerBuilder.port(8080)).thenReturn(webServerBuilder);
         when(webServerBuilder.addProtocol(any(PbjConfig.class))).thenReturn(webServerBuilder);

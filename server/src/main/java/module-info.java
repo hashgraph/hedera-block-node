@@ -12,6 +12,7 @@ module com.hedera.block.server {
     exports com.hedera.block.server.persistence.storage.read;
     exports com.hedera.block.server.persistence.storage.remove;
     exports com.hedera.block.server.config;
+    exports com.hedera.block.server.config.logging;
     exports com.hedera.block.server.mediator;
     exports com.hedera.block.server.metrics;
     exports com.hedera.block.server.events;

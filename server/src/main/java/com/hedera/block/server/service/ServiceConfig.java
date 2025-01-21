@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.service;
 
+import com.hedera.block.common.utils.Preconditions;
+import com.hedera.block.server.config.logging.Loggable;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
 
@@ -9,22 +11,17 @@ import com.swirlds.config.api.ConfigProperty;
  *
  * <p>ServiceConfig will set the default shutdown delay for the service.
  *
- * @param delayMillis the delay in milliseconds for the service
+ * @param shutdownDelayMillis the delay in milliseconds for the service
  */
 @ConfigData("service")
-public record ServiceConfig(@ConfigProperty(defaultValue = "500") int delayMillis) {
-    private static final System.Logger LOGGER = System.getLogger(ServiceConfig.class.getName());
+public record ServiceConfig(@Loggable @ConfigProperty(defaultValue = "500") int shutdownDelayMillis) {
 
     /**
      * Validate the configuration.
      *
-     * @throws IllegalArgumentException if the configuration is invalid
+     * @throws IllegalArgumentException if the shutdownDelayMillis is not positive
      */
     public ServiceConfig {
-        if (delayMillis <= 0) {
-            throw new IllegalArgumentException("Delay milliseconds must be greater than 0");
-        }
-
-        LOGGER.log(System.Logger.Level.INFO, "Service configuration service.delayMillis: " + delayMillis);
+        Preconditions.requirePositive(shutdownDelayMillis);
     }
 }
