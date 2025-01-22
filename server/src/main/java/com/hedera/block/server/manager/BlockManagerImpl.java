@@ -61,7 +61,8 @@ public class BlockManagerImpl implements BlockManager {
     private void attemptAcks() {
         // Temporarily if lastAcknowledgedBlockNumber is -1, we get the first block in the map
         if (lastAcknowledgedBlockNumber == -1) {
-            lastAcknowledgedBlockNumber = blockInfoMap.keySet().stream().min(Long::compareTo).orElse(-1L);
+            lastAcknowledgedBlockNumber =
+                    blockInfoMap.keySet().stream().min(Long::compareTo).orElse(-1L);
         }
 
         // Keep ACK-ing starting from the next block in sequence
@@ -76,8 +77,7 @@ public class BlockManagerImpl implements BlockManager {
             }
 
             // Check if this block is fully ready
-            if (!info.getBlockStatus().isPersisted() ||
-                    !info.getBlockStatus().isVerified()) {
+            if (!info.getBlockStatus().isPersisted() || !info.getBlockStatus().isVerified()) {
                 // Not fully ready. Stop.
                 break;
             }
@@ -99,5 +99,4 @@ public class BlockManagerImpl implements BlockManager {
             // persisted & verified in order.
         }
     }
-
 }

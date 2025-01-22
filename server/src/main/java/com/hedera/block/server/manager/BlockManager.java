@@ -18,5 +18,4 @@ public interface BlockManager {
      * with the newly computed blockHash.
      */
     void blockVerified(long blockNumber, Bytes blockHash);
-
 }
