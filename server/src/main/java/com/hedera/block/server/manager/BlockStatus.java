@@ -1,48 +1,65 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.manager;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * A simple bitmask-based status object for each block.
- * We only track whether it is "persisted" or "verified".
+ * A simple block status object that:
+ *  - Uses volatile booleans for 'persisted' and 'verified' (set once, from false to true).
+ *  - Uses an AtomicBoolean 'ackSent' for lock-free compare-and-set if a block has been ACKed.
  */
 public class BlockStatus {
-    private static final int PERSISTED = 1 << 0; // 1
-    private static final int VERIFIED = 1 << 1; // 2
 
-    private final AtomicInteger state = new AtomicInteger(0);
+    private volatile boolean persisted = false;
+    private volatile boolean verified = false;
 
+    /** Flag that tracks whether this block has been ACKed. */
+    private final AtomicBoolean ackSent = new AtomicBoolean(false);
+
+    /**
+     * Marks this block as persisted.
+     * This is a "set once" transition from false -> true (idempotent if called again).
+     */
     public void setPersisted() {
-        setBits(PERSISTED);
-    }
-
-    public void setVerified() {
-        setBits(VERIFIED);
-    }
-
-    public boolean isPersisted() {
-        return (state.get() & PERSISTED) != 0;
-    }
-
-    public boolean isVerified() {
-        return (state.get() & VERIFIED) != 0;
+        persisted = true;
     }
 
     /**
-     * Atomically sets the given bits in 'state'.
-     * Returns true if this call changed at least one bit from 0 to 1.
+     * Marks this block as verified.
+     * This is a "set once" transition from false -> true (idempotent if called again).
      */
-    private boolean setBits(int bitsToSet) {
-        int oldVal, newVal;
-        do {
-            oldVal = state.get();
-            newVal = oldVal | bitsToSet;
-            if (oldVal == newVal) {
-                // The bits are already set; no change
-                return false;
-            }
-        } while (!state.compareAndSet(oldVal, newVal));
-        return true;
+    public void setVerified() {
+        verified = true;
+    }
+
+    /**
+     * Atomically marks this block as ACKed if not already done.
+     *
+     * @return true if this call successfully set 'ackSent' from false -> true,
+     *         false if 'ackSent' was already true.
+     */
+    public boolean markAckSentIfNotAlready() {
+        return ackSent.compareAndSet(false, true);
+    }
+
+    /**
+     * @return true if persisted = true
+     */
+    public boolean isPersisted() {
+        return persisted;
+    }
+
+    /**
+     * @return true if verified = true
+     */
+    public boolean isVerified() {
+        return verified;
+    }
+
+    /**
+     * @return true if 'ackSent' has already been set
+     */
+    public boolean isAckSent() {
+        return ackSent.get();
     }
 }

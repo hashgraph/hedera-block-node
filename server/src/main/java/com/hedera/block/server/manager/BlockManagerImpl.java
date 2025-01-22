@@ -35,7 +35,6 @@ public class BlockManagerImpl implements BlockManager {
 
     @Override
     public void blockPersisted(long blockNumber) {
-        // If skipping, do nothing
         if (skipAcknowledgement) {
             return;
         }
@@ -48,7 +47,6 @@ public class BlockManagerImpl implements BlockManager {
 
     @Override
     public void blockVerified(long blockNumber, Bytes blockHash) {
-        // If skipping, do nothing
         if (skipAcknowledgement) {
             return;
         }
@@ -60,29 +58,41 @@ public class BlockManagerImpl implements BlockManager {
         attemptAcks();
     }
 
-    /**
-     * Attempt to ACK any blocks starting from (lastAcknowledgedBlockNumber+1) onward,
-     * as long as each is both persisted and verified, in strict ascending order.
-     */
     private void attemptAcks() {
+        // Keep ACK-ing starting from the next block in sequence
         while (true) {
             long nextBlock = lastAcknowledgedBlockNumber + 1;
             BlockInfo info = blockInfoMap.get(nextBlock);
+
             if (info == null) {
-                // We don't have that block yet at all
+                // We have no info for the next expected block yet.
+                // => We can't ACK the "next" block. Stop.
                 break;
             }
-            BlockStatus status = info.getBlockStatus();
-            if (!status.isPersisted() || !status.isVerified()) {
-                // It's not fully ready to be ACKed
+
+            // Check if this block is fully ready
+            if (!info.getBlockStatus().isPersisted() ||
+                    !info.getBlockStatus().isVerified()) {
+                // Not fully ready. Stop.
                 break;
             }
-            // If we get here, we can ACK it
-            notifier.sendAck(nextBlock, info.getBlockHash(), false);
-            // Update last acknowledged
-            lastAcknowledgedBlockNumber = nextBlock;
-            // remove from map we no longer need it.
-            blockInfoMap.remove(nextBlock);
+
+            // Attempt to mark ACK sent (CAS-protected to avoid duplicates)
+            if (info.getBlockStatus().markAckSentIfNotAlready()) {
+                // We "won" the race; we do the actual ACK
+                notifier.sendAck(nextBlock, info.getBlockHash(), false);
+
+                // Update last acknowledged
+                lastAcknowledgedBlockNumber = nextBlock;
+
+                // Remove from map if desired (so we don't waste memory)
+                blockInfoMap.remove(nextBlock);
+            }
+
+            // Loop again in case the next block is also ready.
+            // This can ACK multiple consecutive blocks if they are all
+            // persisted & verified in order.
         }
     }
+
 }
