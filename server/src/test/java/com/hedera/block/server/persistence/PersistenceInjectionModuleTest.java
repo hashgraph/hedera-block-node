@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
+import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
@@ -86,6 +87,9 @@ class PersistenceInjectionModuleTest {
     @Mock
     private ServiceStatus serviceStatusMock;
 
+    @Mock
+    private BlockManager blockManagerMock;
+
     @TempDir
     private Path testLiveRootPath;
 
@@ -118,7 +122,8 @@ class PersistenceInjectionModuleTest {
                 blockNodeContextMock,
                 blockRemoverMock,
                 blockPathResolverMock,
-                compressionMock);
+                compressionMock,
+                blockManagerMock);
 
         final Class<?> targetInstanceType =
                 switch (storageType) {
@@ -157,7 +162,8 @@ class PersistenceInjectionModuleTest {
                         blockNodeContextMock,
                         blockRemoverMock,
                         blockPathResolverMock,
-                        compressionMock))
+                        compressionMock,
+                        blockManagerMock))
                 .withCauseInstanceOf(IOException.class)
                 .withMessage("Failed to create BlockWriter");
     }

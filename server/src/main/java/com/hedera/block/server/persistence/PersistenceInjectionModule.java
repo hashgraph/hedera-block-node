@@ -4,6 +4,7 @@ package com.hedera.block.server.persistence;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
+import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
@@ -58,13 +59,15 @@ public interface PersistenceInjectionModule {
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
             @NonNull final BlockPathResolver blockPathResolver,
-            @NonNull final Compression compression) {
+            @NonNull final Compression compression,
+            @NonNull final BlockManager blockManager) {
         Objects.requireNonNull(blockRemover);
         Objects.requireNonNull(blockPathResolver);
         final StorageType persistenceType = config.type();
         try {
             return switch (persistenceType) {
-                case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileWriter.of(blockNodeContext, blockPathResolver, compression);
+                case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileWriter.of(
+                        blockNodeContext, blockPathResolver, compression, blockManager);
                 case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirWriter.of(
                         blockNodeContext, blockRemover, blockPathResolver);
                 case NO_OP -> NoOpBlockWriter.newInstance();

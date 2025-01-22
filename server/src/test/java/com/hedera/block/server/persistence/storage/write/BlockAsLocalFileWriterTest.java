@@ -8,6 +8,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.compression.Compression;
 import com.hedera.block.server.persistence.storage.compression.NoOpCompression;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mock;
 
 /**
  * Test class for {@link BlockAsLocalFileWriter}.
@@ -47,6 +49,9 @@ class BlockAsLocalFileWriterTest {
 
     private BlockAsLocalFileWriter toTest;
 
+    @Mock
+    private BlockManager blockManagerMock;
+
     @BeforeEach
     void setUp() throws IOException {
         blockNodeContext = TestConfigUtil.getTestBlockNodeContext(
@@ -59,7 +64,7 @@ class BlockAsLocalFileWriterTest {
 
         compressionMock = spy(NoOpCompression.newInstance());
 
-        toTest = BlockAsLocalFileWriter.of(blockNodeContext, pathResolverMock, compressionMock);
+        toTest = BlockAsLocalFileWriter.of(blockNodeContext, pathResolverMock, compressionMock, blockManagerMock);
     }
 
     /**

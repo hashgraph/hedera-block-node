@@ -8,6 +8,7 @@ import static org.assertj.core.api.Assertions.from;
 import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.compression.Compression;
 import com.hedera.block.server.persistence.storage.compression.NoOpCompression;
@@ -32,6 +33,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mock;
 
 /**
  * Tests for the {@link BlockAsLocalFileReader} class.
@@ -44,6 +46,9 @@ class BlockAsLocalFileReaderTest {
 
     @TempDir
     private Path testLiveRootPath;
+
+    @Mock
+    private BlockManager blockManagerMock;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -58,8 +63,8 @@ class BlockAsLocalFileReaderTest {
         compressionMock = spy(NoOpCompression.newInstance());
         final BlockAsLocalFilePathResolver blockAsLocalFileResolverMock =
                 spy(BlockAsLocalFilePathResolver.of(testConfig));
-        blockAsLocalFileWriterMock =
-                spy(BlockAsLocalFileWriter.of(blockNodeContext, blockAsLocalFileResolverMock, compressionMock));
+        blockAsLocalFileWriterMock = spy(BlockAsLocalFileWriter.of(
+                blockNodeContext, blockAsLocalFileResolverMock, compressionMock, blockManagerMock));
         toTest = BlockAsLocalFileReader.of(compressionMock, blockAsLocalFileResolverMock);
     }
 

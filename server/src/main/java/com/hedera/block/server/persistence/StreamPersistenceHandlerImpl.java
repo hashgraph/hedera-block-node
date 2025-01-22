@@ -100,12 +100,7 @@ public class StreamPersistenceHandlerImpl
                             // Persist the BlockItems
                             List<BlockItemUnparsed> blockItems =
                                     subscribeStreamResponse.blockItems().blockItems();
-                            Optional<List<BlockItemUnparsed>> result = blockWriter.write(blockItems);
-                            if (result.isPresent()) {
-                                // Publish the block item back upstream to the notifier
-                                // to send responses to producers.
-                                notifier.publish(blockItems);
-                            }
+                            blockWriter.write(blockItems);
                         }
                     }
                     case STATUS -> LOGGER.log(DEBUG, "Unexpected received a status message rather than a block item");
