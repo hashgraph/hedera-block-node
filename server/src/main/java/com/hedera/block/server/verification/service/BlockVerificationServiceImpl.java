@@ -2,11 +2,12 @@
 package com.hedera.block.server.verification.service;
 
 import static java.lang.System.Logger.Level.ERROR;
-import static java.lang.System.Logger.Level.WARNING;
 import static java.util.Objects.requireNonNull;
 
+import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.verification.BlockVerificationStatus;
 import com.hedera.block.server.verification.session.BlockVerificationSession;
 import com.hedera.block.server.verification.session.BlockVerificationSessionFactory;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -26,6 +27,7 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
 
     private final BlockVerificationSessionFactory sessionFactory;
     private BlockVerificationSession currentSession;
+    private final BlockManager blockManager;
 
     /**
      * Constructs a new BlockVerificationServiceImpl.
@@ -36,9 +38,11 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
     @Inject
     public BlockVerificationServiceImpl(
             @NonNull final MetricsService metricsService,
-            @NonNull final BlockVerificationSessionFactory sessionFactory) {
+            @NonNull final BlockVerificationSessionFactory sessionFactory,
+            @NonNull final BlockManager blockManager) {
         this.metricsService = requireNonNull(metricsService);
         this.sessionFactory = requireNonNull(sessionFactory);
+        this.blockManager = blockManager;
     }
 
     /**
@@ -59,25 +63,26 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
                     .increment();
             BlockHeader blockHeader = BlockHeader.PROTOBUF.parse(firstItem.blockHeader());
 
-            // double check last block hash with prev of current block
-            // once we finish the block verification using signature, we need to re-think this as
-            // a side verification
-            if (currentSession != null) {
-                currentSession.getVerificationResult().thenAccept(result -> {
-                    if (!result.blockHash().equals(blockHeader.previousBlockHash())) {
-                        LOGGER.log(ERROR, "blockHeader.previousBlockHash does not match calculated previous hash.");
-                        metricsService
-                                .get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed)
-                                .increment();
-                    }
-                });
-            } else {
-                LOGGER.log(WARNING, "No previous session to compare block hashes.");
-            }
-
             // start new session and set it as current
             currentSession = sessionFactory.createSession(blockHeader);
             currentSession.appendBlockItems(blockItems);
+
+            // Handle promise completion for the session.
+            currentSession.getVerificationResult().thenAccept(result -> {
+                if (result.status().equals(BlockVerificationStatus.VERIFIED)) {
+                    metricsService
+                            .get(BlockNodeMetricTypes.Counter.VerificationBlocksVerified)
+                            .increment();
+                    blockManager.blockVerified(result.blockNumber(), result.blockHash());
+                } else {
+                    metricsService
+                            .get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed)
+                            .increment();
+
+                    // TODO, we need to notify verification failures
+
+                }
+            });
 
         } else {
             if (currentSession == null) {

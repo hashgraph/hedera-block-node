@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
+import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.verification.service.BlockVerificationService;
@@ -44,6 +45,9 @@ class BlockVerificationServiceImplTest {
     @Mock
     private Counter verificationBlocksFailed;
 
+    @Mock
+    private BlockManager blockManagerMock;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -63,7 +67,8 @@ class BlockVerificationServiceImplTest {
         // No previous session
         when(sessionFactory.createSession(any())).thenReturn(newSession);
 
-        BlockVerificationService service = new BlockVerificationServiceImpl(metricsService, sessionFactory);
+        BlockVerificationService service =
+                new BlockVerificationServiceImpl(metricsService, sessionFactory, blockManagerMock);
 
         // When
         service.onBlockItemsReceived(blockItems);
@@ -91,7 +96,8 @@ class BlockVerificationServiceImplTest {
 
         when(sessionFactory.createSession(getBlockHeader(newBlockNumber))).thenReturn(newSession);
 
-        BlockVerificationServiceImpl service = new BlockVerificationServiceImpl(metricsService, sessionFactory);
+        BlockVerificationServiceImpl service =
+                new BlockVerificationServiceImpl(metricsService, sessionFactory, blockManagerMock);
         setCurrentSession(service, previousSession);
 
         // When
@@ -120,7 +126,8 @@ class BlockVerificationServiceImplTest {
 
         when(sessionFactory.createSession(getBlockHeader(newBlockNumber))).thenReturn(newSession);
 
-        BlockVerificationServiceImpl service = new BlockVerificationServiceImpl(metricsService, sessionFactory);
+        BlockVerificationServiceImpl service =
+                new BlockVerificationServiceImpl(metricsService, sessionFactory, blockManagerMock);
         setCurrentSession(service, previousSession);
 
         // When
@@ -137,7 +144,8 @@ class BlockVerificationServiceImplTest {
         BlockItemUnparsed normalItem = getNormalBlockItem();
         List<BlockItemUnparsed> blockItems = List.of(normalItem);
 
-        BlockVerificationService service = new BlockVerificationServiceImpl(metricsService, sessionFactory);
+        BlockVerificationService service =
+                new BlockVerificationServiceImpl(metricsService, sessionFactory, blockManagerMock);
 
         // When
         IllegalStateException exception =
@@ -154,7 +162,8 @@ class BlockVerificationServiceImplTest {
         BlockItemUnparsed normalItem = getNormalBlockItem();
         List<BlockItemUnparsed> blockItems = List.of(normalItem);
 
-        BlockVerificationServiceImpl service = new BlockVerificationServiceImpl(metricsService, sessionFactory);
+        BlockVerificationServiceImpl service =
+                new BlockVerificationServiceImpl(metricsService, sessionFactory, blockManagerMock);
         setCurrentSession(service, previousSession);
 
         // When
