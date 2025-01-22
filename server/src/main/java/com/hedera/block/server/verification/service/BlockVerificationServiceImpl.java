@@ -70,15 +70,8 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
             // Handle promise completion for the session.
             currentSession.getVerificationResult().thenAccept(result -> {
                 if (result.status().equals(BlockVerificationStatus.VERIFIED)) {
-                    metricsService
-                            .get(BlockNodeMetricTypes.Counter.VerificationBlocksVerified)
-                            .increment();
                     blockManager.blockVerified(result.blockNumber(), result.blockHash());
                 } else {
-                    metricsService
-                            .get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed)
-                            .increment();
-
                     // TODO, we need to notify verification failures
 
                 }
