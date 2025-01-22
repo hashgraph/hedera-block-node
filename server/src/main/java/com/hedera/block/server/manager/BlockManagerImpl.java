@@ -19,7 +19,7 @@ import javax.inject.Inject;
 public class BlockManagerImpl implements BlockManager {
 
     private final Map<Long, BlockInfo> blockInfoMap = new ConcurrentHashMap<>();
-    private volatile long lastAcknowledgedBlockNumber = 0;
+    private volatile long lastAcknowledgedBlockNumber = -1;
     private final Notifier notifier;
     private final boolean skipAcknowledgement;
 
@@ -59,6 +59,11 @@ public class BlockManagerImpl implements BlockManager {
     }
 
     private void attemptAcks() {
+        // Temporarily if lastAcknowledgedBlockNumber is -1, we get the first block in the map
+        if (lastAcknowledgedBlockNumber == -1) {
+            lastAcknowledgedBlockNumber = blockInfoMap.keySet().stream().min(Long::compareTo).orElse(-1L);
+        }
+
         // Keep ACK-ing starting from the next block in sequence
         while (true) {
             long nextBlock = lastAcknowledgedBlockNumber + 1;
