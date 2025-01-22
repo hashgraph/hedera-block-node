@@ -19,14 +19,4 @@ public interface BlockManager {
      */
     void blockVerified(long blockNumber, Bytes blockHash);
 
-    /**
-     * @return The highest block number for which an ACK has been sent.
-     */
-    long lastAcknowledgedBlockNumber();
-
-    /**
-     * @return The current block number if there is any notion of such,
-     *         or -1 if not used. (Optional, if you do not need it, remove.)
-     */
-    long currentBlockNumber();
 }

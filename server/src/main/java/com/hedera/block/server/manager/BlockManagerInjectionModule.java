@@ -22,6 +22,6 @@ public interface BlockManagerInjectionModule {
         boolean skipPersistence = persistenceStorageConfig.type().equals(PersistenceStorageConfig.StorageType.NO_OP);
         boolean skipVerification = verificationConfig.type().equals(VerificationConfig.VerificationServiceType.NO_OP);
 
-        return new BlockManagerImpl(notifier, skipPersistence, skipVerification);
+        return new BlockManagerImpl(notifier, skipPersistence | skipVerification);
     }
 }
