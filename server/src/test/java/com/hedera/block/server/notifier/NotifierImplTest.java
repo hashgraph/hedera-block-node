@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
+import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.mediator.Publisher;
@@ -32,7 +33,6 @@ import com.hedera.block.server.util.TestUtils;
 import com.hedera.block.server.verification.StreamVerificationHandlerImpl;
 import com.hedera.block.server.verification.service.BlockVerificationService;
 import com.hedera.block.server.verification.service.NoOpBlockVerificationService;
-import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
@@ -103,6 +103,9 @@ public class NotifierImplTest {
 
     @Mock
     private ServiceInterface.RequestOptions options;
+
+    @Mock
+    BlockManager blockManager;
 
     private final long TIMEOUT_THRESHOLD_MILLIS = 100L;
     private final long TEST_TIME = 1_719_427_664_950L;
@@ -245,12 +248,6 @@ public class NotifierImplTest {
                 @NonNull final BlockNodeContext blockNodeContext,
                 @NonNull final ServiceStatus serviceStatus) {
             super(mediator, blockNodeContext, serviceStatus);
-        }
-
-        @Override
-        @NonNull
-        Acknowledgement buildAck(@NonNull final List<BlockItemUnparsed> blockItems) throws NoSuchAlgorithmException {
-            throw new NoSuchAlgorithmException("Test exception");
         }
     }
 
