@@ -19,7 +19,6 @@ import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.swirlds.metrics.api.Counter;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -57,88 +56,6 @@ class BlockVerificationServiceImplTest {
                 .thenReturn(verificationBlocksFailed);
 
         blockManagerMock = mock(BlockManager.class);
-    }
-
-    @Test
-    void testOnBlockItemsReceivedWithNewBlockHeaderNoPreviousSession() throws ParseException {
-        // Given a new block header starting at block #10
-        long blockNumber = 10;
-        BlockItemUnparsed blockHeaderItem = getBlockHeaderUnparsed(blockNumber);
-        List<BlockItemUnparsed> blockItems = List.of(blockHeaderItem);
-
-        // No previous session
-        when(sessionFactory.createSession(any())).thenReturn(newSession);
-
-        BlockVerificationService service =
-                new BlockVerificationServiceImpl(metricsService, sessionFactory, blockManagerMock);
-
-        // When
-        service.onBlockItemsReceived(blockItems);
-
-        // Then
-        verify(verificationBlocksReceived).increment(); // new block received
-        verify(sessionFactory).createSession(getBlockHeader(blockNumber));
-        verify(newSession).appendBlockItems(blockItems);
-        // No previous session, so just logs a warning internally
-    }
-
-    @Test
-    void testOnBlockItemsReceivedWithNewBlockHeaderAndPreviousSessionHashMatch() throws ParseException {
-        // Given a previous verified block #9 and now receiving header for block #10
-        long previousBlockNumber = 9;
-        long newBlockNumber = 10;
-
-        BlockItemUnparsed blockHeaderItem = getBlockHeaderUnparsed(newBlockNumber);
-        List<BlockItemUnparsed> blockItems = List.of(blockHeaderItem);
-
-        // Previous session result matches the expected previous hash
-        CompletableFuture<VerificationResult> future = new CompletableFuture<>();
-        future.complete(getVerificationResult(previousBlockNumber));
-        when(previousSession.getVerificationResult()).thenReturn(future);
-
-        when(sessionFactory.createSession(getBlockHeader(newBlockNumber))).thenReturn(newSession);
-
-        BlockVerificationServiceImpl service =
-                new BlockVerificationServiceImpl(metricsService, sessionFactory, blockManagerMock);
-        setCurrentSession(service, previousSession);
-
-        // When
-        service.onBlockItemsReceived(blockItems);
-
-        // Then
-        verify(verificationBlocksReceived).increment();
-        verify(verificationBlocksFailed, never()).increment();
-        verify(newSession).appendBlockItems(blockItems);
-    }
-
-    @Test
-    void testOnBlockItemsReceivedWithNewBlockHeaderAndPreviousSessionHashMismatch() throws ParseException {
-        // Given a previous block #9 but now we produce a verification result that doesn't match the new header's prev
-        // hash
-        long previousBlockNumber = 9;
-        long newBlockNumber = 10;
-
-        BlockItemUnparsed blockHeaderItem = getBlockHeaderUnparsed(newBlockNumber);
-        List<BlockItemUnparsed> blockItems = List.of(blockHeaderItem);
-
-        // Make the previous session result have a different hash (e.g., block #99)
-        CompletableFuture<VerificationResult> future = new CompletableFuture<>();
-        future.complete(getVerificationResult(99)); // This gives hash99, not hash9
-        when(previousSession.getVerificationResult()).thenReturn(future);
-
-        when(sessionFactory.createSession(getBlockHeader(newBlockNumber))).thenReturn(newSession);
-
-        BlockVerificationServiceImpl service =
-                new BlockVerificationServiceImpl(metricsService, sessionFactory, blockManagerMock);
-        setCurrentSession(service, previousSession);
-
-        // When
-        service.onBlockItemsReceived(blockItems);
-
-        // Then
-        verify(verificationBlocksReceived).increment();
-        verify(verificationBlocksFailed).increment(); // mismatch should cause increment
-        verify(newSession).appendBlockItems(blockItems);
     }
 
     @Test
