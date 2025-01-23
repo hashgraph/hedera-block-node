@@ -5,6 +5,7 @@ import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
@@ -63,6 +64,8 @@ class BlockAsLocalFileWriterTest {
         pathResolverMock = spy(BlockAsLocalFilePathResolver.of(testConfig));
 
         compressionMock = spy(NoOpCompression.newInstance());
+
+        blockManagerMock = mock(BlockManager.class);
 
         toTest = BlockAsLocalFileWriter.of(blockNodeContext, pathResolverMock, compressionMock, blockManagerMock);
     }

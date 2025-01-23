@@ -55,6 +55,8 @@ class BlockVerificationServiceImplTest {
                 .thenReturn(verificationBlocksReceived);
         when(metricsService.get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed))
                 .thenReturn(verificationBlocksFailed);
+
+        blockManagerMock = mock(BlockManager.class);
     }
 
     @Test

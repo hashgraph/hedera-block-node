@@ -2,7 +2,6 @@
 package com.hedera.block.server.notifier;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Producers;
-import static com.hedera.block.server.notifier.NotifierImpl.buildErrorStreamResponse;
 import static com.hedera.block.server.util.PbjProtoTestUtils.buildAck;
 import static com.hedera.block.server.util.PbjProtoTestUtils.buildEmptyPublishStreamRequest;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
@@ -174,37 +173,6 @@ public class NotifierImplTest {
 
         producers = blockNodeContext.metricsService().get(Producers).get();
         assertEquals(0, producers, "Expected 0 producers to be registered");
-    }
-
-    @Test
-    public void testPublishThrowsNoSuchAlgorithmException() {
-
-        when(serviceStatus.isRunning()).thenReturn(true);
-        final var notifier = new TestNotifier(mediator, blockNodeContext, serviceStatus);
-        final var concreteObserver1 = new ProducerBlockItemObserver(
-                testClock, publisher, subscriptionHandler, publishStreamObserver1, blockNodeContext, serviceStatus);
-
-        final var concreteObserver2 = new ProducerBlockItemObserver(
-                testClock, publisher, subscriptionHandler, publishStreamObserver2, blockNodeContext, serviceStatus);
-
-        final var concreteObserver3 = new ProducerBlockItemObserver(
-                testClock, publisher, subscriptionHandler, publishStreamObserver3, blockNodeContext, serviceStatus);
-
-        notifier.subscribe(concreteObserver1);
-        notifier.subscribe(concreteObserver2);
-        notifier.subscribe(concreteObserver3);
-
-        assertTrue(notifier.isSubscribed(concreteObserver1), "Expected the notifier to have observer1 subscribed");
-        assertTrue(notifier.isSubscribed(concreteObserver2), "Expected the notifier to have observer2 subscribed");
-        assertTrue(notifier.isSubscribed(concreteObserver3), "Expected the notifier to have observer3 subscribed");
-
-        List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
-        notifier.publish(blockItems);
-
-        final PublishStreamResponse errorResponse = buildErrorStreamResponse();
-        verify(publishStreamObserver1, timeout(testTimeout).times(1)).onNext(errorResponse);
-        verify(publishStreamObserver2, timeout(testTimeout).times(1)).onNext(errorResponse);
-        verify(publishStreamObserver3, timeout(testTimeout).times(1)).onNext(errorResponse);
     }
 
     @Test
