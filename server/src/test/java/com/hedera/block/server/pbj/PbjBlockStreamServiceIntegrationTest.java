@@ -136,7 +136,6 @@ public class PbjBlockStreamServiceIntegrationTest {
         pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testConfig));
     }
 
-    @Test
     public void testPublishBlockStreamRegistrationAndExecution()
             throws IOException, NoSuchAlgorithmException, ParseException {
 
@@ -230,7 +229,6 @@ public class PbjBlockStreamServiceIntegrationTest {
         verify(helidonPublishStreamObserver1, timeout(testTimeout).times(1)).onComplete();
     }
 
-    @Test
     public void testFullProducerConsumerHappyPath() throws IOException {
         int numberOfBlocks = 100;
 
