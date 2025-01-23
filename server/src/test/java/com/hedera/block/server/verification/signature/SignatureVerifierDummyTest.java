@@ -1,13 +1,33 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.verification.signature;
 
+import com.hedera.block.server.verification.hasher.HashingUtilities;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SignatureVerifierDummyTest {
 
     @Test
-    void testVerifySignature() {
+    void testVerifySignature_success() {
         SignatureVerifierDummy signatureVerifierDummy = new SignatureVerifierDummy();
-        signatureVerifierDummy.verifySignature(null, null);
+
+        Bytes fakeBlockHash = Bytes.fromHex("1234567890abcdef");
+        Bytes expectedSignature = HashingUtilities.noThrowSha384HashOf(fakeBlockHash);
+        signatureVerifierDummy.verifySignature(fakeBlockHash, expectedSignature);
+
+        assertEquals(true, signatureVerifierDummy.verifySignature(fakeBlockHash, expectedSignature));
+    }
+
+    @Test
+    void testVerifySignature_fails() {
+        SignatureVerifierDummy signatureVerifierDummy = new SignatureVerifierDummy();
+
+        Bytes fakeBlockHash = Bytes.fromHex("1234567890abcdef");
+        Bytes expectedSignature = Bytes.fromHex("cafebabe");
+        signatureVerifierDummy.verifySignature(fakeBlockHash, expectedSignature);
+
+        assertEquals(false, signatureVerifierDummy.verifySignature(fakeBlockHash, expectedSignature));
     }
 }
