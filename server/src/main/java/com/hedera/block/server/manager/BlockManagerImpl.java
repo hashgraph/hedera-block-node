@@ -2,6 +2,7 @@
 package com.hedera.block.server.manager;
 
 import com.hedera.block.server.notifier.Notifier;
+import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
@@ -58,6 +59,21 @@ public class BlockManagerImpl implements BlockManager {
         attemptAcks();
     }
 
+    /**
+     * If the block verification failed, we send an end of stream message to the notifier.
+     * @param blockNumber the block number that failed verification
+     */
+    @Override
+    public void blockVerificationFailed(long blockNumber) {
+        notifier.sendEndOfStream(blockNumber, PublishStreamResponseCode.STREAM_ITEMS_BAD_STATE_PROOF);
+        // TODO We need to notify persistence to delete this block_number.
+    }
+
+    /**
+     * Attempt to ACK all blocks that are ready to be ACKed.
+     * This method is called whenever a block is persisted or verified.
+     * It ACKs all blocks in sequence that are both persisted and verified.
+     */
     private void attemptAcks() {
         // Temporarily if lastAcknowledgedBlockNumber is -1, we get the first block in the map
         if (lastAcknowledgedBlockNumber == -1) {

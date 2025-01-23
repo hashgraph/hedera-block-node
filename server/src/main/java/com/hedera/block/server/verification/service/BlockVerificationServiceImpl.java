@@ -72,8 +72,7 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
                 if (result.status().equals(BlockVerificationStatus.VERIFIED)) {
                     blockManager.blockVerified(result.blockNumber(), result.blockHash());
                 } else {
-                    // TODO, we need to notify verification failures
-
+                    blockManager.blockVerificationFailed(result.blockNumber());
                 }
             });
 

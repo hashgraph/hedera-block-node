@@ -120,6 +120,24 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
         return Acknowledgement.newBuilder().blockAck(blockAcknowledgement).build();
     }
 
+    @Override
+    public void sendEndOfStream(long block_number, PublishStreamResponseCode responseCode) {
+        if (serviceStatus.isRunning()) {
+            final var publishStreamResponse = PublishStreamResponse.newBuilder()
+                    .status(EndOfStream.newBuilder()
+                            .blockNumber(block_number)
+                            .status(responseCode)
+                            .build())
+                    .build();
+
+            ringBuffer.publishEvent((event, sequence) -> event.set(publishStreamResponse));
+
+            metricsService.get(NotifierRingBufferRemainingCapacity).set(ringBuffer.remainingCapacity());
+            metricsService.get(SuccessfulPubStreamResp).increment();
+        }
+    }
+
+    @Override
     public void sendAck(long blockNumber, Bytes blockHash, boolean duplicated) {
         if (serviceStatus.isRunning()) {
             // Publish the block item to the subscribers

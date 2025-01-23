@@ -18,4 +18,9 @@ public interface BlockManager {
      * with the newly computed blockHash.
      */
     void blockVerified(long blockNumber, Bytes blockHash);
+
+    /**
+     * Called by the Verification Service when we get a verification failure for the given blockNumber.
+     */
+    void blockVerificationFailed(long blockNumber);
 }
