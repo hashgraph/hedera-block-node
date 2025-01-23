@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.verification.signature;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.hedera.block.server.verification.hasher.HashingUtilities;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SignatureVerifierDummyTest {
 

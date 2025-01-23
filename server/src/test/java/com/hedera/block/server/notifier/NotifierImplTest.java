@@ -2,9 +2,7 @@
 package com.hedera.block.server.notifier;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Producers;
-import static com.hedera.block.server.util.PbjProtoTestUtils.buildAck;
 import static com.hedera.block.server.util.PbjProtoTestUtils.buildEmptyPublishStreamRequest;
-import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
 import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -32,6 +30,7 @@ import com.hedera.block.server.util.TestUtils;
 import com.hedera.block.server.verification.StreamVerificationHandlerImpl;
 import com.hedera.block.server.verification.service.BlockVerificationService;
 import com.hedera.block.server.verification.service.NoOpBlockVerificationService;
+import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
@@ -155,16 +154,27 @@ public class NotifierImplTest {
         long producers = blockNodeContext.metricsService().get(Producers).get();
         assertEquals(3, producers, "Expected 3 producers to be registered");
 
-        List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
-        notifier.publish(blockItems);
+        // List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
+        // notifier.publish(blockItems);
+        Bytes blockHash = Bytes.wrap("1234");
+        long blockNumber = 2L;
+        boolean isDuplicated = false;
+
+        notifier.sendAck(blockNumber, blockHash, isDuplicated);
+
+        Acknowledgement blockAcknowledgement = notifier.buildAck(blockHash, blockNumber, isDuplicated);
+
+        // Verify once the serviceStatus is not running that we do not publish the responses
+        final var publishStreamResponse = PublishStreamResponse.newBuilder()
+                .acknowledgement(blockAcknowledgement)
+                .build();
 
         // Verify the response was received by all observers
-        final Bytes publishStreamResponse = PublishStreamResponse.PROTOBUF.toBytes(PublishStreamResponse.newBuilder()
-                .acknowledgement(buildAck(blockItems))
-                .build());
-        verify(helidonPublishStreamObserver1, timeout(testTimeout).times(1)).onNext(publishStreamResponse);
-        verify(helidonPublishStreamObserver2, timeout(testTimeout).times(1)).onNext(publishStreamResponse);
-        verify(helidonPublishStreamObserver3, timeout(testTimeout).times(1)).onNext(publishStreamResponse);
+        final Bytes publishStreamResponseBytes = PublishStreamResponse.PROTOBUF.toBytes(publishStreamResponse);
+
+        verify(helidonPublishStreamObserver1, timeout(testTimeout).times(1)).onNext(publishStreamResponseBytes);
+        verify(helidonPublishStreamObserver2, timeout(testTimeout).times(1)).onNext(publishStreamResponseBytes);
+        verify(helidonPublishStreamObserver3, timeout(testTimeout).times(1)).onNext(publishStreamResponseBytes);
 
         // Unsubscribe the observers
         producerPipeline1.onComplete();
@@ -198,13 +208,19 @@ public class NotifierImplTest {
         assertTrue(notifier.isSubscribed(concreteObserver2), "Expected the notifier to have observer2 subscribed");
         assertTrue(notifier.isSubscribed(concreteObserver3), "Expected the notifier to have observer3 subscribed");
 
-        final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
-        notifier.publish(blockItems);
+        Bytes blockHash = Bytes.wrap("1234");
+        long blockNumber = 2L;
+        boolean isDuplicated = false;
+
+        notifier.sendAck(blockNumber, blockHash, isDuplicated);
+
+        Acknowledgement blockAcknowledgement = notifier.buildAck(blockHash, blockNumber, isDuplicated);
 
         // Verify once the serviceStatus is not running that we do not publish the responses
         final var publishStreamResponse = PublishStreamResponse.newBuilder()
-                .acknowledgement(buildAck(blockItems))
+                .acknowledgement(blockAcknowledgement)
                 .build();
+
         verify(publishStreamObserver1, timeout(testTimeout).times(0)).onNext(publishStreamResponse);
         verify(publishStreamObserver2, timeout(testTimeout).times(0)).onNext(publishStreamResponse);
         verify(publishStreamObserver3, timeout(testTimeout).times(0)).onNext(publishStreamResponse);
