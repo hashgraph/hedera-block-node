@@ -75,7 +75,7 @@ public class StreamPersistenceHandlerImplTest {
 
         // Indirectly confirm the branch we're in by verifying
         // these methods were not called.
-        verify(notifier, never()).publish(blockItems);
+        verify(notifier, never()).publish(any());
         verify(metricsService, never()).get(StreamPersistenceHandlerError);
     }
 

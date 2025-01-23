@@ -69,7 +69,7 @@ public interface PersistenceInjectionModule {
                 case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileWriter.of(
                         blockNodeContext, blockPathResolver, compression, blockManager);
                 case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirWriter.of(
-                        blockNodeContext, blockRemover, blockPathResolver);
+                        blockNodeContext, blockRemover, blockPathResolver, blockManager);
                 case NO_OP -> NoOpBlockWriter.newInstance();
             };
         } catch (final IOException e) {

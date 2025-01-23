@@ -12,13 +12,11 @@ import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.BlockAcknowledgement;
-import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -86,13 +84,22 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
     }
 
     /**
-     * Publishes the given block item to all subscribed producers.
+     * Publishes the given PublishStreamResponse
      *
-     * @param blockItems the block items from the persistence layer to publish a response to
-     *     upstream producers
+     * @param response the PublishStreamResponse to publish
      */
     @Override
-    public void publish(@NonNull List<BlockItemUnparsed> blockItems) {}
+    public void publish(@NonNull PublishStreamResponse response) {
+        if (serviceStatus.isRunning()) {
+            // Publish the block item to the subscribers
+            ringBuffer.publishEvent((event, sequence) -> event.set(response));
+
+            metricsService.get(NotifierRingBufferRemainingCapacity).set(ringBuffer.remainingCapacity());
+            metricsService.get(SuccessfulPubStreamResp).increment();
+        } else {
+            LOGGER.log(ERROR, "Service is not running. Notifier skipping sendAck");
+        }
+    }
 
     /**
      * Builds an error stream response.
@@ -122,35 +129,23 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
 
     @Override
     public void sendEndOfStream(long block_number, PublishStreamResponseCode responseCode) {
-        if (serviceStatus.isRunning()) {
-            final var publishStreamResponse = PublishStreamResponse.newBuilder()
-                    .status(EndOfStream.newBuilder()
-                            .blockNumber(block_number)
-                            .status(responseCode)
-                            .build())
-                    .build();
+        final var publishStreamResponse = PublishStreamResponse.newBuilder()
+                .status(EndOfStream.newBuilder()
+                        .blockNumber(block_number)
+                        .status(responseCode)
+                        .build())
+                .build();
 
-            ringBuffer.publishEvent((event, sequence) -> event.set(publishStreamResponse));
-
-            metricsService.get(NotifierRingBufferRemainingCapacity).set(ringBuffer.remainingCapacity());
-            metricsService.get(SuccessfulPubStreamResp).increment();
-        }
+        publish(publishStreamResponse);
     }
 
     @Override
     public void sendAck(long blockNumber, Bytes blockHash, boolean duplicated) {
-        if (serviceStatus.isRunning()) {
-            // Publish the block item to the subscribers
-            final var publishStreamResponse = PublishStreamResponse.newBuilder()
-                    .acknowledgement(buildAck(blockHash, blockNumber, duplicated))
-                    .build();
 
-            ringBuffer.publishEvent((event, sequence) -> event.set(publishStreamResponse));
+        final var publishStreamResponse = PublishStreamResponse.newBuilder()
+                .acknowledgement(buildAck(blockHash, blockNumber, duplicated))
+                .build();
 
-            metricsService.get(NotifierRingBufferRemainingCapacity).set(ringBuffer.remainingCapacity());
-            metricsService.get(SuccessfulPubStreamResp).increment();
-        } else {
-            LOGGER.log(ERROR, "Service is not running. Notifier skipping sendAck");
-        }
+        publish(publishStreamResponse);
     }
 }

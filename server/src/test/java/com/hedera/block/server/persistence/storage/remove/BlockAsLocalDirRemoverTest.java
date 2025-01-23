@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
@@ -32,12 +33,16 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mock;
 
 class BlockAsLocalDirRemoverTest {
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig testConfig;
     private BlockAsLocalDirPathResolver pathResolverMock;
     private BlockAsLocalDirRemover toTest;
+
+    @Mock
+    private BlockManager blockManagerMock;
 
     @TempDir
     private Path testLiveRootPath;
@@ -52,6 +57,8 @@ class BlockAsLocalDirRemoverTest {
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
         pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testConfig));
         toTest = BlockAsLocalDirRemover.of(pathResolverMock);
+
+        blockManagerMock = mock(BlockManager.class);
     }
 
     @Test
@@ -59,8 +66,8 @@ class BlockAsLocalDirRemoverTest {
         // Write a block
         final List<BlockItemUnparsed> blockItems = PersistTestUtils.generateBlockItemsUnparsed(1);
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManagerMock);
         for (final BlockItemUnparsed blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));
         }

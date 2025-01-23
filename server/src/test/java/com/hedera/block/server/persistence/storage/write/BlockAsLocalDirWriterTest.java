@@ -18,6 +18,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 import com.hedera.block.server.config.BlockNodeContext;
+import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
@@ -44,12 +45,16 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mock;
 
 public class BlockAsLocalDirWriterTest {
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig testConfig;
     private BlockAsLocalDirPathResolver pathResolverMock;
     private List<BlockItemUnparsed> blockItems;
+
+    @Mock
+    private BlockManager blockManagerMock;
 
     @TempDir
     private Path testLiveRootPath;
@@ -64,13 +69,15 @@ public class BlockAsLocalDirWriterTest {
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
         pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testConfig));
+
+        blockManagerMock = mock(BlockManager.class);
     }
 
     @Test
     public void testWriterAndReaderHappyPath() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManagerMock);
         for (int i = 0; i < 10; i++) {
             final Optional<List<BlockItemUnparsed>> result = blockWriter.write(List.of(blockItems.get(i)));
             if (i == 9) {
@@ -114,8 +121,8 @@ public class BlockAsLocalDirWriterTest {
     @Test
     public void testRemoveBlockWritePerms() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManagerMock);
 
         // Change the permissions on the block node root directory
         removeRootWritePerms(testConfig);
@@ -159,8 +166,8 @@ public class BlockAsLocalDirWriterTest {
     @Test
     public void testUnrecoverableIOExceptionOnWrite() throws IOException, ParseException {
         // Use a spy to simulate an IOException when the first block item is written
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                spy(BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock));
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = spy(BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManagerMock));
         doThrow(IOException.class).when(blockWriter).write(blockItems);
         assertThrows(IOException.class, () -> blockWriter.write(blockItems));
     }
@@ -168,8 +175,8 @@ public class BlockAsLocalDirWriterTest {
     @Test
     public void testRemoveRootDirReadPerm() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManagerMock);
 
         // Write the first block item to create the block
         // directory
@@ -208,7 +215,8 @@ public class BlockAsLocalDirWriterTest {
         final int expectedItemsPerBlock = 10;
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(3);
         final BlockRemover blockRemover = BlockAsLocalDirRemover.of(pathResolverMock);
-        final BlockAsLocalDirWriter toTest = BlockAsLocalDirWriter.of(blockNodeContext, blockRemover, pathResolverMock);
+        final BlockAsLocalDirWriter toTest =
+                BlockAsLocalDirWriter.of(blockNodeContext, blockRemover, pathResolverMock, blockManagerMock);
 
         // Now make the calls
         for (int i = 0; i < 23; i++) {
@@ -282,8 +290,8 @@ public class BlockAsLocalDirWriterTest {
     @ParameterizedTest
     @MethodSource("invalidBlockNumbers")
     void testInvalidBlockNumber(final long blockNumber) throws IOException {
-        final BlockAsLocalDirWriter toTest =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
+        final BlockAsLocalDirWriter toTest = BlockAsLocalDirWriter.of(
+                blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManagerMock);
 
         final BlockHeader blockHeader =
                 BlockHeader.newBuilder().number(blockNumber).build();
