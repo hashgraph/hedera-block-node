@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
+import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.notifier.Notifier;
@@ -117,6 +118,9 @@ public class PbjBlockStreamServiceIntegrationTest {
 
     @Mock
     private ServiceInterface.RequestOptions options;
+
+    @Mock
+    private BlockManager blockManager;
 
     @TempDir
     private Path testLiveRootPath;
@@ -234,7 +238,7 @@ public class PbjBlockStreamServiceIntegrationTest {
 
         // Use a real BlockWriter to test the full integration
         final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManager);
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
         // Register 3 producers - Opening a pipeline is not enough to register a producer.
@@ -509,8 +513,8 @@ public class PbjBlockStreamServiceIntegrationTest {
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
 
         // Use a spy to make sure the write() method throws an IOException
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                spy(BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock));
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter = spy(
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManager));
         doThrow(IOException.class).when(blockWriter).write(blockItems);
 
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);
