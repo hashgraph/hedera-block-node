@@ -86,8 +86,10 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
         if (valueToWrite.getLast().hasBlockProof()) {
             writeToFs();
             metricsService.get(BlocksPersisted).increment();
+            // reset will set -1 to currentBlockNumber, so we need to store it before reset
+            long blockNumberPersisted = currentBlockNumber;
             resetState();
-            return Optional.of(currentBlockNumber);
+            return Optional.of(blockNumberPersisted);
         } else {
             return Optional.empty();
         }
