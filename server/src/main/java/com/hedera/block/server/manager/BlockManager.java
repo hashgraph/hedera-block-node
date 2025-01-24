@@ -6,7 +6,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Interface for managing blocks, their persistence, verification, and failure.
- *
  * Responsible for sending Block Acknowledgements to the producer.
  */
 public interface BlockManager {

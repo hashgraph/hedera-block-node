@@ -106,10 +106,8 @@ public class StreamPersistenceHandlerImpl
                             List<BlockItemUnparsed> blockItems =
                                     subscribeStreamResponse.blockItems().blockItems();
                             Optional<Long> result = blockWriter.write(blockItems);
-                            if (result.isPresent()) {
-                                // Notify the block manager that the block has been persisted
-                                blockManager.blockPersisted(result.get());
-                            }
+                            // Notify the block manager that the block has been persisted
+                            result.ifPresent(blockManager::blockPersisted);
                         }
                     }
                     case STATUS -> LOGGER.log(DEBUG, "Unexpected received a status message rather than a block item");
