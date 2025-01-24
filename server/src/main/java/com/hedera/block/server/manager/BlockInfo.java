@@ -2,6 +2,7 @@
 package com.hedera.block.server.manager;
 
 import com.hedera.pbj.runtime.io.buffer.Bytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * POJO that holds information about a block while in process.
@@ -49,7 +50,7 @@ public class BlockInfo {
      * Set the block hash.
      * @param blockHash the block hash
      */
-    public void setBlockHash(Bytes blockHash) {
+    public void setBlockHash(@NonNull Bytes blockHash) {
         this.blockHash = blockHash;
     }
 }

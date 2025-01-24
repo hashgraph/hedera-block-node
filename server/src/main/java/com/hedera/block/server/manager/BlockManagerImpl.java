@@ -57,7 +57,7 @@ public class BlockManagerImpl implements BlockManager {
      * @param blockHash the block hash
      */
     @Override
-    public void blockVerified(long blockNumber, Bytes blockHash) {
+    public void blockVerified(long blockNumber, @NonNull Bytes blockHash) {
         if (skipAcknowledgement) {
             return;
         }
