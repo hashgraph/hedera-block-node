@@ -4,7 +4,9 @@ package com.hedera.block.server.manager;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 
 /**
- * A simplified BlockManager interface that does not have "blockReceived" nor "blockStateUpdated".
+ * Interface for managing blocks, their persistence, verification, and failure.
+ *
+ * Responsible for sending Block Acknowledgements to the producer.
  */
 public interface BlockManager {
 
@@ -15,7 +17,7 @@ public interface BlockManager {
 
     /**
      * Called when we receive a "verified" event for the given blockNumber,
-     * with the newly computed blockHash.
+     * with the computed blockHash.
      */
     void blockVerified(long blockNumber, Bytes blockHash);
 
