@@ -19,5 +19,10 @@ public interface Notifier extends StreamMediator<PublishStreamResponse, PublishS
      */
     void sendAck(long blockNumber, Bytes blockHash, boolean isDuplicated);
 
+    /**
+     * Sends an end of stream message for the given block number.
+     * @param block_number number of the block to ack
+     * @param responseCode the response code to send
+     */
     void sendEndOfStream(long block_number, PublishStreamResponseCode responseCode);
 }

@@ -34,6 +34,10 @@ public class BlockManagerImpl implements BlockManager {
         this.skipAcknowledgement = skipAcknowledgement;
     }
 
+    /**
+     * Called when we receive a "persistence" event for the given blockNumber.
+     * @param blockNumber the block number
+     */
     @Override
     public void blockPersisted(long blockNumber) {
         if (skipAcknowledgement) {
@@ -46,6 +50,12 @@ public class BlockManagerImpl implements BlockManager {
         attemptAcks();
     }
 
+    /**
+     * Called when we receive a "verified" event for the given blockNumber,
+     * with the computed blockHash.
+     * @param blockNumber the block number
+     * @param blockHash the block hash
+     */
     @Override
     public void blockVerified(long blockNumber, Bytes blockHash) {
         if (skipAcknowledgement) {

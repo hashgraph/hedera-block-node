@@ -107,9 +107,7 @@ public class StreamPersistenceHandlerImpl
                                     subscribeStreamResponse.blockItems().blockItems();
                             Optional<Long> result = blockWriter.write(blockItems);
                             if (result.isPresent()) {
-                                // Publish the block item back upstream to the notifier
-                                // to send responses to producers.
-                                // notifier.publish(blockItems);
+                                // Notify the block manager that the block has been persisted
                                 blockManager.blockPersisted(result.get());
                             }
                         }

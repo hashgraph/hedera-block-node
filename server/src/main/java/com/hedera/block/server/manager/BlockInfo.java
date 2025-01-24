@@ -12,23 +12,43 @@ public class BlockInfo {
     private Bytes blockHash;
     private final BlockStatus blockStatus;
 
+    /**
+     * Constructor.
+     * @param blockNumber the block number
+     */
     public BlockInfo(long blockNumber) {
         this.blockNumber = blockNumber;
         this.blockStatus = new BlockStatus();
     }
 
+    /**
+     * Get the block number.
+     * @return the block number
+     */
     public long getBlockNumber() {
         return blockNumber;
     }
 
+    /**
+     * Get the block hash.
+     * @return the block hash
+     */
     public Bytes getBlockHash() {
         return blockHash;
     }
 
+    /**
+     * Get the block status.
+     * @return the block status
+     */
     public BlockStatus getBlockStatus() {
         return blockStatus;
     }
 
+    /**
+     * Set the block hash.
+     * @param blockHash the block hash
+     */
     public void setBlockHash(Bytes blockHash) {
         this.blockHash = blockHash;
     }

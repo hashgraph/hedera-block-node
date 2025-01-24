@@ -115,6 +115,14 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
         return PublishStreamResponse.newBuilder().status(endOfStream).build();
     }
 
+    /**
+     * Builds an acknowledgement for the given block number and block hash.
+     *
+     * @param blockHash root hash of the block to ack
+     * @param blockNumber number of the block to ack
+     * @param alreadyExists true if the block already exists, false otherwise
+     * @return the acknowledgement
+     */
     @NonNull
     Acknowledgement buildAck(
             @NonNull final Bytes blockHash, @NonNull final long blockNumber, @NonNull boolean alreadyExists) {
@@ -127,6 +135,12 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
         return Acknowledgement.newBuilder().blockAck(blockAcknowledgement).build();
     }
 
+    /**
+     * Sends an end of stream message for the given block number.
+     *
+     * @param block_number number of the block to ack
+     * @param responseCode the response code to send
+     */
     @Override
     public void sendEndOfStream(long block_number, PublishStreamResponseCode responseCode) {
         final var publishStreamResponse = PublishStreamResponse.newBuilder()
@@ -139,6 +153,13 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
         publish(publishStreamResponse);
     }
 
+    /**
+     * Sends an acknowledgement for the given block number and block hash.
+     *
+     * @param blockNumber number of the block to ack
+     * @param blockHash root hash of the block to ack
+     * @param duplicated true if the block is a duplicate, false otherwise
+     */
     @Override
     public void sendAck(long blockNumber, Bytes blockHash, boolean duplicated) {
 

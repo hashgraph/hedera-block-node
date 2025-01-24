@@ -111,12 +111,6 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
         return new BlockAsLocalDirWriter(blockNodeContext, blockRemover, blockPathResolver);
     }
 
-    /**
-     * Writes the given block item to the filesystem.
-     *
-     * @param valueToWrite the block item to write
-     * @throws IOException if an error occurs while writing the block item
-     */
     @NonNull
     @Override
     public Optional<Long> write(@NonNull final List<BlockItemUnparsed> valueToWrite)

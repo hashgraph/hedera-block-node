@@ -12,6 +12,14 @@ import javax.inject.Singleton;
 @Module
 public interface BlockManagerInjectionModule {
 
+    /**
+     * Provides a {@link BlockManager} instance.
+     *
+     * @param notifier the {@link Notifier} instance
+     * @param persistenceStorageConfig the {@link PersistenceStorageConfig} instance
+     * @param verificationConfig the {@link VerificationConfig} instance
+     * @return a {@link BlockManager} instance
+     */
     @Provides
     @Singleton
     static BlockManager provideBlockManager(
