@@ -2,6 +2,8 @@
 package com.hedera.block.server.persistence.storage.write;
 
 import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.List;
@@ -18,6 +20,8 @@ public final class NoOpBlockWriter implements BlockWriter<List<BlockItemUnparsed
      */
     private NoOpBlockWriter() {}
 
+    private long currentBlockNumber;
+
     /**
      * This method creates and returns a new instance of
      * {@link NoOpBlockWriter}.
@@ -30,13 +34,20 @@ public final class NoOpBlockWriter implements BlockWriter<List<BlockItemUnparsed
 
     @NonNull
     @Override
-    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
-            throws IOException {
+    public Optional<Long> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
+            throws IOException, ParseException {
+
+        if (valueToWrite.getFirst().hasBlockHeader()) {
+            currentBlockNumber = BlockHeader.PROTOBUF
+                    .parse(valueToWrite.getFirst().blockHeader())
+                    .number();
+        }
+
         if (valueToWrite.getLast().hasBlockProof()) {
             // Returning the BlockItems triggers a
             // PublishStreamResponse to be sent to the
             // upstream producer.
-            return Optional.of(valueToWrite);
+            return Optional.of(currentBlockNumber);
         } else {
             return Optional.empty();
         }

@@ -4,11 +4,13 @@ package com.hedera.block.server.persistence;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.StreamPersistenceHandlerError;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
+import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.exception.BlockStreamProtocolException;
+import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
@@ -19,6 +21,7 @@ import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.runtime.OneOf;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -41,6 +44,7 @@ public class StreamPersistenceHandlerImpl
     private final Notifier notifier;
     private final MetricsService metricsService;
     private final ServiceStatus serviceStatus;
+    private final BlockManager blockManager;
 
     private static final String PROTOCOL_VIOLATION_MESSAGE =
             "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
@@ -64,12 +68,14 @@ public class StreamPersistenceHandlerImpl
             @NonNull final Notifier notifier,
             @NonNull final BlockWriter<List<BlockItemUnparsed>> blockWriter,
             @NonNull final BlockNodeContext blockNodeContext,
-            @NonNull final ServiceStatus serviceStatus) {
-        this.subscriptionHandler = subscriptionHandler;
-        this.blockWriter = blockWriter;
-        this.notifier = notifier;
-        this.metricsService = blockNodeContext.metricsService();
-        this.serviceStatus = serviceStatus;
+            @NonNull final ServiceStatus serviceStatus,
+            @NonNull final BlockManager blockManager) {
+        this.subscriptionHandler = requireNonNull(subscriptionHandler);
+        this.blockWriter = requireNonNull(blockWriter);
+        this.notifier = requireNonNull(notifier);
+        this.metricsService = requireNonNull(blockNodeContext.metricsService());
+        this.serviceStatus = requireNonNull(serviceStatus);
+        this.blockManager = requireNonNull(blockManager);
     }
 
     /**
@@ -99,7 +105,13 @@ public class StreamPersistenceHandlerImpl
                             // Persist the BlockItems
                             List<BlockItemUnparsed> blockItems =
                                     subscribeStreamResponse.blockItems().blockItems();
-                            blockWriter.write(blockItems);
+                            Optional<Long> result = blockWriter.write(blockItems);
+                            if (result.isPresent()) {
+                                // Publish the block item back upstream to the notifier
+                                // to send responses to producers.
+                                // notifier.publish(blockItems);
+                                blockManager.blockPersisted(result.get());
+                            }
                         }
                     }
                     case STATUS -> LOGGER.log(DEBUG, "Unexpected received a status message rather than a block item");

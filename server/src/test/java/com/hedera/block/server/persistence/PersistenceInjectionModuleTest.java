@@ -122,8 +122,7 @@ class PersistenceInjectionModuleTest {
                 blockNodeContextMock,
                 blockRemoverMock,
                 blockPathResolverMock,
-                compressionMock,
-                blockManagerMock);
+                compressionMock);
 
         final Class<?> targetInstanceType =
                 switch (storageType) {
@@ -162,8 +161,7 @@ class PersistenceInjectionModuleTest {
                         blockNodeContextMock,
                         blockRemoverMock,
                         blockPathResolverMock,
-                        compressionMock,
-                        blockManagerMock))
+                        compressionMock))
                 .withCauseInstanceOf(IOException.class)
                 .withMessage("Failed to create BlockWriter");
     }
@@ -288,7 +286,12 @@ class PersistenceInjectionModuleTest {
         // Call the method under test
         final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> streamVerifier =
                 new StreamPersistenceHandlerImpl(
-                        subscriptionHandlerMock, notifierMock, blockWriterMock, blockNodeContext, serviceStatusMock);
+                        subscriptionHandlerMock,
+                        notifierMock,
+                        blockWriterMock,
+                        blockNodeContext,
+                        serviceStatusMock,
+                        blockManagerMock);
         assertNotNull(streamVerifier);
     }
 

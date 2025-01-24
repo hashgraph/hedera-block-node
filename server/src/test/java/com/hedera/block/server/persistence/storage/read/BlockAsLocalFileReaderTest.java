@@ -66,8 +66,8 @@ class BlockAsLocalFileReaderTest {
 
         final BlockAsLocalFilePathResolver blockAsLocalFileResolverMock =
                 spy(BlockAsLocalFilePathResolver.of(testConfig));
-        blockAsLocalFileWriterMock = spy(BlockAsLocalFileWriter.of(
-                blockNodeContext, blockAsLocalFileResolverMock, compressionMock, blockManagerMock));
+        blockAsLocalFileWriterMock =
+                spy(BlockAsLocalFileWriter.of(blockNodeContext, blockAsLocalFileResolverMock, compressionMock));
         toTest = BlockAsLocalFileReader.of(compressionMock, blockAsLocalFileResolverMock);
     }
 
@@ -81,7 +81,7 @@ class BlockAsLocalFileReaderTest {
     void testSuccessfulBlockRead(final long blockNumber) throws IOException, ParseException {
         final List<BlockItemUnparsed> blockItemUnparsed =
                 PersistTestUtils.generateBlockItemsUnparsedForWithBlockNumber(blockNumber);
-        final Optional<List<BlockItemUnparsed>> written = blockAsLocalFileWriterMock.write(blockItemUnparsed);
+        final Optional<Long> written = blockAsLocalFileWriterMock.write(blockItemUnparsed);
 
         // writing the test data is successful
         assertThat(written).isNotNull().isPresent();
@@ -120,7 +120,7 @@ class BlockAsLocalFileReaderTest {
     void testSuccessfulBlockReadContents(final long blockNumber) throws IOException, ParseException {
         final List<BlockItemUnparsed> blockItemUnparsed =
                 PersistTestUtils.generateBlockItemsUnparsedForWithBlockNumber(blockNumber);
-        final Optional<List<BlockItemUnparsed>> written = blockAsLocalFileWriterMock.write(blockItemUnparsed);
+        final Optional<Long> written = blockAsLocalFileWriterMock.write(blockItemUnparsed);
 
         // writing the test data is successful
         assertThat(written).isNotNull().isPresent();

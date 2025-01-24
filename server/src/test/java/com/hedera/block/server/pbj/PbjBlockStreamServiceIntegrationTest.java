@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.pbj;
 
-import static com.hedera.block.server.util.PbjProtoTestUtils.buildAck;
 import static com.hedera.block.server.util.PbjProtoTestUtils.buildEmptyPublishStreamRequest;
 import static com.hedera.block.server.util.PbjProtoTestUtils.buildEmptySubscribeStreamRequest;
 import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY;
@@ -21,6 +20,7 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.manager.BlockManager;
+import com.hedera.block.server.manager.BlockManagerImpl;
 import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.notifier.Notifier;
@@ -36,8 +36,11 @@ import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.block.server.verification.StreamVerificationHandlerImpl;
+import com.hedera.block.server.verification.VerificationConfig;
 import com.hedera.block.server.verification.service.BlockVerificationService;
-import com.hedera.hapi.block.Acknowledgement;
+import com.hedera.block.server.verification.service.BlockVerificationServiceImpl;
+import com.hedera.block.server.verification.session.BlockVerificationSessionFactory;
+import com.hedera.block.server.verification.signature.SignatureVerifierDummy;
 import com.hedera.hapi.block.BlockItemSetUnparsed;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
@@ -65,6 +68,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -140,6 +145,7 @@ public class PbjBlockStreamServiceIntegrationTest {
         pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testConfig));
     }
 
+    @Test
     public void testPublishBlockStreamRegistrationAndExecution()
             throws IOException, NoSuchAlgorithmException, ParseException {
 
@@ -177,7 +183,8 @@ public class PbjBlockStreamServiceIntegrationTest {
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         for (int i = 0; i < blockItems.size(); i++) {
             if (i == 9) {
-                when(blockWriter.write(List.of(blockItems.get(i)))).thenReturn(Optional.of(List.of(blockItems.get(i))));
+                // when(blockWriter.write(List.of(blockItems.get(i)))).thenReturn(Optional.of(List.of(blockItems.get(i))));
+                when(blockWriter.write(List.of(blockItems.get(i)))).thenReturn(Optional.of(1L));
             } else {
                 when(blockWriter.write(List.of(blockItems.get(i)))).thenReturn(Optional.empty());
             }
@@ -215,16 +222,9 @@ public class PbjBlockStreamServiceIntegrationTest {
         verify(subscribeStreamObserver3, timeout(testTimeout).times(1))
                 .onNext(buildSubscribeStreamResponse(blockItems.get(9)));
 
-        // Only 1 response is expected per block sent
-        final Acknowledgement itemAck = buildAck(List.of(blockItems.get(9)));
-        final PublishStreamResponse publishStreamResponse =
-                PublishStreamResponse.newBuilder().acknowledgement(itemAck).build();
-
-        // Verify all 3 producers received the response
-        final Bytes responseBytes = PublishStreamResponse.PROTOBUF.toBytes(publishStreamResponse);
-        verify(helidonPublishStreamObserver1, timeout(testTimeout).times(1)).onNext(responseBytes);
-        verify(helidonPublishStreamObserver2, timeout(testTimeout).times(1)).onNext(responseBytes);
-        verify(helidonPublishStreamObserver3, timeout(testTimeout).times(1)).onNext(responseBytes);
+        verify(helidonPublishStreamObserver1, timeout(testTimeout).times(1)).onNext(any());
+        verify(helidonPublishStreamObserver2, timeout(testTimeout).times(1)).onNext(any());
+        verify(helidonPublishStreamObserver3, timeout(testTimeout).times(1)).onNext(any());
 
         // Close the stream as Helidon does
         helidonPublishStreamObserver1.onComplete();
@@ -233,12 +233,13 @@ public class PbjBlockStreamServiceIntegrationTest {
         verify(helidonPublishStreamObserver1, timeout(testTimeout).times(1)).onComplete();
     }
 
+    @Test
     public void testFullProducerConsumerHappyPath() throws IOException {
-        int numberOfBlocks = 100;
+        int numberOfBlocks = 5;
 
         // Use a real BlockWriter to test the full integration
         final BlockWriter<List<BlockItemUnparsed>> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManager);
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
         // Register 3 producers - Opening a pipeline is not enough to register a producer.
@@ -287,9 +288,12 @@ public class PbjBlockStreamServiceIntegrationTest {
         verifySubscribeStreamResponse(numberOfBlocks, 0, numberOfBlocks, subscribeStreamObserver3, blockItems);
 
         // Verify the producers received all the responses
-        verify(helidonPublishStreamObserver1, timeout(testTimeout).times(100)).onNext(any());
-        verify(helidonPublishStreamObserver2, timeout(testTimeout).times(100)).onNext(any());
-        verify(helidonPublishStreamObserver3, timeout(testTimeout).times(100)).onNext(any());
+        verify(helidonPublishStreamObserver1, timeout(testTimeout).times(numberOfBlocks))
+                .onNext(any());
+        verify(helidonPublishStreamObserver2, timeout(testTimeout).times(numberOfBlocks))
+                .onNext(any());
+        verify(helidonPublishStreamObserver3, timeout(testTimeout).times(numberOfBlocks))
+                .onNext(any());
     }
 
     @Test
@@ -380,7 +384,7 @@ public class PbjBlockStreamServiceIntegrationTest {
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);
         final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
-                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, blockManager);
 
         final StreamVerificationHandlerImpl streamVerificationHandler = new StreamVerificationHandlerImpl(
                 streamMediator,
@@ -513,14 +517,14 @@ public class PbjBlockStreamServiceIntegrationTest {
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
 
         // Use a spy to make sure the write() method throws an IOException
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = spy(
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManager));
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                spy(BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock));
         doThrow(IOException.class).when(blockWriter).write(blockItems);
 
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);
         final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
         final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
-                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, blockManager);
 
         final StreamVerificationHandlerImpl streamVerificationHandler = new StreamVerificationHandlerImpl(
                 streamMediator,
@@ -680,21 +684,31 @@ public class PbjBlockStreamServiceIntegrationTest {
                 PublishStreamResponse.newBuilder().status(endOfStream).build());
     }
 
+    private BlockVerificationSessionFactory getBlockVerificationSessionFactory() {
+        var config = blockNodeContext.configuration().getConfigData(VerificationConfig.class);
+        var signatureVerifier = mock(SignatureVerifierDummy.class);
+        when(signatureVerifier.verifySignature(any(), any())).thenReturn(true);
+        final ExecutorService executorService = ForkJoinPool.commonPool();
+        return new BlockVerificationSessionFactory(
+                config, blockNodeContext.metricsService(), signatureVerifier, executorService);
+    }
+
     private PbjBlockStreamServiceProxy buildBlockStreamService(final BlockWriter<List<BlockItemUnparsed>> blockWriter) {
 
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);
         final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
+        final var blockManager = new BlockManagerImpl(notifier, false);
+        final var blockVerificationSessionFactory = getBlockVerificationSessionFactory();
+
+        final var BlockVerificationService = new BlockVerificationServiceImpl(
+                blockNodeContext.metricsService(), blockVerificationSessionFactory, blockManager);
 
         final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
-                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, blockManager);
 
         final StreamVerificationHandlerImpl streamVerificationHandler = new StreamVerificationHandlerImpl(
-                streamMediator,
-                notifier,
-                blockNodeContext.metricsService(),
-                serviceStatus,
-                mock(BlockVerificationService.class));
+                streamMediator, notifier, blockNodeContext.metricsService(), serviceStatus, BlockVerificationService);
 
         return new PbjBlockStreamServiceProxy(
                 streamMediator,

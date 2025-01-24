@@ -6,7 +6,6 @@ import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.Block
 import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.compression.Compression;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
@@ -33,7 +32,6 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
     private final Compression compression;
     private List<BlockItemUnparsed> currentBlockItems;
     private long currentBlockNumber = -1;
-    private BlockManager blockManager;
 
     /**
      * Constructor.
@@ -48,12 +46,10 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
     private BlockAsLocalFileWriter(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockPathResolver blockPathResolver,
-            @NonNull final Compression compression,
-            @NonNull final BlockManager blockManager) {
+            @NonNull final Compression compression) {
         this.metricsService = Objects.requireNonNull(blockNodeContext.metricsService());
         this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
         this.compression = Objects.requireNonNull(compression);
-        this.blockManager = blockManager;
     }
 
     /**
@@ -70,14 +66,13 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
     public static BlockAsLocalFileWriter of(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockPathResolver blockPathResolver,
-            @NonNull final Compression compression,
-            @NonNull final BlockManager blockManager) {
-        return new BlockAsLocalFileWriter(blockNodeContext, blockPathResolver, compression, blockManager);
+            @NonNull final Compression compression) {
+        return new BlockAsLocalFileWriter(blockNodeContext, blockPathResolver, compression);
     }
 
     @NonNull
     @Override
-    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
+    public Optional<Long> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
             throws IOException, ParseException {
         final BlockItemUnparsed firstItem = valueToWrite.getFirst();
         if (firstItem.hasBlockHeader()) {
@@ -89,11 +84,10 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
         }
 
         if (valueToWrite.getLast().hasBlockProof()) {
-            final Optional<List<BlockItemUnparsed>> result = Optional.of(writeToFs());
+            writeToFs();
             metricsService.get(BlocksPersisted).increment();
-            blockManager.blockPersisted(currentBlockNumber);
             resetState();
-            return result;
+            return Optional.of(currentBlockNumber);
         } else {
             return Optional.empty();
         }

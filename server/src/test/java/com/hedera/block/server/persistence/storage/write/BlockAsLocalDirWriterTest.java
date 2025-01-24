@@ -76,13 +76,13 @@ public class BlockAsLocalDirWriterTest {
     @Test
     public void testWriterAndReaderHappyPath() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManagerMock);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         for (int i = 0; i < 10; i++) {
-            final Optional<List<BlockItemUnparsed>> result = blockWriter.write(List.of(blockItems.get(i)));
+            final Optional<Long> result = blockWriter.write(List.of(blockItems.get(i)));
             if (i == 9) {
                 if (result.isPresent()) {
-                    assertEquals(blockItems.get(i), result.get().getFirst());
+                    assertEquals(1L, result.get());
                 } else {
                     fail("The optional should contain the last block proof block item");
                 }
@@ -121,15 +121,15 @@ public class BlockAsLocalDirWriterTest {
     @Test
     public void testRemoveBlockWritePerms() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManagerMock);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
 
         // Change the permissions on the block node root directory
         removeRootWritePerms(testConfig);
 
         // The first BlockItem contains a header which will create a new block directory.
         // The BlockWriter will attempt to repair the permissions and should succeed.
-        Optional<List<BlockItemUnparsed>> result = blockWriter.write(List.of(blockItems.getFirst()));
+        Optional<Long> result = blockWriter.write(List.of(blockItems.getFirst()));
         assertFalse(result.isPresent());
 
         // Confirm we're able to read 1 block item
@@ -166,8 +166,8 @@ public class BlockAsLocalDirWriterTest {
     @Test
     public void testUnrecoverableIOExceptionOnWrite() throws IOException, ParseException {
         // Use a spy to simulate an IOException when the first block item is written
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = spy(BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManagerMock));
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                spy(BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock));
         doThrow(IOException.class).when(blockWriter).write(blockItems);
         assertThrows(IOException.class, () -> blockWriter.write(blockItems));
     }
@@ -175,12 +175,12 @@ public class BlockAsLocalDirWriterTest {
     @Test
     public void testRemoveRootDirReadPerm() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter = BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManagerMock);
+        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
 
         // Write the first block item to create the block
         // directory
-        Optional<List<BlockItemUnparsed>> result = blockWriter.write(List.of(blockItems.getFirst()));
+        Optional<Long> result = blockWriter.write(List.of(blockItems.getFirst()));
         assertFalse(result.isPresent());
 
         // Remove root dir read permissions and
@@ -194,7 +194,7 @@ public class BlockAsLocalDirWriterTest {
             if (i == 9) {
                 result = blockWriter.write(List.of(blockItems.get(i)));
                 if (result.isPresent()) {
-                    assertEquals(blockItems.get(i), result.get().getFirst());
+                    assertEquals(1L, result.get());
                 } else {
                     fail("The optional should contain the last block proof block item");
                 }
@@ -215,17 +215,15 @@ public class BlockAsLocalDirWriterTest {
         final int expectedItemsPerBlock = 10;
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(3);
         final BlockRemover blockRemover = BlockAsLocalDirRemover.of(pathResolverMock);
-        final BlockAsLocalDirWriter toTest =
-                BlockAsLocalDirWriter.of(blockNodeContext, blockRemover, pathResolverMock, blockManagerMock);
+        final BlockAsLocalDirWriter toTest = BlockAsLocalDirWriter.of(blockNodeContext, blockRemover, pathResolverMock);
 
         // Now make the calls
         for (int i = 0; i < 23; i++) {
-            final Optional<List<BlockItemUnparsed>> result = toTest.write(List.of(blockItems.get(i)));
+            final Optional<Long> result = toTest.write(List.of(blockItems.get(i)));
             if (i == 9 || i == 19) {
                 // The last block item in each block is the block proof
                 // and should be returned by the write method
                 assertTrue(result.isPresent());
-                assertEquals(blockItems.get(i), result.get().getFirst());
             } else {
                 // The write method should return an empty optional
                 assertTrue(result.isEmpty());
@@ -290,8 +288,8 @@ public class BlockAsLocalDirWriterTest {
     @ParameterizedTest
     @MethodSource("invalidBlockNumbers")
     void testInvalidBlockNumber(final long blockNumber) throws IOException {
-        final BlockAsLocalDirWriter toTest = BlockAsLocalDirWriter.of(
-                blockNodeContext, mock(BlockRemover.class), pathResolverMock, blockManagerMock);
+        final BlockAsLocalDirWriter toTest =
+                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
 
         final BlockHeader blockHeader =
                 BlockHeader.newBuilder().number(blockNumber).build();

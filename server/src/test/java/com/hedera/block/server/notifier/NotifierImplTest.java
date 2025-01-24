@@ -240,7 +240,7 @@ public class NotifierImplTest {
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);
         final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
-                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, blockManager);
         final BlockVerificationService blockVerificationService = new NoOpBlockVerificationService();
 
         final var streamVerificationHandler = new StreamVerificationHandlerImpl(

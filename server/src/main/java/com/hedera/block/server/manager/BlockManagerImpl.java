@@ -78,7 +78,7 @@ public class BlockManagerImpl implements BlockManager {
         // Temporarily if lastAcknowledgedBlockNumber is -1, we get the first block in the map
         if (lastAcknowledgedBlockNumber == -1) {
             lastAcknowledgedBlockNumber =
-                    blockInfoMap.keySet().stream().min(Long::compareTo).orElse(-1L);
+                    blockInfoMap.keySet().stream().min(Long::compareTo).orElse(1L) - 1;
         }
 
         // Keep ACK-ing starting from the next block in sequence

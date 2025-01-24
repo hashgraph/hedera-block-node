@@ -12,7 +12,6 @@ import static java.lang.System.Logger.Level.INFO;
 import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
@@ -61,7 +60,6 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
     private final BlockPathResolver blockPathResolver;
     private long blockNodeFileNameIndex;
     private long currentBlockNumber;
-    private final BlockManager blockManager;
 
     /**
      * Use the corresponding builder to construct a new BlockAsDirWriter with the given parameters.
@@ -75,15 +73,13 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
     protected BlockAsLocalDirWriter(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
-            @NonNull final BlockPathResolver blockPathResolver,
-            @NonNull final BlockManager blockManager)
+            @NonNull final BlockPathResolver blockPathResolver)
             throws IOException {
         LOGGER.log(INFO, "Initializing %s...".formatted(getClass().getName()));
 
         this.metricsService = Objects.requireNonNull(blockNodeContext.metricsService());
         this.blockRemover = Objects.requireNonNull(blockRemover);
         this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
-        this.blockManager = Objects.requireNonNull(blockManager);
 
         final PersistenceStorageConfig config =
                 blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
@@ -110,10 +106,9 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
     public static BlockAsLocalDirWriter of(
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,
-            @NonNull final BlockPathResolver blockPathResolver,
-            @NonNull final BlockManager blockManager)
+            @NonNull final BlockPathResolver blockPathResolver)
             throws IOException {
-        return new BlockAsLocalDirWriter(blockNodeContext, blockRemover, blockPathResolver, blockManager);
+        return new BlockAsLocalDirWriter(blockNodeContext, blockRemover, blockPathResolver);
     }
 
     /**
@@ -124,7 +119,7 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
      */
     @NonNull
     @Override
-    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
+    public Optional<Long> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
             throws IOException, ParseException {
         final Bytes unparsedBlockHeader = valueToWrite.getFirst().blockHeader();
         if (unparsedBlockHeader != null) {
@@ -138,8 +133,7 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
 
         if (valueToWrite.getLast().hasBlockProof()) {
             metricsService.get(BlocksPersisted).increment();
-            blockManager.blockPersisted(currentBlockNumber);
-            return Optional.of(valueToWrite);
+            return Optional.of(currentBlockNumber);
         } else {
             return Optional.empty();
         }

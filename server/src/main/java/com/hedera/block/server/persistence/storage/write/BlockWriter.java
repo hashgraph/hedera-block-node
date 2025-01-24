@@ -16,11 +16,11 @@ public interface BlockWriter<T> {
      * Write the block item to storage.
      *
      * @param valueToWrite to storage.
-     * @return an optional containing the item written to storage if the item
+     * @return an optional containing the block number written to storage if the item
      * was a block proof signaling the end of the block, an empty optional otherwise.
      * @throws IOException when failing to write the item to storage.
      * @throws ParseException when failing to parse a block item.
      */
     @NonNull
-    Optional<T> write(@NonNull final T valueToWrite) throws IOException, ParseException;
+    Optional<Long> write(@NonNull final T valueToWrite) throws IOException, ParseException;
 }

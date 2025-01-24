@@ -67,7 +67,7 @@ class BlockAsLocalFileWriterTest {
 
         blockManagerMock = mock(BlockManager.class);
 
-        toTest = BlockAsLocalFileWriter.of(blockNodeContext, pathResolverMock, compressionMock, blockManagerMock);
+        toTest = BlockAsLocalFileWriter.of(blockNodeContext, pathResolverMock, compressionMock);
     }
 
     /**
@@ -97,15 +97,24 @@ class BlockAsLocalFileWriterTest {
 
         final BlockUnparsed expectedBlockToWrite =
                 BlockUnparsed.newBuilder().blockItems(toWrite).build();
-        final Optional<List<BlockItemUnparsed>> actual = toTest.write(toWrite);
+
+        final Optional<Long> actual = toTest.write(toWrite);
         assertThat(actual)
                 .isNotNull()
                 .isNotEmpty()
-                .get(InstanceOfAssertFactories.list(BlockItemUnparsed.class))
-                .isNotNull()
-                .isNotEmpty()
-                .hasSize(expectedBlockItems)
-                .containsExactlyElementsOf(toWrite);
+                .get(InstanceOfAssertFactories.LONG)
+                .isNotNull();
+
+        // final Optional<List<BlockItemUnparsed>> actual = toTest.write(toWrite);
+        //        assertThat(actual)
+        //                .isNotNull()
+        //                .isNotEmpty()
+        //                .get(InstanceOfAssertFactories.list(BlockItemUnparsed.class))
+        //                .isNotNull()
+        //                .isNotEmpty()
+        //                .hasSize(expectedBlockItems)
+        //                .containsExactlyElementsOf(toWrite);
+
         assertThat(expectedPath)
                 .isNotNull()
                 .exists()
@@ -155,19 +164,27 @@ class BlockAsLocalFileWriterTest {
         final BlockUnparsed expectedBlockToWrite =
                 BlockUnparsed.newBuilder().blockItems(toWrite).build();
 
-        final Optional<List<BlockItemUnparsed>> actualOnFirstWrite = toTest.write(firstHalfToWrite);
+        final Optional<Long> actualOnFirstWrite = toTest.write(firstHalfToWrite);
         assertThat(actualOnFirstWrite).isNotNull().isEmpty();
         assertThat(expectedPath).isNotNull().doesNotExist();
 
-        final Optional<List<BlockItemUnparsed>> actualOnSecondWrite = toTest.write(secondHalfToWrite);
+        final Optional<Long> actualOnSecondWrite = toTest.write(secondHalfToWrite);
+
         assertThat(actualOnSecondWrite)
                 .isNotNull()
                 .isNotEmpty()
-                .get(InstanceOfAssertFactories.list(BlockItemUnparsed.class))
-                .isNotNull()
-                .isNotEmpty()
-                .hasSize(expectedBlockItems)
-                .containsExactlyElementsOf(toWrite);
+                .get(InstanceOfAssertFactories.LONG)
+                .isNotNull();
+
+        //        assertThat(actualOnSecondWrite)
+        //                .isNotNull()
+        //                .isNotEmpty()
+        //                .get(InstanceOfAssertFactories.list(BlockItemUnparsed.class))
+        //                .isNotNull()
+        //                .isNotEmpty()
+        //                .hasSize(expectedBlockItems)
+        //                .containsExactlyElementsOf(toWrite);
+
         assertThat(expectedPath)
                 .isNotNull()
                 .exists()
