@@ -124,8 +124,7 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
      * @return the acknowledgement
      */
     @NonNull
-    Acknowledgement buildAck(
-            final @NonNull Bytes blockHash, final long blockNumber, boolean alreadyExists) {
+    Acknowledgement buildAck(final @NonNull Bytes blockHash, final long blockNumber, boolean alreadyExists) {
         final BlockAcknowledgement blockAcknowledgement = BlockAcknowledgement.newBuilder()
                 .blockRootHash(blockHash)
                 .blockNumber(blockNumber)
