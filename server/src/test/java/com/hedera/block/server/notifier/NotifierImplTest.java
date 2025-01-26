@@ -154,8 +154,6 @@ public class NotifierImplTest {
         long producers = blockNodeContext.metricsService().get(Producers).get();
         assertEquals(3, producers, "Expected 3 producers to be registered");
 
-        // List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
-        // notifier.publish(blockItems);
         Bytes blockHash = Bytes.wrap("1234");
         long blockNumber = 2L;
         boolean isDuplicated = false;
