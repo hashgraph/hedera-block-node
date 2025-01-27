@@ -168,16 +168,19 @@ public class ProducerBlockItemObserver
                 skipCurrentBlock = false;
             }
 
-            // TODO, get confirmation of what do in this case
             // This case is when we received a block_header for a block that we already received,
             // so we should not process it again, however cant also send a duplicated ACK since
             // we haven't finish persistence + verification (or we are skipping ACKs due to a disabled feature)
+            // for this cases we will send a Duplicate Block Ack, but without the root block hash, that should tell the
+            // CN that the block was duplicated but was not persisted+verified yet (or never)
             if (!skipCurrentBlock && nextBlockNumber <= serviceStatus.getLatestReceivedBlockNumber()) {
                 LOGGER.log(
                         WARNING,
                         "Received block number {}, but block number {}, has already been received. Skipping duplicate",
                         nextBlockNumber,
                         serviceStatus.getLatestReceivedBlockNumber());
+                BlockInfo blockInfo = new BlockInfo(nextBlockNumber); // BlockInfo without BlockHash.
+                publishStreamResponseObserver.onNext(buildDuplicateBlockStreamResponse(blockInfo));
                 skipCurrentBlock = true;
             }
             serviceStatus.setLatestReceivedBlockNumber(nextBlockNumber);
