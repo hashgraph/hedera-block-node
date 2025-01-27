@@ -10,7 +10,7 @@ dependencies { api(platform("com.google.cloud:libraries-bom:26.53.0")) }
 
 dependencies.constraints {
     val daggerVersion = "2.55"
-    val grpcIoVersion = "1.69.1"
+    val grpcIoVersion = "1.70.0"
     val helidonVersion = "4.1.6"
     val pbjVersion = "0.9.12"
     val protobufVersion = "4.28.2"
