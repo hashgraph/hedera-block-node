@@ -17,6 +17,7 @@ import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.block.simulator.metrics.MetricsServiceImpl;
+import com.hedera.block.simulator.mode.impl.PublisherClientModeHandler;
 import com.hedera.hapi.block.stream.protoc.Block;
 import com.hedera.hapi.block.stream.protoc.BlockItem;
 import com.swirlds.config.api.Configuration;

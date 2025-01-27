@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-package com.hedera.block.simulator.mode;
+package com.hedera.block.simulator.mode.impl;
 
 import static com.hedera.block.simulator.Constants.NANOS_PER_MILLI;
 import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlockItemsSent;
@@ -12,6 +12,7 @@ import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.block.simulator.metrics.MetricsService;
+import com.hedera.block.simulator.mode.SimulatorModeHandler;
 import com.hedera.hapi.block.stream.protoc.Block;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;

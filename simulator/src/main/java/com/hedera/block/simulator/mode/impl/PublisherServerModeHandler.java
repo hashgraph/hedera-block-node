@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
-package com.hedera.block.simulator.mode;
+package com.hedera.block.simulator.mode.impl;
 
 import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcServer;
+import com.hedera.block.simulator.mode.SimulatorModeHandler;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.inject.Inject;
 

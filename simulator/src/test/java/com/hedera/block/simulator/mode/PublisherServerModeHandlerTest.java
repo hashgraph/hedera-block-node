@@ -4,6 +4,7 @@ package com.hedera.block.simulator.mode;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.hedera.block.simulator.grpc.PublishStreamGrpcServer;
+import com.hedera.block.simulator.mode.impl.PublisherServerModeHandler;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 

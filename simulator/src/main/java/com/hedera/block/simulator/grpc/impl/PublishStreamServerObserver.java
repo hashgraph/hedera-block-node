@@ -5,36 +5,73 @@ import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
 
-import com.hedera.hapi.block.protoc.PublishStreamResponse.Acknowledgement;
-import com.hedera.hapi.block.protoc.PublishStreamResponse.BlockAcknowledgement;
 import com.hedera.hapi.block.protoc.PublishStreamRequest;
 import com.hedera.hapi.block.protoc.PublishStreamResponse;
+import com.hedera.hapi.block.protoc.PublishStreamResponse.Acknowledgement;
+import com.hedera.hapi.block.protoc.PublishStreamResponse.BlockAcknowledgement;
 import com.hedera.hapi.block.stream.protoc.BlockItem;
 import com.hedera.hapi.block.stream.protoc.BlockProof;
-import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-
+import java.util.Deque;
 import java.util.List;
 
+/**
+ * A gRPC stream observer implementation that handles incoming {@link PublishStreamRequest} messages
+ * on the server side. This observer processes incoming block stream publications, maintains stream status
+ * history, and manages the response stream back to the client. It implements flow control by tracking
+ * stream state and enforcing capacity limits on status history.
+ */
 public class PublishStreamServerObserver implements StreamObserver<PublishStreamRequest> {
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     // gRPC Components
     private final StreamObserver<PublishStreamResponse> responseObserver;
 
-    public PublishStreamServerObserver(StreamObserver<PublishStreamResponse> responseObserver) {
+    // State
+    private final int lastKnownStatusesCapacity;
+    private final Deque<String> lastKnownStatuses;
+
+    /**
+     * Constructs a new PublishStreamServerObserver that handles stream requests and maintains a history of statuses.
+     *
+     * @param responseObserver The observer that handles responses back to the client
+     * @param lastKnownStatuses A deque to store the history of request statuses
+     * @param lastKnownStatusesCapacity The maximum number of statuses to maintain in the history
+     * @throws NullPointerException if responseObserver or lastKnownStatuses is null
+     */
+    public PublishStreamServerObserver(
+            StreamObserver<PublishStreamResponse> responseObserver,
+            @NonNull final Deque<String> lastKnownStatuses,
+            final int lastKnownStatusesCapacity) {
         this.responseObserver = requireNonNull(responseObserver);
+        this.lastKnownStatuses = requireNonNull(lastKnownStatuses);
+        this.lastKnownStatusesCapacity = lastKnownStatusesCapacity;
     }
 
+    /**
+     * Processes incoming publish stream requests, maintaining a history of requests and handling block acknowledgements.
+     * If the request contains block items with a block proof, generates and sends an acknowledgement response.
+     *
+     * @param publishStreamRequest The incoming stream request to process
+     */
     @Override
     public void onNext(PublishStreamRequest publishStreamRequest) {
+        if (lastKnownStatuses.size() >= lastKnownStatusesCapacity) {
+            lastKnownStatuses.pollFirst();
+        }
+        lastKnownStatuses.add(publishStreamRequest.toString());
 
         if (publishStreamRequest.hasBlockItems()) {
-            final List<BlockItem> blockItemList = publishStreamRequest.getBlockItems().getBlockItemsList();
+            final List<BlockItem> blockItemList =
+                    publishStreamRequest.getBlockItems().getBlockItemsList();
             if (blockItemList.getLast().hasBlockProof()) {
-                final BlockProof blockProof = publishStreamRequest.getBlockItems().getBlockItemsList().getLast().getBlockProof();
+                final BlockProof blockProof = publishStreamRequest
+                        .getBlockItems()
+                        .getBlockItemsList()
+                        .getLast()
+                        .getBlockProof();
                 final PublishStreamResponse publishStreamResponse = handleBlockAckResponse(blockProof);
 
                 responseObserver.onNext(publishStreamResponse);
@@ -42,12 +79,20 @@ public class PublishStreamServerObserver implements StreamObserver<PublishStream
         }
     }
 
+    /**
+     * Handles errors that occur during stream processing.
+     *
+     * @param streamError The error that occurred during stream processing
+     */
     @Override
     public void onError(@NonNull final Throwable streamError) {
         Status status = Status.fromThrowable(streamError);
         LOGGER.log(ERROR, "Error %s with status %s.".formatted(streamError, status), streamError);
     }
 
+    /**
+     * Handles the completion of the stream by completing the response observer and logging the event.
+     */
     @Override
     public void onCompleted() {
         responseObserver.onCompleted();
@@ -56,12 +101,12 @@ public class PublishStreamServerObserver implements StreamObserver<PublishStream
 
     private PublishStreamResponse handleBlockAckResponse(BlockProof blockProof) {
         final long blockNumber = blockProof.getBlock();
-        final BlockAcknowledgement blockAcknowledgement = BlockAcknowledgement.newBuilder().setBlockNumber(blockNumber).build();
-        final Acknowledgement ack = Acknowledgement.newBuilder().setBlockAck(blockAcknowledgement).build();
+        final BlockAcknowledgement blockAcknowledgement =
+                BlockAcknowledgement.newBuilder().setBlockNumber(blockNumber).build();
+        final Acknowledgement ack =
+                Acknowledgement.newBuilder().setBlockAck(blockAcknowledgement).build();
         LOGGER.log(INFO, "Returning block acknowledgement for block number: %s".formatted(blockNumber));
 
-        return PublishStreamResponse.newBuilder()
-                .setAcknowledgement(ack)
-                .build();
+        return PublishStreamResponse.newBuilder().setAcknowledgement(ack).build();
     }
 }

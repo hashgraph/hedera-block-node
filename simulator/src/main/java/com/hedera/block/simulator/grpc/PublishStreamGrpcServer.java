@@ -4,7 +4,16 @@ package com.hedera.block.simulator.grpc;
 import java.util.List;
 
 public interface PublishStreamGrpcServer {
+    /**
+     * Initialize, opens a gRPC channel and creates the needed services with the passed configuration.
+     */
     void init();
+
+    /**
+     * Starts the gRPC server.
+     */
+    void start();
+
     /**
      * Gets the number of processed blocks.
      *

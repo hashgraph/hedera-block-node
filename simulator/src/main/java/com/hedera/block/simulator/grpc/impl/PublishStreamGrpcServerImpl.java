@@ -22,6 +22,12 @@ import java.util.Deque;
 import java.util.List;
 import javax.inject.Inject;
 
+/**
+ * Implementation of {@link PublishStreamGrpcServer} that handles incoming block stream publications
+ * via gRPC streaming. This implementation manages the server setup, handles incoming block streams,
+ * tracks processed blocks, and maintains a history of stream statuses. It provides functionality
+ * to start, monitor, and shutdown the gRPC server.
+ */
 public class PublishStreamGrpcServerImpl implements PublishStreamGrpcServer {
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -30,7 +36,6 @@ public class PublishStreamGrpcServerImpl implements PublishStreamGrpcServer {
     private PublishStreamServerObserver publishStreamServerObserver;
 
     // Configuration
-    private final BlockStreamConfig blockStreamConfig;
     private final GrpcConfig grpcConfig;
 
     // Service dependencies
@@ -40,6 +45,14 @@ public class PublishStreamGrpcServerImpl implements PublishStreamGrpcServer {
     private final int lastKnownStatusesCapacity;
     private final Deque<String> lastKnownStatuses;
 
+    /**
+     * Constructs a new PublishStreamGrpcServerImpl.
+     *
+     * @param grpcConfig Configuration for the gRPC server settings
+     * @param blockStreamConfig Configuration for the block stream settings
+     * @param metricsService Service for tracking metrics
+     * @throws NullPointerException if any of the parameters are null
+     */
     @Inject
     public PublishStreamGrpcServerImpl(
             @NonNull final GrpcConfig grpcConfig,
@@ -47,12 +60,14 @@ public class PublishStreamGrpcServerImpl implements PublishStreamGrpcServer {
             @NonNull final MetricsService metricsService) {
         this.grpcConfig = requireNonNull(grpcConfig);
         this.metricsService = requireNonNull(metricsService);
-        this.blockStreamConfig = requireNonNull(blockStreamConfig);
 
         this.lastKnownStatusesCapacity = blockStreamConfig.lastKnownStatusesCapacity();
         lastKnownStatuses = new ArrayDeque<>(this.lastKnownStatusesCapacity);
     }
 
+    /**
+     * Initialize, opens a gRPC channel and creates the needed services with the passed configuration.
+     */
     @Override
     public void init() {
         server = ServerBuilder.forPort(grpcConfig.port())
@@ -60,22 +75,30 @@ public class PublishStreamGrpcServerImpl implements PublishStreamGrpcServer {
                     @Override
                     public StreamObserver<PublishStreamRequest> publishBlockStream(
                             StreamObserver<PublishStreamResponse> responseObserver) {
-                        publishStreamServerObserver = new PublishStreamServerObserver(responseObserver);
+                        publishStreamServerObserver = new PublishStreamServerObserver(
+                                responseObserver, lastKnownStatuses, lastKnownStatusesCapacity);
                         return publishStreamServerObserver;
                     }
                 })
                 .build();
+    }
+
+    /**
+     * Starts the gRPC server.
+     */
+    @Override
+    public void start() {
         try {
             server.start();
         } catch (IOException e) {
-            LOGGER.log(ERROR, e);
+            LOGGER.log(ERROR, "Something went wrong, while trying to start the gRPC server. Error: %s".formatted(e));
         }
     }
 
     /**
      * Gets the number of processed blocks.
      *
-     * @return the number of published blocks
+     * @return the number of processed blocks
      */
     @Override
     public long getProcessedBlocks() {
@@ -93,8 +116,7 @@ public class PublishStreamGrpcServerImpl implements PublishStreamGrpcServer {
     }
 
     /**
-     * Sends a onCompleted message to the client and waits for a short period of
-     * time to ensure the message is sent.
+     * Sends a onCompleted message to the server.
      */
     @Override
     public void completeStreaming() {
@@ -102,7 +124,7 @@ public class PublishStreamGrpcServerImpl implements PublishStreamGrpcServer {
     }
 
     /**
-     * Shutdowns the channel.
+     * Shutdowns the server.
      *
      * @throws InterruptedException if the thread is interrupted
      */
