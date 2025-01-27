@@ -6,20 +6,26 @@ import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.Succe
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.WARNING;
 
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.LivenessCalculator;
 import com.hedera.block.server.events.ObjectEvent;
+import com.hedera.block.server.manager.BlockInfo;
 import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.hapi.block.Acknowledgement;
+import com.hedera.hapi.block.BlockAcknowledgement;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
+import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.grpc.Pipeline;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.InstantSource;
@@ -43,6 +49,8 @@ public class ProducerBlockItemObserver
     private final ServiceStatus serviceStatus;
     private final MetricsService metricsService;
     private final Flow.Subscriber<? super PublishStreamResponse> publishStreamResponseObserver;
+
+    private boolean skipCurrentBlock = false;
 
     private final AtomicBoolean isResponsePermitted = new AtomicBoolean(true);
 
@@ -112,10 +120,11 @@ public class ProducerBlockItemObserver
         if (serviceStatus.isRunning()) {
             // Refresh the producer liveness
             livenessCalculator.refresh();
-
-            // Publish the block to the mediator
-            publisher.publish(blockItems);
-
+            // only if we should not skip current block
+            if (!skipCurrentBlock) {
+                // Publish the block to the mediator
+                publisher.publish(blockItems);
+            }
         } else {
             LOGGER.log(ERROR, getClass().getName() + " is not accepting BlockItems");
             stopProcessing();
@@ -123,6 +132,55 @@ public class ProducerBlockItemObserver
             // Close the upstream connection to the producer(s)
             publishStreamResponseObserver.onNext(buildErrorStreamResponse());
             LOGGER.log(ERROR, "Error PublishStreamResponse sent to upstream producer");
+        }
+    }
+
+    private void blockHeaderPreCheck(@NonNull final List<BlockItemUnparsed> blockItems) {
+        if (blockItems.getFirst().hasBlockHeader()) {
+            long nextBlockNumber;
+            try {
+                BlockHeader blockHeader =
+                        BlockHeader.PROTOBUF.parse(blockItems.getFirst().blockHeader());
+                nextBlockNumber = blockHeader.number();
+            } catch (ParseException e) {
+                LOGGER.log(ERROR, "Error parsing block header", e);
+                throw new RuntimeException(e);
+            }
+
+            BlockInfo lastAckedBlockInfo = serviceStatus.getLatestAckedBlockNumber();
+
+            // Next block should be exactly one more than the last acked block.
+            // we check the block number to see if it is a duplicate block.
+            if (lastAckedBlockInfo != null && nextBlockNumber <= lastAckedBlockInfo.getBlockNumber()) {
+                // we should skip the next block.
+                skipCurrentBlock = true;
+                LOGGER.log(
+                        WARNING,
+                        "Received block number {}, but block number {}, has already been acked. Skipping duplicate and sending duplicate ACK",
+                        nextBlockNumber,
+                        serviceStatus.getLatestReceivedBlockNumber());
+
+                // Send Back a response.
+                publishStreamResponseObserver.onNext(buildDuplicateBlockStreamResponse(lastAckedBlockInfo));
+
+            } else {
+                // if is not a duplicate block, we should not skip the next block.
+                skipCurrentBlock = false;
+            }
+
+            // TODO, get confirmation of what do in this case
+            // This case is when we received a block_header for a block that we already received,
+            // so we should not process it again, however cant also send a duplicated ACK since
+            // we haven't finish persistence + verification (or we are skipping ACKs due to a disabled feature)
+            if (!skipCurrentBlock && nextBlockNumber <= serviceStatus.getLatestReceivedBlockNumber()) {
+                LOGGER.log(
+                        WARNING,
+                        "Received block number {}, but block number {}, has already been received. Skipping duplicate",
+                        nextBlockNumber,
+                        serviceStatus.getLatestReceivedBlockNumber());
+                skipCurrentBlock = true;
+            }
+            serviceStatus.setLatestReceivedBlockNumber(nextBlockNumber);
         }
     }
 
@@ -148,6 +206,20 @@ public class ProducerBlockItemObserver
                 .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
                 .build();
         return PublishStreamResponse.newBuilder().status(endOfStream).build();
+    }
+
+    private static PublishStreamResponse buildDuplicateBlockStreamResponse(@NonNull final BlockInfo blockInfo) {
+        final BlockAcknowledgement blockAcknowledgement = BlockAcknowledgement.newBuilder()
+                .blockAlreadyExists(true)
+                .blockNumber(blockInfo.getBlockNumber())
+                .blockRootHash(blockInfo.getBlockHash())
+                .build();
+
+        return PublishStreamResponse.newBuilder()
+                .acknowledgement(Acknowledgement.newBuilder()
+                        .blockAck(blockAcknowledgement)
+                        .build())
+                .build();
     }
 
     /**

@@ -7,13 +7,18 @@ import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.verification.VerificationConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class BlockManagerInjectionModuleTest {
+
+    @Mock
+    private ServiceStatus serviceStatus;
 
     @Test
     void testProvideBlockManager() {
@@ -29,8 +34,8 @@ class BlockManagerInjectionModuleTest {
         when(verificationConfig.type()).thenReturn(VerificationConfig.VerificationServiceType.PRODUCTION);
 
         // when
-        BlockManager blockManager =
-                BlockManagerInjectionModule.provideBlockManager(notifier, persistenceStorageConfig, verificationConfig);
+        BlockManager blockManager = BlockManagerInjectionModule.provideBlockManager(
+                notifier, persistenceStorageConfig, verificationConfig, serviceStatus);
 
         // then
         // BlockManagerImpl is the default and only implementation

@@ -698,7 +698,7 @@ public class PbjBlockStreamServiceIntegrationTest {
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);
         final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
-        final var blockManager = new BlockManagerImpl(notifier, false);
+        final var blockManager = new BlockManagerImpl(notifier, false, serviceStatus);
         final var blockVerificationSessionFactory = getBlockVerificationSessionFactory();
 
         final var BlockVerificationService = new BlockVerificationServiceImpl(

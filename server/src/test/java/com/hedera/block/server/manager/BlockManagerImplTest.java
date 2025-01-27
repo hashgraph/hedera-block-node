@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.hedera.block.server.notifier.Notifier;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.util.List;
@@ -17,24 +18,29 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 
 class BlockManagerImplTest {
 
     private Notifier notifier;
     private BlockManagerImpl blockManager;
 
+    @Mock
+    private ServiceStatus serviceStatus;
+
     @BeforeEach
     void setUp() {
         notifier = mock(Notifier.class);
+        serviceStatus = mock(ServiceStatus.class);
         // By default, we do NOT skip acknowledgements
-        blockManager = new BlockManagerImpl(notifier, false);
+        blockManager = new BlockManagerImpl(notifier, false, serviceStatus);
     }
 
     @Test
     @DisplayName("blockVerified + blockPersisted should do nothing if skipAcknowledgement == true")
     void blockVerified_skippedAcknowledgement() {
         // given
-        BlockManagerImpl managerWithSkip = new BlockManagerImpl(notifier, true);
+        BlockManagerImpl managerWithSkip = new BlockManagerImpl(notifier, true, serviceStatus);
 
         // when
         managerWithSkip.blockVerified(1L, Bytes.wrap("somehash".getBytes()));

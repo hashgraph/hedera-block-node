@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.service;
 
+import com.hedera.block.server.manager.BlockInfo;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
 
@@ -38,4 +39,33 @@ public interface ServiceStatus {
      * @param className the name of the class stopping the service
      */
     void stopWebServer(final String className);
+
+    /**
+     * Gets the latest acked block number.
+     *
+     * @return the latest acked block number
+     */
+    BlockInfo getLatestAckedBlockNumber();
+
+    /**
+     * Sets the latest acked block number.
+     *
+     * @param latestAckedBlockInfo the latest acked block number
+     */
+    void setLatestAckedBlockNumber(BlockInfo latestAckedBlockInfo);
+
+    /**
+     * Gets the latest received block number, when ack is skipped it might be used instead of last acked block number.
+     * Also, if persistence + verification is in progress, it might be used to check if the block is already received.
+     *
+     * @return the latest received block number
+     */
+    long getLatestReceivedBlockNumber();
+
+    /**
+     * Sets the latest received block number. should be set when a block_header is received and before the first batch is placed on the ring buffer.
+     *
+     * @param latestReceivedBlockNumber the latest received block number
+     */
+    void setLatestReceivedBlockNumber(long latestReceivedBlockNumber);
 }

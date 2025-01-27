@@ -2,6 +2,7 @@
 package com.hedera.block.server.manager;
 
 import com.hedera.block.server.notifier.Notifier;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -23,15 +24,18 @@ public class BlockManagerImpl implements BlockManager {
     private volatile long lastAcknowledgedBlockNumber = -1;
     private final Notifier notifier;
     private final boolean skipAcknowledgement;
+    private final ServiceStatus serviceStatus;
 
     /**
      * Constructor. If either skipPersistence or skipVerification is true,
      * we ignore all events (no ACKs ever sent).
      */
     @Inject
-    public BlockManagerImpl(@NonNull Notifier notifier, boolean skipAcknowledgement) {
+    public BlockManagerImpl(
+            @NonNull Notifier notifier, boolean skipAcknowledgement, @NonNull final ServiceStatus serviceStatus) {
         this.notifier = notifier;
         this.skipAcknowledgement = skipAcknowledgement;
+        this.serviceStatus = serviceStatus;
     }
 
     /**
@@ -115,6 +119,9 @@ public class BlockManagerImpl implements BlockManager {
 
                 // Update last acknowledged
                 lastAcknowledgedBlockNumber = nextBlock;
+
+                // update the service status with the latest acked block number
+                serviceStatus.setLatestAckedBlockNumber(info);
 
                 // Remove from map if desired (so we don't waste memory)
                 blockInfoMap.remove(nextBlock);
