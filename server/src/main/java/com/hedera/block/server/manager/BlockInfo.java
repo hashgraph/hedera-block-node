@@ -7,7 +7,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 /**
  * POJO that holds information about a block while in process.
  */
-public class BlockInfo {
+class BlockInfo {
 
     private final long blockNumber;
     private Bytes blockHash;

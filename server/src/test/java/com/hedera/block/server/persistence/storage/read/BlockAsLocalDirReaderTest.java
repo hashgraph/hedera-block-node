@@ -84,7 +84,7 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testReadPermsRepairSucceeded() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         for (final BlockItemUnparsed blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));
@@ -102,7 +102,7 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testRemoveBlockItemReadPerms() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         blockWriter.write(blockItems);
 
@@ -128,7 +128,7 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testRepairReadPermsFails() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         blockWriter.write(blockItems);
 
@@ -162,7 +162,7 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testParseExceptionHandling() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         blockWriter.write(blockItems);
 

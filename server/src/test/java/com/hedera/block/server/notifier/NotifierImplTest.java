@@ -97,7 +97,7 @@ public class NotifierImplTest {
     private WebServer webServer;
 
     @Mock
-    private BlockWriter<List<BlockItemUnparsed>> blockWriter;
+    private BlockWriter<List<BlockItemUnparsed>, Long> blockWriter;
 
     @Mock
     private ServiceInterface.RequestOptions options;

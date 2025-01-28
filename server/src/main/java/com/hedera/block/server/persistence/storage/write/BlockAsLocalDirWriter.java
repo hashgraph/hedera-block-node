@@ -43,7 +43,7 @@ import java.util.Set;
  * to remove the current, incomplete block (directory) before re-throwing the exception to the
  * caller.
  */
-public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
+public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnparsed>, Long> {
     private static final Logger LOGGER = System.getLogger(BlockAsLocalDirWriter.class.getName());
     private static final FileAttribute<Set<PosixFilePermission>> DEFAULT_FOLDER_PERMISSIONS =
             PosixFilePermissions.asFileAttribute(Set.of(

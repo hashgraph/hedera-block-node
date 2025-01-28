@@ -6,5 +6,6 @@ package com.hedera.block.server.persistence.storage.write;
  * system.
  *
  * @param <V> the type of the value to be written
+ * @param <R> the type of the return value
  */
-interface LocalBlockWriter<V> extends BlockWriter<V> {}
+interface LocalBlockWriter<V, R> extends BlockWriter<V, R> {}

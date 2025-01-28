@@ -26,7 +26,7 @@ import java.util.Optional;
 /**
  * A Block writer that handles writing of block-as-file.
  */
-public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
+public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<BlockItemUnparsed>, Long> {
     private final MetricsService metricsService;
     private final BlockPathResolver blockPathResolver;
     private final Compression compression;

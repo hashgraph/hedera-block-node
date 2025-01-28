@@ -57,7 +57,7 @@ public class LiveStreamMediatorImplTest {
     private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> observer3;
 
     @Mock
-    private BlockWriter<List<BlockItemUnparsed>> blockWriter;
+    private BlockWriter<List<BlockItemUnparsed>, Long> blockWriter;
 
     @Mock
     private Notifier notifier;

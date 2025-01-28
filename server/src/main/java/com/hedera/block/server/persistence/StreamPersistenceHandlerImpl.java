@@ -40,7 +40,7 @@ public class StreamPersistenceHandlerImpl
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
-    private final BlockWriter<List<BlockItemUnparsed>> blockWriter;
+    private final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter;
     private final Notifier notifier;
     private final MetricsService metricsService;
     private final ServiceStatus serviceStatus;
@@ -66,7 +66,7 @@ public class StreamPersistenceHandlerImpl
     public StreamPersistenceHandlerImpl(
             @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,
             @NonNull final Notifier notifier,
-            @NonNull final BlockWriter<List<BlockItemUnparsed>> blockWriter,
+            @NonNull final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockManager blockManager) {

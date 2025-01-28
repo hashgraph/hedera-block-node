@@ -116,7 +116,7 @@ public class PbjBlockStreamServiceIntegrationTest {
     private WebServer webServer;
 
     @Mock
-    private BlockWriter<List<BlockItemUnparsed>> blockWriter;
+    private BlockWriter<List<BlockItemUnparsed>, Long> blockWriter;
 
     @Mock
     private BlockReader<BlockUnparsed> blockReader;
@@ -238,7 +238,7 @@ public class PbjBlockStreamServiceIntegrationTest {
         int numberOfBlocks = 5;
 
         // Use a real BlockWriter to test the full integration
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(blockWriter);
 
@@ -517,7 +517,7 @@ public class PbjBlockStreamServiceIntegrationTest {
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
 
         // Use a spy to make sure the write() method throws an IOException
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 spy(BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock));
         doThrow(IOException.class).when(blockWriter).write(blockItems);
 
@@ -693,7 +693,8 @@ public class PbjBlockStreamServiceIntegrationTest {
                 config, blockNodeContext.metricsService(), signatureVerifier, executorService);
     }
 
-    private PbjBlockStreamServiceProxy buildBlockStreamService(final BlockWriter<List<BlockItemUnparsed>> blockWriter) {
+    private PbjBlockStreamServiceProxy buildBlockStreamService(
+            final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter) {
 
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);

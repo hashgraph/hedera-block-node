@@ -53,7 +53,7 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static BlockWriter<List<BlockItemUnparsed>> providesBlockWriter(
+    static BlockWriter<List<BlockItemUnparsed>, Long> providesBlockWriter(
             @NonNull final PersistenceStorageConfig config,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockRemover blockRemover,

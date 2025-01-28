@@ -38,7 +38,7 @@ public class StreamPersistenceHandlerImplTest {
     private SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
 
     @Mock
-    private BlockWriter<List<BlockItemUnparsed>> blockWriter;
+    private BlockWriter<List<BlockItemUnparsed>, Long> blockWriter;
 
     @Mock
     private Notifier notifier;

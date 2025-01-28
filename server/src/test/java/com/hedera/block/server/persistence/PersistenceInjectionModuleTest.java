@@ -82,7 +82,7 @@ class PersistenceInjectionModuleTest {
     private Notifier notifierMock;
 
     @Mock
-    private BlockWriter<List<BlockItemUnparsed>> blockWriterMock;
+    private BlockWriter<List<BlockItemUnparsed>, Long> blockWriterMock;
 
     @Mock
     private ServiceStatus serviceStatusMock;
@@ -117,7 +117,7 @@ class PersistenceInjectionModuleTest {
         lenient().when(persistenceStorageConfigMock.liveRootPath()).thenReturn(testLiveRootPath.toString());
         when(persistenceStorageConfigMock.type()).thenReturn(storageType);
 
-        final BlockWriter<List<BlockItemUnparsed>> actual = PersistenceInjectionModule.providesBlockWriter(
+        final BlockWriter<List<BlockItemUnparsed>, Long> actual = PersistenceInjectionModule.providesBlockWriter(
                 persistenceStorageConfigMock,
                 blockNodeContextMock,
                 blockRemoverMock,

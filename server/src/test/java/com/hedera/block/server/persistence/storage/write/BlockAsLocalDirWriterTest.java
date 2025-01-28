@@ -76,7 +76,7 @@ public class BlockAsLocalDirWriterTest {
     @Test
     public void testWriterAndReaderHappyPath() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         for (int i = 0; i < 10; i++) {
             final Optional<Long> result = blockWriter.write(List.of(blockItems.get(i)));
@@ -121,7 +121,7 @@ public class BlockAsLocalDirWriterTest {
     @Test
     public void testRemoveBlockWritePerms() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
 
         // Change the permissions on the block node root directory
@@ -166,7 +166,7 @@ public class BlockAsLocalDirWriterTest {
     @Test
     public void testUnrecoverableIOExceptionOnWrite() throws IOException, ParseException {
         // Use a spy to simulate an IOException when the first block item is written
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 spy(BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock));
         doThrow(IOException.class).when(blockWriter).write(blockItems);
         assertThrows(IOException.class, () -> blockWriter.write(blockItems));
@@ -175,7 +175,7 @@ public class BlockAsLocalDirWriterTest {
     @Test
     public void testRemoveRootDirReadPerm() throws IOException, ParseException {
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
 
         // Write the first block item to create the block

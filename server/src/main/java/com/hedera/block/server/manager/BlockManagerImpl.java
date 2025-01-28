@@ -19,7 +19,7 @@ import javax.inject.Inject;
  */
 public class BlockManagerImpl implements BlockManager {
 
-    private final Map<Long, BlockInfo> blockInfoMap = new ConcurrentHashMap<>();
+    private final Map<Long, BlockInfo> blockInfo = new ConcurrentHashMap<>();
     private volatile long lastAcknowledgedBlockNumber = -1;
     private final Notifier notifier;
     private final boolean skipAcknowledgement;
@@ -44,7 +44,7 @@ public class BlockManagerImpl implements BlockManager {
             return;
         }
 
-        BlockInfo info = blockInfoMap.computeIfAbsent(blockNumber, BlockInfo::new);
+        BlockInfo info = blockInfo.computeIfAbsent(blockNumber, BlockInfo::new);
         info.getBlockStatus().setPersisted();
 
         attemptAcks();
@@ -62,7 +62,7 @@ public class BlockManagerImpl implements BlockManager {
             return;
         }
 
-        BlockInfo info = blockInfoMap.computeIfAbsent(blockNumber, BlockInfo::new);
+        BlockInfo info = blockInfo.computeIfAbsent(blockNumber, BlockInfo::new);
         info.setBlockHash(blockHash);
         info.getBlockStatus().setVerified();
 
@@ -88,13 +88,13 @@ public class BlockManagerImpl implements BlockManager {
         // Temporarily if lastAcknowledgedBlockNumber is -1, we get the first block in the map
         if (lastAcknowledgedBlockNumber == -1) {
             lastAcknowledgedBlockNumber =
-                    blockInfoMap.keySet().stream().min(Long::compareTo).orElse(1L) - 1;
+                    blockInfo.keySet().stream().min(Long::compareTo).orElse(1L) - 1;
         }
 
         // Keep ACK-ing starting from the next block in sequence
         while (true) {
             long nextBlock = lastAcknowledgedBlockNumber + 1;
-            BlockInfo info = blockInfoMap.get(nextBlock);
+            BlockInfo info = blockInfo.get(nextBlock);
 
             if (info == null) {
                 // We have no info for the next expected block yet.
@@ -117,7 +117,7 @@ public class BlockManagerImpl implements BlockManager {
                 lastAcknowledgedBlockNumber = nextBlock;
 
                 // Remove from map if desired (so we don't waste memory)
-                blockInfoMap.remove(nextBlock);
+                blockInfo.remove(nextBlock);
             }
 
             // Loop again in case the next block is also ready.
