@@ -1,4 +1,4 @@
-# Block Verification Design
+# Design Document Template
 
 ## Table of Contents
 
