@@ -5,8 +5,10 @@ import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.from;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.compression.Compression;
@@ -32,6 +34,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mock;
 
 /**
  * Tests for the {@link BlockAsLocalFileReader} class.
@@ -45,6 +48,9 @@ class BlockAsLocalFileReaderTest {
     @TempDir
     private Path testLiveRootPath;
 
+    @Mock
+    private AckHandler ackHandlerMock;
+
     @BeforeEach
     void setUp() throws IOException {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext(
@@ -56,6 +62,8 @@ class BlockAsLocalFileReaderTest {
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
 
         compressionMock = spy(NoOpCompression.newInstance());
+        ackHandlerMock = mock(AckHandler.class);
+
         final BlockAsLocalFilePathResolver blockAsLocalFileResolverMock =
                 spy(BlockAsLocalFilePathResolver.of(testConfig));
         blockAsLocalFileWriterMock =
@@ -73,7 +81,7 @@ class BlockAsLocalFileReaderTest {
     void testSuccessfulBlockRead(final long blockNumber) throws IOException, ParseException {
         final List<BlockItemUnparsed> blockItemUnparsed =
                 PersistTestUtils.generateBlockItemsUnparsedForWithBlockNumber(blockNumber);
-        final Optional<List<BlockItemUnparsed>> written = blockAsLocalFileWriterMock.write(blockItemUnparsed);
+        final Optional<Long> written = blockAsLocalFileWriterMock.write(blockItemUnparsed);
 
         // writing the test data is successful
         assertThat(written).isNotNull().isPresent();
@@ -112,7 +120,7 @@ class BlockAsLocalFileReaderTest {
     void testSuccessfulBlockReadContents(final long blockNumber) throws IOException, ParseException {
         final List<BlockItemUnparsed> blockItemUnparsed =
                 PersistTestUtils.generateBlockItemsUnparsedForWithBlockNumber(blockNumber);
-        final Optional<List<BlockItemUnparsed>> written = blockAsLocalFileWriterMock.write(blockItemUnparsed);
+        final Optional<Long> written = blockAsLocalFileWriterMock.write(blockItemUnparsed);
 
         // writing the test data is successful
         assertThat(written).isNotNull().isPresent();

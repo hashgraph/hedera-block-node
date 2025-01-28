@@ -43,7 +43,7 @@ import java.util.Set;
  * to remove the current, incomplete block (directory) before re-throwing the exception to the
  * caller.
  */
-public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
+public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnparsed>, Long> {
     private static final Logger LOGGER = System.getLogger(BlockAsLocalDirWriter.class.getName());
     private static final FileAttribute<Set<PosixFilePermission>> DEFAULT_FOLDER_PERMISSIONS =
             PosixFilePermissions.asFileAttribute(Set.of(
@@ -111,15 +111,9 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
         return new BlockAsLocalDirWriter(blockNodeContext, blockRemover, blockPathResolver);
     }
 
-    /**
-     * Writes the given block item to the filesystem.
-     *
-     * @param valueToWrite the block item to write
-     * @throws IOException if an error occurs while writing the block item
-     */
     @NonNull
     @Override
-    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
+    public Optional<Long> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
             throws IOException, ParseException {
         final Bytes unparsedBlockHeader = valueToWrite.getFirst().blockHeader();
         if (unparsedBlockHeader != null) {
@@ -133,7 +127,7 @@ public class BlockAsLocalDirWriter implements LocalBlockWriter<List<BlockItemUnp
 
         if (valueToWrite.getLast().hasBlockProof()) {
             metricsService.get(BlocksPersisted).increment();
-            return Optional.of(valueToWrite);
+            return Optional.of(currentBlockNumber);
         } else {
             return Optional.empty();
         }

@@ -4,7 +4,9 @@ package com.hedera.block.server.persistence;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.StreamPersistenceHandlerError;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
+import static java.util.Objects.requireNonNull;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
@@ -38,10 +40,11 @@ public class StreamPersistenceHandlerImpl
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     private final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
-    private final BlockWriter<List<BlockItemUnparsed>> blockWriter;
+    private final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter;
     private final Notifier notifier;
     private final MetricsService metricsService;
     private final ServiceStatus serviceStatus;
+    private final AckHandler ackHandler;
 
     private static final String PROTOCOL_VIOLATION_MESSAGE =
             "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
@@ -63,14 +66,16 @@ public class StreamPersistenceHandlerImpl
     public StreamPersistenceHandlerImpl(
             @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,
             @NonNull final Notifier notifier,
-            @NonNull final BlockWriter<List<BlockItemUnparsed>> blockWriter,
+            @NonNull final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter,
             @NonNull final BlockNodeContext blockNodeContext,
-            @NonNull final ServiceStatus serviceStatus) {
-        this.subscriptionHandler = subscriptionHandler;
-        this.blockWriter = blockWriter;
-        this.notifier = notifier;
-        this.metricsService = blockNodeContext.metricsService();
-        this.serviceStatus = serviceStatus;
+            @NonNull final ServiceStatus serviceStatus,
+            @NonNull final AckHandler ackHandler) {
+        this.subscriptionHandler = requireNonNull(subscriptionHandler);
+        this.blockWriter = requireNonNull(blockWriter);
+        this.notifier = requireNonNull(notifier);
+        this.metricsService = requireNonNull(blockNodeContext.metricsService());
+        this.serviceStatus = requireNonNull(serviceStatus);
+        this.ackHandler = requireNonNull(ackHandler);
     }
 
     /**
@@ -100,12 +105,9 @@ public class StreamPersistenceHandlerImpl
                             // Persist the BlockItems
                             List<BlockItemUnparsed> blockItems =
                                     subscribeStreamResponse.blockItems().blockItems();
-                            Optional<List<BlockItemUnparsed>> result = blockWriter.write(blockItems);
-                            if (result.isPresent()) {
-                                // Publish the block item back upstream to the notifier
-                                // to send responses to producers.
-                                notifier.publish(blockItems);
-                            }
+                            Optional<Long> result = blockWriter.write(blockItems);
+                            // Notify the block manager that the block has been persisted
+                            result.ifPresent(ackHandler::blockPersisted);
                         }
                     }
                     case STATUS -> LOGGER.log(DEBUG, "Unexpected received a status message rather than a block item");

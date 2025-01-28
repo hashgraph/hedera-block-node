@@ -14,6 +14,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.pbj.PbjBlockAccessService;
 import com.hedera.block.server.pbj.PbjBlockAccessServiceProxy;
@@ -58,6 +59,9 @@ class BlockAccessServiceTest {
 
     @Mock
     private ServiceStatus serviceStatus;
+
+    @Mock
+    private AckHandler ackHandler;
 
     @TempDir
     private Path testLiveRootPath;
@@ -106,7 +110,7 @@ class BlockAccessServiceTest {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         // Generate and persist a block
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         blockWriter.write(blockItems);

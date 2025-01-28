@@ -5,8 +5,10 @@ import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.compression.Compression;
@@ -31,6 +33,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mock;
 
 /**
  * Test class for {@link BlockAsLocalFileWriter}.
@@ -47,6 +50,9 @@ class BlockAsLocalFileWriterTest {
 
     private BlockAsLocalFileWriter toTest;
 
+    @Mock
+    private AckHandler ackHandlerMock;
+
     @BeforeEach
     void setUp() throws IOException {
         blockNodeContext = TestConfigUtil.getTestBlockNodeContext(
@@ -58,6 +64,8 @@ class BlockAsLocalFileWriterTest {
         pathResolverMock = spy(BlockAsLocalFilePathResolver.of(testConfig));
 
         compressionMock = spy(NoOpCompression.newInstance());
+
+        ackHandlerMock = mock(AckHandler.class);
 
         toTest = BlockAsLocalFileWriter.of(blockNodeContext, pathResolverMock, compressionMock);
     }
@@ -89,15 +97,24 @@ class BlockAsLocalFileWriterTest {
 
         final BlockUnparsed expectedBlockToWrite =
                 BlockUnparsed.newBuilder().blockItems(toWrite).build();
-        final Optional<List<BlockItemUnparsed>> actual = toTest.write(toWrite);
+
+        final Optional<Long> actual = toTest.write(toWrite);
         assertThat(actual)
                 .isNotNull()
                 .isNotEmpty()
-                .get(InstanceOfAssertFactories.list(BlockItemUnparsed.class))
-                .isNotNull()
-                .isNotEmpty()
-                .hasSize(expectedBlockItems)
-                .containsExactlyElementsOf(toWrite);
+                .get(InstanceOfAssertFactories.LONG)
+                .isNotNull();
+
+        // final Optional<List<BlockItemUnparsed>> actual = toTest.write(toWrite);
+        //        assertThat(actual)
+        //                .isNotNull()
+        //                .isNotEmpty()
+        //                .get(InstanceOfAssertFactories.list(BlockItemUnparsed.class))
+        //                .isNotNull()
+        //                .isNotEmpty()
+        //                .hasSize(expectedBlockItems)
+        //                .containsExactlyElementsOf(toWrite);
+
         assertThat(expectedPath)
                 .isNotNull()
                 .exists()
@@ -147,19 +164,27 @@ class BlockAsLocalFileWriterTest {
         final BlockUnparsed expectedBlockToWrite =
                 BlockUnparsed.newBuilder().blockItems(toWrite).build();
 
-        final Optional<List<BlockItemUnparsed>> actualOnFirstWrite = toTest.write(firstHalfToWrite);
+        final Optional<Long> actualOnFirstWrite = toTest.write(firstHalfToWrite);
         assertThat(actualOnFirstWrite).isNotNull().isEmpty();
         assertThat(expectedPath).isNotNull().doesNotExist();
 
-        final Optional<List<BlockItemUnparsed>> actualOnSecondWrite = toTest.write(secondHalfToWrite);
+        final Optional<Long> actualOnSecondWrite = toTest.write(secondHalfToWrite);
+
         assertThat(actualOnSecondWrite)
                 .isNotNull()
                 .isNotEmpty()
-                .get(InstanceOfAssertFactories.list(BlockItemUnparsed.class))
-                .isNotNull()
-                .isNotEmpty()
-                .hasSize(expectedBlockItems)
-                .containsExactlyElementsOf(toWrite);
+                .get(InstanceOfAssertFactories.LONG)
+                .isNotNull();
+
+        //        assertThat(actualOnSecondWrite)
+        //                .isNotNull()
+        //                .isNotEmpty()
+        //                .get(InstanceOfAssertFactories.list(BlockItemUnparsed.class))
+        //                .isNotNull()
+        //                .isNotEmpty()
+        //                .hasSize(expectedBlockItems)
+        //                .containsExactlyElementsOf(toWrite);
+
         assertThat(expectedPath)
                 .isNotNull()
                 .exists()

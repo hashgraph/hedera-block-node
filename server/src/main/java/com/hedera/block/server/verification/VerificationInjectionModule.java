@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.verification;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.verification.service.BlockVerificationService;
 import com.hedera.block.server.verification.service.BlockVerificationServiceImpl;
@@ -45,11 +46,12 @@ public interface VerificationInjectionModule {
     static BlockVerificationService provideBlockVerificationService(
             @NonNull final VerificationConfig verificationConfig,
             @NonNull final MetricsService metricsService,
-            @NonNull final BlockVerificationSessionFactory blockVerificationSessionFactory) {
+            @NonNull final BlockVerificationSessionFactory blockVerificationSessionFactory,
+            @NonNull final AckHandler ackHandler) {
         if (verificationConfig.type() == VerificationConfig.VerificationServiceType.NO_OP) {
             return new NoOpBlockVerificationService();
         } else {
-            return new BlockVerificationServiceImpl(metricsService, blockVerificationSessionFactory);
+            return new BlockVerificationServiceImpl(metricsService, blockVerificationSessionFactory, ackHandler);
         }
     }
 

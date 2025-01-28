@@ -8,6 +8,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
@@ -81,10 +82,13 @@ class PersistenceInjectionModuleTest {
     private Notifier notifierMock;
 
     @Mock
-    private BlockWriter<List<BlockItemUnparsed>> blockWriterMock;
+    private BlockWriter<List<BlockItemUnparsed>, Long> blockWriterMock;
 
     @Mock
     private ServiceStatus serviceStatusMock;
+
+    @Mock
+    private AckHandler ackHandlerMock;
 
     @TempDir
     private Path testLiveRootPath;
@@ -113,7 +117,7 @@ class PersistenceInjectionModuleTest {
         lenient().when(persistenceStorageConfigMock.liveRootPath()).thenReturn(testLiveRootPath.toString());
         when(persistenceStorageConfigMock.type()).thenReturn(storageType);
 
-        final BlockWriter<List<BlockItemUnparsed>> actual = PersistenceInjectionModule.providesBlockWriter(
+        final BlockWriter<List<BlockItemUnparsed>, Long> actual = PersistenceInjectionModule.providesBlockWriter(
                 persistenceStorageConfigMock,
                 blockNodeContextMock,
                 blockRemoverMock,
@@ -282,7 +286,12 @@ class PersistenceInjectionModuleTest {
         // Call the method under test
         final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> streamVerifier =
                 new StreamPersistenceHandlerImpl(
-                        subscriptionHandlerMock, notifierMock, blockWriterMock, blockNodeContext, serviceStatusMock);
+                        subscriptionHandlerMock,
+                        notifierMock,
+                        blockWriterMock,
+                        blockNodeContext,
+                        serviceStatusMock,
+                        ackHandlerMock);
         assertNotNull(streamVerifier);
     }
 

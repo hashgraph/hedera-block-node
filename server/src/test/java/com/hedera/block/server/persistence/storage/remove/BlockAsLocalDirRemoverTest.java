@@ -8,6 +8,7 @@ import static org.assertj.core.api.Assertions.from;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
@@ -32,12 +33,16 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mock;
 
 class BlockAsLocalDirRemoverTest {
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig testConfig;
     private BlockAsLocalDirPathResolver pathResolverMock;
     private BlockAsLocalDirRemover toTest;
+
+    @Mock
+    private AckHandler ackHandlerMock;
 
     @TempDir
     private Path testLiveRootPath;
@@ -52,6 +57,8 @@ class BlockAsLocalDirRemoverTest {
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
         pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testConfig));
         toTest = BlockAsLocalDirRemover.of(pathResolverMock);
+
+        ackHandlerMock = mock(AckHandler.class);
     }
 
     @Test
@@ -59,7 +66,7 @@ class BlockAsLocalDirRemoverTest {
         // Write a block
         final List<BlockItemUnparsed> blockItems = PersistTestUtils.generateBlockItemsUnparsed(1);
 
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         for (final BlockItemUnparsed blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));

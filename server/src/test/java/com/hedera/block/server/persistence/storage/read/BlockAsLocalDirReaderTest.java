@@ -17,6 +17,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
@@ -46,6 +47,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mock;
 
 public class BlockAsLocalDirReaderTest {
     @TempDir
@@ -55,6 +57,9 @@ public class BlockAsLocalDirReaderTest {
     private BlockNodeContext blockNodeContext;
     private PersistenceStorageConfig testConfig;
     private List<BlockItemUnparsed> blockItems;
+
+    @Mock
+    private AckHandler ackHandlerMock;
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -66,6 +71,8 @@ public class BlockAsLocalDirReaderTest {
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
         pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testConfig));
+
+        ackHandlerMock = mock(AckHandler.class);
     }
 
     @Test
@@ -77,7 +84,7 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testReadPermsRepairSucceeded() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         for (final BlockItemUnparsed blockItem : blockItems) {
             blockWriter.write(List.of(blockItem));
@@ -95,7 +102,7 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testRemoveBlockItemReadPerms() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         blockWriter.write(blockItems);
 
@@ -121,7 +128,7 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testRepairReadPermsFails() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         blockWriter.write(blockItems);
 
@@ -155,7 +162,7 @@ public class BlockAsLocalDirReaderTest {
 
     @Test
     public void testParseExceptionHandling() throws IOException, ParseException {
-        final BlockWriter<List<BlockItemUnparsed>> blockWriter =
+        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
                 BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
         blockWriter.write(blockItems);
 

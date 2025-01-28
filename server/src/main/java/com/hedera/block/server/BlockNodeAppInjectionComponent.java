@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server;
 
+import com.hedera.block.server.ack.AckHandlerInjectionModule;
 import com.hedera.block.server.config.ConfigInjectionModule;
 import com.hedera.block.server.health.HealthInjectionModule;
 import com.hedera.block.server.mediator.MediatorInjectionModule;
@@ -29,6 +30,7 @@ import javax.inject.Singleton;
             MetricsInjectionModule.class,
             PbjInjectionModule.class,
             VerificationInjectionModule.class,
+            AckHandlerInjectionModule.class
         })
 public interface BlockNodeAppInjectionComponent {
     /**

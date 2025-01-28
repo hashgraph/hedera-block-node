@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.stream.BlockProof;
 import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.io.IOException;
 import java.util.List;
@@ -31,15 +32,21 @@ class NoOpBlockWriterTest {
      * block items unparsed if the list ends with a block proof.
      */
     @Test
-    void testSuccessfulBlockWrite() throws IOException {
+    void testSuccessfulBlockWrite() throws IOException, ParseException {
         final BlockProof blockProof = BlockProof.newBuilder().build();
         final Bytes blockProofAsBytes = BlockProof.PROTOBUF.toBytes(blockProof);
         final BlockItemUnparsed blockProofUnparsed =
                 BlockItemUnparsed.newBuilder().blockProof(blockProofAsBytes).build();
-        final List<BlockItemUnparsed> expected = List.of(blockProofUnparsed);
 
-        final Optional<List<BlockItemUnparsed>> actual = toTest.write(expected);
-        assertThat(actual).isNotNull().isNotEmpty().containsSame(expected);
+        final BlockHeader blockHeader = BlockHeader.newBuilder().number(1L).build();
+        final Bytes blockHeaderAsBytes = BlockHeader.PROTOBUF.toBytes(blockHeader);
+        final BlockItemUnparsed blockHeaderUnparsed =
+                BlockItemUnparsed.newBuilder().blockHeader(blockHeaderAsBytes).build();
+
+        final List<BlockItemUnparsed> itemsToWrite = List.of(blockHeaderUnparsed, blockProofUnparsed);
+
+        final Optional<Long> actual = toTest.write(itemsToWrite);
+        assertThat(actual).isNotNull().isNotEmpty().containsSame(1L);
     }
 
     /**
@@ -49,14 +56,14 @@ class NoOpBlockWriterTest {
      * the list does not end with a block proof.
      */
     @Test
-    void testSuccessfulBlockWriteNoProof() throws IOException {
-        final BlockHeader blockHeader = BlockHeader.newBuilder().build();
+    void testSuccessfulBlockWriteNoProof() throws IOException, ParseException {
+        final BlockHeader blockHeader = BlockHeader.newBuilder().number(1L).build();
         final Bytes blockHeaderAsBytes = BlockHeader.PROTOBUF.toBytes(blockHeader);
         final BlockItemUnparsed blockHeaderUnparsed =
                 BlockItemUnparsed.newBuilder().blockHeader(blockHeaderAsBytes).build();
-        final List<BlockItemUnparsed> expected = List.of(blockHeaderUnparsed);
+        final List<BlockItemUnparsed> itemsToWrite = List.of(blockHeaderUnparsed);
 
-        final Optional<List<BlockItemUnparsed>> actual = toTest.write(expected);
+        final Optional<Long> actual = toTest.write(itemsToWrite);
         assertThat(actual).isNotNull().isEmpty();
     }
 }

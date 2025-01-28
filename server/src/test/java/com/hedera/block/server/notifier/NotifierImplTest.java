@@ -2,10 +2,7 @@
 package com.hedera.block.server.notifier;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Producers;
-import static com.hedera.block.server.notifier.NotifierImpl.buildErrorStreamResponse;
-import static com.hedera.block.server.util.PbjProtoTestUtils.buildAck;
 import static com.hedera.block.server.util.PbjProtoTestUtils.buildEmptyPublishStreamRequest;
-import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
 import static java.lang.System.Logger.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,6 +10,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
@@ -99,10 +97,13 @@ public class NotifierImplTest {
     private WebServer webServer;
 
     @Mock
-    private BlockWriter<List<BlockItemUnparsed>> blockWriter;
+    private BlockWriter<List<BlockItemUnparsed>, Long> blockWriter;
 
     @Mock
     private ServiceInterface.RequestOptions options;
+
+    @Mock
+    AckHandler ackHandler;
 
     private final long TIMEOUT_THRESHOLD_MILLIS = 100L;
     private final long TEST_TIME = 1_719_427_664_950L;
@@ -153,16 +154,25 @@ public class NotifierImplTest {
         long producers = blockNodeContext.metricsService().get(Producers).get();
         assertEquals(3, producers, "Expected 3 producers to be registered");
 
-        List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
-        notifier.publish(blockItems);
+        Bytes blockHash = Bytes.wrap("1234");
+        long blockNumber = 2L;
+        boolean isDuplicated = false;
+
+        notifier.sendAck(blockNumber, blockHash, isDuplicated);
+
+        Acknowledgement blockAcknowledgement = notifier.buildAck(blockHash, blockNumber, isDuplicated);
+
+        // Verify once the serviceStatus is not running that we do not publish the responses
+        final var publishStreamResponse = PublishStreamResponse.newBuilder()
+                .acknowledgement(blockAcknowledgement)
+                .build();
 
         // Verify the response was received by all observers
-        final Bytes publishStreamResponse = PublishStreamResponse.PROTOBUF.toBytes(PublishStreamResponse.newBuilder()
-                .acknowledgement(buildAck(blockItems))
-                .build());
-        verify(helidonPublishStreamObserver1, timeout(testTimeout).times(1)).onNext(publishStreamResponse);
-        verify(helidonPublishStreamObserver2, timeout(testTimeout).times(1)).onNext(publishStreamResponse);
-        verify(helidonPublishStreamObserver3, timeout(testTimeout).times(1)).onNext(publishStreamResponse);
+        final Bytes publishStreamResponseBytes = PublishStreamResponse.PROTOBUF.toBytes(publishStreamResponse);
+
+        verify(helidonPublishStreamObserver1, timeout(testTimeout).times(1)).onNext(publishStreamResponseBytes);
+        verify(helidonPublishStreamObserver2, timeout(testTimeout).times(1)).onNext(publishStreamResponseBytes);
+        verify(helidonPublishStreamObserver3, timeout(testTimeout).times(1)).onNext(publishStreamResponseBytes);
 
         // Unsubscribe the observers
         producerPipeline1.onComplete();
@@ -171,37 +181,6 @@ public class NotifierImplTest {
 
         producers = blockNodeContext.metricsService().get(Producers).get();
         assertEquals(0, producers, "Expected 0 producers to be registered");
-    }
-
-    @Test
-    public void testPublishThrowsNoSuchAlgorithmException() {
-
-        when(serviceStatus.isRunning()).thenReturn(true);
-        final var notifier = new TestNotifier(mediator, blockNodeContext, serviceStatus);
-        final var concreteObserver1 = new ProducerBlockItemObserver(
-                testClock, publisher, subscriptionHandler, publishStreamObserver1, blockNodeContext, serviceStatus);
-
-        final var concreteObserver2 = new ProducerBlockItemObserver(
-                testClock, publisher, subscriptionHandler, publishStreamObserver2, blockNodeContext, serviceStatus);
-
-        final var concreteObserver3 = new ProducerBlockItemObserver(
-                testClock, publisher, subscriptionHandler, publishStreamObserver3, blockNodeContext, serviceStatus);
-
-        notifier.subscribe(concreteObserver1);
-        notifier.subscribe(concreteObserver2);
-        notifier.subscribe(concreteObserver3);
-
-        assertTrue(notifier.isSubscribed(concreteObserver1), "Expected the notifier to have observer1 subscribed");
-        assertTrue(notifier.isSubscribed(concreteObserver2), "Expected the notifier to have observer2 subscribed");
-        assertTrue(notifier.isSubscribed(concreteObserver3), "Expected the notifier to have observer3 subscribed");
-
-        List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
-        notifier.publish(blockItems);
-
-        final PublishStreamResponse errorResponse = buildErrorStreamResponse();
-        verify(publishStreamObserver1, timeout(testTimeout).times(1)).onNext(errorResponse);
-        verify(publishStreamObserver2, timeout(testTimeout).times(1)).onNext(errorResponse);
-        verify(publishStreamObserver3, timeout(testTimeout).times(1)).onNext(errorResponse);
     }
 
     @Test
@@ -227,13 +206,19 @@ public class NotifierImplTest {
         assertTrue(notifier.isSubscribed(concreteObserver2), "Expected the notifier to have observer2 subscribed");
         assertTrue(notifier.isSubscribed(concreteObserver3), "Expected the notifier to have observer3 subscribed");
 
-        final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
-        notifier.publish(blockItems);
+        Bytes blockHash = Bytes.wrap("1234");
+        long blockNumber = 2L;
+        boolean isDuplicated = false;
+
+        notifier.sendAck(blockNumber, blockHash, isDuplicated);
+
+        Acknowledgement blockAcknowledgement = notifier.buildAck(blockHash, blockNumber, isDuplicated);
 
         // Verify once the serviceStatus is not running that we do not publish the responses
         final var publishStreamResponse = PublishStreamResponse.newBuilder()
-                .acknowledgement(buildAck(blockItems))
+                .acknowledgement(blockAcknowledgement)
                 .build();
+
         verify(publishStreamObserver1, timeout(testTimeout).times(0)).onNext(publishStreamResponse);
         verify(publishStreamObserver2, timeout(testTimeout).times(0)).onNext(publishStreamResponse);
         verify(publishStreamObserver3, timeout(testTimeout).times(0)).onNext(publishStreamResponse);
@@ -246,12 +231,6 @@ public class NotifierImplTest {
                 @NonNull final ServiceStatus serviceStatus) {
             super(mediator, blockNodeContext, serviceStatus);
         }
-
-        @Override
-        @NonNull
-        Acknowledgement buildAck(@NonNull final List<BlockItemUnparsed> blockItems) throws NoSuchAlgorithmException {
-            throw new NoSuchAlgorithmException("Test exception");
-        }
     }
 
     private PbjBlockStreamServiceProxy buildBlockStreamService(final Notifier notifier) {
@@ -259,7 +238,7 @@ public class NotifierImplTest {
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);
         final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
-                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus);
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, ackHandler);
         final BlockVerificationService blockVerificationService = new NoOpBlockVerificationService();
 
         final var streamVerificationHandler = new StreamVerificationHandlerImpl(

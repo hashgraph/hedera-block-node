@@ -26,7 +26,7 @@ import java.util.Optional;
 /**
  * A Block writer that handles writing of block-as-file.
  */
-public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<BlockItemUnparsed>> {
+public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<BlockItemUnparsed>, Long> {
     private final MetricsService metricsService;
     private final BlockPathResolver blockPathResolver;
     private final Compression compression;
@@ -72,7 +72,7 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
 
     @NonNull
     @Override
-    public Optional<List<BlockItemUnparsed>> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
+    public Optional<Long> write(@NonNull final List<BlockItemUnparsed> valueToWrite)
             throws IOException, ParseException {
         final BlockItemUnparsed firstItem = valueToWrite.getFirst();
         if (firstItem.hasBlockHeader()) {
@@ -84,10 +84,12 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
         }
 
         if (valueToWrite.getLast().hasBlockProof()) {
-            final Optional<List<BlockItemUnparsed>> result = Optional.of(writeToFs());
+            writeToFs();
             metricsService.get(BlocksPersisted).increment();
+            // reset will set -1 to currentBlockNumber, so we need to store it before reset
+            long blockNumberPersisted = currentBlockNumber;
             resetState();
-            return result;
+            return Optional.of(blockNumberPersisted);
         } else {
             return Optional.empty();
         }

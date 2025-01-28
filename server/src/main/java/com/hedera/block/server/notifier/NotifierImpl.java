@@ -4,7 +4,6 @@ package com.hedera.block.server.notifier;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.SuccessfulPubStreamResp;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.NotifierRingBufferRemainingCapacity;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.Producers;
-import static com.hedera.block.server.producer.Util.getFakeHash;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
@@ -12,15 +11,12 @@ import com.hedera.block.server.mediator.SubscriptionHandlerBase;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.Acknowledgement;
-import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.BlockAcknowledgement;
 import com.hedera.hapi.block.EndOfStream;
-import com.hedera.hapi.block.ItemAcknowledgement;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.security.NoSuchAlgorithmException;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -88,38 +84,20 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
     }
 
     /**
-     * Publishes the given block item to all subscribed producers.
+     * Publishes the given PublishStreamResponse
      *
-     * @param blockItems the block items from the persistence layer to publish a response to
-     *     upstream producers
+     * @param response the PublishStreamResponse to publish
      */
     @Override
-    public void publish(@NonNull List<BlockItemUnparsed> blockItems) {
+    public void publish(@NonNull PublishStreamResponse response) {
+        if (serviceStatus.isRunning()) {
+            // Publish the block item to the subscribers
+            ringBuffer.publishEvent((event, sequence) -> event.set(response));
 
-        try {
-            if (serviceStatus.isRunning()) {
-                // Publish the block item to the subscribers
-                final var publishStreamResponse = PublishStreamResponse.newBuilder()
-                        .acknowledgement(buildAck(blockItems))
-                        .build();
-                ringBuffer.publishEvent((event, sequence) -> event.set(publishStreamResponse));
-
-                metricsService.get(NotifierRingBufferRemainingCapacity).set(ringBuffer.remainingCapacity());
-                metricsService.get(SuccessfulPubStreamResp).increment();
-            } else {
-                LOGGER.log(ERROR, "Notifier is not running.");
-            }
-
-        } catch (NoSuchAlgorithmException e) {
-
-            // Stop the server
-            serviceStatus.stopRunning(getClass().getName());
-
-            final var errorResponse = buildErrorStreamResponse();
-            LOGGER.log(ERROR, "Error calculating hash: ", e);
-
-            // Send an error response to all the producers.
-            ringBuffer.publishEvent((event, sequence) -> event.set(errorResponse));
+            metricsService.get(NotifierRingBufferRemainingCapacity).set(ringBuffer.remainingCapacity());
+            metricsService.get(SuccessfulPubStreamResp).increment();
+        } else {
+            LOGGER.log(ERROR, "Service is not running. Notifier skipping sendAck");
         }
     }
 
@@ -138,19 +116,56 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
     }
 
     /**
-     * Protected method meant for testing. Builds an Acknowledgement for the block item.
+     * Builds an acknowledgement for the given block number and block hash.
      *
-     * @param blockItems the block items to build the Acknowledgement for
-     * @return the Acknowledgement for the block item
-     * @throws NoSuchAlgorithmException if the hash algorithm is not supported
+     * @param blockHash root hash of the block to ack
+     * @param blockNumber number of the block to ack
+     * @param alreadyExists true if the block already exists, false otherwise
+     * @return the acknowledgement
      */
     @NonNull
-    Acknowledgement buildAck(@NonNull final List<BlockItemUnparsed> blockItems) throws NoSuchAlgorithmException {
-        final ItemAcknowledgement itemAck = ItemAcknowledgement.newBuilder()
-                // TODO: Replace this with a real hash generator
-                .itemsHash(Bytes.wrap(getFakeHash(blockItems)))
+    Acknowledgement buildAck(final @NonNull Bytes blockHash, final long blockNumber, boolean alreadyExists) {
+        final BlockAcknowledgement blockAcknowledgement = BlockAcknowledgement.newBuilder()
+                .blockRootHash(blockHash)
+                .blockNumber(blockNumber)
+                .blockAlreadyExists(alreadyExists)
                 .build();
 
-        return Acknowledgement.newBuilder().itemAck(itemAck).build();
+        return Acknowledgement.newBuilder().blockAck(blockAcknowledgement).build();
+    }
+
+    /**
+     * Sends an end of stream message for the given block number.
+     *
+     * @param block_number number of the block to ack
+     * @param responseCode the response code to send
+     */
+    @Override
+    public void sendEndOfStream(long block_number, @NonNull PublishStreamResponseCode responseCode) {
+        final var publishStreamResponse = PublishStreamResponse.newBuilder()
+                .status(EndOfStream.newBuilder()
+                        .blockNumber(block_number)
+                        .status(responseCode)
+                        .build())
+                .build();
+
+        publish(publishStreamResponse);
+    }
+
+    /**
+     * Sends an acknowledgement for the given block number and block hash.
+     *
+     * @param blockNumber number of the block to ack
+     * @param blockHash root hash of the block to ack
+     * @param duplicated true if the block is a duplicate, false otherwise
+     */
+    @Override
+    public void sendAck(long blockNumber, @NonNull Bytes blockHash, boolean duplicated) {
+
+        final var publishStreamResponse = PublishStreamResponse.newBuilder()
+                .acknowledgement(buildAck(blockHash, blockNumber, duplicated))
+                .build();
+
+        publish(publishStreamResponse);
     }
 }
