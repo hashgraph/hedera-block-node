@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.simulator.grpc.impl;
 
+import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlocksProcessed;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
 
+import com.hedera.block.simulator.metrics.MetricsService;
 import com.hedera.hapi.block.protoc.PublishStreamRequest;
 import com.hedera.hapi.block.protoc.PublishStreamResponse;
 import com.hedera.hapi.block.protoc.PublishStreamResponse.Acknowledgement;
@@ -26,6 +28,9 @@ import java.util.List;
 public class PublishStreamServerObserver implements StreamObserver<PublishStreamRequest> {
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
+    // Service dependencies
+    private final MetricsService metricsService;
+
     // gRPC Components
     private final StreamObserver<PublishStreamResponse> responseObserver;
 
@@ -37,15 +42,18 @@ public class PublishStreamServerObserver implements StreamObserver<PublishStream
      * Constructs a new PublishStreamServerObserver that handles stream requests and maintains a history of statuses.
      *
      * @param responseObserver The observer that handles responses back to the client
+     * @param metricsService The service for recording consumption metrics
      * @param lastKnownStatuses A deque to store the history of request statuses
      * @param lastKnownStatusesCapacity The maximum number of statuses to maintain in the history
      * @throws NullPointerException if responseObserver or lastKnownStatuses is null
      */
     public PublishStreamServerObserver(
-            StreamObserver<PublishStreamResponse> responseObserver,
+            @NonNull final StreamObserver<PublishStreamResponse> responseObserver,
+            @NonNull final MetricsService metricsService,
             @NonNull final Deque<String> lastKnownStatuses,
             final int lastKnownStatusesCapacity) {
         this.responseObserver = requireNonNull(responseObserver);
+        this.metricsService = requireNonNull(metricsService);
         this.lastKnownStatuses = requireNonNull(lastKnownStatuses);
         this.lastKnownStatusesCapacity = lastKnownStatusesCapacity;
     }
@@ -75,6 +83,7 @@ public class PublishStreamServerObserver implements StreamObserver<PublishStream
                 final PublishStreamResponse publishStreamResponse = handleBlockAckResponse(blockProof);
 
                 responseObserver.onNext(publishStreamResponse);
+                metricsService.get(LiveBlocksProcessed).increment();
             }
         }
     }

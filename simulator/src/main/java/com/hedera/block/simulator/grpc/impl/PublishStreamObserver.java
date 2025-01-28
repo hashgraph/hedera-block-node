@@ -26,7 +26,6 @@ public class PublishStreamObserver implements StreamObserver<PublishStreamRespon
 
     /**
      * Creates a new PublishStreamObserver instance.
-     *
      * @param streamEnabled Controls whether streaming should continue
      * @param lastKnownStatuses List to store the most recent status messages
      * @param lastKnownStatusesCapacity the capacity of the last known statuses

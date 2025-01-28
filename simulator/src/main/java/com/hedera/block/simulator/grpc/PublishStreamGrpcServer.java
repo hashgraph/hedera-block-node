@@ -29,11 +29,6 @@ public interface PublishStreamGrpcServer {
     List<String> getLastKnownStatuses();
 
     /**
-     * Sends a onCompleted message to the client and waits for a short period of time to ensure the message is sent.
-     */
-    void completeStreaming();
-
-    /**
      * Shutdowns the server.
      *
      * @throws InterruptedException if the thread is interrupted

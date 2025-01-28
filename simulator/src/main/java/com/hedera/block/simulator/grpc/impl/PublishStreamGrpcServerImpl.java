@@ -33,7 +33,6 @@ public class PublishStreamGrpcServerImpl implements PublishStreamGrpcServer {
 
     // gRPC Components
     private Server server;
-    private PublishStreamServerObserver publishStreamServerObserver;
 
     // Configuration
     private final GrpcConfig grpcConfig;
@@ -75,9 +74,8 @@ public class PublishStreamGrpcServerImpl implements PublishStreamGrpcServer {
                     @Override
                     public StreamObserver<PublishStreamRequest> publishBlockStream(
                             StreamObserver<PublishStreamResponse> responseObserver) {
-                        publishStreamServerObserver = new PublishStreamServerObserver(
-                                responseObserver, lastKnownStatuses, lastKnownStatusesCapacity);
-                        return publishStreamServerObserver;
+                        return new PublishStreamServerObserver(
+                                responseObserver, metricsService, lastKnownStatuses, lastKnownStatusesCapacity);
                     }
                 })
                 .build();
@@ -116,21 +114,12 @@ public class PublishStreamGrpcServerImpl implements PublishStreamGrpcServer {
     }
 
     /**
-     * Sends a onCompleted message to the server.
-     */
-    @Override
-    public void completeStreaming() {
-        publishStreamServerObserver.onCompleted();
-    }
-
-    /**
      * Shutdowns the server.
      *
      * @throws InterruptedException if the thread is interrupted
      */
     @Override
     public void shutdown() throws InterruptedException {
-        completeStreaming();
         server.shutdown();
     }
 }
