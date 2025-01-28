@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
-package com.hedera.block.server.manager;
+package com.hedera.block.server.block;
 
+import com.hedera.block.server.ack.AckBlockStatus;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * POJO that holds information about a block while in process.
  */
-class BlockInfo {
+public class BlockInfo {
 
     private final long blockNumber;
     private Bytes blockHash;
-    private final BlockStatus blockStatus;
+    private final AckBlockStatus ackBlockStatus;
 
     /**
      * Constructor.
@@ -19,7 +20,7 @@ class BlockInfo {
      */
     public BlockInfo(long blockNumber) {
         this.blockNumber = blockNumber;
-        this.blockStatus = new BlockStatus();
+        this.ackBlockStatus = new AckBlockStatus();
     }
 
     /**
@@ -42,8 +43,8 @@ class BlockInfo {
      * Get the block status.
      * @return the block status
      */
-    public BlockStatus getBlockStatus() {
-        return blockStatus;
+    public AckBlockStatus getBlockStatus() {
+        return ackBlockStatus;
     }
 
     /**

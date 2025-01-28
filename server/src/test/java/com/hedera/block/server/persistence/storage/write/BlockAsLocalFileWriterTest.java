@@ -8,8 +8,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.compression.Compression;
 import com.hedera.block.server.persistence.storage.compression.NoOpCompression;
@@ -51,7 +51,7 @@ class BlockAsLocalFileWriterTest {
     private BlockAsLocalFileWriter toTest;
 
     @Mock
-    private BlockManager blockManagerMock;
+    private AckHandler ackHandlerMock;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -65,7 +65,7 @@ class BlockAsLocalFileWriterTest {
 
         compressionMock = spy(NoOpCompression.newInstance());
 
-        blockManagerMock = mock(BlockManager.class);
+        ackHandlerMock = mock(AckHandler.class);
 
         toTest = BlockAsLocalFileWriter.of(blockNodeContext, pathResolverMock, compressionMock);
     }

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server;
 
+import com.hedera.block.server.ack.BlockManagerInjectionModule;
 import com.hedera.block.server.config.ConfigInjectionModule;
 import com.hedera.block.server.health.HealthInjectionModule;
-import com.hedera.block.server.manager.BlockManagerInjectionModule;
 import com.hedera.block.server.mediator.MediatorInjectionModule;
 import com.hedera.block.server.metrics.MetricsInjectionModule;
 import com.hedera.block.server.notifier.NotifierInjectionModule;

@@ -14,8 +14,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.pbj.PbjBlockAccessService;
 import com.hedera.block.server.pbj.PbjBlockAccessServiceProxy;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
@@ -61,7 +61,7 @@ class BlockAccessServiceTest {
     private ServiceStatus serviceStatus;
 
     @Mock
-    private BlockManager blockManager;
+    private AckHandler ackHandler;
 
     @TempDir
     private Path testLiveRootPath;

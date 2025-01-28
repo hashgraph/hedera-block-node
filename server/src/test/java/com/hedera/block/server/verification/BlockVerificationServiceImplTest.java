@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
-import com.hedera.block.server.manager.BlockManager;
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.verification.service.BlockVerificationService;
@@ -45,7 +45,7 @@ class BlockVerificationServiceImplTest {
     private Counter verificationBlocksFailed;
 
     @Mock
-    private BlockManager blockManagerMock;
+    private AckHandler ackHandlerMock;
 
     @BeforeEach
     void setUp() {
@@ -55,7 +55,7 @@ class BlockVerificationServiceImplTest {
         when(metricsService.get(BlockNodeMetricTypes.Counter.VerificationBlocksFailed))
                 .thenReturn(verificationBlocksFailed);
 
-        blockManagerMock = mock(BlockManager.class);
+        ackHandlerMock = mock(AckHandler.class);
     }
 
     @Test
@@ -64,7 +64,7 @@ class BlockVerificationServiceImplTest {
         List<BlockItemUnparsed> blockItems = List.of(normalItem);
 
         BlockVerificationService service =
-                new BlockVerificationServiceImpl(metricsService, sessionFactory, blockManagerMock);
+                new BlockVerificationServiceImpl(metricsService, sessionFactory, ackHandlerMock);
 
         // When
         IllegalStateException exception =
@@ -82,7 +82,7 @@ class BlockVerificationServiceImplTest {
         List<BlockItemUnparsed> blockItems = List.of(normalItem);
 
         BlockVerificationServiceImpl service =
-                new BlockVerificationServiceImpl(metricsService, sessionFactory, blockManagerMock);
+                new BlockVerificationServiceImpl(metricsService, sessionFactory, ackHandlerMock);
         setCurrentSession(service, previousSession);
 
         // When

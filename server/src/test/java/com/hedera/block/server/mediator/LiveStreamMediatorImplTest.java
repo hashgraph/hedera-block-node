@@ -12,11 +12,11 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
-import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.notifier.NotifierImpl;
@@ -75,7 +75,7 @@ public class LiveStreamMediatorImplTest {
     private InstantSource testClock;
 
     @Mock
-    private BlockManager blockManagerMock;
+    private AckHandler ackHandlerMock;
 
     private final long TIMEOUT_THRESHOLD_MILLIS = 100L;
     private final long TEST_TIME = 1_719_427_664_950L;
@@ -137,7 +137,7 @@ public class LiveStreamMediatorImplTest {
         // register the stream validator
         when(blockWriter.write(List.of(blockItem))).thenReturn(Optional.empty());
         final var handler = new StreamPersistenceHandlerImpl(
-                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, blockManagerMock);
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, ackHandlerMock);
         streamMediator.subscribe(handler);
 
         // Acting as a producer, notify the mediator of a new block
@@ -194,7 +194,7 @@ public class LiveStreamMediatorImplTest {
         // register the stream validator
         when(blockWriter.write(List.of(blockItem))).thenReturn(Optional.empty());
         final var handler = new StreamPersistenceHandlerImpl(
-                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, blockManagerMock);
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, ackHandlerMock);
         streamMediator.subscribe(handler);
 
         // Acting as a producer, notify the mediator of a new block
@@ -397,7 +397,7 @@ public class LiveStreamMediatorImplTest {
 
         final Notifier notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
         final var handler = new StreamPersistenceHandlerImpl(
-                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, blockManagerMock);
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, ackHandlerMock);
 
         // Set up the stream verifier
         streamMediator.subscribe(handler);
@@ -460,7 +460,7 @@ public class LiveStreamMediatorImplTest {
 
         // register the stream validator
         final var handler = new StreamPersistenceHandlerImpl(
-                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, blockManagerMock);
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, ackHandlerMock);
         streamMediator.subscribe(handler);
 
         final var testConsumerBlockItemObserver = new ConsumerStreamResponseObserver(

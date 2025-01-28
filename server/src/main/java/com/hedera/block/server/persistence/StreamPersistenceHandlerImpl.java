@@ -6,11 +6,11 @@ import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.util.Objects.requireNonNull;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.exception.BlockStreamProtocolException;
-import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
@@ -44,7 +44,7 @@ public class StreamPersistenceHandlerImpl
     private final Notifier notifier;
     private final MetricsService metricsService;
     private final ServiceStatus serviceStatus;
-    private final BlockManager blockManager;
+    private final AckHandler ackHandler;
 
     private static final String PROTOCOL_VIOLATION_MESSAGE =
             "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
@@ -69,13 +69,13 @@ public class StreamPersistenceHandlerImpl
             @NonNull final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus,
-            @NonNull final BlockManager blockManager) {
+            @NonNull final AckHandler ackHandler) {
         this.subscriptionHandler = requireNonNull(subscriptionHandler);
         this.blockWriter = requireNonNull(blockWriter);
         this.notifier = requireNonNull(notifier);
         this.metricsService = requireNonNull(blockNodeContext.metricsService());
         this.serviceStatus = requireNonNull(serviceStatus);
-        this.blockManager = requireNonNull(blockManager);
+        this.ackHandler = requireNonNull(ackHandler);
     }
 
     /**
@@ -107,7 +107,7 @@ public class StreamPersistenceHandlerImpl
                                     subscribeStreamResponse.blockItems().blockItems();
                             Optional<Long> result = blockWriter.write(blockItems);
                             // Notify the block manager that the block has been persisted
-                            result.ifPresent(blockManager::blockPersisted);
+                            result.ifPresent(ackHandler::blockPersisted);
                         }
                     }
                     case STATUS -> LOGGER.log(DEBUG, "Unexpected received a status message rather than a block item");

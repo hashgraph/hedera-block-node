@@ -11,9 +11,9 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.ObjectEvent;
-import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
@@ -53,7 +53,7 @@ public class StreamPersistenceHandlerImplTest {
     private MetricsService metricsService;
 
     @Mock
-    private BlockManager blockManagerMock;
+    private AckHandler ackHandlerMock;
 
     private static final int testTimeout = 50;
 
@@ -64,7 +64,7 @@ public class StreamPersistenceHandlerImplTest {
         when(serviceStatus.isRunning()).thenReturn(false);
 
         final var streamPersistenceHandler = new StreamPersistenceHandlerImpl(
-                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus, blockManagerMock);
+                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus, ackHandlerMock);
 
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         final BlockItemSetUnparsed blockItemSet =
@@ -90,7 +90,7 @@ public class StreamPersistenceHandlerImplTest {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         final var streamPersistenceHandler = new StreamPersistenceHandlerImpl(
-                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus, blockManagerMock);
+                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus, ackHandlerMock);
 
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         final BlockItemSetUnparsed blockItemSet =
@@ -117,7 +117,7 @@ public class StreamPersistenceHandlerImplTest {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         final var streamPersistenceHandler = new StreamPersistenceHandlerImpl(
-                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus, blockManagerMock);
+                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus, ackHandlerMock);
 
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         final BlockItemSetUnparsed blockItemSet =
@@ -147,7 +147,7 @@ public class StreamPersistenceHandlerImplTest {
         when(serviceStatus.isRunning()).thenReturn(true);
 
         final var streamPersistenceHandler = new StreamPersistenceHandlerImpl(
-                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus, blockManagerMock);
+                subscriptionHandler, notifier, blockWriter, blockNodeContext, serviceStatus, ackHandlerMock);
 
         final SubscribeStreamResponseUnparsed subscribeStreamResponse = spy(SubscribeStreamResponseUnparsed.newBuilder()
                 .status(READ_STREAM_SUCCESS)

@@ -17,7 +17,7 @@ module com.hedera.block.server {
     exports com.hedera.block.server.metrics;
     exports com.hedera.block.server.events;
     exports com.hedera.block.server.health;
-    exports com.hedera.block.server.manager;
+    exports com.hedera.block.server.ack;
     exports com.hedera.block.server.persistence;
     exports com.hedera.block.server.notifier;
     exports com.hedera.block.server.service;

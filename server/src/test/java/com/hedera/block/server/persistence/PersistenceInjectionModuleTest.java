@@ -8,10 +8,10 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
-import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
@@ -88,7 +88,7 @@ class PersistenceInjectionModuleTest {
     private ServiceStatus serviceStatusMock;
 
     @Mock
-    private BlockManager blockManagerMock;
+    private AckHandler ackHandlerMock;
 
     @TempDir
     private Path testLiveRootPath;
@@ -291,7 +291,7 @@ class PersistenceInjectionModuleTest {
                         blockWriterMock,
                         blockNodeContext,
                         serviceStatusMock,
-                        blockManagerMock);
+                        ackHandlerMock);
         assertNotNull(streamVerifier);
     }
 

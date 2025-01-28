@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-package com.hedera.block.server.manager;
+package com.hedera.block.server.ack;
 
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
@@ -13,16 +13,16 @@ import javax.inject.Singleton;
 public interface BlockManagerInjectionModule {
 
     /**
-     * Provides a {@link BlockManager} instance.
+     * Provides a {@link AckHandler} instance.
      *
      * @param notifier the {@link Notifier} instance
      * @param persistenceStorageConfig the {@link PersistenceStorageConfig} instance
      * @param verificationConfig the {@link VerificationConfig} instance
-     * @return a {@link BlockManager} instance
+     * @return a {@link AckHandler} instance
      */
     @Provides
     @Singleton
-    static BlockManager provideBlockManager(
+    static AckHandler provideBlockManager(
             @NonNull final Notifier notifier,
             @NonNull final PersistenceStorageConfig persistenceStorageConfig,
             @NonNull final VerificationConfig verificationConfig) {
@@ -30,6 +30,6 @@ public interface BlockManagerInjectionModule {
         boolean skipPersistence = persistenceStorageConfig.type().equals(PersistenceStorageConfig.StorageType.NO_OP);
         boolean skipVerification = verificationConfig.type().equals(VerificationConfig.VerificationServiceType.NO_OP);
 
-        return new BlockManagerImpl(notifier, skipPersistence | skipVerification);
+        return new AckHandlerImpl(notifier, skipPersistence | skipVerification);
     }
 }

@@ -10,10 +10,10 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
-import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.mediator.Publisher;
@@ -103,7 +103,7 @@ public class NotifierImplTest {
     private ServiceInterface.RequestOptions options;
 
     @Mock
-    BlockManager blockManager;
+    AckHandler ackHandler;
 
     private final long TIMEOUT_THRESHOLD_MILLIS = 100L;
     private final long TEST_TIME = 1_719_427_664_950L;
@@ -238,7 +238,7 @@ public class NotifierImplTest {
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);
         final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
-                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, blockManager);
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, ackHandler);
         final BlockVerificationService blockVerificationService = new NoOpBlockVerificationService();
 
         final var streamVerificationHandler = new StreamVerificationHandlerImpl(

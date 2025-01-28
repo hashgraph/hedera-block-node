@@ -17,8 +17,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
@@ -54,7 +54,7 @@ public class BlockAsLocalDirWriterTest {
     private List<BlockItemUnparsed> blockItems;
 
     @Mock
-    private BlockManager blockManagerMock;
+    private AckHandler ackHandlerMock;
 
     @TempDir
     private Path testLiveRootPath;
@@ -70,7 +70,7 @@ public class BlockAsLocalDirWriterTest {
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
         pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testConfig));
 
-        blockManagerMock = mock(BlockManager.class);
+        ackHandlerMock = mock(AckHandler.class);
     }
 
     @Test

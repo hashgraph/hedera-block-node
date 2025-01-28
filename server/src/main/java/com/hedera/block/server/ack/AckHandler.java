@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-package com.hedera.block.server.manager;
+package com.hedera.block.server.ack;
 
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -8,7 +8,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * Interface for managing blocks, their persistence, verification, and failure.
  * Responsible for sending Block Acknowledgements to the producer.
  */
-public interface BlockManager {
+public interface AckHandler {
 
     /**
      * Called when we receive a "persistence" event for the given blockNumber.

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-package com.hedera.block.server.manager;
+package com.hedera.block.server.ack;
 
+import com.hedera.block.server.block.BlockInfo;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
@@ -10,14 +11,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 
 /**
- * A simplified BlockManager that:
+ * A simplified AckHandler that:
  *  Creates BlockInfo entries on demand when blockPersisted or blockVerified arrives.
  *  If either skipPersistence or skipVerification is true, ignores all events entirely (no ACKs).
  *  Acks blocks only in strictly increasing order
  *    the ACK is delayed until it is that block's turn.
  *    consecutive ACKs for all blocks that are both persisted and verified.
  */
-public class BlockManagerImpl implements BlockManager {
+public class AckHandlerImpl implements AckHandler {
 
     private final Map<Long, BlockInfo> blockInfo = new ConcurrentHashMap<>();
     private volatile long lastAcknowledgedBlockNumber = -1;
@@ -29,7 +30,7 @@ public class BlockManagerImpl implements BlockManager {
      * we ignore all events (no ACKs ever sent).
      */
     @Inject
-    public BlockManagerImpl(@NonNull Notifier notifier, boolean skipAcknowledgement) {
+    public AckHandlerImpl(@NonNull Notifier notifier, boolean skipAcknowledgement) {
         this.notifier = notifier;
         this.skipAcknowledgement = skipAcknowledgement;
     }
