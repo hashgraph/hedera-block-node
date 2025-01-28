@@ -44,9 +44,6 @@ public final class NoOpBlockWriter implements BlockWriter<List<BlockItemUnparsed
         }
 
         if (valueToWrite.getLast().hasBlockProof()) {
-            // Returning the BlockItems triggers a
-            // PublishStreamResponse to be sent to the
-            // upstream producer.
             return Optional.of(currentBlockNumber);
         } else {
             return Optional.empty();
