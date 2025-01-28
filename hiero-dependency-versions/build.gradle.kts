@@ -46,7 +46,7 @@ dependencies.constraints {
     api("io.helidon.webserver:helidon-webserver:$helidonVersion") {
         because("io.helidon.webserver")
     }
-    api("org.jetbrains:annotations:26.0.1") { because("org.jetbrains.annotations") }
+    api("org.jetbrains:annotations:26.0.2") { because("org.jetbrains.annotations") }
 
     // gRPC dependencies
     api("io.grpc:grpc-api:$grpcIoVersion") { because("io.grpc") }
