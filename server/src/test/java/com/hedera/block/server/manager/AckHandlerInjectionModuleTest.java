@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.server.ack.AckHandler;
+import com.hedera.block.server.ack.AckHandlerImpl;
+import com.hedera.block.server.ack.BlockManagerInjectionModule;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.verification.VerificationConfig;
@@ -13,7 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class BlockManagerInjectionModuleTest {
+class AckHandlerInjectionModuleTest {
 
     @Test
     void testProvideBlockManager() {
@@ -29,12 +32,12 @@ class BlockManagerInjectionModuleTest {
         when(verificationConfig.type()).thenReturn(VerificationConfig.VerificationServiceType.PRODUCTION);
 
         // when
-        BlockManager blockManager =
+        AckHandler ackHandler =
                 BlockManagerInjectionModule.provideBlockManager(notifier, persistenceStorageConfig, verificationConfig);
 
         // then
-        // BlockManagerImpl is the default and only implementation
+        // AckHandlerImpl is the default and only implementation
         // so we should get an instance of it
-        assertEquals(BlockManagerImpl.class, blockManager.getClass());
+        assertEquals(AckHandlerImpl.class, ackHandler.getClass());
     }
 }

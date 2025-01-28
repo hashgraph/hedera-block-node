@@ -8,8 +8,8 @@ import static org.assertj.core.api.Assertions.from;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
 import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
@@ -42,7 +42,7 @@ class BlockAsLocalDirRemoverTest {
     private BlockAsLocalDirRemover toTest;
 
     @Mock
-    private BlockManager blockManagerMock;
+    private AckHandler ackHandlerMock;
 
     @TempDir
     private Path testLiveRootPath;
@@ -58,7 +58,7 @@ class BlockAsLocalDirRemoverTest {
         pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testConfig));
         toTest = BlockAsLocalDirRemover.of(pathResolverMock);
 
-        blockManagerMock = mock(BlockManager.class);
+        ackHandlerMock = mock(AckHandler.class);
     }
 
     @Test

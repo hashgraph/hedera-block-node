@@ -4,7 +4,7 @@ package com.hedera.block.server.verification;
 import static com.hedera.block.server.verification.VerificationConfig.VerificationServiceType.NO_OP;
 import static com.hedera.block.server.verification.session.BlockVerificationSessionType.ASYNC;
 
-import com.hedera.block.server.manager.BlockManager;
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.verification.service.BlockVerificationService;
 import com.hedera.block.server.verification.service.BlockVerificationServiceImpl;
@@ -27,7 +27,7 @@ class VerificationInjectionModuleTest {
     MetricsService metricsService;
 
     @Mock
-    BlockManager blockManagerMock;
+    AckHandler ackHandlerMock;
 
     @Test
     void testProvideBlockVerificationService_enabled() throws IOException {
@@ -35,7 +35,7 @@ class VerificationInjectionModuleTest {
         VerificationConfig verificationConfig = new VerificationConfig(null, ASYNC, 32);
         // when
         BlockVerificationService blockVerificationService = VerificationInjectionModule.provideBlockVerificationService(
-                verificationConfig, metricsService, sessionFactory, blockManagerMock);
+                verificationConfig, metricsService, sessionFactory, ackHandlerMock);
         // then
         Assertions.assertEquals(BlockVerificationServiceImpl.class, blockVerificationService.getClass());
     }
@@ -46,7 +46,7 @@ class VerificationInjectionModuleTest {
         VerificationConfig verificationConfig = new VerificationConfig(NO_OP, ASYNC, 32);
         // when
         BlockVerificationService blockVerificationService = VerificationInjectionModule.provideBlockVerificationService(
-                verificationConfig, metricsService, sessionFactory, blockManagerMock);
+                verificationConfig, metricsService, sessionFactory, ackHandlerMock);
         // then
         Assertions.assertEquals(NoOpBlockVerificationService.class, blockVerificationService.getClass());
     }
@@ -57,7 +57,7 @@ class VerificationInjectionModuleTest {
         VerificationConfig verificationConfig = new VerificationConfig(null, ASYNC, 32);
         // when
         BlockVerificationService blockVerificationService = VerificationInjectionModule.provideBlockVerificationService(
-                verificationConfig, metricsService, sessionFactory, blockManagerMock);
+                verificationConfig, metricsService, sessionFactory, ackHandlerMock);
         // then
         Assertions.assertEquals(BlockVerificationServiceImpl.class, blockVerificationService.getClass());
     }

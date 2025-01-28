@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-package com.hedera.block.server.manager;
+package com.hedera.block.server.ack;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *  - Uses volatile booleans for 'persisted' and 'verified' (set once, from false to true).
  *  - Uses an AtomicBoolean 'ackSent' for lock-free compare-and-set if a block has been ACKed.
  */
-class BlockStatus {
+public class AckBlockStatus {
 
     private volatile boolean persisted = false;
     private volatile boolean verified = false;

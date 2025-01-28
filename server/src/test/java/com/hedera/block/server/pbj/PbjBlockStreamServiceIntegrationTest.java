@@ -16,11 +16,11 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.server.ack.AckHandler;
+import com.hedera.block.server.ack.AckHandlerImpl;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
-import com.hedera.block.server.manager.BlockManager;
-import com.hedera.block.server.manager.BlockManagerImpl;
 import com.hedera.block.server.mediator.LiveStreamMediator;
 import com.hedera.block.server.mediator.LiveStreamMediatorBuilder;
 import com.hedera.block.server.notifier.Notifier;
@@ -125,7 +125,7 @@ public class PbjBlockStreamServiceIntegrationTest {
     private ServiceInterface.RequestOptions options;
 
     @Mock
-    private BlockManager blockManager;
+    private AckHandler ackHandler;
 
     @TempDir
     private Path testLiveRootPath;
@@ -384,7 +384,7 @@ public class PbjBlockStreamServiceIntegrationTest {
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);
         final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
-                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, blockManager);
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, ackHandler);
 
         final StreamVerificationHandlerImpl streamVerificationHandler = new StreamVerificationHandlerImpl(
                 streamMediator,
@@ -524,7 +524,7 @@ public class PbjBlockStreamServiceIntegrationTest {
         final var streamMediator = buildStreamMediator(consumers, serviceStatus);
         final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
         final var blockNodeEventHandler = new StreamPersistenceHandlerImpl(
-                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, blockManager);
+                streamMediator, notifier, blockWriter, blockNodeContext, serviceStatus, ackHandler);
 
         final StreamVerificationHandlerImpl streamVerificationHandler = new StreamVerificationHandlerImpl(
                 streamMediator,
@@ -699,7 +699,7 @@ public class PbjBlockStreamServiceIntegrationTest {
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);
         final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
-        final var blockManager = new BlockManagerImpl(notifier, false);
+        final var blockManager = new AckHandlerImpl(notifier, false);
         final var blockVerificationSessionFactory = getBlockVerificationSessionFactory();
 
         final var BlockVerificationService = new BlockVerificationServiceImpl(

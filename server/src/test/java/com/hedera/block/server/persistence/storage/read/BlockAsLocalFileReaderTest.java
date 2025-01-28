@@ -8,8 +8,8 @@ import static org.assertj.core.api.Assertions.from;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.manager.BlockManager;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.compression.Compression;
 import com.hedera.block.server.persistence.storage.compression.NoOpCompression;
@@ -49,7 +49,7 @@ class BlockAsLocalFileReaderTest {
     private Path testLiveRootPath;
 
     @Mock
-    private BlockManager blockManagerMock;
+    private AckHandler ackHandlerMock;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -62,7 +62,7 @@ class BlockAsLocalFileReaderTest {
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
 
         compressionMock = spy(NoOpCompression.newInstance());
-        blockManagerMock = mock(BlockManager.class);
+        ackHandlerMock = mock(AckHandler.class);
 
         final BlockAsLocalFilePathResolver blockAsLocalFileResolverMock =
                 spy(BlockAsLocalFilePathResolver.of(testConfig));

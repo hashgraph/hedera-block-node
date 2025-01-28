@@ -4,7 +4,7 @@ package com.hedera.block.server.verification.service;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.util.Objects.requireNonNull;
 
-import com.hedera.block.server.manager.BlockManager;
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.verification.BlockVerificationStatus;
@@ -27,7 +27,7 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
 
     private final BlockVerificationSessionFactory sessionFactory;
     private BlockVerificationSession currentSession;
-    private final BlockManager blockManager;
+    private final AckHandler ackHandler;
 
     /**
      * Constructs a new BlockVerificationServiceImpl.
@@ -39,10 +39,10 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
     public BlockVerificationServiceImpl(
             @NonNull final MetricsService metricsService,
             @NonNull final BlockVerificationSessionFactory sessionFactory,
-            @NonNull final BlockManager blockManager) {
+            @NonNull final AckHandler ackHandler) {
         this.metricsService = requireNonNull(metricsService);
         this.sessionFactory = requireNonNull(sessionFactory);
-        this.blockManager = blockManager;
+        this.ackHandler = ackHandler;
     }
 
     /**
@@ -70,9 +70,9 @@ public class BlockVerificationServiceImpl implements BlockVerificationService {
             // Handle promise completion for the session.
             currentSession.getVerificationResult().thenAccept(result -> {
                 if (result.status().equals(BlockVerificationStatus.VERIFIED)) {
-                    blockManager.blockVerified(result.blockNumber(), result.blockHash());
+                    ackHandler.blockVerified(result.blockNumber(), result.blockHash());
                 } else {
-                    blockManager.blockVerificationFailed(result.blockNumber());
+                    ackHandler.blockVerificationFailed(result.blockNumber());
                 }
             });
 
