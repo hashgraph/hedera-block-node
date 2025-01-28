@@ -2,7 +2,15 @@
 
 ## Table of Contents
 
-### link to the relevant sections in the document
+1. [Purpose](#purpose)
+2. [Goals](#goals)
+3. [Terms](#terms)
+4. [Entities](#entities)
+5. [Design](#design)
+6. [Sequence Diagram](#sequence-diagram)
+7. [Configuration](#configuration)
+8. [Metrics](#metrics)
+9. [Exceptions](#exceptions)
 
 ## Purpose
 
@@ -14,7 +22,7 @@
 
 ## Design
 
-## Sequence Diagram:
+## Sequence Diagram
 
 ### Consider using mermaid to generate the sequence diagram
 
