@@ -3,6 +3,7 @@ package com.hedera.block.server.ack;
 
 import com.hedera.block.server.block.BlockInfo;
 import com.hedera.block.server.notifier.Notifier;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -24,15 +25,18 @@ public class AckHandlerImpl implements AckHandler {
     private volatile long lastAcknowledgedBlockNumber = -1;
     private final Notifier notifier;
     private final boolean skipAcknowledgement;
+    private final ServiceStatus serviceStatus;
 
     /**
      * Constructor. If either skipPersistence or skipVerification is true,
      * we ignore all events (no ACKs ever sent).
      */
     @Inject
-    public AckHandlerImpl(@NonNull Notifier notifier, boolean skipAcknowledgement) {
+    public AckHandlerImpl(
+            @NonNull Notifier notifier, boolean skipAcknowledgement, @NonNull final ServiceStatus serviceStatus) {
         this.notifier = notifier;
         this.skipAcknowledgement = skipAcknowledgement;
+        this.serviceStatus = serviceStatus;
     }
 
     /**
@@ -116,6 +120,9 @@ public class AckHandlerImpl implements AckHandler {
 
                 // Update last acknowledged
                 lastAcknowledgedBlockNumber = nextBlock;
+
+                // Update the service status
+                serviceStatus.setLatestAckedBlockNumber(info);
 
                 // Remove from map if desired (so we don't waste memory)
                 blockInfo.remove(nextBlock);

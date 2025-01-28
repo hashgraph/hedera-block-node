@@ -10,6 +10,7 @@ import com.hedera.block.server.ack.AckHandlerImpl;
 import com.hedera.block.server.ack.AckHandlerInjectionModule;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.verification.VerificationConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +23,7 @@ class AckHandlerInjectionModuleTest {
     void testProvideBlockManager() {
         // given
         Notifier notifier = mock(Notifier.class);
+        ServiceStatus serviceStatus = mock(ServiceStatus.class);
         PersistenceStorageConfig persistenceStorageConfig = new PersistenceStorageConfig(
                 "",
                 "",
@@ -34,8 +36,8 @@ class AckHandlerInjectionModuleTest {
         when(verificationConfig.type()).thenReturn(VerificationConfig.VerificationServiceType.PRODUCTION);
 
         // when
-        AckHandler ackHandler =
-                AckHandlerInjectionModule.provideBlockManager(notifier, persistenceStorageConfig, verificationConfig);
+        AckHandler ackHandler = AckHandlerInjectionModule.provideBlockManager(
+                notifier, persistenceStorageConfig, verificationConfig, serviceStatus);
 
         // then
         // AckHandlerImpl is the default and only implementation

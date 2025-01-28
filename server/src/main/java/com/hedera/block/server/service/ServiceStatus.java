@@ -40,7 +40,6 @@ public interface ServiceStatus {
      */
     void stopWebServer(final String className);
 
-
     /**
      * Gets the latest acked block number.
      *
