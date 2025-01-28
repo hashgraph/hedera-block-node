@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.ack.AckHandlerImpl;
-import com.hedera.block.server.ack.BlockManagerInjectionModule;
+import com.hedera.block.server.ack.AckHandlerInjectionModule;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.verification.VerificationConfig;
@@ -33,7 +33,7 @@ class AckHandlerInjectionModuleTest {
 
         // when
         AckHandler ackHandler =
-                BlockManagerInjectionModule.provideBlockManager(notifier, persistenceStorageConfig, verificationConfig);
+                AckHandlerInjectionModule.provideBlockManager(notifier, persistenceStorageConfig, verificationConfig);
 
         // then
         // AckHandlerImpl is the default and only implementation

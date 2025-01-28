@@ -10,7 +10,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.inject.Singleton;
 
 @Module
-public interface BlockManagerInjectionModule {
+public interface AckHandlerInjectionModule {
 
     /**
      * Provides a {@link AckHandler} instance.
