@@ -167,8 +167,7 @@ class ConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEven
                     long blockNumber = BlockHeader.PROTOBUF
                             .parse(Objects.requireNonNull(firstBlockItem.blockHeader()))
                             .number();
-                    final String threadName = Thread.currentThread().getName();
-                    LOGGER.log(DEBUG, threadName + " sending block: " + blockNumber);
+                    LOGGER.log(DEBUG, "{0} sending block: {1}", Thread.currentThread(), blockNumber);
                     metricsService.get(CurrentBlockNumberOutbound).set(blockNumber);
                 }
 

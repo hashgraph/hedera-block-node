@@ -28,7 +28,7 @@ public class LiveStreamEventHandlerBuilder {
                 new ConsumerStreamResponseObserver(producerLivenessClock, observer, blockNodeContext);
 
         final var asyncConsumerStreamResponseObserver = new AsyncConsumerStreamResponseObserver(
-                executorService, subscriptionHandler, consumerStreamResponseObserver, blockNodeContext);
+                executorService, subscriptionHandler, consumerStreamResponseObserver);
 
         // Set the link backward to handle unsubscribe events
         consumerStreamResponseObserver.setPrevSubscriptionHandler(asyncConsumerStreamResponseObserver);

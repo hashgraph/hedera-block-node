@@ -7,7 +7,6 @@ import static java.lang.System.Logger.Level.ERROR;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
-import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.UncheckedIOException;
@@ -33,7 +32,6 @@ final class Functions {
         private final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> nextBlockNodeEventHandler;
         private final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>
                 asyncConsumerStreamResponseObserver;
-        private final MetricsService metricsService;
         private final ObjectEvent<SubscribeStreamResponseUnparsed> event;
         private final long l;
         private final boolean b;
@@ -48,8 +46,7 @@ final class Functions {
                                 asyncConsumerStreamResponseObserver,
                 @NonNull
                         final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>
-                                nextBlockNodeEventHandler,
-                @NonNull final MetricsService metricsService) {
+                                nextBlockNodeEventHandler) {
 
             this.event = event;
             this.l = l;
@@ -57,7 +54,6 @@ final class Functions {
             this.subscriptionHandler = Objects.requireNonNull(subscriptionHandler);
             this.asyncConsumerStreamResponseObserver = Objects.requireNonNull(asyncConsumerStreamResponseObserver);
             this.nextBlockNodeEventHandler = Objects.requireNonNull(nextBlockNodeEventHandler);
-            this.metricsService = metricsService;
         }
 
         /**
