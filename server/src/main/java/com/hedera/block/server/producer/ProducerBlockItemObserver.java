@@ -212,13 +212,13 @@ public class ProducerBlockItemObserver
         final long nextExpectedBlockNumber = serviceStatus.getLatestReceivedBlockNumber() + 1;
 
         // temporary workaround so it always allows the first block at startup
-        if(nextExpectedBlockNumber == 1) {
+        if (nextExpectedBlockNumber == 1) {
             allowCurrentBlockStream = true;
             return true;
         }
 
         // duplicate block
-        if(nextBlockNumber < nextExpectedBlockNumber) {
+        if (nextBlockNumber < nextExpectedBlockNumber) {
             // we don't stream to the RB until we check a new blockHeader for the expected block
             allowCurrentBlockStream = false;
             LOGGER.log(
@@ -231,7 +231,7 @@ public class ProducerBlockItemObserver
         }
 
         // future non-immediate block
-        if(nextBlockNumber > nextExpectedBlockNumber) {
+        if (nextBlockNumber > nextExpectedBlockNumber) {
             // we don't stream to the RB until we check a new blockHeader for the expected block
             allowCurrentBlockStream = false;
             LOGGER.log(
@@ -260,7 +260,7 @@ public class ProducerBlockItemObserver
 
     private Optional<Bytes> getBlockHash(final long blockNumber) {
         final BlockInfo latestAckedBlockNumber = serviceStatus.getLatestAckedBlockNumber();
-        if(latestAckedBlockNumber.getBlockNumber() == blockNumber) {
+        if (latestAckedBlockNumber.getBlockNumber() == blockNumber) {
             return Optional.of(latestAckedBlockNumber.getBlockHash());
         }
         // if the block is older than the latest acked block, we don't have the hash on hand
@@ -273,9 +273,8 @@ public class ProducerBlockItemObserver
                 .blockNumber(currentBlock)
                 .build();
 
-        final PublishStreamResponse publishStreamResponse = PublishStreamResponse.newBuilder()
-                .status(endOfStream)
-                .build();
+        final PublishStreamResponse publishStreamResponse =
+                PublishStreamResponse.newBuilder().status(endOfStream).build();
 
         publishStreamResponseObserver.onNext(publishStreamResponse);
     }
@@ -295,5 +294,4 @@ public class ProducerBlockItemObserver
 
         publishStreamResponseObserver.onNext(publishStreamResponse);
     }
-
 }
