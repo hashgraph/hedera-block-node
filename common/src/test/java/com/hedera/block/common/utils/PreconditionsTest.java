@@ -25,6 +25,8 @@ class PreconditionsTest {
     private static final String DEFAULT_REQUIRE_POWER_OF_TWO_MESSAGE =
             "The input number [%d] is required to be a power of two.";
     private static final String DEFAULT_REQUIRE_IS_EVEN = "The input number [%d] is required to be even.";
+    private static final String DEFAULT_REQUIRE_POSITIVE_POWER_OF_10_MESSAGE =
+            "The input number [%d] is required to be a positive power of 10.";
 
     /**
      * This test aims to verify that the
@@ -362,6 +364,52 @@ class PreconditionsTest {
         final String expectedTestMessage = testMessage.formatted(toTest);
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> Preconditions.requireEven(toTest, testMessage))
+                .withMessage(expectedTestMessage);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link Preconditions#requirePositivePowerOf10(int)} will return the input
+     * 'toTest' parameter if the positive power of 10 check passes. Test
+     * includes overloads.
+     *
+     * @param toTest parameterized, the number to test
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#positiveIntPowersOf10")
+    void testRequirePositivePowerOf10Pass(final int toTest) {
+        final Consumer<Integer> asserts =
+                actual -> assertThat(actual).isPositive().isEqualTo(toTest);
+
+        final int actual = Preconditions.requirePositivePowerOf10(toTest);
+        assertThat(actual).satisfies(asserts);
+
+        final int actualOverload = Preconditions.requirePositivePowerOf10(toTest, "test error message");
+        assertThat(actualOverload).satisfies(asserts);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link Preconditions#requirePositivePowerOf10(int)} will throw an
+     * {@link IllegalArgumentException} if the positive power of 10 check fails.
+     * Test includes overloads.
+     *
+     * @param toTest parameterized, the number to test
+     */
+    @ParameterizedTest
+    @MethodSource({
+        "com.hedera.block.common.CommonsTestUtility#negativeIntPowersOf10",
+        "com.hedera.block.common.CommonsTestUtility#nonPowersOf10"
+    })
+    void testRequirePositivePowerOf10Fail(final int toTest) {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requirePositivePowerOf10(toTest))
+                .withMessage(DEFAULT_REQUIRE_POSITIVE_POWER_OF_10_MESSAGE.formatted(toTest));
+
+        final String testMessage = DEFAULT_REQUIRE_POSITIVE_POWER_OF_10_MESSAGE.concat(" custom test error message");
+        final String expectedTestMessage = testMessage.formatted(toTest);
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Preconditions.requirePositivePowerOf10(toTest, testMessage))
                 .withMessage(expectedTestMessage);
     }
 

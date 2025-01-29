@@ -7,9 +7,14 @@ import com.hedera.block.server.Constants;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.DecimalFormat;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.zip.ZipFile;
 
 /**
  * A Block path resolver for block-as-file.
@@ -17,7 +22,11 @@ import java.util.Optional;
 public final class BlockAsLocalFilePathResolver implements BlockPathResolver {
     private static final int MAX_LONG_DIGITS = 19;
     private final Path liveRootPath;
-    private final CompressionType compressionType;
+    private final Path archiveRootPath;
+    private final int archiveDirDepth;
+    private final int archiveGroupSize;
+    private final DecimalFormat longLeadingZeroesFormat;
+    private final DecimalFormat blockDirDepthFormat;
 
     /**
      * Constructor.
@@ -27,7 +36,11 @@ public final class BlockAsLocalFilePathResolver implements BlockPathResolver {
      */
     private BlockAsLocalFilePathResolver(@NonNull final PersistenceStorageConfig config) {
         this.liveRootPath = Path.of(config.liveRootPath());
-        this.compressionType = config.compression();
+        this.archiveRootPath = Path.of(config.archiveRootPath());
+        this.archiveGroupSize = config.archiveBatchSize();
+        this.archiveDirDepth = MAX_LONG_DIGITS - (int) Math.log10(this.archiveGroupSize);
+        this.longLeadingZeroesFormat = new DecimalFormat("0".repeat(MAX_LONG_DIGITS));
+        this.blockDirDepthFormat = new DecimalFormat("0".repeat(archiveDirDepth));
     }
 
     /**
@@ -53,27 +66,88 @@ public final class BlockAsLocalFilePathResolver implements BlockPathResolver {
         return Path.of(liveRootPath.toString(), blockPath);
     }
 
-    @NonNull
     @Override
-    public Path resolveArchiveRawPathToBlock(final long blockNumber) {
+    public Optional<LiveBlockPath> findLiveBlock(final long blockNumber) {
         Preconditions.requireWhole(blockNumber);
-        throw new UnsupportedOperationException("Not implemented yet");
+        final Path rawLiveBlockPath = resolveLiveRawPathToBlock(blockNumber); // here is the raw path, no extension
+        Optional<LiveBlockPath> result = Optional.empty();
+        final CompressionType[] allCompressionTypes = CompressionType.values();
+        for (int i = 0; i < allCompressionTypes.length; i++) {
+            final CompressionType localCompressionType = allCompressionTypes[i];
+            final Path compressionExtendedBlockPath =
+                    FileUtilities.appendExtension(rawLiveBlockPath, localCompressionType.getFileExtension());
+            if (Files.exists(compressionExtendedBlockPath)) {
+                final Path dirPath = compressionExtendedBlockPath.getParent();
+                final String blockFileName =
+                        compressionExtendedBlockPath.getFileName().toString();
+                final LiveBlockPath toReturn =
+                        new LiveBlockPath(blockNumber, dirPath, blockFileName, localCompressionType);
+                result = Optional.of(toReturn);
+                break;
+            }
+        }
+        return result;
     }
 
-    @NonNull
     @Override
-    public Optional<Path> findBlock(final long blockNumber) {
+    public Optional<ArchiveBlockPath> findArchivedBlock(final long blockNumber) {
         Preconditions.requireWhole(blockNumber);
-        final Path liveRawRootPath = resolveLiveRawPathToBlock(blockNumber);
-        final Path compressionExtendedLiveRawRootPath =
-                FileUtilities.appendExtension(liveRawRootPath, compressionType.getFileExtension());
-        if (Files.exists(compressionExtendedLiveRawRootPath)) {
-            return Optional.of(compressionExtendedLiveRawRootPath);
-        } else if (Files.exists(liveRawRootPath)) {
-            return Optional.of(liveRawRootPath);
-        } else {
-            return Optional.empty();
+        final ArchiveBlockPath rawArchiveBlockPath =
+                resolveRawArchivePath(blockNumber); // here is the raw path, no extension
+        final Path resolvedZipFilePath = rawArchiveBlockPath.dirPath().resolve(rawArchiveBlockPath.zipFileName());
+        Optional<ArchiveBlockPath> result = Optional.empty();
+        if (Files.exists(resolvedZipFilePath)) {
+            try (final ZipFile zipFile = new ZipFile(resolvedZipFilePath.toFile())) {
+                final String rawEntryName = rawArchiveBlockPath.zipEntryName();
+                final CompressionType[] allCompressionTypes = CompressionType.values();
+                for (int i = 0; i < allCompressionTypes.length; i++) {
+                    final CompressionType localCompressionType = allCompressionTypes[i];
+                    final String compressionExtendedEntry =
+                            rawEntryName.concat(localCompressionType.getFileExtension());
+                    if (Objects.nonNull(zipFile.getEntry(compressionExtendedEntry))) {
+                        final ArchiveBlockPath toReturn = new ArchiveBlockPath(
+                                rawArchiveBlockPath.blockNumber(),
+                                rawArchiveBlockPath.dirPath(),
+                                rawArchiveBlockPath.zipFileName(),
+                                compressionExtendedEntry,
+                                localCompressionType);
+                        result = Optional.of(toReturn);
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e); // todo should we propagate this exception?
+            }
         }
-    } // todo consider to add additional handling here, like test for other compression types (currently not existing)
-    // and also look for archived blocks (will be implemented in a follow-up PR)
+        return result;
+    }
+
+    /**
+     * This method resolves the path to where an archived block would reside. No
+     * compression extension is appended to the file name.
+     * @param blockNumber the block number to look for
+     * @return an {@link ArchiveBlockPath} containing the raw path resolved
+     */
+    private ArchiveBlockPath resolveRawArchivePath(final long blockNumber) {
+        final long dividedNumber = Math.floorDiv(blockNumber, archiveGroupSize);
+        final String formattedNumber = blockDirDepthFormat.format(dividedNumber);
+        final StringBuilder pathBuilder = new StringBuilder(archiveDirDepth * 2);
+        final char[] arr = formattedNumber.toCharArray();
+        for (int i = 0; i < arr.length; i++) {
+            pathBuilder.append(arr[i]).append("/");
+        }
+        pathBuilder.setCharAt(pathBuilder.length() - 1, '.');
+        pathBuilder.append("zip");
+        final String dst = pathBuilder.toString();
+        // use the symlink from the live root path
+        final Path destPath = liveRootPath.resolve(Path.of(dst));
+        final String rawBlockFileName =
+                longLeadingZeroesFormat.format(blockNumber).concat(Constants.BLOCK_FILE_EXTENSION);
+        return new ArchiveBlockPath(
+                blockNumber,
+                destPath.getParent(),
+                destPath.getFileName().toString(),
+                rawBlockFileName,
+                CompressionType.NONE);
+    }
 }

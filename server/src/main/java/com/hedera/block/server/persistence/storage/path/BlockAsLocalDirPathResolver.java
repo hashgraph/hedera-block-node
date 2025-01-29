@@ -3,6 +3,7 @@ package com.hedera.block.server.persistence.storage.path;
 
 import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,13 +45,6 @@ public final class BlockAsLocalDirPathResolver implements BlockPathResolver {
         return liveRootPath.resolve(String.valueOf(blockNumber));
     }
 
-    @NonNull
-    @Override
-    public Path resolveArchiveRawPathToBlock(final long blockNumber) {
-        Preconditions.requireWhole(blockNumber);
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
     /**
      * The block-as-local-dir implementation does not support
      * compression/decompression. A block will only be found if it exists and is
@@ -62,13 +56,24 @@ public final class BlockAsLocalDirPathResolver implements BlockPathResolver {
      */
     @NonNull
     @Override
-    public Optional<Path> findBlock(final long blockNumber) {
+    public Optional<LiveBlockPath> findLiveBlock(final long blockNumber) {
         Preconditions.requireWhole(blockNumber);
         final Path liveRawRootPath = resolveLiveRawPathToBlock(blockNumber);
         if (Files.exists(liveRawRootPath)) {
-            return Optional.of(liveRawRootPath);
+            final LiveBlockPath found = new LiveBlockPath(
+                    blockNumber,
+                    liveRawRootPath.getParent(),
+                    liveRawRootPath.getFileName().toString(),
+                    CompressionType.NONE);
+            return Optional.of(found);
         } else {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public Optional<ArchiveBlockPath> findArchivedBlock(final long blockNumber) {
+        Preconditions.requireWhole(blockNumber);
+        throw new UnsupportedOperationException("Archiving is not supported by the block-as-dir implementation.");
     }
 }

@@ -7,6 +7,10 @@ import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.archive.BlockArchiver;
+import com.hedera.block.server.persistence.storage.archive.BlockAsLocalFileArchiver;
+import com.hedera.block.server.persistence.storage.archive.NoOpArchiver;
 import com.hedera.block.server.persistence.storage.compression.Compression;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -30,12 +34,14 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
     private final MetricsService metricsService;
     private final BlockPathResolver blockPathResolver;
     private final Compression compression;
+    private final BlockArchiver blockArchiver;
     private List<BlockItemUnparsed> currentBlockItems;
     private long currentBlockNumber = -1;
 
     /**
      * Constructor.
      *
+     * @param config valid, {@code non-null} instance of {@link PersistenceStorageConfig}
      * @param blockNodeContext valid, {@code non-null} instance of
      * {@link BlockNodeContext} used to get the {@link MetricsService}
      * @param blockPathResolver valid, {@code non-null} instance of
@@ -44,17 +50,26 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
      * {@link Compression} used to compress the Block
      */
     private BlockAsLocalFileWriter(
+            @NonNull final PersistenceStorageConfig config,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockPathResolver blockPathResolver,
             @NonNull final Compression compression) {
+        Objects.requireNonNull(config);
         this.metricsService = Objects.requireNonNull(blockNodeContext.metricsService());
         this.blockPathResolver = Objects.requireNonNull(blockPathResolver);
         this.compression = Objects.requireNonNull(compression);
+
+        if (config.archiveEnabled()) {
+            this.blockArchiver = BlockAsLocalFileArchiver.of(config, blockPathResolver);
+        } else {
+            this.blockArchiver = NoOpArchiver.newInstance();
+        }
     }
 
     /**
      * This method creates and returns a new instance of {@link BlockAsLocalFileWriter}.
      *
+     * @param config valid, {@code non-null} instance of {@link PersistenceStorageConfig}
      * @param blockNodeContext valid, {@code non-null} instance of
      * {@link BlockNodeContext} used to get the {@link MetricsService}
      * @param blockPathResolver valid, {@code non-null} instance of
@@ -64,10 +79,11 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
      * @return a new, fully initialized instance of {@link BlockAsLocalFileWriter}
      */
     public static BlockAsLocalFileWriter of(
+            @NonNull final PersistenceStorageConfig config,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final BlockPathResolver blockPathResolver,
             @NonNull final Compression compression) {
-        return new BlockAsLocalFileWriter(blockNodeContext, blockPathResolver, compression);
+        return new BlockAsLocalFileWriter(config, blockNodeContext, blockPathResolver, compression);
     }
 
     @NonNull
@@ -88,6 +104,7 @@ public final class BlockAsLocalFileWriter implements LocalBlockWriter<List<Block
             metricsService.get(BlocksPersisted).increment();
             // reset will set -1 to currentBlockNumber, so we need to store it before reset
             long blockNumberPersisted = currentBlockNumber;
+            blockArchiver.signalBlockWritten(currentBlockNumber);
             resetState();
             return Optional.of(blockNumberPersisted);
         } else {

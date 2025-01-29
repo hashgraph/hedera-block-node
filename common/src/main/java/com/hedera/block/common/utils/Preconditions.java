@@ -16,6 +16,8 @@ public final class Preconditions {
     private static final String DEFAULT_REQUIRE_POWER_OF_TWO_MESSAGE =
             "The input number [%d] is required to be a power of two.";
     private static final String DEFAULT_REQUIRE_IS_EVEN = "The input number [%d] is required to be even.";
+    private static final String DEFAULT_REQUIRE_POSITIVE_POWER_OF_10_MESSAGE =
+            "The input number [%d] is required to be a positive power of 10.";
 
     /**
      * This method asserts a given {@link String} is not blank.
@@ -292,6 +294,38 @@ public final class Preconditions {
      */
     public static int requireEven(final int toCheck) {
         return requireEven(toCheck, DEFAULT_REQUIRE_IS_EVEN);
+    }
+
+    /**
+     * This method asserts a given number is a positive power of 10.
+     *
+     * @param toCheck the number to check if it is a positive power of 10
+     * @return the number to check if it is a positive power of 10
+     * @throws IllegalArgumentException if the input number to check is not a
+     * positive power of 10
+     */
+    public static int requirePositivePowerOf10(final int toCheck) {
+        return requirePositivePowerOf10(toCheck, DEFAULT_REQUIRE_POSITIVE_POWER_OF_10_MESSAGE);
+    }
+
+    /**
+     * This method asserts a given number is a positive power of 10.
+     *
+     * @param toCheck the number to check if it is a positive power of 10
+     * @param errorMessage a formatted string with one decimal parameter for
+     * {@code toCheck}, must not be {@code null}.<br/>
+     * Example error message: {@value #DEFAULT_REQUIRE_POSITIVE_POWER_OF_10_MESSAGE}
+     * @return the number to check if it is a positive power of 10
+     * @throws IllegalArgumentException if the input number to check is not a
+     * positive power of 10
+     * @see java.util.Formatter for more information on error message formatting
+     */
+    public static int requirePositivePowerOf10(final int toCheck, @NonNull final String errorMessage) {
+        if (!MathUtilities.isPositivePowerOf10(toCheck)) {
+            throw new IllegalArgumentException(errorMessage.formatted(toCheck));
+        } else {
+            return toCheck;
+        }
     }
 
     private Preconditions() {}

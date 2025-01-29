@@ -38,6 +38,8 @@ class ServerMappedConfigSourceInitializerTest {
 
     private static final Set<String> LOGGABLE_PACKAGES = Set.of("metrics", "prometheus");
     private static final ConfigMapping[] SUPPORTED_MAPPINGS = {
+        // Please add properties in alphabetical order
+
         // Consumer Config
         new ConfigMapping("consumer.timeoutThresholdMillis", "CONSUMER_TIMEOUT_THRESHOLD_MILLIS"),
 
@@ -54,9 +56,15 @@ class ServerMappedConfigSourceInitializerTest {
         new ConfigMapping("persistence.storage.compressionLevel", "PERSISTENCE_STORAGE_COMPRESSION_LEVEL"),
         new ConfigMapping("persistence.storage.liveRootPath", "PERSISTENCE_STORAGE_LIVE_ROOT_PATH"),
         new ConfigMapping("persistence.storage.type", "PERSISTENCE_STORAGE_TYPE"),
+        new ConfigMapping("persistence.storage.archiveEnabled", "PERSISTENCE_STORAGE_ARCHIVE_ENABLED"),
+        new ConfigMapping("persistence.storage.archiveBatchSize", "PERSISTENCE_STORAGE_ARCHIVE_BATCH_SIZE"),
 
         // Producer Config
         new ConfigMapping("producer.type", "PRODUCER_TYPE"),
+
+        // Prometheus Config (externally managed, but we need this mapping)
+        new ConfigMapping("prometheus.endpointEnabled", "PROMETHEUS_ENDPOINT_ENABLED"),
+        new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER"),
 
         // Server Config
         new ConfigMapping("server.maxMessageSizeBytes", "SERVER_MAX_MESSAGE_SIZE_BYTES"),
@@ -65,13 +73,9 @@ class ServerMappedConfigSourceInitializerTest {
         // Service Config
         new ConfigMapping("service.shutdownDelayMillis", "SERVICE_SHUTDOWN_DELAY_MILLIS"),
 
-        // Prometheus Config (externally managed, but we need this mapping)
-        new ConfigMapping("prometheus.endpointEnabled", "PROMETHEUS_ENDPOINT_ENABLED"),
-        new ConfigMapping("prometheus.endpointPortNumber", "PROMETHEUS_ENDPOINT_PORT_NUMBER"),
-
         // Verification Config
-        new ConfigMapping("verification.sessionType", "VERIFICATION_SESSION_TYPE"),
         new ConfigMapping("verification.hashCombineBatchSize", "VERIFICATION_HASH_COMBINE_BATCH_SIZE"),
+        new ConfigMapping("verification.sessionType", "VERIFICATION_SESSION_TYPE"),
         new ConfigMapping("verification.type", "VERIFICATION_TYPE"),
     };
 

@@ -56,4 +56,31 @@ class MathUtilitiesTest {
         final boolean actual = MathUtilities.isEven(toTest);
         assertThat(actual).isFalse();
     }
+
+    /**
+     * This test aims to verify that the
+     * {@link MathUtilities#isPositivePowerOf10(long)} returns {@code true} if
+     * the input to check is a positive power of 10.
+     */
+    @ParameterizedTest
+    @MethodSource("com.hedera.block.common.CommonsTestUtility#positivePowersOf10")
+    void testIsPositivePowerOf10Pass(final long toTest) {
+        final boolean actual = MathUtilities.isPositivePowerOf10(toTest);
+        assertThat(actual).isTrue();
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link MathUtilities#isPositivePowerOf10(long)} returns {@code true} if
+     * the input to check is a positive power of 10.
+     */
+    @ParameterizedTest
+    @MethodSource({
+        "com.hedera.block.common.CommonsTestUtility#negativePowersOf10",
+        "com.hedera.block.common.CommonsTestUtility#nonPowersOf10"
+    })
+    void testIsPositivePowerOf10Fail(final long toTest) {
+        final boolean actual = MathUtilities.isPositivePowerOf10(toTest);
+        assertThat(actual).isFalse();
+    }
 }

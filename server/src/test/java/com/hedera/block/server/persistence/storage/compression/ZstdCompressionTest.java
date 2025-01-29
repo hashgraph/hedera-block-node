@@ -8,6 +8,7 @@ import com.github.luben.zstd.ZstdOutputStream;
 import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import com.hedera.block.server.util.TestConfigUtil;
 import java.io.IOException;
 import java.io.InputStream;
@@ -90,9 +91,10 @@ class ZstdCompressionTest {
 
     /**
      * This test aims to verify that the
-     * {@link ZstdCompression#wrap(InputStream)} correctly wraps a valid
-     * provided {@link InputStream} and reads the test data from it`s
-     * destination but decompresses it using the Zstandard compression algorithm.
+     * {@link Compression#wrap(InputStream, PersistenceStorageConfig.CompressionType)}
+     * correctly wraps a valid provided {@link InputStream} and reads the test
+     * data from it`s destination but decompresses it using the Zstandard
+     * compression algorithm.
      *
      * @param testData parameterized, test data
      * @throws IOException if an I/O exception occurs
@@ -113,7 +115,7 @@ class ZstdCompressionTest {
 
         // read data
         final byte[] actual;
-        try (final InputStream in = toTest.wrap(Files.newInputStream(toRead))) {
+        try (final InputStream in = toTest.wrap(Files.newInputStream(toRead), CompressionType.ZSTD)) {
             actual = in.readAllBytes();
         }
         assertThat(actual).isNotNull().isEqualTo(expected);
