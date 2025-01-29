@@ -5,7 +5,7 @@ import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
+import com.hedera.block.server.consumer.LiveStreamEventHandlerBuilder;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediator;
@@ -29,6 +29,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Clock;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.inject.Inject;
 
 /**
@@ -41,6 +43,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
+    private final ExecutorService executorService;
     private final LiveStreamMediator streamMediator;
     private final ServiceStatus serviceStatus;
     private final BlockNodeContext blockNodeContext;
@@ -71,6 +74,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         streamMediator.subscribe(Objects.requireNonNull(streamPersistenceHandler));
         streamMediator.subscribe(Objects.requireNonNull(streamVerificationHandler));
         this.streamMediator = Objects.requireNonNull(streamMediator);
+        this.executorService = Executors.newVirtualThreadPerTaskExecutor();
     }
 
     /**
@@ -163,11 +167,13 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         if (serviceStatus.isRunning()) {
             // Unsubscribe any expired notifiers
             streamMediator.unsubscribeAllExpired();
-
-            final var consumerStreamResponseObserver = new ConsumerStreamResponseObserver(
-                    Clock.systemDefaultZone(), streamMediator, subscribeStreamResponseObserver, blockNodeContext);
-
-            streamMediator.subscribe(consumerStreamResponseObserver);
+            final var liveStreamEventHandler = LiveStreamEventHandlerBuilder.build(
+                    executorService,
+                    Clock.systemDefaultZone(),
+                    streamMediator,
+                    subscribeStreamResponseObserver,
+                    blockNodeContext);
+            streamMediator.subscribe(liveStreamEventHandler);
         } else {
             LOGGER.log(ERROR, "Server Streaming subscribeBlockStream gRPC Service is not currently running");
 

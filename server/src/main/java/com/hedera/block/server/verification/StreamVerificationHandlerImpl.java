@@ -107,10 +107,15 @@ public class StreamVerificationHandlerImpl
             serviceStatus.stopRunning(getClass().getName());
 
             // Unsubscribe from the mediator to avoid additional onEvent calls.
-            subscriptionHandler.unsubscribe(this);
+            unsubscribe();
 
             // Broadcast the problem to the notifier
             notifier.notifyUnrecoverableError();
         }
+    }
+
+    @Override
+    public void unsubscribe() {
+        subscriptionHandler.unsubscribe(this);
     }
 }

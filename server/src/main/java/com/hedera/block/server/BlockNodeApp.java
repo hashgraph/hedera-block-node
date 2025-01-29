@@ -14,6 +14,7 @@ import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.pbj.grpc.helidon.PbjRouting;
 import com.hedera.pbj.grpc.helidon.config.PbjConfig;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.helidon.webserver.ConnectionConfig;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.WebServerConfig;
 import io.helidon.webserver.http.HttpRouting;
@@ -88,12 +89,18 @@ public class BlockNodeApp {
                 .maxMessageSizeBytes(serverConfig.maxMessageSizeBytes())
                 .build();
 
+        final ConnectionConfig connectionConfig = ConnectionConfig.builder()
+                .sendBufferSize(serverConfig.socketSendBufferSizeBytes())
+                .receiveBufferSize(serverConfig.socketSendBufferSizeBytes())
+                .build();
+
         // Build the web server
         final WebServer webServer = webServerBuilder
                 .port(serverConfig.port())
                 .addProtocol(pbjConfig)
                 .addRouting(pbjRouting)
                 .addRouting(httpRouting)
+                .connectionConfig(connectionConfig)
                 .build();
 
         // Update the serviceStatus with the web server

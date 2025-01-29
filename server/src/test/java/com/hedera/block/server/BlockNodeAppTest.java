@@ -21,6 +21,7 @@ import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.grpc.helidon.PbjRouting;
 import com.hedera.pbj.grpc.helidon.config.PbjConfig;
+import io.helidon.webserver.ConnectionConfig;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.WebServerConfig;
 import io.helidon.webserver.http.HttpRouting;
@@ -74,7 +75,7 @@ class BlockNodeAppTest {
     @BeforeEach
     void setup() {
 
-        serverConfig = new ServerConfig(4_194_304, 8080);
+        serverConfig = new ServerConfig(4_194_304, 32_768, 32_768, 8080);
 
         blockNodeApp = new BlockNodeApp(
                 serviceStatus,
@@ -95,6 +96,7 @@ class BlockNodeAppTest {
         when(webServerBuilder.addProtocol(any(PbjConfig.class))).thenReturn(webServerBuilder);
         when(webServerBuilder.addRouting(any(PbjRouting.Builder.class))).thenReturn(webServerBuilder);
         when(webServerBuilder.addRouting(any(HttpRouting.Builder.class))).thenReturn(webServerBuilder);
+        when(webServerBuilder.connectionConfig(any(ConnectionConfig.class))).thenReturn(webServerBuilder);
         when(webServerBuilder.build()).thenReturn(webServer);
         when(healthService.getHealthRootPath()).thenReturn("/health");
     }

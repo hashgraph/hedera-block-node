@@ -10,13 +10,12 @@ import java.util.List;
 /** No-op implementation of the {@link BlockVerificationService}. */
 public class NoOpBlockVerificationService implements BlockVerificationService {
 
-    private final System.Logger LOGGER = System.getLogger(getClass().getName());
-
     /**
      * Constructs a no-op block verification service.
      */
     public NoOpBlockVerificationService() {
-        // no-op
+        System.Logger LOGGER = System.getLogger(getClass().getName());
+        LOGGER.log(INFO, "Using " + getClass().getName());
     }
 
     /**
@@ -24,6 +23,6 @@ public class NoOpBlockVerificationService implements BlockVerificationService {
      */
     @Override
     public void onBlockItemsReceived(@NonNull List<BlockItemUnparsed> blockItems) {
-        LOGGER.log(INFO, "Using " + getClass().getName());
+        // no-op
     }
 }

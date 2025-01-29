@@ -3,6 +3,7 @@ package com.hedera.block.server.producer;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.LiveBlockItemsReceived;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.SuccessfulPubStreamRespSent;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Gauge.CurrentBlockNumberInbound;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
@@ -32,6 +33,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.InstantSource;
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -126,6 +128,20 @@ public class ProducerBlockItemObserver
 
                 // pre-check for valid block
                 if (preCheck(blockItems)) {
+
+                    final BlockItemUnparsed blockItemUnparsed = blockItems.getFirst();
+                    if (blockItemUnparsed.hasBlockHeader()) {
+
+                        try {
+                            long blockNumber = BlockHeader.PROTOBUF
+                                    .parse(Objects.requireNonNull(blockItemUnparsed.blockHeader()))
+                                    .number();
+                            metricsService.get(CurrentBlockNumberInbound).set(blockNumber);
+                        } catch (ParseException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
                     // Publish the block to the mediator
                     publisher.publish(blockItems);
                 }
@@ -208,6 +224,11 @@ public class ProducerBlockItemObserver
 
     private void stopProcessing() {
         isResponsePermitted.set(false);
+        unsubscribe();
+    }
+
+    @Override
+    public void unsubscribe() {
         subscriptionHandler.unsubscribe(this);
     }
 
