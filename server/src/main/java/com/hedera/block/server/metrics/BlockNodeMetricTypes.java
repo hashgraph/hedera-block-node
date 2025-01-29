@@ -104,8 +104,10 @@ public final class BlockNodeMetricTypes {
         /** The number of producers publishing block items. */
         Producers("producers", "Producers"),
 
+        /** The block number of the latest block as it enters the system */
         CurrentBlockNumberInbound("current_block_number_inbound", "Current Block Number Inbound"),
 
+        /** The block number of the latest block as it exits the system bound for a consumer */
         CurrentBlockNumberOutbound("current_block_number_outbound", "Current Block Number Outbound"),
 
         /** The amount of capacity remaining in the mediator ring buffer. */
