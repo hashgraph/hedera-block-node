@@ -27,9 +27,11 @@ import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.grpc.Pipeline;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.InstantSource;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -54,7 +56,7 @@ public class ProducerBlockItemObserver
 
     private final LivenessCalculator livenessCalculator;
 
-    private boolean skipCurrentBlock = false;
+    private boolean allowCurrentBlockStream = false;
 
     /**
      * Constructor for the ProducerBlockStreamObserver class. It is responsible for calling the
@@ -122,7 +124,7 @@ public class ProducerBlockItemObserver
             livenessCalculator.refresh();
 
             // pre-check for a duplicate block
-            if (duplicateBlockPreCheck(blockItems)) {
+            if (preCheck(blockItems)) {
                 // Publish the block to the mediator
                 publisher.publish(blockItems);
             }
@@ -199,75 +201,99 @@ public class ProducerBlockItemObserver
         subscriptionHandler.unsubscribe(this);
     }
 
-    private boolean duplicateBlockPreCheck(@NonNull final List<BlockItemUnparsed> blockItems) {
-        // If there is no block header, just return the opposite of skipCurrentBlock
+    private boolean preCheck(@NonNull final List<BlockItemUnparsed> blockItems) {
+
         BlockItemUnparsed firstItem = blockItems.getFirst();
         if (!firstItem.hasBlockHeader()) {
-            return !skipCurrentBlock;
+            return allowCurrentBlockStream;
         }
 
-        // Attempt to parse the block header
-        long nextBlockNumber;
+        final long nextBlockNumber = noThrowParseBlockHeaderNumber(firstItem);
+        final long nextExpectedBlockNumber = serviceStatus.getLatestReceivedBlockNumber() + 1;
+
+        // temporary workaround so it always allows the first block at startup
+        if(nextExpectedBlockNumber == 1) {
+            allowCurrentBlockStream = true;
+            return true;
+        }
+
+        // duplicate block
+        if(nextBlockNumber < nextExpectedBlockNumber) {
+            // we don't stream to the RB until we check a new blockHeader for the expected block
+            allowCurrentBlockStream = false;
+            LOGGER.log(
+                    WARNING,
+                    "Received a duplicate block, received_block_number: {}, expected_block_number: {}",
+                    nextBlockNumber,
+                    nextExpectedBlockNumber);
+
+            notifyOfDuplicateBlock(nextBlockNumber);
+        }
+
+        // future non-immediate block
+        if(nextBlockNumber > nextExpectedBlockNumber) {
+            // we don't stream to the RB until we check a new blockHeader for the expected block
+            allowCurrentBlockStream = false;
+            LOGGER.log(
+                    WARNING,
+                    "Received a future block, received_block_number: {}, expected_block_number: {}",
+                    nextBlockNumber,
+                    nextExpectedBlockNumber);
+
+            notifyOfFutureBlock(serviceStatus.getLatestAckedBlockNumber().getBlockNumber());
+        }
+
+        // if block is neither duplicate nor future (most be the same as expected)
+        // we allow the stream
+        allowCurrentBlockStream = true;
+        return true;
+    }
+
+    private long noThrowParseBlockHeaderNumber(@NonNull final BlockItemUnparsed blockItem) {
         try {
-            BlockHeader blockHeader = BlockHeader.PROTOBUF.parse(firstItem.blockHeader());
-            nextBlockNumber = blockHeader.number();
+            return BlockHeader.PROTOBUF.parse(blockItem.blockHeader()).number();
         } catch (ParseException e) {
             LOGGER.log(ERROR, "Error parsing block header", e);
             throw new RuntimeException(e);
         }
-
-        // Check if this block was already acknowledged
-        BlockInfo lastAckedBlockInfo = serviceStatus.getLatestAckedBlockNumber();
-        boolean isDuplicateAckedBlock =
-                lastAckedBlockInfo != null && nextBlockNumber <= lastAckedBlockInfo.getBlockNumber();
-
-        if (isDuplicateAckedBlock) {
-            skipCurrentBlock = true;
-            LOGGER.log(
-                    WARNING,
-                    "Received block number {}, but block number {} has already been acked. "
-                            + "Skipping duplicate and sending duplicate ACK",
-                    nextBlockNumber,
-                    lastAckedBlockInfo.getBlockNumber());
-            publishStreamResponseObserver.onNext(buildDuplicateBlockStreamResponse(lastAckedBlockInfo));
-        } else {
-            skipCurrentBlock = false;
-        }
-
-        // Check if this block was already received but not yet fully processed
-        boolean isAlreadyReceived =
-                !skipCurrentBlock && nextBlockNumber <= serviceStatus.getLatestReceivedBlockNumber();
-
-        if (isAlreadyReceived) {
-            LOGGER.log(
-                    WARNING,
-                    "Received block number {}, but block number {} has already been received. " + "Skipping duplicate",
-                    nextBlockNumber,
-                    serviceStatus.getLatestReceivedBlockNumber());
-            // Create BlockInfo without block hash (indicating partial or unverified persistence).
-            BlockInfo blockInfo = new BlockInfo(nextBlockNumber);
-            publishStreamResponseObserver.onNext(buildDuplicateBlockStreamResponse(blockInfo));
-            skipCurrentBlock = true;
-        }
-
-        // Update the latest received block number
-        serviceStatus.setLatestReceivedBlockNumber(nextBlockNumber);
-
-        // Return whether we should process this block or skip it
-        return !skipCurrentBlock;
     }
 
-    private static PublishStreamResponse buildDuplicateBlockStreamResponse(@NonNull final BlockInfo blockInfo) {
-        final BlockAcknowledgement blockAcknowledgement = BlockAcknowledgement.newBuilder()
-                .blockAlreadyExists(true)
-                .blockNumber(blockInfo.getBlockNumber())
-                .blockRootHash(blockInfo.getBlockHash())
+    private Optional<Bytes> getBlockHash(final long blockNumber) {
+        final BlockInfo latestAckedBlockNumber = serviceStatus.getLatestAckedBlockNumber();
+        if(latestAckedBlockNumber.getBlockNumber() == blockNumber) {
+            return Optional.of(latestAckedBlockNumber.getBlockHash());
+        }
+        // if the block is older than the latest acked block, we don't have the hash on hand
+        return Optional.empty();
+    }
+
+    private void notifyOfFutureBlock(final long currentBlock) {
+        final EndOfStream endOfStream = EndOfStream.newBuilder()
+                .status(PublishStreamResponseCode.STREAM_ITEMS_BEHIND)
+                .blockNumber(currentBlock)
                 .build();
 
-        return PublishStreamResponse.newBuilder()
+        final PublishStreamResponse publishStreamResponse = PublishStreamResponse.newBuilder()
+                .status(endOfStream)
+                .build();
+
+        publishStreamResponseObserver.onNext(publishStreamResponse);
+    }
+
+    private void notifyOfDuplicateBlock(final long duplicateBlockNumber) {
+        final BlockAcknowledgement blockAcknowledgement = BlockAcknowledgement.newBuilder()
+                .blockAlreadyExists(true)
+                .blockNumber(duplicateBlockNumber)
+                .blockRootHash(getBlockHash(duplicateBlockNumber).orElse(Bytes.EMPTY))
+                .build();
+
+        final PublishStreamResponse publishStreamResponse = PublishStreamResponse.newBuilder()
                 .acknowledgement(Acknowledgement.newBuilder()
                         .blockAck(blockAcknowledgement)
                         .build())
                 .build();
+
+        publishStreamResponseObserver.onNext(publishStreamResponse);
     }
+
 }
