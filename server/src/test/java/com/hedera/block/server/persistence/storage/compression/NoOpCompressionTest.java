@@ -3,6 +3,7 @@ package com.hedera.block.server.persistence.storage.compression;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -72,9 +73,9 @@ class NoOpCompressionTest {
 
     /**
      * This test aims to verify that the
-     * {@link NoOpCompression#wrap(InputStream)} correctly wraps a valid
-     * provided {@link InputStream} and reads the test data from it`s
-     * destination as it is provided, no decompression is done.
+     * {@link Compression#wrap(InputStream, com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType)}
+     * correctly wraps a valid provided {@link InputStream} and reads the test
+     * data from it`s destination as it is provided, no decompression is done.
      *
      * @param testData parameterized, test data
      * @throws IOException if an I/O exception occurs
@@ -95,7 +96,7 @@ class NoOpCompressionTest {
 
         // read data
         final byte[] actual;
-        try (final InputStream in = toTest.wrap(Files.newInputStream(toRead))) {
+        try (final InputStream in = toTest.wrap(Files.newInputStream(toRead), CompressionType.NONE)) {
             actual = in.readAllBytes();
         }
         assertThat(actual).isNotNull().isEqualTo(expected);

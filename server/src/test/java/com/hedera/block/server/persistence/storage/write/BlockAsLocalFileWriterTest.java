@@ -67,7 +67,7 @@ class BlockAsLocalFileWriterTest {
 
         ackHandlerMock = mock(AckHandler.class);
 
-        toTest = BlockAsLocalFileWriter.of(blockNodeContext, pathResolverMock, compressionMock);
+        toTest = BlockAsLocalFileWriter.of(testConfig, blockNodeContext, pathResolverMock, compressionMock);
     }
 
     /**

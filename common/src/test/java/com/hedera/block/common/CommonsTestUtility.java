@@ -253,5 +253,90 @@ public final class CommonsTestUtility {
         return Stream.concat(Stream.of(Arguments.of(0)), negativeIntegers());
     }
 
+    public static Stream<Arguments> positivePowersOf10() {
+        return Stream.of(
+                Arguments.of(1L),
+                Arguments.of(10L),
+                Arguments.of(100L),
+                Arguments.of(1_000L),
+                Arguments.of(10_000L),
+                Arguments.of(100_000L),
+                Arguments.of(1_000_000L),
+                Arguments.of(10_000_000L),
+                Arguments.of(100_000_000L),
+                Arguments.of(1_000_000_000L),
+                Arguments.of(10_000_000_000L),
+                Arguments.of(100_000_000_000L),
+                Arguments.of(1_000_000_000_000L),
+                Arguments.of(10_000_000_000_000L),
+                Arguments.of(100_000_000_000_000L),
+                Arguments.of(1_000_000_000_000_000L),
+                Arguments.of(10_000_000_000_000_000L),
+                Arguments.of(100_000_000_000_000_000L),
+                Arguments.of(1_000_000_000_000_000_000L));
+    }
+
+    public static Stream<Arguments> negativePowersOf10() {
+        return Stream.of(
+                Arguments.of(-1L),
+                Arguments.of(-10L),
+                Arguments.of(-100L),
+                Arguments.of(-1_000L),
+                Arguments.of(-10_000L),
+                Arguments.of(-100_000L),
+                Arguments.of(-1_000_000L),
+                Arguments.of(-10_000_000L),
+                Arguments.of(-100_000_000L),
+                Arguments.of(-1_000_000_000L),
+                Arguments.of(-10_000_000_000L),
+                Arguments.of(-100_000_000_000L),
+                Arguments.of(-1_000_000_000_000L),
+                Arguments.of(-10_000_000_000_000L),
+                Arguments.of(-100_000_000_000_000L),
+                Arguments.of(-1_000_000_000_000_000L),
+                Arguments.of(-10_000_000_000_000_000L),
+                Arguments.of(-100_000_000_000_000_000L),
+                Arguments.of(-1_000_000_000_000_000_000L));
+    }
+
+    public static Stream<Arguments> positiveIntPowersOf10() {
+        return Stream.of(
+                Arguments.of(1),
+                Arguments.of(10),
+                Arguments.of(100),
+                Arguments.of(1_000),
+                Arguments.of(10_000),
+                Arguments.of(100_000),
+                Arguments.of(1_000_000),
+                Arguments.of(10_000_000),
+                Arguments.of(100_000_000),
+                Arguments.of(1_000_000_000));
+    }
+
+    public static Stream<Arguments> negativeIntPowersOf10() {
+        return Stream.of(
+                Arguments.of(-1),
+                Arguments.of(-10),
+                Arguments.of(-100),
+                Arguments.of(-1_000),
+                Arguments.of(-10_000),
+                Arguments.of(-100_000),
+                Arguments.of(-1_000_000),
+                Arguments.of(-10_000_000),
+                Arguments.of(-100_000_000),
+                Arguments.of(-1_000_000_000));
+    }
+
+    // @todo(517) add 0 and MIN MAX values here as well, also, make the same logic to test for longs as well
+    public static Stream<Arguments> nonPowersOf10() {
+        return Stream.of(
+                Arguments.of(2),
+                Arguments.of(11),
+                Arguments.of(20),
+                Arguments.of(50),
+                Arguments.of(101),
+                Arguments.of(10_100));
+    }
+
     private CommonsTestUtility() {}
 }

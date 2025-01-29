@@ -39,6 +39,9 @@ class PersistenceStorageConfigTest {
     private static final int LOWER_BOUNDARY_FOR_ZSTD_COMPRESSION = 0;
     private static final int DEFAULT_VALUE_FOR_ZSTD_COMPRESSION = DEFAULT_COMPRESSION_LEVEL;
     private static final int UPPER_BOUNDARY_FOR_ZSTD_COMPRESSION = 20;
+    // Archiving defaults
+    private static final boolean DEFAULT_ARCHIVE_ENABLED = true;
+    private static final int DEFAULT_ARCHIVE_BATCH_SIZE = 1000;
 
     @AfterEach
     void tearDown() {
@@ -67,8 +70,14 @@ class PersistenceStorageConfigTest {
     @ParameterizedTest
     @MethodSource("storageTypes")
     void testPersistenceStorageConfigStorageTypes(final StorageType storageType) {
-        final PersistenceStorageConfig actual =
-                new PersistenceStorageConfig("", "", storageType, CompressionType.NONE, DEFAULT_COMPRESSION_LEVEL);
+        final PersistenceStorageConfig actual = new PersistenceStorageConfig(
+                "",
+                "",
+                storageType,
+                CompressionType.NONE,
+                DEFAULT_COMPRESSION_LEVEL,
+                DEFAULT_ARCHIVE_ENABLED,
+                DEFAULT_ARCHIVE_BATCH_SIZE);
         assertThat(actual).returns(storageType, from(PersistenceStorageConfig::type));
     }
 
@@ -94,7 +103,9 @@ class PersistenceStorageConfigTest {
                 archiveRootPathToTest,
                 StorageType.BLOCK_AS_LOCAL_FILE,
                 CompressionType.NONE,
-                DEFAULT_COMPRESSION_LEVEL);
+                DEFAULT_COMPRESSION_LEVEL,
+                DEFAULT_ARCHIVE_ENABLED,
+                DEFAULT_ARCHIVE_BATCH_SIZE);
         assertThat(actual)
                 .returns(expectedLiveRootPathToTest, from(PersistenceStorageConfig::liveRootPath))
                 .returns(expectedArchiveRootPathToTest, from(PersistenceStorageConfig::archiveRootPath));
@@ -120,7 +131,9 @@ class PersistenceStorageConfigTest {
                         invalidArchiveRootPathToTest,
                         StorageType.BLOCK_AS_LOCAL_FILE,
                         CompressionType.NONE,
-                        DEFAULT_COMPRESSION_LEVEL));
+                        DEFAULT_COMPRESSION_LEVEL,
+                        DEFAULT_ARCHIVE_ENABLED,
+                        DEFAULT_ARCHIVE_BATCH_SIZE));
     }
 
     /**
@@ -134,7 +147,13 @@ class PersistenceStorageConfigTest {
     void testPersistenceStorageConfigValidCompressionLevel(
             final CompressionType compressionType, final int compressionLevel) {
         final PersistenceStorageConfig actual = new PersistenceStorageConfig(
-                "", "", StorageType.BLOCK_AS_LOCAL_FILE, compressionType, compressionLevel);
+                "",
+                "",
+                StorageType.BLOCK_AS_LOCAL_FILE,
+                compressionType,
+                compressionLevel,
+                DEFAULT_ARCHIVE_ENABLED,
+                DEFAULT_ARCHIVE_BATCH_SIZE);
         assertThat(actual).returns(compressionLevel, from(PersistenceStorageConfig::compressionLevel));
     }
 
@@ -151,7 +170,13 @@ class PersistenceStorageConfigTest {
             final CompressionType compressionType, final int compressionLevel) {
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> new PersistenceStorageConfig(
-                        "", "", StorageType.BLOCK_AS_LOCAL_FILE, compressionType, compressionLevel));
+                        "",
+                        "",
+                        StorageType.BLOCK_AS_LOCAL_FILE,
+                        compressionType,
+                        compressionLevel,
+                        DEFAULT_ARCHIVE_ENABLED,
+                        DEFAULT_ARCHIVE_BATCH_SIZE));
     }
 
     /**
@@ -163,8 +188,14 @@ class PersistenceStorageConfigTest {
     @ParameterizedTest
     @MethodSource("compressionTypes")
     void testPersistenceStorageConfigCompressionTypes(final CompressionType compressionType) {
-        final PersistenceStorageConfig actual =
-                new PersistenceStorageConfig("", "", StorageType.NO_OP, compressionType, DEFAULT_COMPRESSION_LEVEL);
+        final PersistenceStorageConfig actual = new PersistenceStorageConfig(
+                "",
+                "",
+                StorageType.NO_OP,
+                compressionType,
+                DEFAULT_COMPRESSION_LEVEL,
+                DEFAULT_ARCHIVE_ENABLED,
+                DEFAULT_ARCHIVE_BATCH_SIZE);
         assertThat(actual).returns(compressionType, from(PersistenceStorageConfig::compression));
     }
 

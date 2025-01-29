@@ -6,6 +6,7 @@ module com.hedera.block.server {
     exports com.hedera.block.server.consumer;
     exports com.hedera.block.server.exception;
     exports com.hedera.block.server.persistence.storage;
+    exports com.hedera.block.server.persistence.storage.archive;
     exports com.hedera.block.server.persistence.storage.compression;
     exports com.hedera.block.server.persistence.storage.path;
     exports com.hedera.block.server.persistence.storage.write;

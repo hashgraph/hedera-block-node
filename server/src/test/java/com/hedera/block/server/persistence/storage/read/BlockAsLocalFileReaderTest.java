@@ -66,8 +66,8 @@ class BlockAsLocalFileReaderTest {
 
         final BlockAsLocalFilePathResolver blockAsLocalFileResolverMock =
                 spy(BlockAsLocalFilePathResolver.of(testConfig));
-        blockAsLocalFileWriterMock =
-                spy(BlockAsLocalFileWriter.of(blockNodeContext, blockAsLocalFileResolverMock, compressionMock));
+        blockAsLocalFileWriterMock = spy(
+                BlockAsLocalFileWriter.of(testConfig, blockNodeContext, blockAsLocalFileResolverMock, compressionMock));
         toTest = BlockAsLocalFileReader.of(compressionMock, blockAsLocalFileResolverMock);
     }
 

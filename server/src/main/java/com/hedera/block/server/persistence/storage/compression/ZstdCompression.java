@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.persistence.storage.compression;
 
-import com.github.luben.zstd.ZstdInputStream;
 import com.github.luben.zstd.ZstdOutputStream;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Objects;
 
@@ -15,7 +13,7 @@ import java.util.Objects;
  * An implementation of {@link Compression} that compresses the data using the
  * Zstandard (Zstd) compression algorithm.
  */
-public class ZstdCompression implements Compression {
+public final class ZstdCompression extends CompressionBase {
     private final int compressionLevel;
 
     /**
@@ -46,12 +44,6 @@ public class ZstdCompression implements Compression {
     @Override
     public OutputStream wrap(@NonNull final OutputStream streamToWrap) throws IOException {
         return new ZstdOutputStream(Objects.requireNonNull(streamToWrap), compressionLevel);
-    }
-
-    @NonNull
-    @Override
-    public InputStream wrap(@NonNull final InputStream streamToWrap) throws IOException {
-        return new ZstdInputStream(Objects.requireNonNull(streamToWrap));
     }
 
     @NonNull

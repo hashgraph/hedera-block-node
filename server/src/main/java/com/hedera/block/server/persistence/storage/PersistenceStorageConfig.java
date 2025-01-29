@@ -36,7 +36,10 @@ public record PersistenceStorageConfig(
         @Loggable @ConfigProperty(defaultValue = "") String archiveRootPath,
         @Loggable @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type,
         @Loggable @ConfigProperty(defaultValue = "ZSTD") CompressionType compression,
-        @Loggable @ConfigProperty(defaultValue = "3") @Min(0) @Max(20) int compressionLevel) {
+        @Loggable @ConfigProperty(defaultValue = "3") @Min(0) @Max(20) int compressionLevel,
+        @Loggable @ConfigProperty(defaultValue = "true") boolean archiveEnabled,
+        @Loggable @ConfigProperty(defaultValue = "1_000")
+                int archiveBatchSize) { // @todo(517) rename batch to group size
     // @todo(#371) - the default life/archive root path must be absolute starting from /opt
     private static final String LIVE_ROOT_PATH =
             Path.of("hashgraph/blocknode/data/live/").toAbsolutePath().toString();
@@ -49,6 +52,7 @@ public record PersistenceStorageConfig(
      */
     public PersistenceStorageConfig {
         Objects.requireNonNull(type);
+        Preconditions.requirePositivePowerOf10(archiveBatchSize);
         compression.verifyCompressionLevel(compressionLevel);
         liveRootPath = resolvePath(liveRootPath, LIVE_ROOT_PATH, BLOCK_NODE_LIVE_ROOT_DIRECTORY_SEMANTIC_NAME);
         archiveRootPath =
