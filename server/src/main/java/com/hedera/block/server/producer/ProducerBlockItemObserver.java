@@ -6,7 +6,9 @@ import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.Succe
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.WARNING;
 
+import com.hedera.block.server.block.BlockInfo;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.consumer.ConsumerConfig;
 import com.hedera.block.server.events.BlockNodeEventHandler;
@@ -16,10 +18,14 @@ import com.hedera.block.server.mediator.Publisher;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.hapi.block.Acknowledgement;
+import com.hedera.hapi.block.BlockAcknowledgement;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.PublishStreamResponseCode;
+import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.grpc.Pipeline;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.InstantSource;
@@ -47,6 +53,8 @@ public class ProducerBlockItemObserver
     private final AtomicBoolean isResponsePermitted = new AtomicBoolean(true);
 
     private final LivenessCalculator livenessCalculator;
+
+    private boolean skipCurrentBlock = false;
 
     /**
      * Constructor for the ProducerBlockStreamObserver class. It is responsible for calling the
@@ -113,9 +121,11 @@ public class ProducerBlockItemObserver
             // Refresh the producer liveness
             livenessCalculator.refresh();
 
-            // Publish the block to the mediator
-            publisher.publish(blockItems);
-
+            // pre-check for a duplicate block
+            if (duplicateBlockPreCheck(blockItems)) {
+                // Publish the block to the mediator
+                publisher.publish(blockItems);
+            }
         } else {
             LOGGER.log(ERROR, getClass().getName() + " is not accepting BlockItems");
             stopProcessing();
@@ -187,5 +197,77 @@ public class ProducerBlockItemObserver
     private void stopProcessing() {
         isResponsePermitted.set(false);
         subscriptionHandler.unsubscribe(this);
+    }
+
+    private boolean duplicateBlockPreCheck(@NonNull final List<BlockItemUnparsed> blockItems) {
+        // If there is no block header, just return the opposite of skipCurrentBlock
+        BlockItemUnparsed firstItem = blockItems.getFirst();
+        if (!firstItem.hasBlockHeader()) {
+            return !skipCurrentBlock;
+        }
+
+        // Attempt to parse the block header
+        long nextBlockNumber;
+        try {
+            BlockHeader blockHeader = BlockHeader.PROTOBUF.parse(firstItem.blockHeader());
+            nextBlockNumber = blockHeader.number();
+        } catch (ParseException e) {
+            LOGGER.log(ERROR, "Error parsing block header", e);
+            throw new RuntimeException(e);
+        }
+
+        // Check if this block was already acknowledged
+        BlockInfo lastAckedBlockInfo = serviceStatus.getLatestAckedBlockNumber();
+        boolean isDuplicateAckedBlock =
+                lastAckedBlockInfo != null && nextBlockNumber <= lastAckedBlockInfo.getBlockNumber();
+
+        if (isDuplicateAckedBlock) {
+            skipCurrentBlock = true;
+            LOGGER.log(
+                    WARNING,
+                    "Received block number {}, but block number {} has already been acked. "
+                            + "Skipping duplicate and sending duplicate ACK",
+                    nextBlockNumber,
+                    lastAckedBlockInfo.getBlockNumber());
+            publishStreamResponseObserver.onNext(buildDuplicateBlockStreamResponse(lastAckedBlockInfo));
+        } else {
+            skipCurrentBlock = false;
+        }
+
+        // Check if this block was already received but not yet fully processed
+        boolean isAlreadyReceived =
+                !skipCurrentBlock && nextBlockNumber <= serviceStatus.getLatestReceivedBlockNumber();
+
+        if (isAlreadyReceived) {
+            LOGGER.log(
+                    WARNING,
+                    "Received block number {}, but block number {} has already been received. " + "Skipping duplicate",
+                    nextBlockNumber,
+                    serviceStatus.getLatestReceivedBlockNumber());
+            // Create BlockInfo without block hash (indicating partial or unverified persistence).
+            BlockInfo blockInfo = new BlockInfo(nextBlockNumber);
+            publishStreamResponseObserver.onNext(buildDuplicateBlockStreamResponse(blockInfo));
+            skipCurrentBlock = true;
+        }
+
+        // Update the latest received block number
+        serviceStatus.setLatestReceivedBlockNumber(nextBlockNumber);
+
+        // Return whether we should process this block or skip it
+        return !skipCurrentBlock;
+    }
+
+    private static PublishStreamResponse buildDuplicateBlockStreamResponse(@NonNull final BlockInfo blockInfo) {
+        final BlockAcknowledgement blockAcknowledgement = BlockAcknowledgement.newBuilder()
+                .blockAlreadyExists(true)
+                .blockNumber(blockInfo.getBlockNumber())
+                .blockRootHash(blockInfo.getBlockHash())
+                .build();
+
+        return PublishStreamResponse.newBuilder()
+                .acknowledgement(Acknowledgement.newBuilder()
+                        .blockAck(blockAcknowledgement)
+                        .build())
+                .build();
     }
 }
