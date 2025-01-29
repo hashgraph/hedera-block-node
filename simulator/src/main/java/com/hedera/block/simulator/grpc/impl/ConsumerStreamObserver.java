@@ -99,16 +99,16 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
     }
 
     private void processBlockItems(List<BlockItem> blockItems) {
-        blockItems.stream().filter(BlockItem::hasBlockHeader).forEach(blockItem -> {
+        blockItems.stream().filter(BlockItem::hasBlockProof).forEach(blockItem -> {
             metricsService.get(LiveBlocksConsumed).increment();
 
-            long blockNumber = blockItem.getBlockHeader().getNumber();
+            long blockNumber = blockItem.getBlockProof().getBlock();
             LOGGER.log(INFO, "Received block number: " + blockNumber);
-            logNonAscendingBlockNumbers(blockNumber, blockItem);
+            logNonAscendingBlockNumbers(blockNumber);
         });
     }
 
-    private void logNonAscendingBlockNumbers(long blockNumber, final BlockItem blockItem) {
+    private void logNonAscendingBlockNumbers(long blockNumber) {
         if (blocksConsumed.get() == 0) {
             // Set the first block number in case we started
             // a recording in the middle when running a range.
