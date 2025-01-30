@@ -36,17 +36,13 @@ final class Functions {
         private final long l;
         private final boolean b;
 
-        Task(
-                @NonNull final ObjectEvent<SubscribeStreamResponseUnparsed> event,
-                final long l,
-                final boolean b,
-                @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,
-                @NonNull
-                        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>
-                                asyncConsumerStreamResponseObserver,
-                @NonNull
-                        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>
-                                nextBlockNodeEventHandler) {
+        // spotless:off
+        Task(@NonNull final ObjectEvent<SubscribeStreamResponseUnparsed> event,
+             final long l,
+             final boolean b,
+             @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,
+             @NonNull final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> asyncConsumerStreamResponseObserver,
+             @NonNull final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> nextBlockNodeEventHandler) {
 
             this.event = event;
             this.l = l;
@@ -55,6 +51,7 @@ final class Functions {
             this.asyncConsumerStreamResponseObserver = Objects.requireNonNull(asyncConsumerStreamResponseObserver);
             this.nextBlockNodeEventHandler = Objects.requireNonNull(nextBlockNodeEventHandler);
         }
+        // spotless:on
 
         /**
          * {@inheritDoc}
