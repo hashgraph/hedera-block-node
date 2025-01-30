@@ -162,8 +162,11 @@ public class ProducerBlockItemObserver
 
     @NonNull
     private PublishStreamResponse buildErrorStreamResponse() {
+        long blockNumber = serviceStatus.getLatestAckedBlock() != null
+                ? serviceStatus.getLatestAckedBlock().getBlockNumber()
+                : 0;
         final EndOfStream endOfStream = EndOfStream.newBuilder()
-                .blockNumber(serviceStatus.getLatestAckedBlock().getBlockNumber())
+                .blockNumber(blockNumber)
                 .status(PublishStreamResponseCode.STREAM_ITEMS_INTERNAL_ERROR)
                 .build();
         return PublishStreamResponse.newBuilder().status(endOfStream).build();
@@ -236,7 +239,7 @@ public class ProducerBlockItemObserver
             allowCurrentBlockStream = false;
             LOGGER.log(
                     WARNING,
-                    "Received a duplicate block, received_block_number: {}, expected_block_number: {}",
+                    "Received a duplicate block, received_block_number: {0}, expected_block_number: {1}",
                     nextBlockNumber,
                     nextExpectedBlockNumber);
 
@@ -249,7 +252,7 @@ public class ProducerBlockItemObserver
             allowCurrentBlockStream = false;
             LOGGER.log(
                     WARNING,
-                    "Received a future block, received_block_number: {}, expected_block_number: {}",
+                    "Received a future block, received_block_number: {0}, expected_block_number: {1}",
                     nextBlockNumber,
                     nextExpectedBlockNumber);
 

@@ -2,12 +2,14 @@
 package com.hedera.block.server.producer;
 
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
+import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsedForWithBlockNumber;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.server.block.BlockInfo;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.Publisher;
@@ -15,14 +17,20 @@ import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.hapi.block.Acknowledgement;
+import com.hedera.hapi.block.BlockAcknowledgement;
 import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.EndOfStream;
 import com.hedera.hapi.block.PublishStreamResponse;
+import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.pbj.runtime.grpc.Pipeline;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.io.IOException;
 import java.time.InstantSource;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -146,5 +154,73 @@ public class ProducerBlockItemObserverTest {
 
         // Confirm that the observer was unsubscribed
         verify(subscriptionHandler, timeout(testTimeout).times(1)).unsubscribe(producerBlockItemObserver);
+    }
+
+    @Test
+    @DisplayName("Test duplicate block items")
+    public void testDuplicateBlockReceived() {
+
+        // given
+        when(serviceStatus.isRunning()).thenReturn(true);
+        long latestAckedBlockNumber = 10L;
+        Bytes fakeHash = Bytes.wrap("fake_hash");
+        BlockInfo latestAckedBlock = new BlockInfo(latestAckedBlockNumber);
+        latestAckedBlock.setBlockHash(fakeHash);
+        when(serviceStatus.getLatestAckedBlock()).thenReturn(latestAckedBlock);
+        when(serviceStatus.getLatestReceivedBlockNumber()).thenReturn(latestAckedBlockNumber);
+
+        final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsedForWithBlockNumber(10);
+        final ProducerBlockItemObserver producerBlockItemObserver = new ProducerBlockItemObserver(
+                testClock, publisher, subscriptionHandler, helidonPublishPipeline, testContext, serviceStatus);
+
+        // when
+        producerBlockItemObserver.onNext(blockItems);
+
+        // then
+        final BlockAcknowledgement blockAcknowledgement = BlockAcknowledgement.newBuilder()
+                .blockNumber(10L)
+                .blockAlreadyExists(true)
+                .blockRootHash(fakeHash)
+                .build();
+
+        final Acknowledgement acknowledgement =
+                Acknowledgement.newBuilder().blockAck(blockAcknowledgement).build();
+
+        final PublishStreamResponse publishStreamResponse = PublishStreamResponse.newBuilder()
+                .acknowledgement(acknowledgement)
+                .build();
+
+        // verify helidonPublishPipeline.onNext() is called once with publishStreamResponse
+        verify(helidonPublishPipeline, timeout(testTimeout).times(1)).onNext(publishStreamResponse);
+    }
+
+    @Test
+    @DisplayName("Test future (ahead of expected) block received")
+    public void testFutureBlockReceived() {
+        // given
+        when(serviceStatus.isRunning()).thenReturn(true);
+        long latestAckedBlockNumber = 10L;
+        Bytes fakeHash = Bytes.wrap("fake_hash");
+        BlockInfo latestAckedBlock = new BlockInfo(latestAckedBlockNumber);
+        latestAckedBlock.setBlockHash(fakeHash);
+        when(serviceStatus.getLatestAckedBlock()).thenReturn(latestAckedBlock);
+        when(serviceStatus.getLatestReceivedBlockNumber()).thenReturn(10L);
+        final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsedForWithBlockNumber(12);
+        final ProducerBlockItemObserver producerBlockItemObserver = new ProducerBlockItemObserver(
+                testClock, publisher, subscriptionHandler, helidonPublishPipeline, testContext, serviceStatus);
+
+        // when
+        producerBlockItemObserver.onNext(blockItems);
+
+        // then
+        final EndOfStream endOfStream = EndOfStream.newBuilder()
+                .status(PublishStreamResponseCode.STREAM_ITEMS_BEHIND)
+                .blockNumber(10L)
+                .build();
+        final PublishStreamResponse publishStreamResponse =
+                PublishStreamResponse.newBuilder().status(endOfStream).build();
+
+        // verify helidonPublishPipeline.onNext() is called once with publishStreamResponse
+        verify(helidonPublishPipeline, timeout(testTimeout).times(1)).onNext(publishStreamResponse);
     }
 }
