@@ -25,7 +25,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.InstantSource;
 import java.util.Map;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Executors;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -53,6 +56,13 @@ public class ConsumerStreamResponseObserverTest {
 
     final BlockNodeContext testContext;
 
+    private CompletionService<Void> completionService;
+
+    @BeforeEach
+    public void setUp() {
+        completionService = new ExecutorCompletionService<>(Executors.newSingleThreadExecutor());
+    }
+
     public ConsumerStreamResponseObserverTest() throws IOException {
         this.testContext = TestConfigUtil.getTestBlockNodeContext(
                 Map.of(TestConfigUtil.CONSUMER_TIMEOUT_THRESHOLD_KEY, String.valueOf(TIMEOUT_THRESHOLD_MILLIS)));
@@ -64,7 +74,7 @@ public class ConsumerStreamResponseObserverTest {
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                new ForkJoinPool(), testClock, streamMediator, responseStreamObserver, testContext);
+                completionService, testClock, streamMediator, responseStreamObserver, testContext);
 
         final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
         final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder()
@@ -95,7 +105,7 @@ public class ConsumerStreamResponseObserverTest {
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS + 1);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                new ForkJoinPool(), testClock, streamMediator, responseStreamObserver, testContext);
+                completionService, testClock, streamMediator, responseStreamObserver, testContext);
 
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
         verify(streamMediator, timeout(testTimeout)).unsubscribe(consumerBlockItemObserver);
@@ -109,7 +119,7 @@ public class ConsumerStreamResponseObserverTest {
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                new ForkJoinPool(), testClock, streamMediator, responseStreamObserver, testContext);
+                completionService, testClock, streamMediator, responseStreamObserver, testContext);
 
         // Send non-header BlockItems to validate that the observer does not send them
         for (int i = 1; i <= 10; i++) {
@@ -172,7 +182,7 @@ public class ConsumerStreamResponseObserverTest {
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                new ForkJoinPool(), testClock, streamMediator, responseStreamObserver, testContext);
+                completionService, testClock, streamMediator, responseStreamObserver, testContext);
         assertThrows(IllegalArgumentException.class, () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
     }
 
@@ -184,7 +194,7 @@ public class ConsumerStreamResponseObserverTest {
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                new ForkJoinPool(), testClock, streamMediator, responseStreamObserver, testContext);
+                completionService, testClock, streamMediator, responseStreamObserver, testContext);
 
         assertThrows(IllegalArgumentException.class, () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
     }
@@ -204,7 +214,7 @@ public class ConsumerStreamResponseObserverTest {
         doThrow(UncheckedIOException.class).when(responseStreamObserver).onNext(subscribeStreamResponse);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                new ForkJoinPool(), testClock, streamMediator, responseStreamObserver, testContext);
+                completionService, testClock, streamMediator, responseStreamObserver, testContext);
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         verify(streamMediator, timeout(testTimeout).times(1)).unsubscribe(any());
@@ -225,7 +235,7 @@ public class ConsumerStreamResponseObserverTest {
         doThrow(RuntimeException.class).when(responseStreamObserver).onNext(subscribeStreamResponse);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                new ForkJoinPool(), testClock, streamMediator, responseStreamObserver, testContext);
+                completionService, testClock, streamMediator, responseStreamObserver, testContext);
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         verify(streamMediator, timeout(testTimeout).times(1)).unsubscribe(any());

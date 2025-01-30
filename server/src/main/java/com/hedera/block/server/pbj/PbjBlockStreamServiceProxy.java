@@ -29,7 +29,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Clock;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 import javax.inject.Inject;
 
@@ -43,7 +43,6 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
-    private final ExecutorService executorService;
     private final LiveStreamMediator streamMediator;
     private final ServiceStatus serviceStatus;
     private final BlockNodeContext blockNodeContext;
@@ -74,7 +73,6 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         streamMediator.subscribe(Objects.requireNonNull(streamPersistenceHandler));
         streamMediator.subscribe(Objects.requireNonNull(streamVerificationHandler));
         this.streamMediator = Objects.requireNonNull(streamMediator);
-        this.executorService = Executors.newVirtualThreadPerTaskExecutor();
     }
 
     /**
@@ -168,7 +166,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
             // Unsubscribe any expired notifiers
             streamMediator.unsubscribeAllExpired();
             final var liveStreamEventHandler = LiveStreamEventHandlerBuilder.build(
-                    executorService,
+                    new ExecutorCompletionService<>(Executors.newSingleThreadExecutor()),
                     Clock.systemDefaultZone(),
                     streamMediator,
                     subscribeStreamResponseObserver,

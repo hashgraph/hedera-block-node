@@ -39,8 +39,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Executors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -86,7 +87,7 @@ public class LiveStreamMediatorImplTest {
 
     private final BlockNodeContext testContext;
 
-    private final ExecutorService executorService;
+    private final CompletionService<Void> completionService;
 
     public LiveStreamMediatorImplTest() throws IOException {
         Map<String, String> properties = new HashMap<>();
@@ -94,7 +95,7 @@ public class LiveStreamMediatorImplTest {
         properties.put(TestConfigUtil.MEDIATOR_RING_BUFFER_SIZE_KEY, String.valueOf(1024));
 
         this.testContext = TestConfigUtil.getTestBlockNodeContext(properties);
-        this.executorService = new ForkJoinPool();
+        this.completionService = new ExecutorCompletionService<>(Executors.newSingleThreadExecutor());
     }
 
     @Test
@@ -167,11 +168,11 @@ public class LiveStreamMediatorImplTest {
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
         final var concreteObserver1 = LiveStreamEventHandlerBuilder.build(
-                executorService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
+                completionService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
         final var concreteObserver2 = LiveStreamEventHandlerBuilder.build(
-                executorService, testClock, streamMediator, helidonSubscribeStreamObserver2, testContext);
+                completionService, testClock, streamMediator, helidonSubscribeStreamObserver2, testContext);
         final var concreteObserver3 = LiveStreamEventHandlerBuilder.build(
-                executorService, testClock, streamMediator, helidonSubscribeStreamObserver3, testContext);
+                completionService, testClock, streamMediator, helidonSubscribeStreamObserver3, testContext);
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -225,11 +226,11 @@ public class LiveStreamMediatorImplTest {
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
         final var concreteObserver1 = LiveStreamEventHandlerBuilder.build(
-                executorService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
+                completionService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
         final var concreteObserver2 = LiveStreamEventHandlerBuilder.build(
-                executorService, testClock, streamMediator, helidonSubscribeStreamObserver2, testContext);
+                completionService, testClock, streamMediator, helidonSubscribeStreamObserver2, testContext);
         final var concreteObserver3 = LiveStreamEventHandlerBuilder.build(
-                executorService, testClock, streamMediator, helidonSubscribeStreamObserver3, testContext);
+                completionService, testClock, streamMediator, helidonSubscribeStreamObserver3, testContext);
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -253,7 +254,7 @@ public class LiveStreamMediatorImplTest {
                 .build();
 
         final var concreteObserver1 = LiveStreamEventHandlerBuilder.build(
-                executorService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
+                completionService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
 
         streamMediator.subscribe(concreteObserver1);
         assertTrue(streamMediator.isSubscribed(concreteObserver1));
@@ -383,11 +384,11 @@ public class LiveStreamMediatorImplTest {
                 .build();
 
         final var concreteObserver1 = LiveStreamEventHandlerBuilder.build(
-                executorService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
+                completionService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
         final var concreteObserver2 = LiveStreamEventHandlerBuilder.build(
-                executorService, testClock, streamMediator, helidonSubscribeStreamObserver2, testContext);
+                completionService, testClock, streamMediator, helidonSubscribeStreamObserver2, testContext);
         final var concreteObserver3 = LiveStreamEventHandlerBuilder.build(
-                executorService, testClock, streamMediator, helidonSubscribeStreamObserver3, testContext);
+                completionService, testClock, streamMediator, helidonSubscribeStreamObserver3, testContext);
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -463,7 +464,7 @@ public class LiveStreamMediatorImplTest {
         streamMediator.subscribe(handler);
 
         final var testConsumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                executorService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
+                completionService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
 
         // Confirm the observer is not subscribed
         assertFalse(streamMediator.isSubscribed(testConsumerBlockItemObserver));

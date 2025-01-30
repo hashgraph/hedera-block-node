@@ -9,7 +9,7 @@ import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.runtime.grpc.Pipeline;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.InstantSource;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.CompletionService;
 
 /**
  * LiveStreamEventHandlerBuilder is a factory class for building the event handler chain for
@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutorService;
  */
 public class LiveStreamEventHandlerBuilder {
     public static BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> build(
-            @NonNull final ExecutorService executorService,
+            @NonNull final CompletionService<Void> completionService,
             @NonNull final InstantSource producerLivenessClock,
             @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,
             @NonNull final Pipeline<? super SubscribeStreamResponseUnparsed> observer,
@@ -28,7 +28,7 @@ public class LiveStreamEventHandlerBuilder {
                 new ConsumerStreamResponseObserver(producerLivenessClock, observer, blockNodeContext);
 
         final var asyncConsumerStreamResponseObserver = new AsyncConsumerStreamResponseObserver(
-                executorService, subscriptionHandler, consumerStreamResponseObserver);
+                completionService, subscriptionHandler, consumerStreamResponseObserver);
 
         // Set the link backward to handle unsubscribe events
         consumerStreamResponseObserver.setPrevSubscriptionHandler(asyncConsumerStreamResponseObserver);
