@@ -74,7 +74,7 @@ final class Functions {
             } catch (Exception e) {
                 subscriptionHandler.unsubscribe(asyncConsumerStreamResponseObserver);
                 LOGGER.log(ERROR, "Exception caught from Pipeline instance. Unsubscribed consumer observer instance.");
-                LOGGER.log(ERROR, e.getMessage());
+                LOGGER.log(ERROR, e.getMessage(), e);
             }
             return null;
         }
