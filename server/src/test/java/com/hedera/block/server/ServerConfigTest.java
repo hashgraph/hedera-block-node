@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,98 +20,72 @@ class ServerConfigTest {
 
     @Test
     void testValidValues() {
-
         ServerConfig serverConfig = new ServerConfig(4_194_304, 32_768, 32_768, 8080);
-
         assertEquals(4_194_304, serverConfig.maxMessageSizeBytes());
         assertEquals(8080, serverConfig.port());
     }
 
     @Test
     void testMessageSizeTooBig() {
-        try {
-            new ServerConfig(16_777_216, 32_768, 32_768, 8080);
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            String expectedErrorMsg = String.format(
-                    RANGE_ERROR_TEMPLATE,
-                    "server.maxMessageSizeBytes",
-                    16_777_216,
-                    ServerConfig.minMaxMessageSizeBytes,
-                    ServerConfig.maxMaxMessageSizeBytes);
-            assertEquals(expectedErrorMsg, e.getMessage());
-        }
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ServerConfig(16_777_216, 32_768, 32_768, 8080))
+                .withMessage(String.format(
+                        RANGE_ERROR_TEMPLATE,
+                        "server.maxMessageSizeBytes",
+                        16_777_216,
+                        ServerConfig.minMaxMessageSizeBytes,
+                        ServerConfig.maxMaxMessageSizeBytes));
     }
 
     @Test
     void testMessageSizeTooSmall() {
-        try {
-            new ServerConfig(10_239, 32_768, 32_768, 8080);
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            String expectedErrorMsg = String.format(
-                    RANGE_ERROR_TEMPLATE,
-                    "server.maxMessageSizeBytes",
-                    10_239,
-                    ServerConfig.minMaxMessageSizeBytes,
-                    ServerConfig.maxMaxMessageSizeBytes);
-            assertEquals(expectedErrorMsg, e.getMessage());
-        }
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ServerConfig(10_239, 32_768, 32_768, 8080))
+                .withMessage(String.format(
+                        RANGE_ERROR_TEMPLATE,
+                        "server.maxMessageSizeBytes",
+                        10_239,
+                        ServerConfig.minMaxMessageSizeBytes,
+                        ServerConfig.maxMaxMessageSizeBytes));
     }
 
     @Test
     void testSocketSendBufferSizeTooSmall() {
-        try {
-            new ServerConfig(4_194_304, 32_767, 32_768, 8080);
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            String expectedErrorMsg = String.format(
-                    RANGE_ERROR_TEMPLATE,
-                    "server.socketSendBufferSizeBytes",
-                    32_767,
-                    ServerConfig.minSocketSendBufferSizeBytes,
-                    Integer.MAX_VALUE);
-            assertEquals(expectedErrorMsg, e.getMessage());
-        }
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ServerConfig(4_194_304, 32_767, 32_768, 8080))
+                .withMessage(String.format(
+                        RANGE_ERROR_TEMPLATE,
+                        "server.socketSendBufferSizeBytes",
+                        32_767,
+                        ServerConfig.minSocketSendBufferSizeBytes,
+                        Integer.MAX_VALUE));
     }
 
     @Test
     void testSocketReceiveBufferSizeTooSmall() {
-        try {
-            new ServerConfig(4_194_304, 32_768, 32_767, 8080);
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            String expectedErrorMsg = String.format(
-                    RANGE_ERROR_TEMPLATE,
-                    "server.socketReceiveBufferSizeBytes",
-                    32_767,
-                    ServerConfig.minSocketReceiveBufferSizeBytes,
-                    Integer.MAX_VALUE);
-            assertEquals(expectedErrorMsg, e.getMessage());
-        }
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ServerConfig(4_194_304, 32_768, 32_767, 8080))
+                .withMessage(String.format(
+                        RANGE_ERROR_TEMPLATE,
+                        "server.socketReceiveBufferSizeBytes",
+                        32_767,
+                        ServerConfig.minSocketReceiveBufferSizeBytes,
+                        Integer.MAX_VALUE));
     }
 
     @Test
     void testPortValueTooBig() {
-        try {
-            new ServerConfig(4_194_304, 32_768, 32_768, 65_536);
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            String expectedErrorMsg = String.format(
-                    RANGE_ERROR_TEMPLATE, "server.port", 65_536, ServerConfig.minPort, ServerConfig.maxPort);
-            assertEquals(expectedErrorMsg, e.getMessage());
-        }
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ServerConfig(4_194_304, 32_768, 32_768, 65_536))
+                .withMessage(String.format(
+                        RANGE_ERROR_TEMPLATE, "server.port", 65_536, ServerConfig.minPort, ServerConfig.maxPort));
     }
 
     @Test
     void testPortValueTooSmall() {
-        try {
-            new ServerConfig(4_194_304, 32_768, 32_768, 1023);
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            String expectedErrorMsg = String.format(
-                    RANGE_ERROR_TEMPLATE, "server.port", 1023, ServerConfig.minPort, ServerConfig.maxPort);
-            assertEquals(expectedErrorMsg, e.getMessage());
-        }
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ServerConfig(4_194_304, 32_768, 32_768, 1023))
+                .withMessage(String.format(
+                        RANGE_ERROR_TEMPLATE, "server.port", 1023, ServerConfig.minPort, ServerConfig.maxPort));
     }
 }
