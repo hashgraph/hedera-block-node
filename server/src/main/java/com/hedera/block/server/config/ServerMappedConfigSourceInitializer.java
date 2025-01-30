@@ -42,8 +42,8 @@ public final class ServerMappedConfigSourceInitializer {
 
             // Server Config
             new ConfigMapping("server.maxMessageSizeBytes", "SERVER_MAX_MESSAGE_SIZE_BYTES"),
-            new ConfigMapping("server.socketSendBufferSizeBytes", "SOCKET_SEND_BUFFER_SIZE_BYTES"),
-            new ConfigMapping("server.socketReceiveBufferSizeBytes", "SOCKET_RECEIVE_BUFFER_SIZE_BYTES"),
+            new ConfigMapping("server.socketSendBufferSizeBytes", "SERVER_SOCKET_SEND_BUFFER_SIZE_BYTES"),
+            new ConfigMapping("server.socketReceiveBufferSizeBytes", "SERVER_SOCKET_RECEIVE_BUFFER_SIZE_BYTES"),
             new ConfigMapping("server.port", "SERVER_PORT"),
 
             // Service Config
