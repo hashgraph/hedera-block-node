@@ -3,10 +3,12 @@ package com.hedera.block.server.ack;
 
 import com.hedera.block.server.block.BlockInfo;
 import com.hedera.block.server.notifier.Notifier;
+import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
@@ -21,11 +23,14 @@ import javax.inject.Inject;
  */
 public class AckHandlerImpl implements AckHandler {
 
+    private final System.Logger LOGGER = System.getLogger(getClass().getName());
+
     private final Map<Long, BlockInfo> blockInfo = new ConcurrentHashMap<>();
     private volatile long lastAcknowledgedBlockNumber = -1;
     private final Notifier notifier;
     private final boolean skipAcknowledgement;
     private final ServiceStatus serviceStatus;
+    private final BlockRemover blockRemover;
 
     /**
      * Constructor. If either skipPersistence or skipVerification is true,
@@ -33,10 +38,14 @@ public class AckHandlerImpl implements AckHandler {
      */
     @Inject
     public AckHandlerImpl(
-            @NonNull Notifier notifier, boolean skipAcknowledgement, @NonNull final ServiceStatus serviceStatus) {
+            @NonNull final Notifier notifier,
+            boolean skipAcknowledgement,
+            @NonNull final ServiceStatus serviceStatus,
+            @NonNull final BlockRemover blockRemover) {
         this.notifier = notifier;
         this.skipAcknowledgement = skipAcknowledgement;
         this.serviceStatus = serviceStatus;
+        this.blockRemover = blockRemover;
     }
 
     /**
@@ -81,7 +90,12 @@ public class AckHandlerImpl implements AckHandler {
     @Override
     public void blockVerificationFailed(long blockNumber) {
         notifier.sendEndOfStream(blockNumber, PublishStreamResponseCode.STREAM_ITEMS_BAD_STATE_PROOF);
-        // TODO We need to notify persistence to delete this block_number.
+        try {
+            blockRemover.remove(blockNumber);
+        } catch (IOException e) {
+            LOGGER.log(System.Logger.Level.ERROR, "Failed to remove block " + blockNumber, e);
+            throw new RuntimeException(e);
+        }
     }
 
     /**

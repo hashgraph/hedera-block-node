@@ -3,6 +3,7 @@ package com.hedera.block.server.ack;
 
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.verification.VerificationConfig;
 import dagger.Module;
@@ -27,11 +28,12 @@ public interface AckHandlerInjectionModule {
             @NonNull final Notifier notifier,
             @NonNull final PersistenceStorageConfig persistenceStorageConfig,
             @NonNull final VerificationConfig verificationConfig,
-            @NonNull final ServiceStatus serviceStatus) {
+            @NonNull final ServiceStatus serviceStatus,
+            @NonNull final BlockRemover blockRemover) {
 
         boolean skipPersistence = persistenceStorageConfig.type().equals(PersistenceStorageConfig.StorageType.NO_OP);
         boolean skipVerification = verificationConfig.type().equals(VerificationConfig.VerificationServiceType.NO_OP);
 
-        return new AckHandlerImpl(notifier, skipPersistence | skipVerification, serviceStatus);
+        return new AckHandlerImpl(notifier, skipPersistence | skipVerification, serviceStatus, blockRemover);
     }
 }

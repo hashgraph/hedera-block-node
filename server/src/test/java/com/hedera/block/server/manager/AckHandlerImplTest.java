@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.hedera.block.server.ack.AckHandlerImpl;
 import com.hedera.block.server.notifier.Notifier;
+import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
@@ -29,19 +30,23 @@ class AckHandlerImplTest {
     @Mock
     private ServiceStatus serviceStatus;
 
+    @Mock
+    private BlockRemover blockRemover;
+
     @BeforeEach
     void setUp() {
         notifier = mock(Notifier.class);
+        blockRemover = mock(BlockRemover.class);
         serviceStatus = mock(ServiceStatus.class);
         // By default, we do NOT skip acknowledgements
-        blockManager = new AckHandlerImpl(notifier, false, serviceStatus);
+        blockManager = new AckHandlerImpl(notifier, false, serviceStatus, blockRemover);
     }
 
     @Test
     @DisplayName("blockVerified + blockPersisted should do nothing if skipAcknowledgement == true")
     void blockVerified_skippedAcknowledgement() {
         // given
-        AckHandlerImpl managerWithSkip = new AckHandlerImpl(notifier, true, serviceStatus);
+        AckHandlerImpl managerWithSkip = new AckHandlerImpl(notifier, true, serviceStatus, blockRemover);
 
         // when
         managerWithSkip.blockVerified(1L, Bytes.wrap("somehash".getBytes()));
