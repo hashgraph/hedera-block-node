@@ -107,10 +107,13 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
      * @return the error stream response
      */
     @NonNull
-    static PublishStreamResponse buildErrorStreamResponse() {
-        // TODO: Replace this with a real error enum.
+    private PublishStreamResponse buildErrorStreamResponse() {
+        long blockNumber = serviceStatus.getLatestAckedBlock() != null
+                ? serviceStatus.getLatestAckedBlock().getBlockNumber()
+                : 0;
         final EndOfStream endOfStream = EndOfStream.newBuilder()
-                .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
+                .status(PublishStreamResponseCode.STREAM_ITEMS_INTERNAL_ERROR)
+                .blockNumber(blockNumber)
                 .build();
         return PublishStreamResponse.newBuilder().status(endOfStream).build();
     }
