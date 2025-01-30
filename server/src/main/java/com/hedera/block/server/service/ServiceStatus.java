@@ -45,14 +45,14 @@ public interface ServiceStatus {
      *
      * @return the latest acked block number
      */
-    BlockInfo getLatestAckedBlockNumber();
+    BlockInfo getLatestAckedBlock();
 
     /**
      * Sets the latest acked block number.
      *
      * @param latestAckedBlockInfo the latest acked block number
      */
-    void setLatestAckedBlockNumber(BlockInfo latestAckedBlockInfo);
+    void setLatestAckedBlock(BlockInfo latestAckedBlockInfo);
 
     /**
      * Gets the latest received block number, when ack is skipped it might be used instead of last acked block number.

@@ -110,31 +110,38 @@ public class ProducerBlockItemObserver
     @Override
     public void onNext(@NonNull final List<BlockItemUnparsed> blockItems) {
 
-        LOGGER.log(DEBUG, "Received PublishStreamRequest from producer with " + blockItems.size() + " BlockItems.");
-        if (blockItems.isEmpty()) {
-            return;
-        }
-
-        metricsService.get(LiveBlockItemsReceived).add(blockItems.size());
-
-        // Publish the block to all the subscribers unless
-        // there's an issue with the StreamMediator.
-        if (serviceStatus.isRunning()) {
-            // Refresh the producer liveness
-            livenessCalculator.refresh();
-
-            // pre-check for a duplicate block
-            if (preCheck(blockItems)) {
-                // Publish the block to the mediator
-                publisher.publish(blockItems);
+        try {
+            LOGGER.log(DEBUG, "Received PublishStreamRequest from producer with " + blockItems.size() + " BlockItems.");
+            if (blockItems.isEmpty()) {
+                return;
             }
-        } else {
-            LOGGER.log(ERROR, getClass().getName() + " is not accepting BlockItems");
-            stopProcessing();
 
-            // Close the upstream connection to the producer(s)
+            metricsService.get(LiveBlockItemsReceived).add(blockItems.size());
+
+            // Publish the block to all the subscribers unless
+            // there's an issue with the StreamMediator.
+            if (serviceStatus.isRunning()) {
+                // Refresh the producer liveness
+                livenessCalculator.refresh();
+
+                // pre-check for valid block
+                if (preCheck(blockItems)) {
+                    // Publish the block to the mediator
+                    publisher.publish(blockItems);
+                }
+            } else {
+                LOGGER.log(ERROR, getClass().getName() + " is not accepting BlockItems");
+                stopProcessing();
+
+                // Close the upstream connection to the producer(s)
+                publishStreamResponseObserver.onNext(buildErrorStreamResponse());
+                LOGGER.log(ERROR, "Error PublishStreamResponse sent to upstream producer");
+            }
+        } catch (Exception e) {
+            LOGGER.log(ERROR, "Error processing block items", e);
             publishStreamResponseObserver.onNext(buildErrorStreamResponse());
-            LOGGER.log(ERROR, "Error PublishStreamResponse sent to upstream producer");
+            // should we halt processing?
+            stopProcessing();
         }
     }
 
@@ -154,10 +161,10 @@ public class ProducerBlockItemObserver
     }
 
     @NonNull
-    private static PublishStreamResponse buildErrorStreamResponse() {
-        // TODO: Replace this with a real error enum.
+    private PublishStreamResponse buildErrorStreamResponse() {
         final EndOfStream endOfStream = EndOfStream.newBuilder()
-                .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
+                .blockNumber(serviceStatus.getLatestAckedBlock().getBlockNumber())
+                .status(PublishStreamResponseCode.STREAM_ITEMS_INTERNAL_ERROR)
                 .build();
         return PublishStreamResponse.newBuilder().status(endOfStream).build();
     }
@@ -201,14 +208,20 @@ public class ProducerBlockItemObserver
         subscriptionHandler.unsubscribe(this);
     }
 
+    /**
+     * Pre-check for valid block, if the block is a duplicate or future block, we don't stream to the Ring Buffer.
+     * @param blockItems the list of block items
+     * @return true if the block should stream forward to RB otherwise false
+     */
     private boolean preCheck(@NonNull final List<BlockItemUnparsed> blockItems) {
 
+        // we only check if is the start of a new block.
         BlockItemUnparsed firstItem = blockItems.getFirst();
         if (!firstItem.hasBlockHeader()) {
             return allowCurrentBlockStream;
         }
 
-        final long nextBlockNumber = noThrowParseBlockHeaderNumber(firstItem);
+        final long nextBlockNumber = attemptParseBlockHeaderNumber(firstItem);
         final long nextExpectedBlockNumber = serviceStatus.getLatestReceivedBlockNumber() + 1;
 
         // temporary workaround so it always allows the first block at startup
@@ -240,16 +253,22 @@ public class ProducerBlockItemObserver
                     nextBlockNumber,
                     nextExpectedBlockNumber);
 
-            notifyOfFutureBlock(serviceStatus.getLatestAckedBlockNumber().getBlockNumber());
+            notifyOfFutureBlock(serviceStatus.getLatestAckedBlock().getBlockNumber());
         }
 
-        // if block is neither duplicate nor future (most be the same as expected)
-        // we allow the stream
+        // if block number is neither duplicate nor future (should be the same as expected)
+        // we allow the stream of subsequent batches
         allowCurrentBlockStream = true;
+        // we also allow the batch that contains the block_header
         return true;
     }
 
-    private long noThrowParseBlockHeaderNumber(@NonNull final BlockItemUnparsed blockItem) {
+    /**
+     * Parse the block header number from the given block item.
+     * If the block header is not parsable, log the error and throw a runtime exception.
+     * This is necessary to wrap the checked exception that is thrown by the parse method.
+     * */
+    private long attemptParseBlockHeaderNumber(@NonNull final BlockItemUnparsed blockItem) {
         try {
             return BlockHeader.PROTOBUF.parse(blockItem.blockHeader()).number();
         } catch (ParseException e) {
@@ -258,8 +277,15 @@ public class ProducerBlockItemObserver
         }
     }
 
+    /**
+     * Get the block hash for the given block number, only if is the latest acked block.
+     * otherwise Empty
+     *
+     * @param blockNumber the block number
+     * @return a promise of block hash if it exists
+     */
     private Optional<Bytes> getBlockHash(final long blockNumber) {
-        final BlockInfo latestAckedBlockNumber = serviceStatus.getLatestAckedBlockNumber();
+        final BlockInfo latestAckedBlockNumber = serviceStatus.getLatestAckedBlock();
         if (latestAckedBlockNumber.getBlockNumber() == blockNumber) {
             return Optional.of(latestAckedBlockNumber.getBlockHash());
         }
@@ -267,6 +293,11 @@ public class ProducerBlockItemObserver
         return Optional.empty();
     }
 
+    /**
+     * Notify the producer of a future block that was not expected was received.
+     *
+     * @param currentBlock the current block number that is persisted and verified.
+     */
     private void notifyOfFutureBlock(final long currentBlock) {
         final EndOfStream endOfStream = EndOfStream.newBuilder()
                 .status(PublishStreamResponseCode.STREAM_ITEMS_BEHIND)
@@ -279,6 +310,11 @@ public class ProducerBlockItemObserver
         publishStreamResponseObserver.onNext(publishStreamResponse);
     }
 
+    /**
+     * Notify the producer of a duplicate block that was received.
+     *
+     * @param duplicateBlockNumber the block number that was received and is a duplicate
+     */
     private void notifyOfDuplicateBlock(final long duplicateBlockNumber) {
         final BlockAcknowledgement blockAcknowledgement = BlockAcknowledgement.newBuilder()
                 .blockAlreadyExists(true)

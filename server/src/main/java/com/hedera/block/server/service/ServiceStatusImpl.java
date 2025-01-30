@@ -23,11 +23,8 @@ public class ServiceStatusImpl implements ServiceStatus {
 
     private final AtomicBoolean isRunning = new AtomicBoolean(true);
     private WebServer webServer;
-
-    private BlockInfo latestAckedBlockNumber;
-
+    private volatile BlockInfo latestAckedBlock;
     private volatile long latestReceivedBlockNumber;
-
     private final int delayMillis;
 
     /**
@@ -99,13 +96,13 @@ public class ServiceStatusImpl implements ServiceStatus {
     }
 
     @Override
-    public BlockInfo getLatestAckedBlockNumber() {
-        return latestAckedBlockNumber;
+    public BlockInfo getLatestAckedBlock() {
+        return latestAckedBlock;
     }
 
     @Override
-    public void setLatestAckedBlockNumber(BlockInfo latestAckedBlockNumber) {
-        this.latestAckedBlockNumber = latestAckedBlockNumber;
+    public void setLatestAckedBlock(BlockInfo latestAckedBlock) {
+        this.latestAckedBlock = latestAckedBlock;
     }
 
     @Override

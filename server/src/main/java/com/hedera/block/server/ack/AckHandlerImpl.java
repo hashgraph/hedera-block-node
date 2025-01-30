@@ -122,7 +122,7 @@ public class AckHandlerImpl implements AckHandler {
                 lastAcknowledgedBlockNumber = nextBlock;
 
                 // Update the service status
-                serviceStatus.setLatestAckedBlockNumber(info);
+                serviceStatus.setLatestAckedBlock(info);
 
                 // Remove from map if desired (so we don't waste memory)
                 blockInfo.remove(nextBlock);
