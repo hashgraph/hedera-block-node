@@ -110,6 +110,9 @@ class ConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEven
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isTimeoutExpired() {
         return livenessCalculator.isTimeoutExpired();
@@ -192,6 +195,9 @@ class ConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEven
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void unsubscribe() {
         prevSubscriptionHandler.unsubscribe();

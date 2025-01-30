@@ -11,6 +11,11 @@ import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
+/**
+ * The AsyncConsumerStreamResponseObserver class is responsible for decoupling the
+ * RingBuffer worker threads from the consumer processing required to send each
+ * response to a downstream consumer.
+ */
 class AsyncConsumerStreamResponseObserver
         implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> {
 
@@ -18,6 +23,13 @@ class AsyncConsumerStreamResponseObserver
     private final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
     private final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> nextBlockNodeEventHandler;
 
+    /**
+     * Constructor for the AsyncConsumerStreamResponseObserver class.
+     *
+     * @param executorService the executor service to use for asynchronous processing
+     * @param subscriptionHandler the handler for managing subscriptions
+     * @param nextBlockNodeEventHandler the next block node event handler in the chain
+     */
     public AsyncConsumerStreamResponseObserver(
             @NonNull final ExecutorService executorService,
             @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,
@@ -30,6 +42,9 @@ class AsyncConsumerStreamResponseObserver
         this.nextBlockNodeEventHandler = Objects.requireNonNull(nextBlockNodeEventHandler);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onEvent(
             @NonNull final ObjectEvent<SubscribeStreamResponseUnparsed> event, final long l, final boolean b) {
@@ -48,6 +63,9 @@ class AsyncConsumerStreamResponseObserver
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void unsubscribe() {
         subscriptionHandler.unsubscribe(this);
