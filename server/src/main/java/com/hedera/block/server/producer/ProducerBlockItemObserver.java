@@ -164,7 +164,7 @@ public class ProducerBlockItemObserver
     private PublishStreamResponse buildErrorStreamResponse() {
         long blockNumber = serviceStatus.getLatestAckedBlock() != null
                 ? serviceStatus.getLatestAckedBlock().getBlockNumber()
-                : 0;
+                : serviceStatus.getLatestReceivedBlockNumber();
         final EndOfStream endOfStream = EndOfStream.newBuilder()
                 .blockNumber(blockNumber)
                 .status(PublishStreamResponseCode.STREAM_ITEMS_INTERNAL_ERROR)

@@ -110,7 +110,7 @@ public class NotifierImpl extends SubscriptionHandlerBase<PublishStreamResponse>
     private PublishStreamResponse buildErrorStreamResponse() {
         long blockNumber = serviceStatus.getLatestAckedBlock() != null
                 ? serviceStatus.getLatestAckedBlock().getBlockNumber()
-                : 0;
+                : serviceStatus.getLatestReceivedBlockNumber();
         final EndOfStream endOfStream = EndOfStream.newBuilder()
                 .status(PublishStreamResponseCode.STREAM_ITEMS_INTERNAL_ERROR)
                 .blockNumber(blockNumber)
