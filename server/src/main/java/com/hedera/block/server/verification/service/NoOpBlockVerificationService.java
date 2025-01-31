@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.verification.service;
 
+import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -9,12 +10,12 @@ import java.util.List;
 
 /** No-op implementation of the {@link BlockVerificationService}. */
 public class NoOpBlockVerificationService implements BlockVerificationService {
+    final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     /**
      * Constructs a no-op block verification service.
      */
     public NoOpBlockVerificationService() {
-        System.Logger LOGGER = System.getLogger(getClass().getName());
         LOGGER.log(INFO, "Using " + getClass().getName());
     }
 
@@ -23,6 +24,6 @@ public class NoOpBlockVerificationService implements BlockVerificationService {
      */
     @Override
     public void onBlockItemsReceived(@NonNull List<BlockItemUnparsed> blockItems) {
-        // no-op
+        LOGGER.log(DEBUG, "{0} is ignoring {1} block items.", getClass().getName(), blockItems.size());
     }
 }
