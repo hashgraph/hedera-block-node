@@ -52,7 +52,9 @@ class AsyncConsumerStreamResponseObserver
         try {
             completionService.submit(new Task(event, l, b, subscriptionHandler, this, nextBlockNodeEventHandler));
 
-            Future<Void> future = completionService.poll(); // Non-blocking check
+            // Non-blocking check - take() propagates
+            // exceptions we rely on upstream to handle
+            Future<Void> future = completionService.take();
             if (future != null) {
                 future.get();
             }

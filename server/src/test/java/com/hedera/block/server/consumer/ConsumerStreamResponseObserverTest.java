@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.consumer;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -183,7 +183,7 @@ public class ConsumerStreamResponseObserverTest {
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
                 completionService, testClock, streamMediator, responseStreamObserver, testContext);
-        assertThrows(IllegalArgumentException.class, () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
+        assertThatIllegalArgumentException().isThrownBy(() -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
     }
 
     @Test
@@ -196,7 +196,7 @@ public class ConsumerStreamResponseObserverTest {
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
                 completionService, testClock, streamMediator, responseStreamObserver, testContext);
 
-        assertThrows(IllegalArgumentException.class, () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
+        assertThatIllegalArgumentException().isThrownBy(() -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
     }
 
     @Test
