@@ -166,7 +166,7 @@ public class ConsumerStreamResponseObserverTest {
     }
 
     @Test
-    public void testSubscriberStreamResponseIsBlockItemWhenBlockItemIsNull() {
+    public void testSubscriberStreamResponseIsBlockItemWhenBlockItemIsNull() throws Exception {
 
         // The generated objects contain safeguards to prevent a SubscribeStreamResponse
         // being created with a null BlockItem. Here, I have to used a spy() to even
@@ -183,11 +183,19 @@ public class ConsumerStreamResponseObserverTest {
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
                 completionService, testClock, streamMediator, responseStreamObserver, testContext);
+
+        // This call will throw an exception but, because of the async
+        // service executor, the exception will not get caught until the
+        // next call.
+        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
+        Thread.sleep(testTimeout);
+
+        // This second call will throw the exception.
         assertThatIllegalArgumentException().isThrownBy(() -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
     }
 
     @Test
-    public void testSubscribeStreamResponseTypeNotSupported() {
+    public void testSubscribeStreamResponseTypeNotSupported() throws Exception {
 
         final SubscribeStreamResponseUnparsed subscribeStreamResponse =
                 SubscribeStreamResponseUnparsed.newBuilder().build();
@@ -196,6 +204,13 @@ public class ConsumerStreamResponseObserverTest {
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
                 completionService, testClock, streamMediator, responseStreamObserver, testContext);
 
+        // This call will throw an exception but, because of the async
+        // service executor, the exception will not get caught until the
+        // next call.
+        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
+        Thread.sleep(testTimeout);
+
+        // This second call will throw the exception.
         assertThatIllegalArgumentException().isThrownBy(() -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
     }
 
@@ -215,6 +230,9 @@ public class ConsumerStreamResponseObserverTest {
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
                 completionService, testClock, streamMediator, responseStreamObserver, testContext);
+
+        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
+        Thread.sleep(testTimeout);
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         verify(streamMediator, timeout(testTimeout).times(1)).unsubscribe(any());
@@ -236,6 +254,8 @@ public class ConsumerStreamResponseObserverTest {
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
                 completionService, testClock, streamMediator, responseStreamObserver, testContext);
+        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
+        Thread.sleep(testTimeout);
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         verify(streamMediator, timeout(testTimeout).times(1)).unsubscribe(any());
