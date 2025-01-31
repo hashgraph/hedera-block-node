@@ -11,7 +11,8 @@ import com.swirlds.config.api.ConfigProperty;
  *
  * <p>NotifierConfig will set the ring buffer size for the notifier.
  *
- * @param ringBufferSize the size of the ring buffer used by the notifier
+ * @param ringBufferSize the number of available "slots" the ring buffer uses internally to store
+ *                       events.
  */
 @ConfigData("notifier")
 public record NotifierConfig(@Loggable @ConfigProperty(defaultValue = "1024") int ringBufferSize) {
