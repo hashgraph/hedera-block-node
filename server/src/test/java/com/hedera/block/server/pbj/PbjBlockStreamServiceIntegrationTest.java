@@ -678,7 +678,8 @@ public class PbjBlockStreamServiceIntegrationTest {
 
     private static Bytes buildEndOfStreamResponse() {
         final EndOfStream endOfStream = EndOfStream.newBuilder()
-                .status(PublishStreamResponseCode.STREAM_ITEMS_UNKNOWN)
+                .status(PublishStreamResponseCode.STREAM_ITEMS_INTERNAL_ERROR)
+                .blockNumber(0L)
                 .build();
         return PublishStreamResponse.PROTOBUF.toBytes(
                 PublishStreamResponse.newBuilder().status(endOfStream).build());
@@ -696,10 +697,11 @@ public class PbjBlockStreamServiceIntegrationTest {
     private PbjBlockStreamServiceProxy buildBlockStreamService(
             final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter) {
 
+        final BlockRemover blockRemover = mock(BlockRemover.class);
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final var streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);
         final var notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
-        final var blockManager = new AckHandlerImpl(notifier, false);
+        final var blockManager = new AckHandlerImpl(notifier, false, serviceStatus, blockRemover);
         final var blockVerificationSessionFactory = getBlockVerificationSessionFactory();
 
         final var BlockVerificationService = new BlockVerificationServiceImpl(

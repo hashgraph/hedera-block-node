@@ -29,6 +29,7 @@ module com.hedera.block.server {
     exports com.hedera.block.server.verification.session;
     exports com.hedera.block.server.verification.signature;
     exports com.hedera.block.server.verification.service;
+    exports com.hedera.block.server.block;
 
     requires com.hedera.block.common;
     requires com.hedera.block.stream;

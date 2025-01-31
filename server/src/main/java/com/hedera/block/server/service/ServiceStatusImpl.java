@@ -4,6 +4,7 @@ package com.hedera.block.server.service;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
+import com.hedera.block.server.block.BlockInfo;
 import com.hedera.block.server.config.BlockNodeContext;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.helidon.webserver.WebServer;
@@ -22,7 +23,8 @@ public class ServiceStatusImpl implements ServiceStatus {
 
     private final AtomicBoolean isRunning = new AtomicBoolean(true);
     private WebServer webServer;
-
+    private volatile BlockInfo latestAckedBlock;
+    private volatile long latestReceivedBlockNumber;
     private final int delayMillis;
 
     /**
@@ -91,5 +93,25 @@ public class ServiceStatusImpl implements ServiceStatus {
 
         // Stop the web server
         webServer.stop();
+    }
+
+    @Override
+    public BlockInfo getLatestAckedBlock() {
+        return latestAckedBlock;
+    }
+
+    @Override
+    public void setLatestAckedBlock(BlockInfo latestAckedBlock) {
+        this.latestAckedBlock = latestAckedBlock;
+    }
+
+    @Override
+    public long getLatestReceivedBlockNumber() {
+        return latestReceivedBlockNumber;
+    }
+
+    @Override
+    public void setLatestReceivedBlockNumber(long latestReceivedBlockNumber) {
+        this.latestReceivedBlockNumber = latestReceivedBlockNumber;
     }
 }
