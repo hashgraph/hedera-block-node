@@ -9,6 +9,7 @@ import com.hedera.block.suites.BaseSuite;
 import java.io.IOException;
 import java.util.concurrent.Future;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.Container;
@@ -46,6 +47,7 @@ public class PositiveDataPersistenceTests extends BaseSuite {
      *     commands
      */
     @Test
+    @Disabled("Needs simulator to be updated with blocks that pass verification @todo(502) @todo(175)")
     public void verifyBlockDataSavedInCorrectDirectory() throws InterruptedException, IOException {
         String savedBlocksFolderBefore = getContainerCommandResult(GET_BLOCKS_COMMAND);
         int savedBlocksCountBefore = getSavedBlocksCount(savedBlocksFolderBefore);
