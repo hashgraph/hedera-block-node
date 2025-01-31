@@ -25,7 +25,7 @@ import org.mockito.Mock;
 class AckHandlerImplTest {
 
     private Notifier notifier;
-    private AckHandlerImpl blockManager;
+    private AckHandlerImpl ackHandler;
 
     @Mock
     private ServiceStatus serviceStatus;
@@ -39,7 +39,7 @@ class AckHandlerImplTest {
         blockRemover = mock(BlockRemover.class);
         serviceStatus = mock(ServiceStatus.class);
         // By default, we do NOT skip acknowledgements
-        blockManager = new AckHandlerImpl(notifier, false, serviceStatus, blockRemover);
+        ackHandler = new AckHandlerImpl(notifier, false, serviceStatus, blockRemover);
     }
 
     @Test
@@ -61,10 +61,10 @@ class AckHandlerImplTest {
     @DisplayName("blockVerificationFailed should send end-of-stream message with appropriate code")
     void blockVerificationFailed_sendsEndOfStream() {
         // when
-        blockManager.blockVerificationFailed(5L);
+        ackHandler.blockVerificationFailed(2L);
 
         // then
-        verify(notifier, times(1)).sendEndOfStream(5L, PublishStreamResponseCode.STREAM_ITEMS_BAD_STATE_PROOF);
+        verify(notifier, times(1)).sendEndOfStream(-1L, PublishStreamResponseCode.STREAM_ITEMS_BAD_STATE_PROOF);
         verifyNoMoreInteractions(notifier);
     }
 
@@ -72,7 +72,7 @@ class AckHandlerImplTest {
     @DisplayName("blockPersisted alone does not ACK")
     void blockPersisted_thenNoAckWithoutVerification() {
         // when
-        blockManager.blockPersisted(1L);
+        ackHandler.blockPersisted(1L);
 
         // then
         // We have not verified the block, so no ACK is sent
@@ -83,7 +83,7 @@ class AckHandlerImplTest {
     @DisplayName("blockVerified alone does not ACK")
     void blockVerified_thenNoAckWithoutPersistence() {
         // when
-        blockManager.blockVerified(1L, Bytes.wrap("hash1".getBytes()));
+        ackHandler.blockVerified(1L, Bytes.wrap("hash1".getBytes()));
 
         // then
         verifyNoInteractions(notifier);
@@ -97,8 +97,8 @@ class AckHandlerImplTest {
         Bytes blockHash = Bytes.wrap("hash1".getBytes());
 
         // when
-        blockManager.blockPersisted(blockNumber);
-        blockManager.blockVerified(blockNumber, blockHash);
+        ackHandler.blockPersisted(blockNumber);
+        ackHandler.blockVerified(blockNumber, blockHash);
 
         // then
         // We expect a single ACK for block #1
@@ -120,16 +120,16 @@ class AckHandlerImplTest {
 
         // when
         // Mark block1 persisted and verified
-        blockManager.blockPersisted(block1);
-        blockManager.blockVerified(block1, hash1);
+        ackHandler.blockPersisted(block1);
+        ackHandler.blockVerified(block1, hash1);
 
         // Mark block2 persisted and verified
-        blockManager.blockPersisted(block2);
-        blockManager.blockVerified(block2, hash2);
+        ackHandler.blockPersisted(block2);
+        ackHandler.blockVerified(block2, hash2);
 
         // Mark block3 persisted and verified
-        blockManager.blockPersisted(block3);
-        blockManager.blockVerified(block3, hash3);
+        ackHandler.blockPersisted(block3);
+        ackHandler.blockVerified(block3, hash3);
 
         // then
         // The manager should ACK blocks in ascending order (1,2,3).
@@ -165,11 +165,11 @@ class AckHandlerImplTest {
 
         // when
         // Fully persist & verify block #10 -> Should ACK
-        blockManager.blockPersisted(block1);
-        blockManager.blockVerified(block1, hash1);
+        ackHandler.blockPersisted(block1);
+        ackHandler.blockVerified(block1, hash1);
 
         // Partially persist block #11
-        blockManager.blockPersisted(block2);
+        ackHandler.blockPersisted(block2);
         // We do NOT verify block #11 yet
 
         // then
@@ -178,7 +178,7 @@ class AckHandlerImplTest {
         verifyNoMoreInteractions(notifier);
 
         // Now verify block #11
-        blockManager.blockVerified(block2, hash2);
+        ackHandler.blockVerified(block2, hash2);
 
         // Expect the second ACK
         verify(notifier, times(1)).sendAck(eq(block2), eq(hash2), eq(false));

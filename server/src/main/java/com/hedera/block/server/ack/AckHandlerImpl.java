@@ -89,7 +89,7 @@ public class AckHandlerImpl implements AckHandler {
      */
     @Override
     public void blockVerificationFailed(long blockNumber) {
-        notifier.sendEndOfStream(blockNumber, PublishStreamResponseCode.STREAM_ITEMS_BAD_STATE_PROOF);
+        notifier.sendEndOfStream(lastAcknowledgedBlockNumber, PublishStreamResponseCode.STREAM_ITEMS_BAD_STATE_PROOF);
         try {
             blockRemover.remove(blockNumber);
         } catch (IOException e) {
