@@ -231,8 +231,13 @@ public class ConsumerStreamResponseObserverTest {
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
                 completionService, testClock, streamMediator, responseStreamObserver, testContext);
 
+        // This call will throw an exception but, because of the async
+        // service executor, the exception will not get caught until the
+        // next call.
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
         Thread.sleep(testTimeout);
+
+        // This second call will throw the exception.
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         verify(streamMediator, timeout(testTimeout).times(1)).unsubscribe(any());
@@ -254,8 +259,14 @@ public class ConsumerStreamResponseObserverTest {
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
                 completionService, testClock, streamMediator, responseStreamObserver, testContext);
+
+        // This call will throw an exception but, because of the async
+        // service executor, the exception will not get caught until the
+        // next call.
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
         Thread.sleep(testTimeout);
+
+        // This second call will throw the exception.
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         verify(streamMediator, timeout(testTimeout).times(1)).unsubscribe(any());
