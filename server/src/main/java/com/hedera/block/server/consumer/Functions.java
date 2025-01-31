@@ -10,23 +10,23 @@ import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.UncheckedIOException;
+import java.lang.System.Logger;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
 /**
- * Functions is meant to contain static classes to offset lambda performance
- * penalties.
+ * Use Functions static classes to offset lambda performance penalties.
  */
 final class Functions {
     private Functions() {}
 
     /**
-     * Task is a Callable used to stream events asynchronously to
+     * ProcessOutboundEvent is a Callable used to stream events asynchronously to
      * a consumer.
      */
-    static final class Task implements Callable<Void> {
+    static final class ProcessOutboundEvent implements Callable<Void> {
 
-        private static final System.Logger LOGGER = System.getLogger(Task.class.getName());
+        private static final Logger LOGGER = System.getLogger(ProcessOutboundEvent.class.getName());
 
         private final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
         private final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> nextBlockNodeEventHandler;
@@ -37,7 +37,7 @@ final class Functions {
         private final boolean b;
 
         // spotless:off
-        Task(@NonNull final ObjectEvent<SubscribeStreamResponseUnparsed> event,
+        ProcessOutboundEvent(@NonNull final ObjectEvent<SubscribeStreamResponseUnparsed> event,
              final long l,
              final boolean b,
              @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,

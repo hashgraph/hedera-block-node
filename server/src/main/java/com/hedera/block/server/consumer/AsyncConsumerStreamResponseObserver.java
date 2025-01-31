@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.consumer;
 
-import com.hedera.block.server.consumer.Functions.Task;
+import com.hedera.block.server.consumer.Functions.ProcessOutboundEvent;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
@@ -50,7 +50,8 @@ class AsyncConsumerStreamResponseObserver
             @NonNull final ObjectEvent<SubscribeStreamResponseUnparsed> event, final long l, final boolean b) {
 
         try {
-            completionService.submit(new Task(event, l, b, subscriptionHandler, this, nextBlockNodeEventHandler));
+            completionService.submit(
+                    new ProcessOutboundEvent(event, l, b, subscriptionHandler, this, nextBlockNodeEventHandler));
 
             // Non-blocking check - take() propagates
             // exceptions we rely on upstream to handle
