@@ -4,6 +4,7 @@ package com.hedera.block.simulator.grpc.impl;
 import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlocksConsumed;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
+import static java.lang.System.Logger.Level.WARNING;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.simulator.metrics.MetricsService;
@@ -15,6 +16,7 @@ import io.grpc.stub.StreamObserver;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implementation of StreamObserver that handles responses from the block stream subscription.
@@ -30,6 +32,7 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
     private final CountDownLatch streamLatch;
     private final int lastKnownStatusesCapacity;
     private final Deque<String> lastKnownStatuses;
+    private final AtomicLong blocksConsumed = new AtomicLong(0);
 
     /**
      * Constructs a new ConsumerStreamObserver.
@@ -98,8 +101,25 @@ public class ConsumerStreamObserver implements StreamObserver<SubscribeStreamRes
     private void processBlockItems(List<BlockItem> blockItems) {
         blockItems.stream().filter(BlockItem::hasBlockProof).forEach(blockItem -> {
             metricsService.get(LiveBlocksConsumed).increment();
-            LOGGER.log(
-                    INFO, "Received block number: " + blockItem.getBlockProof().getBlock());
+
+            long blockNumber = blockItem.getBlockProof().getBlock();
+            LOGGER.log(INFO, "Received block number: " + blockNumber);
+            logNonAscendingBlockNumbers(blockNumber);
         });
+    }
+
+    private void logNonAscendingBlockNumbers(long blockNumber) {
+        if (blocksConsumed.get() == 0) {
+            // Set the first block number in case we started
+            // a recording in the middle when running a range.
+            // e.g. blocks 1000-2000 - don't assume we're starting
+            // with block 1
+            blocksConsumed.set(blockNumber);
+        } else {
+            long count = blocksConsumed.incrementAndGet();
+            if (count != blockNumber) {
+                LOGGER.log(WARNING, "Block number mismatch: expected %d, received %d".formatted(count, blockNumber));
+            }
+        }
     }
 }
