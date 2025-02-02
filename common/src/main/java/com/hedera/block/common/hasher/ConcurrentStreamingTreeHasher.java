@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-package com.hedera.block.server.verification.hasher;
+package com.hedera.block.common.hasher;
 
-import static com.hedera.block.server.verification.hasher.HashingUtilities.noThrowSha384HashOf;
+import static com.hedera.block.common.hasher.HashingUtilities.noThrowSha384HashOf;
 import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.common.utils.Preconditions;

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-package com.hedera.block.server.verification.hasher;
+package com.hedera.block.common.hasher;
 
-import static com.hedera.block.server.verification.hasher.ConcurrentStreamingTreeHasher.rootHashFrom;
-import static com.hedera.block.server.verification.hasher.StreamingTreeHasher.HASH_LENGTH;
+import static com.hedera.block.common.hasher.ConcurrentStreamingTreeHasher.rootHashFrom;
+import static com.hedera.block.common.hasher.StreamingTreeHasher.HASH_LENGTH;
 import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,12 +12,9 @@ import java.nio.ByteBuffer;
 import java.util.SplittableRandom;
 import java.util.concurrent.ForkJoinPool;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
 class ConcurrentStreamingTreeHasherTest {
     private static final SplittableRandom RANDOM = new SplittableRandom();
 
