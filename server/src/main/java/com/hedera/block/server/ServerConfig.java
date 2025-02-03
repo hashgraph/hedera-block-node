@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server;
 
+import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.config.logging.Loggable;
 import com.swirlds.config.api.ConfigData;
 import com.swirlds.config.api.ConfigProperty;
@@ -22,17 +23,38 @@ public record ServerConfig(
                 @Min(minMaxMessageSizeBytes)
                 @Max(maxMaxMessageSizeBytes)
                 int maxMessageSizeBytes,
+        @Loggable
+                @ConfigProperty(defaultValue = defaultSocketSendBufferSizeBytes)
+                @Min(minSocketSendBufferSizeBytes)
+                @Max(Integer.MAX_VALUE)
+                int socketSendBufferSizeBytes,
+        @Loggable
+                @ConfigProperty(defaultValue = defaultSocketReceiveBufferSizeBytes)
+                @Min(minSocketReceiveBufferSizeBytes)
+                @Max(Integer.MAX_VALUE)
+                int socketReceiveBufferSizeBytes,
         @Loggable @ConfigProperty(defaultValue = defaultPort) @Min(minPort) @Max(maxPort) int port) {
 
     // Constants for maxMessageSizeBytes property
-    private static final String defaultMaxMessageSizeBytes = "4_194_304";
-    private static final long minMaxMessageSizeBytes = 10_240;
-    private static final long maxMaxMessageSizeBytes = 16_777_215;
+    static final String defaultMaxMessageSizeBytes = "4_194_304";
+    static final int minMaxMessageSizeBytes = 10_240;
+    static final int maxMaxMessageSizeBytes = 16_777_215;
+
+    // Constants for connectionSendBufferSize property
+    static final String defaultSocketSendBufferSizeBytes = "32768";
+    static final int minSocketSendBufferSizeBytes = 32768;
+
+    // Constants for connectionReceiveBufferSize property
+    static final String defaultSocketReceiveBufferSizeBytes = "32768";
+    static final int minSocketReceiveBufferSizeBytes = 32768;
 
     // Constants for port property
-    private static final String defaultPort = "8080";
-    private static final int minPort = 1024;
-    private static final int maxPort = 65_535;
+    static final String defaultPort = "8080";
+    static final int minPort = 1024;
+    static final int maxPort = 65_535;
+
+    private static final String SERVER_CONFIG_PREFIX = "server.";
+    private static final String ERROR_MSG_TEMPLATE = " value %d is out of range [%d, %d]";
 
     /**
      * Validate the configuration.
@@ -40,28 +62,21 @@ public record ServerConfig(
      * @throws IllegalArgumentException if the configuration is invalid
      */
     public ServerConfig {
-
-        validateMaxMessageSizeBytes(maxMessageSizeBytes);
-        validatePort(port);
-    }
-
-    private void validatePort(int port) {
-        if (port < minPort) {
-            throw new IllegalArgumentException("port must be greater than " + minPort);
-        }
-
-        if (port > maxPort) {
-            throw new IllegalArgumentException("port must be less than " + maxPort);
-        }
-    }
-
-    private void validateMaxMessageSizeBytes(int maxMessageSizeBytes) {
-        if (maxMessageSizeBytes < minMaxMessageSizeBytes) {
-            throw new IllegalArgumentException("maxMessageSizeBytes must be greater than " + minMaxMessageSizeBytes);
-        }
-
-        if (maxMessageSizeBytes > maxMaxMessageSizeBytes) {
-            throw new IllegalArgumentException("maxMessageSizeBytes must be less than " + maxMaxMessageSizeBytes);
-        }
+        Preconditions.requireInRange(
+                maxMessageSizeBytes,
+                minMaxMessageSizeBytes,
+                maxMaxMessageSizeBytes,
+                SERVER_CONFIG_PREFIX + "maxMessageSizeBytes" + ERROR_MSG_TEMPLATE);
+        Preconditions.requireInRange(
+                socketSendBufferSizeBytes,
+                minSocketSendBufferSizeBytes,
+                Integer.MAX_VALUE,
+                SERVER_CONFIG_PREFIX + "socketSendBufferSizeBytes" + ERROR_MSG_TEMPLATE);
+        Preconditions.requireInRange(
+                socketReceiveBufferSizeBytes,
+                minSocketReceiveBufferSizeBytes,
+                Integer.MAX_VALUE,
+                SERVER_CONFIG_PREFIX + "socketReceiveBufferSizeBytes" + ERROR_MSG_TEMPLATE);
+        Preconditions.requireInRange(port, minPort, maxPort, SERVER_CONFIG_PREFIX + "port" + ERROR_MSG_TEMPLATE);
     }
 }

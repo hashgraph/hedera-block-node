@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.consumer;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -25,6 +25,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.InstantSource;
 import java.util.Map;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Executors;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -52,18 +56,25 @@ public class ConsumerStreamResponseObserverTest {
 
     final BlockNodeContext testContext;
 
+    private CompletionService<Void> completionService;
+
+    @BeforeEach
+    public void setUp() {
+        completionService = new ExecutorCompletionService<>(Executors.newSingleThreadExecutor());
+    }
+
     public ConsumerStreamResponseObserverTest() throws IOException {
         this.testContext = TestConfigUtil.getTestBlockNodeContext(
                 Map.of(TestConfigUtil.CONSUMER_TIMEOUT_THRESHOLD_KEY, String.valueOf(TIMEOUT_THRESHOLD_MILLIS)));
     }
 
     @Test
-    public void testProducerTimeoutWithinWindow() {
+    public void testProducerTimeoutWithinWindow() throws Exception {
 
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
-        final var consumerBlockItemObserver =
-                new ConsumerStreamResponseObserver(testClock, streamMediator, responseStreamObserver, testContext);
+        final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
+                completionService, testClock, streamMediator, responseStreamObserver, testContext);
 
         final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
         final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder()
@@ -80,35 +91,35 @@ public class ConsumerStreamResponseObserverTest {
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         // verify the observer is called with the next BlockItem
-        verify(responseStreamObserver).onNext(subscribeStreamResponse);
+        verify(responseStreamObserver, timeout(testTimeout)).onNext(subscribeStreamResponse);
 
         // verify the mediator is NOT called to unsubscribe the observer
         verify(streamMediator, timeout(testTimeout).times(0)).unsubscribe(consumerBlockItemObserver);
     }
 
     @Test
-    public void testProducerTimeoutOutsideWindow() throws InterruptedException {
+    public void testProducerTimeoutOutsideWindow() throws Exception {
 
         // Mock a clock with 2 different return values in response to anticipated
         // millis() calls. Here the second call will always be outside the timeout window.
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS + 1);
 
-        final var consumerBlockItemObserver =
-                new ConsumerStreamResponseObserver(testClock, streamMediator, responseStreamObserver, testContext);
+        final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
+                completionService, testClock, streamMediator, responseStreamObserver, testContext);
 
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
-        verify(streamMediator).unsubscribe(consumerBlockItemObserver);
+        verify(streamMediator, timeout(testTimeout)).unsubscribe(consumerBlockItemObserver);
     }
 
     @Test
-    public void testConsumerNotToSendBeforeBlockHeader() {
+    public void testConsumerNotToSendBeforeBlockHeader() throws Exception {
 
         // Mock a clock with 2 different return values in response to anticipated
         // millis() calls. Here the second call will always be inside the timeout window.
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
-        final var consumerBlockItemObserver =
-                new ConsumerStreamResponseObserver(testClock, streamMediator, responseStreamObserver, testContext);
+        final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
+                completionService, testClock, streamMediator, responseStreamObserver, testContext);
 
         // Send non-header BlockItems to validate that the observer does not send them
         for (int i = 1; i <= 10; i++) {
@@ -155,7 +166,7 @@ public class ConsumerStreamResponseObserverTest {
     }
 
     @Test
-    public void testSubscriberStreamResponseIsBlockItemWhenBlockItemIsNull() {
+    public void testSubscriberStreamResponseIsBlockItemWhenBlockItemIsNull() throws Exception {
 
         // The generated objects contain safeguards to prevent a SubscribeStreamResponse
         // being created with a null BlockItem. Here, I have to used a spy() to even
@@ -170,26 +181,41 @@ public class ConsumerStreamResponseObserverTest {
         when(subscribeStreamResponse.blockItems()).thenReturn(null);
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
-        final var consumerBlockItemObserver =
-                new ConsumerStreamResponseObserver(testClock, streamMediator, responseStreamObserver, testContext);
-        assertThrows(IllegalArgumentException.class, () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
+        final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
+                completionService, testClock, streamMediator, responseStreamObserver, testContext);
+
+        // This call will throw an exception but, because of the async
+        // service executor, the exception will not get caught until the
+        // next call.
+        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
+        Thread.sleep(testTimeout);
+
+        // This second call will throw the exception.
+        assertThatIllegalArgumentException().isThrownBy(() -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
     }
 
     @Test
-    public void testSubscribeStreamResponseTypeNotSupported() {
+    public void testSubscribeStreamResponseTypeNotSupported() throws Exception {
 
         final SubscribeStreamResponseUnparsed subscribeStreamResponse =
                 SubscribeStreamResponseUnparsed.newBuilder().build();
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
-        final var consumerBlockItemObserver =
-                new ConsumerStreamResponseObserver(testClock, streamMediator, responseStreamObserver, testContext);
+        final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
+                completionService, testClock, streamMediator, responseStreamObserver, testContext);
 
-        assertThrows(IllegalArgumentException.class, () -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
+        // This call will throw an exception but, because of the async
+        // service executor, the exception will not get caught until the
+        // next call.
+        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
+        Thread.sleep(testTimeout);
+
+        // This second call will throw the exception.
+        assertThatIllegalArgumentException().isThrownBy(() -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
     }
 
     @Test
-    public void testUncheckedIOExceptionException() {
+    public void testUncheckedIOExceptionException() throws Exception {
         final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
         final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder()
                 .blockHeader(BlockHeader.PROTOBUF.toBytes(blockHeader))
@@ -202,15 +228,23 @@ public class ConsumerStreamResponseObserverTest {
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
         doThrow(UncheckedIOException.class).when(responseStreamObserver).onNext(subscribeStreamResponse);
 
-        final var consumerBlockItemObserver =
-                new ConsumerStreamResponseObserver(testClock, streamMediator, responseStreamObserver, testContext);
+        final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
+                completionService, testClock, streamMediator, responseStreamObserver, testContext);
+
+        // This call will throw an exception but, because of the async
+        // service executor, the exception will not get caught until the
+        // next call.
+        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
+        Thread.sleep(testTimeout);
+
+        // This second call will throw the exception.
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         verify(streamMediator, timeout(testTimeout).times(1)).unsubscribe(any());
     }
 
     @Test
-    public void testRuntimeException() {
+    public void testRuntimeException() throws Exception {
         final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
         final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder()
                 .blockHeader(BlockHeader.PROTOBUF.toBytes(blockHeader))
@@ -223,8 +257,16 @@ public class ConsumerStreamResponseObserverTest {
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
         doThrow(RuntimeException.class).when(responseStreamObserver).onNext(subscribeStreamResponse);
 
-        final var consumerBlockItemObserver =
-                new ConsumerStreamResponseObserver(testClock, streamMediator, responseStreamObserver, testContext);
+        final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
+                completionService, testClock, streamMediator, responseStreamObserver, testContext);
+
+        // This call will throw an exception but, because of the async
+        // service executor, the exception will not get caught until the
+        // next call.
+        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
+        Thread.sleep(testTimeout);
+
+        // This second call will throw the exception.
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         verify(streamMediator, timeout(testTimeout).times(1)).unsubscribe(any());

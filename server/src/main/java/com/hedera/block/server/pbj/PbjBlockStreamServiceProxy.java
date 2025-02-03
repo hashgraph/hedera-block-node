@@ -5,7 +5,7 @@ import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.consumer.ConsumerStreamResponseObserver;
+import com.hedera.block.server.consumer.LiveStreamEventHandlerBuilder;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.LiveStreamMediator;
@@ -29,6 +29,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Clock;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Executors;
 import javax.inject.Inject;
 
 /**
@@ -163,11 +165,13 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
         if (serviceStatus.isRunning()) {
             // Unsubscribe any expired notifiers
             streamMediator.unsubscribeAllExpired();
-
-            final var consumerStreamResponseObserver = new ConsumerStreamResponseObserver(
-                    Clock.systemDefaultZone(), streamMediator, subscribeStreamResponseObserver, blockNodeContext);
-
-            streamMediator.subscribe(consumerStreamResponseObserver);
+            final var liveStreamEventHandler = LiveStreamEventHandlerBuilder.build(
+                    new ExecutorCompletionService<>(Executors.newSingleThreadExecutor()),
+                    Clock.systemDefaultZone(),
+                    streamMediator,
+                    subscribeStreamResponseObserver,
+                    blockNodeContext);
+            streamMediator.subscribe(liveStreamEventHandler);
         } else {
             LOGGER.log(ERROR, "Server Streaming subscribeBlockStream gRPC Service is not currently running");
 

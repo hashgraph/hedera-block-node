@@ -11,7 +11,7 @@ import java.util.List;
  * A class that extends {@link MappedConfigSource} ir order to have project-relevant initialization.
  */
 public final class ServerMappedConfigSourceInitializer {
-    private static final List<ConfigMapping> MAPPINGS = List.of(
+    static final List<ConfigMapping> MAPPINGS = List.of(
             // Please add properties in alphabetical order
 
             // Consumer Config
@@ -42,6 +42,8 @@ public final class ServerMappedConfigSourceInitializer {
 
             // Server Config
             new ConfigMapping("server.maxMessageSizeBytes", "SERVER_MAX_MESSAGE_SIZE_BYTES"),
+            new ConfigMapping("server.socketSendBufferSizeBytes", "SERVER_SOCKET_SEND_BUFFER_SIZE_BYTES"),
+            new ConfigMapping("server.socketReceiveBufferSizeBytes", "SERVER_SOCKET_RECEIVE_BUFFER_SIZE_BYTES"),
             new ConfigMapping("server.port", "SERVER_PORT"),
 
             // Service Config

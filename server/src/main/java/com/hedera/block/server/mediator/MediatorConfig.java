@@ -11,14 +11,14 @@ import com.swirlds.config.api.ConfigProperty;
  *
  * <p>MediatorConfig will set the ring buffer size for the mediator.
  *
- * @param ringBufferSize the size of the ring buffer used by the mediator
+ * @param ringBufferSize the number of available "slots" the ring buffer uses internally to store
+ *                       events.
  * @param type use a predefined type string to replace the mediator component implementation.
  *  Non-PRODUCTION values should only be used for troubleshooting and development purposes.
  */
-// 131072 works but not with persistence
 @ConfigData("mediator")
 public record MediatorConfig(
-        @Loggable @ConfigProperty(defaultValue = "4_194_304") int ringBufferSize,
+        @Loggable @ConfigProperty(defaultValue = "1_048_576") int ringBufferSize,
         @Loggable @ConfigProperty(defaultValue = "PRODUCTION") MediatorType type) {
 
     /**

@@ -68,6 +68,8 @@ class ServerMappedConfigSourceInitializerTest {
 
         // Server Config
         new ConfigMapping("server.maxMessageSizeBytes", "SERVER_MAX_MESSAGE_SIZE_BYTES"),
+        new ConfigMapping("server.socketSendBufferSizeBytes", "SERVER_SOCKET_SEND_BUFFER_SIZE_BYTES"),
+        new ConfigMapping("server.socketReceiveBufferSizeBytes", "SERVER_SOCKET_RECEIVE_BUFFER_SIZE_BYTES"),
         new ConfigMapping("server.port", "SERVER_PORT"),
 
         // Service Config
@@ -90,7 +92,7 @@ class ServerMappedConfigSourceInitializerTest {
      *     - all fields in all config classes are annotated with the
      *       {@link ConfigProperty} annotation.
      *     - a mapping for all fields in all config classes is present in the
-     *       {@link ServerMappedConfigSourceInitializer#MAPPINGS()}, as defined
+     *       {@link ServerMappedConfigSourceInitializer#MAPPINGS}, as defined
      *       in {@link #allManagedConfigDataTypes()}.
      * </pre>
      * @param config parameterized, config class to test

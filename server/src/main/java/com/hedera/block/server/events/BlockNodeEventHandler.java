@@ -18,4 +18,9 @@ public interface BlockNodeEventHandler<V> extends EventHandler<V> {
     default boolean isTimeoutExpired() {
         return false;
     }
+
+    /**
+     * Use this method to unsubscribe from the event handler.
+     */
+    default void unsubscribe() {}
 }

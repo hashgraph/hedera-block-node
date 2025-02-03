@@ -122,7 +122,7 @@ public class StreamPersistenceHandlerImpl
                 LOGGER.log(ERROR, "Service is not running. Block item will not be processed further.");
             }
         } catch (final Exception e) {
-            LOGGER.log(ERROR, "Failed to persist BlockItems: ", e);
+            LOGGER.log(ERROR, "Failed to persist BlockItems: " + e.getMessage(), e);
 
             metricsService.get(StreamPersistenceHandlerError).increment();
 
@@ -130,10 +130,15 @@ public class StreamPersistenceHandlerImpl
             serviceStatus.stopRunning(getClass().getName());
 
             // Unsubscribe from the mediator to avoid additional onEvent calls.
-            subscriptionHandler.unsubscribe(this);
+            unsubscribe();
 
             // Broadcast the problem to the notifier
             notifier.notifyUnrecoverableError();
         }
+    }
+
+    @Override
+    public void unsubscribe() {
+        subscriptionHandler.unsubscribe(this);
     }
 }
