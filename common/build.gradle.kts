@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 plugins {
     id("org.hiero.gradle.module.library")
-    id("application")
 }
 
 description = "Commons module with logic that could be abstracted and reused."
