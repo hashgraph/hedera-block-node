@@ -679,7 +679,7 @@ public class PbjBlockStreamServiceIntegrationTest {
     private static Bytes buildEndOfStreamResponse() {
         final EndOfStream endOfStream = EndOfStream.newBuilder()
                 .status(PublishStreamResponseCode.STREAM_ITEMS_INTERNAL_ERROR)
-                .blockNumber(0L)
+                .blockNumber(1L)
                 .build();
         return PublishStreamResponse.PROTOBUF.toBytes(
                 PublishStreamResponse.newBuilder().status(endOfStream).build());
