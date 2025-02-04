@@ -136,6 +136,7 @@ public class ProducerBlockItemObserver
                             long blockNumber = BlockHeader.PROTOBUF
                                     .parse(Objects.requireNonNull(blockItemUnparsed.blockHeader()))
                                     .number();
+                            serviceStatus.setLatestReceivedBlockNumber(blockNumber);
                             metricsService.get(CurrentBlockNumberInbound).set(blockNumber);
                         } catch (ParseException e) {
                             throw new RuntimeException(e);
@@ -265,6 +266,7 @@ public class ProducerBlockItemObserver
                     nextExpectedBlockNumber);
 
             notifyOfDuplicateBlock(nextBlockNumber);
+            return false;
         }
 
         // future non-immediate block
@@ -278,6 +280,7 @@ public class ProducerBlockItemObserver
                     nextExpectedBlockNumber);
 
             notifyOfFutureBlock(serviceStatus.getLatestAckedBlock().getBlockNumber());
+            return false;
         }
 
         // if block number is neither duplicate nor future (should be the same as expected)
