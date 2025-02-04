@@ -3,13 +3,13 @@ package com.hedera.block.server.verification.session;
 
 import static java.lang.System.Logger.Level.INFO;
 
+import com.hedera.block.common.hasher.Hashes;
+import com.hedera.block.common.hasher.HashingUtilities;
+import com.hedera.block.common.hasher.StreamingTreeHasher;
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.verification.BlockVerificationStatus;
 import com.hedera.block.server.verification.VerificationResult;
-import com.hedera.block.server.verification.hasher.Hashes;
-import com.hedera.block.server.verification.hasher.HashingUtilities;
-import com.hedera.block.server.verification.hasher.StreamingTreeHasher;
 import com.hedera.block.server.verification.signature.SignatureVerifier;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.stream.BlockProof;

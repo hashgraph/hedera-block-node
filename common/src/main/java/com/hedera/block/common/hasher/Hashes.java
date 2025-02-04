@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-package com.hedera.block.server.verification.hasher;
+package com.hedera.block.common.hasher;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;

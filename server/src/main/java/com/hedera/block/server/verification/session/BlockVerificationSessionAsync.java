@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.verification.session;
 
+import com.hedera.block.common.hasher.ConcurrentStreamingTreeHasher;
 import com.hedera.block.server.metrics.MetricsService;
-import com.hedera.block.server.verification.hasher.ConcurrentStreamingTreeHasher;
 import com.hedera.block.server.verification.signature.SignatureVerifier;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.stream.output.BlockHeader;
