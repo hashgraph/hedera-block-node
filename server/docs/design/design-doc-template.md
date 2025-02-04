@@ -11,6 +11,7 @@
 7. [Configuration](#configuration)
 8. [Metrics](#metrics)
 9. [Exceptions](#exceptions)
+10. [Acceptance Tests](#acceptance-tests)
 
 ## Purpose
 

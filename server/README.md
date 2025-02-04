@@ -3,12 +3,12 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-1. [Prerequisites](#prerequisites)
-1. [Configuration](#configuration)
-1. [Metrics](#metrics)
-1. [Design](#design)
+2. [Prerequisites](#prerequisites)
+3. [Configuration](#configuration)
+4. [Metrics](#metrics)
+5. [Design](#design)
    1. [Block Persistence](#block-persistence)
-   1. [Bi-directional Producer/Consumer Streaming with gRPC](#bi-directional-producerconsumer-streaming-with-grpc)
+   2. [Bi-directional Producer/Consumer Streaming with gRPC](#bi-directional-producerconsumer-streaming-with-grpc)
 
 ## Overview
 
@@ -36,4 +36,4 @@ Refer to the [Block Persistence](docs/design/block-persistence.md) for details o
 
 ### Bi-directional Producer/Consumer Streaming with gRPC
 
-Refer to the [Bi-directional Producer/Consumer Streaming with gRPC](docs/design/bidi-producer-consumers-streaming.md) for details on how the gRPC streaming is implemented.
+Refer to the [Bi-directional Producer/Consumer Streaming with gRPC](docs/design/live-streaming/bidi-producer-consumers-streaming.md) for details on how the gRPC streaming is implemented.
