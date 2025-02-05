@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-package com.hedera.block.simulator.mode;
+package com.hedera.block.simulator.mode.impl;
 
 import static com.hedera.block.simulator.Constants.NANOS_PER_MILLI;
 import static com.hedera.block.simulator.metrics.SimulatorMetricTypes.Counter.LiveBlockItemsSent;
@@ -12,16 +12,17 @@ import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
 import com.hedera.block.simulator.metrics.MetricsService;
+import com.hedera.block.simulator.mode.SimulatorModeHandler;
 import com.hedera.hapi.block.stream.protoc.Block;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.inject.Inject;
 
 /**
  * The {@code PublisherModeHandler} class implements the
  * {@link SimulatorModeHandler} interface
- * and provides the behavior for a mode where only publishing of block data
- * occurs.
+ * and provides the behavior for a mode where simulator is working using PublishBlockStream and acts as a client.
  *
  * <p>
  * This mode handles single operation in the block streaming process, utilizing
@@ -30,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * scenarios where
  * the simulator needs to handle publication of blocks.
  */
-public class PublisherModeHandler implements SimulatorModeHandler {
+public class PublisherClientModeHandler implements SimulatorModeHandler {
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
 
     // Configuration fields
@@ -56,7 +57,8 @@ public class PublisherModeHandler implements SimulatorModeHandler {
      * @param metricsService The service for recording metrics
      * @throws NullPointerException if any parameter is null
      */
-    public PublisherModeHandler(
+    @Inject
+    public PublisherClientModeHandler(
             @NonNull final BlockStreamConfig blockStreamConfig,
             @NonNull final PublishStreamGrpcClient publishStreamGrpcClient,
             @NonNull final BlockStreamManager blockStreamManager,

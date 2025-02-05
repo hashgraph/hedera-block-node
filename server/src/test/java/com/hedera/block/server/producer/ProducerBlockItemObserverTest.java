@@ -192,6 +192,8 @@ public class ProducerBlockItemObserverTest {
 
         // verify helidonPublishPipeline.onNext() is called once with publishStreamResponse
         verify(helidonPublishPipeline, timeout(testTimeout).times(1)).onNext(publishStreamResponse);
+        // verify that the duplicate block is not published
+        verify(publisher, never()).publish(any());
     }
 
     @Test
@@ -222,5 +224,9 @@ public class ProducerBlockItemObserverTest {
 
         // verify helidonPublishPipeline.onNext() is called once with publishStreamResponse
         verify(helidonPublishPipeline, timeout(testTimeout).times(1)).onNext(publishStreamResponse);
+        // verify that .onNext() is called only once.
+        verify(helidonPublishPipeline, timeout(testTimeout).times(1)).onNext(any());
+        // verify that the future block is not published
+        verify(publisher, never()).publish(any());
     }
 }
