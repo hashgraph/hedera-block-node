@@ -11,6 +11,8 @@ module com.hedera.block.simulator {
     exports com.hedera.block.simulator.generator;
     exports com.hedera.block.simulator.metrics;
     exports com.hedera.block.simulator.grpc.impl;
+    exports com.hedera.block.simulator.mode;
+    exports com.hedera.block.simulator.mode.impl;
 
     requires com.hedera.block.common;
     requires com.hedera.block.stream;

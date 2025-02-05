@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
+import com.hedera.block.simulator.mode.impl.ConsumerModeHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

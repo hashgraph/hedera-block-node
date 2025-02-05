@@ -13,8 +13,8 @@ import java.io.IOException;
  * <p>Examples of working modes include:
  * <ul>
  *   <li>Consumer mode: The simulator consumes data from the block stream.</li>
- *   <li>Publisher mode: The simulator publishes data to the block stream.</li>
- *   <li>Combined mode: The simulator handles both consuming and publishing.</li>
+ *   <li>Publisher Client mode: The simulator publishes data to the block stream.</li>
+ *   <li>Publisher Server mode: The simulator receives blocks from client and sends back acknowledgments or errors.</li>
  * </ul>
  */
 public interface SimulatorModeHandler {
@@ -27,7 +27,7 @@ public interface SimulatorModeHandler {
 
     /**
      * Starts the simulator and initiates the streaming process according to the configured mode.
-     * The behavior of this method depends on the specific working mode (consumer, publisher, or combined).
+     * The behavior of this method depends on the specific working mode (consumer, publisher in client mode, or publisher in server mode).
      *
      * @throws BlockSimulatorParsingException if an error occurs while parsing blocks
      * @throws IOException if an I/O error occurs during block streaming

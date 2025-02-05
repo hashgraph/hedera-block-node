@@ -55,12 +55,21 @@ class BlockStreamConfigTest {
     }
 
     @Test
-    void testSimulatorMode() {
+    void testSimulatorPublishClientMode() {
         BlockStreamConfig config = getBlockStreamConfigBuilder()
-                .simulatorMode(SimulatorMode.PUBLISHER)
+                .simulatorMode(SimulatorMode.PUBLISHER_CLIENT)
                 .build();
 
-        assertEquals(SimulatorMode.PUBLISHER, config.simulatorMode());
+        assertEquals(SimulatorMode.PUBLISHER_CLIENT, config.simulatorMode());
+    }
+
+    @Test
+    void testSimulatorPublishServerMode() {
+        BlockStreamConfig config = getBlockStreamConfigBuilder()
+                .simulatorMode(SimulatorMode.PUBLISHER_SERVER)
+                .build();
+
+        assertEquals(SimulatorMode.PUBLISHER_SERVER, config.simulatorMode());
     }
 
     @Test

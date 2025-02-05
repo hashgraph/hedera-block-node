@@ -5,6 +5,7 @@ import com.hedera.block.simulator.config.ConfigInjectionModule;
 import com.hedera.block.simulator.generator.GeneratorInjectionModule;
 import com.hedera.block.simulator.grpc.GrpcInjectionModule;
 import com.hedera.block.simulator.metrics.MetricsInjectionModule;
+import com.hedera.block.simulator.mode.SimulatorModeInjectionModule;
 import com.swirlds.config.api.Configuration;
 import dagger.BindsInstance;
 import dagger.Component;
@@ -18,6 +19,7 @@ import javax.inject.Singleton;
             ConfigInjectionModule.class,
             GeneratorInjectionModule.class,
             GrpcInjectionModule.class,
+            SimulatorModeInjectionModule.class
         })
 public interface BlockStreamSimulatorInjectionComponent {
 
