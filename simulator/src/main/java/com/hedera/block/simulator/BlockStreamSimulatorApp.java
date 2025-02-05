@@ -6,17 +6,12 @@ import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.INFO;
 import static java.util.Objects.requireNonNull;
 
-import com.hedera.block.simulator.config.data.BlockStreamConfig;
 import com.hedera.block.simulator.config.data.StreamStatus;
-import com.hedera.block.simulator.config.types.SimulatorMode;
 import com.hedera.block.simulator.exception.BlockSimulatorParsingException;
 import com.hedera.block.simulator.generator.BlockStreamManager;
 import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
 import com.hedera.block.simulator.grpc.PublishStreamGrpcClient;
-import com.hedera.block.simulator.metrics.MetricsService;
-import com.hedera.block.simulator.mode.CombinedModeHandler;
-import com.hedera.block.simulator.mode.ConsumerModeHandler;
-import com.hedera.block.simulator.mode.PublisherModeHandler;
+import com.hedera.block.simulator.grpc.PublishStreamGrpcServer;
 import com.hedera.block.simulator.mode.SimulatorModeHandler;
 import com.swirlds.config.api.Configuration;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -46,6 +41,7 @@ public class BlockStreamSimulatorApp {
 
     // Service dependencies
     private final PublishStreamGrpcClient publishStreamGrpcClient;
+    private final PublishStreamGrpcServer publishStreamGrpcServer;
     private final ConsumerStreamGrpcClient consumerStreamGrpcClient;
     private final SimulatorModeHandler simulatorModeHandler;
 
@@ -62,7 +58,6 @@ public class BlockStreamSimulatorApp {
      *                                 generation
      * @param publishStreamGrpcClient  The gRPC client for publishing blocks
      * @param consumerStreamGrpcClient The gRPC client for consuming blocks
-     * @param metricsService           The service for recording metrics
      * @throws NullPointerException     if any parameter is null
      * @throws IllegalArgumentException if an unknown simulator mode is configured
      */
@@ -71,27 +66,18 @@ public class BlockStreamSimulatorApp {
             @NonNull Configuration configuration,
             @NonNull BlockStreamManager blockStreamManager,
             @NonNull PublishStreamGrpcClient publishStreamGrpcClient,
+            @NonNull PublishStreamGrpcServer publishStreamGrpcServer,
             @NonNull ConsumerStreamGrpcClient consumerStreamGrpcClient,
-            @NonNull MetricsService metricsService) {
+            @NonNull SimulatorModeHandler simulatorModeHandler) {
 
         requireNonNull(configuration);
         requireNonNull(blockStreamManager);
         loadLoggingProperties();
 
         this.publishStreamGrpcClient = requireNonNull(publishStreamGrpcClient);
+        this.publishStreamGrpcServer = requireNonNull(publishStreamGrpcServer);
         this.consumerStreamGrpcClient = requireNonNull(consumerStreamGrpcClient);
-
-        // Initialize the appropriate mode handler based on configuration
-        final BlockStreamConfig blockStreamConfig =
-                requireNonNull(configuration.getConfigData(BlockStreamConfig.class));
-        // @todo(386) Load simulator mode using dagger
-        final SimulatorMode simulatorMode = blockStreamConfig.simulatorMode();
-        this.simulatorModeHandler = switch (simulatorMode) {
-            case PUBLISHER -> new PublisherModeHandler(
-                    blockStreamConfig, publishStreamGrpcClient, blockStreamManager, metricsService);
-            case CONSUMER -> new ConsumerModeHandler(consumerStreamGrpcClient);
-            case BOTH -> new CombinedModeHandler();
-        };
+        this.simulatorModeHandler = requireNonNull(simulatorModeHandler);
     }
 
     /**
@@ -148,8 +134,10 @@ public class BlockStreamSimulatorApp {
     public StreamStatus getStreamStatus() {
         return StreamStatus.builder()
                 .publishedBlocks(publishStreamGrpcClient.getPublishedBlocks())
+                .processedBlocks(publishStreamGrpcServer.getProcessedBlocks())
                 .consumedBlocks(consumerStreamGrpcClient.getConsumedBlocks())
-                .lastKnownPublisherStatuses(publishStreamGrpcClient.getLastKnownStatuses())
+                .lastKnownPublisherClientStatuses(publishStreamGrpcClient.getLastKnownStatuses())
+                .lastKnownPublisherServerStatuses(publishStreamGrpcServer.getLastKnownStatuses())
                 .lastKnownConsumersStatuses(consumerStreamGrpcClient.getLastKnownStatuses())
                 .build();
     }

@@ -63,11 +63,11 @@ public class PositiveEndpointBehaviourTests extends BaseSuite {
         // We just need to make sure that number of published blocks is equal or greater than the statuses. Statuses are
         // tracked in a queue to avoid unnecessary memory usage, therefore will always be less or equal to published.
         assertTrue(streamStatus.publishedBlocks()
-                >= streamStatus.lastKnownPublisherStatuses().size());
+                >= streamStatus.lastKnownPublisherClientStatuses().size());
 
         // Verify each status contains the word "acknowledgement"
         streamStatus
-                .lastKnownPublisherStatuses()
+                .lastKnownPublisherClientStatuses()
                 .forEach(status -> assertTrue(status.toLowerCase().contains("acknowledgement")));
     }
 }
