@@ -75,15 +75,15 @@ sequenceDiagram
     H->>BR: read(blockNumber)
     BR->>H: block
     H->>BNEH: send(blockItems)
-    end
-
     BNEH->>C: send()
+    end
 ```
 
 ## Configuration
 
 Given the limited scope of this feature, it may not be necessary to add any new configuration properties or supply the
 entities with a Config object.
+- block item max batch size
 
 ## Metrics
 
@@ -95,7 +95,9 @@ entities with a Config object.
 ## Exceptions
 
 Based on the `SubscribeStreamRequest` specification, the following error response messages may be returned to the client:
-- ### READ_STREAM_INVALID_START_BLOCK_NUMBER
+
+### READ_STREAM_INVALID_START_BLOCK_NUMBER
+
 - The `start_block_number` is greater than the `end_block_number`.
 - The `start_block_number` is invalid.
 
