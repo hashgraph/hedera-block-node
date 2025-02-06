@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Agile Task or Feature
+description: Create a new task or feature
+title: "feat: "
+projects: "hashgraph/69"
+body:
+  - type: input
+    id: as-a-line
+    attributes:
+      label: Persona
+      description: As a "Persona"
+      value: "As a ?"
+    validations:
+      required: true
+  - type: input
+    id: i-want-to-line
+    attributes:
+      label: Request
+      description: I want to "Request"
+      value: "I want to ?"
+    validations:
+      required: true
+  - type: input
+    id: so-that-line
+    attributes:
+      label: Goal
+      description: So that "Goal"
+      value: "So that ?"
+    validations:
+      required: true
+  - type: textarea
+    id: technical-notes
+    attributes:
+      label: Technical Notes
+      description: Add any additional detail to describe this story.
+      value: |
+        ## Technical Notes
+        Technical details, notes, suggestions, etc...
+    validations:
+      required: true
