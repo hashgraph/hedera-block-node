@@ -33,23 +33,18 @@ See the range specification in the  `block_service.proto` file definition [here]
 
 ## Entities
 
--
-
 ### BlockReader
 
 - An entity which is responsible for reading block items from the persistence service.
-  -
 
 ### HistoricBlockStreamSupplier
 
 - An entity which is responsible for supplying historic block items to a BlockNodeEventHandler.
-  -
 
 ### BlockNodeEventHandler
 
 - An entity which manages a connection to a streaming client provided by Helidon and which receives data from an
   HistoricBlockStreamSupplier. It is responsible for sending the data to the streaming client.
-  -
 
 ### PbjBlockStreamServiceProxy
 
@@ -104,12 +99,9 @@ Based on the `SubscribeStreamRequest` specification, the following error respons
 - The `start_block_number` is greater than the `end_block_number`.
 - The `start_block_number` is invalid.
 
--
-
 ### READ_STREAM_INVALID_END_BLOCK_NUMBER
 
 - The `end_block_number` is invalid.
-  -
 
 ### READ_STREAM_NOT_AVAILABLE
 
