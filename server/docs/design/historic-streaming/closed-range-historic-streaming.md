@@ -81,9 +81,9 @@ sequenceDiagram
 
 ## Configuration
 
-Given the limited scope of this feature, it may not be necessary to add any new configuration properties or supply the
-entities with a Config object.
-- block item max batch size
+This feature will leverage one of our standard Config objects to communicate properties.
+- `maxBlockItemBatchSize` - An integer used to determine the max size of each block item batch a block from the BlockReader
+is broken up into before being sent to a client.
 
 ## Metrics
 
