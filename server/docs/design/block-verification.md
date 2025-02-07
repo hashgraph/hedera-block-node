@@ -7,7 +7,6 @@
 1. [Terms](#terms)
 1. [Entities](#entities)
 1. [Design](#design)
-1. [Interfaces](#interfaces)
 1. [Enums](#enums)
 1. [Metrics](#metrics)
 1. [Exceptions](#exceptions)
@@ -91,11 +90,7 @@ Network aggregation of "share" private keys, as described in the TSS design.</dd
 Sequence Diagram:
 
 ```mermaid
-sequenceDiagram
-    participant U as UnverifiedRingBuffer
-    participant V as VerificationHandler
-    participant F as BlockHashingSessionFactory
-    participant S as BlockHashingSession
+sequenceDiagram    
     participant U as UnverifiedRingBuffer
     participant V as VerificationHandler
     participant F as BlockHashingSessionFactory
