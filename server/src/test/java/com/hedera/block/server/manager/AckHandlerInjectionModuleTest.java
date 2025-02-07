@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.ack.AckHandlerImpl;
 import com.hedera.block.server.ack.AckHandlerInjectionModule;
+import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
@@ -15,10 +16,14 @@ import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.verification.VerificationConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class AckHandlerInjectionModuleTest {
+
+    @Mock
+    private MetricsService metricsService;
 
     @Test
     void testProvideBlockManager() {
@@ -39,7 +44,7 @@ class AckHandlerInjectionModuleTest {
 
         // when
         AckHandler ackHandler = AckHandlerInjectionModule.provideBlockManager(
-                notifier, persistenceStorageConfig, verificationConfig, serviceStatus, blockRemover);
+                notifier, persistenceStorageConfig, verificationConfig, serviceStatus, blockRemover, metricsService);
 
         // then
         // AckHandlerImpl is the default and only implementation
