@@ -45,8 +45,7 @@ public class AckHandlerImpl implements AckHandler {
             boolean skipAcknowledgement,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockRemover blockRemover,
-            @NonNull final MetricsService metricsService
-    ) {
+            @NonNull final MetricsService metricsService) {
         this.notifier = notifier;
         this.skipAcknowledgement = skipAcknowledgement;
         this.serviceStatus = serviceStatus;

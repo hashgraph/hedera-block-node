@@ -39,6 +39,7 @@ public interface AckHandlerInjectionModule {
         boolean skipPersistence = persistenceStorageConfig.type().equals(PersistenceStorageConfig.StorageType.NO_OP);
         boolean skipVerification = verificationConfig.type().equals(VerificationConfig.VerificationServiceType.NO_OP);
 
-        return new AckHandlerImpl(notifier, skipPersistence | skipVerification, serviceStatus, blockRemover, metricsService);
+        return new AckHandlerImpl(
+                notifier, skipPersistence | skipVerification, serviceStatus, blockRemover, metricsService);
     }
 }

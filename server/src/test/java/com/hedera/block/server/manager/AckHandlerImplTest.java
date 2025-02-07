@@ -3,7 +3,6 @@ package com.hedera.block.server.manager;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -49,7 +48,8 @@ class AckHandlerImplTest {
     @DisplayName("blockVerified + blockPersisted should do nothing if skipAcknowledgement == true")
     void blockVerified_skippedAcknowledgement() {
         // given
-        AckHandlerImpl managerWithSkip = new AckHandlerImpl(notifier, true, serviceStatus, blockRemover, metricsService);
+        AckHandlerImpl managerWithSkip =
+                new AckHandlerImpl(notifier, true, serviceStatus, blockRemover, metricsService);
 
         // when
         managerWithSkip.blockVerified(1L, Bytes.wrap("somehash".getBytes()));
