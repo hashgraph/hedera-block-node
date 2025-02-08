@@ -7,30 +7,27 @@ body:
   - type: textarea
     id: epic-goal
     attributes:
-      label: Epic Goal
+      label: Goal
       description: Describe the goal of this epic in one or two sentences
       value: |
-        # Goal
         Make the block node spectacular.
     validations:
       required: true
   - type: textarea
     id: epic-intention
     attributes:
-      label: Epic Intention
+      label: Intention
       description: Three to five sentences about what the team intends to accomplish in order to meet the epic goal.
       value: |
-        ## Intention
         Three to five sentences about what the team intends to accomplish in order to meet the epic goal.
     validations:
       required: true
   - type: textarea
     id: epic-considerations
     attributes:
-      label: Epic Considerations
+      label: Considerations
       description: A list of considerations that affect the completion of this epic.
       value: |
-        ## Considerations
         A list of considerations that affect the completion of this epic.  This includes alternatives already considered before arriving at the intention above.
         - Consideration
            - Added details
@@ -42,20 +39,18 @@ body:
   - type: textarea
     id: epic-detail
     attributes:
-      label: Epic Details
+      label: Technical Details
       description: Add any additional detail to describe this epic.
       value: |
-        ## Technical Details
         Technical details, notes, customer stories, etc...
     validations:
       required: false
   - type: textarea
     id: task-list
     attributes:
-      label: Task List
+      label: Tasks and Features
       description: List features and tasks needed to complete this epic
       value: |
-        ## Tasks and Features
         - [ ] feature 1
         - [ ] feature 2
         - [ ] task 1

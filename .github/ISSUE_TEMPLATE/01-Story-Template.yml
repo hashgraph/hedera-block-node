@@ -34,7 +34,6 @@ body:
       label: Technical Notes
       description: Add any additional detail to describe this story.
       value: |
-        ## Technical Notes
         Technical details, notes, suggestions, etc...
     validations:
       required: true
