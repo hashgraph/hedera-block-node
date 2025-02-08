@@ -4,6 +4,7 @@ package com.hedera.block.server.consumer;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -135,7 +136,7 @@ public class ConsumerStreamResponseObserverTest {
                         SubscribeStreamResponseUnparsed.newBuilder()
                                 .blockItems(blockItemSet)
                                 .build();
-                when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+                lenient().when(objectEvent.get()).thenReturn(subscribeStreamResponse);
             } else {
                 final Bytes blockProof = BlockProof.PROTOBUF.toBytes(
                         BlockProof.newBuilder().block(i).build());
