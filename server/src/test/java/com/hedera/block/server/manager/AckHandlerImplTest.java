@@ -3,6 +3,7 @@ package com.hedera.block.server.manager;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -10,21 +11,29 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.hedera.block.server.ack.AckHandlerImpl;
+import com.hedera.block.server.metrics.BlockNodeMetricTypes;
+import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
+import com.swirlds.metrics.api.Counter;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class AckHandlerImplTest {
 
+    @Mock
     private Notifier notifier;
+
     private AckHandlerImpl ackHandler;
 
     @Mock
@@ -33,20 +42,25 @@ class AckHandlerImplTest {
     @Mock
     private BlockRemover blockRemover;
 
+    @Mock
+    private MetricsService metricsService;
+
     @BeforeEach
     void setUp() {
-        notifier = mock(Notifier.class);
-        blockRemover = mock(BlockRemover.class);
-        serviceStatus = mock(ServiceStatus.class);
         // By default, we do NOT skip acknowledgements
-        ackHandler = new AckHandlerImpl(notifier, false, serviceStatus, blockRemover);
+        Counter metric = mock(Counter.class);
+        lenient()
+                .when(metricsService.get(BlockNodeMetricTypes.Counter.AckedBlocked))
+                .thenReturn(metric);
+        ackHandler = new AckHandlerImpl(notifier, false, serviceStatus, blockRemover, metricsService);
     }
 
     @Test
     @DisplayName("blockVerified + blockPersisted should do nothing if skipAcknowledgement == true")
     void blockVerified_skippedAcknowledgement() {
         // given
-        AckHandlerImpl managerWithSkip = new AckHandlerImpl(notifier, true, serviceStatus, blockRemover);
+        AckHandlerImpl managerWithSkip =
+                new AckHandlerImpl(notifier, true, serviceStatus, blockRemover, metricsService);
 
         // when
         managerWithSkip.blockVerified(1L, Bytes.wrap("somehash".getBytes()));

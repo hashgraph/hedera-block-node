@@ -2,6 +2,8 @@
 package com.hedera.block.server.ack;
 
 import com.hedera.block.server.block.BlockInfo;
+import com.hedera.block.server.metrics.BlockNodeMetricTypes;
+import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.service.ServiceStatus;
@@ -31,6 +33,7 @@ public class AckHandlerImpl implements AckHandler {
     private final boolean skipAcknowledgement;
     private final ServiceStatus serviceStatus;
     private final BlockRemover blockRemover;
+    private final MetricsService metricsService;
 
     /**
      * Constructor. If either skipPersistence or skipVerification is true,
@@ -41,11 +44,13 @@ public class AckHandlerImpl implements AckHandler {
             @NonNull final Notifier notifier,
             boolean skipAcknowledgement,
             @NonNull final ServiceStatus serviceStatus,
-            @NonNull final BlockRemover blockRemover) {
+            @NonNull final BlockRemover blockRemover,
+            @NonNull final MetricsService metricsService) {
         this.notifier = notifier;
         this.skipAcknowledgement = skipAcknowledgement;
         this.serviceStatus = serviceStatus;
         this.blockRemover = blockRemover;
+        this.metricsService = metricsService;
     }
 
     /**
@@ -140,6 +145,9 @@ public class AckHandlerImpl implements AckHandler {
 
                 // Remove from map if desired (so we don't waste memory)
                 blockInfo.remove(nextBlock);
+
+                // Update metrics
+                metricsService.get(BlockNodeMetricTypes.Counter.AckedBlocked).increment();
             }
 
             // Loop again in case the next block is also ready.

@@ -67,7 +67,10 @@ public final class BlockNodeMetricTypes {
         LiveBlockStreamMediatorError("live_block_stream_mediator_error", "Live Block Stream Mediator Error"),
 
         /** The number of errors encountered by the stream persistence handler. */
-        StreamPersistenceHandlerError("stream_persistence_handler_error", "Stream Persistence Handler Error");
+        StreamPersistenceHandlerError("stream_persistence_handler_error", "Stream Persistence Handler Error"),
+
+        /** The number of blocks acked */
+        AckedBlocked("acked_blocked", "Count of blocks acked");
 
         private final String grafanaLabel;
         private final String description;
