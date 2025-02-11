@@ -54,7 +54,7 @@ It updates the ServiceStatus of the latest Acknowledged block.
 
 ### ServiceStatus
 
-1. ServiceStatus will store the relevant information to file, will update file every time service state changes.
+1. ServiceStatus will store the relevant information to file, will update file every X blocks and on Shutdown hook.
 2. At start-up, the ServiceStatus upon creation, will attempt to restore it state from the file (if available).
 3. The ServiceStatus will be updated by the AckHandler, when a new block is Acknowledged.
 
@@ -75,7 +75,9 @@ sequenceDiagram
 
    loop Every Acked Block
       AH->>SS: updates the ServiceStatus
-      SS->>F: writes the ServiceStatus state to file
+   end
+   opt
+   SS->>F: writes the ServiceStatus state to file on Shutdown and every X blocks.
    end
     C->>PBJ: rpc serverStatus
     PBJ->>SS: fetches `last_available_block`
