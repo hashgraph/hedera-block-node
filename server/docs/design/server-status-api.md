@@ -85,7 +85,7 @@ sequenceDiagram
 
 ```
 
-### Return Payload Example
+### Response Payload Example
 
 Showing the information that is currently available in the ServerStatusResponse:
 
