@@ -109,8 +109,8 @@ public class AckHandlerImpl implements AckHandler {
     private void attemptAcks() {
         // Temporarily if lastAcknowledgedBlockNumber is -1, we get the first block in the map
         if (lastAcknowledgedBlockNumber == -1) {
-            lastAcknowledgedBlockNumber =
-                    blockInfo.keySet().stream().min(Long::compareTo).orElse(1L) - 1;
+            // todo(147): once we have a way to get the last acknowledged block from the store we should use that
+            lastAcknowledgedBlockNumber = 0;
         }
 
         // Keep ACK-ing starting from the next block in sequence
@@ -135,9 +135,6 @@ public class AckHandlerImpl implements AckHandler {
                 // We "won" the race; we do the actual ACK
                 notifier.sendAck(nextBlock, info.getBlockHash(), false);
 
-                // Update last acknowledged
-                lastAcknowledgedBlockNumber = nextBlock;
-
                 // Update the service status
                 serviceStatus.setLatestAckedBlock(info);
 
@@ -146,8 +143,17 @@ public class AckHandlerImpl implements AckHandler {
 
                 // Update metrics
                 metricsService.get(BlockNodeMetricTypes.Counter.AckedBlocked).increment();
-            }
 
+                // Update last acknowledged
+                lastAcknowledgedBlockNumber = nextBlock;
+
+                LOGGER.log(System.Logger.Level.DEBUG, "ACKed block " + nextBlock);
+            } else {
+                // Someone else already ACKed this block.
+                // Stop, as we can't ACK the next block until this one is ACKed.
+                // Also, to unblock the other thread faster.
+                break;
+            }
             // Loop again in case the next block is also ready.
             // This can ACK multiple consecutive blocks if they are all
             // persisted & verified in order.

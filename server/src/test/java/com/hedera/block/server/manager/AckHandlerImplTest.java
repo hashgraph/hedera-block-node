@@ -2,9 +2,13 @@
 package com.hedera.block.server.manager;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -27,6 +31,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -45,7 +50,7 @@ class AckHandlerImplTest {
     @Mock
     private MetricsService metricsService;
 
-    private AckHandlerImpl toTest;
+    private AckHandlerImpl ackHandler;
 
     @BeforeEach
     void setUp() {
@@ -54,7 +59,7 @@ class AckHandlerImplTest {
         lenient()
                 .when(metricsService.get(BlockNodeMetricTypes.Counter.AckedBlocked))
                 .thenReturn(metric);
-        toTest = new AckHandlerImpl(notifier, false, serviceStatus, blockRemover, metricsService);
+        ackHandler = new AckHandlerImpl(notifier, false, serviceStatus, blockRemover, metricsService);
     }
 
     @Test
@@ -78,7 +83,7 @@ class AckHandlerImplTest {
     @DisplayName("blockVerificationFailed should send end-of-stream message with appropriate code")
     void blockVerificationFailed_sendsEndOfStream() {
         // when
-        toTest.blockVerificationFailed(2L);
+        ackHandler.blockVerificationFailed(2L);
 
         // then
         verify(notifier, times(1)).sendEndOfStream(-1L, PublishStreamResponseCode.STREAM_ITEMS_BAD_STATE_PROOF);
@@ -90,7 +95,7 @@ class AckHandlerImplTest {
     void blockPersisted_thenNoAckWithoutVerification() {
         // when
         final long blockNumber = 1L;
-        toTest.blockPersisted(new BlockPersistenceResult(blockNumber, BlockPersistenceStatus.SUCCESS));
+        ackHandler.blockPersisted(new BlockPersistenceResult(blockNumber, BlockPersistenceStatus.SUCCESS));
 
         // then
         // We have not verified the block, so no ACK is sent
@@ -101,7 +106,7 @@ class AckHandlerImplTest {
     @DisplayName("blockVerified alone does not ACK")
     void blockVerified_thenNoAckWithoutPersistence() {
         // when
-        toTest.blockVerified(1L, Bytes.wrap("hash1".getBytes()));
+        ackHandler.blockVerified(1L, Bytes.wrap("hash1".getBytes()));
 
         // then
         verifyNoInteractions(notifier);
@@ -115,8 +120,8 @@ class AckHandlerImplTest {
         final Bytes blockHash = Bytes.wrap("hash1".getBytes());
 
         // when
-        toTest.blockPersisted(new BlockPersistenceResult(blockNumber, BlockPersistenceStatus.SUCCESS));
-        toTest.blockVerified(blockNumber, blockHash);
+        ackHandler.blockPersisted(new BlockPersistenceResult(blockNumber, BlockPersistenceStatus.SUCCESS));
+        ackHandler.blockVerified(blockNumber, blockHash);
 
         // then
         // We expect a single ACK for block #1
@@ -138,16 +143,16 @@ class AckHandlerImplTest {
 
         // when
         // Mark block1 persisted and verified
-        toTest.blockPersisted(new BlockPersistenceResult(block1, BlockPersistenceStatus.SUCCESS));
-        toTest.blockVerified(block1, hash1);
+        ackHandler.blockPersisted(new BlockPersistenceResult(block1, BlockPersistenceStatus.SUCCESS));
+        ackHandler.blockVerified(block1, hash1);
 
         // Mark block2 persisted and verified
-        toTest.blockPersisted(new BlockPersistenceResult(block2, BlockPersistenceStatus.SUCCESS));
-        toTest.blockVerified(block2, hash2);
+        ackHandler.blockPersisted(new BlockPersistenceResult(block2, BlockPersistenceStatus.SUCCESS));
+        ackHandler.blockVerified(block2, hash2);
 
         // Mark block3 persisted and verified
-        toTest.blockPersisted(new BlockPersistenceResult(block3, BlockPersistenceStatus.SUCCESS));
-        toTest.blockVerified(block3, hash3);
+        ackHandler.blockPersisted(new BlockPersistenceResult(block3, BlockPersistenceStatus.SUCCESS));
+        ackHandler.blockVerified(block3, hash3);
 
         // then
         // The manager should ACK blocks in ascending order (1,2,3).
@@ -176,18 +181,18 @@ class AckHandlerImplTest {
     @DisplayName("Blocks are ACKed in order; partial readiness doesn't skip ahead")
     void ackStopsIfNextBlockIsNotReady() {
         // given
-        final long block1 = 10L;
-        final long block2 = 11L;
-        final Bytes hash1 = Bytes.wrap("hash10".getBytes());
-        final Bytes hash2 = Bytes.wrap("hash11".getBytes());
+        final long block1 = 1L;
+        final long block2 = 2L;
+        final Bytes hash1 = Bytes.wrap("hash1".getBytes());
+        final Bytes hash2 = Bytes.wrap("hash2".getBytes());
 
         // when
         // Fully persist & verify block #10 -> Should ACK
-        toTest.blockPersisted(new BlockPersistenceResult(block1, BlockPersistenceStatus.SUCCESS));
-        toTest.blockVerified(block1, hash1);
+        ackHandler.blockPersisted(new BlockPersistenceResult(block1, BlockPersistenceStatus.SUCCESS));
+        ackHandler.blockVerified(block1, hash1);
 
         // Partially persist block #11
-        toTest.blockPersisted(new BlockPersistenceResult(block2, BlockPersistenceStatus.SUCCESS));
+        ackHandler.blockPersisted(new BlockPersistenceResult(block2, BlockPersistenceStatus.SUCCESS));
         // We do NOT verify block #11 yet
 
         // then
@@ -196,10 +201,54 @@ class AckHandlerImplTest {
         verifyNoMoreInteractions(notifier);
 
         // Now verify block #11
-        toTest.blockVerified(block2, hash2);
+        ackHandler.blockVerified(block2, hash2);
 
         // Expect the second ACK
         verify(notifier, times(1)).sendAck(eq(block2), eq(hash2), eq(false));
         verifyNoMoreInteractions(notifier);
+    }
+
+    /**
+     * Edge condition #1:
+     * If only block 2 is processed (i.e. block 1 is missing)
+     * then no ACK should be sent (because ACKs must be strictly consecutive).
+     */
+    @Test
+    public void testAckNotSentWhenLowerBlockMissing() {
+        final long block2 = 2L;
+        final Bytes blockHash2 = Bytes.wrap("hash2".getBytes());
+
+        // Simulate receiving persistence and verification for block 2.
+        ackHandler.blockPersisted(new BlockPersistenceResult(block2, BlockPersistenceStatus.SUCCESS));
+        ackHandler.blockVerified(block2, blockHash2);
+
+        // In a correct implementation nothing should be ACKed because block 1 is missing.
+        verify(notifier, never()).sendAck(eq(block2), any(), anyBoolean());
+    }
+
+    /**
+     * Edge condition #2:
+     * When block 2 is processed first (and ACKed) and then block 1 arrives,
+     * the ACK order is wrong – block 1 should have been ACKed before block 2.
+     */
+    @Test
+    public void testAckOrderWhenLowerBlockArrivesLate() {
+        final long block2 = 2L;
+        final Bytes blockHash2 = Bytes.wrap("hash2".getBytes());
+        final long block1 = 1L;
+        final Bytes blockHash1 = Bytes.wrap("hash1".getBytes());
+
+        // First, process events for block 2.
+        ackHandler.blockPersisted(new BlockPersistenceResult(block2, BlockPersistenceStatus.SUCCESS));
+        ackHandler.blockVerified(block2, blockHash2);
+
+        // Then, process events for block 1.
+        ackHandler.blockPersisted(new BlockPersistenceResult(block1, BlockPersistenceStatus.SUCCESS));
+        ackHandler.blockVerified(block1, blockHash1);
+
+        // In a correct implementation the ACKs would be sent in order: first for block 1 then block 2.
+        InOrder inOrder = inOrder(notifier);
+        inOrder.verify(notifier).sendAck(eq(block1), eq(blockHash1), eq(false));
+        inOrder.verify(notifier).sendAck(eq(block2), eq(blockHash2), eq(false));
     }
 }
