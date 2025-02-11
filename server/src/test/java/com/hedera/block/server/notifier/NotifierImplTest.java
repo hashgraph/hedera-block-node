@@ -20,6 +20,7 @@ import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.pbj.PbjBlockStreamService;
 import com.hedera.block.server.pbj.PbjBlockStreamServiceProxy;
 import com.hedera.block.server.persistence.StreamPersistenceHandlerImpl;
+import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.write.AsyncBlockWriterFactory;
 import com.hedera.block.server.producer.ProducerBlockItemObserver;
 import com.hedera.block.server.service.ServiceStatus;
@@ -30,6 +31,7 @@ import com.hedera.block.server.verification.service.BlockVerificationService;
 import com.hedera.block.server.verification.service.NoOpBlockVerificationService;
 import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.BlockItemUnparsed;
+import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.PublishStreamResponse;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.runtime.grpc.Pipeline;
@@ -95,6 +97,9 @@ class NotifierImplTest {
 
     @Mock
     private AckHandler ackHandler;
+
+    @Mock
+    private BlockReader<BlockUnparsed> blockReader;
 
     @Mock
     private AsyncBlockWriterFactory asyncBlockWriterFactoryMock;
@@ -217,6 +222,7 @@ class NotifierImplTest {
                 serviceStatus,
                 blockNodeEventHandler,
                 streamVerificationHandler,
+                blockReader,
                 notifier,
                 blockNodeContext);
     }

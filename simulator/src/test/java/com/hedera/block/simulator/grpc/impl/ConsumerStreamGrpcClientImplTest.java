@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.hedera.block.simulator.TestUtils;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.ConsumerConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
 import com.hedera.block.simulator.metrics.MetricsService;
@@ -39,6 +40,9 @@ public class ConsumerStreamGrpcClientImplTest {
 
     @Mock
     private BlockStreamConfig blockStreamConfig;
+
+    @Mock
+    private ConsumerConfig consumerConfig;
 
     private ConsumerStreamGrpcClient consumerStreamGrpcClientImpl;
     private Server server;
@@ -95,7 +99,8 @@ public class ConsumerStreamGrpcClientImplTest {
 
         final Configuration config = TestUtils.getTestConfiguration();
         final MetricsService metricsService = new MetricsServiceImpl(getTestMetrics(config));
-        consumerStreamGrpcClientImpl = new ConsumerStreamGrpcClientImpl(grpcConfig, blockStreamConfig, metricsService);
+        consumerStreamGrpcClientImpl =
+                new ConsumerStreamGrpcClientImpl(grpcConfig, blockStreamConfig, consumerConfig, metricsService);
         consumerStreamGrpcClientImpl.init();
     }
 

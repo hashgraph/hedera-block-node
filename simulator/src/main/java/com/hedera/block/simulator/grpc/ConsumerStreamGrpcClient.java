@@ -25,6 +25,14 @@ public interface ConsumerStreamGrpcClient {
     void requestBlocks(long startBlock, long endBlock) throws InterruptedException;
 
     /**
+     * Requests a stream of blocks from the server. This method should be used when the range should be specified via
+     * configuration.
+     *
+     * @throws InterruptedException if the streaming process is interrupted
+     */
+    void requestBlocks() throws InterruptedException;
+
+    /**
      * Shutdown the channel and signals completion of the streaming process to the server.
      * This method should be called to gracefully terminate the stream.
      *

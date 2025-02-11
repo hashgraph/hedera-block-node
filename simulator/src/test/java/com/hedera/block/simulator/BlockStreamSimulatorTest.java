@@ -119,7 +119,7 @@ class BlockStreamSimulatorTest {
         blockStreamSimulator.start();
 
         verify(consumerStreamGrpcClient).init();
-        verify(consumerStreamGrpcClient).requestBlocks(0, 0);
+        verify(consumerStreamGrpcClient).requestBlocks();
         assertTrue(blockStreamSimulator.isRunning());
     }
 

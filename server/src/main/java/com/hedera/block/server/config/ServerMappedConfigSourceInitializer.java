@@ -16,6 +16,7 @@ public final class ServerMappedConfigSourceInitializer {
 
             // Consumer Config
             new ConfigMapping("consumer.timeoutThresholdMillis", "CONSUMER_TIMEOUT_THRESHOLD_MILLIS"),
+            new ConfigMapping("consumer.maxBlockItemBatchSize", "CONSUMER_MAX_BLOCK_ITEM_BATCH_SIZE"),
 
             // Mediator Config
             new ConfigMapping("mediator.ringBufferSize", "MEDIATOR_RING_BUFFER_SIZE"),

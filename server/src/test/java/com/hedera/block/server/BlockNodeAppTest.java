@@ -85,6 +85,7 @@ class BlockNodeAppTest {
                         serviceStatus,
                         blockNodeEventHandler,
                         streamVerificationHandler,
+                        blockReader,
                         notifier,
                         blockNodeContext),
                 new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext),

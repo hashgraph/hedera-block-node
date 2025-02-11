@@ -171,13 +171,28 @@ class LiveStreamMediatorImplTest {
 
         final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver1 =
                 LiveStreamEventHandlerBuilder.build(
-                        completionService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
+                        completionService,
+                        testClock,
+                        streamMediator,
+                        helidonSubscribeStreamObserver1,
+                        testContext.metricsService(),
+                        testContext.configuration());
         final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver2 =
                 LiveStreamEventHandlerBuilder.build(
-                        completionService, testClock, streamMediator, helidonSubscribeStreamObserver2, testContext);
+                        completionService,
+                        testClock,
+                        streamMediator,
+                        helidonSubscribeStreamObserver2,
+                        testContext.metricsService(),
+                        testContext.configuration());
         final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver3 =
                 LiveStreamEventHandlerBuilder.build(
-                        completionService, testClock, streamMediator, helidonSubscribeStreamObserver3, testContext);
+                        completionService,
+                        testClock,
+                        streamMediator,
+                        helidonSubscribeStreamObserver3,
+                        testContext.metricsService(),
+                        testContext.configuration());
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -234,15 +249,27 @@ class LiveStreamMediatorImplTest {
 
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
-        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver1 =
-                LiveStreamEventHandlerBuilder.build(
-                        completionService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
-        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver2 =
-                LiveStreamEventHandlerBuilder.build(
-                        completionService, testClock, streamMediator, helidonSubscribeStreamObserver2, testContext);
-        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver3 =
-                LiveStreamEventHandlerBuilder.build(
-                        completionService, testClock, streamMediator, helidonSubscribeStreamObserver3, testContext);
+        final var concreteObserver1 = LiveStreamEventHandlerBuilder.build(
+                completionService,
+                testClock,
+                streamMediator,
+                helidonSubscribeStreamObserver1,
+                testContext.metricsService(),
+                testContext.configuration());
+        final var concreteObserver2 = LiveStreamEventHandlerBuilder.build(
+                completionService,
+                testClock,
+                streamMediator,
+                helidonSubscribeStreamObserver2,
+                testContext.metricsService(),
+                testContext.configuration());
+        final var concreteObserver3 = LiveStreamEventHandlerBuilder.build(
+                completionService,
+                testClock,
+                streamMediator,
+                helidonSubscribeStreamObserver3,
+                testContext.metricsService(),
+                testContext.configuration());
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -267,7 +294,12 @@ class LiveStreamMediatorImplTest {
 
         final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver1 =
                 LiveStreamEventHandlerBuilder.build(
-                        completionService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
+                        completionService,
+                        testClock,
+                        streamMediator,
+                        helidonSubscribeStreamObserver1,
+                        testContext.metricsService(),
+                        testContext.configuration());
 
         streamMediator.subscribe(concreteObserver1);
         assertTrue(streamMediator.isSubscribed(concreteObserver1));
@@ -397,13 +429,28 @@ class LiveStreamMediatorImplTest {
 
         final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver1 =
                 LiveStreamEventHandlerBuilder.build(
-                        completionService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
+                        completionService,
+                        testClock,
+                        streamMediator,
+                        helidonSubscribeStreamObserver1,
+                        testContext.metricsService(),
+                        testContext.configuration());
         final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver2 =
                 LiveStreamEventHandlerBuilder.build(
-                        completionService, testClock, streamMediator, helidonSubscribeStreamObserver2, testContext);
+                        completionService,
+                        testClock,
+                        streamMediator,
+                        helidonSubscribeStreamObserver2,
+                        testContext.metricsService(),
+                        testContext.configuration());
         final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver3 =
                 LiveStreamEventHandlerBuilder.build(
-                        completionService, testClock, streamMediator, helidonSubscribeStreamObserver3, testContext);
+                        completionService,
+                        testClock,
+                        streamMediator,
+                        helidonSubscribeStreamObserver3,
+                        testContext.metricsService(),
+                        testContext.configuration());
 
         // Set up the subscribers
         streamMediator.subscribe(concreteObserver1);
@@ -489,7 +536,12 @@ class LiveStreamMediatorImplTest {
 
         final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> testConsumerBlockItemObserver =
                 LiveStreamEventHandlerBuilder.build(
-                        completionService, testClock, streamMediator, helidonSubscribeStreamObserver1, testContext);
+                        completionService,
+                        testClock,
+                        streamMediator,
+                        helidonSubscribeStreamObserver1,
+                        testContext.metricsService(),
+                        testContext.configuration());
 
         // Confirm the observer is not subscribed
         assertFalse(streamMediator.isSubscribed(testConsumerBlockItemObserver));

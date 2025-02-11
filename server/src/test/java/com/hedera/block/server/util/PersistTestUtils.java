@@ -50,8 +50,25 @@ public final class PersistTestUtils {
      * used to generate the block items for
      */
     public static List<BlockItemUnparsed> generateBlockItemsUnparsedForWithBlockNumber(final long blockNumber) {
+        return generateBlockItemsUnparsedForWithBlockNumber(blockNumber, 10);
+    }
+
+    /**
+     * This method generates a list of {@link BlockItemUnparsed} with the input
+     * blockNumber used to generate the block items for. It generates 10 block
+     * items starting with the block header, followed by 8 events and ending
+     * with the block proof.
+     *
+     * @param blockNumber the block number to generate the block items for
+     * @param numOfBlockItems the number of block items to generate per block
+     *
+     * @return a list of {@link BlockItemUnparsed} with the input blockNumber
+     * used to generate the block items for
+     */
+    public static List<BlockItemUnparsed> generateBlockItemsUnparsedForWithBlockNumber(
+            final long blockNumber, final int numOfBlockItems) {
         final List<BlockItemUnparsed> result = new ArrayList<>();
-        for (int j = 1; j <= 10; j++) {
+        for (int j = 1; j <= numOfBlockItems; j++) {
             switch (j) {
                 case 1:
                     // First block is always the header

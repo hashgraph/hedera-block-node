@@ -38,7 +38,7 @@ class ConsumerModeHandlerTest {
     @Test
     void testStart() throws InterruptedException {
         consumerModeHandler.start();
-        verify(consumerStreamGrpcClient).requestBlocks(0, 0);
+        verify(consumerStreamGrpcClient).requestBlocks();
     }
 
     @Test
@@ -47,7 +47,7 @@ class ConsumerModeHandlerTest {
 
         doThrow(new InterruptedException("Test exception"))
                 .when(consumerStreamGrpcClient)
-                .requestBlocks(0, 0);
+                .requestBlocks();
         assertThrows(InterruptedException.class, () -> consumerModeHandler.start());
     }
 

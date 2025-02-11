@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage_error() {
-  echo "Usage: $0 <integer>"
+  echo "Usage: $0 <integer> [integer]"
   exit 1
 }
 
@@ -19,8 +19,11 @@ fi
 trap cleanup SIGINT
 trap cleanup SIGTERM
 
+first_param=$1
+second_param="${2:-0}"
+
 # If the script reaches here, the parameters are valid
-echo "Param is: $1"
+echo "Params are: $first_param, $second_param"
 
 # Use environment variables or default values
 GRPC_SERVER=${GRPC_SERVER:-"localhost:8080"}
@@ -30,7 +33,7 @@ PATH_TO_PROTO="./block_service.proto"
 echo "Starting consumer..."
 
 # Response block messages from the gRPC server are printed to stdout.
-echo "{\"start_block_number\": $1}" | grpcurl -plaintext -proto $PATH_TO_PROTO -d @ $GRPC_SERVER $GRPC_METHOD &
+echo "{\"start_block_number\": $first_param, \"end_block_number\": $second_param}" | grpcurl -plaintext -proto $PATH_TO_PROTO -d @ $GRPC_SERVER $GRPC_METHOD &
 grp_pid=$!
 echo "Started consumer with PID: $grp_pid"
 
