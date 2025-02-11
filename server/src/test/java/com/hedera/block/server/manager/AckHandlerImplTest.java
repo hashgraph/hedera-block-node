@@ -2,8 +2,11 @@
 package com.hedera.block.server.manager;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
@@ -15,6 +18,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.hedera.block.server.ack.AckHandlerImpl;
+import com.hedera.block.server.block.BlockInfo;
 import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
@@ -26,10 +30,17 @@ import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.swirlds.metrics.api.Counter;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
@@ -250,5 +261,106 @@ class AckHandlerImplTest {
         InOrder inOrder = inOrder(notifier);
         inOrder.verify(notifier).sendAck(eq(block1), eq(blockHash1), eq(false));
         inOrder.verify(notifier).sendAck(eq(block2), eq(blockHash2), eq(false));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        // Format: blockCount, maxPersistDelayNanos, maxVerifyDelayNanos
+        "100, 0, 0",
+        "1000, 0, 0",
+        "10000, 0, 0",
+        "100, 1000, 0",
+        "1000, 1000, 0",
+        "10000, 1000, 0",
+        "100, 0, 1000",
+        "1000, 0, 1000",
+        "10000, 0, 1000",
+    })
+    void highlyConcurrentAckHandlerTest(int blockCount, int maxPersistDelayNanos, int maxVerifyDelayNanos)
+            throws Exception {
+        // Create the instance under test (with skipAcknowledgement = false).
+        AckHandlerImpl ackHandler = new AckHandlerImpl(notifier, false, serviceStatus, blockRemover, metricsService);
+
+        // Use an ExecutorService to run two concurrent tasks.
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(2);
+        Random random = new Random();
+
+        // Thread that sends persistence events.
+        Runnable persistTask = () -> {
+            try {
+                startLatch.await();
+                for (int i = 1; i <= blockCount; i++) {
+                    ackHandler.blockPersisted(i);
+                    if (maxPersistDelayNanos > 0) {
+                        long delay = random.nextInt(maxPersistDelayNanos + 1);
+                        TimeUnit.NANOSECONDS.sleep(delay);
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                doneLatch.countDown();
+            }
+        };
+
+        // Thread that sends verification events.
+        Runnable verifyTask = () -> {
+            try {
+                startLatch.await();
+                for (int i = 1; i <= blockCount; i++) {
+                    Bytes blockHash = bytesFromLong(i);
+                    ackHandler.blockVerified(i, blockHash);
+                    if (maxVerifyDelayNanos > 0) {
+                        long delay = random.nextInt(maxVerifyDelayNanos + 1);
+                        TimeUnit.NANOSECONDS.sleep(delay);
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            } finally {
+                doneLatch.countDown();
+            }
+        };
+
+        executor.submit(persistTask);
+        executor.submit(verifyTask);
+        startLatch.countDown();
+        assertTrue(doneLatch.await(60, TimeUnit.SECONDS), "Tasks did not complete in time");
+        executor.shutdown();
+        // Wait a bit to ensure all ACKs are processed.
+        Thread.sleep(100);
+
+        ArgumentCaptor<Long> blockNumberCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<Bytes> blockHashCaptor = ArgumentCaptor.forClass(Bytes.class);
+        verify(notifier, times(blockCount))
+                .sendAck(blockNumberCaptor.capture(), blockHashCaptor.capture(), anyBoolean());
+        List<Long> capturedBlockNumbers = blockNumberCaptor.getAllValues();
+        List<Bytes> capturedBlockHashes = blockHashCaptor.getAllValues();
+
+        assertEquals(blockCount, capturedBlockNumbers.size(), "Number of ACKs mismatch");
+        for (int i = 0; i < blockCount; i++) {
+            long expected = i + 1;
+            assertEquals(expected, capturedBlockNumbers.get(i), "ACK order mismatch at index " + i);
+            assertEquals(
+                    bytesFromLong(expected), capturedBlockHashes.get(i), "Block hash mismatch at block " + expected);
+        }
+        // verify that the serviceStatus was updated with the final block.
+        ArgumentCaptor<BlockInfo> blockInfoCaptor = ArgumentCaptor.forClass(BlockInfo.class);
+        verify(serviceStatus, atLeastOnce()).setLatestAckedBlock(blockInfoCaptor.capture());
+        BlockInfo latest = blockInfoCaptor.getValue();
+        assertNotNull(latest, "Latest acked block should not be null");
+        assertEquals(blockCount, latest.getBlockNumber(), "Latest acknowledged block number mismatch");
+    }
+
+    // Helper method to create a dummy Bytes object from a long.
+    private static Bytes bytesFromLong(long value) {
+        byte[] arr = new byte[8];
+        for (int i = 7; i >= 0; i--) {
+            arr[i] = (byte) (value & 0xFF);
+            value >>= 8;
+        }
+        return Bytes.wrap(arr);
     }
 }
