@@ -14,19 +14,25 @@
 10. [Acceptance Tests](#acceptance-tests)
 
 ## Purpose
-Server Status API Component, is an essential part of the Block-Node, it provides a way to query the status of the server, its version and other relevant information.
-More details on the specification can be found on the [protobuf service](https://github.com/hashgraph/hedera-protobufs/blob/main/block/block_service.proto#L874-L882). 
+**ServerStatus** API Component, is an essential part of the Block-Node, it provides a way to query the status of the server, its version and other relevant information.
+More details on the API specification can be found on the [protobuf definition](https://github.com/hashgraph/hedera-protobufs/blob/main/block/block_service.proto#L874-L882). 
 
 ## Goals
 
-1. Provide a way to query the status information of the server.
+1. Provide a way to query the status information of the server. current response includes:
    2. first_available_block
    3. last_available_block
    4. only_latest_state
    5. version_information
-2. Provide a way for the BN to remember its status between restarts and upgrades.
+2. Persist ServiceStatus to file and restore it on start-up.
 
 ## Terms
+<dl>
+<dt>Client</dt><dd>The consumer of the ServerStatus, it might be a Consensus Node, a Miror Node or another Block Node.</dd>
+<dt>first_available_block</dt><dd>The first block that this Block Node has persisted and available to query and stream.</dd>
+<dt>last_available_block</dt><dd>Last available block that this Block Node has persisted and is available to query and stream.</dd>
+</dl>
+
 
 ## Entities
 
@@ -34,20 +40,22 @@ More details on the specification can be found on the [protobuf service](https:/
 PBJServerStatusService is the entity responsible for handling the server status requests. It provides the implementation for the `getServerStatus` rpc endpoint.
 
 ### ServiceStatus
-Keeps the information of the Service status, such as the first available block, last available block, only latest state, and version information, among others that might be needed by other components.
+Keeps the information of the Service status within the different components of the Block-Node.
 This entity is vital (non-optional) for the Block-Node to function properly.
 
 ### AckHandler
 It updates the ServiceStatus of the latest Acknowledged block.
 
-
 ## Design
 
-1. ServiceStatus will store the relevant information to file, as part of the shutdown process, the current status of the server.
+### ServiceStatus
+1. ServiceStatus will store the relevant information to file, will update file every time service state changes.
 2. At start-up, the ServiceStatus upon creation, will attempt to restore it state from the file (if available).
 3. The ServiceStatus will be updated by the AckHandler, when a new block is Acknowledged.
-4. The PBJServerStatusService is called by Helidon when a client makes a request to the `serverStatus` rpc endpoint. using `ServerStatusRequest` message.
-5. The PBJServerStatusService reads the server status information from the ServiceStatus entity and sends it back to the client via a `ServerStatusResponse` message.
+
+### ServerStatusRequest
+1. The PBJServerStatusService is called by Helidon when a client makes a request to the `serverStatus` rpc endpoint. using `ServerStatusRequest` message.
+2. The PBJServerStatusService reads the server status information from the ServiceStatus entity and sends it back to the client via a `ServerStatusResponse` message.
 
 ## Sequence Diagram
 
@@ -57,8 +65,12 @@ sequenceDiagram
     participant PBJ as PBJServerStatusService
     participant SS as ServiceStatus
     participant AH as AckHandler
+    participant F as FileStore
 
-    AH->>SS: updates the ServiceStatus
+   loop Every Acked Block
+      AH->>SS: updates the ServiceStatus
+      SS->>F: writes the ServiceStatus state to file
+   end    
     C->>PBJ: rpc serverStatus
     PBJ->>SS: fetches the necessary information
     SS->>PBJ: returns the information
@@ -67,12 +79,37 @@ sequenceDiagram
 
 ```
 
-### Consider using mermaid to generate the sequence diagram
+### Return Payload Example
+Showing the information that is currently available in the ServerStatusResponse:
+```json
+{
+  "first_available_block": 0,
+  "last_available_block": 100,
+  "only_latest_state": false,
+  "version_information": {
+    "address_book_version": "0.1.0",
+    "stream_proto_version": "0.1.0",
+     "software_version": "0.4.0"
+  }
+}
+```
 
 ## Configuration
+ServerStatus Configuration will hold the expected `first_desired_block` that the BN should start from, as part of the start-up process a BN should check using the BlockReader, if that Block is available on Disk, if not, should attempt to fetch it from another BN unless is Genesis block, by default it will be set to 0 (Genesis Block).
+
+Configuration should also provide value for `only_latest_state`, this might be part of the configuration for the state module, however temporarily we could have it at the service configuration level.
+
+Configuration should also contain the BlockNodeVersions.
 
 ## Metrics
+ServerStatusRequest Counter, to keep track of the number of requests made to the ServerStatus endpoint.
 
 ## Exceptions
+The PBJServerStatusService should handle any exceptions that might occur during the process of fetching the server status information, and return an appropriate error message to the client.
 
 ## Acceptance Tests
+1. Verify that ServiceStatus writes latest state to file.
+2. Verify that ServiceStatus onStartup reads the latest state from file.
+3. Verify that PBJServerStatusService returns the correct information.
+4. Verify that the ServerStatusRequest Counter is incremented on each request.
+5. Verify that the PBJServerStatusService handles exceptions correctly.
