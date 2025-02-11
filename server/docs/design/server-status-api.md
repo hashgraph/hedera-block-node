@@ -1,4 +1,4 @@
-# Design Document Template
+# ServerStatus API Design
 
 ## Table of Contents
 
