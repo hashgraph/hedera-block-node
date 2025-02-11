@@ -71,11 +71,11 @@ sequenceDiagram
       AH->>SS: updates the ServiceStatus
       SS->>F: writes the ServiceStatus state to file
    end    
-    C->>PBJ: rpc serverStatus
-    PBJ->>SS: fetches the necessary information
-    SS->>PBJ: returns the information
-    PBJ->>C: returns the information
-    
+    C->>PBJ: rpc serverStatus    
+    PBJ->>SS: fetches `last_available_block` 
+    SS->>PBJ: return information
+    PBJ->>PBJ: Create `ServerStatusResponse` and populate it.
+    PBJ->>C: return ServerStatusResponse
 
 ```
 
@@ -95,11 +95,9 @@ Showing the information that is currently available in the ServerStatusResponse:
 ```
 
 ## Configuration
-ServerStatus Configuration will hold the expected `first_desired_block` that the BN should start from, as part of the start-up process a BN should check using the BlockReader, if that Block is available on Disk, if not, should attempt to fetch it from another BN unless is Genesis block, by default it will be set to 0 (Genesis Block).
+ServerStatus Configuration will hold the expected `first_desired_block` that the BN should start from, as part of the start-up process a BN should check using the BlockReader, if that Block is available on Disk, if not, should attempt to fetch it from another BN unless is Genesis block, by default it will be set to 0 (Genesis Block), if not possible to fetch it from another BN, it should throw an exception and stop the service.
 
-Configuration should also provide value for `only_latest_state`, this might be part of the configuration for the state module, however temporarily we could have it at the service configuration level.
-
-Configuration should also contain the BlockNodeVersions.
+Configuration should also provide value for `only_latest_state`, this might be part of the configuration for the state module.
 
 ## Metrics
 ServerStatusRequest Counter, to keep track of the number of requests made to the ServerStatus endpoint.
@@ -108,8 +106,8 @@ ServerStatusRequest Counter, to keep track of the number of requests made to the
 The PBJServerStatusService should handle any exceptions that might occur during the process of fetching the server status information, and return an appropriate error message to the client.
 
 ## Acceptance Tests
-1. Verify that ServiceStatus writes latest state to file.
-2. Verify that ServiceStatus onStartup reads the latest state from file.
+1. Verify that ServiceStatus writes latest `last_available_block` to file.
+2. Verify that ServiceStatus onStartup reads the latest `last_available_block` from file.
 3. Verify that PBJServerStatusService returns the correct information.
 4. Verify that the ServerStatusRequest Counter is incremented on each request.
 5. Verify that the PBJServerStatusService handles exceptions correctly.
