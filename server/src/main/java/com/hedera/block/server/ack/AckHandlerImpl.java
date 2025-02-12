@@ -141,13 +141,12 @@ public class AckHandlerImpl implements AckHandler {
                 // Remove from map if desired (so we don't waste memory)
                 blockInfo.remove(nextBlock);
 
-                // Update metrics
+                // Update metrics and logging
                 metricsService.get(BlockNodeMetricTypes.Counter.AckedBlocked).increment();
+                LOGGER.log(System.Logger.Level.DEBUG, "ACKed block " + nextBlock);
 
                 // Update last acknowledged
                 lastAcknowledgedBlockNumber = nextBlock;
-
-                LOGGER.log(System.Logger.Level.DEBUG, "ACKed block " + nextBlock);
             } else {
                 // Someone else already ACKed this block.
                 // Stop, as we can't ACK the next block until this one is ACKed.
