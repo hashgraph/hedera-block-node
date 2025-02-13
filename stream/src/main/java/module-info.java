@@ -78,6 +78,6 @@ module com.hedera.block.stream {
     requires transitive io.grpc;
     requires io.grpc.protobuf;
     requires org.antlr.antlr4.runtime;
-    requires static com.github.spotbugs.annotations;
+    requires static transitive com.github.spotbugs.annotations;
     requires static java.annotation;
 }
