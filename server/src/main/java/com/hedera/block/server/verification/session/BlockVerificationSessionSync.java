@@ -63,8 +63,8 @@ public class BlockVerificationSessionSync extends BlockVerificationSessionBase {
         for (BlockItemUnparsed item : blockItems) {
             final BlockItemUnparsed.ItemOneOfType kind = item.item().kind();
             switch (kind) {
-                case EVENT_HEADER, EVENT_TRANSACTION -> inputTreeHasher.addLeaf(getBlockItemHash(item));
-                case TRANSACTION_RESULT, TRANSACTION_OUTPUT, STATE_CHANGES -> outputTreeHasher.addLeaf(
+                case EVENT_HEADER, EVENT_TRANSACTION, ROUND_HEADER -> inputTreeHasher.addLeaf(getBlockItemHash(item));
+                case TRANSACTION_OUTPUT, STATE_CHANGES, TRANSACTION_RESULT, BLOCK_HEADER -> outputTreeHasher.addLeaf(
                         getBlockItemHash(item));
             }
         }
