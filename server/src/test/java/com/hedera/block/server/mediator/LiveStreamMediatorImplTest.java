@@ -29,7 +29,6 @@ import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.hapi.block.stream.output.BlockHeader;
-import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.grpc.Pipeline;
 import com.swirlds.metrics.api.LongGauge;
 import java.io.IOException;
@@ -48,7 +47,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class LiveStreamMediatorImplTest {
+class LiveStreamMediatorImplTest {
     private static final long TIMEOUT_THRESHOLD_MILLIS = 100L;
     private static final long TEST_TIME = 1_719_427_664_950L;
     private static final int TEST_TIMEOUT = 1000;
@@ -100,7 +99,7 @@ public class LiveStreamMediatorImplTest {
     }
 
     @Test
-    public void testUnsubscribeEach() throws InterruptedException, IOException {
+    void testUnsubscribeEach() throws InterruptedException, IOException {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final LiveStreamMediatorBuilder streamMediatorBuilder =
                 LiveStreamMediatorBuilder.newBuilder(blockNodeContext, new ServiceStatusImpl(blockNodeContext));
@@ -131,7 +130,7 @@ public class LiveStreamMediatorImplTest {
     }
 
     @Test
-    public void testMediatorPersistenceWithoutSubscribers() throws IOException, ParseException {
+    void testMediatorPersistenceWithoutSubscribers() throws IOException {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final LiveStreamMediator streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
@@ -162,7 +161,7 @@ public class LiveStreamMediatorImplTest {
     }
 
     @Test
-    public void testMediatorPublishEventToSubscribers() throws IOException, ParseException {
+    void testMediatorPublishEventToSubscribers() throws IOException {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final LiveStreamMediator streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
@@ -222,12 +221,12 @@ public class LiveStreamMediatorImplTest {
         verify(helidonSubscribeStreamObserver2, timeout(TEST_TIMEOUT).times(1)).onNext(subscribeStreamResponse);
         verify(helidonSubscribeStreamObserver3, timeout(TEST_TIMEOUT).times(1)).onNext(subscribeStreamResponse);
 
-        // Confirm the BlockStorage write method was called
-        // verify(blockWriter, timeout(testTimeout).times(1)).write(List.of(blockItem));
+        // Confirm Writer created
+        verify(asyncBlockWriterFactoryMock, timeout(TEST_TIMEOUT).times(1)).create(1L);
     }
 
     @Test
-    public void testSubAndUnsubHandling() throws IOException {
+    void testSubAndUnsubHandling() throws IOException {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final LiveStreamMediator streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
@@ -259,7 +258,7 @@ public class LiveStreamMediatorImplTest {
     }
 
     @Test
-    public void testSubscribeWhenHandlerAlreadySubscribed() throws IOException {
+    void testSubscribeWhenHandlerAlreadySubscribed() throws IOException {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final LongGauge consumersGauge = blockNodeContext.metricsService().get(BlockNodeMetricTypes.Gauge.Consumers);
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
@@ -288,7 +287,7 @@ public class LiveStreamMediatorImplTest {
     }
 
     //        @Test
-    //        public void testOnCancelSubscriptionHandling() throws IOException {
+    //        void testOnCancelSubscriptionHandling() throws IOException {
     //
     //            final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
     //            final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
@@ -338,7 +337,7 @@ public class LiveStreamMediatorImplTest {
     //        }
 
     //    @Test
-    //    public void testOnCloseSubscriptionHandling() throws IOException {
+    //    void testOnCloseSubscriptionHandling() throws IOException {
     //
     //        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
     //        final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
@@ -390,7 +389,7 @@ public class LiveStreamMediatorImplTest {
     //    }
 
     @Test
-    public void testMediatorBlocksPublishAfterException() throws IOException, InterruptedException, ParseException {
+    void testMediatorBlocksPublishAfterException() throws IOException, InterruptedException {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final LiveStreamMediator streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
@@ -432,8 +431,6 @@ public class LiveStreamMediatorImplTest {
         // However, we will need to support multiple producers in the
         // future. In that case, we need to make sure a second producer
         // is not able to publish a block after the first producer fails.
-        //        doThrow(new IOException()).when(blockWriter).write(List.of(firstBlockItem));
-
         streamMediator.publish(List.of(firstBlockItem));
 
         Thread.sleep(TEST_TIMEOUT);
@@ -468,12 +465,12 @@ public class LiveStreamMediatorImplTest {
         verify(helidonSubscribeStreamObserver2, timeout(TEST_TIMEOUT).times(1)).onNext(endOfStreamResponse);
         verify(helidonSubscribeStreamObserver3, timeout(TEST_TIMEOUT).times(1)).onNext(endOfStreamResponse);
 
-        // verify write method only called once despite the second block being published.
-        // verify(blockWriter, timeout(testTimeout).times(1)).write(List.of(firstBlockItem));
+        // Confirm Writer created
+        verify(asyncBlockWriterFactoryMock, timeout(TEST_TIMEOUT).times(1)).create(1L);
     }
 
     @Test
-    public void testUnsubscribeWhenNotSubscribed() throws IOException {
+    void testUnsubscribeWhenNotSubscribed() throws IOException {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final LiveStreamMediator streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)

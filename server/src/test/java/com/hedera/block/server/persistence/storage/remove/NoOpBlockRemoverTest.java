@@ -39,7 +39,7 @@ class NoOpBlockRemoverTest {
      *
      * @return a stream of valid block numbers
      */
-    public static Stream<Arguments> validBlockNumbers() {
+    private static Stream<Arguments> validBlockNumbers() {
         return Stream.of(
                 Arguments.of(0L),
                 Arguments.of(1L),
@@ -70,7 +70,7 @@ class NoOpBlockRemoverTest {
      *
      * @return a stream of invalid block numbers
      */
-    public static Stream<Arguments> invalidBlockNumbers() {
+    private static Stream<Arguments> invalidBlockNumbers() {
         return Stream.of(
                 Arguments.of(-1L),
                 Arguments.of(-2L),

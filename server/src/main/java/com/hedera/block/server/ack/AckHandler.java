@@ -12,7 +12,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public interface AckHandler {
 
     /**
-     * Called when we receive a "persistence" event.
+     * Called when we receive a "persistence" result.
      */
     void blockPersisted(@NonNull final BlockPersistenceResult persistenceResult);
 

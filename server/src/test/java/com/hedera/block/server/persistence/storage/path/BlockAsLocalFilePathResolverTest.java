@@ -443,7 +443,7 @@ class BlockAsLocalFilePathResolverTest {
      *
      * @return a stream of valid block numbers
      */
-    static Stream<Arguments> validBlockNumbers() {
+    private static Stream<Arguments> validBlockNumbers() {
         return Stream.of(
                 Arguments.of(0L, "0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0000000000000000000.blk"),
                 Arguments.of(1L, "0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0000000000000000001.blk"),
@@ -474,7 +474,7 @@ class BlockAsLocalFilePathResolverTest {
      *
      * @return a stream of invalid block numbers
      */
-    static Stream<Arguments> invalidBlockNumbers() {
+    private static Stream<Arguments> invalidBlockNumbers() {
         return Stream.of(
                 Arguments.of(-1L),
                 Arguments.of(-2L),
@@ -507,7 +507,7 @@ class BlockAsLocalFilePathResolverTest {
      * @return a stream of valid block numbers and their corresponding
      * {@link ArchiveBlockPath} instances
      */
-    static Stream<Arguments> validBlockNumbersArchivePathResolve() {
+    private static Stream<Arguments> validBlockNumbersArchivePathResolve() {
         // spotless:off
         return Stream.of(
                 Arguments.of(new ArchiveBlockPath(Path.of("0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/0/"), "0.zip", "0000000000000000000.blk", CompressionType.NONE, 0L), 0L),

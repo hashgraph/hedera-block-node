@@ -125,7 +125,7 @@ class NoOpBlockPathResolverTest {
      *
      * @return a stream of valid block numbers
      */
-    public static Stream<Arguments> validBlockNumbers() {
+    private static Stream<Arguments> validBlockNumbers() {
         return Stream.of(
                 Arguments.of(0L, "/tmp/hashgraph/blocknode/data/0.tmp.blk"),
                 Arguments.of(1L, "/tmp/hashgraph/blocknode/data/1.tmp.blk"),
@@ -156,7 +156,7 @@ class NoOpBlockPathResolverTest {
      *
      * @return a stream of invalid block numbers
      */
-    public static Stream<Arguments> invalidBlockNumbers() {
+    private static Stream<Arguments> invalidBlockNumbers() {
         return Stream.of(
                 Arguments.of(-1L, "/tmp/hashgraph/blocknode/data/-1.tmp.blk"),
                 Arguments.of(-2L, "/tmp/hashgraph/blocknode/data/-2.tmp.blk"),

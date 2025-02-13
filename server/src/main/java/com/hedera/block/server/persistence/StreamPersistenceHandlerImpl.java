@@ -161,7 +161,6 @@ public class StreamPersistenceHandlerImpl
                 currentWriterQueue = null;
             } else {
                 final BlockHeader header = BlockHeader.PROTOBUF.parse(firstItem.blockHeader());
-                // start with invalid and very unlikely to ever receive
                 final long blockNumber = header.number();
                 if (blockNumber >= 0) {
                     final AsyncBlockWriter writer = asyncBlockWriterFactory.create(blockNumber);
@@ -188,8 +187,8 @@ public class StreamPersistenceHandlerImpl
                 }
             }
         }
-        if (currentWriterQueue != null) {
-            // We need this if non-null check because of the bad block number
+        for (int i = 0; i < blockItems.size() && currentWriterQueue != null; i++) {
+            // We need the non-null check because of the bad block number
             // case, we still need to continue processing following block items,
             // but if the first batch with the bad number does not end with a
             // block proof, we need to keep accepting (but not pushing since the
@@ -199,9 +198,7 @@ public class StreamPersistenceHandlerImpl
             // the first batch does not end with a block proof, to keep accepting
             // items, but not processing them until the next block comes along,
             // which will start anew.
-            for (int i = 0; i < blockItems.size(); i++) {
-                currentWriterQueue.offer(blockItems.get(i));
-            }
+            currentWriterQueue.offer(blockItems.get(i));
         }
         if (blockItems.getLast().hasBlockProof()) {
             currentWriterQueue = null;

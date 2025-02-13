@@ -51,7 +51,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class NotifierImplTest {
+class NotifierImplTest {
     private static final int TEST_TIMEOUT = 1000;
 
     @Mock
@@ -111,7 +111,6 @@ public class NotifierImplTest {
 
     @Test
     void testRegistration() throws NoSuchAlgorithmException {
-        //        when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
         when(serviceStatus.isRunning()).thenReturn(true);
 
         final NotifierImpl notifier = new NotifierImpl(mediator, blockNodeContext, serviceStatus);

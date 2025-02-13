@@ -33,8 +33,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class StreamPersistenceHandlerImplTest {
-    private static final int testTimeout = 50;
+class StreamPersistenceHandlerImplTest {
+    private static final int TEST_TIMEOUT = 50;
 
     @Mock
     private SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
@@ -61,7 +61,7 @@ public class StreamPersistenceHandlerImplTest {
     private Executor executorMock;
 
     @Test
-    public void testOnEventWhenServiceIsNotRunning() {
+    void testOnEventWhenServiceIsNotRunning() {
         when(blockNodeContext.metricsService()).thenReturn(metricsService);
         when(serviceStatus.isRunning()).thenReturn(false);
 
@@ -77,7 +77,7 @@ public class StreamPersistenceHandlerImplTest {
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         final BlockItemSetUnparsed blockItemSet =
                 BlockItemSetUnparsed.newBuilder().blockItems(blockItems).build();
-        final var subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
+        final SubscribeStreamResponseUnparsed subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
                 .blockItems(blockItemSet)
                 .build();
         final ObjectEvent<SubscribeStreamResponseUnparsed> event = new ObjectEvent<>();
@@ -92,7 +92,7 @@ public class StreamPersistenceHandlerImplTest {
     }
 
     @Test
-    public void testBlockItemIsNull() throws IOException {
+    void testBlockItemIsNull() throws IOException {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         when(serviceStatus.isRunning()).thenReturn(true);
 
@@ -108,7 +108,7 @@ public class StreamPersistenceHandlerImplTest {
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         final BlockItemSetUnparsed blockItemSet =
                 BlockItemSetUnparsed.newBuilder().blockItems(blockItems).build();
-        final var subscribeStreamResponse = spy(SubscribeStreamResponseUnparsed.newBuilder()
+        final SubscribeStreamResponseUnparsed subscribeStreamResponse = spy(SubscribeStreamResponseUnparsed.newBuilder()
                 .blockItems(blockItemSet)
                 .build());
 
@@ -119,13 +119,13 @@ public class StreamPersistenceHandlerImplTest {
 
         streamPersistenceHandler.onEvent(event, 0, false);
 
-        verify(serviceStatus, timeout(testTimeout).times(1)).stopRunning(any());
-        verify(subscriptionHandler, timeout(testTimeout).times(1)).unsubscribe(any());
-        verify(notifier, timeout(testTimeout).times(1)).notifyUnrecoverableError();
+        verify(serviceStatus, timeout(TEST_TIMEOUT).times(1)).stopRunning(any());
+        verify(subscriptionHandler, timeout(TEST_TIMEOUT).times(1)).unsubscribe(any());
+        verify(notifier, timeout(TEST_TIMEOUT).times(1)).notifyUnrecoverableError();
     }
 
     @Test
-    public void testSubscribeStreamResponseTypeUnknown() throws IOException {
+    void testSubscribeStreamResponseTypeUnknown() throws IOException {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
         when(serviceStatus.isRunning()).thenReturn(true);
 
@@ -141,7 +141,7 @@ public class StreamPersistenceHandlerImplTest {
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
         final BlockItemSetUnparsed blockItemSet =
                 BlockItemSetUnparsed.newBuilder().blockItems(blockItems).build();
-        final var subscribeStreamResponse = spy(SubscribeStreamResponseUnparsed.newBuilder()
+        final SubscribeStreamResponseUnparsed subscribeStreamResponse = spy(SubscribeStreamResponseUnparsed.newBuilder()
                 .blockItems(blockItemSet)
                 .build());
 
@@ -155,13 +155,13 @@ public class StreamPersistenceHandlerImplTest {
 
         streamPersistenceHandler.onEvent(event, 0, false);
 
-        verify(serviceStatus, timeout(testTimeout).times(1)).stopRunning(any());
-        verify(subscriptionHandler, timeout(testTimeout).times(1)).unsubscribe(any());
-        verify(notifier, timeout(testTimeout).times(1)).notifyUnrecoverableError();
+        verify(serviceStatus, timeout(TEST_TIMEOUT).times(1)).stopRunning(any());
+        verify(subscriptionHandler, timeout(TEST_TIMEOUT).times(1)).unsubscribe(any());
+        verify(notifier, timeout(TEST_TIMEOUT).times(1)).notifyUnrecoverableError();
     }
 
     @Test
-    public void testSubscribeStreamResponseTypeStatus() {
+    void testSubscribeStreamResponseTypeStatus() {
         when(blockNodeContext.metricsService()).thenReturn(metricsService);
         when(serviceStatus.isRunning()).thenReturn(true);
 

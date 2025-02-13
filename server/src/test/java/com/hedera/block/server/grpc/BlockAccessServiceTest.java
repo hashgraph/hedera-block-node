@@ -58,7 +58,7 @@ class BlockAccessServiceTest {
     private PbjBlockAccessService blockAccessService;
 
     @BeforeEach
-    public void setUp() throws IOException {
+    void setUp() throws IOException {
         blockNodeContext = TestConfigUtil.getTestBlockNodeContext(
                 Map.of(PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY, testLiveRootPath.toString()));
         testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
@@ -70,17 +70,17 @@ class BlockAccessServiceTest {
     }
 
     @Test
-    public void testServiceName() {
+    void testServiceName() {
         assertEquals(SERVICE_NAME_BLOCK_ACCESS, blockAccessService.serviceName());
     }
 
     @Test
-    public void testFullName() {
+    void testFullName() {
         assertEquals(FULL_SERVICE_NAME_BLOCK_ACCESS, blockAccessService.fullName());
     }
 
     @Test
-    public void testMethods() {
+    void testMethods() {
         assertEquals(1, blockAccessService.methods().size());
     }
 
@@ -160,7 +160,7 @@ class BlockAccessServiceTest {
     }
 
     @Test
-    public void testSingleBlockIOExceptionPath() throws IOException, ParseException {
+    void testSingleBlockIOExceptionPath() throws IOException, ParseException {
         when(serviceStatus.isRunning()).thenReturn(true);
         when(blockReader.read(1)).thenThrow(new IOException("Test exception"));
 
@@ -181,7 +181,7 @@ class BlockAccessServiceTest {
     }
 
     @Test
-    public void testSingleBlockParseExceptionPath() throws IOException, ParseException {
+    void testSingleBlockParseExceptionPath() throws IOException, ParseException {
         when(serviceStatus.isRunning()).thenReturn(true);
         when(blockReader.read(1)).thenThrow(new ParseException("Test exception"));
 
