@@ -9,8 +9,8 @@ import java.nio.file.Path;
  * TODO: add documentation
  */
 public record ArchiveBlockPath(
-        long blockNumber,
         @NonNull Path dirPath,
         @NonNull String zipFileName,
         @NonNull String zipEntryName,
-        @NonNull CompressionType compressionType) {}
+        @NonNull CompressionType compressionType,
+        long blockNumber) {}

@@ -21,6 +21,7 @@ public final class PersistTestUtils {
     private static final Logger LOGGER = System.getLogger(PersistTestUtils.class.getName());
     public static final String PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY = "persistence.storage.liveRootPath";
     public static final String PERSISTENCE_STORAGE_COMPRESSION_LEVEL = "persistence.storage.compressionLevel";
+    public static final String PERSISTENCE_STORAGE_ARCHIVE_BATCH_SIZE = "persistence.storage.archiveBatchSize";
 
     private PersistTestUtils() {}
 

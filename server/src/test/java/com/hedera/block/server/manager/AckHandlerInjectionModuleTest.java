@@ -28,10 +28,10 @@ class AckHandlerInjectionModuleTest {
     @Test
     void testProvideBlockManager() {
         // given
-        Notifier notifier = mock(Notifier.class);
-        ServiceStatus serviceStatus = mock(ServiceStatus.class);
-        BlockRemover blockRemover = mock(BlockRemover.class);
-        PersistenceStorageConfig persistenceStorageConfig = new PersistenceStorageConfig(
+        final Notifier notifier = mock(Notifier.class);
+        final ServiceStatus serviceStatus = mock(ServiceStatus.class);
+        final BlockRemover blockRemover = mock(BlockRemover.class);
+        final PersistenceStorageConfig persistenceStorageConfig = new PersistenceStorageConfig(
                 "",
                 "",
                 PersistenceStorageConfig.StorageType.BLOCK_AS_LOCAL_FILE,
@@ -39,11 +39,11 @@ class AckHandlerInjectionModuleTest {
                 0,
                 false,
                 10);
-        VerificationConfig verificationConfig = mock(VerificationConfig.class);
+        final VerificationConfig verificationConfig = mock(VerificationConfig.class);
         when(verificationConfig.type()).thenReturn(VerificationConfig.VerificationServiceType.PRODUCTION);
 
         // when
-        AckHandler ackHandler = AckHandlerInjectionModule.provideBlockManager(
+        final AckHandler ackHandler = AckHandlerInjectionModule.provideBlockManager(
                 notifier, persistenceStorageConfig, verificationConfig, serviceStatus, blockRemover, metricsService);
 
         // then

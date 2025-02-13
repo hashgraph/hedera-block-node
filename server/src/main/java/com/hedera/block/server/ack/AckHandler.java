@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.ack;
 
+import com.hedera.block.server.persistence.storage.write.BlockPersistenceResult;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
@@ -11,9 +12,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public interface AckHandler {
 
     /**
-     * Called when we receive a "persistence" event for the given blockNumber.
+     * Called when we receive a "persistence" event.
      */
-    void blockPersisted(long blockNumber);
+    void blockPersisted(@NonNull final BlockPersistenceResult persistenceResult);
 
     /**
      * Called when we receive a "verified" event for the given blockNumber,
