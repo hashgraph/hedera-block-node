@@ -31,7 +31,6 @@ testModuleInfo {
     requires("org.mockito")
     requires("org.mockito.junit.jupiter")
     requires("org.assertj.core")
-    requiresStatic("com.github.spotbugs.annotations")
 }
 
 // Vals
@@ -82,7 +81,7 @@ tasks.register<Exec>("startDockerContainer") {
     commandLine(
         "sh",
         "-c",
-        "./update-env.sh ${project.version} false false && docker compose -p block-node up -d"
+        "./update-env.sh ${project.version} false false && docker compose -p block-node up -d",
     )
 }
 
@@ -96,7 +95,7 @@ tasks.register<Exec>("startDockerContainerDebug") {
     commandLine(
         "sh",
         "-c",
-        "./update-env.sh ${project.version} true false && docker compose -p block-node up -d"
+        "./update-env.sh ${project.version} true false && docker compose -p block-node up -d",
     )
 }
 
@@ -110,7 +109,7 @@ tasks.register<Exec>("startDockerContainerSmokeTest") {
     commandLine(
         "sh",
         "-c",
-        "./update-env.sh ${project.version} false true && docker compose -p block-node up -d"
+        "./update-env.sh ${project.version} false true && docker compose -p block-node up -d",
     )
 }
 
