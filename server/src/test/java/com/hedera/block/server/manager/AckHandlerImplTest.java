@@ -292,7 +292,7 @@ class AckHandlerImplTest {
             try {
                 startLatch.await();
                 for (int i = 1; i <= blockCount; i++) {
-                    ackHandler.blockPersisted(i);
+                    ackHandler.blockPersisted(new BlockPersistenceResult(i, BlockPersistenceStatus.SUCCESS));
                     if (maxPersistDelayNanos > 0) {
                         long delay = random.nextInt(maxPersistDelayNanos + 1);
                         TimeUnit.NANOSECONDS.sleep(delay);
