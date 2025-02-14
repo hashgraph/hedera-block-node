@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.persistence.storage.write;
 
-import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.TRACE;
 
 import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.ack.AckHandler;
@@ -44,7 +44,7 @@ public final class AsyncBlockAsLocalFileWriterFactory implements AsyncBlockWrite
         Preconditions.requireWhole(blockNumber);
         final AsyncBlockAsLocalFileWriter instance = new AsyncBlockAsLocalFileWriter(
                 blockNumber, blockPathResolver, blockRemover, compression, ackHandler, metricsService);
-        LOGGER.log(DEBUG, "Created Writer for Block [%d]".formatted(blockNumber));
+        LOGGER.log(TRACE, "Created Writer for Block [%d]".formatted(blockNumber));
         return instance;
     }
 }

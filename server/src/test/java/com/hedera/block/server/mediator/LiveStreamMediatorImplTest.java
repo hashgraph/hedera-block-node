@@ -21,8 +21,10 @@ import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.notifier.NotifierImpl;
 import com.hedera.block.server.persistence.StreamPersistenceHandlerImpl;
 import com.hedera.block.server.persistence.storage.write.AsyncBlockWriterFactory;
+import com.hedera.block.server.persistence.storage.write.AsyncNoOpWriterFactory;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.service.ServiceStatusImpl;
+import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.BlockItemSetUnparsed;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -136,28 +138,26 @@ class LiveStreamMediatorImplTest {
         final LiveStreamMediator streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
                 .build();
 
-        final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder().build();
+        final List<BlockItemUnparsed> blockItemUnparsed =
+                PersistTestUtils.generateBlockItemsUnparsedForWithBlockNumber(1);
 
         // register the stream validator
+        final AsyncNoOpWriterFactory writerFactory =
+                new AsyncNoOpWriterFactory(ackHandlerMock, blockNodeContext.metricsService());
         final StreamPersistenceHandlerImpl handler = new StreamPersistenceHandlerImpl(
-                streamMediator,
-                notifier,
-                blockNodeContext,
-                serviceStatus,
-                ackHandlerMock,
-                asyncBlockWriterFactoryMock,
-                executorMock);
+                streamMediator, notifier, blockNodeContext, serviceStatus, ackHandlerMock, writerFactory, executorMock);
         streamMediator.subscribe(handler);
 
         // Acting as a producer, notify the mediator of a new block
-        streamMediator.publish(List.of(blockItem));
+        streamMediator.publish(blockItemUnparsed);
 
         // Verify the counter was incremented
-        assertEquals(1, blockNodeContext.metricsService().get(LiveBlockItems).get());
+        assertEquals(10, blockNodeContext.metricsService().get(LiveBlockItems).get());
 
-        // Confirm the BlockStorage write method was
-        // called despite the absence of subscribers
-        // verify(blockWriter, timeout(testTimeout).times(1)).write(List.of(blockItem));
+        // @todo(642) we need to employ the same technique here to inject a writer that will ensure
+        // the tasks are complete before we can verify the metrics for blocks persisted
+        // the test will pass without flaking if we do that
+        // assertEquals(1, blockNodeContext.metricsService().get(BlocksPersisted).get());
     }
 
     @Test

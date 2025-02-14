@@ -100,7 +100,8 @@ final class AsyncBlockAsLocalFileWriter implements AsyncBlockWriter {
                         }
                     }
                 } catch (final InterruptedException e) {
-                    // @todo(545) is this the proper handling here?
+                    // @todo(545) if we have entered here, something has cancelled the task.
+                    // Is this the proper handling here?
                     LOGGER.log(
                             Level.ERROR,
                             "Interrupted while waiting for next block item for block [%d]".formatted(blockNumber));

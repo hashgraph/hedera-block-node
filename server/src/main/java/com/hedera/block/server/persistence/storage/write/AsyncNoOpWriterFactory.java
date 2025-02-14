@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.persistence.storage.write;
 
-import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.TRACE;
 
 import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.metrics.MetricsService;
@@ -32,7 +32,7 @@ public final class AsyncNoOpWriterFactory implements AsyncBlockWriterFactory {
     @Override
     public AsyncBlockWriter create(long blockNumber) {
         final AsyncNoOpWriter instance = new AsyncNoOpWriter(blockNumber, ackHandler, metricsService);
-        LOGGER.log(DEBUG, "Created Writer for Block [%d]".formatted(blockNumber));
+        LOGGER.log(TRACE, "Created Writer for Block [%d]".formatted(blockNumber));
         return instance;
     }
 }
