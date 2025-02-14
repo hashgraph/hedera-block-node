@@ -4,7 +4,6 @@ package com.hedera.block.server.mediator;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
-import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.lmax.disruptor.BatchEventProcessor;
@@ -18,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>When a stream mediator is created, it will accept new block items from a producer, publish
  * them to all consumers subscribed to the stream, and persist the block items to storage
- * represented by a {@link BlockWriter}.
+ * represented by a {@link com.hedera.block.server.persistence.storage.write.AsyncBlockWriter}.
  */
 public class LiveStreamMediatorBuilder {
 

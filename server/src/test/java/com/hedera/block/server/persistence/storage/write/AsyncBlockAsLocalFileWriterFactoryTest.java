@@ -1,42 +1,77 @@
 // SPDX-License-Identifier: Apache-2.0
-package com.hedera.block.server.persistence.storage.read;
+package com.hedera.block.server.persistence.storage.write;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
-import com.hedera.hapi.block.BlockUnparsed;
-import com.hedera.pbj.runtime.ParseException;
-import java.io.IOException;
-import java.util.Optional;
+import com.hedera.block.server.ack.AckHandler;
+import com.hedera.block.server.metrics.MetricsService;
+import com.hedera.block.server.persistence.storage.compression.Compression;
+import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
+import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Tests for the {@link NoOpBlockReader} class.
+ * Test class for {@link AsyncBlockAsLocalFileWriterFactory}
  */
-class NoOpBlockReaderTest {
-    private NoOpBlockReader toTest;
+@ExtendWith(MockitoExtension.class)
+class AsyncBlockAsLocalFileWriterFactoryTest {
+    @Mock
+    private BlockPathResolver blockPathResolverMock;
+
+    @Mock
+    private BlockRemover blockRemoverMock;
+
+    @Mock
+    private Compression compressionMock;
+
+    @Mock
+    private AckHandler ackHandlerMock;
+
+    @Mock
+    private MetricsService metricsServiceMock;
+
+    private AsyncBlockAsLocalFileWriterFactory toTest;
 
     @BeforeEach
     void setUp() {
-        toTest = NoOpBlockReader.newInstance();
+        toTest = new AsyncBlockAsLocalFileWriterFactory(
+                blockPathResolverMock, blockRemoverMock, compressionMock, ackHandlerMock, metricsServiceMock);
     }
 
     /**
      * This test aims to verify that the
-     * {@link NoOpBlockReader#read(long)} does nothing and does not throw any
-     * exceptions. The no-op reader has no preconditions check as well. The
-     * method always returns an empty {@link Optional}.
+     * {@link AsyncBlockAsLocalFileWriterFactory#create(long)} correctly
+     * creates an {@link AsyncBlockAsLocalFileWriter} instance.
      *
-     * @param toRead parameterized, block number
+     * @param blockNumber parameterized, block number
      */
     @ParameterizedTest
-    @MethodSource({"validBlockNumbers", "invalidBlockNumbers"})
-    void testSuccessfulBlockReading(final long toRead) throws IOException, ParseException {
-        final Optional<BlockUnparsed> actual = toTest.read(toRead);
-        assertThat(actual).isNotNull().isEmpty();
+    @MethodSource("validBlockNumbers")
+    void testCreate(final long blockNumber) {
+        final AsyncBlockWriter actual = toTest.create(blockNumber);
+        assertThat(actual).isNotNull().isExactlyInstanceOf(AsyncBlockAsLocalFileWriter.class);
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link AsyncBlockAsLocalFileWriterFactory#create(long)} correctly
+     * throws an {@link IllegalArgumentException} when an invalid block number is
+     * provided.
+     *
+     * @param blockNumber parameterized, block number
+     */
+    @ParameterizedTest
+    @MethodSource("invalidBlockNumbers")
+    void testCreateInvalidBlockNumber(final long blockNumber) {
+        assertThatIllegalArgumentException().isThrownBy(() -> toTest.create(blockNumber));
     }
 
     /**

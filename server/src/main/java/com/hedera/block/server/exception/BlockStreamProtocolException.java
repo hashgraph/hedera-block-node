@@ -15,4 +15,8 @@ public class BlockStreamProtocolException extends Exception {
     public BlockStreamProtocolException(String message) {
         super(message);
     }
+
+    public BlockStreamProtocolException(final String message, final Throwable cause) {
+        super(message, cause);
+    }
 }

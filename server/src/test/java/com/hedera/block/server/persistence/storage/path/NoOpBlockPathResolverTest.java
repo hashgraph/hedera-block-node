@@ -2,7 +2,9 @@
 package com.hedera.block.server.persistence.storage.path;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
+import com.hedera.block.server.Constants;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +42,25 @@ class NoOpBlockPathResolverTest {
 
     /**
      * This test aims to verify that the
+     * {@link NoOpBlockPathResolver#resolveLiveRawUnverifiedPathToBlock (long)}
+     * correctly resolves the path to a block by a given number. The no-op
+     * resolver does nothing, always returns a path resolved under '/tmp' based
+     * on the blockNumber and has no preconditions check. E.g. for blockNumber
+     * 0, the resolved path is '/tmp/hashgraph/blocknode/data/0.tmp.blk'.
+     * Essentially, acts the same as
+     * {@link NoOpBlockPathResolver#resolveLiveRawPathToBlock(long)}.
+     *
+     * @param toResolve parameterized, block number
+     */
+    @ParameterizedTest
+    @MethodSource({"validBlockNumbers", "invalidBlockNumbers"})
+    void testSuccessfulLiveRawUnverifiedPathResolution(final long toResolve, final Path expected) {
+        final Path actual = toTest.resolveLiveRawUnverifiedPathToBlock(toResolve);
+        assertThat(actual).isNotNull().isAbsolute().isEqualByComparingTo(expected);
+    }
+
+    /**
+     * This test aims to verify that the
      * {@link NoOpBlockPathResolver#findLiveBlock(long)}  always returns an empty
      * optional.
      *
@@ -52,11 +73,59 @@ class NoOpBlockPathResolverTest {
     }
 
     /**
+     * This test aims to verify that the
+     * {@link NoOpBlockPathResolver#findArchivedBlock(long)}  always returns an empty
+     * optional.
+     *
+     * @param toResolve parameterized, block number
+     */
+    @ParameterizedTest
+    @MethodSource({"validBlockNumbers", "invalidBlockNumbers"})
+    void testSuccessfulFindArchiveBlock(final long toResolve) {
+        assertThat(toTest.findArchivedBlock(toResolve)).isNotNull().isEmpty();
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link NoOpBlockPathResolver#existsVerifiedBlock(long)}
+     * always returns false.
+     *
+     * @param toResolve parameterized, block number
+     */
+    @ParameterizedTest
+    @MethodSource({"validBlockNumbers", "invalidBlockNumbers"})
+    void testSuccessfulExistsVerified(final long toResolve) {
+        assertThat(toTest.existsVerifiedBlock(toResolve)).isFalse();
+    }
+
+    /**
+     * This test aims to verify that the
+     * {@link NoOpBlockPathResolver#markVerified(long)} does nothing.
+     *
+     * @param toResolve parameterized, block number
+     */
+    @ParameterizedTest
+    @MethodSource({"validBlockNumbers", "invalidBlockNumbers"})
+    void testSuccessfulMarkVerified(final long toResolve, final String blockPath) {
+        final Path verifiedBlockPath = Path.of(blockPath);
+        final Path unverifiedBlockPath =
+                Path.of(blockPath.replace(Constants.BLOCK_FILE_EXTENSION, Constants.UNVERIFIED_BLOCK_FILE_EXTENSION));
+
+        assertThat(verifiedBlockPath).doesNotExist();
+        assertThat(unverifiedBlockPath).doesNotExist();
+
+        assertThatCode(() -> toTest.markVerified(toResolve)).doesNotThrowAnyException();
+
+        assertThat(verifiedBlockPath).doesNotExist();
+        assertThat(unverifiedBlockPath).doesNotExist();
+    }
+
+    /**
      * Some valid block numbers.
      *
      * @return a stream of valid block numbers
      */
-    public static Stream<Arguments> validBlockNumbers() {
+    private static Stream<Arguments> validBlockNumbers() {
         return Stream.of(
                 Arguments.of(0L, "/tmp/hashgraph/blocknode/data/0.tmp.blk"),
                 Arguments.of(1L, "/tmp/hashgraph/blocknode/data/1.tmp.blk"),
@@ -87,7 +156,7 @@ class NoOpBlockPathResolverTest {
      *
      * @return a stream of invalid block numbers
      */
-    public static Stream<Arguments> invalidBlockNumbers() {
+    private static Stream<Arguments> invalidBlockNumbers() {
         return Stream.of(
                 Arguments.of(-1L, "/tmp/hashgraph/blocknode/data/-1.tmp.blk"),
                 Arguments.of(-2L, "/tmp/hashgraph/blocknode/data/-2.tmp.blk"),

@@ -4,27 +4,18 @@ package com.hedera.block.server.grpc;
 import static com.hedera.block.server.Constants.FULL_SERVICE_NAME_BLOCK_ACCESS;
 import static com.hedera.block.server.Constants.SERVICE_NAME_BLOCK_ACCESS;
 import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY;
-import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
+import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsedForWithBlockNumber;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.pbj.PbjBlockAccessService;
 import com.hedera.block.server.pbj.PbjBlockAccessServiceProxy;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
-import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
-import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
-import com.hedera.block.server.persistence.storage.remove.BlockRemover;
-import com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter;
-import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -47,10 +38,9 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@SuppressWarnings("FieldCanBeLocal")
 @ExtendWith(MockitoExtension.class)
 class BlockAccessServiceTest {
-    private BlockAsLocalDirPathResolver pathResolverMock;
-
     @Mock
     private Pipeline<? super Bytes> responseObserver;
 
@@ -60,9 +50,6 @@ class BlockAccessServiceTest {
     @Mock
     private ServiceStatus serviceStatus;
 
-    @Mock
-    private AckHandler ackHandler;
-
     @TempDir
     private Path testLiveRootPath;
 
@@ -71,8 +58,7 @@ class BlockAccessServiceTest {
     private PbjBlockAccessService blockAccessService;
 
     @BeforeEach
-    public void setUp() throws IOException {
-
+    void setUp() throws IOException {
         blockNodeContext = TestConfigUtil.getTestBlockNodeContext(
                 Map.of(PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY, testLiveRootPath.toString()));
         testConfig = blockNodeContext.configuration().getConfigData(PersistenceStorageConfig.class);
@@ -81,50 +67,36 @@ class BlockAccessServiceTest {
 
         final String testConfigLiveRootPath = testConfig.liveRootPath();
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
-        pathResolverMock = spy(BlockAsLocalDirPathResolver.of(testConfig));
     }
 
     @Test
-    public void testServiceName() {
+    void testServiceName() {
         assertEquals(SERVICE_NAME_BLOCK_ACCESS, blockAccessService.serviceName());
     }
 
     @Test
-    public void testFullName() {
+    void testFullName() {
         assertEquals(FULL_SERVICE_NAME_BLOCK_ACCESS, blockAccessService.fullName());
     }
 
     @Test
-    public void testMethods() {
+    void testMethods() {
         assertEquals(1, blockAccessService.methods().size());
     }
 
     @Test
     void testSingleBlockHappyPath() throws IOException, ParseException {
-        final BlockReader<BlockUnparsed> blockReader = BlockAsLocalDirReader.of(testConfig);
+        final long blockNumber = 1L;
+        final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsedForWithBlockNumber(blockNumber);
+        final BlockUnparsed targetBlock =
+                BlockUnparsed.newBuilder().blockItems(blockItems).build();
 
-        final PbjBlockAccessService blockAccessService =
-                new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
-
-        // Enable the serviceStatus
+        when(blockReader.read(blockNumber)).thenReturn(Optional.of(targetBlock));
         when(serviceStatus.isRunning()).thenReturn(true);
-
-        // Generate and persist a block
-        final BlockWriter<List<BlockItemUnparsed>, Long> blockWriter =
-                BlockAsLocalDirWriter.of(blockNodeContext, mock(BlockRemover.class), pathResolverMock);
-        final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
-        blockWriter.write(blockItems);
-
-        // Get the block so we can verify the response payload
-        final Optional<BlockUnparsed> blockOpt = blockReader.read(1);
-        if (blockOpt.isEmpty()) {
-            fail("Block 1 should be present");
-            return;
-        }
 
         // Build a response to verify what's passed to the response observer
         final SingleBlockResponseUnparsed expectedSingleBlockResponse = SingleBlockResponseUnparsed.newBuilder()
-                .block(blockOpt.get())
+                .block(targetBlock)
                 .status(SingleBlockResponseCode.READ_BLOCK_SUCCESS)
                 .build();
 
@@ -143,7 +115,6 @@ class BlockAccessServiceTest {
 
     @Test
     void testSingleBlockNotFoundPath() throws IOException, ParseException {
-
         // Get the block so we can verify the response payload
         when(blockReader.read(1)).thenReturn(Optional.empty());
 
@@ -155,9 +126,6 @@ class BlockAccessServiceTest {
         // Build a request to invoke the service
         final SingleBlockRequest singleBlockRequest =
                 SingleBlockRequest.newBuilder().blockNumber(1).build();
-
-        final PbjBlockAccessService blockAccessService =
-                new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
 
         // Enable the serviceStatus
         when(serviceStatus.isRunning()).thenReturn(true);
@@ -172,10 +140,6 @@ class BlockAccessServiceTest {
 
     @Test
     void testSingleBlockServiceNotAvailable() {
-
-        final PbjBlockAccessService blockAccessService =
-                new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
-
         // Set the service status to not running
         when(serviceStatus.isRunning()).thenReturn(false);
 
@@ -196,10 +160,7 @@ class BlockAccessServiceTest {
     }
 
     @Test
-    public void testSingleBlockIOExceptionPath() throws IOException, ParseException {
-        final PbjBlockAccessService blockAccessService =
-                new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
-
+    void testSingleBlockIOExceptionPath() throws IOException, ParseException {
         when(serviceStatus.isRunning()).thenReturn(true);
         when(blockReader.read(1)).thenThrow(new IOException("Test exception"));
 
@@ -220,10 +181,7 @@ class BlockAccessServiceTest {
     }
 
     @Test
-    public void testSingleBlockParseExceptionPath() throws IOException, ParseException {
-        final PbjBlockAccessService blockAccessService =
-                new PbjBlockAccessServiceProxy(serviceStatus, blockReader, blockNodeContext);
-
+    void testSingleBlockParseExceptionPath() throws IOException, ParseException {
         when(serviceStatus.isRunning()).thenReturn(true);
         when(blockReader.read(1)).thenThrow(new ParseException("Test exception"));
 

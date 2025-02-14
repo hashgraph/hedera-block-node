@@ -1,42 +1,50 @@
 // SPDX-License-Identifier: Apache-2.0
-package com.hedera.block.server.persistence.storage.read;
+package com.hedera.block.server.persistence.storage.write;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.hedera.hapi.block.BlockUnparsed;
-import com.hedera.pbj.runtime.ParseException;
-import java.io.IOException;
-import java.util.Optional;
+import com.hedera.block.server.ack.AckHandler;
+import com.hedera.block.server.metrics.MetricsService;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Tests for the {@link NoOpBlockReader} class.
+ * Test class for {@link AsyncNoOpWriterFactory}.
  */
-class NoOpBlockReaderTest {
-    private NoOpBlockReader toTest;
+@ExtendWith(MockitoExtension.class)
+class AsyncNoOpWriterFactoryTest {
+    @Mock
+    private AckHandler ackHandlerMock;
+
+    @Mock
+    private MetricsService metricsServiceMock;
+
+    private AsyncNoOpWriterFactory toTest;
 
     @BeforeEach
     void setUp() {
-        toTest = NoOpBlockReader.newInstance();
+        toTest = new AsyncNoOpWriterFactory(ackHandlerMock, metricsServiceMock);
     }
 
     /**
      * This test aims to verify that the
-     * {@link NoOpBlockReader#read(long)} does nothing and does not throw any
-     * exceptions. The no-op reader has no preconditions check as well. The
-     * method always returns an empty {@link Optional}.
+     * {@link AsyncNoOpWriterFactory#create(long)} correctly
+     * creates an {@link AsyncNoOpWriterFactory} instance, no precondition
+     * check for the block number.
      *
-     * @param toRead parameterized, block number
+     * @param blockNumber parameterized, block number
      */
     @ParameterizedTest
     @MethodSource({"validBlockNumbers", "invalidBlockNumbers"})
-    void testSuccessfulBlockReading(final long toRead) throws IOException, ParseException {
-        final Optional<BlockUnparsed> actual = toTest.read(toRead);
-        assertThat(actual).isNotNull().isEmpty();
+    void testCreate(final long blockNumber) {
+        final AsyncBlockWriter actual = toTest.create(blockNumber);
+        assertThat(actual).isNotNull().isExactlyInstanceOf(AsyncNoOpWriter.class);
     }
 
     /**
