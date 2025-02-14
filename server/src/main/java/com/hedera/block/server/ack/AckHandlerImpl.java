@@ -109,7 +109,7 @@ public class AckHandlerImpl implements AckHandler {
     private void attemptAcks() {
         // Temporarily if lastAcknowledgedBlockNumber is -1, we get the first block in the map
         if (lastAcknowledgedBlockNumber == -1) {
-            // todo(147): once we have a way to get the last acknowledged block from the store we should use that
+            // @todo(147): once we have a way to get the last acknowledged block from the store we should use that
             lastAcknowledgedBlockNumber = 0;
         }
 
