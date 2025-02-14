@@ -4,15 +4,17 @@ Implementation of the Hedera Block Node, which is responsible for consuming the 
 
 ## Table of Contents
 
+revert this change
+
 1. [Project Links](#project-links)
-1. [Prerequisites](#prerequisites)
-1. [Overview of child modules](#overview-of-child-modules)
-1. [Getting Started](#getting-started)
-1. [Support](#support)
-1. [Contributing](#contributing)
-1. [Code of Conduct](#code-of-conduct)
-1. [Security](#-security)
-1. [License](#license)
+2. [Prerequisites](#prerequisites)
+3. [Overview of child modules](#overview-of-child-modules)
+4. [Getting Started](#getting-started)
+5. [Support](#support)
+6. [Contributing](#contributing)
+7. [Code of Conduct](#code-of-conduct)
+8. [Security](#-security)
+9. [License](#license)
 
 ## Project Links
 
