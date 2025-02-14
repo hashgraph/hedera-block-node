@@ -22,6 +22,7 @@ public class NaiveStreamingTreeHasher implements StreamingTreeHasher {
 
     private final List<byte[]> leafHashes = new ArrayList<>();
     private boolean rootHashRequested = false;
+    private final List<List<byte[]>> completeMerkleTree = new LinkedList<>();
 
     /**
      * Constructor for the {@link NaiveStreamingTreeHasher}.
@@ -56,6 +57,7 @@ public class NaiveStreamingTreeHasher implements StreamingTreeHasher {
             }
         }
         while (hashes.size() > 1) {
+            completeMerkleTree.add(new ArrayList<>(hashes));
             final Queue<byte[]> newLeafHashes = new LinkedList<>();
             while (!hashes.isEmpty()) {
                 final byte[] left = hashes.poll();
