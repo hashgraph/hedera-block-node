@@ -44,6 +44,10 @@ public final class BlockNodeMetricTypes {
         /** The number of single blocks not found via the singleBlock rpc service. */
         SingleBlocksNotFound("single_blocks_not_found", "Single Blocks Not Found"),
 
+        /** The number of closed range historic blocks retrieved. */
+        ClosedRangeHistoricBlocksRetrieved(
+                "closed_range_historic_blocks_retrieved", "Closed Range Historic Blocks Retrieved"),
+
         // Verification counters
 
         /** The number of blocks received for verification. */

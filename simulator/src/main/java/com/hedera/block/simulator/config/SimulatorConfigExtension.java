@@ -4,6 +4,7 @@ package com.hedera.block.simulator.config;
 import com.google.auto.service.AutoService;
 import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.ConsumerConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.swirlds.common.metrics.config.MetricsConfig;
 import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
@@ -25,6 +26,7 @@ public class SimulatorConfigExtension implements ConfigurationExtension {
     public Set<Class<? extends Record>> getConfigDataTypes() {
         return Set.of(
                 BlockStreamConfig.class,
+                ConsumerConfig.class,
                 GrpcConfig.class,
                 BlockGeneratorConfig.class,
                 MetricsConfig.class,

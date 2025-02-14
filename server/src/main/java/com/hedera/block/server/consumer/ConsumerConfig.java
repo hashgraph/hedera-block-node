@@ -13,7 +13,15 @@ import com.swirlds.config.api.ConfigProperty;
  *     timed out and will be disconnected
  */
 @ConfigData("consumer")
-public record ConsumerConfig(@Loggable @ConfigProperty(defaultValue = "1500") long timeoutThresholdMillis) {
+public record ConsumerConfig(
+        @Loggable @ConfigProperty(defaultValue = "1500") int timeoutThresholdMillis,
+        @Loggable @ConfigProperty(defaultValue = "1000") int maxBlockItemBatchSize) {
+
+    static final int minTimeoutThresholdMillis = 1;
+    static final int minMaxBlockItemBatchSize = 1;
+
+    private static final String CONSUMER_CONFIG_PREFIX = "consumer.";
+    private static final String ERROR_MSG_TEMPLATE = " value %d is out of range [%d, %d]";
 
     /**
      * Validate the configuration.
@@ -21,6 +29,15 @@ public record ConsumerConfig(@Loggable @ConfigProperty(defaultValue = "1500") lo
      * @throws IllegalArgumentException if the timeoutThresholdMillis is not positive
      */
     public ConsumerConfig {
-        Preconditions.requirePositive(timeoutThresholdMillis);
+        Preconditions.requireInRange(
+                timeoutThresholdMillis,
+                minTimeoutThresholdMillis,
+                Integer.MAX_VALUE,
+                CONSUMER_CONFIG_PREFIX + "timeoutThresholdMillis" + ERROR_MSG_TEMPLATE);
+        Preconditions.requireInRange(
+                maxBlockItemBatchSize,
+                minMaxBlockItemBatchSize,
+                Integer.MAX_VALUE,
+                CONSUMER_CONFIG_PREFIX + "maxBlockItemBatchSize" + ERROR_MSG_TEMPLATE);
     }
 }

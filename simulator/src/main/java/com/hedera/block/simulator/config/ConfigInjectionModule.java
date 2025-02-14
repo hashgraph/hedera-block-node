@@ -3,6 +3,7 @@ package com.hedera.block.simulator.config;
 
 import com.hedera.block.simulator.config.data.BlockGeneratorConfig;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.ConsumerConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.swirlds.common.metrics.platform.prometheus.PrometheusConfig;
 import com.swirlds.config.api.Configuration;
@@ -24,6 +25,18 @@ public interface ConfigInjectionModule {
     @Provides
     static BlockStreamConfig provideBlockStreamConfig(Configuration configuration) {
         return configuration.getConfigData(BlockStreamConfig.class);
+    }
+
+    /**
+     * Provides the consumer configuration.
+     *
+     * @param configuration the configuration to be used by the block consumer
+     * @return the block consumer configuration
+     */
+    @Singleton
+    @Provides
+    static ConsumerConfig provideConsumerConfig(Configuration configuration) {
+        return configuration.getConfigData(ConsumerConfig.class);
     }
 
     /**

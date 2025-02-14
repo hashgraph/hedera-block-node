@@ -25,6 +25,10 @@ public final class SimulatorMappedConfigSourceInitializer {
             new ConfigMapping("blockStream.millisecondsPerBlock", "BLOCK_STREAM_MILLISECONDS_PER_BLOCK"),
             new ConfigMapping("blockStream.blockItemsBatchSize", "BLOCK_STREAM_BLOCK_ITEMS_BATCH_SIZE"),
 
+            // Block consumer configuration
+            new ConfigMapping("consumer.startBlockNumber", "CONSUMER_START_BLOCK_NUMBER"),
+            new ConfigMapping("consumer.endBlockNumber", "CONSUMER_END_BLOCK_NUMBER"),
+
             // Block generator configuration
             new ConfigMapping("generator.generationMode", "GENERATOR_GENERATION_MODE"),
             new ConfigMapping("generator.folderRootPath", "GENERATOR_FOLDER_ROOT_PATH"),

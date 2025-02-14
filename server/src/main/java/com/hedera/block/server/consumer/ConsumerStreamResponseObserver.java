@@ -6,7 +6,6 @@ import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
-import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.LivenessCalculator;
 import com.hedera.block.server.events.ObjectEvent;
@@ -18,6 +17,7 @@ import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.OneOf;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.grpc.Pipeline;
+import com.swirlds.config.api.Configuration;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.InstantSource;
 import java.util.List;
@@ -35,7 +35,7 @@ class ConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEven
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
     private final MetricsService metricsService;
-    private final Pipeline<? super SubscribeStreamResponseUnparsed> subscribeStreamResponseObserver;
+    private final Pipeline<? super SubscribeStreamResponseUnparsed> helidonConsumerObserver;
     private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> prevSubscriptionHandler;
 
     private final AtomicBoolean isResponsePermitted = new AtomicBoolean(true);
@@ -48,29 +48,47 @@ class ConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEven
     private final LivenessCalculator livenessCalculator;
 
     /**
-     * Constructor for the ConsumerBlockItemObserver class. It is responsible for observing the
+     * Constructor for the ConsumerStreamResponseObserver class. It is responsible for observing the
      * SubscribeStreamResponse events from the Disruptor and passing them to the downstream consumer
      * via the subscribeStreamResponseObserver.
      *
      * @param producerLivenessClock the clock to use to determine the producer liveness
-     * @param subscribeStreamResponseObserver the observer to use to send responses to the consumer
-     * @param blockNodeContext contains the context with metrics and configuration for the
-     *     application
+     * @param helidonConsumerObserver the observer to use to send responses to the consumer
+     * @param metricsService - the service responsible for handling metrics
+     * @param configuration - the configuration settings for the block node
      */
     public ConsumerStreamResponseObserver(
             @NonNull final InstantSource producerLivenessClock,
-            @NonNull final Pipeline<? super SubscribeStreamResponseUnparsed> subscribeStreamResponseObserver,
-            @NonNull final BlockNodeContext blockNodeContext) {
+            @NonNull final Pipeline<? super SubscribeStreamResponseUnparsed> helidonConsumerObserver,
+            @NonNull final MetricsService metricsService,
+            @NonNull final Configuration configuration) {
 
         this.livenessCalculator = new LivenessCalculator(
                 producerLivenessClock,
-                blockNodeContext
-                        .configuration()
+                Objects.requireNonNull(configuration)
                         .getConfigData(ConsumerConfig.class)
                         .timeoutThresholdMillis());
 
-        this.metricsService = blockNodeContext.metricsService();
-        this.subscribeStreamResponseObserver = subscribeStreamResponseObserver;
+        this.metricsService = Objects.requireNonNull(metricsService);
+        this.helidonConsumerObserver = helidonConsumerObserver;
+    }
+
+    /**
+     * Constructor for the ConsumerStreamResponseObserver class. It is responsible for observing the
+     * SubscribeStreamResponse events from the Disruptor and passing them to the downstream consumer
+     * via the subscribeStreamResponseObserver. Use this constructor when the producer liveness is not
+     * required.
+     *
+     * @param helidonConsumerObserver the observer to use to send responses to the consumer
+     * @param metricsService - the service responsible for handling metrics
+     */
+    public ConsumerStreamResponseObserver(
+            @NonNull final Pipeline<? super SubscribeStreamResponseUnparsed> helidonConsumerObserver,
+            @NonNull final MetricsService metricsService) {
+
+        this.livenessCalculator = null;
+        this.metricsService = Objects.requireNonNull(metricsService);
+        this.helidonConsumerObserver = Objects.requireNonNull(helidonConsumerObserver);
     }
 
     /**
@@ -97,11 +115,11 @@ class ConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEven
 
                 // Notify the Helidon observer that we've
                 // stopped processing the stream
-                subscribeStreamResponseObserver.onComplete();
+                helidonConsumerObserver.onComplete();
                 LOGGER.log(DEBUG, "Producer liveness timeout. Unsubscribed ConsumerBlockItemObserver.");
             } else {
                 // Refresh the producer liveness and pass the BlockItem to the downstream observer.
-                livenessCalculator.refresh();
+                refreshLiveness();
 
                 final SubscribeStreamResponseUnparsed subscribeStreamResponse = event.get();
                 final ResponseSender responseSender = getResponseSender(subscribeStreamResponse);
@@ -115,7 +133,17 @@ class ConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEven
      */
     @Override
     public boolean isTimeoutExpired() {
-        return livenessCalculator.isTimeoutExpired();
+        if (livenessCalculator != null) {
+            return livenessCalculator.isTimeoutExpired();
+        }
+
+        return false;
+    }
+
+    private void refreshLiveness() {
+        if (livenessCalculator != null) {
+            livenessCalculator.refresh();
+        }
     }
 
     @NonNull
@@ -170,17 +198,18 @@ class ConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEven
                     long blockNumber = BlockHeader.PROTOBUF
                             .parse(Objects.requireNonNull(firstBlockItem.blockHeader()))
                             .number();
-                    LOGGER.log(DEBUG, "{0} sending block: {1}", Thread.currentThread(), blockNumber);
+                    if (LOGGER.isLoggable(DEBUG)) {
+                        LOGGER.log(DEBUG, "{0} sending block: {1}", Thread.currentThread(), blockNumber);
+                    }
                     metricsService.get(CurrentBlockNumberOutbound).set(blockNumber);
                 }
 
-                // Increment the number of block items consumed
                 metricsService
                         .get(BlockNodeMetricTypes.Counter.LiveBlockItemsConsumed)
                         .add(blockItems.size());
 
                 // Send the response down through Helidon
-                subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
+                helidonConsumerObserver.onNext(subscribeStreamResponse);
             }
         }
     }
@@ -190,8 +219,8 @@ class ConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEven
     private final class StatusResponseSender implements ResponseSender {
         public void send(@NonNull final SubscribeStreamResponseUnparsed subscribeStreamResponse) {
             LOGGER.log(DEBUG, "Sending SubscribeStreamResponse downstream: " + subscribeStreamResponse);
-            subscribeStreamResponseObserver.onNext(subscribeStreamResponse);
-            subscribeStreamResponseObserver.onComplete();
+            helidonConsumerObserver.onNext(subscribeStreamResponse);
+            helidonConsumerObserver.onComplete();
         }
     }
 
@@ -200,7 +229,9 @@ class ConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEven
      */
     @Override
     public void unsubscribe() {
-        prevSubscriptionHandler.unsubscribe();
+        if (prevSubscriptionHandler != null) {
+            prevSubscriptionHandler.unsubscribe();
+        }
     }
 
     public void setPrevSubscriptionHandler(

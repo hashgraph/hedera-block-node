@@ -6,6 +6,7 @@ import static java.util.Objects.requireNonNull;
 
 import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.simulator.config.data.BlockStreamConfig;
+import com.hedera.block.simulator.config.data.ConsumerConfig;
 import com.hedera.block.simulator.config.data.GrpcConfig;
 import com.hedera.block.simulator.grpc.ConsumerStreamGrpcClient;
 import com.hedera.block.simulator.metrics.MetricsService;
@@ -30,7 +31,7 @@ import javax.inject.Inject;
 public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
     // Configuration
     private final GrpcConfig grpcConfig;
-    private final BlockStreamConfig blockStreamConfig;
+    private final ConsumerConfig consumerConfig;
 
     // Service dependencies
     private final MetricsService metricsService;
@@ -57,10 +58,11 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
     public ConsumerStreamGrpcClientImpl(
             @NonNull final GrpcConfig grpcConfig,
             @NonNull final BlockStreamConfig blockStreamConfig,
+            @NonNull final ConsumerConfig consumerConfig,
             @NonNull final MetricsService metricsService) {
         this.grpcConfig = requireNonNull(grpcConfig);
         this.metricsService = requireNonNull(metricsService);
-        this.blockStreamConfig = requireNonNull(blockStreamConfig);
+        this.consumerConfig = requireNonNull(consumerConfig);
         this.lastKnownStatusesCapacity = blockStreamConfig.lastKnownStatusesCapacity();
         this.lastKnownStatuses = new ArrayDeque<>(lastKnownStatusesCapacity);
     }
@@ -87,6 +89,21 @@ public class ConsumerStreamGrpcClientImpl implements ConsumerStreamGrpcClient {
         SubscribeStreamRequest request = SubscribeStreamRequest.newBuilder()
                 .setStartBlockNumber(startBlock)
                 .setEndBlockNumber(endBlock)
+                .setAllowUnverified(true)
+                .build();
+        stub.subscribeBlockStream(request, consumerStreamObserver);
+
+        streamLatch.await();
+    }
+
+    @Override
+    public void requestBlocks() throws InterruptedException {
+        consumerStreamObserver =
+                new ConsumerStreamObserver(metricsService, streamLatch, lastKnownStatuses, lastKnownStatusesCapacity);
+
+        SubscribeStreamRequest request = SubscribeStreamRequest.newBuilder()
+                .setStartBlockNumber(consumerConfig.startBlockNumber())
+                .setEndBlockNumber(consumerConfig.endBlockNumber())
                 .setAllowUnverified(true)
                 .build();
         stub.subscribeBlockStream(request, consumerStreamObserver);

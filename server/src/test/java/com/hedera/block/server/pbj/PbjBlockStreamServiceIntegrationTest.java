@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.ack.AckHandlerImpl;
+import com.hedera.block.server.block.BlockInfo;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
@@ -154,7 +155,8 @@ class PbjBlockStreamServiceIntegrationTest {
     void testPublishBlockStreamRegistrationAndExecution() {
         final int numberOfBlocks = 1;
         final ExecutorService executor = Executors.newFixedThreadPool(numberOfBlocks);
-        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(executor);
+        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy =
+                buildBlockStreamService(blockReaderMock, executor);
 
         // Register 3 producers - Opening a pipeline is not enough to register a producer.
         // pipeline.onNext() must be invoked to register the producer at the Helidon PBJ layer.
@@ -246,7 +248,8 @@ class PbjBlockStreamServiceIntegrationTest {
 
         final ExecutorService executor = Executors.newFixedThreadPool(numberOfBlocks);
         // Use a real BlockWriter to test the full integration
-        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(executor);
+        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy =
+                buildBlockStreamService(blockReaderMock, executor);
 
         // Register 3 producers - Opening a pipeline is not enough to register a producer.
         // pipeline.onNext() must be invoked to register the producer at the Helidon PBJ layer.
@@ -317,7 +320,8 @@ class PbjBlockStreamServiceIntegrationTest {
         final int numberOfBlocks = 100;
 
         final ExecutorService executor = Executors.newFixedThreadPool(1);
-        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy = buildBlockStreamService(executor);
+        final PbjBlockStreamServiceProxy pbjBlockStreamServiceProxy =
+                buildBlockStreamService(blockReaderMock, executor);
 
         // Register a producer
         final Pipeline<? super Bytes> producerPipeline = pbjBlockStreamServiceProxy.open(
@@ -404,6 +408,8 @@ class PbjBlockStreamServiceIntegrationTest {
                         BatchEventProcessor<ObjectEvent<SubscribeStreamResponseUnparsed>>>
                 consumers = new LinkedHashMap<>();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
+        final BlockInfo blockInfo = new BlockInfo(1L);
+        serviceStatus.setLatestAckedBlock(blockInfo);
         final LiveStreamMediator streamMediator = buildStreamMediator(consumers, serviceStatus);
         final AsyncNoOpWriterFactory writerFactory =
                 new AsyncNoOpWriterFactory(ackHandlerMock, blockNodeContext.metricsService());
@@ -426,6 +432,7 @@ class PbjBlockStreamServiceIntegrationTest {
                 serviceStatus,
                 blockNodeEventHandler,
                 streamVerificationHandler,
+                blockReaderMock,
                 notifierMock,
                 blockNodeContext);
 
@@ -549,6 +556,8 @@ class PbjBlockStreamServiceIntegrationTest {
                 consumers = new ConcurrentHashMap<>();
         // Use a spy to use the real object but also verify the behavior.
         final ServiceStatus serviceStatus = spy(new ServiceStatusImpl(blockNodeContext));
+        final BlockInfo blockInfo = new BlockInfo(1L);
+        serviceStatus.setLatestAckedBlock(blockInfo);
         doCallRealMethod().when(serviceStatus).setWebServer(webServerMock);
         doCallRealMethod().when(serviceStatus).isRunning();
         doCallRealMethod().when(serviceStatus).stopWebServer(any());
@@ -578,6 +587,7 @@ class PbjBlockStreamServiceIntegrationTest {
                 serviceStatus,
                 blockNodeEventHandler,
                 streamVerificationHandler,
+                blockReaderMock,
                 notifier,
                 blockNodeContext);
 
@@ -682,10 +692,9 @@ class PbjBlockStreamServiceIntegrationTest {
 
         assertEquals(SingleBlockResponseCode.READ_BLOCK_NOT_AVAILABLE, singleBlockResponse.status());
 
-        // TODO: Fix the response code when it's available
         final Bytes expectedSubscriberStreamNotAvailable =
                 SubscribeStreamResponseUnparsed.PROTOBUF.toBytes(SubscribeStreamResponseUnparsed.newBuilder()
-                        .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
+                        .status(SubscribeStreamResponseCode.READ_STREAM_NOT_AVAILABLE)
                         .build());
 
         verify(subscribeStreamObserver4, timeout(testTimeout).times(1)).onNext(expectedSubscriberStreamNotAvailable);
@@ -740,9 +749,11 @@ class PbjBlockStreamServiceIntegrationTest {
                 config, blockNodeContext.metricsService(), signatureVerifier, executorService);
     }
 
-    private PbjBlockStreamServiceProxy buildBlockStreamService(final ExecutorService persistenceExecutor) {
+    private PbjBlockStreamServiceProxy buildBlockStreamService(
+            final BlockReader<BlockUnparsed> blockReader, final ExecutorService persistenceExecutor) {
         final BlockRemover blockRemover = mock(BlockRemover.class);
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
+        serviceStatus.setLatestAckedBlock(new BlockInfo(1L));
         final LiveStreamMediator streamMediator = buildStreamMediator(new ConcurrentHashMap<>(32), serviceStatus);
         final Notifier notifier = new NotifierImpl(streamMediator, blockNodeContext, serviceStatus);
         final AckHandler blockManager =
@@ -767,6 +778,7 @@ class PbjBlockStreamServiceIntegrationTest {
                 serviceStatus,
                 blockNodeEventHandler,
                 streamVerificationHandler,
+                blockReader,
                 notifier,
                 blockNodeContext);
     }

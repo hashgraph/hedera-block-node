@@ -75,7 +75,12 @@ public class ConsumerStreamResponseObserverTest {
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                completionService, testClock, streamMediator, responseStreamObserver, testContext);
+                completionService,
+                testClock,
+                streamMediator,
+                responseStreamObserver,
+                testContext.metricsService(),
+                testContext.configuration());
 
         final BlockHeader blockHeader = BlockHeader.newBuilder().number(1).build();
         final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder()
@@ -106,7 +111,12 @@ public class ConsumerStreamResponseObserverTest {
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS + 1);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                completionService, testClock, streamMediator, responseStreamObserver, testContext);
+                completionService,
+                testClock,
+                streamMediator,
+                responseStreamObserver,
+                testContext.metricsService(),
+                testContext.configuration());
 
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
         verify(streamMediator, timeout(testTimeout)).unsubscribe(consumerBlockItemObserver);
@@ -120,7 +130,12 @@ public class ConsumerStreamResponseObserverTest {
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                completionService, testClock, streamMediator, responseStreamObserver, testContext);
+                completionService,
+                testClock,
+                streamMediator,
+                responseStreamObserver,
+                testContext.metricsService(),
+                testContext.configuration());
 
         // Send non-header BlockItems to validate that the observer does not send them
         for (int i = 1; i <= 10; i++) {
@@ -183,7 +198,12 @@ public class ConsumerStreamResponseObserverTest {
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                completionService, testClock, streamMediator, responseStreamObserver, testContext);
+                completionService,
+                testClock,
+                streamMediator,
+                responseStreamObserver,
+                testContext.metricsService(),
+                testContext.configuration());
 
         // This call will throw an exception but, because of the async
         // service executor, the exception will not get caught until the
@@ -203,7 +223,12 @@ public class ConsumerStreamResponseObserverTest {
         when(objectEvent.get()).thenReturn(subscribeStreamResponse);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                completionService, testClock, streamMediator, responseStreamObserver, testContext);
+                completionService,
+                testClock,
+                streamMediator,
+                responseStreamObserver,
+                testContext.metricsService(),
+                testContext.configuration());
 
         // This call will throw an exception but, because of the async
         // service executor, the exception will not get caught until the
@@ -230,7 +255,12 @@ public class ConsumerStreamResponseObserverTest {
         doThrow(UncheckedIOException.class).when(responseStreamObserver).onNext(subscribeStreamResponse);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                completionService, testClock, streamMediator, responseStreamObserver, testContext);
+                completionService,
+                testClock,
+                streamMediator,
+                responseStreamObserver,
+                testContext.metricsService(),
+                testContext.configuration());
 
         // This call will throw an exception but, because of the async
         // service executor, the exception will not get caught until the
@@ -259,7 +289,12 @@ public class ConsumerStreamResponseObserverTest {
         doThrow(RuntimeException.class).when(responseStreamObserver).onNext(subscribeStreamResponse);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                completionService, testClock, streamMediator, responseStreamObserver, testContext);
+                completionService,
+                testClock,
+                streamMediator,
+                responseStreamObserver,
+                testContext.metricsService(),
+                testContext.configuration());
 
         // This call will throw an exception but, because of the async
         // service executor, the exception will not get caught until the
