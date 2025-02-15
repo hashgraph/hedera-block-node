@@ -17,7 +17,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import com.hedera.block.common.hasher.HashingUtilities;
 import com.hedera.block.common.hasher.MerkleProofCalculator;
 import com.hedera.block.common.hasher.MerkleProofElement;
 import com.hedera.block.server.metrics.MetricsService;
@@ -37,7 +36,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -111,12 +109,16 @@ public abstract class BlockVerificationSessionBaseTest {
         verifyNoMoreInteractions(verificationBlocksFailed);
 
         // lets get the first transaction result
-        BlockItemUnparsed blockItem = blockItems.stream().filter(item -> item.hasStateChanges()).collect(Collectors.toList()).get(0);
+        BlockItemUnparsed blockItem = blockItems.stream()
+                .filter(item -> item.hasStateChanges())
+                .collect(Collectors.toList())
+                .get(0);
         Bytes blockItemHash = Bytes.wrap(getBlockItemHash(blockItem).array());
 
         // get proof for the item
         MerkleProofCalculator calculator = new MerkleProofCalculator();
-        List<MerkleProofElement> proof = calculator.calculateBlockMerkleProof(result.blockMerkleTreeInfo(), blockItemHash);
+        List<MerkleProofElement> proof =
+                calculator.calculateBlockMerkleProof(result.blockMerkleTreeInfo(), blockItemHash);
 
         // verify that the proof is valid
         boolean isBlockItemVerified = calculator.verifyMerkleProof(proof, blockItemHash, result.blockHash());
