@@ -104,6 +104,12 @@ public class ConcurrentStreamingTreeHasher implements StreamingTreeHasher {
     }
 
     @Override
+    public CompletableFuture<List<List<Bytes>>> merkleTree() {
+        List<List<Bytes>> merkleTree = new ArrayList<>();
+        return CompletableFuture.completedFuture(merkleTree);
+    }
+
+    @Override
     public Status status() {
         if (numLeaves == 0) {
             return Status.EMPTY;

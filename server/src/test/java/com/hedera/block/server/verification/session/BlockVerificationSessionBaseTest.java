@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.verification.session;
 
+import static com.hedera.block.common.hasher.HashingUtilities.getBlockItemHash;
 import static com.hedera.block.common.utils.FileUtilities.readGzipFileUnsafe;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.VerificationBlockTime;
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.VerificationBlocksError;
@@ -16,6 +17,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.hedera.block.common.hasher.HashingUtilities;
+import com.hedera.block.common.hasher.MerkleProofCalculator;
+import com.hedera.block.common.hasher.MerkleProofElement;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.verification.BlockVerificationStatus;
 import com.hedera.block.server.verification.VerificationResult;
@@ -32,6 +36,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -103,6 +109,18 @@ public abstract class BlockVerificationSessionBaseTest {
         verify(verificationBlocksVerified, times(1)).increment();
         verify(verificationBlockTime, times(1)).add(any(Long.class));
         verifyNoMoreInteractions(verificationBlocksFailed);
+
+        // lets get the first transaction result
+        BlockItemUnparsed blockItem = blockItems.stream().filter(item -> item.hasStateChanges()).collect(Collectors.toList()).get(0);
+        Bytes blockItemHash = Bytes.wrap(getBlockItemHash(blockItem).array());
+
+        // get proof for the item
+        MerkleProofCalculator calculator = new MerkleProofCalculator();
+        List<MerkleProofElement> proof = calculator.calculateBlockMerkleProof(result.blockMerkleTreeInfo(), blockItemHash);
+
+        // verify that the proof is valid
+        boolean isBlockItemVerified = calculator.verifyMerkleProof(proof, blockItemHash, result.blockHash());
+        assertTrue(isBlockItemVerified, "Block item proof is not valid");
     }
 
     @Test

@@ -7,6 +7,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import org.junit.jupiter.api.Test;
 
 public class MerkleProofCalculatorTest {
@@ -24,15 +26,15 @@ public class MerkleProofCalculatorTest {
         // - H0_3 is the hash of H0_1 and H2_3.
         // For our test, we use literal byte arrays with the given names.
 
-        byte[] L0 = "L0".getBytes(StandardCharsets.UTF_8);
-        byte[] L1 = "L1".getBytes(StandardCharsets.UTF_8);
-        byte[] L2 = "L2".getBytes(StandardCharsets.UTF_8);
-        byte[] L3 = "L3".getBytes(StandardCharsets.UTF_8);
-        byte[] H0_1 = "H0_1".getBytes(StandardCharsets.UTF_8);
-        byte[] H2_3 = "H2_3".getBytes(StandardCharsets.UTF_8);
-        byte[] H0_3 = "H0_3".getBytes(StandardCharsets.UTF_8);
+        Bytes L0 = Bytes.wrap("L0".getBytes(StandardCharsets.UTF_8));
+        Bytes L1 = Bytes.wrap("L1".getBytes(StandardCharsets.UTF_8));
+        Bytes L2 = Bytes.wrap("L2".getBytes(StandardCharsets.UTF_8));
+        Bytes L3 = Bytes.wrap("L3".getBytes(StandardCharsets.UTF_8));
+        Bytes H0_1 = Bytes.wrap("H0_1".getBytes(StandardCharsets.UTF_8));
+        Bytes H2_3 = Bytes.wrap("H2_3".getBytes(StandardCharsets.UTF_8));
+        Bytes H0_3 = Bytes.wrap("H0_3".getBytes(StandardCharsets.UTF_8));
 
-        List<List<byte[]>> completeMerkleTree = new ArrayList<>();
+        List<List<Bytes>> completeMerkleTree = new ArrayList<>();
 
         // Level 0: Leaves
         completeMerkleTree.add(Arrays.asList(L0, L1, L2, L3));
@@ -49,18 +51,25 @@ public class MerkleProofCalculatorTest {
         //   - At Level 1: then parent's index becomes 2/2 = 1; its sibling is at index 0 (H0_1).
         // So the expected proof is [L3, H0_1].
         int leafIndex = 2;
-        List<byte[]> proof = calculator.calculateMerkleProof(completeMerkleTree, leafIndex);
+        List<MerkleProofElement> proof = calculator.calculateMerkleProof(completeMerkleTree, leafIndex);
 
-        List<byte[]> expectedProof = new ArrayList<>();
-        expectedProof.add(L3);
-        expectedProof.add(H0_1);
+        List<MerkleProofElement> expectedProof = new ArrayList<>();
+        //expectedProof.add(L3);
+        expectedProof.add(new MerkleProofElement(L3, false));
+
+        //expectedProof.add(H0_1);
+        expectedProof.add(new MerkleProofElement(H0_1, true));
 
         // Check that the proof has the expected size.
         assertEquals(expectedProof.size(), proof.size(), "Proof size does not match expected size.");
 
         // Verify that each element in the proof matches the expected value.
         for (int i = 0; i < expectedProof.size(); i++) {
-            assertArrayEquals(expectedProof.get(i), proof.get(i), "Proof element at index " + i + " does not match.");
+            MerkleProofElement expectedElement = expectedProof.get(i);
+            MerkleProofElement actualElement = proof.get(i);
+
+            assertArrayEquals(expectedElement.hash().toByteArray(), actualElement.hash().toByteArray(), "Hashes do not match.");
+            assertEquals(expectedElement.isLeft(), actualElement.isLeft(), "isLeft does not match.");
         }
     }
 
