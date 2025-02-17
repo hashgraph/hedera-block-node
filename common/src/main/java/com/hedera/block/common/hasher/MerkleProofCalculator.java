@@ -3,11 +3,20 @@ package com.hedera.block.common.hasher;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class MerkleProofCalculator {
 
+    private MerkleProofCalculator() {
+        throw new UnsupportedOperationException("Utility Class");
+    }
+
+    /**
+     * Find the index of a byte array in a list of byte arrays.
+     * @param list list of hashes as Bytes
+     * @param target leaf to find index within the list
+     * @return index of the target leaf in the list, or -1 if not found
+     */
     public static int indexOfByteArray(List<Bytes> list, Bytes target) {
         for (int i = 0; i < list.size(); i++) {
             if (list.get(i).equals(target)) {
@@ -17,7 +26,13 @@ public class MerkleProofCalculator {
         return -1;
     }
 
-    public List<MerkleProofElement> calculateBlockMerkleProof(BlockMerkleTreeInfo blockMerkleTreeInfo, Bytes leafHash) {
+    /**
+     * Calculate the Merkle proof for a leaf hash in a block Merkle tree
+     * @param blockMerkleTreeInfo block Merkle tree information
+     * @param leafHash leaf hash to calculate proof for
+     * @return list of MerkleProofElement representing the proof, if item is not found within block, return null
+     */
+    public static List<MerkleProofElement> calculateBlockMerkleProof(BlockMerkleTreeInfo blockMerkleTreeInfo, Bytes leafHash) {
 
         // is the leaf in the input tree
         // all leaf hashes are at the lowest level = 0
@@ -62,9 +77,14 @@ public class MerkleProofCalculator {
         return new ArrayList<>(proof);
     }
 
-    // Calculate the Merkle root hash of a list of leaf hashes.
-    // Requires the completeMerkleTree to be a list of lists of byte arrays, where each list represents a level of the tree, fully padded.
-    public List<MerkleProofElement> calculateMerkleProof(List<List<Bytes>> completeMerkleTree, int leafIndex) {
+    /**
+     * Calculate the Merkle root hash of a list of leaf hashes.
+     * Requires the completeMerkleTree to be a list of lists of byte arrays, where each list represents a level of the tree, fully padded.
+     *
+     * @param completeMerkleTree A list of lists of byte arrays, where each list represents a level of the tree, fully padded.
+     * @return The Merkle root hash.
+     */
+    public static List<MerkleProofElement> calculateMerkleProof(List<List<Bytes>> completeMerkleTree, int leafIndex) {
         List<MerkleProofElement> proof = new ArrayList<>();
         int index = leafIndex;
 
@@ -93,7 +113,7 @@ public class MerkleProofCalculator {
      * @param rootHash The expected Merkle root hash.
      * @return true if the proof is valid and the computed root matches rootHash; false otherwise.
      */
-    public boolean verifyMerkleProof(List<MerkleProofElement> proof, Bytes leafHash, Bytes rootHash) {
+    public static boolean verifyMerkleProof(List<MerkleProofElement> proof, Bytes leafHash, Bytes rootHash) {
         Bytes computedHash = leafHash;
         for (MerkleProofElement element : proof) {
             if (element.isLeft()) {

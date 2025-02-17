@@ -23,7 +23,7 @@ public class NaiveStreamingTreeHasher implements StreamingTreeHasher {
 
     private final List<byte[]> leafHashes = new ArrayList<>();
     private boolean rootHashRequested = false;
-    private final List<List<Bytes>> completeMerkleTree = new LinkedList<>();
+    private final CompletableFuture<List<List<Bytes>>> futureMerkleTree = new CompletableFuture<>();
 
     /**
      * Constructor for the {@link NaiveStreamingTreeHasher}.
@@ -57,6 +57,7 @@ public class NaiveStreamingTreeHasher implements StreamingTreeHasher {
                 hashes.add(EMPTY_HASH);
             }
         }
+        final List<List<Bytes>> completeMerkleTree = new LinkedList<>();
         while (hashes.size() > 1) {
             completeMerkleTree.add(new ArrayList<>(hashes.stream().map(Bytes::wrap).toList()));
             final Queue<byte[]> newLeafHashes = new LinkedList<>();
@@ -71,10 +72,11 @@ public class NaiveStreamingTreeHasher implements StreamingTreeHasher {
             hashes = newLeafHashes;
         }
         completeMerkleTree.add(new ArrayList<>(hashes.stream().map(Bytes::wrap).toList()));
+        futureMerkleTree.complete(completeMerkleTree);
         return CompletableFuture.completedFuture(Bytes.wrap(requireNonNull(hashes.poll())));
     }
 
     public CompletableFuture<List<List<Bytes>>> merkleTree() {
-        return CompletableFuture.completedFuture(completeMerkleTree);
+        return rootHash().thenCompose(ignore -> futureMerkleTree);
     }
 }

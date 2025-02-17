@@ -116,12 +116,11 @@ public abstract class BlockVerificationSessionBaseTest {
         Bytes blockItemHash = Bytes.wrap(getBlockItemHash(blockItem).array());
 
         // get proof for the item
-        MerkleProofCalculator calculator = new MerkleProofCalculator();
         List<MerkleProofElement> proof =
-                calculator.calculateBlockMerkleProof(result.blockMerkleTreeInfo(), blockItemHash);
+                MerkleProofCalculator.calculateBlockMerkleProof(result.blockMerkleTreeInfo(), blockItemHash);
 
         // verify that the proof is valid
-        boolean isBlockItemVerified = calculator.verifyMerkleProof(proof, blockItemHash, result.blockHash());
+        boolean isBlockItemVerified = MerkleProofCalculator.verifyMerkleProof(proof, blockItemHash, result.blockHash());
         assertTrue(isBlockItemVerified, "Block item proof is not valid");
     }
 
