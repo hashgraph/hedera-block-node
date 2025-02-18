@@ -80,7 +80,7 @@ public class StreamVerificationHandlerImpl implements BlockNodeEventHandler<Obje
             // Unsubscribe from the mediator to avoid additional onEvent calls.
             unsubscribe();
 
-            // @todo: We need an error channel to broadcast
+            // @todo(662) We need an error channel to broadcast
             // messages to the consumers and producers
             notifier.notifyUnrecoverableError();
         }

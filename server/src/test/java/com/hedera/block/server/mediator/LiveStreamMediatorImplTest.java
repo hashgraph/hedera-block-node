@@ -503,7 +503,7 @@ class LiveStreamMediatorImplTest {
         verify(helidonSubscribeStreamObserver2, timeout(TEST_TIMEOUT).times(1)).onNext(subscribeStreamResponse);
         verify(helidonSubscribeStreamObserver3, timeout(TEST_TIMEOUT).times(1)).onNext(subscribeStreamResponse);
 
-        // @todo: Revisit this code after we implement an error channel
+        // @todo(662): Revisit this code after we implement an error channel
         // TODO: Replace READ_STREAM_SUCCESS (2) with a generic error code?
         //        final SubscribeStreamResponseUnparsed endOfStreamResponse =
         // SubscribeStreamResponseUnparsed.newBuilder()

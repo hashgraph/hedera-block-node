@@ -106,9 +106,7 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<List<BlockItemUnpar
 
         LOGGER.log(ERROR, "Sending an error response to end the stream for all consumers.");
 
-        // @todo: Change how we broadcast an end of stream response in the event of an unrecoverable error.
+        // @todo(662): Change how we broadcast an end of stream response in the event of an unrecoverable error.
         // Publish an end of stream response to all downstream consumers
-        //        final SubscribeStreamResponseUnparsed endStreamResponse = buildEndStreamResponse();
-        //        ringBuffer.publishEvent((event, sequence) -> event.set(endStreamResponse));
     }
 }
