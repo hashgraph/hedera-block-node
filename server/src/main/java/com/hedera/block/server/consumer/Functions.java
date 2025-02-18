@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.consumer;
 
-import static java.lang.System.Logger.Level.ERROR;
-
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -22,8 +20,6 @@ final class Functions {
      * a consumer.
      */
     static final class ProcessOutboundEvent implements Callable<Void> {
-
-        private static final System.Logger LOGGER = System.getLogger(ProcessOutboundEvent.class.getName());
 
         private final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> nextBlockNodeEventHandler;
         private final ObjectEvent<List<BlockItemUnparsed>> event;
@@ -48,12 +44,7 @@ final class Functions {
          */
         @Override
         public Void call() throws Exception {
-            if (event.get() == null) {
-                LOGGER.log(ERROR, "BlockItems list is null.");
-            } else {
-                nextBlockNodeEventHandler.onEvent(event, l, b);
-            }
-
+            nextBlockNodeEventHandler.onEvent(event, l, b);
             return null;
         }
     }

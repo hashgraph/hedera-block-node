@@ -70,11 +70,6 @@ public class StreamVerificationHandlerImpl implements BlockNodeEventHandler<Obje
             }
 
             final List<BlockItemUnparsed> blockItems = event.get();
-            if (blockItems == null) {
-                LOGGER.log(ERROR, "BlockItems batch is null. BlockItems will not be processed further.");
-                return;
-            }
-
             blockVerificationService.onBlockItemsReceived(blockItems);
         } catch (final Exception e) {
 

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.consumer;
 
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
@@ -30,7 +29,6 @@ import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -172,29 +170,6 @@ public class ConsumerStreamResponseObserverTest {
         // Confirm that the observer was called with the next BlockItem
         // since we never send a BlockItem with a Header to start the stream.
         verify(responseStreamObserver, timeout(testTimeout).times(0)).onNext(subscribeStreamResponse);
-    }
-
-    @Disabled("Should we guarantee the publisher will never send a null BlockItem instead?")
-    @Test
-    public void testSubscriberStreamResponseIsBlockItemWhenBlockItemIsNull() throws Exception {
-
-        when(objectEvent.get()).thenReturn(null);
-        final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                completionService,
-                testClock,
-                streamMediator,
-                responseStreamObserver,
-                testContext.metricsService(),
-                testContext.configuration());
-
-        // This call will throw an exception but, because of the async
-        // service executor, the exception will not get caught until the
-        // next call.
-        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
-        Thread.sleep(testTimeout);
-
-        // This second call will throw the exception.
-        assertThatIllegalArgumentException().isThrownBy(() -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
     }
 
     @Test

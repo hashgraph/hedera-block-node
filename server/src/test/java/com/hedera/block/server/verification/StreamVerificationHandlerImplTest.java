@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.verification;
 
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.VerificationBlocksError;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -61,24 +60,6 @@ public class StreamVerificationHandlerImplTest {
         verify(serviceStatus, timeout(testTimeout).times(0)).stopRunning(any());
         verify(subscriptionHandler, timeout(testTimeout).times(0)).unsubscribe(any());
         verify(notifier, timeout(testTimeout).times(0)).notifyUnrecoverableError();
-    }
-
-    @Test
-    public void testBlockItemsDoesNotThrowExceptionWithNullItems() {
-        final var streamVerificationHandler = new StreamVerificationHandlerImpl(
-                subscriptionHandler, notifier, metricsService, serviceStatus, blockVerificationService);
-
-        final ObjectEvent<List<BlockItemUnparsed>> event = new ObjectEvent<>();
-        event.set(null);
-
-        // Trigger the event
-        streamVerificationHandler.onEvent(event, 0, false);
-
-        // Confirm that with a null item, we do not interact with any of the services
-        verify(metricsService, never()).get(VerificationBlocksError);
-        verify(serviceStatus, never()).stopRunning(any());
-        verify(subscriptionHandler, never()).unsubscribe(any());
-        verify(notifier, never()).notifyUnrecoverableError();
     }
 
     @Test

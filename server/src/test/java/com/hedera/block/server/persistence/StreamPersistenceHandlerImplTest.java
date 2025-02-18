@@ -16,9 +16,7 @@ import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.write.AsyncBlockWriterFactory;
 import com.hedera.block.server.service.ServiceStatus;
-import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.BlockItemUnparsed;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Executor;
 import org.junit.jupiter.api.Test;
@@ -78,26 +76,5 @@ class StreamPersistenceHandlerImplTest {
         // these methods were not called.
         verify(notifier, never()).publish(any());
         verify(metricsService, never()).get(StreamPersistenceHandlerError);
-    }
-
-    @Test
-    void testBlockItemIsNull() throws IOException {
-        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
-        final StreamPersistenceHandlerImpl streamPersistenceHandler = new StreamPersistenceHandlerImpl(
-                subscriptionHandler,
-                notifier,
-                blockNodeContext,
-                serviceStatus,
-                ackHandlerMock,
-                asyncBlockWriterFactoryMock,
-                executorMock);
-
-        final ObjectEvent<List<BlockItemUnparsed>> event = new ObjectEvent<>();
-        event.set(null);
-        streamPersistenceHandler.onEvent(event, 0, false);
-
-        verify(serviceStatus, never()).stopRunning(any());
-        verify(subscriptionHandler, never()).unsubscribe(any());
-        verify(notifier, never()).notifyUnrecoverableError();
     }
 }

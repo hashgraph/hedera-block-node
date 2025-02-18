@@ -93,14 +93,9 @@ public class StreamPersistenceHandlerImpl implements BlockNodeEventHandler<Objec
     @Override
     public void onEvent(final ObjectEvent<List<BlockItemUnparsed>> event, long l, boolean b) {
 
-        final List<BlockItemUnparsed> blockItems = event.get();
-        if (blockItems == null) {
-            LOGGER.log(ERROR, "BlockItems list is null.");
-            return;
-        }
-
         try {
             if (serviceStatus.isRunning()) {
+                final List<BlockItemUnparsed> blockItems = event.get();
                 if (blockItems.isEmpty()) {
                     final String message = "BlockItems list is empty.";
                     throw new BlockStreamProtocolException(message);

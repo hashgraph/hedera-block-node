@@ -56,11 +56,6 @@ class AsyncConsumerStreamResponseObserver implements BlockNodeEventHandler<Objec
     @Override
     public void onEvent(@NonNull final ObjectEvent<List<BlockItemUnparsed>> event, final long l, final boolean b) {
 
-        if (event.get() == null) {
-            LOGGER.log(ERROR, "BlockItems list is null.");
-            return;
-        }
-
         try {
             completionService.submit(new ProcessOutboundEvent(event, l, b, nextBlockNodeEventHandler));
 
