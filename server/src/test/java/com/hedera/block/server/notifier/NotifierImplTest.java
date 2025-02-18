@@ -33,7 +33,6 @@ import com.hedera.hapi.block.Acknowledgement;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.PublishStreamResponse;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.runtime.grpc.Pipeline;
 import com.hedera.pbj.runtime.grpc.ServiceInterface;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
@@ -229,8 +228,8 @@ class NotifierImplTest {
 
     private LiveStreamMediator buildStreamMediator(
             final Map<
-                            BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>,
-                            BatchEventProcessor<ObjectEvent<SubscribeStreamResponseUnparsed>>>
+                            BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>>,
+                            BatchEventProcessor<ObjectEvent<List<BlockItemUnparsed>>>>
                     subscribers,
             final ServiceStatus serviceStatus) {
         serviceStatus.setWebServer(webServer);

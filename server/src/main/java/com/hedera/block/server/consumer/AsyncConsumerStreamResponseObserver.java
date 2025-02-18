@@ -8,10 +8,11 @@ import com.hedera.block.server.consumer.Functions.ProcessOutboundEvent;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.mediator.SubscriptionHandler;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.UncheckedIOException;
 import java.lang.System.Logger;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
@@ -22,14 +23,13 @@ import java.util.concurrent.Future;
  * RingBuffer worker threads from the consumer processing required to send each
  * response to a downstream consumer.
  */
-class AsyncConsumerStreamResponseObserver
-        implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> {
+class AsyncConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> {
 
     private static final Logger LOGGER = System.getLogger(ProcessOutboundEvent.class.getName());
 
-    private final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
+    private final SubscriptionHandler<List<BlockItemUnparsed>> subscriptionHandler;
     private final CompletionService<Void> completionService;
-    private final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> nextBlockNodeEventHandler;
+    private final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> nextBlockNodeEventHandler;
 
     /**
      * Constructor for the AsyncConsumerStreamResponseObserver class.
@@ -40,8 +40,8 @@ class AsyncConsumerStreamResponseObserver
     // spotless:off
     public AsyncConsumerStreamResponseObserver(
             @NonNull final CompletionService<Void> completionService,
-            @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,
-            @NonNull final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>
+            @NonNull final SubscriptionHandler<List<BlockItemUnparsed>> subscriptionHandler,
+            @NonNull final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>>
                             nextBlockNodeEventHandler) {
 
         this.completionService = Objects.requireNonNull(completionService);
@@ -54,8 +54,7 @@ class AsyncConsumerStreamResponseObserver
      * {@inheritDoc}
      */
     @Override
-    public void onEvent(
-            @NonNull final ObjectEvent<SubscribeStreamResponseUnparsed> event, final long l, final boolean b) {
+    public void onEvent(@NonNull final ObjectEvent<List<BlockItemUnparsed>> event, final long l, final boolean b) {
 
         try {
             completionService.submit(new ProcessOutboundEvent(event, l, b, nextBlockNodeEventHandler));

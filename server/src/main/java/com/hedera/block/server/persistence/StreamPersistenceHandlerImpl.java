@@ -18,11 +18,8 @@ import com.hedera.block.server.persistence.storage.write.AsyncBlockWriterFactory
 import com.hedera.block.server.persistence.storage.write.BlockPersistenceResult;
 import com.hedera.block.server.persistence.storage.write.BlockPersistenceResult.BlockPersistenceStatus;
 import com.hedera.block.server.service.ServiceStatus;
-import com.hedera.hapi.block.BlockItemSetUnparsed;
 import com.hedera.hapi.block.BlockItemUnparsed;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.hapi.block.stream.output.BlockHeader;
-import com.hedera.pbj.runtime.OneOf;
 import com.hedera.pbj.runtime.ParseException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
@@ -45,12 +42,9 @@ import javax.inject.Singleton;
  * invoke the onEvent() method when a new SubscribeStreamResponse is available.
  */
 @Singleton
-public class StreamPersistenceHandlerImpl
-        implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> {
+public class StreamPersistenceHandlerImpl implements BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> {
     private static final System.Logger LOGGER = System.getLogger(StreamPersistenceHandlerImpl.class.getName());
-    private static final String PROTOCOL_VIOLATION_MESSAGE =
-            "Protocol Violation. %s is OneOf type %s but %s is null.\n%s";
-    private final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
+    private final SubscriptionHandler<List<BlockItemUnparsed>> subscriptionHandler;
     private final Notifier notifier;
     private final MetricsService metricsService;
     private final ServiceStatus serviceStatus;
@@ -72,7 +66,7 @@ public class StreamPersistenceHandlerImpl
      */
     @Inject
     public StreamPersistenceHandlerImpl(
-            @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,
+            @NonNull final SubscriptionHandler<List<BlockItemUnparsed>> subscriptionHandler,
             @NonNull final Notifier notifier,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus,
@@ -97,38 +91,19 @@ public class StreamPersistenceHandlerImpl
      * @param b true if the event is the last in the sequence
      */
     @Override
-    public void onEvent(final ObjectEvent<SubscribeStreamResponseUnparsed> event, long l, boolean b) {
+    public void onEvent(final ObjectEvent<List<BlockItemUnparsed>> event, long l, boolean b) {
+
         try {
             if (serviceStatus.isRunning()) {
-                final SubscribeStreamResponseUnparsed subscribeStreamResponse = event.get();
-                final OneOf<SubscribeStreamResponseUnparsed.ResponseOneOfType> oneOfTypeOneOf =
-                        subscribeStreamResponse.response();
-                switch (oneOfTypeOneOf.kind()) {
-                    case BLOCK_ITEMS -> {
-                        final BlockItemSetUnparsed blockItemSetUnparsed = subscribeStreamResponse.blockItems();
-                        if (blockItemSetUnparsed == null) {
-                            final String message = PROTOCOL_VIOLATION_MESSAGE.formatted(
-                                    "SubscribeStreamResponse", "BLOCK_ITEM", "block_item", subscribeStreamResponse);
-                            throw new BlockStreamProtocolException(message);
-                        } else {
-                            final List<BlockItemUnparsed> blockItems = blockItemSetUnparsed.blockItems();
-                            if (blockItems.isEmpty()) {
-                                final String message = "BlockItems list is empty.";
-                                throw new BlockStreamProtocolException(message);
-                            } else {
-                                handleBlockItems(blockItems);
-                            }
-                        }
-                    }
-                    case STATUS -> LOGGER.log(DEBUG, "Unexpected received a status message rather than a block item");
-                    default -> {
-                        final String message = "Unknown response type: " + oneOfTypeOneOf.kind();
-                        LOGGER.log(ERROR, message);
-                        throw new BlockStreamProtocolException(message);
-                    }
+                final List<BlockItemUnparsed> blockItems = event.get();
+                if (blockItems.isEmpty()) {
+                    final String message = "BlockItems list is empty.";
+                    throw new BlockStreamProtocolException(message);
                 }
+
+                handleBlockItems(blockItems);
             } else {
-                LOGGER.log(ERROR, "Service is not running. Block item will not be processed further.");
+                LOGGER.log(ERROR, "Service is not running. Block items will not be persisted.");
             }
         } catch (final Exception e) {
             LOGGER.log(ERROR, "Failed to persist BlockItems due to {0}", e);

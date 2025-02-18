@@ -5,6 +5,7 @@ import static com.hedera.block.server.util.PbjProtoTestUtils.buildEmptyPublishSt
 import static com.hedera.block.server.util.PbjProtoTestUtils.buildEmptySubscribeStreamRequest;
 import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_LIVE_ROOT_PATH_KEY;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
+import static com.hedera.hapi.block.SubscribeStreamResponseCode.READ_STREAM_NOT_AVAILABLE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -50,7 +51,6 @@ import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.hapi.block.SingleBlockRequest;
 import com.hedera.hapi.block.SingleBlockResponseCode;
 import com.hedera.hapi.block.SingleBlockResponseUnparsed;
-import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.runtime.grpc.Pipeline;
 import com.hedera.pbj.runtime.grpc.ServiceInterface;
@@ -404,8 +404,8 @@ class PbjBlockStreamServiceIntegrationTest {
     void testSubAndUnsubWhileStreaming() throws InterruptedException {
         final int numberOfBlocks = 100;
         final LinkedHashMap<
-                        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>,
-                        BatchEventProcessor<ObjectEvent<SubscribeStreamResponseUnparsed>>>
+                        BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>>,
+                        BatchEventProcessor<ObjectEvent<List<BlockItemUnparsed>>>>
                 consumers = new LinkedHashMap<>();
         final ServiceStatus serviceStatus = new ServiceStatusImpl(blockNodeContext);
         final BlockInfo blockInfo = new BlockInfo(1L);
@@ -474,7 +474,7 @@ class PbjBlockStreamServiceIntegrationTest {
                 // Pause here to ensure the last sent block item is received.
                 // This makes the test deterministic.
                 Thread.sleep(50);
-                final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> k =
+                final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> k =
                         consumers.firstEntry().getKey();
                 streamMediator.unsubscribe(k);
             }
@@ -484,7 +484,7 @@ class PbjBlockStreamServiceIntegrationTest {
                 // Pause here to ensure the last sent block item is received.
                 // This makes the test deterministic.
                 Thread.sleep(50);
-                final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> k =
+                final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> k =
                         consumers.firstEntry().getKey();
                 streamMediator.unsubscribe(k);
             }
@@ -504,7 +504,7 @@ class PbjBlockStreamServiceIntegrationTest {
                 // Pause here to ensure the last sent block item is received.
                 // This makes the test deterministic.
                 Thread.sleep(50);
-                final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> k =
+                final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> k =
                         consumers.firstEntry().getKey();
                 streamMediator.unsubscribe(k);
             }
@@ -551,8 +551,8 @@ class PbjBlockStreamServiceIntegrationTest {
     @Timeout(value = JUNIT_TIMEOUT, unit = TimeUnit.MILLISECONDS)
     void testMediatorExceptionHandlingWhenPersistenceFailure() {
         final ConcurrentHashMap<
-                        BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>,
-                        BatchEventProcessor<ObjectEvent<SubscribeStreamResponseUnparsed>>>
+                        BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>>,
+                        BatchEventProcessor<ObjectEvent<List<BlockItemUnparsed>>>>
                 consumers = new ConcurrentHashMap<>();
         // Use a spy to use the real object but also verify the behavior.
         final ServiceStatus serviceStatus = spy(new ServiceStatusImpl(blockNodeContext));
@@ -672,20 +672,6 @@ class PbjBlockStreamServiceIntegrationTest {
         verify(subscribeStreamObserver2, timeout(testTimeout).times(1)).onNext(subscribeStreamResponse);
         verify(subscribeStreamObserver3, timeout(testTimeout).times(1)).onNext(subscribeStreamResponse);
 
-        // Verify all the consumers received the end of stream response
-        // TODO: Fix the response code when it's available
-        final Bytes endStreamResponse =
-                SubscribeStreamResponseUnparsed.PROTOBUF.toBytes(SubscribeStreamResponseUnparsed.newBuilder()
-                        .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
-                        .build());
-        verify(subscribeStreamObserver1, timeout(testTimeout).times(1)).onNext(endStreamResponse);
-        verify(subscribeStreamObserver2, timeout(testTimeout).times(1)).onNext(endStreamResponse);
-        verify(subscribeStreamObserver3, timeout(testTimeout).times(1)).onNext(endStreamResponse);
-
-        // Verify the publishBlockStream service returned the expected
-        // error code indicating the service is not available.
-        verify(helidonPublishStreamObserver1, timeout(testTimeout).times(1)).onNext(buildEndOfStreamResponse());
-
         // Adding extra time to allow the service to stop given
         // the built-in delay.
         verify(webServerMock, timeout(testTimeout).times(1)).stop();
@@ -694,7 +680,7 @@ class PbjBlockStreamServiceIntegrationTest {
 
         final Bytes expectedSubscriberStreamNotAvailable =
                 SubscribeStreamResponseUnparsed.PROTOBUF.toBytes(SubscribeStreamResponseUnparsed.newBuilder()
-                        .status(SubscribeStreamResponseCode.READ_STREAM_NOT_AVAILABLE)
+                        .status(READ_STREAM_NOT_AVAILABLE)
                         .build());
 
         verify(subscribeStreamObserver4, timeout(testTimeout).times(1)).onNext(expectedSubscriberStreamNotAvailable);
@@ -785,8 +771,8 @@ class PbjBlockStreamServiceIntegrationTest {
 
     private LiveStreamMediator buildStreamMediator(
             final Map<
-                            BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>,
-                            BatchEventProcessor<ObjectEvent<SubscribeStreamResponseUnparsed>>>
+                            BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>>,
+                            BatchEventProcessor<ObjectEvent<List<BlockItemUnparsed>>>>
                     subscribers,
             final ServiceStatus serviceStatus) {
         serviceStatus.setWebServer(webServerMock);

@@ -28,7 +28,6 @@ import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.BlockItemSetUnparsed;
 import com.hedera.hapi.block.BlockItemUnparsed;
-import com.hedera.hapi.block.SubscribeStreamResponseCode;
 import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.grpc.Pipeline;
@@ -55,13 +54,13 @@ class LiveStreamMediatorImplTest {
     private static final int TEST_TIMEOUT = 1000;
 
     @Mock
-    private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> observer1;
+    private BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> observer1;
 
     @Mock
-    private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> observer2;
+    private BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> observer2;
 
     @Mock
-    private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> observer3;
+    private BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> observer3;
 
     @Mock
     private Notifier notifier;
@@ -169,7 +168,7 @@ class LiveStreamMediatorImplTest {
 
         when(testClock.millis()).thenReturn(TEST_TIME, TEST_TIME + TIMEOUT_THRESHOLD_MILLIS);
 
-        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver1 =
+        final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> concreteObserver1 =
                 LiveStreamEventHandlerBuilder.build(
                         completionService,
                         testClock,
@@ -177,7 +176,7 @@ class LiveStreamMediatorImplTest {
                         helidonSubscribeStreamObserver1,
                         testContext.metricsService(),
                         testContext.configuration());
-        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver2 =
+        final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> concreteObserver2 =
                 LiveStreamEventHandlerBuilder.build(
                         completionService,
                         testClock,
@@ -185,7 +184,7 @@ class LiveStreamMediatorImplTest {
                         helidonSubscribeStreamObserver2,
                         testContext.metricsService(),
                         testContext.configuration());
-        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver3 =
+        final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> concreteObserver3 =
                 LiveStreamEventHandlerBuilder.build(
                         completionService,
                         testClock,
@@ -292,7 +291,7 @@ class LiveStreamMediatorImplTest {
         final LiveStreamMediator streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
                 .build();
 
-        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver1 =
+        final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> concreteObserver1 =
                 LiveStreamEventHandlerBuilder.build(
                         completionService,
                         testClock,
@@ -427,7 +426,7 @@ class LiveStreamMediatorImplTest {
         final LiveStreamMediator streamMediator = LiveStreamMediatorBuilder.newBuilder(blockNodeContext, serviceStatus)
                 .build();
 
-        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver1 =
+        final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> concreteObserver1 =
                 LiveStreamEventHandlerBuilder.build(
                         completionService,
                         testClock,
@@ -435,7 +434,7 @@ class LiveStreamMediatorImplTest {
                         helidonSubscribeStreamObserver1,
                         testContext.metricsService(),
                         testContext.configuration());
-        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver2 =
+        final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> concreteObserver2 =
                 LiveStreamEventHandlerBuilder.build(
                         completionService,
                         testClock,
@@ -443,7 +442,7 @@ class LiveStreamMediatorImplTest {
                         helidonSubscribeStreamObserver2,
                         testContext.metricsService(),
                         testContext.configuration());
-        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> concreteObserver3 =
+        final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> concreteObserver3 =
                 LiveStreamEventHandlerBuilder.build(
                         completionService,
                         testClock,
@@ -494,7 +493,7 @@ class LiveStreamMediatorImplTest {
                         .get());
 
         // Send another block item after the exception
-        streamMediator.publish(List.of(blockItems.get(1)));
+        streamMediator.publish(List.of(firstBlockItem));
         final BlockItemSetUnparsed blockItemSet =
                 BlockItemSetUnparsed.newBuilder().blockItems(firstBlockItem).build();
         final SubscribeStreamResponseUnparsed subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
@@ -504,13 +503,15 @@ class LiveStreamMediatorImplTest {
         verify(helidonSubscribeStreamObserver2, timeout(TEST_TIMEOUT).times(1)).onNext(subscribeStreamResponse);
         verify(helidonSubscribeStreamObserver3, timeout(TEST_TIMEOUT).times(1)).onNext(subscribeStreamResponse);
 
+        // @todo(662): Revisit this code after we implement an error channel
         // TODO: Replace READ_STREAM_SUCCESS (2) with a generic error code?
-        final SubscribeStreamResponseUnparsed endOfStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
-                .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
-                .build();
-        verify(helidonSubscribeStreamObserver1, timeout(TEST_TIMEOUT).times(1)).onNext(endOfStreamResponse);
-        verify(helidonSubscribeStreamObserver2, timeout(TEST_TIMEOUT).times(1)).onNext(endOfStreamResponse);
-        verify(helidonSubscribeStreamObserver3, timeout(TEST_TIMEOUT).times(1)).onNext(endOfStreamResponse);
+        //        final SubscribeStreamResponseUnparsed endOfStreamResponse =
+        // SubscribeStreamResponseUnparsed.newBuilder()
+        //                .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
+        //                .build();
+        //        verify(helidonSubscribeStreamObserver1, timeout(TEST_TIMEOUT).times(1)).onNext(endOfStreamResponse);
+        //        verify(helidonSubscribeStreamObserver2, timeout(TEST_TIMEOUT).times(1)).onNext(endOfStreamResponse);
+        //        verify(helidonSubscribeStreamObserver3, timeout(TEST_TIMEOUT).times(1)).onNext(endOfStreamResponse);
 
         // Confirm Writer created
         verify(asyncBlockWriterFactoryMock, timeout(TEST_TIMEOUT).times(1)).create(1L);
@@ -534,7 +535,7 @@ class LiveStreamMediatorImplTest {
                 executorMock);
         streamMediator.subscribe(handler);
 
-        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> testConsumerBlockItemObserver =
+        final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> testConsumerBlockItemObserver =
                 LiveStreamEventHandlerBuilder.build(
                         completionService,
                         testClock,

@@ -26,11 +26,12 @@ import com.hedera.block.server.persistence.storage.write.AsyncBlockAsLocalFileWr
 import com.hedera.block.server.persistence.storage.write.AsyncBlockWriterFactory;
 import com.hedera.block.server.persistence.storage.write.AsyncNoOpWriterFactory;
 import com.hedera.block.server.service.ServiceStatus;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import dagger.Module;
 import dagger.Provides;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import javax.inject.Singleton;
@@ -153,8 +154,8 @@ public interface PersistenceInjectionModule {
      */
     @Provides
     @Singleton
-    static BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> providesBlockNodeEventHandler(
-            @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,
+    static BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> providesBlockNodeEventHandler(
+            @NonNull final SubscriptionHandler<List<BlockItemUnparsed>> subscriptionHandler,
             @NonNull final Notifier notifier,
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus,

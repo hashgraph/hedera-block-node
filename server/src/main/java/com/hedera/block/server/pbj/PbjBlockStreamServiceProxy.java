@@ -92,7 +92,7 @@ public class PbjBlockStreamServiceProxy implements PbjBlockStreamService {
     public PbjBlockStreamServiceProxy(
             @NonNull final LiveStreamMediator streamMediator,
             @NonNull final ServiceStatus serviceStatus,
-            @NonNull final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> streamPersistenceHandler,
+            @NonNull final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> streamPersistenceHandler,
             @NonNull final StreamVerificationHandlerImpl streamVerificationHandler,
             @NonNull final BlockReader<BlockUnparsed> blockReader,
             @NonNull final Notifier notifier,

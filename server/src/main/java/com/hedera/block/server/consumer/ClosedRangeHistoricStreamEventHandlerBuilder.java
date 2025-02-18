@@ -35,14 +35,7 @@ public final class ClosedRangeHistoricStreamEventHandlerBuilder {
             @NonNull final MetricsService metricsService,
             @NonNull final Configuration configuration) {
 
-        final var consumerStreamResponseObserver =
-                new ConsumerStreamResponseObserver(helidonConsumerObserver, metricsService);
         return new HistoricBlockStreamSupplier(
-                startBlockNumber,
-                endBlockNumber,
-                blockReader,
-                consumerStreamResponseObserver,
-                metricsService,
-                configuration);
+                startBlockNumber, endBlockNumber, blockReader, helidonConsumerObserver, metricsService, configuration);
     }
 }
