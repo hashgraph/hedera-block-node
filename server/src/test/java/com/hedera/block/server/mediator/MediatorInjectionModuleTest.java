@@ -8,7 +8,6 @@ import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.BlockItemUnparsed;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,7 @@ class MediatorInjectionModuleTest {
         BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         // Call the method under test
-        StreamMediator<List<BlockItemUnparsed>, SubscribeStreamResponseUnparsed> streamMediator =
+        StreamMediator<List<BlockItemUnparsed>, List<BlockItemUnparsed>> streamMediator =
                 MediatorInjectionModule.providesLiveStreamMediator(blockNodeContext, serviceStatus);
 
         // Verify that the streamMediator is correctly instantiated
@@ -50,7 +49,7 @@ class MediatorInjectionModuleTest {
         BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext(properties);
 
         // Call the method under test
-        StreamMediator<List<BlockItemUnparsed>, SubscribeStreamResponseUnparsed> streamMediator =
+        StreamMediator<List<BlockItemUnparsed>, List<BlockItemUnparsed>> streamMediator =
                 MediatorInjectionModule.providesLiveStreamMediator(blockNodeContext, serviceStatus);
 
         // Verify that the streamMediator is correctly instantiated

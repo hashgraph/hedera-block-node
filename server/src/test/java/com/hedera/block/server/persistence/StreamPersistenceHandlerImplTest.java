@@ -3,11 +3,8 @@ package com.hedera.block.server.persistence;
 
 import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.StreamPersistenceHandlerError;
 import static com.hedera.block.server.util.PersistTestUtils.generateBlockItemsUnparsed;
-import static com.hedera.hapi.block.SubscribeStreamResponseCode.READ_STREAM_SUCCESS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,10 +17,7 @@ import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.write.AsyncBlockWriterFactory;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
-import com.hedera.hapi.block.BlockItemSetUnparsed;
 import com.hedera.hapi.block.BlockItemUnparsed;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
-import com.hedera.pbj.runtime.OneOf;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -37,7 +31,7 @@ class StreamPersistenceHandlerImplTest {
     private static final int TEST_TIMEOUT = 50;
 
     @Mock
-    private SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
+    private SubscriptionHandler<List<BlockItemUnparsed>> subscriptionHandler;
 
     @Mock
     private Notifier notifier;
@@ -75,13 +69,8 @@ class StreamPersistenceHandlerImplTest {
                 executorMock);
 
         final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
-        final BlockItemSetUnparsed blockItemSet =
-                BlockItemSetUnparsed.newBuilder().blockItems(blockItems).build();
-        final SubscribeStreamResponseUnparsed subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
-                .blockItems(blockItemSet)
-                .build();
-        final ObjectEvent<SubscribeStreamResponseUnparsed> event = new ObjectEvent<>();
-        event.set(subscribeStreamResponse);
+        final ObjectEvent<List<BlockItemUnparsed>> event = new ObjectEvent<>();
+        event.set(blockItems);
 
         streamPersistenceHandler.onEvent(event, 0, false);
 
@@ -94,8 +83,6 @@ class StreamPersistenceHandlerImplTest {
     @Test
     void testBlockItemIsNull() throws IOException {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
-        when(serviceStatus.isRunning()).thenReturn(true);
-
         final StreamPersistenceHandlerImpl streamPersistenceHandler = new StreamPersistenceHandlerImpl(
                 subscriptionHandler,
                 notifier,
@@ -105,81 +92,8 @@ class StreamPersistenceHandlerImplTest {
                 asyncBlockWriterFactoryMock,
                 executorMock);
 
-        final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
-        final BlockItemSetUnparsed blockItemSet =
-                BlockItemSetUnparsed.newBuilder().blockItems(blockItems).build();
-        final SubscribeStreamResponseUnparsed subscribeStreamResponse = spy(SubscribeStreamResponseUnparsed.newBuilder()
-                .blockItems(blockItemSet)
-                .build());
-
-        // Force the block item to be null
-        when(subscribeStreamResponse.blockItems()).thenReturn(null);
-        final ObjectEvent<SubscribeStreamResponseUnparsed> event = new ObjectEvent<>();
-        event.set(subscribeStreamResponse);
-
-        streamPersistenceHandler.onEvent(event, 0, false);
-
-        verify(serviceStatus, timeout(TEST_TIMEOUT).times(1)).stopRunning(any());
-        verify(subscriptionHandler, timeout(TEST_TIMEOUT).times(1)).unsubscribe(any());
-        verify(notifier, timeout(TEST_TIMEOUT).times(1)).notifyUnrecoverableError();
-    }
-
-    @Test
-    void testSubscribeStreamResponseTypeUnknown() throws IOException {
-        final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
-        when(serviceStatus.isRunning()).thenReturn(true);
-
-        final StreamPersistenceHandlerImpl streamPersistenceHandler = new StreamPersistenceHandlerImpl(
-                subscriptionHandler,
-                notifier,
-                blockNodeContext,
-                serviceStatus,
-                ackHandlerMock,
-                asyncBlockWriterFactoryMock,
-                executorMock);
-
-        final List<BlockItemUnparsed> blockItems = generateBlockItemsUnparsed(1);
-        final BlockItemSetUnparsed blockItemSet =
-                BlockItemSetUnparsed.newBuilder().blockItems(blockItems).build();
-        final SubscribeStreamResponseUnparsed subscribeStreamResponse = spy(SubscribeStreamResponseUnparsed.newBuilder()
-                .blockItems(blockItemSet)
-                .build());
-
-        // Force the block item to be UNSET
-        final OneOf<SubscribeStreamResponseUnparsed.ResponseOneOfType> illegalOneOf =
-                new OneOf<>(SubscribeStreamResponseUnparsed.ResponseOneOfType.UNSET, null);
-        when(subscribeStreamResponse.response()).thenReturn(illegalOneOf);
-
-        final ObjectEvent<SubscribeStreamResponseUnparsed> event = new ObjectEvent<>();
-        event.set(subscribeStreamResponse);
-
-        streamPersistenceHandler.onEvent(event, 0, false);
-
-        verify(serviceStatus, timeout(TEST_TIMEOUT).times(1)).stopRunning(any());
-        verify(subscriptionHandler, timeout(TEST_TIMEOUT).times(1)).unsubscribe(any());
-        verify(notifier, timeout(TEST_TIMEOUT).times(1)).notifyUnrecoverableError();
-    }
-
-    @Test
-    void testSubscribeStreamResponseTypeStatus() {
-        when(blockNodeContext.metricsService()).thenReturn(metricsService);
-        when(serviceStatus.isRunning()).thenReturn(true);
-
-        final StreamPersistenceHandlerImpl streamPersistenceHandler = new StreamPersistenceHandlerImpl(
-                subscriptionHandler,
-                notifier,
-                blockNodeContext,
-                serviceStatus,
-                ackHandlerMock,
-                asyncBlockWriterFactoryMock,
-                executorMock);
-
-        final SubscribeStreamResponseUnparsed subscribeStreamResponse = spy(SubscribeStreamResponseUnparsed.newBuilder()
-                .status(READ_STREAM_SUCCESS)
-                .build());
-        final ObjectEvent<SubscribeStreamResponseUnparsed> event = new ObjectEvent<>();
-        event.set(subscribeStreamResponse);
-
+        final ObjectEvent<List<BlockItemUnparsed>> event = new ObjectEvent<>();
+        event.set(null);
         streamPersistenceHandler.onEvent(event, 0, false);
 
         verify(serviceStatus, never()).stopRunning(any());

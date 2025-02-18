@@ -14,10 +14,7 @@ import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.service.ServiceStatus;
-import com.hedera.hapi.block.BlockItemSetUnparsed;
 import com.hedera.hapi.block.BlockItemUnparsed;
-import com.hedera.hapi.block.SubscribeStreamResponseCode;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.lmax.disruptor.BatchEventProcessor;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
@@ -31,8 +28,7 @@ import java.util.Map;
  * subscribers as they arrive via a RingBuffer maintained in the base class and persists the block
  * items to a store.
  */
-class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResponseUnparsed>
-        implements LiveStreamMediator {
+class LiveStreamMediatorImpl extends SubscriptionHandlerBase<List<BlockItemUnparsed>> implements LiveStreamMediator {
 
     private final Logger LOGGER = System.getLogger(getClass().getName());
 
@@ -55,8 +51,8 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
     LiveStreamMediatorImpl(
             @NonNull
                     final Map<
-                                    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>,
-                                    BatchEventProcessor<ObjectEvent<SubscribeStreamResponseUnparsed>>>
+                                    BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>>,
+                                    BatchEventProcessor<ObjectEvent<List<BlockItemUnparsed>>>>
                             subscribers,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockNodeContext blockNodeContext) {
@@ -85,17 +81,8 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
     public void publish(@NonNull final List<BlockItemUnparsed> blockItems) {
 
         if (serviceStatus.isRunning()) {
-
-            // Publish the block for all subscribers to receive
-            final BlockItemSetUnparsed blockItemsSet =
-                    BlockItemSetUnparsed.newBuilder().blockItems(blockItems).build();
-
-            final var subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
-                    .blockItems(blockItemsSet)
-                    .build();
-
             LOGGER.log(DEBUG, "Publishing BlockItems: " + blockItems.size());
-            ringBuffer.publishEvent((event, sequence) -> event.set(subscribeStreamResponse));
+            ringBuffer.publishEvent((event, sequence) -> event.set(blockItems));
 
             long remainingCapacity = ringBuffer.remainingCapacity();
             metricsService.get(MediatorRingBufferRemainingCapacity).set(remainingCapacity);
@@ -119,18 +106,9 @@ class LiveStreamMediatorImpl extends SubscriptionHandlerBase<SubscribeStreamResp
 
         LOGGER.log(ERROR, "Sending an error response to end the stream for all consumers.");
 
+        // @todo: Change how we broadcast an end of stream response in the event of an unrecoverable error.
         // Publish an end of stream response to all downstream consumers
-        final SubscribeStreamResponseUnparsed endStreamResponse = buildEndStreamResponse();
-        ringBuffer.publishEvent((event, sequence) -> event.set(endStreamResponse));
-    }
-
-    @NonNull
-    private static SubscribeStreamResponseUnparsed buildEndStreamResponse() {
-        // The current spec does not contain a generic error code for
-        // SubscribeStreamResponseCode.
-        // TODO: Replace READ_STREAM_SUCCESS (2) with a generic error code?
-        return SubscribeStreamResponseUnparsed.newBuilder()
-                .status(SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
-                .build();
+        //        final SubscribeStreamResponseUnparsed endStreamResponse = buildEndStreamResponse();
+        //        ringBuffer.publishEvent((event, sequence) -> event.set(endStreamResponse));
     }
 }

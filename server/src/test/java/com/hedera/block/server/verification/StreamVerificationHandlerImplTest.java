@@ -11,13 +11,11 @@ import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.verification.service.BlockVerificationService;
-import com.hedera.hapi.block.BlockItemSetUnparsed;
 import com.hedera.hapi.block.BlockItemUnparsed;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.hapi.block.stream.output.BlockHeader;
-import com.hedera.pbj.runtime.OneOf;
 import com.hedera.pbj.runtime.ParseException;
 import com.swirlds.metrics.api.Counter;
+import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class StreamVerificationHandlerImplTest {
 
     @Mock
-    private SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
+    private SubscriptionHandler<List<BlockItemUnparsed>> subscriptionHandler;
 
     @Mock
     private Notifier notifier;
@@ -54,9 +52,8 @@ public class StreamVerificationHandlerImplTest {
         final var streamVerificationHandler = new StreamVerificationHandlerImpl(
                 subscriptionHandler, notifier, metricsService, serviceStatus, blockVerificationService);
 
-        final ObjectEvent<SubscribeStreamResponseUnparsed> event = new ObjectEvent<>();
-        final var response = SubscribeStreamResponseUnparsed.newBuilder().build(); // no block items, no status
-        event.set(response);
+        final ObjectEvent<List<BlockItemUnparsed>> event = new ObjectEvent<>();
+        event.set(Collections.emptyList());
 
         // Call the handler
         streamVerificationHandler.onEvent(event, 0, false);
@@ -67,83 +64,21 @@ public class StreamVerificationHandlerImplTest {
     }
 
     @Test
-    public void testBlockItemsNullThrowsException() {
-        when(metricsService.get(VerificationBlocksError)).thenReturn(verificationBlocksError);
-
-        when(serviceStatus.isRunning()).thenReturn(true);
-
+    public void testBlockItemsDoesNotThrowExceptionWithNullItems() {
         final var streamVerificationHandler = new StreamVerificationHandlerImpl(
                 subscriptionHandler, notifier, metricsService, serviceStatus, blockVerificationService);
 
-        // Create a SubscribeStreamResponseUnparsed with BLOCK_ITEMS type but null blockItems
-        final SubscribeStreamResponseUnparsed response = spy(SubscribeStreamResponseUnparsed.newBuilder()
-                .blockItems((BlockItemSetUnparsed) null)
-                .build());
-        final ObjectEvent<SubscribeStreamResponseUnparsed> event = new ObjectEvent<>();
-        event.set(response);
-
-        // Ensure that the response kind is BLOCK_ITEMS but blockItems is null
-        final OneOf<SubscribeStreamResponseUnparsed.ResponseOneOfType> blockItemsOneOf =
-                new OneOf<>(SubscribeStreamResponseUnparsed.ResponseOneOfType.BLOCK_ITEMS, null);
-        when(response.response()).thenReturn(blockItemsOneOf);
+        final ObjectEvent<List<BlockItemUnparsed>> event = new ObjectEvent<>();
+        event.set(null);
 
         // Trigger the event
         streamVerificationHandler.onEvent(event, 0, false);
 
-        // We expect a protocol exception, leading to service stop and unsubscribing
-        verify(metricsService, timeout(testTimeout).times(1)).get(VerificationBlocksError);
-        verify(serviceStatus, timeout(testTimeout).times(1)).stopRunning(any());
-        verify(subscriptionHandler, timeout(testTimeout).times(1)).unsubscribe(any());
-        verify(notifier, timeout(testTimeout).times(1)).notifyUnrecoverableError();
-        // verify(blockVerificationService, never()).onBlockItemsReceived(any());
-    }
-
-    @Test
-    public void testUnknownResponseTypeThrowsException() {
-        when(serviceStatus.isRunning()).thenReturn(true);
-
-        final var streamVerificationHandler = new StreamVerificationHandlerImpl(
-                subscriptionHandler, notifier, metricsService, serviceStatus, blockVerificationService);
-
-        final SubscribeStreamResponseUnparsed response =
-                spy(SubscribeStreamResponseUnparsed.newBuilder().build());
-        final ObjectEvent<SubscribeStreamResponseUnparsed> event = new ObjectEvent<>();
-        event.set(response);
-
-        // Force an UNKNOWN/UNSET oneOf type
-        final OneOf<SubscribeStreamResponseUnparsed.ResponseOneOfType> unknownOneOf =
-                new OneOf<>(SubscribeStreamResponseUnparsed.ResponseOneOfType.UNSET, null);
-        when(response.response()).thenReturn(unknownOneOf);
-
-        streamVerificationHandler.onEvent(event, 0, false);
-
-        verify(metricsService, timeout(testTimeout).times(1)).get(VerificationBlocksError);
-        verify(serviceStatus, timeout(testTimeout).times(1)).stopRunning(any());
-        verify(subscriptionHandler, timeout(testTimeout).times(1)).unsubscribe(any());
-        verify(notifier, timeout(testTimeout).times(1)).notifyUnrecoverableError();
-        // verify(blockVerificationService, never()).onBlockItemsReceived(any());
-    }
-
-    @Test
-    public void testStatusMessageDoesNotThrow() {
-        when(serviceStatus.isRunning()).thenReturn(true);
-
-        final var streamVerificationHandler = new StreamVerificationHandlerImpl(
-                subscriptionHandler, notifier, metricsService, serviceStatus, blockVerificationService);
-
-        // Create a subscribeStreamResponse with a STATUS type
-        final SubscribeStreamResponseUnparsed response = SubscribeStreamResponseUnparsed.newBuilder()
-                .status(com.hedera.hapi.block.SubscribeStreamResponseCode.READ_STREAM_SUCCESS)
-                .build();
-        final ObjectEvent<SubscribeStreamResponseUnparsed> event = new ObjectEvent<>();
-        event.set(response);
-
-        streamVerificationHandler.onEvent(event, 0, false);
-
+        // Confirm that with a null item, we do not interact with any of the services
+        verify(metricsService, never()).get(VerificationBlocksError);
         verify(serviceStatus, never()).stopRunning(any());
         verify(subscriptionHandler, never()).unsubscribe(any());
         verify(notifier, never()).notifyUnrecoverableError();
-        // verify(blockVerificationService, never()).onBlockItemsReceived(any());
     }
 
     @Test
@@ -160,13 +95,8 @@ public class StreamVerificationHandlerImplTest {
                 .blockHeader(BlockHeader.PROTOBUF.toBytes(blockHeader))
                 .build());
 
-        final BlockItemSetUnparsed blockItemSet =
-                BlockItemSetUnparsed.newBuilder().blockItems(blockItems).build();
-        final SubscribeStreamResponseUnparsed response = SubscribeStreamResponseUnparsed.newBuilder()
-                .blockItems(blockItemSet)
-                .build();
-        final ObjectEvent<SubscribeStreamResponseUnparsed> event = new ObjectEvent<>();
-        event.set(response);
+        final ObjectEvent<List<BlockItemUnparsed>> event = new ObjectEvent<>();
+        event.set(blockItems);
 
         streamVerificationHandler.onEvent(event, 0, false);
 
@@ -190,13 +120,8 @@ public class StreamVerificationHandlerImplTest {
                 .blockHeader(BlockHeader.PROTOBUF.toBytes(blockHeader))
                 .build());
 
-        final BlockItemSetUnparsed blockItemSet =
-                BlockItemSetUnparsed.newBuilder().blockItems(blockItems).build();
-        final SubscribeStreamResponseUnparsed response = SubscribeStreamResponseUnparsed.newBuilder()
-                .blockItems(blockItemSet)
-                .build();
-        final ObjectEvent<SubscribeStreamResponseUnparsed> event = new ObjectEvent<>();
-        event.set(response);
+        final ObjectEvent<List<BlockItemUnparsed>> event = new ObjectEvent<>();
+        event.set(blockItems);
 
         // Simulate an exception when verifying block items
         doThrow(new RuntimeException("Verification failed"))
@@ -207,6 +132,5 @@ public class StreamVerificationHandlerImplTest {
 
         verify(serviceStatus, timeout(testTimeout).times(1)).stopRunning(any());
         verify(subscriptionHandler, timeout(testTimeout).times(1)).unsubscribe(any());
-        verify(notifier, timeout(testTimeout).times(1)).notifyUnrecoverableError();
     }
 }

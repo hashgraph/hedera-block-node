@@ -30,10 +30,11 @@ import com.hedera.block.server.persistence.storage.remove.NoOpBlockRemover;
 import com.hedera.block.server.persistence.storage.write.AsyncBlockWriterFactory;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.util.TestConfigUtil;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.Executor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,7 +56,7 @@ class PersistenceInjectionModuleTest {
     private Compression compressionMock;
 
     @Mock
-    private SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandlerMock;
+    private SubscriptionHandler<List<BlockItemUnparsed>> subscriptionHandlerMock;
 
     @Mock
     private Notifier notifierMock;
@@ -192,7 +193,7 @@ class PersistenceInjectionModuleTest {
         final BlockNodeContext blockNodeContext = TestConfigUtil.getTestBlockNodeContext();
 
         // Call the method under test
-        final BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> streamVerifier =
+        final BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> streamVerifier =
                 new StreamPersistenceHandlerImpl(
                         subscriptionHandlerMock,
                         notifierMock,

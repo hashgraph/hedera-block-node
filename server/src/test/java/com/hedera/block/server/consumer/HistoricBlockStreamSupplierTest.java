@@ -11,8 +11,6 @@ import static org.mockito.Mockito.when;
 
 import com.hedera.block.common.utils.ChunkUtils;
 import com.hedera.block.server.config.BlockNodeContext;
-import com.hedera.block.server.events.BlockNodeEventHandler;
-import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
@@ -41,7 +39,7 @@ public class HistoricBlockStreamSupplierTest {
     private BlockReader<BlockUnparsed> blockReader;
 
     @Mock
-    private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> helidonConsumerObserver;
+    private Pipeline<SubscribeStreamResponseUnparsed> helidonConsumerObserver;
 
     @Mock
     private Pipeline<? super SubscribeStreamResponseUnparsed> closedRangeHistoricStreamObserver;
@@ -82,8 +80,7 @@ public class HistoricBlockStreamSupplierTest {
         historicBlockStreamSupplier.sendInBatches(ChunkUtils.chunkify(blockItems, maxBatchSize));
 
         // Verify the helidon observer was invoked an expected number of times
-        verify(helidonConsumerObserver, times(expectedNumberOfInvocations))
-                .onEvent(any(), any(Long.class), any(Boolean.class));
+        verify(helidonConsumerObserver, times(expectedNumberOfInvocations)).onNext(any());
     }
 
     @Test
@@ -129,8 +126,7 @@ public class HistoricBlockStreamSupplierTest {
         historicBlockStreamSupplier.run();
 
         // Confirm the observer was invoked with the read stream not available message
-        verify(helidonConsumerObserver, timeout(testTimeout).times(1))
-                .onEvent(any(), any(Long.class), any(Boolean.class));
+        verify(helidonConsumerObserver, timeout(testTimeout).times(1)).onNext(any());
     }
 
     private List<BlockUnparsed> generateBlocks(int numberOfBlocks, int itemsPerBlock) {

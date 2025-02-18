@@ -1,21 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.verification;
 
-import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.VerificationBlocksError;
-import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
-import com.hedera.block.server.exception.BlockStreamProtocolException;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.verification.service.BlockVerificationService;
 import com.hedera.hapi.block.BlockItemUnparsed;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
-import com.hedera.pbj.runtime.OneOf;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Objects;
@@ -26,11 +21,10 @@ import javax.inject.Singleton;
  * Verification Handler, receives the block items from the ring buffer, validates their type and uses the BlockVerificationService to verify the block items.
  */
 @Singleton
-public class StreamVerificationHandlerImpl
-        implements BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> {
+public class StreamVerificationHandlerImpl implements BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> {
 
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
-    private final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler;
+    private final SubscriptionHandler<List<BlockItemUnparsed>> subscriptionHandler;
     private final Notifier notifier;
     private final MetricsService metricsService;
     private final ServiceStatus serviceStatus;
@@ -50,7 +44,7 @@ public class StreamVerificationHandlerImpl
      */
     @Inject
     public StreamVerificationHandlerImpl(
-            @NonNull final SubscriptionHandler<SubscribeStreamResponseUnparsed> subscriptionHandler,
+            @NonNull final SubscriptionHandler<List<BlockItemUnparsed>> subscriptionHandler,
             @NonNull final Notifier notifier,
             @NonNull final MetricsService metricsService,
             @NonNull final ServiceStatus serviceStatus,
@@ -66,7 +60,7 @@ public class StreamVerificationHandlerImpl
      * Handles the event from the ring buffer, unpacks it and uses the BlockVerificationService to verify the block items.
      */
     @Override
-    public void onEvent(ObjectEvent<SubscribeStreamResponseUnparsed> event, long l, boolean b) {
+    public void onEvent(ObjectEvent<List<BlockItemUnparsed>> event, long l, boolean b) {
 
         try {
 
@@ -75,31 +69,13 @@ public class StreamVerificationHandlerImpl
                 return;
             }
 
-            final SubscribeStreamResponseUnparsed subscribeStreamResponse = event.get();
-            final OneOf<SubscribeStreamResponseUnparsed.ResponseOneOfType> oneOfTypeOneOf =
-                    subscribeStreamResponse.response();
-            switch (oneOfTypeOneOf.kind()) {
-                case BLOCK_ITEMS -> {
-                    if (subscribeStreamResponse.blockItems() == null) {
-                        final String message = PROTOCOL_VIOLATION_MESSAGE.formatted(
-                                "SubscribeStreamResponse", "BLOCK_ITEM", "block_item", subscribeStreamResponse);
-                        LOGGER.log(ERROR, message);
-                        metricsService.get(VerificationBlocksError).increment();
-                        throw new BlockStreamProtocolException(message);
-                    } else {
-                        List<BlockItemUnparsed> blockItems =
-                                subscribeStreamResponse.blockItems().blockItems();
-                        blockVerificationService.onBlockItemsReceived(blockItems);
-                    }
-                }
-                case STATUS -> LOGGER.log(DEBUG, "Unexpected received a status message rather than a block item");
-                default -> {
-                    final String message = "Unknown response type: " + oneOfTypeOneOf.kind();
-                    LOGGER.log(ERROR, message);
-                    metricsService.get(VerificationBlocksError).increment();
-                    throw new BlockStreamProtocolException(message);
-                }
+            final List<BlockItemUnparsed> blockItems = event.get();
+            if (blockItems == null) {
+                LOGGER.log(ERROR, "BlockItems batch is null. BlockItems will not be processed further.");
+                return;
             }
+
+            blockVerificationService.onBlockItemsReceived(blockItems);
         } catch (final Exception e) {
 
             LOGGER.log(ERROR, "Failed to verify BlockItems: ", e);
@@ -109,7 +85,8 @@ public class StreamVerificationHandlerImpl
             // Unsubscribe from the mediator to avoid additional onEvent calls.
             unsubscribe();
 
-            // Broadcast the problem to the notifier
+            // @todo: We need an error channel to broadcast
+            // messages to the consumers and producers
             notifier.notifyUnrecoverableError();
         }
     }

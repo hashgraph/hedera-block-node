@@ -17,8 +17,8 @@ import com.hedera.block.server.pbj.PbjBlockStreamServiceProxy;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.block.server.verification.StreamVerificationHandlerImpl;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import com.hedera.pbj.grpc.helidon.PbjRouting;
 import com.hedera.pbj.grpc.helidon.config.PbjConfig;
 import io.helidon.webserver.ConnectionConfig;
@@ -26,6 +26,7 @@ import io.helidon.webserver.WebServer;
 import io.helidon.webserver.WebServerConfig;
 import io.helidon.webserver.http.HttpRouting;
 import java.io.IOException;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,7 +55,7 @@ class BlockNodeAppTest {
     private BlockReader<BlockUnparsed> blockReader;
 
     @Mock
-    private BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> blockNodeEventHandler;
+    private BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> blockNodeEventHandler;
 
     @Mock
     private StreamVerificationHandlerImpl streamVerificationHandler;

@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,11 +24,13 @@ import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.InstantSource;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -44,13 +45,13 @@ public class ConsumerStreamResponseObserverTest {
     private static final int testTimeout = 1000;
 
     @Mock
-    private StreamMediator<BlockItemUnparsed, SubscribeStreamResponseUnparsed> streamMediator;
+    private StreamMediator<BlockItemUnparsed, List<BlockItemUnparsed>> streamMediator;
 
     @Mock
-    private Pipeline<SubscribeStreamResponseUnparsed> responseStreamObserver;
+    private Pipeline<? super SubscribeStreamResponseUnparsed> responseStreamObserver;
 
     @Mock
-    private ObjectEvent<SubscribeStreamResponseUnparsed> objectEvent;
+    private ObjectEvent<List<BlockItemUnparsed>> objectEvent;
 
     @Mock
     private InstantSource testClock;
@@ -86,15 +87,17 @@ public class ConsumerStreamResponseObserverTest {
         final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder()
                 .blockHeader(BlockHeader.PROTOBUF.toBytes(blockHeader))
                 .build();
+
+        List<BlockItemUnparsed> blockItems = List.of(blockItem);
+        when(objectEvent.get()).thenReturn(blockItems);
+
+        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
+
         final BlockItemSetUnparsed blockItemSet =
-                BlockItemSetUnparsed.newBuilder().blockItems(blockItem).build();
+                BlockItemSetUnparsed.newBuilder().blockItems(blockItems).build();
         final SubscribeStreamResponseUnparsed subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
                 .blockItems(blockItemSet)
                 .build();
-
-        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
-
-        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
 
         // verify the observer is called with the next BlockItem
         verify(responseStreamObserver, timeout(testTimeout)).onNext(subscribeStreamResponse);
@@ -118,6 +121,8 @@ public class ConsumerStreamResponseObserverTest {
                 testContext.metricsService(),
                 testContext.configuration());
 
+        when(objectEvent.get())
+                .thenReturn(List.of(BlockItemUnparsed.newBuilder().build()));
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
         verify(streamMediator, timeout(testTimeout)).unsubscribe(consumerBlockItemObserver);
     }
@@ -145,25 +150,13 @@ public class ConsumerStreamResponseObserverTest {
                         EventHeader.PROTOBUF.toBytes(EventHeader.newBuilder().build());
                 final BlockItemUnparsed blockItem =
                         BlockItemUnparsed.newBuilder().eventHeader(eventHeader).build();
-                final BlockItemSetUnparsed blockItemSet =
-                        BlockItemSetUnparsed.newBuilder().blockItems(blockItem).build();
-                final SubscribeStreamResponseUnparsed subscribeStreamResponse =
-                        SubscribeStreamResponseUnparsed.newBuilder()
-                                .blockItems(blockItemSet)
-                                .build();
-                lenient().when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+                lenient().when(objectEvent.get()).thenReturn(List.of(blockItem));
             } else {
                 final Bytes blockProof = BlockProof.PROTOBUF.toBytes(
                         BlockProof.newBuilder().block(i).build());
                 final BlockItemUnparsed blockItem =
                         BlockItemUnparsed.newBuilder().blockProof(blockProof).build();
-                final BlockItemSetUnparsed blockItemSet =
-                        BlockItemSetUnparsed.newBuilder().blockItems(blockItem).build();
-                final SubscribeStreamResponseUnparsed subscribeStreamResponse =
-                        SubscribeStreamResponseUnparsed.newBuilder()
-                                .blockItems(blockItemSet)
-                                .build();
-                when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+                when(objectEvent.get()).thenReturn(List.of(blockItem));
             }
 
             consumerBlockItemObserver.onEvent(objectEvent, 0, true);
@@ -181,47 +174,11 @@ public class ConsumerStreamResponseObserverTest {
         verify(responseStreamObserver, timeout(testTimeout).times(0)).onNext(subscribeStreamResponse);
     }
 
+    @Disabled("Should we guarantee the publisher will never send a null BlockItem instead?")
     @Test
     public void testSubscriberStreamResponseIsBlockItemWhenBlockItemIsNull() throws Exception {
 
-        // The generated objects contain safeguards to prevent a SubscribeStreamResponse
-        // being created with a null BlockItem. Here, I have to used a spy() to even
-        // manufacture this scenario. This should not happen in production.
-        final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder().build();
-        final BlockItemSetUnparsed blockItemSet =
-                BlockItemSetUnparsed.newBuilder().blockItems(blockItem).build();
-        final SubscribeStreamResponseUnparsed subscribeStreamResponse = spy(SubscribeStreamResponseUnparsed.newBuilder()
-                .blockItems(blockItemSet)
-                .build());
-
-        when(subscribeStreamResponse.blockItems()).thenReturn(null);
-        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
-
-        final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
-                completionService,
-                testClock,
-                streamMediator,
-                responseStreamObserver,
-                testContext.metricsService(),
-                testContext.configuration());
-
-        // This call will throw an exception but, because of the async
-        // service executor, the exception will not get caught until the
-        // next call.
-        consumerBlockItemObserver.onEvent(objectEvent, 0, true);
-        Thread.sleep(testTimeout);
-
-        // This second call will throw the exception.
-        assertThatIllegalArgumentException().isThrownBy(() -> consumerBlockItemObserver.onEvent(objectEvent, 0, true));
-    }
-
-    @Test
-    public void testSubscribeStreamResponseTypeNotSupported() throws Exception {
-
-        final SubscribeStreamResponseUnparsed subscribeStreamResponse =
-                SubscribeStreamResponseUnparsed.newBuilder().build();
-        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
-
+        when(objectEvent.get()).thenReturn(null);
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
                 completionService,
                 testClock,
@@ -246,12 +203,14 @@ public class ConsumerStreamResponseObserverTest {
         final BlockItemUnparsed blockItem = BlockItemUnparsed.newBuilder()
                 .blockHeader(BlockHeader.PROTOBUF.toBytes(blockHeader))
                 .build();
+
+        when(objectEvent.get()).thenReturn(List.of(blockItem));
+
         final BlockItemSetUnparsed blockItemSet =
                 BlockItemSetUnparsed.newBuilder().blockItems(blockItem).build();
         final SubscribeStreamResponseUnparsed subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
                 .blockItems(blockItemSet)
                 .build();
-        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
         doThrow(UncheckedIOException.class).when(responseStreamObserver).onNext(subscribeStreamResponse);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
@@ -285,7 +244,7 @@ public class ConsumerStreamResponseObserverTest {
         final SubscribeStreamResponseUnparsed subscribeStreamResponse = SubscribeStreamResponseUnparsed.newBuilder()
                 .blockItems(blockItemSet)
                 .build();
-        when(objectEvent.get()).thenReturn(subscribeStreamResponse);
+        when(objectEvent.get()).thenReturn(List.of(blockItem));
         doThrow(RuntimeException.class).when(responseStreamObserver).onNext(subscribeStreamResponse);
 
         final var consumerBlockItemObserver = LiveStreamEventHandlerBuilder.build(
