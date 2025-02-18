@@ -88,11 +88,6 @@ class ConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEven
     public void onEvent(@NonNull final ObjectEvent<List<BlockItemUnparsed>> event, final long l, final boolean b)
             throws ParseException {
 
-        if (event.get() == null) {
-            LOGGER.log(ERROR, "BlockItems list is null.");
-            return;
-        }
-
         // Only send the response if the consumer has not cancelled
         // or closed the stream.
         if (isResponsePermitted.get()) {

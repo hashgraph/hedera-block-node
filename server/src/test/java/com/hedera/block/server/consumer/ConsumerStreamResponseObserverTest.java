@@ -119,8 +119,10 @@ public class ConsumerStreamResponseObserverTest {
                 testContext.metricsService(),
                 testContext.configuration());
 
-        when(objectEvent.get())
-                .thenReturn(List.of(BlockItemUnparsed.newBuilder().build()));
+        final List<BlockItemUnparsed> blockItems =
+                List.of(BlockItemUnparsed.newBuilder().build());
+        final ObjectEvent<List<BlockItemUnparsed>> objectEvent = new ObjectEvent<>();
+        objectEvent.set(blockItems);
         consumerBlockItemObserver.onEvent(objectEvent, 0, true);
         verify(streamMediator, timeout(testTimeout)).unsubscribe(consumerBlockItemObserver);
     }
