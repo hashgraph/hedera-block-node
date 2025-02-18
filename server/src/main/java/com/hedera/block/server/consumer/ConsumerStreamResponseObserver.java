@@ -141,8 +141,7 @@ class ConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEven
             throw new IllegalArgumentException(message);
         }
 
-        final List<BlockItemUnparsed> blockItems =
-                Objects.requireNonNull(subscribeStreamResponse.blockItems()).blockItems();
+        final List<BlockItemUnparsed> blockItems = subscribeStreamResponse.blockItems().blockItems();
 
         // Only start sending BlockItems after we've reached
         // the beginning of a block.
@@ -154,7 +153,7 @@ class ConsumerStreamResponseObserver implements BlockNodeEventHandler<ObjectEven
         if (streamStarted) {
             if (firstBlockItem.hasBlockHeader()) {
                 long blockNumber = BlockHeader.PROTOBUF
-                        .parse(Objects.requireNonNull(firstBlockItem.blockHeader()))
+                        .parse(firstBlockItem.blockHeader())
                         .number();
                 if (LOGGER.isLoggable(DEBUG)) {
                     LOGGER.log(DEBUG, "{0} sending block: {1}", Thread.currentThread(), blockNumber);
