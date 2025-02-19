@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 1,
+  "id": 2,
   "links": [],
   "panels": [
     {
@@ -232,7 +232,7 @@
             "h": 7,
             "w": 6,
             "x": 0,
-            "y": 196
+            "y": 25
           },
           "id": 28,
           "options": {
@@ -331,7 +331,7 @@
             "h": 7,
             "w": 18,
             "x": 6,
-            "y": 196
+            "y": 25
           },
           "id": 29,
           "options": {
@@ -396,7 +396,7 @@
             "h": 6,
             "w": 6,
             "x": 0,
-            "y": 348
+            "y": 32
           },
           "id": 42,
           "options": {
@@ -424,13 +424,13 @@
               "expr": "last_over_time(hedera_block_node_verification_blocks_failed_total[$__interval])",
               "fullMetaSearch": false,
               "includeNullMetadata": true,
-              "legendFormat": "__auto",
+              "legendFormat": "Total Failed Verifications",
               "range": true,
               "refId": "A",
               "useBackend": false
             }
           ],
-          "title": "Total Failed  Verifications",
+          "title": "Total Failed Verifications",
           "type": "stat"
         },
         {
@@ -498,7 +498,7 @@
             "h": 6,
             "w": 18,
             "x": 6,
-            "y": 348
+            "y": 32
           },
           "id": 41,
           "options": {
@@ -522,13 +522,170 @@
               "expr": "rate(hedera_block_node_verification_blocks_failed_total[$__rate_interval])",
               "fullMetaSearch": false,
               "includeNullMetadata": true,
-              "legendFormat": "__auto",
+              "legendFormat": "Total Failed Verifications",
               "range": true,
               "refId": "A",
               "useBackend": false
             }
           ],
           "title": "Failed Verifications",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "dark-red",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 38
+          },
+          "id": 50,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "percentChangeColorMode": "standard",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "pluginVersion": "11.5.1",
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "hedera_block_node_block_persistence_error_total",
+              "legendFormat": "Block Persistence Error",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Total Block Persistence Errors",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 18,
+            "x": 6,
+            "y": 38
+          },
+          "id": 51,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "11.5.1",
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "rate( hedera_block_node_block_persistence_error_total [$__rate_interval])",
+              "legendFormat": "Block Persistence Errors",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Block Persistence Errors",
           "type": "timeseries"
         }
       ],
@@ -1661,8 +1818,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -1735,8 +1891,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "yellow",
@@ -2003,8 +2158,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               },
@@ -2016,7 +2170,7 @@
             "h": 6,
             "w": 6,
             "x": 0,
-            "y": 4
+            "y": 635
           },
           "id": 24,
           "options": {
@@ -2102,8 +2256,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2119,7 +2272,7 @@
             "h": 6,
             "w": 18,
             "x": 6,
-            "y": 4
+            "y": 635
           },
           "id": 22,
           "options": {
@@ -2168,8 +2321,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               }
@@ -2180,7 +2332,7 @@
             "h": 6,
             "w": 6,
             "x": 0,
-            "y": 28
+            "y": 677
           },
           "id": 27,
           "options": {
@@ -2266,8 +2418,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               },
@@ -2279,7 +2430,7 @@
             "h": 6,
             "w": 18,
             "x": 6,
-            "y": 28
+            "y": 677
           },
           "id": 26,
           "options": {
@@ -2342,8 +2493,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               }
@@ -2354,7 +2504,7 @@
             "h": 6,
             "w": 6,
             "x": 0,
-            "y": 5
+            "y": 636
           },
           "id": 46,
           "options": {
@@ -2439,8 +2589,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2456,7 +2605,7 @@
             "h": 6,
             "w": 18,
             "x": 6,
-            "y": 5
+            "y": 636
           },
           "id": 47,
           "options": {
@@ -2504,8 +2653,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -2525,7 +2673,7 @@
             "h": 6,
             "w": 6,
             "x": 0,
-            "y": 29
+            "y": 642
           },
           "id": 37,
           "options": {
@@ -2623,8 +2771,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2640,7 +2787,7 @@
             "h": 6,
             "w": 18,
             "x": 6,
-            "y": 29
+            "y": 642
           },
           "id": 35,
           "options": {
@@ -2701,8 +2848,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -2722,7 +2868,7 @@
             "h": 6,
             "w": 6,
             "x": 0,
-            "y": 35
+            "y": 648
           },
           "id": 39,
           "options": {
@@ -2820,8 +2966,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -2841,7 +2986,7 @@
             "h": 6,
             "w": 18,
             "x": 6,
-            "y": 35
+            "y": 648
           },
           "id": 40,
           "options": {
@@ -2927,7 +3072,7 @@
             "h": 6,
             "w": 6,
             "x": 0,
-            "y": 1014
+            "y": 613
           },
           "id": 38,
           "options": {
@@ -3028,7 +3173,7 @@
             "h": 6,
             "w": 18,
             "x": 6,
-            "y": 1014
+            "y": 613
           },
           "id": 36,
           "options": {
@@ -3583,6 +3728,6 @@
   "timezone": "browser",
   "title": "Block-Node Server Dashboard",
   "uid": "edu86nutnxts0c",
-  "version": 1,
+  "version": 6,
   "weekStart": ""
 }
