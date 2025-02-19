@@ -56,8 +56,8 @@ public class ConsumerModeHandler implements SimulatorModeHandler {
      */
     @Override
     public void start() throws InterruptedException {
-        LOGGER.log(System.Logger.Level.INFO, "Block Stream Simulator is starting in consumer mode.");
-        consumerStreamGrpcClient.requestBlocks(0, 0);
+        LOGGER.log(INFO, "Block Stream Simulator is starting in consumer mode.");
+        consumerStreamGrpcClient.requestBlocks();
     }
 
     /**

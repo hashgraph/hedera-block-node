@@ -6,11 +6,12 @@ import static com.hedera.block.server.mediator.MediatorConfig.MediatorType.NO_OP
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.notifier.Notifiable;
 import com.hedera.block.server.service.ServiceStatus;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.List;
 import javax.inject.Singleton;
 
 /** A Dagger module for providing dependencies for Mediator Module.` */
@@ -48,7 +49,7 @@ public interface MediatorInjectionModule {
      */
     @Binds
     @Singleton
-    SubscriptionHandler<SubscribeStreamResponseUnparsed> bindSubscriptionHandler(
+    SubscriptionHandler<List<BlockItemUnparsed>> bindSubscriptionHandler(
             @NonNull final LiveStreamMediator liveStreamMediator);
 
     /**

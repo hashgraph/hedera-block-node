@@ -1,21 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
-import com.github.jengelman.gradle.plugins.shadow.internal.DefaultDependencyFilter
-
 plugins {
-    id("org.hiero.gradle.module.library")
     id("application")
-    id("com.gradleup.shadow") version "8.3.5"
+    id("org.hiero.gradle.module.library")
+    id("org.hiero.gradle.feature.legacy-classpath") // due to 'com.google.cloud.storage'
+    id("org.hiero.gradle.feature.shadow")
 }
 
 description = "Hedera Block Stream Tools"
 
 application { mainClass = "com.hedera.block.tools.BlockStreamTool" }
-
-// Allow non-module Jars
-extraJavaModuleInfo {
-    failOnMissingModuleInfo = false
-    failOnAutomaticModules = false
-}
 
 mainModuleInfo {
     requires("com.hedera.block.stream") // use streams module to access protobuf generated classes
@@ -33,26 +26,3 @@ mainModuleInfo {
 }
 
 testModuleInfo { requiresStatic("com.github.spotbugs.annotations") }
-
-// == Shadow plugin configuration ==
-tasks.shadowJar {
-    // Generate Manifest with Main-Class and Implementation-Title
-    manifest {
-        attributes(
-            "Main-Class" to application.mainClass,
-            "Implementation-Title" to project.name,
-            "Implementation-Version" to project.version
-        )
-    }
-
-    // There is an issue in the shadow plugin that it automatically accesses the
-    // files in 'runtimeClasspath' while Gradle is building the task graph.
-    // See: https://github.com/GradleUp/shadow/issues/882
-    dependencyFilter = NoResolveDependencyFilter()
-}
-
-class NoResolveDependencyFilter : DefaultDependencyFilter(project) {
-    override fun resolve(configuration: FileCollection): FileCollection {
-        return configuration
-    }
-}

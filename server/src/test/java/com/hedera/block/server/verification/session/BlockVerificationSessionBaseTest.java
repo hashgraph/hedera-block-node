@@ -58,7 +58,7 @@ public abstract class BlockVerificationSessionBaseTest {
     protected Counter verificationBlocksError;
 
     protected final Bytes hashing01BlockHash = Bytes.fromHex(
-            "006ae77f87ff57df598f4d6536dcb5c0a5c1f840c2fef817b2faebd554d32cfc9a4eaee1d873ed88de668b53b7839117");
+            "24ec308ac4b552c83fcde20ba443bf7b69ae435f8e74f09086bfb339151f65a7c6f06eb2bdc4c50b69a12685f6168e84");
 
     @BeforeEach
     void setUpBase() {
@@ -139,7 +139,7 @@ public abstract class BlockVerificationSessionBaseTest {
         // Given
         List<BlockItemUnparsed> blockItems = getTestBlock1Items();
         final Bytes hashing01BlockHash = Bytes.fromHex(
-                "006ae77f87ff57df598f4d6536dcb5c0a5c1f840c2fef817b2faebd554d32cfc9a4eaee1d873ed88de668b53b7839117");
+                "24ec308ac4b552c83fcde20ba443bf7b69ae435f8e74f09086bfb339151f65a7c6f06eb2bdc4c50b69a12685f6168e84");
         BlockHeader blockHeader =
                 BlockHeader.PROTOBUF.parse(blockItems.getFirst().blockHeader());
         BlockVerificationSession session = createSession(blockHeader);

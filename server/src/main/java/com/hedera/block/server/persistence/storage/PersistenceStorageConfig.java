@@ -134,12 +134,6 @@ public record PersistenceStorageConfig(
          */
         BLOCK_AS_LOCAL_FILE,
         /**
-         * This type of storage stores Blocks as directories with the Block
-         * number being the directory number. Block Items are stored as files
-         * within a given Block directory. Used primarily for testing purposes.
-         */
-        BLOCK_AS_LOCAL_DIRECTORY,
-        /**
          * This type of storage does nothing.
          */
         NO_OP

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.persistence.storage.remove;
 
-import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,15 +22,16 @@ class NoOpBlockRemoverTest {
 
     /**
      * This test aims to verify that the
-     * {@link NoOpBlockRemover#remove(long)} does nothing and does not throw any
-     * exceptions. The no-op remover has no preconditions check as well.
+     * {@link NoOpBlockRemover#removeLiveUnverified(long)} does nothing and
+     * returns false always. The no-op remover has no preconditions check as well.
      *
      * @param toRemove parameterized, block number
      */
     @ParameterizedTest
     @MethodSource({"validBlockNumbers", "invalidBlockNumbers"})
     void testSuccessfulBlockDeletion(final long toRemove) {
-        assertThatNoException().isThrownBy(() -> toTest.remove(toRemove));
+        final boolean actual = toTest.removeLiveUnverified(toRemove);
+        assertThat(actual).isFalse();
     }
 
     /**
@@ -38,7 +39,7 @@ class NoOpBlockRemoverTest {
      *
      * @return a stream of valid block numbers
      */
-    public static Stream<Arguments> validBlockNumbers() {
+    private static Stream<Arguments> validBlockNumbers() {
         return Stream.of(
                 Arguments.of(0L),
                 Arguments.of(1L),
@@ -69,7 +70,7 @@ class NoOpBlockRemoverTest {
      *
      * @return a stream of invalid block numbers
      */
-    public static Stream<Arguments> invalidBlockNumbers() {
+    private static Stream<Arguments> invalidBlockNumbers() {
         return Stream.of(
                 Arguments.of(-1L),
                 Arguments.of(-2L),

@@ -1,79 +1,69 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.persistence;
 
+import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
+import com.hedera.block.server.mediator.SubscriptionHandler;
+import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
 import com.hedera.block.server.persistence.storage.compression.Compression;
 import com.hedera.block.server.persistence.storage.compression.NoOpCompression;
 import com.hedera.block.server.persistence.storage.compression.ZstdCompression;
-import com.hedera.block.server.persistence.storage.path.BlockAsLocalDirPathResolver;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalFilePathResolver;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.persistence.storage.path.NoOpBlockPathResolver;
-import com.hedera.block.server.persistence.storage.read.BlockAsLocalDirReader;
 import com.hedera.block.server.persistence.storage.read.BlockAsLocalFileReader;
 import com.hedera.block.server.persistence.storage.read.BlockReader;
 import com.hedera.block.server.persistence.storage.read.NoOpBlockReader;
-import com.hedera.block.server.persistence.storage.remove.BlockAsLocalDirRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockAsLocalFileRemover;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
 import com.hedera.block.server.persistence.storage.remove.NoOpBlockRemover;
-import com.hedera.block.server.persistence.storage.write.BlockAsLocalDirWriter;
-import com.hedera.block.server.persistence.storage.write.BlockAsLocalFileWriter;
-import com.hedera.block.server.persistence.storage.write.BlockWriter;
-import com.hedera.block.server.persistence.storage.write.NoOpBlockWriter;
+import com.hedera.block.server.persistence.storage.write.AsyncBlockAsLocalFileWriterFactory;
+import com.hedera.block.server.persistence.storage.write.AsyncBlockWriterFactory;
+import com.hedera.block.server.persistence.storage.write.AsyncNoOpWriterFactory;
+import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.BlockItemUnparsed;
 import com.hedera.hapi.block.BlockUnparsed;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
-import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executors;
 import javax.inject.Singleton;
 
 /** A Dagger module for providing dependencies for Persistence Module. */
 @Module
 public interface PersistenceInjectionModule {
     /**
-     * Provides a block writer singleton using the block node context.
+     * Provides an async block writer factory singleton using the persistence
+     * storage config.
      *
-     * @param blockNodeContext the application context
-     * @param blockRemover the block remover
+     * @param config the persistence storage config needed to discern the type
+     * of the async block writer factory
      * @param blockPathResolver the block path resolver
      * @param compression the compression used
-     * @return a block writer singleton
+     * @return an async block writer factory singleton
      */
     @Provides
     @Singleton
-    static BlockWriter<List<BlockItemUnparsed>, Long> providesBlockWriter(
+    static AsyncBlockWriterFactory providesAsyncBlockWriterFactory(
             @NonNull final PersistenceStorageConfig config,
-            @NonNull final BlockNodeContext blockNodeContext,
-            @NonNull final BlockRemover blockRemover,
             @NonNull final BlockPathResolver blockPathResolver,
-            @NonNull final Compression compression) {
-        Objects.requireNonNull(blockRemover);
-        Objects.requireNonNull(blockPathResolver);
-        final StorageType persistenceType = config.type();
-        try {
-            return switch (persistenceType) {
-                case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileWriter.of(
-                        config, blockNodeContext, blockPathResolver, compression);
-                case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirWriter.of(
-                        blockNodeContext, blockRemover, blockPathResolver);
-                case NO_OP -> NoOpBlockWriter.newInstance();
-            };
-        } catch (final IOException e) {
-            // we cannot have checked exceptions with dagger @Provides
-            throw new UncheckedIOException("Failed to create BlockWriter", e);
-        }
+            @NonNull final BlockRemover blockRemover,
+            @NonNull final Compression compression,
+            @NonNull final AckHandler ackHandler,
+            @NonNull final BlockNodeContext context) {
+        final StorageType type = config.type();
+        return switch (type) {
+            case BLOCK_AS_LOCAL_FILE -> new AsyncBlockAsLocalFileWriterFactory(
+                    blockPathResolver, blockRemover, compression, ackHandler, context.metricsService());
+            case NO_OP -> new AsyncNoOpWriterFactory(ackHandler, context.metricsService());
+        };
     }
 
     /**
@@ -94,7 +84,6 @@ public interface PersistenceInjectionModule {
         final StorageType persistenceType = config.type();
         return switch (persistenceType) {
             case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileReader.of(compression, blockPathResolver);
-            case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirReader.of(config);
             case NO_OP -> NoOpBlockReader.newInstance();
         };
     }
@@ -114,8 +103,7 @@ public interface PersistenceInjectionModule {
         Objects.requireNonNull(blockPathResolver);
         final StorageType persistenceType = config.type();
         return switch (persistenceType) {
-            case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFileRemover.newInstance();
-            case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirRemover.of(blockPathResolver);
+            case BLOCK_AS_LOCAL_FILE -> new BlockAsLocalFileRemover(blockPathResolver);
             case NO_OP -> NoOpBlockRemover.newInstance();
         };
     }
@@ -133,7 +121,6 @@ public interface PersistenceInjectionModule {
         final StorageType persistenceType = config.type();
         return switch (persistenceType) {
             case BLOCK_AS_LOCAL_FILE -> BlockAsLocalFilePathResolver.of(config);
-            case BLOCK_AS_LOCAL_DIRECTORY -> BlockAsLocalDirPathResolver.of(config);
             case NO_OP -> NoOpBlockPathResolver.newInstance();
         };
     }
@@ -156,13 +143,31 @@ public interface PersistenceInjectionModule {
     }
 
     /**
-     * Binds the block node event handler to the stream persistence handler.
-     *
-     * @param streamPersistenceHandler the stream persistence handler
-     * @return the block node event handler
+     * Provides a block node event handler singleton (stream persistence handler)
+     * @param subscriptionHandler the subscription handler
+     * @param notifier the notifier
+     * @param blockNodeContext the block node context
+     * @param serviceStatus the service status
+     * @param ackHandler the ack handler
+     * @param asyncBlockWriterFactory the async block writer factory
+     * @return the persistence block node event handler singleton
      */
-    @Binds
+    @Provides
     @Singleton
-    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> bindBlockNodeEventHandler(
-            @NonNull final StreamPersistenceHandlerImpl streamPersistenceHandler);
+    static BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> providesBlockNodeEventHandler(
+            @NonNull final SubscriptionHandler<List<BlockItemUnparsed>> subscriptionHandler,
+            @NonNull final Notifier notifier,
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final ServiceStatus serviceStatus,
+            @NonNull final AckHandler ackHandler,
+            @NonNull final AsyncBlockWriterFactory asyncBlockWriterFactory) {
+        return new StreamPersistenceHandlerImpl(
+                subscriptionHandler,
+                notifier,
+                blockNodeContext,
+                serviceStatus,
+                ackHandler,
+                asyncBlockWriterFactory,
+                Executors.newFixedThreadPool(5));
+    }
 }

@@ -4,11 +4,11 @@ package com.hedera.block.server.mediator;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
-import com.hedera.block.server.persistence.storage.write.BlockWriter;
 import com.hedera.block.server.service.ServiceStatus;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
+import com.hedera.hapi.block.BlockItemUnparsed;
 import com.lmax.disruptor.BatchEventProcessor;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>When a stream mediator is created, it will accept new block items from a producer, publish
  * them to all consumers subscribed to the stream, and persist the block items to storage
- * represented by a {@link BlockWriter}.
+ * represented by a {@link com.hedera.block.server.persistence.storage.write.AsyncBlockWriter}.
  */
 public class LiveStreamMediatorBuilder {
 
@@ -26,8 +26,8 @@ public class LiveStreamMediatorBuilder {
     private final ServiceStatus serviceStatus;
 
     private Map<
-                    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>,
-                    BatchEventProcessor<ObjectEvent<SubscribeStreamResponseUnparsed>>>
+                    BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>>,
+                    BatchEventProcessor<ObjectEvent<List<BlockItemUnparsed>>>>
             subscribers;
 
     /** The initial capacity of the subscriber map. */
@@ -68,8 +68,8 @@ public class LiveStreamMediatorBuilder {
     public LiveStreamMediatorBuilder subscribers(
             @NonNull
                     final Map<
-                                    BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>>,
-                                    BatchEventProcessor<ObjectEvent<SubscribeStreamResponseUnparsed>>>
+                                    BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>>,
+                                    BatchEventProcessor<ObjectEvent<List<BlockItemUnparsed>>>>
                             subscribers) {
         this.subscribers = subscribers;
         return this;

@@ -20,11 +20,11 @@ public final class NoOpBlockRemover implements BlockRemover {
     }
 
     /**
-     * No-op remover. Does nothing and returns immediately. No preconditions
+     * No-op remover. Does nothing and always returns false. No preconditions
      * check also.
      */
     @Override
-    public void remove(final long blockNumber) {
-        // do nothing
+    public boolean removeLiveUnverified(final long blockNumber) {
+        return false;
     }
 }

@@ -28,8 +28,6 @@ fi
 
 if [ true = "$is_smoke_test" ]; then
   # add smoke test variables
-  # @todo(#372) - default persistence type should be BLOCK_AS_LOCAL_FILE
-  echo "PERSISTENCE_STORAGE_TYPE=BLOCK_AS_LOCAL_DIRECTORY" >> .env
   echo "MEDIATOR_RING_BUFFER_SIZE=1024" >> .env
   echo "NOTIFIER_RING_BUFFER_SIZE=1024" >> .env
   echo "JAVA_OPTS='-Xms4G -Xmx4G'" >> .env

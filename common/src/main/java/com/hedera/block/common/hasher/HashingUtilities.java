@@ -100,8 +100,8 @@ public final class HashingUtilities {
             final BlockItemUnparsed item = blockItems.get(i);
             final BlockItemUnparsed.ItemOneOfType kind = item.item().kind();
             switch (kind) {
-                case EVENT_HEADER, EVENT_TRANSACTION -> numInputs++;
-                case TRANSACTION_RESULT, TRANSACTION_OUTPUT, STATE_CHANGES -> numOutputs++;
+                case EVENT_HEADER, EVENT_TRANSACTION, ROUND_HEADER -> numInputs++;
+                case TRANSACTION_RESULT, TRANSACTION_OUTPUT, STATE_CHANGES, BLOCK_HEADER -> numOutputs++;
             }
         }
 
@@ -112,9 +112,9 @@ public final class HashingUtilities {
             final BlockItemUnparsed item = blockItems.get(i);
             final BlockItemUnparsed.ItemOneOfType kind = item.item().kind();
             switch (kind) {
-                case EVENT_HEADER, EVENT_TRANSACTION -> inputHashes.put(
+                case EVENT_HEADER, EVENT_TRANSACTION, ROUND_HEADER -> inputHashes.put(
                         digest.digest(BlockItemUnparsed.PROTOBUF.toBytes(item).toByteArray()));
-                case TRANSACTION_RESULT, TRANSACTION_OUTPUT, STATE_CHANGES -> outputHashes.put(
+                case TRANSACTION_RESULT, TRANSACTION_OUTPUT, STATE_CHANGES, BLOCK_HEADER -> outputHashes.put(
                         digest.digest(BlockItemUnparsed.PROTOBUF.toBytes(item).toByteArray()));
             }
         }

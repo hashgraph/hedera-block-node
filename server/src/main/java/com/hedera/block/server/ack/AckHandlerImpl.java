@@ -6,12 +6,15 @@ import com.hedera.block.server.metrics.BlockNodeMetricTypes;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.remove.BlockRemover;
+import com.hedera.block.server.persistence.storage.write.BlockPersistenceResult;
+import com.hedera.block.server.persistence.storage.write.BlockPersistenceResult.BlockPersistenceStatus;
 import com.hedera.block.server.service.ServiceStatus;
 import com.hedera.hapi.block.PublishStreamResponseCode;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 
@@ -24,9 +27,7 @@ import javax.inject.Inject;
  *    consecutive ACKs for all blocks that are both persisted and verified.
  */
 public class AckHandlerImpl implements AckHandler {
-
     private final System.Logger LOGGER = System.getLogger(getClass().getName());
-
     private final Map<Long, BlockInfo> blockInfo = new ConcurrentHashMap<>();
     private volatile long lastAcknowledgedBlockNumber = -1;
     private final Notifier notifier;
@@ -42,31 +43,28 @@ public class AckHandlerImpl implements AckHandler {
     @Inject
     public AckHandlerImpl(
             @NonNull final Notifier notifier,
-            boolean skipAcknowledgement,
+            final boolean skipAcknowledgement,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final BlockRemover blockRemover,
             @NonNull final MetricsService metricsService) {
-        this.notifier = notifier;
+        this.notifier = Objects.requireNonNull(notifier);
         this.skipAcknowledgement = skipAcknowledgement;
-        this.serviceStatus = serviceStatus;
-        this.blockRemover = blockRemover;
+        this.serviceStatus = Objects.requireNonNull(serviceStatus);
+        this.blockRemover = Objects.requireNonNull(blockRemover);
         this.metricsService = metricsService;
     }
 
-    /**
-     * Called when we receive a "persistence" event for the given blockNumber.
-     * @param blockNumber the block number
-     */
     @Override
-    public void blockPersisted(long blockNumber) {
-        if (skipAcknowledgement) {
-            return;
+    public void blockPersisted(@NonNull final BlockPersistenceResult blockPersistenceResult) {
+        Objects.requireNonNull(blockPersistenceResult);
+        if (!skipAcknowledgement) {
+            // @todo(545) handle other cases for the blockPersistenceResult
+            final BlockInfo info = blockInfo.computeIfAbsent(blockPersistenceResult.blockNumber(), BlockInfo::new);
+            if (blockPersistenceResult.status() == BlockPersistenceStatus.SUCCESS) {
+                info.getBlockStatus().setPersisted();
+            }
+            attemptAcks();
         }
-
-        BlockInfo info = blockInfo.computeIfAbsent(blockNumber, BlockInfo::new);
-        info.getBlockStatus().setPersisted();
-
-        attemptAcks();
     }
 
     /**
@@ -96,7 +94,7 @@ public class AckHandlerImpl implements AckHandler {
     public void blockVerificationFailed(long blockNumber) {
         notifier.sendEndOfStream(lastAcknowledgedBlockNumber, PublishStreamResponseCode.STREAM_ITEMS_BAD_STATE_PROOF);
         try {
-            blockRemover.remove(blockNumber);
+            blockRemover.removeLiveUnverified(blockNumber);
         } catch (IOException e) {
             LOGGER.log(System.Logger.Level.ERROR, "Failed to remove block " + blockNumber, e);
             throw new RuntimeException(e);
@@ -111,8 +109,8 @@ public class AckHandlerImpl implements AckHandler {
     private void attemptAcks() {
         // Temporarily if lastAcknowledgedBlockNumber is -1, we get the first block in the map
         if (lastAcknowledgedBlockNumber == -1) {
-            lastAcknowledgedBlockNumber =
-                    blockInfo.keySet().stream().min(Long::compareTo).orElse(1L) - 1;
+            // @todo(147): once we have a way to get the last acknowledged block from the store we should use that
+            lastAcknowledgedBlockNumber = 0;
         }
 
         // Keep ACK-ing starting from the next block in sequence
@@ -137,19 +135,24 @@ public class AckHandlerImpl implements AckHandler {
                 // We "won" the race; we do the actual ACK
                 notifier.sendAck(nextBlock, info.getBlockHash(), false);
 
-                // Update last acknowledged
-                lastAcknowledgedBlockNumber = nextBlock;
-
                 // Update the service status
                 serviceStatus.setLatestAckedBlock(info);
 
                 // Remove from map if desired (so we don't waste memory)
                 blockInfo.remove(nextBlock);
 
-                // Update metrics
+                // Update metrics and logging
                 metricsService.get(BlockNodeMetricTypes.Counter.AckedBlocked).increment();
-            }
+                LOGGER.log(System.Logger.Level.DEBUG, "ACKed block " + nextBlock);
 
+                // Update last acknowledged
+                lastAcknowledgedBlockNumber = nextBlock;
+            } else {
+                // Someone else already ACKed this block.
+                // Stop, as we can't ACK the next block until this one is ACKed.
+                // Also, to unblock the other thread faster.
+                break;
+            }
             // Loop again in case the next block is also ready.
             // This can ACK multiple consecutive blocks if they are all
             // persisted & verified in order.

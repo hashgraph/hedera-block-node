@@ -4,7 +4,7 @@ import org.hiero.gradle.tasks.GitClone
 plugins {
     id("org.hiero.gradle.module.library")
     id("org.hiero.gradle.feature.protobuf")
-    id("com.hedera.pbj.pbj-compiler") version "0.9.2"
+    id("com.hedera.pbj.pbj-compiler") version "0.9.17"
 }
 
 description = "Hedera API"

@@ -5,16 +5,14 @@ import static com.hedera.block.server.util.PersistTestUtils.PERSISTENCE_STORAGE_
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.from;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-import com.hedera.block.server.ack.AckHandler;
 import com.hedera.block.server.config.BlockNodeContext;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.compression.Compression;
 import com.hedera.block.server.persistence.storage.compression.NoOpCompression;
 import com.hedera.block.server.persistence.storage.path.BlockAsLocalFilePathResolver;
-import com.hedera.block.server.persistence.storage.write.BlockAsLocalFileWriter;
+import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
 import com.hedera.block.server.util.PersistTestUtils;
 import com.hedera.block.server.util.TestConfigUtil;
 import com.hedera.hapi.block.BlockItemUnparsed;
@@ -22,6 +20,7 @@ import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.ParseException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -34,22 +33,18 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.Mock;
 
 /**
  * Tests for the {@link BlockAsLocalFileReader} class.
  */
 @SuppressWarnings("FieldCanBeLocal")
 class BlockAsLocalFileReaderTest {
-    private BlockAsLocalFileWriter blockAsLocalFileWriterMock;
     private Compression compressionMock;
+    private BlockPathResolver blockPathResolverMock;
     private BlockAsLocalFileReader toTest;
 
     @TempDir
     private Path testLiveRootPath;
-
-    @Mock
-    private AckHandler ackHandlerMock;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -62,18 +57,12 @@ class BlockAsLocalFileReaderTest {
         assertThat(testConfigLiveRootPath).isEqualTo(testLiveRootPath.toString());
 
         compressionMock = spy(NoOpCompression.newInstance());
-        ackHandlerMock = mock(AckHandler.class);
-
-        final BlockAsLocalFilePathResolver blockAsLocalFileResolverMock =
-                spy(BlockAsLocalFilePathResolver.of(testConfig));
-        blockAsLocalFileWriterMock = spy(
-                BlockAsLocalFileWriter.of(testConfig, blockNodeContext, blockAsLocalFileResolverMock, compressionMock));
-        toTest = BlockAsLocalFileReader.of(compressionMock, blockAsLocalFileResolverMock);
+        blockPathResolverMock = spy(BlockAsLocalFilePathResolver.of(testConfig));
+        toTest = BlockAsLocalFileReader.of(compressionMock, blockPathResolverMock);
     }
 
     /**
-     * This test aims to verify that the
-     * {@link BlockAsLocalFileReader#read(long)} correctly reads a block with a
+     * This test aims to verify that the {@link BlockAsLocalFileReader#read(long)} correctly reads a block with a
      * given block number and returns a {@code non-empty} {@link Optional}.
      */
     @ParameterizedTest
@@ -81,10 +70,9 @@ class BlockAsLocalFileReaderTest {
     void testSuccessfulBlockRead(final long blockNumber) throws IOException, ParseException {
         final List<BlockItemUnparsed> blockItemUnparsed =
                 PersistTestUtils.generateBlockItemsUnparsedForWithBlockNumber(blockNumber);
-        final Optional<Long> written = blockAsLocalFileWriterMock.write(blockItemUnparsed);
-
+        final Path written = createAndWriteBlockAsFile(blockNumber, blockItemUnparsed);
+        assertThat(written).isNotNull().exists().isReadable().isRegularFile().isNotEmptyFile();
         // writing the test data is successful
-        assertThat(written).isNotNull().isPresent();
 
         final Optional<BlockUnparsed> actual = toTest.read(blockNumber);
         assertThat(actual)
@@ -104,26 +92,23 @@ class BlockAsLocalFileReaderTest {
                     }
                 }))
                 .extracting(BlockUnparsed::blockItems)
-                .asList()
+                .asInstanceOf(InstanceOfAssertFactories.LIST)
                 .isNotNull()
                 .isNotEmpty();
     }
 
     /**
-     * This test aims to verify that the
-     * {@link BlockAsLocalFileReader#read(long)} correctly reads a block with a
-     * given block number and has the same contents as the block that has been
-     * persisted.
+     * This test aims to verify that the {@link BlockAsLocalFileReader#read(long)} correctly reads a block with a
+     * given block number and has the same contents as the block that has been persisted.
      */
     @ParameterizedTest
     @MethodSource("validBlockNumbers")
     void testSuccessfulBlockReadContents(final long blockNumber) throws IOException, ParseException {
         final List<BlockItemUnparsed> blockItemUnparsed =
                 PersistTestUtils.generateBlockItemsUnparsedForWithBlockNumber(blockNumber);
-        final Optional<Long> written = blockAsLocalFileWriterMock.write(blockItemUnparsed);
-
+        final Path written = createAndWriteBlockAsFile(blockNumber, blockItemUnparsed);
+        assertThat(written).isNotNull().exists().isReadable().isRegularFile().isNotEmptyFile();
         // writing the test data is successful
-        assertThat(written).isNotNull().isPresent();
 
         final Optional<BlockUnparsed> actual = toTest.read(blockNumber);
         assertThat(actual)
@@ -132,7 +117,7 @@ class BlockAsLocalFileReaderTest {
                 .get(InstanceOfAssertFactories.type(BlockUnparsed.class))
                 .isNotNull()
                 .extracting(BlockUnparsed::blockItems)
-                .asList()
+                .asInstanceOf(InstanceOfAssertFactories.LIST)
                 .isNotNull()
                 .isNotEmpty()
                 .hasSize(blockItemUnparsed.size())
@@ -141,9 +126,8 @@ class BlockAsLocalFileReaderTest {
 
     /**
      * This test aims to verify that the
-     * {@link BlockAsLocalFileReader#read(long) correctly returns an empty
-     * {@link Optional} when no block file is found for the given valid block
-     * number.
+     * {@link BlockAsLocalFileReader#read(long) correctly returns an empty {@link Optional} when no block file is
+     * found for the given valid block number.
      */
     @ParameterizedTest
     @MethodSource("validBlockNumbers")
@@ -153,10 +137,9 @@ class BlockAsLocalFileReaderTest {
     }
 
     /**
-     * This test aims to verify that the
-     * {@link BlockAsLocalFileReader#read(long)} correctly throws an
-     * {@link IllegalArgumentException} when an invalid block number is
-     * provided. A block number is invalid if it is a strictly negative number.
+     * This test aims to verify that the {@link BlockAsLocalFileReader#read(long)} correctly throws an
+     * {@link IllegalArgumentException} when an invalid block number is provided. A block number is invalid if it
+     * is a strictly negative number.
      *
      * @param toRead parameterized, block number
      */
@@ -166,12 +149,22 @@ class BlockAsLocalFileReaderTest {
         assertThatIllegalArgumentException().isThrownBy(() -> toTest.read(toRead));
     }
 
+    private Path createAndWriteBlockAsFile(final long blockNumber, final List<BlockItemUnparsed> blockItemUnparsed)
+            throws IOException {
+        final BlockUnparsed block =
+                BlockUnparsed.newBuilder().blockItems(blockItemUnparsed).build();
+        final Path written = blockPathResolverMock.resolveLiveRawPathToBlock(blockNumber);
+        Files.createDirectories(written.getParent());
+        Files.write(written, BlockUnparsed.PROTOBUF.toBytes(block).toByteArray());
+        return written;
+    }
+
     /**
      * Some valid block numbers.
      *
      * @return a stream of valid block numbers
      */
-    public static Stream<Arguments> validBlockNumbers() {
+    private static Stream<Arguments> validBlockNumbers() {
         return Stream.of(
                 Arguments.of(0L),
                 Arguments.of(1L),
@@ -202,7 +195,7 @@ class BlockAsLocalFileReaderTest {
      *
      * @return a stream of invalid block numbers
      */
-    public static Stream<Arguments> invalidBlockNumbers() {
+    private static Stream<Arguments> invalidBlockNumbers() {
         return Stream.of(
                 Arguments.of(-1L),
                 Arguments.of(-2L),

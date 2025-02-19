@@ -38,30 +38,38 @@ shutdown() {
     fi
 }
 
+liveness() {
+    if ! curl -v --connect-timeout 5 --max-time 10 --retry 12 --retry-delay 5 --retry-max-time 100 --retry-all-errors $SERVER_URL$LIVENESS_ENDPOINT; then
+        echo "$LIVENESS_ENDPOINT failed."
+        shutdown
+        exit 1
+    fi
+    echo "$LIVENESS_ENDPOINT endpoint is healthy."
+}
+
+readiness() {
+    if ! curl -v --connect-timeout 5 --max-time 10 --retry 12 --retry-delay 5 --retry-max-time 100 --retry-all-errors $SERVER_URL$READINESS_ENDPOINT; then
+        echo "$READINESS_ENDPOINT endpoint failed."
+        shutdown
+        exit 1
+    fi
+    echo "$READINESS_ENDPOINT endpoint is ready."
+}
+
 # Trap any exit signal to ensure everything is cleaned up
 trap "shutdown; exit 1" ERR SIGINT SIGTERM
 
 # 1. Call the endpoints /health/livez and /health/readyz
-SERVER_URL="http://localhost:8080"
-LIVENESS_ENDPOINT="/healthz/livez"
-READINESS_ENDPOINT="/healthz/readyz"
+export SERVER_URL="http://localhost:8080"
+export LIVENESS_ENDPOINT="/healthz/livez"
+export READINESS_ENDPOINT="/healthz/readyz"
 
-if ! curl -v --connect-timeout 5 --max-time 10 --retry 12 --retry-delay 5 --retry-max-time 100 --retry-all-errors $SERVER_URL$LIVENESS_ENDPOINT; then
-    echo "$LIVENESS_ENDPOINT failed."
-    shutdown
-    exit 1
-fi
-echo "$LIVENESS_ENDPOINT endpoint is healthy."
-
-if ! curl -v --connect-timeout 5 --max-time 10 --retry 12 --retry-delay 5 --retry-max-time 100 --retry-all-errors $SERVER_URL$READINESS_ENDPOINT; then
-    echo "$READINESS_ENDPOINT endpoint failed."
-    shutdown
-    exit 1
-fi
-echo "$READINESS_ENDPOINT endpoint is ready."
+# Verify the server is up and running
+liveness
+readiness
 
 # 2. Start the consumer script with parameters 1 1000 and save logs to consumer.log
-./consumer.sh 1 1000 > consumer.log 2>&1 &
+./consumer.sh 1 0 > consumer.log 2>&1 &
 CONSUMER_PID=$!
 echo "Started consumer with PID $CONSUMER_PID, logging to consumer.log"
 
@@ -78,6 +86,11 @@ if ! ./get-block.sh 1 > get-block.log 2>&1; then
     echo "get-block.sh failed."
     echo "get-block logs:"
     cat get-block.log
+
+    echo "Rechecking liveness and readiness"
+    liveness
+    readiness
+
     shutdown
     exit 1
 fi

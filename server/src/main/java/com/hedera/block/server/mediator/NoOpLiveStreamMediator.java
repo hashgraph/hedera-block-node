@@ -9,7 +9,6 @@ import com.hedera.block.server.events.BlockNodeEventHandler;
 import com.hedera.block.server.events.ObjectEvent;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.hapi.block.BlockItemUnparsed;
-import com.hedera.hapi.block.SubscribeStreamResponseUnparsed;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 
@@ -44,19 +43,19 @@ public class NoOpLiveStreamMediator implements LiveStreamMediator {
      * {@inheritDoc}
      */
     @Override
-    public void subscribe(@NonNull BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> handler) {}
+    public void subscribe(@NonNull BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> handler) {}
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void unsubscribe(@NonNull BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> handler) {}
+    public void unsubscribe(@NonNull BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> handler) {}
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean isSubscribed(@NonNull BlockNodeEventHandler<ObjectEvent<SubscribeStreamResponseUnparsed>> handler) {
+    public boolean isSubscribed(@NonNull BlockNodeEventHandler<ObjectEvent<List<BlockItemUnparsed>>> handler) {
         return false;
     }
 
