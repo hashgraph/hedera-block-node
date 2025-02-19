@@ -1,27 +1,27 @@
-# Hedera Block Node
+# Hiero Block Node
 
-Implementation of the Hedera Block Node, which is responsible for consuming the block streams, maintaining state and exposing additional targeted value adding APIs to the Hedera community.
+Implementation of the Hiero Block Node, which is responsible for consuming the block streams, maintaining state and exposing additional targeted value adding APIs to the Hiero community.
 
 ## Table of Contents
 
 1. [Project Links](#project-links)
-1. [Prerequisites](#prerequisites)
-1. [Overview of child modules](#overview-of-child-modules)
-1. [Getting Started](#getting-started)
-1. [Support](#support)
-1. [Contributing](#contributing)
-1. [Code of Conduct](#code-of-conduct)
-1. [Security](#-security)
-1. [License](#license)
+2. [Prerequisites](#prerequisites)
+3. [Overview of child modules](#overview-of-child-modules)
+4. [Getting Started](#getting-started)
+5. [Support](#support)
+6. [Contributing](#contributing)
+7. [Code of Conduct](#code-of-conduct)
+8. [Security](#-security)
+9. [License](#license)
 
 ## Project Links
 
-[![Build Application](https://github.com/hashgraph/hedera-block-node/actions/workflows/build-application.yaml/badge.svg?branch=main)](https://github.com/hashgraph/hedera-block-node/actions/workflows/build-application.yaml)
-[![E2E Test Suites](https://github.com/hashgraph/hedera-block-node/actions/workflows/e2e-tests.yaml/badge.svg?branch=main)](https://github.com/hashgraph/hedera-block-node/actions/workflows/e2e-tests.yaml)
-[![codecov](https://codecov.io/github/hashgraph/hedera-block-node/graph/badge.svg?token=OF6T6E8V7U)](https://codecov.io/github/hashgraph/hedera-block-node)
+[![Build Application](https://github.com/hiero-ledger/hiero-block-node/actions/workflows/build-application.yaml/badge.svg?branch=main)](https://github.com/hiero-ledger/hiero-block-node/actions/workflows/build-application.yaml)
+[![E2E Test Suites](https://github.com/hiero-ledger/hiero-block-node/actions/workflows/e2e-tests.yaml/badge.svg?branch=main)](https://github.com/hiero-ledger/hiero-block-node/actions/workflows/e2e-tests.yaml)
+[![codecov](https://codecov.io/github/hiero-ledger/hiero-block-node/graph/badge.svg?token=OF6T6E8V7U)](https://codecov.io/github/hiero-ledger/hiero-block-node)
 
-[![Latest Version](https://img.shields.io/github/v/tag/hashgraph/hedera-block-node?sort=semver&label=version)](README.md)
-[![Made With](https://img.shields.io/badge/made_with-java-blue)](https://github.com/hashgraph/hedera-block-node/)
+[![Latest Version](https://img.shields.io/github/v/tag/hiero-ledger/hiero-block-node?sort=semver&label=version)](README.md)
+[![Made With](https://img.shields.io/badge/made_with-java-blue)](https://github.com/hiero-ledger/hiero-block-node/)
 [![Development Branch](https://img.shields.io/badge/docs-quickstart-green.svg)](docs/overview.md)
 [![License](https://img.shields.io/badge/license-apache2-blue.svg)](LICENSE)
 
@@ -42,29 +42,29 @@ Implementation of the Hedera Block Node, which is responsible for consuming the 
 
 ## Getting Started
 
-Refer to the [Hedera Block Node Documentation Overview](docs/overview.md) for more information about the project, design and guides.
+Refer to the [Hiero Block Node Documentation Overview](docs/overview.md) for more information about the project, design and guides.
 
 ## Support
 
 If you have a question on how to use the product, please see our
-[support guide](https://github.com/hashgraph/.github/blob/main/SUPPORT.md).
+[support guide](https://github.com/hiero-ledger/.github/blob/main/SUPPORT.md).
 
 ## Contributing
 
 Contributions are welcome. Please see the
-[contributing guide](https://github.com/hashgraph/.github/blob/main/CONTRIBUTING.md)
+[contributing guide](https://github.com/hiero-ledger/.github/blob/main/CONTRIBUTING.md)
 to see how you can get involved.
 
 ## Code of Conduct
 
 This project is governed by the
-[Contributor Covenant Code of Conduct](https://github.com/hashgraph/.github/blob/main/CODE_OF_CONDUCT.md). By
+[Contributor Covenant Code of Conduct](https://github.com/hiero-ledger/.github/blob/main/CODE_OF_CONDUCT.md). By
 participating, you are expected to uphold this code of conduct. Please report unacceptable behavior
 to [oss@hedera.com](mailto:oss@hedera.com).
 
 ## 🔐 Security
 
-Please do not file a public ticket mentioning the vulnerability. Refer to the security policy defined in the [SECURITY.md](https://github.com/hashgraph/hedera-block-node/blob/main/SECURITY.md).
+Please do not file a public ticket mentioning the vulnerability. Refer to the security policy defined in the [SECURITY.md](https://github.com/hiero-ledger/hiero-block-node/blob/main/SECURITY.md).
 
 ## License
 
