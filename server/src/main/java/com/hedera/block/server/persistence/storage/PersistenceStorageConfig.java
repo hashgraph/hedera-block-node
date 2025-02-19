@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.persistence.storage;
 
-import static com.hedera.block.common.utils.StringUtilities.isBlank;
-
 import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.config.logging.Loggable;
 import com.swirlds.config.api.ConfigData;
@@ -21,28 +19,27 @@ import java.util.Objects;
  * @param compression compression type to use for the storage
  * @param compressionLevel compression level used by the compression algorithm
  * Non-PRODUCTION values should only be used for troubleshooting and development purposes.
+ * @param archiveEnabled whether to enable archiving
+ * @param archiveGroupSize the number of blocks to archive in a single group
  */
 @ConfigData("persistence.storage")
 public record PersistenceStorageConfig(
-        @Loggable @ConfigProperty(defaultValue = DEFAULT_LIVE_ROOT_PATH) Path liveRootPath,
-        @Loggable @ConfigProperty(defaultValue = DEFAULT_ARCHIVE_ROOT_PATH) Path archiveRootPath,
+        @Loggable @ConfigProperty(defaultValue = "/opt/hashgraph/blocknode/data/live") Path liveRootPath,
+        @Loggable @ConfigProperty(defaultValue = "/opt/hashgraph/blocknode/data/archive") Path archiveRootPath,
         @Loggable @ConfigProperty(defaultValue = "BLOCK_AS_LOCAL_FILE") StorageType type,
         @Loggable @ConfigProperty(defaultValue = "ZSTD") CompressionType compression,
         @Loggable @ConfigProperty(defaultValue = "3") @Min(0) @Max(20) int compressionLevel,
         @Loggable @ConfigProperty(defaultValue = "true") boolean archiveEnabled,
         @Loggable @ConfigProperty(defaultValue = "1_000") int archiveGroupSize) {
-    private static final String DEFAULT_LIVE_ROOT_PATH = "/opt/hashgraph/blocknode/data/live";
-    private static final String DEFAULT_ARCHIVE_ROOT_PATH = "/opt/hashgraph/blocknode/data/archive";
-
     /**
      * Constructor.
      */
     public PersistenceStorageConfig {
+        Objects.requireNonNull(liveRootPath);
+        Objects.requireNonNull(archiveRootPath);
         Objects.requireNonNull(type);
-        Preconditions.requirePositivePowerOf10(archiveGroupSize);
         compression.verifyCompressionLevel(compressionLevel);
-        liveRootPath = isBlank(liveRootPath.toString()) ? Path.of(DEFAULT_LIVE_ROOT_PATH) : liveRootPath;
-        archiveRootPath = isBlank(archiveRootPath.toString()) ? Path.of(DEFAULT_ARCHIVE_ROOT_PATH) : archiveRootPath;
+        Preconditions.requirePositivePowerOf10(archiveGroupSize);
     }
 
     /**

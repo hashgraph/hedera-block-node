@@ -200,7 +200,7 @@ class PersistenceStorageConfigTest {
 
         // blank liveRootPath results in the default liveRootPath to be used
         final String liveToTest2 = "";
-        final String liveExpected2 = defaultLiveRootAbsolutePath.toString();
+        final String liveExpected2 = liveToTest2;
         final String archiveToTest2 = defaultArchiveRootAbsolutePath.toString();
         final String archiveExpected2 = defaultArchiveRootAbsolutePath.toString();
 
@@ -208,13 +208,13 @@ class PersistenceStorageConfigTest {
         final String liveToTest3 = defaultLiveRootAbsolutePath.toString();
         final String liveExpected3 = defaultLiveRootAbsolutePath.toString();
         final String archiveToTest3 = "";
-        final String archiveExpected3 = defaultArchiveRootAbsolutePath.toString();
+        final String archiveExpected3 = archiveToTest3;
 
         // blank liveRootPath and archiveRootPath results in the default liveRootPath and archiveRootPath to be used
         final String liveToTest6 = "";
-        final String liveExpected6 = defaultLiveRootAbsolutePath.toString();
+        final String liveExpected6 = liveToTest6;
         final String archiveToTest6 = "";
-        final String archiveExpected6 = defaultArchiveRootAbsolutePath.toString();
+        final String archiveExpected6 = archiveToTest6;
 
         return Stream.of(
                 Arguments.of(liveToTest1, liveExpected1, archiveToTest1, archiveExpected1),
