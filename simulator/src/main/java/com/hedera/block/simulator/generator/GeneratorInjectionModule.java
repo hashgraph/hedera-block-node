@@ -26,7 +26,7 @@ public interface GeneratorInjectionModule {
         final String managerImpl = config.managerImplementation();
         final GenerationMode generationMode = config.generationMode();
 
-        return switch (generationMode){
+        return switch (generationMode) {
             case DIR -> {
                 if ("BlockAsDirBlockStreamManager".equalsIgnoreCase(managerImpl)) {
                     yield new BlockAsDirBlockStreamManager(config);
