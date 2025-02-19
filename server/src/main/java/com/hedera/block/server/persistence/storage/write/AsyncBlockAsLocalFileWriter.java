@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.persistence.storage.write;
 
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlockPersistenceError;
+import static com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter.BlocksPersisted;
 import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
 
 import com.hedera.block.common.utils.FileUtilities;
 import com.hedera.block.common.utils.Preconditions;
 import com.hedera.block.server.ack.AckHandler;
-import com.hedera.block.server.metrics.BlockNodeMetricTypes.Counter;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.persistence.storage.compression.Compression;
 import com.hedera.block.server.persistence.storage.path.BlockPathResolver;
@@ -17,7 +19,6 @@ import com.hedera.hapi.block.BlockUnparsed;
 import com.hedera.pbj.runtime.io.stream.WritableStreamingData;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
-import java.lang.System.Logger.Level;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
@@ -62,8 +63,12 @@ final class AsyncBlockAsLocalFileWriter implements AsyncBlockWriter {
         LOGGER.log(DEBUG, "Persistence task completed, publishing Persistence Result: %s".formatted(result));
         ackHandler.blockPersisted(result);
         if (result.status().equals(BlockPersistenceStatus.SUCCESS)) {
-            metricsService.get(Counter.BlocksPersisted).increment();
+            metricsService.get(BlocksPersisted).increment();
+        } else {
+            LOGGER.log(ERROR, "Failed to persist block [%d]".formatted(blockNumber));
+            metricsService.get(BlockPersistenceError).increment();
         }
+
         return null;
     }
 
@@ -103,7 +108,7 @@ final class AsyncBlockAsLocalFileWriter implements AsyncBlockWriter {
                     // @todo(545) if we have entered here, something has cancelled the task.
                     // Is this the proper handling here?
                     LOGGER.log(
-                            Level.ERROR,
+                            ERROR,
                             "Interrupted while waiting for next block item for block [%d]".formatted(blockNumber));
                     final BlockPersistenceResult result = revertWrite(BlockPersistenceStatus.PERSISTENCE_INTERRUPTED);
                     Thread.currentThread().interrupt();
@@ -117,7 +122,7 @@ final class AsyncBlockAsLocalFileWriter implements AsyncBlockWriter {
                         BlockUnparsed.newBuilder().blockItems(localBlockItems).build();
                 BlockUnparsed.PROTOBUF.toBytes(blockToWrite).writeTo(wsd);
             } catch (final IOException e) {
-                LOGGER.log(Level.ERROR, "Failed to write block [%d] to local storage!".formatted(blockNumber), e);
+                LOGGER.log(ERROR, "Failed to write block [%d] to local storage!".formatted(blockNumber), e);
                 return revertWrite(BlockPersistenceStatus.FAILURE_DURING_WRITE);
             }
             return new BlockPersistenceResult(blockNumber, BlockPersistenceStatus.SUCCESS);
@@ -154,7 +159,7 @@ final class AsyncBlockAsLocalFileWriter implements AsyncBlockWriter {
             blockRemover.removeLiveUnverified(blockNumber);
             return new BlockPersistenceResult(blockNumber, statusIfSuccessfulRevert);
         } catch (final IOException e) {
-            LOGGER.log(Level.ERROR, "Failed to remove block [%d]".formatted(blockNumber), e);
+            LOGGER.log(ERROR, "Failed to remove block [%d]".formatted(blockNumber), e);
             return new BlockPersistenceResult(blockNumber, BlockPersistenceStatus.FAILURE_DURING_REVERT);
         }
     }

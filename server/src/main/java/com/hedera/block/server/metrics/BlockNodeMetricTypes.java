@@ -74,7 +74,10 @@ public final class BlockNodeMetricTypes {
         StreamPersistenceHandlerError("stream_persistence_handler_error", "Stream Persistence Handler Error"),
 
         /** The number of blocks acked */
-        AckedBlocked("acked_blocked", "Count of blocks acked");
+        AckedBlocked("acked_blocked", "Count of blocks acked"),
+
+        /** The number of blocks failed to persist. */
+        BlockPersistenceError("block_persistence_error", "Blocks Failed to Persist");
 
         private final String grafanaLabel;
         private final String description;
