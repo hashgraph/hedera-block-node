@@ -2,7 +2,7 @@
 ##### Global Protection Rule ######
 ###################################
 # NOTE: This rule is overriden by the more specific rules below. This is the catch-all rule for all files not covered by the more specific rules below
-*                                               @hashgraph/block-node
+*                                               @hiero-ledger/hiero-block-node-maintainers @hiero-ledger/hiero-block-node-committers
 
 #########################
 #####  Core Files  ######
@@ -11,24 +11,24 @@
 # NOTE: Must be placed last to ensure enforcement over all other rules
 
 # Protection Rules for Github Configuration Files and Actions Workflows
-/.github/                                       @hashgraph/platform-ci @hashgraph/release-engineering-managers @hashgraph/release-engineering-managers @hashgraph/block-node
-/.github/workflows/                             @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/release-engineering-managers
+/.github/                                       @hiero-ledger/github-maintainers @hiero-ledger/hiero-block-node-maintainers @hiero-ledger/hiero-block-node-committers
+/.github/workflows/                             @hiero-ledger/github-maintainers @hiero-ledger/github-committers
 
 # Codacy Tool Configurations
-/config/                                        @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/release-engineering-managers @hashgraph/block-node
-.remarkrc                                       @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/release-engineering-managers @hashgraph/block-node
+/config/                                        @hiero-ledger/github-maintainers @hiero-ledger/github-committers @hiero-ledger/hiero-block-node-maintainers @hiero-ledger/hiero-block-node-committers
+.remarkrc                                       @hiero-ledger/github-maintainers @hiero-ledger/github-committers @hiero-ledger/hiero-block-node-maintainers @hiero-ledger/hiero-block-node-committers
 
 # Self-protection for root CODEOWNERS files (this file should not exist and should definitely require approval)
-/CODEOWNERS                                     @hashgraph/release-engineering-managers
+/CODEOWNERS                                     @hiero-ledger/github-maintainers
 
 # Protect the repository root files
-/README.md                                      @hashgraph/platform-ci @hashgraph/release-engineering-managers @hashgraph/block-node
-**/LICENSE                                      @hashgraph/release-engineering-managers
+/README.md                                      @hiero-ledger/github-maintainers @hiero-ledger/hiero-block-node-maintainers @hiero-ledger/hiero-block-node-committers
+**/LICENSE                                      @hiero-ledger/github-maintainers
 
 # CodeCov configuration
-**/codecov.yml                                  @hashgraph/platform-ci @hashgraph/release-engineering-managers @hashgraph/block-node
+**/codecov.yml                                  @hiero-ledger/github-maintainers @hiero-ledger/hiero-block-node-maintainers @hiero-ledger/hiero-block-node-committers
 
 # Git Ignore definitions
-**/.gitignore                                   @hashgraph/platform-ci @hashgraph/release-engineering-managers @hashgraph/block-node
-**/.gitignore.*                                 @hashgraph/platform-ci @hashgraph/release-engineering-managers @hashgraph/block-node
+**/.gitignore                                   @hiero-ledger/github-maintainers @hiero-ledger/hiero-block-node-maintainers @hiero-ledger/hiero-block-node-committers
+**/.gitignore.*                                 @hiero-ledger/github-maintainers @hiero-ledger/hiero-block-node-maintainers @hiero-ledger/hiero-block-node-committers
 
