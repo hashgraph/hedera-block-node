@@ -19,7 +19,7 @@ defaults:
 jobs:
   release:
     name: Release
-    runs-on: block-node-linux-medium
+    runs-on: hiero-block-node-linux-medium
     env:
       RELEASE_NOTES_FILENAME: release_notes
     outputs:
@@ -140,7 +140,7 @@ jobs:
 
   create_pr:
     name: Create PR
-    runs-on: block-node-linux-medium
+    runs-on: hiero-block-node-linux-medium
     needs: release
     if: ${{ needs.release.outputs.create_pr == 'true' }}
     env:

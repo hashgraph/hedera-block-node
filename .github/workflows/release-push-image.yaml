@@ -48,7 +48,7 @@ jobs:
 
   publish:
     needs: [check-gradle, check-docker]
-    runs-on: block-node-linux-medium
+    runs-on: hiero-block-node-linux-medium
 
     steps:
       - name: Harden Runner
@@ -137,7 +137,7 @@ jobs:
 
   helm-chart-release:
     needs: publish
-    runs-on: block-node-linux-medium
+    runs-on: hiero-block-node-linux-medium
 
     steps:
       - name: Harden Runner

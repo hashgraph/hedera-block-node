@@ -57,7 +57,7 @@ env:
 jobs:
   generate-baseline:
     name: Generate Baseline
-    runs-on: block-node-linux-medium
+    runs-on: hiero-block-node-linux-medium
     outputs:
       sha: ${{ steps.commit.outputs.sha }}
       path: ${{ steps.baseline.outputs.path }}
@@ -144,7 +144,7 @@ jobs:
         os:
           - ubuntu-22.04
           - ubuntu-20.04
-          - block-node-linux-medium
+          - hiero-block-node-linux-medium
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
