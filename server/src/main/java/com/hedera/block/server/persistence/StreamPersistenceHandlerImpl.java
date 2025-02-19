@@ -57,25 +57,6 @@ public class StreamPersistenceHandlerImpl implements BlockNodeEventHandler<Objec
     private final int archiveGroupSize;
     private TransferQueue<BlockItemUnparsed> currentWriterQueue;
 
-    public StreamPersistenceHandlerImpl(
-            @NonNull final SubscriptionHandler<List<BlockItemUnparsed>> subscriptionHandler,
-            @NonNull final Notifier notifier,
-            @NonNull final BlockNodeContext blockNodeContext,
-            @NonNull final ServiceStatus serviceStatus,
-            @NonNull final AckHandler ackHandler,
-            @NonNull final AsyncBlockWriterFactory asyncBlockWriterFactory,
-            @NonNull final Executor executor) {
-        this.subscriptionHandler = Objects.requireNonNull(subscriptionHandler);
-        this.notifier = Objects.requireNonNull(notifier);
-        this.metricsService = blockNodeContext.metricsService();
-        this.serviceStatus = Objects.requireNonNull(serviceStatus);
-        this.ackHandler = Objects.requireNonNull(ackHandler);
-        this.asyncBlockWriterFactory = Objects.requireNonNull(asyncBlockWriterFactory);
-        this.completionService = new ExecutorCompletionService<>(Objects.requireNonNull(executor));
-        this.archiver = null;
-        this.archiveGroupSize = 0;
-    }
-
     /**
      * Constructor.
      *
@@ -85,7 +66,9 @@ public class StreamPersistenceHandlerImpl implements BlockNodeEventHandler<Objec
      * @param serviceStatus valid, non-null instance of {@link ServiceStatus}
      * @param ackHandler valid, non-null instance of {@link AckHandler}
      * @param asyncBlockWriterFactory valid, non-null instance of {@link AsyncBlockWriterFactory}
-     * @param executor valid, non-null instance of {@link Executor}
+     * @param writerExecutor valid, non-null instance of {@link Executor}
+     * @param archiver valid, non-null instance of {@link LocalBlockArchiver}
+     * @param persistenceStorageConfig valid, non-null instance of {@link PersistenceStorageConfig}
      */
     @Inject
     public StreamPersistenceHandlerImpl(
@@ -95,9 +78,9 @@ public class StreamPersistenceHandlerImpl implements BlockNodeEventHandler<Objec
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final AckHandler ackHandler,
             @NonNull final AsyncBlockWriterFactory asyncBlockWriterFactory,
+            @NonNull final Executor writerExecutor,
             @NonNull final LocalBlockArchiver archiver,
-            @NonNull final PersistenceStorageConfig persistenceStorageConfig,
-            @NonNull final Executor executor) {
+            @NonNull final PersistenceStorageConfig persistenceStorageConfig) {
         this.subscriptionHandler = Objects.requireNonNull(subscriptionHandler);
         this.notifier = Objects.requireNonNull(notifier);
         this.metricsService = blockNodeContext.metricsService();
@@ -106,7 +89,7 @@ public class StreamPersistenceHandlerImpl implements BlockNodeEventHandler<Objec
         this.asyncBlockWriterFactory = Objects.requireNonNull(asyncBlockWriterFactory);
         this.archiver = Objects.requireNonNull(archiver);
         this.archiveGroupSize = persistenceStorageConfig.archiveBatchSize();
-        this.completionService = new ExecutorCompletionService<>(Objects.requireNonNull(executor));
+        this.completionService = new ExecutorCompletionService<>(Objects.requireNonNull(writerExecutor));
     }
 
     /**

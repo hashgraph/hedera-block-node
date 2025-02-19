@@ -198,8 +198,8 @@ public interface PersistenceInjectionModule {
                 serviceStatus,
                 ackHandler,
                 asyncBlockWriterFactory,
+                Executors.newFixedThreadPool(5),
                 localBlockArchiver,
-                persistenceStorageConfig,
-                Executors.newFixedThreadPool(5));
+                persistenceStorageConfig);
     }
 }
