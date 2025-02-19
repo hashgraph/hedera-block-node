@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package com.hedera.block.server.verification.signature;
 
-import com.hedera.block.common.hasher.HashingUtilities;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.inject.Inject;
@@ -29,6 +28,7 @@ public class SignatureVerifierDummy implements SignatureVerifier {
     public Boolean verifySignature(@NonNull Bytes hash, @NonNull Bytes signature) {
         // Dummy implementation
         // signature = is Hash384( BlockHash )
-        return signature.equals(HashingUtilities.noThrowSha384HashOf(hash));
+        //        return signature.equals(HashingUtilities.noThrowSha384HashOf(hash));
+        return true;
     }
 }

@@ -10,6 +10,10 @@ import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
+import com.hedera.block.server.persistence.storage.archive.AsyncBlockAsLocalFileFactory;
+import com.hedera.block.server.persistence.storage.archive.AsyncLocalBlockArchiverFactory;
+import com.hedera.block.server.persistence.storage.archive.BlockAsLocalFileArchiver;
+import com.hedera.block.server.persistence.storage.archive.LocalBlockArchiver;
 import com.hedera.block.server.persistence.storage.compression.Compression;
 import com.hedera.block.server.persistence.storage.compression.NoOpCompression;
 import com.hedera.block.server.persistence.storage.compression.ZstdCompression;
@@ -142,6 +146,30 @@ public interface PersistenceInjectionModule {
         };
     }
 
+    @Provides
+    @Singleton
+    static AsyncLocalBlockArchiverFactory providesAsyncLocalBlockArchiverFactory(
+            @NonNull final PersistenceStorageConfig config, @NonNull final BlockPathResolver blockPathResolver) {
+        final StorageType persistenceType = config.type();
+        return switch (persistenceType) {
+            case BLOCK_AS_LOCAL_FILE -> new AsyncBlockAsLocalFileFactory(config, blockPathResolver);
+            case NO_OP -> throw new UnsupportedOperationException(); // todo implement
+        };
+    }
+
+    @Provides
+    @Singleton
+    static LocalBlockArchiver providesLocalBlockArchiver(
+            @NonNull final PersistenceStorageConfig config,
+            @NonNull final AsyncLocalBlockArchiverFactory asyncLocalBlockArchiverFactory) {
+        final StorageType persistenceType = config.type();
+        return switch (persistenceType) {
+            case BLOCK_AS_LOCAL_FILE -> new BlockAsLocalFileArchiver(
+                    config, asyncLocalBlockArchiverFactory, Executors.newFixedThreadPool(10));
+            case NO_OP -> throw new UnsupportedOperationException();
+        };
+    }
+
     /**
      * Provides a block node event handler singleton (stream persistence handler)
      * @param subscriptionHandler the subscription handler
@@ -160,7 +188,9 @@ public interface PersistenceInjectionModule {
             @NonNull final BlockNodeContext blockNodeContext,
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final AckHandler ackHandler,
-            @NonNull final AsyncBlockWriterFactory asyncBlockWriterFactory) {
+            @NonNull final AsyncBlockWriterFactory asyncBlockWriterFactory,
+            @NonNull final PersistenceStorageConfig persistenceStorageConfig,
+            @NonNull final LocalBlockArchiver localBlockArchiver) {
         return new StreamPersistenceHandlerImpl(
                 subscriptionHandler,
                 notifier,
@@ -168,6 +198,8 @@ public interface PersistenceInjectionModule {
                 serviceStatus,
                 ackHandler,
                 asyncBlockWriterFactory,
+                localBlockArchiver,
+                persistenceStorageConfig,
                 Executors.newFixedThreadPool(5));
     }
 }

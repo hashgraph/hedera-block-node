@@ -61,6 +61,12 @@ public interface BlockPathResolver {
     @NonNull
     Path resolveLiveRawUnverifiedPathToBlock(final long blockNumber);
 
+    @NonNull
+    Path resolveRawPathToArchiveParentUnderLive(final long blockNumber);
+
+    @NonNull
+    Path resolveRawPathToArchiveParentUnderArchive(final long blockNumber);
+
     /**
      * This method attempts to find a Block by a given number under the
      * persistence storage live root. This method will ONLY check for VERIFIED

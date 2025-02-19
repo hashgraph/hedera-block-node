@@ -13,6 +13,8 @@ import com.hedera.block.server.exception.BlockStreamProtocolException;
 import com.hedera.block.server.mediator.SubscriptionHandler;
 import com.hedera.block.server.metrics.MetricsService;
 import com.hedera.block.server.notifier.Notifier;
+import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
+import com.hedera.block.server.persistence.storage.archive.LocalBlockArchiver;
 import com.hedera.block.server.persistence.storage.write.AsyncBlockWriter;
 import com.hedera.block.server.persistence.storage.write.AsyncBlockWriterFactory;
 import com.hedera.block.server.persistence.storage.write.BlockPersistenceResult;
@@ -51,7 +53,28 @@ public class StreamPersistenceHandlerImpl implements BlockNodeEventHandler<Objec
     private final AckHandler ackHandler;
     private final AsyncBlockWriterFactory asyncBlockWriterFactory;
     private final CompletionService<Void> completionService;
+    private final LocalBlockArchiver archiver;
+    private final int archiveGroupSize;
     private TransferQueue<BlockItemUnparsed> currentWriterQueue;
+
+    public StreamPersistenceHandlerImpl(
+            @NonNull final SubscriptionHandler<List<BlockItemUnparsed>> subscriptionHandler,
+            @NonNull final Notifier notifier,
+            @NonNull final BlockNodeContext blockNodeContext,
+            @NonNull final ServiceStatus serviceStatus,
+            @NonNull final AckHandler ackHandler,
+            @NonNull final AsyncBlockWriterFactory asyncBlockWriterFactory,
+            @NonNull final Executor executor) {
+        this.subscriptionHandler = Objects.requireNonNull(subscriptionHandler);
+        this.notifier = Objects.requireNonNull(notifier);
+        this.metricsService = blockNodeContext.metricsService();
+        this.serviceStatus = Objects.requireNonNull(serviceStatus);
+        this.ackHandler = Objects.requireNonNull(ackHandler);
+        this.asyncBlockWriterFactory = Objects.requireNonNull(asyncBlockWriterFactory);
+        this.completionService = new ExecutorCompletionService<>(Objects.requireNonNull(executor));
+        this.archiver = null;
+        this.archiveGroupSize = 0;
+    }
 
     /**
      * Constructor.
@@ -72,6 +95,8 @@ public class StreamPersistenceHandlerImpl implements BlockNodeEventHandler<Objec
             @NonNull final ServiceStatus serviceStatus,
             @NonNull final AckHandler ackHandler,
             @NonNull final AsyncBlockWriterFactory asyncBlockWriterFactory,
+            @NonNull final LocalBlockArchiver archiver,
+            @NonNull final PersistenceStorageConfig persistenceStorageConfig,
             @NonNull final Executor executor) {
         this.subscriptionHandler = Objects.requireNonNull(subscriptionHandler);
         this.notifier = Objects.requireNonNull(notifier);
@@ -79,6 +104,8 @@ public class StreamPersistenceHandlerImpl implements BlockNodeEventHandler<Objec
         this.serviceStatus = Objects.requireNonNull(serviceStatus);
         this.ackHandler = Objects.requireNonNull(ackHandler);
         this.asyncBlockWriterFactory = Objects.requireNonNull(asyncBlockWriterFactory);
+        this.archiver = Objects.requireNonNull(archiver);
+        this.archiveGroupSize = persistenceStorageConfig.archiveBatchSize();
         this.completionService = new ExecutorCompletionService<>(Objects.requireNonNull(executor));
     }
 
@@ -141,6 +168,11 @@ public class StreamPersistenceHandlerImpl implements BlockNodeEventHandler<Objec
                     final AsyncBlockWriter writer = asyncBlockWriterFactory.create(blockNumber);
                     currentWriterQueue = writer.getQueue();
                     completionService.submit(writer);
+                    if (blockNumber % archiveGroupSize == 0) {
+                        // threshold reached, archive blocks 1 order of magnitude
+                        // lower than the threshold juxtaposed to the archive group size
+                        archiver.signalThresholdPassed(blockNumber);
+                    }
                 } else {
                     // we need to notify the ackHandler that the block number is invalid
                     // IMPORTANT: the currentWriterQueue MUST be null after we have
