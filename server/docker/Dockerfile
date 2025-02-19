@@ -34,16 +34,18 @@ RUN --mount=type=bind,source=./repro-sources-list.sh,target=/usr/local/bin/repro
 ####    Java Setup    ####
 ##########################
 
+# Find versions here: https://github.com/adoptium/temurin21-binaries/releases
+# ESUMs found in the .sha256.txt file for each version
 RUN set -eux; \
         ARCH="$(dpkg --print-architecture)"; \
         case "${ARCH}" in \
            aarch64|arm64) \
-            ESUM='6482639ed9fd22aa2e704cc366848b1b3e1586d2bf1213869c43e80bca58fe5c'; \
-            BINARY_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.5%2B11/OpenJDK21U-jdk_aarch64_linux_hotspot_21.0.5_11.tar.gz' \
+            ESUM='04fe1273f624187d927f1b466e8cdb630d70786db07bee7599bfa5153060afd3'; \
+            BINARY_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.6%2B7/OpenJDK21U-jdk_aarch64_linux_hotspot_21.0.6_7.tar.gz' \
             ;; \
           amd64|i386:x86-64) \
-            ESUM='3c654d98404c073b8a7e66bffb27f4ae3e7ede47d13284c132d40a83144bfd8c'; \
-            BINARY_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.5%2B11/OpenJDK21U-jdk_x64_linux_hotspot_21.0.5_11.tar.gz' \
+            ESUM='a2650fba422283fbed20d936ce5d2a52906a5414ec17b2f7676dddb87201dbae'; \
+            BINARY_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.6%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.6_7.tar.gz' \
             ;; \
            *) \
             echo "Unsupported arch: ${ARCH}"; \
@@ -121,7 +123,7 @@ ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
 
-ENV JAVA_VERSION="jdk-21.0.5+11"
+ENV JAVA_VERSION="jdk-21.0.6+7"
 ENV JAVA_HOME=/usr/local/java
 ENV PATH=${JAVA_HOME}/bin:${PATH}
 
