@@ -4,6 +4,6 @@ package com.hedera.block.server.persistence.storage.archive;
 /**
  * TODO: add documentation
  */
-public interface LocalBlockArchiver {
-    void signalThresholdPassed(final long currentBlockNumber);
+public interface AsyncLocalBlockArchiverFactory {
+    AsyncLocalBlockArchiver create(final long blockNumber);
 }

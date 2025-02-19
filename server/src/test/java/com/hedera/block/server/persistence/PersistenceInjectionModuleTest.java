@@ -15,6 +15,7 @@ import com.hedera.block.server.notifier.Notifier;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.CompressionType;
 import com.hedera.block.server.persistence.storage.PersistenceStorageConfig.StorageType;
+import com.hedera.block.server.persistence.storage.archive.LocalBlockArchiver;
 import com.hedera.block.server.persistence.storage.compression.Compression;
 import com.hedera.block.server.persistence.storage.compression.NoOpCompression;
 import com.hedera.block.server.persistence.storage.compression.ZstdCompression;
@@ -72,6 +73,12 @@ class PersistenceInjectionModuleTest {
 
     @Mock
     private Executor executorMock;
+
+    @Mock
+    private LocalBlockArchiver archiverMock;
+
+    @Mock
+    private PersistenceStorageConfig persistenceConfigMock;
 
     @TempDir
     private Path testLiveRootPath;
@@ -201,7 +208,9 @@ class PersistenceInjectionModuleTest {
                         serviceStatusMock,
                         ackHandlerMock,
                         asyncBlockWriterFactoryMock,
-                        executorMock);
+                        executorMock,
+                        archiverMock,
+                        persistenceConfigMock);
         assertNotNull(streamVerifier);
     }
 }
