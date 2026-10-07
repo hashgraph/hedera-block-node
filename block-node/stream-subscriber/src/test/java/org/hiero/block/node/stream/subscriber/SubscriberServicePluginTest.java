@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import org.hiero.block.api.SubscribeStreamRequest;
@@ -1192,6 +1193,44 @@ class SubscriberServicePluginTest {
                                             .build(),
                                     Code.NOT_AVAILABLE));
                 }
+            }
+        }
+
+        /**
+         * Tests for the periodic session reaper (cleanup of completed sessions that does not
+         * depend on a new client request arriving to trigger it).
+         */
+        @Nested
+        @DisplayName("Session Reaper Tests")
+        class SessionReaperTests {
+            /**
+             * This test aims to assert that a session that has already completed is removed
+             * from the open-sessions tracking once the periodic reaper runs, even though no new
+             * client request was made after it completed.
+             */
+            @Test
+            @DisplayName("should reap a completed session without a new client request")
+            void testCompletedSessionIsReapedWithoutNewRequest() {
+                // Invalid start block number: the session is closed almost immediately.
+                final SubscribeStreamRequest invalidRequest = SubscribeStreamRequest.newBuilder()
+                        .startBlockNumber(-2L)
+                        .endBlockNumber(-1L)
+                        .build();
+                toPluginPipe.onNext(SubscribeStreamRequest.PROTOBUF.toBytes(invalidRequest));
+                awaitResponse(fromPluginBytes, 1);
+
+                // Nothing on the request path drains openSessions anymore; only the periodic
+                // reaper does. Keep pumping it until the session is reaped, bounded so a
+                // regression fails the test instead of hanging it.
+                final long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!plugin.getOpenSessions().isEmpty() && System.nanoTime() < deadlineNanos) {
+                    testThreadPoolManager.scheduledExecutor().executeSerially();
+                    if (!plugin.getOpenSessions().isEmpty()) {
+                        parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
+                    }
+                }
+
+                assertThat(plugin.getOpenSessions()).isEmpty();
             }
         }
     }
