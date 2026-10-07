@@ -21,6 +21,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.hiero.block.api.BlockStreamSubscribeServiceInterface;
 import org.hiero.block.api.SubscribeStreamRequest;
@@ -147,6 +150,17 @@ public class SubscriberServicePlugin implements BlockNodePlugin, BlockStreamSubs
 
         private final ExecutorService virtualThreadExecutor;
         private volatile CompletionService<BlockStreamSubscriberSession> streamSessions;
+        /**
+         * Periodically reaps completed sessions, so cleanup of {@link #openSessions} and the
+         * open-connections gauge never depends on a new client connecting to trigger it.
+         * Runs on a dedicated scheduled executor, not {@link #virtualThreadExecutor}, so it never
+         * competes with (or is starved by) actual session work.
+         */
+        private final ScheduledExecutorService reaperExecutor;
+        /** Handle used to stop further reaper executions from {@link #stop()}. */
+        private final ScheduledFuture<?> reaperTask;
+        /** How often the reaper drains already-completed sessions. */
+        private static final long REAP_INTERVAL_SECONDS = 5L;
 
         private SubscribeBlockStreamHandler(@NonNull final BlockNodeContext context) {
             this.context = requireNonNull(context);
@@ -163,9 +177,43 @@ public class SubscriberServicePlugin implements BlockNodePlugin, BlockStreamSubs
                     .register(LongCounter.builder(METRIC_SUBSCRIBER_ERRORS)
                             .setDescription("Errors while streaming to subscribers"))
                     .getOrCreateNotLabeled();
+            reaperExecutor = context.threadPoolManager()
+                    .createVirtualThreadScheduledExecutor(
+                            1,
+                            "SubscriberSessionReaper",
+                            (thread, error) ->
+                                    LOGGER.log(Level.ERROR, "Uncaught exception in subscriber session reaper", error));
+            reaperTask = reaperExecutor.scheduleAtFixedRate(
+                    this::reapCompletedSessions, REAP_INTERVAL_SECONDS, REAP_INTERVAL_SECONDS, TimeUnit.SECONDS);
+        }
+
+        /**
+         * Drains whatever sessions have already completed, independent of any new client
+         * connecting. Non-blocking: only touches futures that are already done, so it cannot
+         * itself stall on a session that is still running.
+         */
+        private void reapCompletedSessions() {
+            final CompletionService<BlockStreamSubscriberSession> streams = streamSessions;
+            if (streams == null) {
+                return;
+            }
+            try {
+                Future<BlockStreamSubscriberSession> completedSessionFuture;
+                while ((completedSessionFuture = streams.poll()) != null) {
+                    handleCompletedStream(completedSessionFuture);
+                }
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
 
         private void stop() {
+            // Stop further reaper executions before touching openSessions/streamSessions below, so
+            // it cannot race the drain loop over the same completion queue. A reap already in
+            // flight at this point is non-blocking and near-instant (see reapCompletedSessions()),
+            // so the tiny residual window here is no larger than this method's pre-existing
+            // reliance on every session actually completing.
+            reaperTask.cancel(false);
             // Stop allowing new connection threads.
             CompletionService<BlockStreamSubscriberSession> sessionsToClose = streamSessions;
             streamSessions = null;
@@ -194,7 +242,6 @@ public class SubscriberServicePlugin implements BlockNodePlugin, BlockStreamSubs
             }
         }
 
-        @SuppressWarnings("NestedAssignment")
         @Override
         public void apply(
                 @NonNull final SubscribeStreamRequest request,
@@ -210,17 +257,14 @@ public class SubscriberServicePlugin implements BlockNodePlugin, BlockStreamSubs
                 final SessionContext sessionContext = SessionContext.create(clientId, request, context);
                 final BlockStreamSubscriberSession blockStreamSession =
                         new BlockStreamSubscriberSession(sessionContext, responsePipeline, context, sessionReadyLatch);
+                // Register the session before submitting it, so it is impossible for the
+                // background reaper (see reapCompletedSessions()) to observe this session as
+                // completed and remove it before it has ever been added.
+                sessions.put(clientId, blockStreamSession);
+                numberOfSubscribers.set(sessionCount.incrementAndGet());
                 streams.submit(blockStreamSession);
                 // Wait for the session to start
                 sessionReadyLatch.await();
-                // add the session to the set of open sessions
-                sessions.put(clientId, blockStreamSession);
-                numberOfSubscribers.set(sessionCount.incrementAndGet());
-                Future<BlockStreamSubscriberSession> completedSessionFuture;
-                // Get any available completed sessions and log success/failure.
-                while ((completedSessionFuture = streams.poll()) != null) {
-                    handleCompletedStream(completedSessionFuture);
-                }
             } else {
                 failStreamRequest(responsePipeline);
             }
