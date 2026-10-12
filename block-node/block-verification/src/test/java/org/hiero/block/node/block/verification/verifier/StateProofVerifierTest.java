@@ -228,6 +228,7 @@ class StateProofVerifierTest {
                 signed.block().number(),
                 hashing.blockProofs().getFirst().blockStateProof(),
                 hashing.rootHash(),
+                hashing.hashAlgorithm(),
                 verificationDataProvider);
         isCanceled.set(true);
         assertThat(toTest.verify()).isEqualTo(SessionFailureType.CANCELLED);
@@ -278,6 +279,7 @@ class StateProofVerifierTest {
                 signed.block().number(),
                 hashing.blockProofs().getFirst().blockStateProof(),
                 hashing.rootHash(),
+                hashing.hashAlgorithm(),
                 verificationDataProvider);
         assertThat(toTest.verify()).isNull();
     }
@@ -290,6 +292,7 @@ class StateProofVerifierTest {
                 tampered.number(),
                 hashing.blockProofs().getFirst().blockStateProof(),
                 hashing.rootHash(),
+                hashing.hashAlgorithm(),
                 verificationDataProvider);
         assertThat(toTest.verify()).isNotNull().isEqualTo(SessionFailureType.BAD_BLOCK_PROOF);
     }

@@ -5,9 +5,13 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.hedera.hapi.block.stream.BlockProof;
+import com.hedera.hapi.block.stream.output.BlockFooter;
+import com.hedera.hapi.node.base.BlockHashAlgorithm;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.hiero.block.common.hasher.HashAlgorithm;
 import org.hiero.block.internal.BlockItemUnparsed;
 import org.hiero.block.node.app.fixtures.TestConfigurationBuilder;
 import org.hiero.block.node.app.fixtures.TestUtils;
@@ -66,6 +70,61 @@ class HarnessChainBuilderTest {
             assertThat(verifier.verify())
                     .withFailMessage("Block %d must verify", signed.block().number())
                     .isNull();
+        }
+    }
+
+    /// This test aims to assert that a chain built for another algorithm than the test blocks
+    /// declare, here SHA2_384 as a release from before the move to SHA-256 verifies, is consistent
+    /// under that algorithm: every header declares SHA2_384, every root hash and footer hash has
+    /// the SHA-384 digest size, block 1 chains to block 0's root, the state root placeholder is
+    /// the SHA-384 empty tree hash, and the TSS signature verifies over the root. The root itself
+    /// is computed by the block root tree utilities, which `blockRootHashMatchesBlockHasher`
+    /// proves equal to the production hasher.
+    @Test
+    @DisplayName("Chain built for SHA2_384 carries SHA-384 hashes and verifies")
+    void chainForOtherAlgorithmMatchesThatAlgorithm() throws ParseException {
+        final TssBlockSigner signer = TssBlockSigner.create();
+        verificationDataProvider.safeUpdateTssData(signer.verificationMaterial().tssData(), false);
+        final HarnessChainBuilder builder =
+                new HarnessChainBuilder(signer, verificationDataProvider, metricsHolder, HashAlgorithm.SHA2_384);
+        final HarnessChainBuilder.Signed block0 = builder.genesisWithPublication();
+        final HarnessChainBuilder.Signed block1 = builder.next(1L);
+        final int hashSize = HashAlgorithm.SHA2_384.hashSize();
+        assertThat(block0.block().header().hashAlgorithm()).isEqualTo(BlockHashAlgorithm.SHA2_384);
+        assertThat(block1.block().header().hashAlgorithm()).isEqualTo(BlockHashAlgorithm.SHA2_384);
+        assertThat(block0.rootHash().length()).isEqualTo(hashSize);
+        assertThat(block1.rootHash().length()).isEqualTo(hashSize);
+        final BlockFooter footer1 = block1.block().footer();
+        assertThat(footer1.previousBlockRootHash()).isEqualTo(block0.rootHash());
+        assertThat(footer1.rootHashOfAllBlockHashesTree().length()).isEqualTo(hashSize);
+        assertThat(footer1.startOfBlockStateRootHash()).isEqualTo(HashAlgorithm.SHA2_384.emptyTreeHash());
+        final TSSVerifier verifier = new TSSVerifier(
+                metricsHolder.proofVerificationMetrics(),
+                block1.rootHash(),
+                extractSignature(block1.block()),
+                verificationDataProvider);
+        assertThat(verifier.verify()).isNull();
+    }
+
+    /// This test aims to assert that the block root tree utilities the harness hashes a chain of
+    /// another algorithm with compute exactly the root the production `BlockHasher` computes: for
+    /// every block of a SHA2_256 chain, whose signed roots the harness takes from the
+    /// `BlockHasher`, the utilities computing with SHA2_256 return the identical root. The
+    /// production hasher computes with SHA2_256 only, so this equality is what keeps a chain built
+    /// for SHA2_384 hashed the way a release from before the move to SHA-256 hashes it.
+    @Test
+    @DisplayName("Block root tree utilities compute the root the BlockHasher computes")
+    void blockRootHashMatchesBlockHasher() {
+        final HarnessChainBuilder builder =
+                new HarnessChainBuilder(TssBlockSigner.create(), verificationDataProvider, metricsHolder);
+        final List<HarnessChainBuilder.Signed> chain =
+                List.of(builder.genesisWithPublication(), builder.next(1L), builder.next(2L));
+        for (final HarnessChainBuilder.Signed signed : chain) {
+            assertThat(HarnessChainBuilder.blockRootHash(HashAlgorithm.SHA2_256, signed.block()))
+                    .withFailMessage(
+                            "Block %d root must match the BlockHasher root",
+                            signed.block().number())
+                    .isEqualTo(signed.rootHash());
         }
     }
 

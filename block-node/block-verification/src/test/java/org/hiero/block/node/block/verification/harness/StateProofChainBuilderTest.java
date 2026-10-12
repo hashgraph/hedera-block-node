@@ -74,6 +74,7 @@ class StateProofChainBuilderTest {
                     signed.block().number(),
                     stateProof,
                     signed.rootHash(),
+                    hashing.hashAlgorithm(),
                     verificationDataProvider);
             final SessionFailureType result = verifier.verify();
             assertThat(result)
