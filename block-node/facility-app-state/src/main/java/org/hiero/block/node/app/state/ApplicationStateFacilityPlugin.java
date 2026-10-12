@@ -147,9 +147,10 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
 
     /// {@inheritDoc}
     ///
-    /// Loads the persisted state, dispatching initial notifications directly as each datum is loaded,
-    /// then dispatches the available and stored blocks the providers loaded during `init()`. Finally
-    /// schedules the block-range persist-interval check.
+    /// Loads the persisted state, handing the persist and notification of each state item to the
+    /// ApplicationStateDispatcher thread as it is loaded. Then dispatches the available and stored
+    /// blocks the providers loaded during `init()`. Finally schedules the block-range
+    /// persist-interval check.
     @Override
     public void start() {
         loadApplicationState();
@@ -184,11 +185,17 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
         if (timer != null) {
             timer.shutdownNow();
         }
+        final ExecutorService executor = dispatcher;
+        if (executor == null) {
+            // init() never completed, so there is no state to flush and no configuration to persist with.
+            LOGGER.log(DEBUG, "Application state facility was not initialized, nothing to stop");
+            return;
+        }
         // shutdown() still runs the syncs already queued and lets a running write finish; any update
         // arriving afterwards is kept in memory but not synced, see dispatch().
-        dispatcher.shutdown();
+        executor.shutdown();
         try {
-            if (!dispatcher.awaitTermination(5, TimeUnit.SECONDS)) {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
                 LOGGER.log(INFO, "applicationStateDispatcher did not terminate in time");
             }
         } catch (final InterruptedException e) {
@@ -541,8 +548,7 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
     /// almost every sub block of code and calling methods that throw instead
     /// of returning errors. This needs to be fixed.
     private void loadApplicationState() {
-        // Load TssData (JSON format). The dispatcher executor does not exist yet, so it is persisted and
-        // dispatched inline.
+        // Load TssData (JSON format). Installing it persists and dispatches it on the dispatcher thread.
         final Path tssDataJsonPath = appStateConfig.tssBootstrapFilePath();
         if (Files.exists(tssDataJsonPath)) {
             try {

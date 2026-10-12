@@ -166,7 +166,9 @@ public class BlockNodeApp implements HealthFacility {
         applicationStateFacility = serviceLoader
                 .loadServices(ApplicationStateFacility.class)
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No ApplicationStateFacility provided"));
+                .orElseThrow(() -> new IllegalStateException("No ApplicationStateFacility provided. The"
+                        + " facility-app-state plugin is required; if plugins.names is set, add facility-app-state"
+                        + " to it."));
         loadedPlugins.add(applicationStateFacility);
         // Load HistoricalBlockFacilityImpl
         historicalBlockFacility = new HistoricalBlockFacilityImpl(serviceLoader);
