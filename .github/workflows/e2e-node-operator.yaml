@@ -84,7 +84,7 @@ jobs:
     steps:
       # ── PHASE 0: Setup ─────────────────────────────────────────────────────
       - name: Harden Runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -94,7 +94,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Java
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: "25.0.2"
@@ -108,7 +108,7 @@ jobs:
           version: v3.14.4
 
       - name: Create kind cluster
-        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1.14.0
+        uses: helm/kind-action@06c1ae10762d3b9c1644e7fe69596ae519e015a2 # v1.15.0
         with:
           cluster_name: operator-test
           node_image: kindest/node:v1.31.4@sha256:2cb39f7295fe7eafee0842b1052a599a4fb0f8bcf3f83d96c7f4864c357c6c30
@@ -428,6 +428,16 @@ jobs:
           # --timeout 20m: chart's resolve-plugins init container pulls Maven artifacts even with
           # PLUGIN_NAMES="" set, and Sonatype Snapshots is slow enough on shared runners that the
           # snapshot upgrade routinely takes 15+ minutes.
+          # The chart resolves plugins from Maven (main's published snapshot), not this PR. When the PR
+          # changes the SPI the old plugins fail with NoSuchMethodError, so swap in the jars built above.
+          # Only possible when the image was built from this checkout (build-image=true).
+          INJECT_PID=""
+          if [[ "${{ inputs.build-image }}" != "false" ]]; then
+            bash tools-and-tests/scripts/e2e-node-operator/inject-pr-plugins.sh \
+              "${{ steps.versions.outputs.SNAP_VERSION }}" "${CLUSTER_NAME}" "${NAMESPACE}" "${RELEASE}" &
+            INJECT_PID=$!
+          fi
+
           set +e
           sudo KUBECONFIG="$KUBECONFIG" solo-provisioner block node upgrade \
             --profile=local --namespace="${NAMESPACE}" --release-name="${RELEASE}" --non-interactive \
@@ -440,6 +450,7 @@ jobs:
           set -e
 
           kill "${WATCH_PID}" 2>/dev/null || true
+          if [[ -n "${INJECT_PID}" ]]; then kill "${INJECT_PID}" 2>/dev/null || true; fi
           echo "===== post-upgrade snapshot (rc=${RC}) ====="
           kubectl get pods,pvc,svc,statefulset,endpoints -n "${NAMESPACE}" -o wide 2>/dev/null || true
           kubectl describe statefulset -n "${NAMESPACE}" 2>/dev/null || true
