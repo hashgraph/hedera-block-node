@@ -773,7 +773,7 @@ function deploy_consensus_nodes {
   local overlay_dir="${SCRIPT_DIR}/../out"
   mkdir -p "${overlay_dir}"
   local cn_app_properties="${overlay_dir}/cn-application.properties"
-  generate_cn_application_properties "${cn_app_properties}"
+  generate_cn_application_properties "${cn_app_properties}" "${CN_VERSION}"
 
   start_task "Generating consensus keys for ${NODE_ALIASES}"
   solo keys consensus generate \
@@ -788,10 +788,16 @@ function deploy_consensus_nodes {
   # download flag is on in cn-application.properties, but the staged tarball's hash matches, so the
   # CN installs it without downloading. --tss is kept so Solo still patches
   # block-nodes.json with the TSS message-size limits the large WRAPS genesis block needs.
+  # A CN whose TSS library embeds the WRAPS parameters (see cn_needs_wraps_proving_key) needs no
+  # key at all, so nothing WRAPS related is passed for it; --tss alone covers it.
   local wraps_key_args=""
   if [[ "${TSS_ENABLED}" == "true" ]]; then
-    ensure_wraps_keys_cached "${WRAPS_KEYS_DIR}"
-    wraps_key_args="--wraps true --wraps-key-path ${WRAPS_KEYS_DIR}"
+    if cn_needs_wraps_proving_key "${CN_VERSION}"; then
+      ensure_wraps_keys_cached "${WRAPS_KEYS_DIR}"
+      wraps_key_args="--wraps true --wraps-key-path ${WRAPS_KEYS_DIR}"
+    else
+      log_line "CN %s embeds its WRAPS parameters, no proving key is staged" "${CN_VERSION}"
+    fi
   fi
 
   start_task "Deploying consensus network"

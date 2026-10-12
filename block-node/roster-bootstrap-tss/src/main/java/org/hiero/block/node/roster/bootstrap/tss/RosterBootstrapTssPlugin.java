@@ -31,10 +31,16 @@ import org.hiero.metrics.core.MetricRegistry;
 /// A block node plugin that tries to get the latest TssData and makes it available to the `BlockNodeApp` and
 /// to the `ServerStatusServicePlugin`
 ///
-/// The TssData is retrieved from TssData sources in the following order:
-///  - `RosterBootstrapTssConfig` TssData fields (ledgerId, wrapsVerificationKey, etc)
-///  - (todo) Peer BlockNodes Queries other peer BlockNodes periodically for TssData
+/// The TssData is retrieved by querying the peer BlockNodes listed in the block node sources
+/// file periodically. A peer's TssData is only installed when its ledger id has the length the
+/// current TSS library verifies against; a peer that predates the library change answers with a
+/// shorter ledger id, which is skipped.
 public class RosterBootstrapTssPlugin implements BlockNodePlugin {
+    /// Length in bytes of a ledger id: the hash of the genesis address book followed by the hash
+    /// of the genesis hinTS verification key (the TSS library's network id). Mirrors the constant
+    /// the verification plugin checks against.
+    static final int LEDGER_ID_LENGTH = 64;
+
     public static final MetricKey<ObservableGauge> METRIC_TSS_DATA_PEERS =
             MetricKey.of("tss_data_peers", ObservableGauge.class).addCategory(METRICS_CATEGORY);
     public static final MetricKey<LongCounter> METRIC_TSS_DATA_ERRORS =
@@ -166,11 +172,23 @@ public class RosterBootstrapTssPlugin implements BlockNodePlugin {
                 this::queryPeerTssData, 0, rosterBootstrapTssConfig.queryPeerInterval(), TimeUnit.MILLISECONDS);
     }
 
-    /// queries peer BlockNodes for their TssData
+    /// Queries peer BlockNodes for their TssData and installs every datum whose ledger id has the
+    /// length the current TSS library verifies against; any other length is skipped.
     private void queryPeerTssData() {
-        List<TssData> tssDataList = tssDataFetcher.getTssData();
-        for (TssData tssData : tssDataList) {
-            applicationStateFacility.updateTssData(tssData);
+        final List<TssData> tssDataList = tssDataFetcher.getTssData();
+        for (final TssData tssData : tssDataList) {
+            final Bytes ledgerId = tssData.ledgerId();
+            final long ledgerIdLength = ledgerId == null ? 0L : ledgerId.length();
+            if (ledgerIdLength == LEDGER_ID_LENGTH) {
+                applicationStateFacility.updateTssData(tssData);
+            } else {
+                LOGGER.log(
+                        DEBUG,
+                        "Skipping peer TSS data valid from block {0} with a ledger id of {1} bytes, expected {2}",
+                        tssData.validFromBlock(),
+                        ledgerIdLength,
+                        LEDGER_ID_LENGTH);
+            }
         }
     }
 

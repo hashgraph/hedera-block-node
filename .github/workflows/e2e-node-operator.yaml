@@ -233,6 +233,19 @@ jobs:
           echo "BASE_HASH_ALGORITHM=${BASE_HASH_ALGORITHM}" >> "$GITHUB_OUTPUT"
           echo "Base ${BASE} verifies ${BASE_HASH_ALGORITHM} blocks"
 
+          # The TSS library moved to hedera-cryptography 3.18.0 in 0.46.0 (#3689): 64 byte ledger id and
+          # a WRAPS proof in every block signature. A base release from before that verifies only the
+          # earlier layout, which the snapshot's harness can no longer produce, so the install phase
+          # pushes the committed legacy chain (tools-and-tests/scripts/e2e-node-operator/base-blocks-3.13)
+          # and the snapshot gets its own TSS bootstrap file before the upgrade.
+          if (( BASE_MAJOR == 0 && BASE_MINOR < 46 )); then
+            BASE_TSS_LIB_ERA="legacy"
+          else
+            BASE_TSS_LIB_ERA="current"
+          fi
+          echo "BASE_TSS_LIB_ERA=${BASE_TSS_LIB_ERA}" >> "$GITHUB_OUTPUT"
+          echo "Base ${BASE} TSS library era: ${BASE_TSS_LIB_ERA}"
+
           # Plugin profile -> comma-separated plugin names Maven resolves into the plugins PVC.
           # all -> empty (provisioner skips the PVC; baked plugins from solo-dev image are used).
           # lfh -> read plugins.names from the profile file.
@@ -301,9 +314,15 @@ jobs:
         run: |
           # Blocks are generated via the harness (HarnessChainBuilder with TssBlockSigner) so no
           # committed fixture set is required. Emits <BLOCKS_DIR>/0.blk.gz..4.blk.gz hashed with the
-          # snapshot's algorithm (SHA-256). When the base release verifies another algorithm, a second
-          # chain hashed with that algorithm is emitted into <BLOCKS_DIR>-base for the install phase; both
-          # chains come from the same deterministic signer, so one TSS bootstrap (block 0) covers both.
+          # snapshot's algorithm (SHA-256) plus the signer's tss-bootstrap-roster.json. The base release
+          # gets its own chain for the install phase in <BLOCKS_DIR>-base when it cannot verify the
+          # snapshot's blocks:
+          #   - a base from before the TSS library change (BASE_TSS_LIB_ERA=legacy) gets the committed
+          #     legacy chain matching its hash algorithm, since the snapshot's harness can no longer sign
+          #     in that layout; the snapshot then needs its own bootstrap file before the upgrade;
+          #   - otherwise a base verifying another hash algorithm gets a chain the harness hashes with that
+          #     algorithm; both chains come from the same deterministic signer, so one TSS bootstrap
+          #     (block 0) covers both.
           mkdir -p "${BLOCKS_DIR}"
           ./gradlew :block-verification:generateHarnessBlocks \
             -PoutputDir="${BLOCKS_DIR}" -Pcount=5 --no-daemon
@@ -312,7 +331,16 @@ jobs:
           done
           ls -l "${BLOCKS_DIR}"
           BASE_ALGORITHM="${{ steps.versions.outputs.BASE_HASH_ALGORITHM }}"
-          if [[ "${BASE_ALGORITHM}" == "SHA2_256" ]]; then
+          BASE_ERA="${{ steps.versions.outputs.BASE_TSS_LIB_ERA }}"
+          if [[ "${BASE_ERA}" == "legacy" ]]; then
+            BASE_BLOCKS_DIR="${BLOCKS_DIR}-base"
+            mkdir -p "${BASE_BLOCKS_DIR}"
+            LEGACY_SET="tools-and-tests/scripts/e2e-node-operator/base-blocks-3.13/$(echo "${BASE_ALGORITHM}" | tr '[:upper:]_' '[:lower:]-')"
+            for i in 0 1 2; do
+              gunzip -c "${LEGACY_SET}/${i}.blk.gz" > "${BASE_BLOCKS_DIR}/${i}.blk"
+            done
+            ls -l "${BASE_BLOCKS_DIR}"
+          elif [[ "${BASE_ALGORITHM}" == "SHA2_256" ]]; then
             BASE_BLOCKS_DIR="${BLOCKS_DIR}"
           else
             BASE_BLOCKS_DIR="${BLOCKS_DIR}-base"
@@ -375,7 +403,7 @@ jobs:
         run: bash tools-and-tests/scripts/e2e-node-operator/bn-kind-port-forward.sh "${RELEASE}" "${NAMESPACE}" "${SERVER_PORT}" "${SERVER_PORT}"
 
       # ── PHASE 2: Push bootstrap blocks 0-2 ─────────────────────────────────
-      # Block 0 carries TSS data (ledger ID + Schnorr keys + WRAPS VK) that the verification plugin
+      # Block 0 carries TSS data (the ledger id and the roster) that the verification plugin
       # extracts asynchronously. Blocks 1-2 must not arrive until extraction completes and
       # currentTssData is set; pushing block 0 in its own step (separate JVM invocation) ensures this.
       - name: Push block 0 (TSS bootstrap)
@@ -417,13 +445,29 @@ jobs:
           echo "::endgroup::"
           echo "::group::TSS extraction + block-0 verification log lines (base install pod)"
           kubectl logs -n "${NAMESPACE}" "${POD}" -c block-node-server 2>/dev/null \
-            | grep -iE "Updating TSS data|Successfully updated TSS|Failed.*TssData|block=0|Verification (failed|succe)" || echo "(no matching log lines)"
+            | grep -iE "Updating TSS data|Successfully updated TSS|Updated TSS data|Ignoring TSS data|TSS library|Failed.*TssData|block=0|Verification (failed|succe)" || echo "(no matching log lines)"
           echo "::endgroup::"
 
       # ── PHASE 4: Upgrade (base -> snapshot) + continued ingestion ──────────
       # Base and snapshot are both 0.37+, so the state volume (application-state) is stable and this is a
       # plain `helm upgrade` — no StatefulSet surgery. Block + state data (incl. tss-bootstrap-roster.json)
       # carry across via solo-provisioner's provisioner-owned hostPath existingClaims (outlive the StatefulSet).
+      #
+      # A base from before the TSS library change persisted a tss-bootstrap-roster.json with a 32 byte
+      # ledger id, which the snapshot ignores (it logs "Ignoring TSS data ... expected 64") and which no
+      # block 0 re-pushes after the upgrade, so blocks 3 and 4 would fail with missing verification data.
+      # Stage the snapshot's own bootstrap file (emitted by generateHarnessBlocks next to the blocks) on
+      # the state volume first: the snapshot loads it at start, as an operator would after this upgrade.
+      - name: Stage the snapshot TSS bootstrap file (legacy base)
+        if: steps.versions.outputs.BASE_TSS_LIB_ERA == 'legacy'
+        run: |
+          POD="${RELEASE}-block-node-server-0"
+          kubectl exec -i -n "${NAMESPACE}" "${POD}" -c block-node-server -- \
+            sh -c 'cat > /opt/hiero/block-node/application-state/tss-bootstrap-roster.json' \
+            < "${BLOCKS_DIR}/tss-bootstrap-roster.json"
+          kubectl exec -n "${NAMESPACE}" "${POD}" -c block-node-server -- \
+            sh -c 'ls -la /opt/hiero/block-node/application-state/tss-bootstrap-roster.json && head -c 200 /opt/hiero/block-node/application-state/tss-bootstrap-roster.json; echo'
+
       - name: Upgrade to snapshot version
         run: |
           # Point the chart ref at the local OCI registry (snapshot pushed above). --no-reuse-values
@@ -538,7 +582,7 @@ jobs:
           kubectl exec -n "${NAMESPACE}" "${POD}" -c block-node-server -- \
             sh -c 'ls -la /opt/hiero/block-node/application-state 2>&1 || true'
           kubectl logs -n "${NAMESPACE}" "${POD}" -c block-node-server 2>/dev/null \
-            | grep -iE "Updating TSS data|Successfully updated TSS|Failed.*TssData" || echo "(no matching log lines)"
+            | grep -iE "Updating TSS data|Successfully updated TSS|Updated TSS data|Ignoring TSS data|TSS library|Failed.*TssData" || echo "(no matching log lines)"
           echo "::endgroup::"
 
       - name: Verify blocks survived upgrade (0-2)

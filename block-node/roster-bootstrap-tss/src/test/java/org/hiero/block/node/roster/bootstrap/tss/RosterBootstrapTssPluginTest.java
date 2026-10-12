@@ -95,11 +95,12 @@ public class RosterBootstrapTssPluginTest
         assertEquals(1, sentTssData.size());
         final TssData tssData = sentTssData.getFirst().tssData();
 
-        // These are magic numbers, yes. The {@link TestBlockNodeServer} does not yet have a way to pass in TssData to
-        // hand back to testers. Using the values that are passed back to make sure the statusDetails api is
-        // being called. Todo: add TssData flexibility to {@link TestBlockNodeServer}
-        assertEquals(Bytes.fromHex("01010101"), tssData.ledgerId());
-        assertEquals(Bytes.fromHex("02020202"), tssData.wrapsVerificationKey());
+        // The {@link TestBlockNodeServer} does not yet have a way to pass in TssData to hand back to testers.
+        // Using the values that are passed back to make sure the statusDetails api is being called; the ledger
+        // id has the 64 byte length the plugin requires before it installs peer data, and the WRAPS
+        // verification key is no longer used. Todo: add TssData flexibility to {@link TestBlockNodeServer}
+        assertEquals(TestBlockNodeServer.SAMPLE_LEDGER_ID, tssData.ledgerId());
+        assertEquals(Bytes.EMPTY, tssData.wrapsVerificationKey());
     }
 
     private void createTestBlockNodeSourcesFile(BlockNodeSource blockNodeSource, String configPath) throws IOException {

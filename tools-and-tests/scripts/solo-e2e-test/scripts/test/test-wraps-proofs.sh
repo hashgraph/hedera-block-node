@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 #
-# Fixture-based unit test for the signature-transition assertion:
+# Fixture-based unit test for the wraps-proofs assertion:
 #
-#   - assert_signature_transition in solo-test-runner.sh, against stand-in monitors that
+#   - assert_wraps_proofs in solo-test-runner.sh, against stand-in monitors that
 #     hang, leak a descendant, or fail immediately. These need GNU `timeout`; they skip
 #     when it is absent (stock macOS) rather than hanging for 300s.
 #   - monitor-block-proofs.sh's own max_block*2 deadline, against a fake grpcurl. These
@@ -19,9 +19,9 @@ REAL_PATH="${PATH}"
 # itself stays unrun (it is guarded on BASH_SOURCE). Sourcing overwrites SCRIPT_DIR
 # with the runner's own directory, so the fixture override has to come after.
 # shellcheck disable=SC1091
-source "${TEST_DIR}/../solo-test-runner.sh" --test "${TEST_DIR}/../../tests/tss-signature-transition.yaml"
+source "${TEST_DIR}/../solo-test-runner.sh" --test "${TEST_DIR}/../../tests/tss-wraps-proofs.yaml"
 
-# assert_signature_transition pre-flights its target with assert_block_available_single,
+# assert_wraps_proofs pre-flights its target with assert_block_available_single,
 # which needs a live Block Node. These tests are about what happens once the monitor is
 # running, so stand the pre-flight down rather than mocking serverStatus.
 function assert_block_available_single {
@@ -46,7 +46,7 @@ function record {
 }
 
 # record_contains <name> <substring> <output> — on mismatch reports the last output line,
-# which is the summary assert_signature_transition ends with.
+# which is the summary assert_wraps_proofs ends with.
 function record_contains {
     local name="$1" needle="$2" haystack="$3" actual
     if [[ "${haystack}" == *"${needle}"* ]]; then
@@ -68,29 +68,29 @@ function under {
 }
 
 # ============================================================================
-# assert_signature_transition's `timeout` wrapper
+# assert_wraps_proofs's `timeout` wrapper
 # ============================================================================
 
 # Any existing directory satisfies validate_proto_path; the fake monitors ignore it.
 # max_block 1 plus 1s of grace gives a 3s ceiling.
 # shellcheck disable=SC2034 # consumed by the sourced runner
-SIGNATURE_TRANSITION_GRACE_SECONDS=1
+WRAPS_PROOFS_GRACE_SECONDS=1
 
 if [[ -z "${TIMEOUT_BIN}" ]]; then
-    echo "assert_signature_transition's timeout wrapper"
+    echo "assert_wraps_proofs's timeout wrapper"
     skip "hung monitor / leaked descendant scenarios (no timeout or gtimeout on PATH)"
 else
-    echo "assert_signature_transition with a hung monitor-block-proofs.sh"
+    echo "assert_wraps_proofs with a hung monitor-block-proofs.sh"
 
-    SCRIPT_DIR="${TEST_DIR}/fixtures/signature-transition"
+    SCRIPT_DIR="${TEST_DIR}/fixtures/wraps-proofs"
     # shellcheck disable=SC2034 # consumed by the sourced runner
     PROTO_PATH="${SCRIPT_DIR}"
     started=${SECONDS}
     status=0
-    output=$(assert_signature_transition block-node-1 1 2>/dev/null) || status=$?
+    output=$(assert_wraps_proofs block-node-1 1 2>/dev/null) || status=$?
     elapsed=$((SECONDS - started))
 
-    record "fails instead of reporting a transition" "rc=1" "rc=${status}"
+    record "fails instead of reporting WRAPS proofs" "rc=1" "rc=${status}"
     # The 3s ceiling plus process teardown; anything near the fixture's 300s sleep means
     # the wrapper did not fire.
     record "returns rather than hanging" "under 10s" "$(under "${elapsed}" 10)"
@@ -98,17 +98,17 @@ else
         "exceeded 3s and was killed by the wrapper" "${output}"
 
     echo ""
-    echo "assert_signature_transition with a monitor-block-proofs.sh that leaks a descendant"
+    echo "assert_wraps_proofs with a monitor-block-proofs.sh that leaks a descendant"
 
-    SCRIPT_DIR="${TEST_DIR}/fixtures/signature-transition-leaked-descendant"
+    SCRIPT_DIR="${TEST_DIR}/fixtures/wraps-proofs-leaked-descendant"
     # shellcheck disable=SC2034 # consumed by the sourced runner
     PROTO_PATH="${SCRIPT_DIR}"
     started=${SECONDS}
     status=0
-    output=$(assert_signature_transition block-node-1 1 2>/dev/null) || status=$?
+    output=$(assert_wraps_proofs block-node-1 1 2>/dev/null) || status=$?
     elapsed=$((SECONDS - started))
 
-    record "fails instead of reporting a transition" "rc=1" "rc=${status}"
+    record "fails instead of reporting WRAPS proofs" "rc=1" "rc=${status}"
     # The leaked helper sleeps 300s. Anything near that means the runner waited on the
     # descendant's copy of a pipe rather than on the child `timeout` actually killed.
     record "returns despite the leaked descendant" "under 10s" "$(under "${elapsed}" 10)"
@@ -117,31 +117,17 @@ else
 fi
 
 echo ""
-echo "assert_signature_transition with a monitor-block-proofs.sh that fails immediately"
+echo "assert_wraps_proofs with a monitor-block-proofs.sh that fails immediately"
 
-SCRIPT_DIR="${TEST_DIR}/fixtures/signature-transition-failure"
+SCRIPT_DIR="${TEST_DIR}/fixtures/wraps-proofs-failure"
 # shellcheck disable=SC2034 # consumed by the sourced runner
 PROTO_PATH="${SCRIPT_DIR}"
 status=0
-output=$(assert_signature_transition block-node-1 1 2>/dev/null) || status=$?
+output=$(assert_wraps_proofs block-node-1 1 2>/dev/null) || status=$?
 
-record "fails instead of reporting a transition" "rc=1" "rc=${status}"
-record_contains "reports 'WRAPS not detected' with the exit status, not a timeout" \
-    "WRAPS not detected within 1 blocks (exit 1)" "${output}"
-
-echo ""
-echo "assert_signature_transition with a monitor-block-proofs.sh that found WRAPS imprecisely"
-
-SCRIPT_DIR="${TEST_DIR}/fixtures/signature-transition-wraps-imprecise"
-# shellcheck disable=SC2034 # consumed by the sourced runner
-PROTO_PATH="${SCRIPT_DIR}"
-status=0
-output=$(assert_signature_transition block-node-1 1 2>/dev/null) || status=$?
-
-# Observing WRAPS satisfies the assertion; the deadline only cost the exact block number.
-record "treats an unnarrowed transition as a pass" "rc=0" "rc=${status}"
-record_contains "reports the block WRAPS was seen at, not the caveat line" \
-    "Schnorr -> WRAPS at block 1" "${output}"
+record "fails instead of reporting WRAPS proofs" "rc=1" "rc=${status}"
+record_contains "reports 'WRAPS proof not detected' with the exit status, not a timeout" \
+    "WRAPS proof not detected within 1 blocks (exit 1)" "${output}"
 
 # ============================================================================
 # monitor-block-proofs.sh's own max_block*2 deadline (real monitor, fake grpcurl)
@@ -151,7 +137,7 @@ record_contains "reports the block WRAPS was seen at, not the caveat line" \
 # is needed to enter the scan loop at all with a max_block that small.
 SCRIPT_DIR="${TEST_DIR}/.."
 # shellcheck disable=SC2034 # consumed by the sourced runner
-SIGNATURE_TRANSITION_GRACE_SECONDS=30
+WRAPS_PROOFS_GRACE_SECONDS=30
 export MONITOR_BLOCK_STEP=1
 
 # A fixture missing from the checkout otherwise surfaces only as "PROTO_PATH invalid".
@@ -166,11 +152,11 @@ PROTO_PATH="${TEST_DIR}/fixtures/monitor-hard-timeout"
 PATH="${PROTO_PATH}:${REAL_PATH}"
 started=${SECONDS}
 status=0
-output=$(assert_signature_transition block-node-1 2 2>/dev/null) || status=$?
+output=$(assert_wraps_proofs block-node-1 2 2>/dev/null) || status=$?
 elapsed=$((SECONDS - started))
 PATH="${REAL_PATH}"
 
-record "fails instead of reporting a transition" "rc=1" "rc=${status}"
+record "fails instead of reporting WRAPS proofs" "rc=1" "rc=${status}"
 record "returns rather than waiting for blocks forever" "under 20s" "$(under "${elapsed}" 20)"
 # Exit 3, not the 143 a bare SIGTERM death produces and not the wrapper's 124.
 record_contains "names the monitor's own deadline" \

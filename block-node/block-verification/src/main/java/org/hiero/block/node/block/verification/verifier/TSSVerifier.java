@@ -40,13 +40,16 @@ public final class TSSVerifier implements ProofVerifier {
     /// {@inheritDoc}
     /// ---
     /// Verifies the TSS signature against the hash to verify, using the ledger id
-    /// from the currently available [TssData]. The WRAPS verification key is also
-    /// required for verification, but it is set once on startup and is not
-    /// supplied on every call or initialized on block 0 if not present on startup.
+    /// from the currently available [TssData]. The ledger id is the only verification
+    /// input besides the signature itself: the signature carries the hinTS verification
+    /// key, the hinTS aggregate signature over the hash and the compressed WRAPS proof
+    /// that ties that key to the ledger id, and the library embeds the parameters it
+    /// checks the WRAPS proof with.
     ///
-    /// `TSS.verifyTSS()` handles both the genesis (Schnorr aggregate) and
-    /// post-genesis (WRAPS) paths. Signatures without a recognized proof suffix
-    /// are rejected by the library.
+    /// The library throws `IllegalArgumentException` for a malformed signature (any
+    /// layout other than key, signature and proof, or a ledger id of the wrong length)
+    /// and `IllegalStateException` when it is not initialized; both are reported as a
+    /// bad block proof.
     ///
     /// The success or failure TSS series of the proof verification metrics is
     /// incremented accordingly before returning.
@@ -62,8 +65,6 @@ public final class TSSVerifier implements ProofVerifier {
         if (tssData == null) {
             result = SessionFailureType.MISSING_VERIFICATION_DATA;
         } else {
-            // TSS.verifyTSS() handles both the genesis (Schnorr aggregate) and post-genesis (WRAPS) paths.
-            // Signatures without a recognized proof suffix are rejected by the library.
             try {
                 // NativeVerificationLibrary serializes this native call against every other one; the
                 // hinTS/WRAPS library is a non-thread-safe JVM-wide singleton.

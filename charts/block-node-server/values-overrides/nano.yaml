@@ -4,13 +4,17 @@
 # This is useful for testing and development purposes with limited resources.
 # ie: minikube
 
+# Memory: the JVM itself stays small (see JAVA_OPTS below), but verifying TSS block proofs loads
+# the TSS library's WRAPS verification parameters, about 200 MB off heap plus verifier working
+# memory (measured peak 550 to 620 MB RSS under load with hedera-cryptography 3.18.0). The limit
+# below accommodates that; a node that never receives TSS block proofs stays far below it.
 resources:
   requests:
     cpu: "500m"
-    memory: "128M"
+    memory: "512M"
   limits:
     cpu: "1"
-    memory: "128M"
+    memory: "1Gi"
 
 blockNode:
   config:
@@ -19,6 +23,10 @@ blockNode:
     MESSAGING_BLOCK_ITEM_QUEUE_SIZE: "128"
     MESSAGING_BLOCK_NOTIFICATION_QUEUE_SIZE: "16"
     BACKFILL_FETCH_BATCH_SIZE: "5"
+    # The TSS library holds about 200 MB of WRAPS verification parameters off heap once loaded.
+    # Loading is deferred to the first TSS block proof instead of happening at start, so a nano
+    # node that never receives TSS block proofs does not pay for it.
+    VERIFICATION_TSS_WARM_UP_ENABLED: "false"
   persistence:
     archive:
       size: 1Gi

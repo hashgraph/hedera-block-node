@@ -63,7 +63,6 @@ public final class VerificationServicePlugin
     @SuppressWarnings("FieldCanBeLocal")
     private MetricsHolder metricsHolder;
     /// The configuration for verification.
-    @SuppressWarnings("FieldCanBeLocal")
     private VerificationConfig verificationConfig;
     /// The verification data provider.
     private VerificationDataProvider verificationDataProvider;
@@ -115,10 +114,21 @@ public final class VerificationServicePlugin
     /// {@inheritDoc}
     /// ---
     /// Start the plugin.
-    /// Register the plugin in messaging. Determine a starting point for the
-    /// last verified block, that is the same as the latest persisted block.
+    /// Load the TSS library's WRAPS public parameters, so the first TSS block does
+    /// not pay for it and a temp directory the library cannot write to is reported
+    /// at start. Register the plugin in messaging. Determine a starting point for
+    /// the last verified block, that is the same as the latest persisted block.
     @Override
     public void start() {
+        if (!verificationConfig.tssWarmUpEnabled()) {
+            LOGGER.log(INFO, "TSS library warm-up disabled, WRAPS public parameters load on the first TSS block");
+        } else if (NativeVerificationLibrary.warmUp()) {
+            LOGGER.log(INFO, "TSS library ready, WRAPS public parameters loaded");
+        } else {
+            LOGGER.log(
+                    WARNING,
+                    "TSS library not ready, WRAPS proof verification is unavailable and TSS block proofs will fail verification");
+        }
         verificationDataProvider.safeUpdateTssData(
                 context.applicationStateFacility().tssData(), false);
         updateLastVerifiedBlock(context.applicationStateFacility().storedBlocks());

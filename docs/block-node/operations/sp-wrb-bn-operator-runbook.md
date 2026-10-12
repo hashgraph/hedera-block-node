@@ -620,7 +620,7 @@ helm upgrade block-node -n block-node --reuse-values \
 |                                Path                                 |       Owner        |                                       Purpose                                       |
 |---------------------------------------------------------------------|--------------------|-------------------------------------------------------------------------------------|
 | `/opt/hiero/block-node/application-state/rsa-bootstrap-roster.json` | BN (`app.state.*`) | RSA roster — single-book *or* `RangedAddressBookHistory` JSON; loader auto-detects. |
-| `/opt/hiero/block-node/application-state/tss-parameters.bin`        | BN                 | TSS parameters; managed by the BN, do not hand-edit.                                |
+| `/opt/hiero/block-node/application-state/tss-bootstrap-roster.json` | BN (`app.state.*`) | TSS data (64 byte ledger id, roster); rewritten by the BN on every update.          |
 | `/opt/hiero/block-node/data/historic/`                              | BN                 | On-disk historic archive; target of the bulk-load path.                             |
 | `/mnt/wrb-operations/wrappedBlocks/tss-bootstrap-roster.json`       | CLI                | CLI-produced TSS bootstrap; copy into BN application-state.                         |
 | `wrappedBlocks/addressBookHistory.json`                             | CLI                | CLI-produced address-book history; input to `convert-address-book-history`.         |

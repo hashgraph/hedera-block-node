@@ -981,11 +981,14 @@ class VerificationServicePluginTest {
     }
 
     /// Tests running the real captured block fixtures through the plugin, one fixture family per
-    /// case: wrapped record blocks from the four node Solo network, state proof blocks and WRAPS
-    /// TSS blocks captured from consensus nodes. The harness based tests above cover the plugin
-    /// behaviour in depth with generated blocks; this class keeps the plugin honest against
-    /// genuine consensus node output, so a drift between the harness and the real block format,
-    /// or a fixture that no longer matches the current hashing rules, is caught here.
+    /// case, currently the wrapped record blocks from the four node Solo network. The two TSS
+    /// captures (state proof blocks and TSS blocks from consensus nodes) are excluded until they
+    /// are re-captured from a consensus node on the current TSS library: their proofs predate the
+    /// hedera-cryptography 3.17 formats (32 byte ledger id, genesis Schnorr aggregate) and cannot
+    /// verify any more, while {@code BlockHasherTest} still hashes them. The harness based tests
+    /// above cover the plugin behaviour in depth with generated blocks; this class keeps the plugin
+    /// honest against genuine consensus node output, so a drift between the harness and the real
+    /// block format, or a fixture that no longer matches the current hashing rules, is caught here.
     @Nested
     @DisplayName("Real Blocks Tests")
     class RealBlocksTests extends PluginTestBase<VerificationServicePlugin, ExecutorService, ScheduledExecutorService> {
@@ -1003,7 +1006,8 @@ class VerificationServicePluginTest {
         /// signatures can be checked; TSS blocks need no setup because the genesis block
         /// publishes the TSS parameters in band.
         @ParameterizedTest(name = "{0}")
-        @MethodSource("org.hiero.block.node.app.fixtures.blocks.ResourceTestBlockBuilder#realBlockChains")
+        @MethodSource(
+                "org.hiero.block.node.app.fixtures.blocks.ResourceTestBlockBuilder#realBlockChainsWithVerifiableProofs")
         @DisplayName("Successful consecutive verification of real blocks - Live RB")
         void testSuccessfulConsecutiveRealBlocksVerificationLiveRB(
                 final String family, final List<? extends ResourceTestBlock> blocks) {
@@ -1505,7 +1509,7 @@ class VerificationServicePluginTest {
         /// full 200 @RepeatedTest iterations instead of once per iteration. Safe because every
         /// iteration creates a fresh plugin whose TSS state is provisioned from CACHED_CHAIN[0]'s
         /// LedgerIdPublication.
-        private static final TssBlockSigner CACHED_SIGNER = TssBlockSigner.createDeterministic();
+        private static final TssBlockSigner CACHED_SIGNER = TssBlockSigner.create();
 
         /// Length-5 signed chain built once from CACHED_SIGNER. Blocks are immutable so every
         /// iteration reuses them without conflict.

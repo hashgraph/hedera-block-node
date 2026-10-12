@@ -186,7 +186,10 @@ ships with the following defaults:
 | `blockNode.config.JAVA_OPTS` (heap flags) | `-Xms10G -Xmx10G -XX:MaxMetaspaceSize=512m` |
 
 Set the JVM heap (`-Xmx`) to between 75-90% of the container memory limit, leaving the
-remainder for JVM non-heap overhead (metaspace, code cache, native threads). For testnet
+remainder for JVM non-heap overhead (metaspace, code cache, native threads) and for the
+TSS library, which extracts its WRAPS verification parameters (about 64 MB) into the
+directory named by the `java.io.tmpdir` system property at start and then holds roughly
+200 MB off heap for the life of the process. For testnet
 workloads, a memory limit matching the [recommended VM sizing](#recommended-vm-sizing) above
 (32 GB) is a reasonable starting point:
 

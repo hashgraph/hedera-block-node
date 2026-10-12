@@ -17,6 +17,10 @@ on:
         description: "Consensus Node version ('latest', 'rc', or tag like 'v0.68.6')"
         type: string
         default: "rc"
+      consensus-node-ref:
+        description: "Consensus Node git ref to build when the version is a -SNAPSHOT (branch, tag or SHA)"
+        type: string
+        default: "main"
       mirror-node-version:
         description: "Mirror Node version ('latest', 'rc', or tag like 'v0.146.0')"
         type: string
@@ -82,7 +86,7 @@ on:
         type: string
         default: "5"
       test-definition:
-        description: "Test definitions (comma-separated): smoke-test, basic-load, high-load, node-restart-resilience, full-history-backfill, archive-backfill, plugin-profiles, tss-signature-transition, wrb-cli-hash-validation, wrb-cli-wrapping-validation, wrb-cli-jumpstart-validation, wrb-differential-test, wrb-core-validation, rsa-roster-verification, wrb-distribution-steps1-12, chaos-foundation-smoke, latency-cn-to-cn, latency-cn-to-bn, latency-bn-to-bn, latency-all-three, latency-stress, latency-severe"
+        description: "Test definitions (comma-separated): smoke-test, basic-load, high-load, node-restart-resilience, full-history-backfill, archive-backfill, plugin-profiles, tss-wraps-proofs, wrb-cli-hash-validation, wrb-cli-wrapping-validation, wrb-cli-jumpstart-validation, wrb-differential-test, wrb-core-validation, rsa-roster-verification, wrb-distribution-steps1-12, chaos-foundation-smoke, latency-cn-to-cn, latency-cn-to-bn, latency-bn-to-bn, latency-all-three, latency-stress, latency-severe"
         type: string
         default: "none"
     outputs:
@@ -202,7 +206,7 @@ on:
         required: false
         default: "5"
       test-definition:
-        description: "Test definitions (comma-separated): smoke-test, basic-load, high-load, node-restart-resilience, full-history-backfill, archive-backfill, plugin-profiles, tss-signature-transition, wrb-cli-hash-validation, wrb-cli-wrapping-validation, wrb-cli-jumpstart-validation, wrb-differential-test, wrb-core-validation, rsa-roster-verification, wrb-distribution-steps1-12, chaos-foundation-smoke, latency-cn-to-cn, latency-cn-to-bn, latency-bn-to-bn, latency-all-three, latency-stress, latency-severe"
+        description: "Test definitions (comma-separated): smoke-test, basic-load, high-load, node-restart-resilience, full-history-backfill, archive-backfill, plugin-profiles, tss-wraps-proofs, wrb-cli-hash-validation, wrb-cli-wrapping-validation, wrb-cli-jumpstart-validation, wrb-differential-test, wrb-core-validation, rsa-roster-verification, wrb-distribution-steps1-12, chaos-foundation-smoke, latency-cn-to-cn, latency-cn-to-bn, latency-bn-to-bn, latency-all-three, latency-stress, latency-severe"
         required: false
         default: "none"
 
@@ -342,7 +346,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: hiero-ledger/hiero-consensus-node
-          ref: main
+          ref: ${{ inputs.consensus-node-ref }}
           path: hiero-consensus-node
           fetch-depth: 1
 

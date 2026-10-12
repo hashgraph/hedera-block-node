@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 #
-# Finds the Schnorr → WRAPS signature transition in block proofs.
+# Checks that the TSS block proofs a Block Node serves carry WRAPS proofs.
 #
-# Scans blocks every 50, waits if the network hasn't produced them yet,
-# and binary-searches for the exact transition block once WRAPS is detected.
+# Scans blocks every STEP, waits if the network hasn't produced them yet, and
+# reports the first signed block whose signature has the WRAPS layout. A signed
+# block with a signature of any other size fails the check: since the TSS library
+# embeds its WRAPS parameters, every block proof, including block 0's, carries a
+# WRAPS proof and there is no pre-WRAPS signature layout any more.
 #
-# Proof sizes (TssSignedBlockProof.block_signature):
-#   Schnorr: ~2,920 bytes (pre-settled TSS)
-#   WRAPS:   ~3,432 bytes (post-settled TSS)
+# Proof size (TssSignedBlockProof.block_signature):
+#   WRAPS: 13,712 bytes = hinTS verification key (1,096) + hinTS signature (1,248)
+#          + compressed WRAPS proof (11,368)
+# Blocks proven indirectly (block state proofs) carry no signature and are skipped.
 #
 # Usage:
 #   ./monitor-block-proofs.sh <proto-path> [grpc-endpoint] [max-block] [port-forward-cmd]
@@ -16,7 +20,7 @@
 # Arguments:
 #   proto-path        Path to extracted protobuf files (required)
 #   grpc-endpoint     Block Node gRPC endpoint (default: localhost:40840)
-#   max-block         Stop and fail if this block is reached without WRAPS.
+#   max-block         Stop and fail if this block is reached without a WRAPS proof.
 #                     Blocks are produced every ~2s; the script waits patiently
 #                     for each block to become available. Also enforces a hard
 #                     wall-clock timeout of max_block*2 seconds. (default: 0 = no limit)
@@ -25,11 +29,10 @@
 #                     instead of failing immediately (max 3 restarts).
 #
 # Exit codes:
-#   0  WRAPS transition found (including a hard-timeout hit after WRAPS was observed:
-#      the transition is real, only its exact block number went unnarrowed)
-#   1  max-block reached without WRAPS, or error
+#   0  a WRAPS proof was observed
+#   1  max-block reached without a WRAPS proof, a signature of another size seen, or error
 #   2  connection error with no port-forward-cmd provided
-#   3  hard wall-clock timeout (max_block*2) hit before WRAPS was ever observed
+#   3  hard wall-clock timeout (max_block*2) hit before a WRAPS proof was observed
 
 set -euo pipefail
 
@@ -38,6 +41,9 @@ BN_ENDPOINT="${2:-localhost:40840}"
 MAX_BLOCK="${3:-0}"
 PORT_FORWARD_CMD="${4:-}"
 
+# Signature length of a TSS block proof carrying a WRAPS proof.
+WRAPS_SIGNATURE_BYTES=13712
+
 # Scan stride. Env-overridable so the unit suite can pair a tiny max_block with a
 # stride small enough to enter the scan loop at all; production always uses 50.
 STEP="${MONITOR_BLOCK_STEP:-50}"
@@ -45,7 +51,7 @@ STEP="${MONITOR_BLOCK_STEP:-50}"
 # block can be ~100MB. Downloading 100MB through kubectl port-forward crashes
 # the SPDY tunnel. A 10MB limit rejects oversized blocks early (via RST_STREAM)
 # before the data flood kills the port-forward. Rejected blocks are treated as
-# NOT_AVAILABLE, which the binary search handles correctly.
+# NOT_AVAILABLE and skipped.
 MAX_MSG_SIZE=10000000
 # Per-call wall-clock ceiling for grpcurl. A Service whose pods are gone still
 # accepts a kubectl port-forward connection and then stalls forever, so without
@@ -65,36 +71,23 @@ else
 fi
 START_TIME=$(date +%s)
 
-# Set once WRAPS is observed. Everything after that only sharpens the reported
-# block number, so a deadline hit with this set is imprecision, not a failure.
-WRAPS_SEEN_BLOCK=""
-
 # Without a trap the TERM from check_hard_timeout exits 143, indistinguishable
 # from any other abnormal death. 3 names the self-imposed deadline.
 function on_hard_timeout {
-  if [[ -n "${WRAPS_SEEN_BLOCK}" ]]; then
-    exit 0
-  fi
   exit 3
 }
 trap on_hard_timeout TERM
 
-# Checked from get_sig_type_safe (every gRPC call site: scan loop, binary
-# search, lower-bound search, print_result) rather than only between scan
-# iterations, so post-detection work can't run unbounded past the deadline.
+# Checked from get_sig_type_safe (every gRPC call site) rather than only between
+# scan iterations, so no call can run unbounded past the deadline.
 function check_hard_timeout {
   [[ "$HARD_TIMEOUT" -gt 0 ]] || return 0
   local elapsed=$(( $(date +%s) - START_TIME ))
   if [[ "$elapsed" -ge "$HARD_TIMEOUT" ]]; then
     echo "" >&2
-    echo "=== Signature Transition ===" >&2
-    if [[ -n "${WRAPS_SEEN_BLOCK}" ]]; then
-      echo "  First WRAPS block: ${WRAPS_SEEN_BLOCK}" >&2
-      echo "  (upper bound only: exact transition block not narrowed, ${HARD_TIMEOUT}s deadline hit during binary search)" >&2
-    else
-      echo "  Status: WRAPS NOT DETECTED" >&2
-      echo "  Hard timeout: ${HARD_TIMEOUT}s elapsed (max_block=${MAX_BLOCK} * 2s)" >&2
-    fi
+    echo "=== WRAPS Proof Check ===" >&2
+    echo "  Status: WRAPS PROOF NOT DETECTED" >&2
+    echo "  Hard timeout: ${HARD_TIMEOUT}s elapsed (max_block=${MAX_BLOCK} * 2s)" >&2
     # set -e doesn't reliably cross nested $(...) layers; signal the top-level script.
     # The exit below lets the enclosing $(...) finish so the parent can run its trap.
     kill -TERM "$$"
@@ -112,7 +105,7 @@ if [[ ! -d "${PROTO_DIR}" ]]; then
 fi
 
 # Returns "<TYPE> <sig_bytes> <block_size>"
-# e.g. "SCHNORR 2920 95432", "WRAPS 3432 94521320", "NOT_AVAILABLE 0 0"
+# e.g. "WRAPS 13712 95432", "STATE_PROOF 0 94521320", "UNKNOWN 2920 95432", "NOT_AVAILABLE 0 0"
 # block_size is the approximate binary protobuf size (sum of base64-decoded fields)
 function get_sig_type {
   local block_number="$1"
@@ -129,13 +122,13 @@ function get_sig_type {
     return
   fi
 
-  # Connection errors (port-forward down, refused, timeout) — fail fast
+  # Connection errors (port-forward down, refused, timeout) -- fail fast
   if echo "${raw}" | grep -qiE "connection refused|failed to dial|context deadline|transport:"; then
     echo "CONNECTION_ERROR 0 0"
     return
   fi
 
-  # Oversized block — grpcurl rejected it before downloading (port-forward survives)
+  # Oversized block -- grpcurl rejected it before downloading (port-forward survives)
   if echo "${raw}" | grep -qiE "received message larger than max"; then
     echo "NOT_AVAILABLE 0 0"
     return
@@ -163,29 +156,37 @@ for match in b64_pattern.finditer(raw_text):
         pass
 # Add ~10% for protobuf field tags, varints, and non-binary fields
 binary_size = int(binary_size * 1.1)
+proof_kind = 'NONE'
 sig_bytes = 0
 for item in d.get('block',{}).get('items',[]):
     if 'blockProof' in item:
         bp = item['blockProof']
         sbp = bp.get('signedBlockProof',{})
         if sbp and sbp.get('blockSignature'):
+            proof_kind = 'SIGNED'
             sig_bytes = len(base64.b64decode(sbp['blockSignature']))
-        elif bp.get('previousBlockRootHash'):
-            sig_bytes = len(base64.b64decode(bp['previousBlockRootHash']))
+        elif bp.get('blockStateProof'):
+            proof_kind = 'STATE_PROOF'
+        elif bp.get('signedRecordFileProof'):
+            proof_kind = 'RECORD_FILE'
         break
-print(f'{sig_bytes} {binary_size}')
-" 2>/dev/null) || parsed="0 0"
+print(f'{proof_kind} {sig_bytes} {binary_size}')
+" 2>/dev/null) || parsed="NONE 0 0"
 
-  local sig_bytes block_size
-  sig_bytes="${parsed%% *}"
-  block_size="${parsed##* }"
+  local proof_kind sig_bytes block_size
+  read -r proof_kind sig_bytes block_size <<< "${parsed}"
 
   local sig_type
-  case "${sig_bytes}" in
-    292[0-9]) sig_type="SCHNORR" ;;
-    343[0-9]) sig_type="WRAPS" ;;
-    *)        sig_type="UNKNOWN" ;;
-  esac
+  if [[ "${proof_kind}" == "SIGNED" ]]; then
+    if [[ "${sig_bytes}" -eq "${WRAPS_SIGNATURE_BYTES}" ]]; then
+      sig_type="WRAPS"
+    else
+      sig_type="UNKNOWN"
+    fi
+  else
+    # STATE_PROOF, RECORD_FILE or NONE: no TSS signature to classify on this block
+    sig_type="${proof_kind}"
+  fi
 
   echo "${sig_type} ${sig_bytes} ${block_size}"
 }
@@ -233,78 +234,8 @@ function format_size {
   fi
 }
 
-function binary_search_transition {
-  local low="$1"
-  local high="$2"
-
-  while [[ $((high - low)) -gt 1 ]]; do
-    local mid=$(( (low + high) / 2 ))
-    local result
-    result=$(get_sig_type_safe "$mid")
-    local sig_type="${result%% *}"
-    if [[ "$sig_type" == "SCHNORR" ]]; then
-      low=$mid
-    else
-      # WRAPS, UNKNOWN, or NOT_AVAILABLE — treat conservatively as potential WRAPS
-      # (the ~99MB genesis WRAPS block may fail to fetch on resource-constrained CI)
-      high=$mid
-    fi
-  done
-
-  echo "$high"
-}
-
-function find_schnorr_lower_bound {
-  local wraps_block="$1"
-  local low=$(( wraps_block > 100 ? wraps_block - 100 : 0 ))
-
-  while [[ $low -gt 0 ]]; do
-    local result
-    result=$(get_sig_type_safe "$low")
-    if [[ "${result%% *}" == "SCHNORR" ]]; then
-      echo "$low"
-      return
-    fi
-    low=$(( low > 100 ? low - 100 : 0 ))
-  done
-
-  echo "$low"
-}
-
-function format_block_line {
-  local block_number="$1"
-  local result="$2"
-  local sig_type="${result%% *}"
-
-  if [[ "$sig_type" == "NOT_AVAILABLE" || "$sig_type" == "UNKNOWN" || "$sig_type" == "CONNECTION_ERROR" ]]; then
-    echo "  Block ${block_number}: NOT_AVAILABLE (BN unable to serve — likely oversized WRAPS genesis block)"
-  else
-    local sig_bytes block_size
-    sig_bytes=$(echo "$result" | awk '{print $2}')
-    block_size=$(echo "$result" | awk '{print $3}')
-    echo "  Block ${block_number}: ${sig_type} (sig: ${sig_bytes} bytes, block: $(format_size "$block_size"))"
-  fi
-}
-
-function print_result {
-  local transition_block="$1"
-
-  local pre_result post_result next_result
-  pre_result=$(get_sig_type_safe "$((transition_block - 1))")
-  post_result=$(get_sig_type_safe "$transition_block")
-  next_result=$(get_sig_type_safe "$((transition_block + 1))")
-
-  echo ""
-  echo "=== Signature Transition ==="
-  echo "  First WRAPS block: ${transition_block}"
-  echo "  Last Schnorr block: $((transition_block - 1))"
-  format_block_line "$((transition_block - 1))" "$pre_result"
-  format_block_line "$transition_block" "$post_result"
-  format_block_line "$((transition_block + 1))" "$next_result"
-}
-
-# Main: scan every STEP blocks
-echo "Scanning for WRAPS signature (every ${STEP} blocks)..."
+# Main: scan every STEP blocks until a signed block with a WRAPS proof is seen
+echo "Scanning for a WRAPS block proof (every ${STEP} blocks)..."
 block=0
 while true; do
   block=$(( block + STEP ))
@@ -312,8 +243,8 @@ while true; do
   # Enforce max-block limit
   if [[ "$MAX_BLOCK" -gt 0 && "$block" -gt "$MAX_BLOCK" ]]; then
     echo ""
-    echo "=== Signature Transition ==="
-    echo "  Status: WRAPS NOT DETECTED"
+    echo "=== WRAPS Proof Check ==="
+    echo "  Status: WRAPS PROOF NOT DETECTED"
     echo "  Max block limit: ${MAX_BLOCK}"
     exit 1
   fi
@@ -340,7 +271,7 @@ while true; do
     (( wait_count++ )) || true
     printf "."
     sleep 5
-    # Block production is every ~2s. Wait patiently — the block will be produced.
+    # Block production is every ~2s. Wait patiently -- the block will be produced.
     # max_block and the hard wall-clock timeout are what bound the wait.
     block=$(( block - STEP ))
     continue
@@ -355,12 +286,17 @@ while true; do
   echo "  Block ${block}: ${sig_type} (sig: ${sig_bytes} bytes, block: $(format_size "$block_size"))"
 
   if [[ "$sig_type" == "WRAPS" ]]; then
-    # Record it before narrowing: from here on the assertion is already satisfied.
-    WRAPS_SEEN_BLOCK=$block
-    echo "  WRAPS detected, binary searching for exact transition..."
-    low=$(find_schnorr_lower_bound "$block")
-    transition=$(binary_search_transition "$low" "$block")
-    print_result "$transition"
+    echo ""
+    echo "=== WRAPS Proof Check ==="
+    echo "  Status: WRAPS PROOF DETECTED"
+    echo "  First WRAPS block: ${block}"
     exit 0
+  elif [[ "$sig_type" == "UNKNOWN" ]]; then
+    echo ""
+    echo "=== WRAPS Proof Check ==="
+    echo "  Status: UNEXPECTED SIGNATURE LAYOUT"
+    echo "  Block ${block} carries a ${sig_bytes} byte TSS signature, expected ${WRAPS_SIGNATURE_BYTES} bytes"
+    exit 1
   fi
+  # STATE_PROOF, RECORD_FILE or NONE: nothing to classify on this block, keep scanning
 done

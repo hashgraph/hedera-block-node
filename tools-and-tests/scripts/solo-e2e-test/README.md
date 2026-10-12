@@ -581,7 +581,7 @@ Deployment order stays the standard **BN -> CN -> MN** (so Solo wires the Block 
 stream sources on the Consensus Nodes). The `roster-bootstrap-rsa` plugin polls the Mirror Node
 indefinitely until it is reachable, so the Block Node tolerates the Mirror Node starting later.
 
-These topologies do not run the `tss-signature-transition` test; they run `rsa-roster-verification`
+These topologies do not run the `tss-wraps-proofs` test; they run `rsa-roster-verification`
 instead.
 
 ## CI Integration
@@ -715,7 +715,7 @@ task test:validate TEST_FILE=tests/basic-load.yaml
 | `tests/archive-backfill.yaml`             | RFH cloud-only loop, archiving with node replacement                                      |
 | `tests/plugin-profiles.yaml`              | lfh / minimal / all plugin profiles                                                       |
 | `tests/rsa-roster-verification.yaml`      | Blocks verified via the RSA roster (WRB topologies)                                       |
-| `tests/tss-signature-transition.yaml`     | Verify TSS signature transition from Schnorr to WRAPS                                     |
+| `tests/tss-wraps-proofs.yaml`             | Verify TSS block proofs carry WRAPS proofs                                                |
 | `tests/wrb-core-validation.yaml`          | WRB core validation - wrapping and serving without Mirror Nodes                           |
 | `tests/wrb-cli-wrapping-validation.yaml`  | Validate WRB CLI wrapping produces blocks identical to CN                                 |
 | `tests/wrb-cli-hash-validation.yaml`      | Validate WRB CLI block hashing matches Consensus Node hashing                             |
@@ -867,7 +867,7 @@ CHAOS_ENABLED=true task chaos:install
 
 `task chaos:install` is idempotent - re-running upgrades in place rather than failing.
 
-> **TSS is on by default** (the supported mode). Solo CLI's `--wraps` flag requires CN ≥ v0.74.0-0; `CN_VERSION=latest` is min-enforced by `resolve-versions.sh` to a TSS-capable tag (currently `0.75.0-rc.4`), so `--wraps` deploys cleanly and TSS signatures verify under latency (confirmed: Schnorr→WRAPS transition). Only set `TSS_ENABLED=false` if you pin a `CN_VERSION` below the floor.
+> **TSS is on by default** (the supported mode). Solo CLI's `--wraps` flag requires CN ≥ v0.74.0-0; `CN_VERSION=latest` is min-enforced by `resolve-versions.sh` to a TSS-capable tag (currently `0.75.0-rc.4`), so `--wraps` deploys cleanly and TSS signatures verify under latency (confirmed: WRAPS proofs on signed blocks). Only set `TSS_ENABLED=false` if you pin a `CN_VERSION` below the floor.
 
 ### Running a latency test
 

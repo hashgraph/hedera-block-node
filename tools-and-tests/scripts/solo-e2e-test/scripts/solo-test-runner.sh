@@ -46,13 +46,13 @@ DEPLOYMENT="${DEPLOYMENT:-deployment-solo}"
 export NAMESPACE CONTEXT DEPLOYMENT PROTO_PATH
 
 # Slack added on top of monitor-block-proofs.sh's own max_block*2 deadline when
-# assert_signature_transition wraps it in `timeout`. monitor-block-proofs.sh
+# assert_wraps_proofs wraps it in `timeout`. monitor-block-proofs.sh
 # checks its own deadline before every gRPC call, so the worst-case overshoot
 # before its deadline fires is one call plus its port-forward retry chain
 # (2x MAX_CALL_SECONDS + 2x3s sleep, ~126s); 180s covers that with room to
 # spare, so the script's own deadline normally fires first, keeping its more
 # informative output. Env-overridable so the unit suite can bound it tightly.
-SIGNATURE_TRANSITION_GRACE_SECONDS="${SIGNATURE_TRANSITION_GRACE_SECONDS:-180}"
+WRAPS_PROOFS_GRACE_SECONDS="${WRAPS_PROOFS_GRACE_SECONDS:-180}"
 
 # Stock macOS ships neither `timeout` nor `gtimeout`. It is only a backstop here --
 # the monitor enforces its own max_block*2 deadline -- so wrap only when present.
@@ -1440,9 +1440,9 @@ function assert_blocks_diverged {
     fi
 }
 
-# Assert that block signatures transition from Schnorr to WRAPS.
+# Assert that the TSS block proofs the node serves carry WRAPS proofs.
 # Delegates to monitor-block-proofs.sh and captures its output.
-function assert_signature_transition {
+function assert_wraps_proofs {
     local target="$1"
     local max_block="${2:-1000}"
     local port
@@ -1474,7 +1474,7 @@ function assert_signature_transition {
     local hard_timeout=0
     if [[ "$max_block" -gt 0 ]]; then
         monitor_deadline=$(( max_block * 2 ))
-        hard_timeout=$(( monitor_deadline + SIGNATURE_TRANSITION_GRACE_SECONDS ))
+        hard_timeout=$(( monitor_deadline + WRAPS_PROOFS_GRACE_SECONDS ))
     fi
 
     # Output goes to a file, not a command substitution: a leaked descendant holding
@@ -1493,11 +1493,11 @@ function assert_signature_transition {
     rm -f "${out_file}"
 
     if [[ "${status}" -eq 0 ]]; then
-        local transition_block transition_summary
-        transition_summary=$(echo "${output}" | grep -A 10 "=== Signature Transition ===")
-        transition_block=$(echo "${transition_summary}" | grep "First WRAPS block:" | awk '{print $NF}')
-        echo "${target}: Schnorr -> WRAPS at block ${transition_block:-unknown}"
-        echo "${transition_summary}"
+        local wraps_block wraps_summary
+        wraps_summary=$(echo "${output}" | grep -A 10 "=== WRAPS Proof Check ===")
+        wraps_block=$(echo "${wraps_summary}" | grep "First WRAPS block:" | awk '{print $NF}')
+        echo "${target}: WRAPS proofs from block ${wraps_block:-unknown}"
+        echo "${wraps_summary}"
         return 0
     else
         echo "${output}" >&2
@@ -1506,7 +1506,7 @@ function assert_signature_transition {
         elif [[ "${status}" -eq 124 ]]; then
             echo "${target}: monitor-block-proofs.sh exceeded ${hard_timeout}s and was killed by the wrapper"
         else
-            echo "${target}: WRAPS not detected within ${max_block} blocks (exit ${status})"
+            echo "${target}: WRAPS proof not detected within ${max_block} blocks (exit ${status})"
         fi
         return 1
     fi
@@ -1724,7 +1724,7 @@ function run_assertion {
             bd_min_spread=$(echo "$args" | yq '.min_spread // 3')
             assert_blocks_diverged "${bd_snapshot_id}" "${bd_min_spread}"
             ;;
-        signature-transition)
+        wraps-proofs)
             if [[ "${TSS_ENABLED:-true}" != "true" ]]; then
                 echo "Skipped (TSS not enabled)"
                 return 0
@@ -1732,7 +1732,7 @@ function run_assertion {
             [[ -z "$target" || "$target" == "null" ]] && target=$(echo "$args" | yq '.target // "block-node-1"')
             local sig_max_block
             sig_max_block=$(echo "$args" | yq '.max_block // 1000')
-            assert_signature_transition "$target" "$sig_max_block"
+            assert_wraps_proofs "$target" "$sig_max_block"
             ;;
         rsa-roster-verification)
             [[ -z "$target" || "$target" == "null" ]] && target=$(echo "$args" | yq '.target // "all"')
@@ -2020,7 +2020,7 @@ function write_github_summary {
                 [[ "$status" == "PASS" ]] && icon=":white_check_mark:" || icon=":x:"
                 # Extract key info from details (keep it short for the table)
                 local short_details
-                short_details=$(echo "$details" | grep -oE "(Schnorr -> WRAPS at block [0-9]+)|(Skipped)|([0-9]+ errors)|(Blocks [0-9]+-[0-9]+)|([0-9]+ -> [0-9]+)" | head -1)
+                short_details=$(echo "$details" | grep -oE "(WRAPS proofs from block [0-9]+)|(Skipped)|([0-9]+ errors)|(Blocks [0-9]+-[0-9]+)|([0-9]+ -> [0-9]+)" | head -1)
                 [[ -z "$short_details" ]] && short_details=$(echo "$details" | head -1 | cut -c1-80)
                 # Escape pipe chars so they don't break the markdown table
                 short_details="${short_details//|/\\|}"

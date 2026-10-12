@@ -44,12 +44,12 @@ We intend to create a new Block Node plugin (TSSBootstrapPlugin) that queries an
       This hinTS signature is verified using a daily hinTS verification key.</dd>
 </dl>
 <dl>
-  <dt>Verification Key</dt>
-  <dd>The WRAPS verification key used to verify the WRAPS proof, with respect to a given ledger ID. This key is about 1.7KB.</dd>
+  <dt>WRAPS parameters</dt>
+  <dd>The public parameters the WRAPS proof is verified with. They are embedded in the TSS library jar, so no verification key is configured or exchanged.</dd>
 </dl>
 <dl>
   <dt>Ledger ID</dt>
-  <dd>SHA-256 hash of the genesis TSS Address Book. This is 32 bytes.</dd>
+  <dd>The hash of the genesis TSS Address Book followed by the hash of the hinTS verification key that address book first adopted. This is 64 bytes.</dd>
 </dl>
 <dl>
   <dt>Schnorr public / private key</dt>
@@ -112,24 +112,31 @@ We intend to create a new Block Node plugin (TSSBootstrapPlugin) that queries an
 ```markdown
 /**
  * TSS information<br/>
- * `TssData` contains the Ledger Id, wraps validation key, and TssRoster information
- *  It is returned by the serverStatusDetail service
+ * `TssData` contains the ledger id a Block Node verifies TSS block proofs against,
+ * the TSS roster that published it, and the block it is valid from.<br/>
+ * It is returned by the serverStatusDetail service.
  *
- * All fields in this message SHALL be filled in, or none.
+ * The `ledger_id` and `valid_from_block` fields SHALL be filled in, or none.
  */
 message TssData {
     /**
-     * The ledger id
+     * The ledger id; that is, the network id of the chain of trust: the hash of
+     * the genesis TSS address book followed by the hash of the hinTS verification
+     * key that address book first adopted (64 bytes).
      */
     bytes ledger_id = 1;
 
     /**
-     * The wraps verification key
+     * No longer used, since the TSS library embeds the parameters it verifies
+     * recursive history proofs with.<br/>
+     * This field SHALL be empty.
      */
     bytes wraps_verification_key = 2;
 
     /**
-     * The current TSS roster
+     * The TSS roster that published the ledger id.<br/>
+     * This field is informational and MAY be omitted; verification of block
+     * proofs does not require it.
      */
     TssRoster current_roster = 3;
 
@@ -186,7 +193,7 @@ message RosterEntry {
 ## Design
 
 - Delivers TSS booststrap information to a Block Node that does not have access to the network Block 0 transactions.
-  - A new Block Node needs to learn the current TSS state (roster, verification key, ledger ID)
+  - A new Block Node needs to learn the current TSS state (ledger ID and, for information, the roster)
     - Plugin implements the existing `BlockNodePlugin` interfaces
     - The plugin queries a peer BN's serverStatusDetail gRPC endpoint to retrieve TSS information
       - gRPC peer communication follows the same WebClient pattern used elsewhere in the codebase
@@ -228,8 +235,7 @@ Consider using mermaid to generate one or more of the following:
 
 ### TssBootstrapPlugin (TssBootstrapConfig)
 
-- `ledgerId`. Base64 encoded `ledgerId`
-- `wrapsVerificationKey`. Base64 encoded `wrapsVerificationKey`
+- `ledgerId`. Base64 encoded `ledgerId` (64 bytes)
 - `nodeId`. The node id
 - `weight`. The weight
 - `schnorrPublicKey`, Base64 encoded 'schnorrPublicKey'
