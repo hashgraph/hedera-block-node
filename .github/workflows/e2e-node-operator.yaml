@@ -259,25 +259,35 @@ jobs:
                 | sed -E 's/.*names:[[:space:]]*"?([^"]*)"?.*/\1/') ;;
             *) echo "::error::unknown plugin-profile '${PROFILE}'"; exit 1 ;;
           esac
-          # facility-app-state is new in this PR and 404s on Maven for any version that predates it, which
-          # makes the chart's resolve-plugins init container fail. Drop it from a phase's names until that
-          # version has published it. For the snapshot phase inject-pr-plugins.sh adds the PR-built jar.
-          has_app_state() { # $1 = version
-            local url
-            if [[ "$1" == *-SNAPSHOT ]]; then
-              url="https://central.sonatype.com/repository/maven-snapshots/org/hiero/block-node/facility-app-state/$1/maven-metadata.xml"
+          # The chart's resolve-plugins init container fails the whole install when any listed plugin is not
+          # on Maven. A plugin that is new in this PR (or new since the base release) therefore has to be
+          # dropped from that phase's list before resolution. The snapshot phase gets the PR build of every
+          # profile plugin from inject-pr-plugins.sh, which adds the jar when Maven lacks it and replaces
+          # it when Maven has an older one.
+          is_published() { # $1 = plugin (name or name:version), $2 = version
+            local artifact="${1%%:*}" version="${1#*:}" url
+            [[ "${version}" == "$1" ]] && version="$2"
+            if [[ "${version}" == *-SNAPSHOT ]]; then
+              url="https://central.sonatype.com/repository/maven-snapshots/org/hiero/block-node/${artifact}/${version}/maven-metadata.xml"
             else
-              url="https://repo1.maven.org/maven2/org/hiero/block-node/facility-app-state/$1/facility-app-state-$1.pom"
+              url="https://repo1.maven.org/maven2/org/hiero/block-node/${artifact}/${version}/${artifact}-${version}.pom"
             fi
             curl -fsI "${url}" >/dev/null 2>&1
           }
-          names_for() { # $1 = names, $2 = version
-            if has_app_state "$2"; then
-              echo "$1"
-            else
-              echo "$1" | tr ',' '\n' | grep -vx 'facility-app-state' | paste -sd, - || true
-            fi
+          names_for() { # $1 = names, $2 = version; prints the names published at that version
+            local kept=() name
+            IFS=',' read -ra entries <<< "$1"
+            for name in "${entries[@]}"; do
+              [[ -z "${name}" ]] && continue
+              if is_published "${name}" "$2"; then
+                kept+=("${name}")
+              else
+                echo "::notice::${name} is not on Maven for $2; not resolving it" >&2
+              fi
+            done
+            (IFS=','; echo "${kept[*]}")
           }
+          echo "PLUGIN_NAMES=${NAMES}" >> "$GITHUB_OUTPUT"
           echo "BASE_PLUGIN_NAMES=$(names_for "${NAMES}" "${BASE}")" >> "$GITHUB_OUTPUT"
           echo "SNAP_PLUGIN_NAMES=$(names_for "${NAMES}" "${SNAP}")" >> "$GITHUB_OUTPUT"
           echo "Plugin profile: ${PROFILE} -> ${NAMES:-<all>}"
@@ -499,7 +509,8 @@ jobs:
           INJECT_PID=""
           if [[ "${{ inputs.build-image }}" != "false" ]]; then
             bash tools-and-tests/scripts/e2e-node-operator/inject-pr-plugins.sh \
-              "${{ steps.versions.outputs.SNAP_VERSION }}" "${CLUSTER_NAME}" "${NAMESPACE}" "${RELEASE}" &
+              "${{ steps.versions.outputs.SNAP_VERSION }}" "${CLUSTER_NAME}" "${NAMESPACE}" "${RELEASE}" \
+              "${{ steps.versions.outputs.PLUGIN_NAMES }}" &
             INJECT_PID=$!
           fi
 

@@ -13,19 +13,27 @@
 # Run in the background alongside `solo-provisioner block node upgrade`; it waits until the upgrade's
 # resolve-plugins has written a new .resolved-hash, swaps the jars, then restarts the pod.
 #
+# Every plugin in the profile is taken from the PR build: the jar is added when Maven did not have the plugin
+# (new in the PR, not yet published) and replaced when Maven resolved an older one.
+#
 # Usage: inject-pr-plugins.sh <snapshot-version> [cluster=operator-test] [namespace=block-node] [release=block-node]
+#          [profile-plugin-names=""]   comma-separated plugin names (optionally name:version) of the profile
 set -uo pipefail
 
 SNAP="${1:?snapshot version required}"
 CLUSTER_NAME="${2:-operator-test}"
 NAMESPACE="${3:-block-node}"
 RELEASE="${4:-block-node}"
+PROFILE_NAMES="${5:-}"
 NODE="${CLUSTER_NAME}-control-plane"
 PLUGINS_DIR=/tmp/bn/plugins
 PR_JARS_DIR="block-node/app/build/docker/plugins"
-# Plugins the PR core requires that Maven may not have published yet, so the profile cannot resolve them.
-# They are added to the plugins dir even when absent from it.
-PR_ONLY_PLUGINS=" facility-app-state "
+# Artifact ids of the profile's plugins, as " a b c ", for exact matching below.
+PROFILE_ARTIFACTS=" "
+IFS=',' read -ra _entries <<< "${PROFILE_NAMES}"
+for _entry in ${_entries[@]+"${_entries[@]}"}; do
+  [[ -n "${_entry}" ]] && PROFILE_ARTIFACTS+="${_entry%%:*} "
+done
 
 node() { docker exec "${NODE}" "$@"; }
 
@@ -40,9 +48,9 @@ for _ in $(seq 1 300); do
       [[ -f "${jar}" ]] || continue
       name=$(basename "${jar}")
       artifact="${name%-${SNAP}.jar}"
-      # Only replace modules the profile resolved (plus the PR-only ones); Maven names SNAPSHOT jars with
-      # the base version or a timestamp, so match on the artifact id and the version's leading digits.
-      if [[ "${PR_ONLY_PLUGINS}" == *" ${artifact} "* ]] \
+      # Take the PR jar for every profile plugin, and for anything else Maven resolved; Maven names SNAPSHOT
+      # jars with the base version or a timestamp, so match on the artifact id and the version's leading digits.
+      if [[ "${PROFILE_ARTIFACTS}" == *" ${artifact} "* ]] \
         || node sh -c "ls ${PLUGINS_DIR}/${artifact}-[0-9]*.jar >/dev/null 2>&1"; then
         node sh -c "rm -f ${PLUGINS_DIR}/${artifact}-[0-9]*.jar"
         # Stream the jar in: `docker cp` cannot write into the node's tmpfs-backed /tmp.
