@@ -471,6 +471,21 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
     /// @return a `ContinueResult` to leave the stream open
     private PublisherRequestResult handleAcknowledgeOnly(final AcknowledgeOnly request) {
         final long requestedBlockNumber = request == null ? UNKNOWN_BLOCK_NUMBER : request.blockNumber();
+        // AcknowledgeOnly cancels any in-progress block from this handler, the
+        // same way a new BlockHeader arriving before BlockEnd would. See
+        // docs/design/communication-protocol/publish-block-stream.md.
+        final long blockInProgress = currentStreamingBlockNumber.get();
+        if (isCurrentlyMidBlock(blockInProgress)) {
+            LOGGER.log(
+                    DEBUG,
+                    "[{0}] Handler {1} received AcknowledgeOnly({2}) mid-block {3}; cancelling partial block",
+                    correlationIdPrefix,
+                    handlerId,
+                    requestedBlockNumber,
+                    blockInProgress);
+            publisherManager.blockIsEnding(blockInProgress, handlerId);
+            resetState();
+        }
         publisherManager.recordPassiveHandlerAck(handlerId, requestedBlockNumber);
         final long latestAcked = publisherManager.getLatestAckedBlockNumber();
         if (requestedBlockNumber > UNKNOWN_BLOCK_NUMBER
