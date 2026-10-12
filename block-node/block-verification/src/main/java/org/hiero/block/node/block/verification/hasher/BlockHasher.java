@@ -15,7 +15,6 @@ import com.hedera.hapi.node.tss.LedgerIdPublicationTransactionBody;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.UnknownField;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -80,9 +79,9 @@ public final class BlockHasher implements Supplier<HashingResult> {
     /// Extension 0 subtree hasher, leaf position 9 of the fixed 16 leaf block root tree
     /// ("Merkle Mountain Top" in HIP-1424). The eight extension leaf positions (9 to 16) are
     /// permanently defined in the tree; each hasher below is bound to its position and is
-    /// always instantiated. An extension hasher with no items produces {@code EMPTY_TREE_HASH}
-    /// via the same fold as every other subtree, which is what its slot contributes to the
-    /// Merkle Mountain Top. See issue #3377.
+    /// always instantiated. An extension hasher with no items produces the empty tree hash via
+    /// the same fold as every other subtree, which is what its slot contributes to the Merkle
+    /// Mountain Top. See issue #3377.
     private final NaiveStreamingTreeHasher extensionHasherZero;
     /// Extension 1 subtree hasher, leaf position 10. See [#extensionHasherZero].
     private final NaiveStreamingTreeHasher extensionHasherOne;
@@ -196,9 +195,6 @@ public final class BlockHasher implements Supplier<HashingResult> {
         } catch (final ParseException e) {
             throw new VerificationSessionFailedException(
                     blockNumber, SessionFailureType.UNABLE_TO_PARSE, blockSource, e);
-        } catch (final NoSuchAlgorithmException e) {
-            throw new VerificationSessionFailedException(
-                    blockNumber, SessionFailureType.MISSING_VERIFICATION_DATA, blockSource, e);
         }
     }
 
@@ -383,13 +379,11 @@ public final class BlockHasher implements Supplier<HashingResult> {
         return null;
     }
 
-    /// Returns the given extension subtree hasher, or a new one when it does not exist yet.
-    /// @param hasher the current extension subtree hasher, or null when not yet created
     /// Finish the hashing operation.
     /// This method will finalize the hashing process. Root hash will be calculated and
     /// a [HashingResult] will be returned.
     /// @throws VerificationSessionFailedException in case a known failure occurs
-    private HashingResult finalHashingResult() throws NoSuchAlgorithmException {
+    private HashingResult finalHashingResult() {
         final HashingResult hashingResult;
         if (blockHeader == null || blockFooter == null || blockProofs.isEmpty()) {
             throw new VerificationSessionFailedException(
