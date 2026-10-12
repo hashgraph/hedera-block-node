@@ -23,6 +23,9 @@ RELEASE="${4:-block-node}"
 NODE="${CLUSTER_NAME}-control-plane"
 PLUGINS_DIR=/tmp/bn/plugins
 PR_JARS_DIR="block-node/app/build/docker/plugins"
+# Plugins the PR core requires that Maven may not have published yet, so the profile cannot resolve them.
+# They are added to the plugins dir even when absent from it.
+PR_ONLY_PLUGINS=" facility-app-state "
 
 node() { docker exec "${NODE}" "$@"; }
 
@@ -37,9 +40,10 @@ for _ in $(seq 1 300); do
       [[ -f "${jar}" ]] || continue
       name=$(basename "${jar}")
       artifact="${name%-${SNAP}.jar}"
-      # Only replace modules the profile resolved; Maven names SNAPSHOT jars with the base version or a
-      # timestamp, so match on the artifact id and the version's leading digits.
-      if node sh -c "ls ${PLUGINS_DIR}/${artifact}-[0-9]*.jar >/dev/null 2>&1"; then
+      # Only replace modules the profile resolved (plus the PR-only ones); Maven names SNAPSHOT jars with
+      # the base version or a timestamp, so match on the artifact id and the version's leading digits.
+      if [[ "${PR_ONLY_PLUGINS}" == *" ${artifact} "* ]] \
+        || node sh -c "ls ${PLUGINS_DIR}/${artifact}-[0-9]*.jar >/dev/null 2>&1"; then
         node sh -c "rm -f ${PLUGINS_DIR}/${artifact}-[0-9]*.jar"
         # Stream the jar in: `docker cp` cannot write into the node's tmpfs-backed /tmp.
         if ! docker exec -i "${NODE}" sh -c "cat > ${PLUGINS_DIR}/${name} && chmod 644 ${PLUGINS_DIR}/${name}" < "${jar}"; then

@@ -42,6 +42,7 @@ on:
       - ".github/workflows/e2e-node-operator.yaml"
       - "block-node/app/**"
       - "block-node/app-config/**"
+      - "block-node/facility-app-state/**"
       - "charts/**"
       - "protobuf-sources/**"
       - "tools-and-tests/scripts/e2e-node-operator/**"
@@ -258,7 +259,27 @@ jobs:
                 | sed -E 's/.*names:[[:space:]]*"?([^"]*)"?.*/\1/') ;;
             *) echo "::error::unknown plugin-profile '${PROFILE}'"; exit 1 ;;
           esac
-          echo "PLUGIN_NAMES=${NAMES}" >> "$GITHUB_OUTPUT"
+          # facility-app-state is new in this PR and 404s on Maven for any version that predates it, which
+          # makes the chart's resolve-plugins init container fail. Drop it from a phase's names until that
+          # version has published it. For the snapshot phase inject-pr-plugins.sh adds the PR-built jar.
+          has_app_state() { # $1 = version
+            local url
+            if [[ "$1" == *-SNAPSHOT ]]; then
+              url="https://central.sonatype.com/repository/maven-snapshots/org/hiero/block-node/facility-app-state/$1/maven-metadata.xml"
+            else
+              url="https://repo1.maven.org/maven2/org/hiero/block-node/facility-app-state/$1/facility-app-state-$1.pom"
+            fi
+            curl -fsI "${url}" >/dev/null 2>&1
+          }
+          names_for() { # $1 = names, $2 = version
+            if has_app_state "$2"; then
+              echo "$1"
+            else
+              echo "$1" | tr ',' '\n' | grep -vx 'facility-app-state' | paste -sd, - || true
+            fi
+          }
+          echo "BASE_PLUGIN_NAMES=$(names_for "${NAMES}" "${BASE}")" >> "$GITHUB_OUTPUT"
+          echo "SNAP_PLUGIN_NAMES=$(names_for "${NAMES}" "${SNAP}")" >> "$GITHUB_OUTPUT"
           echo "Plugin profile: ${PROFILE} -> ${NAMES:-<all>}"
         env:
           GH_TOKEN: ${{ github.token }}
@@ -358,7 +379,7 @@ jobs:
 
           # Render CI values for this phase (image tag + plugin profile); volumes use chart defaults.
           sed -e "s/__BN_TAG__/${{ steps.versions.outputs.BASE_VERSION }}/g" \
-              -e "s/__PLUGIN_NAMES__/${{ steps.versions.outputs.PLUGIN_NAMES }}/g" \
+              -e "s/__PLUGIN_NAMES__/${{ steps.versions.outputs.BASE_PLUGIN_NAMES }}/g" \
             tools-and-tests/scripts/e2e-node-operator/solo-ci-values.yaml > /tmp/solo-ci-values-base.yaml
 
           set +e
@@ -449,7 +470,7 @@ jobs:
           # ('spec.initContainers[0].volumeMounts[4].name: Not found: "plugins-storage"') for the
           # entire --timeout window. A non-empty PLUGIN_NAMES keeps the volume around.
           sed -e "s/__BN_TAG__/${{ steps.versions.outputs.SNAP_VERSION }}/g" \
-              -e "s/__PLUGIN_NAMES__/${{ steps.versions.outputs.PLUGIN_NAMES }}/g" \
+              -e "s/__PLUGIN_NAMES__/${{ steps.versions.outputs.SNAP_PLUGIN_NAMES }}/g" \
             tools-and-tests/scripts/e2e-node-operator/solo-ci-values.yaml > /tmp/solo-ci-values-snap.yaml
 
           # Watch loop — same pattern as install. --atomic rolls the release back to the base
