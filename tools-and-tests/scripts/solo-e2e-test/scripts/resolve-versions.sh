@@ -35,17 +35,24 @@ readonly TCK_REPO="hiero-ledger/hiero-sdk-tck"
 # Tiers are evaluated highest-first; first matching tier wins.
 # CN is also floored at the lowest tier's cn_min.
 #
-# | CN Version        | MN Minimum    | BN Minimum   | Notes                          |
-# |-------------------|---------------|--------------|--------------------------------|
-# | >= 0.75.0-rc.4    | 0.154.0       | 0.35.0       | WRB streaming + RSA roster      |
+# | CN Version        | MN Minimum    | BN Minimum   | Notes                                        |
+# |-------------------|---------------|--------------|----------------------------------------------|
+# | >= 0.80.0         | 0.154.0       | 0.46.0       | TSS library 3.18.0: 64 byte ledger id, WRAPS   |
+# |                   |               |              | proof on every block; a BN below 0.46.0 cannot |
+# |                   |               |              | verify these blocks, and a BN >= 0.46.0 cannot  |
+# |                   |               |              | verify blocks of an older TSS enabled CN         |
+# | >= 0.75.0-rc.4    | 0.154.0       | 0.35.0       | WRB streaming + RSA roster                     |
+#
+# TODO(#3689): confirm the 0.80.0 tier (the first CN release adopting hedera-cryptography 3.18.0)
+# and the MN minimum that adopts the same library, once those releases are cut.
 #
 # Note: 0.154.0 is the floor for WRB cutover support (added in 0.153.0); newer MN is fine.
 # Separately, MN 0.155.x/0.156.x ship broken GraalVM-native importer/grpc images; that is
 # worked around in the Mirror Node overlay by overriding those modules to the JVM images
 # (see generate-chart-values-config-overlays.sh), NOT by pinning the MN version here.
-readonly COMPAT_CN_MINS=("0.75.0-rc.4")
-readonly COMPAT_MN_MINS=("0.154.0")
-readonly COMPAT_BN_MINS=("0.35.0")
+readonly COMPAT_CN_MINS=("0.80.0" "0.75.0-rc.4")
+readonly COMPAT_MN_MINS=("0.154.0" "0.154.0")
+readonly COMPAT_BN_MINS=("0.46.0" "0.35.0")
 
 # Lowest tier CN floor (used to enforce CN minimum before tier selection)
 # Note: bash 3.2 (macOS default) does not support negative array indices — use explicit last index

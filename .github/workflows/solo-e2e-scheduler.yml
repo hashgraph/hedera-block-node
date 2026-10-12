@@ -162,8 +162,8 @@ jobs:
             daily)
               # Quick validation - single topology smoke test + backfill test
               MATRIX='[
-                {"topology":"single","tests":"smoke-test,tss-signature-transition,wrb-cli-hash-validation,wrb-cli-wrapping-validation"},
-                {"topology":"2cn-2bn-backfill","tests":"tss-signature-transition,full-history-backfill"},
+                {"topology":"single","tests":"smoke-test,tss-wraps-proofs,wrb-cli-hash-validation,wrb-cli-wrapping-validation"},
+                {"topology":"2cn-2bn-backfill","tests":"tss-wraps-proofs,full-history-backfill"},
                 {"topology":"single-wrb-rsa","tests":"smoke-test,rsa-roster-verification"},
                 {"topology":"wrb-differential-test","tests":"wrb-differential-test"}
               ]'
@@ -171,14 +171,14 @@ jobs:
             weekend|rc)
               # Full matrix - explicit valid combinations per topology
               MATRIX='[
-                {"topology":"single","tests":"smoke-test,basic-load,high-load,node-restart-resilience,tss-signature-transition,wrb-cli-hash-validation,wrb-cli-wrapping-validation"},
-                {"topology":"paired-3","tests":"smoke-test,basic-load,high-load,tss-signature-transition"},
-                {"topology":"3cn-1bn","tests":"smoke-test,tss-signature-transition"},
-                {"topology":"fan-out-3cn-2bn","tests":"smoke-test,tss-signature-transition"},
-                {"topology":"2cn-2bn-backfill","tests":"tss-signature-transition,full-history-backfill"},
+                {"topology":"single","tests":"smoke-test,basic-load,high-load,node-restart-resilience,tss-wraps-proofs,wrb-cli-hash-validation,wrb-cli-wrapping-validation"},
+                {"topology":"paired-3","tests":"smoke-test,basic-load,high-load,tss-wraps-proofs"},
+                {"topology":"3cn-1bn","tests":"smoke-test,tss-wraps-proofs"},
+                {"topology":"fan-out-3cn-2bn","tests":"smoke-test,tss-wraps-proofs"},
+                {"topology":"2cn-2bn-backfill","tests":"tss-wraps-proofs,full-history-backfill"},
                 {"topology":"2cn-2bn-archive","tests":"archive-backfill"},
                 {"topology":"2cn-3bn-plugin-profiles","tests":"plugin-profiles"},
-                {"topology":"7cn-3bn-distributed","tests":"smoke-test,tss-signature-transition"},
+                {"topology":"7cn-3bn-distributed","tests":"smoke-test,tss-wraps-proofs"},
                 {"topology":"single-wrb-rsa","tests":"smoke-test,rsa-roster-verification"},
                 {"topology":"3cn-2bn-wrb-rsa","tests":"smoke-test,rsa-roster-verification"},
                 {"topology":"wrb-differential-test","tests":"wrb-differential-test"}

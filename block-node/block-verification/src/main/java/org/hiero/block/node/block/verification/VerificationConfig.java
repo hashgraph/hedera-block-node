@@ -26,6 +26,12 @@ import org.hiero.block.node.base.Loggable;
 /// @param dumpEnabled whether to write failing block bytes and metadata to disk for diagnostics (off by default)
 /// @param dumpDirectoryPath directory where bad-block dump files are written
 /// @param dumpRetentionDays how many days to retain dump files before the daily purge removes them
+/// @param tssWarmUpEnabled whether the plugin loads the TSS library's WRAPS verification parameters at start.
+///     Loading extracts about 64 MB into the directory named by `java.io.tmpdir`, takes a few seconds and
+///     holds roughly 200 MB off heap for the life of the process; when enabled (the default) a node that
+///     cannot verify TSS block proofs reports it at start instead of failing its first TSS block. Disable it
+///     only for memory constrained deployments that never receive TSS block proofs (the parameters are still
+///     loaded on the first TSS verification).
 @ConfigData("verification")
 public record VerificationConfig(
     @Loggable @ConfigProperty(defaultValue = "100") int recentlyVerifiedBlocksBufferSize,
@@ -34,6 +40,7 @@ public record VerificationConfig(
     @Loggable @ConfigProperty(defaultValue = "true") boolean allSourcesRequireOrdering,
     @Loggable @ConfigProperty(defaultValue = "false") boolean dumpEnabled,
     @Loggable @ConfigProperty(defaultValue = "/opt/hiero/block-node/verification/dumps") Path dumpDirectoryPath,
-    @Loggable @ConfigProperty(defaultValue = "7") int dumpRetentionDays){}
+    @Loggable @ConfigProperty(defaultValue = "7") int dumpRetentionDays,
+    @Loggable @ConfigProperty(defaultValue = "true") boolean tssWarmUpEnabled){}
 
 // spotless:on

@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# TSS WRAPS Proofs Test
+#
+# Verifies that the TSS block proofs the network produces carry WRAPS proofs.
+# With TSS enabled, every signed block proof, including block 0's, is a
+# 13,712 byte signature made of the hinTS verification key, the hinTS
+# signature and the compressed WRAPS proof; the TSS library embeds the
+# parameters that proof is built and verified with, so there is no earlier
+# signature layout to transition from.
+#
+# This test polls the Block Node for the first signed block and checks its
+# signature layout; a signed block with a signature of any other size fails
+# the test. If no signed block appears before max_block, the test fails.
+#
+# Prerequisites:
+#   - Any topology deployed with TSS_ENABLED=true (task up)
+#   - Port forwards active (task port-forward)
+#
+# Usage:
+#   task test:run TEST_FILE=tests/tss-wraps-proofs.yaml
+
+name: tss-wraps-proofs
+description: "Verify TSS block proofs carry WRAPS proofs"
+
+events:
+  - id: initial-status
+    type: network-status
+    description: "Network status before the proof check"
+    delay: 5
+
+assertions:
+  - id: all-healthy
+    type: node-healthy
+    description: "All Block Nodes are healthy"
+    target: all
+
+  - id: wraps-proofs
+    type: wraps-proofs
+    description: "Signed block proofs carry WRAPS proofs"
+    target: block-node-1
+    args:
+      max_block: 1000

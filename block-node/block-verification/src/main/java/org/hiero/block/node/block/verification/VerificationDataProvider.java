@@ -7,6 +7,7 @@ import static java.lang.System.Logger.Level.WARNING;
 
 import com.hedera.hapi.node.base.NodeAddress;
 import com.hedera.hapi.node.base.NodeAddressBook;
+import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -19,9 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import org.hiero.block.api.RosterEntry;
 import org.hiero.block.api.TssData;
-import org.hiero.block.api.TssRoster;
 import org.hiero.block.node.spi.BlockNodeContext;
 
 /// Provider for verification data.
@@ -111,54 +110,53 @@ public final class VerificationDataProvider {
         }
     }
 
-    /// Update the TSS data if the given data is new and valid from a later block
-    /// than the current data. On a successful update, the TSS library address book
-    /// and the WRAPS verification key are set before the new data is published.
+    /// Update the TSS data if the given data differs from the current data, carries a
+    /// ledger id of the length the TSS library verifies against, and is not valid from
+    /// an earlier block than the current data. Nothing is installed into the library:
+    /// the ledger id is handed to it on every verification, and the roster is kept for
+    /// information only.
+    ///
+    /// A ledger id of any other length comes from a bootstrap file or a peer that
+    /// predates the current TSS library and is ignored, so the verifier stays without
+    /// data until block 0 of the stream publishes the current one.
     ///
     /// @param updatedTssData the new TSS data, must not be null
     /// @param sendUpdateToAppState if `true`, a successful update is also forwarded
     ///     to the application state facility
     private void updateTssData(final TssData updatedTssData, final boolean sendUpdateToAppState) {
         final TssData localCurrentTss = currentTssData.get();
-        // Only update if we see new TSS data
-        if (!updatedTssData.equals(localCurrentTss)) {
-            LOGGER.log(INFO, "Updating TSS data from application state");
-            if (localCurrentTss == null || updatedTssData.validFromBlock() > localCurrentTss.validFromBlock()) {
-                final TssRoster roster = updatedTssData.currentRoster();
-                if (roster != null) {
-                    final List<RosterEntry> contributions = roster.rosterEntries();
-                    if (contributions != null && !contributions.isEmpty()) {
-                        final int nodeCount = contributions.size();
-                        byte[][] publicKeys = new byte[nodeCount][];
-                        long[] nodeIds = new long[nodeCount];
-                        long[] weights = new long[nodeCount];
-                        for (int i = 0; i < nodeCount; i++) {
-                            final RosterEntry contribution = contributions.get(i);
-                            publicKeys[i] = contribution.schnorrPublicKey().toByteArray();
-                            nodeIds[i] = contribution.nodeId();
-                            weights[i] = contribution.weight();
-                        }
-                        // NativeVerificationLibrary serializes these native calls against verifies; the
-                        // address book and WRAPS key mutate the shared native state that verifyTSS reads.
-                        NativeVerificationLibrary.updateVerificationKeys(
-                                publicKeys,
-                                weights,
-                                nodeIds,
-                                updatedTssData.wrapsVerificationKey().toByteArray());
-                        if (currentTssData.compareAndSet(localCurrentTss, updatedTssData)) {
-                            if (sendUpdateToAppState) {
-                                context.applicationStateFacility().updateTssData(currentTssData.get());
-                            }
-                            LOGGER.log(INFO, "Successfully updated TSS data");
-                        } else {
-                            LOGGER.log(WARNING, "Failed to CAS TSS data from application state");
-                        }
-                    } else {
-                        LOGGER.log(INFO, "No contributions in TSS data roster found");
-                    }
-                } else {
-                    LOGGER.log(INFO, "No roster in TSS data found");
+        final Bytes ledgerId = updatedTssData.ledgerId();
+        final long ledgerIdLength = ledgerId == null ? 0L : ledgerId.length();
+        if (updatedTssData.equals(localCurrentTss)) {
+            LOGGER.log(DEBUG, "TSS data update carries the current TSS data, nothing to do");
+        } else if (ledgerIdLength != NativeVerificationLibrary.LEDGER_ID_LENGTH) {
+            LOGGER.log(
+                    WARNING,
+                    "Ignoring TSS data valid from block {0} with a ledger id of {1} bytes, expected {2}; it comes from a bootstrap file or peer that predates the current TSS library",
+                    updatedTssData.validFromBlock(),
+                    ledgerIdLength,
+                    NativeVerificationLibrary.LEDGER_ID_LENGTH);
+        } else if (localCurrentTss != null && updatedTssData.validFromBlock() < localCurrentTss.validFromBlock()) {
+            LOGGER.log(
+                    INFO,
+                    "Ignoring TSS data valid from block {0}, the current TSS data is valid from block {1}",
+                    updatedTssData.validFromBlock(),
+                    localCurrentTss.validFromBlock());
+        } else {
+            final int rosterSize = updatedTssData.hasCurrentRoster()
+                    ? updatedTssData.currentRosterOrThrow().rosterEntries().size()
+                    : 0;
+            if (currentTssData.compareAndSet(localCurrentTss, updatedTssData)) {
+                if (sendUpdateToAppState) {
+                    context.applicationStateFacility().updateTssData(currentTssData.get());
                 }
+                LOGGER.log(
+                        INFO,
+                        "Updated TSS data, valid from block {0}, roster entries {1}",
+                        updatedTssData.validFromBlock(),
+                        rosterSize);
+            } else {
+                LOGGER.log(WARNING, "Failed to CAS TSS data from application state");
             }
         }
     }

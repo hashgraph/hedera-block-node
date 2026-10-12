@@ -16,13 +16,13 @@ The block stream, specified in [HIP-1056](https://hips.hedera.com/hip/hip-1056),
 
 The shift is in the source. A Mirror Node ingests the same logical content - transactions, results, sidecar trace data, signatures, state - but the transport, encoding, and verification mechanism all change.
 
-|     Dimension      |          Before cutover (record stream)          |                                                                        After cutover (block stream)                                                                        |
-|--------------------|--------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Transport          | Poll cloud-storage buckets (GCS / S3)            | Subscribe to one or more Block Nodes over gRPC                                                                                                                             |
-| Encoding           | Record file (`.rcd`) + sidecar + signature files | `BlockItem` messages in a single stream                                                                                                                                    |
-| Verification       | Per-node RSA signatures, majority verification   | Single TSS aggregated signature per block, verified against the network's Ledger ID and the WRAPS verification key (the same key is used across nearly all Hiero networks) |
-| Source discovery   | Operator-configured cloud-bucket source          | On-chain registry per [HIP-1137](https://hips.hedera.com/hip/hip-1137) or operator-supplied list                                                                           |
-| Trigger for switch | Manual reconfiguration                           | Automatic per [HAPI version](./glossary.md#hapi-version) (Mirror Node v0.155+)                                                                                             |
+|     Dimension      |          Before cutover (record stream)          |                                                                          After cutover (block stream)                                                                          |
+|--------------------|--------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Transport          | Poll cloud-storage buckets (GCS / S3)            | Subscribe to one or more Block Nodes over gRPC                                                                                                                                 |
+| Encoding           | Record file (`.rcd`) + sidecar + signature files | `BlockItem` messages in a single stream                                                                                                                                        |
+| Verification       | Per-node RSA signatures, majority verification   | Single TSS aggregated signature per block, verified against the network's Ledger ID (the WRAPS proof in each signature is checked with parameters embedded in the TSS library) |
+| Source discovery   | Operator-configured cloud-bucket source          | On-chain registry per [HIP-1137](https://hips.hedera.com/hip/hip-1137) or operator-supplied list                                                                               |
+| Trigger for switch | Manual reconfiguration                           | Automatic per [HAPI version](./glossary.md#hapi-version) (Mirror Node v0.155+)                                                                                                 |
 
 For configuration steps and the property table, see [Connecting a Mirror Node to a Block Node](./operations/connecting-a-mirror-node-to-a-block-node.md). For the operator-visible behaviour of a Block Node subscription, see [Mirror Node Integration](./mirror-node-integration.md).
 
@@ -66,7 +66,7 @@ Items present in the block stream that had no record-stream counterpart:
 
 This is the release on the consensus network before the cutover boundary. Two things happen.
 
-- **Ledger ID generation.** Consensus nodes perform the TSS ceremony specified in [HIP-1398](https://hips.hedera.com/hip/hip-1398) and externalize the Ledger ID via a synthetic `LedgerIdPublicationTransaction` (defined in [HIP-1200](https://hips.hedera.com/hip/hip-1200)). The Ledger ID is the hash of the genesis TSS Roster and is what consumers use to verify the network's TSS signature on every subsequent block.
+- **Ledger ID generation.** Consensus nodes perform the TSS ceremony specified in [HIP-1398](https://hips.hedera.com/hip/hip-1398) and externalize the Ledger ID via a synthetic `LedgerIdPublicationTransaction` (defined in [HIP-1200](https://hips.hedera.com/hip/hip-1200)). The Ledger ID is the hash of the genesis TSS Roster followed by the hash of the hinTS verification key that roster first adopted (64 bytes), and is what consumers use to verify the network's TSS signature on every subsequent block.
 - **Mirror Node v0.155+ ships the auto-detect logic.** Operators on earlier versions must upgrade in order for automatic switching to occur.
 
 The block stream is not yet produced during this phase; the Mirror Node continues ingesting from cloud storage.

@@ -642,20 +642,23 @@ During validation, the CLI automatically detects and extracts TSS (Threshold Sig
 
 ```json
 {
-  "ledger_id": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
-  "wraps_verification_key": "a1b2c3d4e5f6a7b8c9d0...",
-  "current_roster": {
-    "roster_entries": [
+  "ledgerId": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+Pw==",
+  "currentRoster": {
+    "rosterEntries": [
       {
-        "node_id": 0,
+        "nodeId": 0,
         "weight": 1000,
-        "schnorr_public_key": "0a1b2c3d4e5f6a7b8c9d0e1f..."
+        "schnorrPublicKey": "Chs8..."
       }
     ]
   },
-  "valid_from_block": 42
+  "validFromBlock": 42
 }
 ```
+
+Field names are camelCase and bytes are base64 (the Block Node's JSON codec); the ledger id is
+64 bytes and there is no WRAPS verification key, since the TSS library embeds the parameters it
+verifies proofs with.
 
 **Usage**:
 - The JSON file can be directly consumed by the Block Node's `ApplicationStateConfig`

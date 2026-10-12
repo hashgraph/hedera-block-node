@@ -24,10 +24,15 @@ import org.hiero.block.signing.TssBlockSigner;
  *
  * <p>Emits {@code <outputDir>/0.blk.gz}..{@code <outputDir>/<count-1>.blk.gz}. Block 0 carries
  * a {@code LedgerIdPublicationTransactionBody} so the receiving Block Node self-provisions its
- * TSS state on the first push, matching the behaviour of the previously-committed
- * {@code CN_11_12_TSS_WRAPS/*.blk.gz} fixtures.
+ * TSS state on the first push, matching the behaviour of a consensus node's genesis block. The
+ * signer's TSS data is also written as {@code <outputDir>/tss-bootstrap-roster.json}, the file a
+ * Block Node reads from {@code app.state.tssBootstrapFilePath}, for workflows that provision a
+ * node that never receives block 0.
  */
 public final class GenerateHarnessBlocksMain {
+
+    /** File name of the emitted TSS bootstrap file. */
+    public static final String BOOTSTRAP_FILE_NAME = "tss-bootstrap-roster.json";
 
     private GenerateHarnessBlocksMain() {}
 
@@ -46,7 +51,7 @@ public final class GenerateHarnessBlocksMain {
         }
         Files.createDirectories(outputDir);
 
-        final TssBlockSigner signer = TssBlockSigner.createDeterministic();
+        final TssBlockSigner signer = TssBlockSigner.create();
         final HarnessChainBuilder builder = HarnessChainBuilder.create(signer, algorithm);
         for (long n = 0; n < count; n++) {
             final HarnessChainBuilder.Signed signed = n == 0 ? builder.genesisWithPublication() : builder.next(n);
@@ -57,5 +62,8 @@ public final class GenerateHarnessBlocksMain {
             }
             System.out.println("Wrote " + file + " (" + bytes.length() + " bytes)");
         }
+        final Path bootstrapFile = outputDir.resolve(BOOTSTRAP_FILE_NAME);
+        signer.verificationMaterial().writeTssBootstrapFile(bootstrapFile);
+        System.out.println("Wrote " + bootstrapFile);
     }
 }

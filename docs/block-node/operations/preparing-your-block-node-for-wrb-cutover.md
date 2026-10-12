@@ -368,8 +368,7 @@ The file format:
 
 ```json
 {
-  "ledgerId": "AAECAwQFBgc=",
-  "wrapsVerificationKey": "CAkKCwwNDg8=",
+  "ledgerId": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+Pw==",
   "currentRoster": {
     "rosterEntries": [
       { "nodeId": 4, "weight": 100, "schnorrPublicKey": "EBESExQVFhc=" },

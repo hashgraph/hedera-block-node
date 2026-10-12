@@ -96,13 +96,15 @@ fetch_bn_status_detail_raw() {
         org.hiero.block.api.BlockNodeService/serverStatusDetail
 }
 
+# TssData is usable once it carries a 64 byte ledger id (the hash of the genesis
+# address book followed by the hash of the genesis hinTS verification key). The
+# WRAPS verification key is no longer used and the roster is informational, so
+# neither is required.
 has_tss_data() {
     local resp="$1"
     [[ -n "${resp}" ]] || return 1
     echo "${resp}" | jq -e '
-        (.tssData.ledgerId // "") != "" and
-        (.tssData.wrapsVerificationKey // "") != "" and
-        ((.tssData.currentRoster.rosterEntries // []) | length > 0)
+        ((.tssData.ledgerId // "") | @base64d | length) == 64
     ' >/dev/null 2>&1
 }
 

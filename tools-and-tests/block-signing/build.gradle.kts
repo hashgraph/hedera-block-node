@@ -13,6 +13,5 @@ testModuleInfo {
     requires("org.junit.jupiter.api")
 }
 
-// Headroom for the offline WRAPS proof regeneration (WrapsProofGeneratorTest), which loads a large
-// proving key and runs a SNARK. Normal tests use only a fraction of this.
-tasks.test { maxHeapSize = "6g" }
+// The offline WRAPS proof regeneration (WrapsProofGeneratorTest) runs the SNARK prover in native
+// memory, outside the JVM heap, so the test task keeps the default heap.

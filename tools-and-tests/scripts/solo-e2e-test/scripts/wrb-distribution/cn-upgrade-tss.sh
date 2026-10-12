@@ -129,9 +129,17 @@ ensure_wraps_keys_cached() {
 source "${SCRIPT_DIR}/../lib/cn-application-properties.sh"
 
 TSS_ENABLE_PROPERTIES_FILE="${TMPDIR:-/tmp}/wrb-dist-cn-upgrade-tss-application.properties"
-TSS_ENABLED=true WRB_RSA=false generate_cn_application_properties "${TSS_ENABLE_PROPERTIES_FILE}"
+TSS_ENABLED=true WRB_RSA=false generate_cn_application_properties "${TSS_ENABLE_PROPERTIES_FILE}" "${CN_UPGRADE_VERSION}"
 
-ensure_wraps_keys_cached
+# A CN whose TSS library embeds the WRAPS parameters (see cn_needs_wraps_proving_key in
+# lib/cn-application-properties.sh) stages no proving key; older CNs still need it.
+WRAPS_KEY_ARGS=()
+if cn_needs_wraps_proving_key "${CN_UPGRADE_VERSION}"; then
+    ensure_wraps_keys_cached
+    WRAPS_KEY_ARGS=(--wraps-key-path "${WRAPS_KEYS_DIR}")
+else
+    log "CN ${CN_UPGRADE_VERSION} embeds its WRAPS parameters, no proving key is staged"
+fi
 
 # SOLO-5068 workaround: two distinct issues that both block `helm upgrade`:
 #
@@ -213,7 +221,7 @@ solo consensus network upgrade \
     --deployment "${DEPLOYMENT}" \
     --node-aliases "${NODE_ALIASES}" \
     --upgrade-version "${CN_UPGRADE_VERSION}" \
-    --wraps-key-path "${WRAPS_KEYS_DIR}" \
+    ${WRAPS_KEY_ARGS[@]+"${WRAPS_KEY_ARGS[@]}"} \
     --application-properties "${TSS_ENABLE_PROPERTIES_FILE}" \
     -q \
     || fail "solo consensus network upgrade failed"

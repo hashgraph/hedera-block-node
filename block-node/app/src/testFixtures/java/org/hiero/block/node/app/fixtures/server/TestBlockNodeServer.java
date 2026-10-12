@@ -41,6 +41,10 @@ import org.hiero.block.node.spi.historicalblocks.HistoricalBlockFacility;
 import org.hiero.block.node.spi.historicalblocks.LongRange;
 
 public class TestBlockNodeServer {
+    /// The ledger id the server reports in its TSS data: 64 bytes, the length a peer's ledger id
+    /// must have to be accepted (the hash of the genesis address book followed by the hash of the
+    /// genesis hinTS verification key), filled with a recognizable value.
+    public static final Bytes SAMPLE_LEDGER_ID = Bytes.wrap(sampleLedgerId());
 
     private final WebServer webServer;
 
@@ -233,12 +237,13 @@ public class TestBlockNodeServer {
             }
 
             // Todo: add TssData flexibility to TestBlockNodeServer to allow tests to pass in TssData to hand back to
-            // tests
+            // tests. The ledger id has the 64 byte length a peer must report for its TssData to be accepted;
+            // the WRAPS verification key is no longer used and stays empty.
             return ServerStatusDetailResponse.newBuilder()
                     .availableRanges(blockRanges)
                     .tssData(buildTssData(
-                            Bytes.fromHex("01010101"),
-                            Bytes.fromHex("02020202"),
+                            SAMPLE_LEDGER_ID,
+                            Bytes.EMPTY,
                             List.of(buildRosterEntry(11, 22, Bytes.fromHex("03030303"))),
                             250))
                     .nodeAddressBook(buildAddressBook(4))
@@ -323,5 +328,11 @@ public class TestBlockNodeServer {
                     .schnorrPublicKey(schnorrPublicKey)
                     .build();
         }
+    }
+
+    private static byte[] sampleLedgerId() {
+        final byte[] ledgerId = new byte[64];
+        java.util.Arrays.fill(ledgerId, (byte) 0x01);
+        return ledgerId;
     }
 }

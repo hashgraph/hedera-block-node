@@ -24,8 +24,15 @@
 #   DEPLOYMENT         (default "deployment-solo")
 #   NODE_ALIASES       (default "node1,node2,node3")
 #   READY_TIMEOUT      (default 300)
+#   CN_UPGRADE_VERSION (optional; the CN version the nodes run, decides whether the
+#                       WRAPS proving key must be staged on restart, see
+#                       cn_needs_wraps_proving_key in lib/cn-application-properties.sh)
 
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../lib/cn-application-properties.sh
+source "${SCRIPT_DIR}/../lib/cn-application-properties.sh"
 
 : "${NAMESPACE:=solo-network}"
 : "${CLUSTER_REFERENCE:=kind-solo-cluster}"
@@ -69,7 +76,15 @@ ensure_wraps_keys_cached() {
     done
 }
 
-ensure_wraps_keys_cached
+# A CN whose TSS library embeds the WRAPS parameters stages no proving key; older CNs
+# still need it on every start.
+WRAPS_KEY_ARGS=()
+if cn_needs_wraps_proving_key "${CN_UPGRADE_VERSION:-}"; then
+    ensure_wraps_keys_cached
+    WRAPS_KEY_ARGS=(--wraps-key-path "${WRAPS_KEYS_DIR}")
+else
+    log "CN ${CN_UPGRADE_VERSION:-} embeds its WRAPS parameters, no proving key is staged"
+fi
 
 IFS=',' read -ra aliases <<< "${NODE_ALIASES}"
 
@@ -93,7 +108,7 @@ log "Starting consensus nodes back up..."
 solo consensus node start \
     --deployment "${DEPLOYMENT}" \
     --node-aliases "${NODE_ALIASES}" \
-    --wraps-key-path "${WRAPS_KEYS_DIR}" \
+    ${WRAPS_KEY_ARGS[@]+"${WRAPS_KEY_ARGS[@]}"} \
     -q \
     || fail "solo consensus node start failed"
 

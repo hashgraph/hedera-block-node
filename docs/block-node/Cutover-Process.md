@@ -50,16 +50,16 @@ timeline
                  : CN removes `BlockInfo` entirely during migration and only uses `BlockStreamInfo`.
     section TSS Enablement
         TSS Ceremony Runs
-                 : WRAPS proving key and parameters loaded from a local file or network content storage.
+                 : WRAPS public parameters embedded in the TSS library.
                  : TSS enabled but not used
                  : TSS enabled and signs blocks
-        TSS proving key, verification key, and parameters produced
+        TSS public parameters produced
                  : .
-                 : WRAPS proving key hash loaded during upgrade migration
+                 : Parameters ship inside the TSS library, nothing is downloaded or verified by hash
                  : .
         .
                  : .
-                 : LedgerID set and published with WRAPS verification key and initial TSS Roster
+                 : LedgerID set and published with the initial TSS Roster
                  : .
         .
                  : .
@@ -98,10 +98,10 @@ timeline
 
 - Release K (<= N) — **Completed**
   - The "Powers of Tau" ceremony executed during this release to produce
-    the WRAPS keys and Groth parameters. As of TSS library v3.8.0 the
-    ceremony-created artifacts ship with the release, and the WRAPS
-    proving key tar is published at
-    [wraps-v1.0.0.tar.gz](https://builds.hedera.com/tss/hiero/wraps/v1.0/wraps-v1.0.0.tar.gz).
+    the WRAPS public parameters. As of TSS library v3.18.0 the parameters
+    are embedded in the library itself (earlier releases downloaded a
+    separate proving key archive); consensus nodes construct proofs and
+    Block Nodes verify them with nothing beyond the library.
   - Block Nodes run in Preview mode.
   - Preview Block Streams produced with incomplete hash data.
 - Release N
@@ -125,14 +125,14 @@ timeline
       end of each block.
     - Consensus Node stores the correct WRB streaming hash tree data in state
       in BlockInfo at the end of each block.
-  - WRAPS proving key and parameters downloaded by Consensus Node.
-  - WRAPS proving key hash read from configuration.
-    - This data is stored in state as part of post-upgrade migration.
-    - The hash is used to validate the downloaded WRAPS data.
+  - WRAPS public parameters are embedded in the TSS library the Consensus
+    Node ships with; nothing is downloaded or validated by hash.
   - TSS is enabled in Consensus Node but does not sign blocks.
-    - TSS creates the Ledger ID and publishes LedgerID, Initial Roster, and
-      WRAPS verification key in record stream via TSS adoption transaction.
-    - Consensus Node creates WRAPS proofs for each new Roster.
+    - TSS creates the Ledger ID (the hash of the genesis Roster followed by
+      the hash of its hinTS verification key) and publishes the LedgerID and
+      the Initial Roster in the record stream via the TSS adoption transaction.
+    - Consensus Node creates WRAPS proofs for the genesis Roster and for each
+      new Roster.
   - Offline process continues to generate WRB files for backfill via [RBH Block Node](./glossary.md#record-block-history-rbh-block-node).
   - Block Nodes are prepared for cutover.
     - All "production" Tier 1 block nodes are reset to clear preview blocks.

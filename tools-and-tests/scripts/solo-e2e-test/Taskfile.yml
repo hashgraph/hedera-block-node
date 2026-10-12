@@ -279,7 +279,7 @@ tasks:
         echo "$STATUS" | grep -E "(firstAvailableBlock|lastAvailableBlock)" || echo "$STATUS"
 
   check:signature:
-    desc: "Find Schnorr→WRAPS signature transition on Block Node 1"
+    desc: "Check that signed block proofs on Block Node 1 carry WRAPS proofs"
     deps: [proto:extract]
     cmds:
       - '"{{.SCRIPTS_DIR}}/monitor-block-proofs.sh" "{{.PROTO_PATH}}" "localhost:40840"'

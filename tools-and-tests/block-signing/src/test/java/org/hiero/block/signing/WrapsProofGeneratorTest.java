@@ -7,19 +7,20 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /// Offline (re)generator for the committed genesis WRAPS proof resource.
 ///
 /// This is NOT a normal unit test: it is skipped unless the `GENERATE_WRAPS_PROOF=true` environment
-/// variable is set, because it constructs a WRAPS SNARK proof — which takes ~13 minutes and requires
-/// the ~2 GB proving artifacts (`TSS_LIB_WRAPS_ARTIFACTS_PATH` pointing at
-/// `decider_pp.bin`/`decider_vp.bin`/`nova_pp.bin`/`nova_vp.bin`).
+/// variable is set, because it runs the WRAPS SNARK prover (tens of seconds and a few gigabytes of
+/// native memory) and overwrites the committed resource. The prover needs nothing beyond the TSS
+/// library jar: the public parameters are embedded in it.
 ///
-/// Run it to (re)generate the resource — e.g. after a `hedera-cryptography` upgrade — with:
+/// Run it to (re)generate the resource, for example after a `hedera-cryptography` upgrade that changes
+/// the proof format or the ledger id derivation, with:
 /// ```
-/// TSS_LIB_WRAPS_ARTIFACTS_PATH=~/.solo/cache/wraps-v1.0.0-keys GENERATE_WRAPS_PROOF=true \
-///   ./gradlew :block-signing:test --tests '*WrapsProofGeneratorTest*'
+/// GENERATE_WRAPS_PROOF=true ./gradlew :block-signing:test --tests '*WrapsProofGeneratorTest*'
 /// ```
 /// then commit the updated `src/main/resources/org/hiero/block/signing/genesis-wraps-proof.bin`.
 class WrapsProofGeneratorTest {
@@ -27,14 +28,19 @@ class WrapsProofGeneratorTest {
     private static final Path RESOURCE_PATH =
             Path.of("src", "main", "resources", "org", "hiero", "block", "signing", "genesis-wraps-proof.bin");
 
+    /// This test aims to assert that, when regeneration is requested, the genesis WRAPS proof
+    /// constructed for the deterministic roster has the compressed proof length and is written to
+    /// the committed resource path; the generator verifies the proof against the roster's ledger id
+    /// and hinTS verification key before returning it.
     @Test
+    @DisplayName("regenerates the committed genesis WRAPS proof when GENERATE_WRAPS_PROOF=true")
     void regeneratesCommittedGenesisWrapsProof() throws IOException {
         assumeTrue(
                 "true".equals(System.getenv("GENERATE_WRAPS_PROOF")),
-                "set GENERATE_WRAPS_PROOF=true (with TSS_LIB_WRAPS_ARTIFACTS_PATH) to regenerate the WRAPS proof");
+                "set GENERATE_WRAPS_PROOF=true to regenerate the committed WRAPS proof");
 
         final byte[] compressedProof = TssBlockSigner.generateGenesisWrapsProof();
-        assertThat(compressedProof).hasSize(704);
+        assertThat(compressedProof).hasSize(TssBlockSigner.COMPRESSED_WRAPS_PROOF_LENGTH);
 
         Files.createDirectories(RESOURCE_PATH.getParent());
         Files.write(RESOURCE_PATH, compressedProof);
