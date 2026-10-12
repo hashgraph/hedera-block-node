@@ -1387,6 +1387,47 @@ class BlockStreamSubscriberSessionTest {
         }
 
         /**
+         * This test verifies that chunked sending stops as soon as the session is closed,
+         * instead of sending every remaining chunk of a large block.
+         */
+        @Test
+        @DisplayName("should stop sending further chunks once the session is closed")
+        void testChunkedSendStopsWhenClosed() {
+            // Large block requiring multiple chunks (same shape as testLargeBlockMultipleChunks).
+            final List<BlockItemUnparsed> largeBlock = new java.util.ArrayList<>();
+            largeBlock.add(sampleHeaderUnparsed(0));
+            largeBlock.add(createLargeBlockItem(50_000));
+            largeBlock.add(createLargeBlockItem(50_000));
+            largeBlock.add(createLargeBlockItem(50_000));
+            largeBlock.add(sampleProofUnparsed(0));
+
+            final SubscribeStreamRequest request = SubscribeStreamRequest.newBuilder()
+                    .startBlockNumber(0L)
+                    .endBlockNumber(0L)
+                    .build();
+            final BlockStreamSubscriberSession session = new BlockStreamSubscriberSession(
+                    SessionContext.create(clientId, request, chunkingContext),
+                    chunkingPipeline,
+                    chunkingContext,
+                    sessionReadyLatch);
+
+            // Simulate the session already being closed when a chunked send is in progress (e.g.
+            // a concurrent close(), or a future force-cancellation of this thread).
+            Thread.currentThread().interrupt();
+            try {
+                session.sendBlockItemsChunked(largeBlock);
+            } finally {
+                // Clear the interrupt so it doesn't leak into any other test sharing this thread.
+                assertThat(Thread.interrupted()).isTrue();
+            }
+
+            // Exactly one chunk should have been sent before the closed check stopped the loop.
+            final var responses = chunkingPipeline.getOnNextCalls();
+            assertThat(responses).hasSize(1);
+            assertThat(responses.getFirst().response().kind()).isEqualTo(ResponseOneOfType.BLOCK_ITEMS);
+        }
+
+        /**
          * This test verifies that an empty block list results in no responses.
          */
         @Test
