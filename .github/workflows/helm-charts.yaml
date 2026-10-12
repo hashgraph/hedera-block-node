@@ -61,7 +61,7 @@ jobs:
         id: install-needed
         run: |
           changed_files=$(git diff --name-only origin/${{ github.event.repository.default_branch }}...HEAD)
-          if echo "$changed_files" | grep -qE "^(block-node/app/(docker/|build\.gradle\.kts)|charts/|tools-and-tests/simulator/(docker/|build\.gradle\.kts))"; then
+          if echo "$changed_files" | grep -qE "^(block-node/app/(docker/|build\.gradle\.kts)|charts/|tools-and-tests/scripts/chart-tests/|tools-and-tests/simulator/(docker/|build\.gradle\.kts))"; then
             echo "needed=true" >> "$GITHUB_OUTPUT"
             echo "Image/chart/build files changed - will build and test"
           else
@@ -93,9 +93,13 @@ jobs:
           helm repo add grafana https://grafana.github.io/helm-charts
           helm dependency update charts/block-node-server
 
+      - name: Use PR build of plugins not yet in Maven
+        if: steps.install-needed.outputs.needed == 'true'
+        run: bash tools-and-tests/scripts/chart-tests/prepare-pr-plugins.sh "$(cat version.txt)" chart-testing /tmp/pr-plugins-values.yaml
+
       - name: Run chart-testing (install)
         if: steps.install-needed.outputs.needed == 'true'
-        run: ${CGEXEC} ct install --config ct.yaml --all
+        run: ${CGEXEC} ct install --config ct.yaml --all --helm-extra-args "--values /tmp/pr-plugins-values.yaml"
 
   backfill-sources-render-test:
     timeout-minutes: 10
@@ -188,7 +192,7 @@ jobs:
         id: install-needed
         run: |
           changed_files=$(git diff --name-only origin/${{ github.event.repository.default_branch }}...HEAD)
-          if echo "$changed_files" | grep -qE "^(block-node/app/(docker/|build\.gradle\.kts)|charts/|tools-and-tests/simulator/(docker/|build\.gradle\.kts))"; then
+          if echo "$changed_files" | grep -qE "^(block-node/app/(docker/|build\.gradle\.kts)|charts/|tools-and-tests/scripts/chart-tests/|tools-and-tests/simulator/(docker/|build\.gradle\.kts))"; then
             echo "needed=true" >> "$GITHUB_OUTPUT"
             echo "Image/chart/build files changed - will run multi-port test"
           else
@@ -231,6 +235,10 @@ jobs:
           helm repo add grafana https://grafana.github.io/helm-charts
           helm dependency update charts/block-node-server
 
+      - name: Use PR build of plugins not yet in Maven
+        if: steps.install-needed.outputs.needed == 'true'
+        run: bash tools-and-tests/scripts/chart-tests/prepare-pr-plugins.sh "$(cat version.txt)" chart-testing /tmp/pr-plugins-values.yaml
+
       - name: Install chart with multi-port values
         if: steps.install-needed.outputs.needed == 'true'
         run: |
@@ -238,6 +246,7 @@ jobs:
           helm install bn-multi-port-test charts/block-node-server \
             --namespace default \
             --values charts/block-node-server/ci/multi-port/multi-port-values.yaml \
+            --values /tmp/pr-plugins-values.yaml \
             --set image.tag="${APP_VERSION}" \
             --wait \
             --timeout 300s
@@ -333,7 +342,7 @@ jobs:
         id: install-needed
         run: |
           changed_files=$(git diff --name-only origin/${{ github.event.repository.default_branch }}...HEAD)
-          if echo "$changed_files" | grep -qE "^(block-node/app/(docker/|build\.gradle\.kts)|charts/|tools-and-tests/simulator/(docker/|build\.gradle\.kts))"; then
+          if echo "$changed_files" | grep -qE "^(block-node/app/(docker/|build\.gradle\.kts)|charts/|tools-and-tests/scripts/chart-tests/|tools-and-tests/simulator/(docker/|build\.gradle\.kts))"; then
             echo "needed=true" >> "$GITHUB_OUTPUT"
             echo "Image/chart/build files changed - will run LB multi-port test"
           else
@@ -376,6 +385,10 @@ jobs:
           helm repo add grafana https://grafana.github.io/helm-charts
           helm dependency update charts/block-node-server
 
+      - name: Use PR build of plugins not yet in Maven
+        if: steps.install-needed.outputs.needed == 'true'
+        run: bash tools-and-tests/scripts/chart-tests/prepare-pr-plugins.sh "$(cat version.txt)" chart-testing /tmp/pr-plugins-values.yaml
+
       - name: Install chart with LB multi-port values
         if: steps.install-needed.outputs.needed == 'true'
         run: |
@@ -385,6 +398,7 @@ jobs:
           helm install bn-lb-multi-port-test charts/block-node-server \
             --namespace default \
             --values charts/block-node-server/ci/lb/lb-multi-port-values.yaml \
+            --values /tmp/pr-plugins-values.yaml \
             --set image.tag="${APP_VERSION}" \
             --timeout 300s
           kubectl wait pod \
