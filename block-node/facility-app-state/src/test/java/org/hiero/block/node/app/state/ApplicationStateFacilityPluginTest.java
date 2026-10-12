@@ -503,10 +503,13 @@ class ApplicationStateFacilityPluginTest {
         final Fixture second = newFixture();
         final RecordingHandler secondHandler = new RecordingHandler();
         second.register(secondHandler);
-        second.initAndStart();
+        second.init();
+        secondHandler.expect(1);
+        second.plugin.start();
 
         assertThat(second.plugin.tssData()).isEqualTo(tssData);
-        // initial delivery: the persisted value is dispatched as the facility starts
+        // initial delivery: the persisted value is dispatched, on the dispatcher thread, as the facility starts
+        secondHandler.await();
         assertThat(secondHandler.tssDataNotifications).containsExactly(tssData);
         second.plugin.stop();
     }
@@ -789,7 +792,12 @@ class ApplicationStateFacilityPluginTest {
         f.register(handler);
         f.historical.available.add(0, 10);
         f.historical.available.add(20, 30);
-        f.initAndStart();
+        f.init();
+        // let the startup notifications (available and stored blocks) arrive before changing anything,
+        // so they are not counted towards the wait for the change below
+        handler.expect(2);
+        f.plugin.start();
+        handler.await();
 
         f.historical.available.add(11, 15);
         handler.expect(2);
