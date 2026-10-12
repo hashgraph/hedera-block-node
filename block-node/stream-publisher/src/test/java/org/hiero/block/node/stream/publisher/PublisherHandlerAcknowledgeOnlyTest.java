@@ -173,6 +173,39 @@ class PublisherHandlerAcknowledgeOnlyTest {
     }
 
     @Nested
+    @DisplayName("Mid-block cancellation tests")
+    class MidBlockCancellationTests {
+
+        @Test
+        @DisplayName("AcknowledgeOnly mid-block cancels the partial block on the manager and resets handler state")
+        void acknowledgeOnlyCancelsMidBlock() {
+            manager.setBlockActionForBlock(BlockAction.ACCEPT);
+            // Start streaming block 7 (handler enters mid-block state and registers the queue).
+            handler.onNext(blockItemsRequest(7L));
+            assertThat(manager.getQueueForBlock(7L)).isNotNull();
+            assertThat(manager.getBlocksEndedMidBlock()).doesNotContain(7L);
+
+            handler.onNext(ackOnlyRequest(7L));
+
+            assertThat(manager.getBlocksEndedMidBlock()).contains(7L);
+            assertThat(handler.getMode()).isEqualTo(HandlerMode.PASSIVE);
+            // A subsequent BlockItems request with a new header must be accepted as a fresh block
+            // (i.e. the handler is no longer mid-block on 7).
+            handler.onNext(blockItemsRequest(8L));
+            assertThat(handler.getMode()).isEqualTo(HandlerMode.ACTIVE);
+        }
+
+        @Test
+        @DisplayName("AcknowledgeOnly with no in-progress block does not call blockIsEnding")
+        void acknowledgeOnlyNoMidBlockDoesNotCancel() {
+            handler.onNext(ackOnlyRequest(5L));
+
+            assertThat(manager.getBlocksEndedMidBlock()).isEmpty();
+            assertThat(handler.getMode()).isEqualTo(HandlerMode.PASSIVE);
+        }
+    }
+
+    @Nested
     @DisplayName("Progress tracking tests")
     class ProgressTrackingTests {
 
