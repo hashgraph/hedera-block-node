@@ -18,11 +18,13 @@ Usage:
 """
 
 import argparse
+import os
 import struct
 import sys
 from dataclasses import dataclass
 
 HASH_SIZE = 32  # SHA-256
+FIXED_FIELDS_SIZE = 8 + 3 * HASH_SIZE + 8 + 4  # blockNumber, 3 hashes, leafCount, hashCount
 
 
 @dataclass
@@ -52,6 +54,12 @@ def read_jumpstart(binary_file):
     output_items_tree_root_hash = binary_file.read(HASH_SIZE).hex()
     leaf_count = struct.unpack('>q', binary_file.read(8))[0]
     hash_count = struct.unpack('>i', binary_file.read(4))[0]
+    # A legacy SHA-384 file (48-byte hashes) never has the size a 32-byte layout expects
+    expected_size = FIXED_FIELDS_SIZE + hash_count * HASH_SIZE
+    actual_size = os.fstat(binary_file.fileno()).st_size
+    if hash_count < 0 or actual_size != expected_size:
+        raise ValueError('file is {} bytes but a hash count of {} needs {}. It is probably SHA-384 output '
+                         'from an older CLI version.'.format(actual_size, hash_count, expected_size))
     hashes = [binary_file.read(HASH_SIZE).hex() for _ in range(hash_count)]
     return Jumpstart(block_number, block_hash, consensus_timestamp_hash,
                      output_items_tree_root_hash, leaf_count, hash_count, hashes)
@@ -78,6 +86,9 @@ def main():
         return 1
     try:
         jumpstart = read_jumpstart(binary_file)
+    except ValueError as err:
+        print("error: could not read '{}': {}".format(args.filename, err), file=sys.stderr)
+        return 1
     finally:
         binary_file.close()
     print_jumpstart(jumpstart)

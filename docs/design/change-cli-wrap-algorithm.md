@@ -45,8 +45,9 @@ Every consumer of existing WRBs must clear that history and obtain the revised b
   This is also referred to as the "Merkle Mountain Top".</dd>
 
   <dt>Hash registry</dt>
-  <dd><code>blockStreamBlockHashes.bin</code>: headerless array of fixed-width block root hashes, one slot per block,
-  in the wrap output directory</dd>
+  <dd><code>blockStreamBlockHashes.bin</code>: a 4-byte <code>S256</code> header followed by an array of 32-byte
+  block root hashes, one slot per block, in the wrap output directory. A legacy headerless SHA2-384 file is
+  rejected</dd>
 
   <dt>Jumpstart data</dt>
   <dd><code>jumpstart.bin</code>: last wrapped block number, block hash, consensus-timestamp hash, output-items root

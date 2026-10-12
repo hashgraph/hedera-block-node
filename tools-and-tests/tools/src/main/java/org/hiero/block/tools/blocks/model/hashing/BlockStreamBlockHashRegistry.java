@@ -6,8 +6,8 @@ import static org.hiero.block.tools.blocks.model.hashing.HashingUtils.EMPTY_TREE
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.function.Consumer;
 import org.hiero.block.tools.utils.Sha256;
 
@@ -15,8 +15,16 @@ import org.hiero.block.tools.utils.Sha256;
  * A registry for the history of block stream block root hashes. It is designed to store on disk all hashes for block
  * from block 0 on. To allow random read by block number. Blocks are stored in a binary file of 32 byte hashes at index
  * by block number. As if it was a giant array of hash byte[]s, like byte[][].
+ *
+ * <p>The file starts with a 4 byte {@link #MAGIC} header that marks it as a SHA-256 registry. Older CLI versions wrote
+ * a headerless file of 48 byte SHA-384 hashes, which cannot be told apart from a SHA-256 file by its length alone. A
+ * non-empty file without the header is rejected rather than misparsed or truncated.
  */
 public class BlockStreamBlockHashRegistry implements AutoCloseable {
+    /** Header at the start of the file, identifying a registry of SHA-256 hashes */
+    static final byte[] MAGIC = {'S', '2', '5', '6'};
+    /** Size of the header in bytes */
+    private static final int HEADER_SIZE = MAGIC.length;
     /** random access file for reading and storing block hashes */
     private final RandomAccessFile randomAccessFile;
     /** The highest block number stored in the file */
@@ -37,9 +45,22 @@ public class BlockStreamBlockHashRegistry implements AutoCloseable {
     public BlockStreamBlockHashRegistry(Path blockHashesFilePath) {
         try {
             randomAccessFile = new RandomAccessFile(blockHashesFilePath.toFile(), "rw");
-            if (Files.exists(blockHashesFilePath) && randomAccessFile.length() > 0) {
-                long fileLength = randomAccessFile.length();
-                long remainder = fileLength % Sha256.SHA_256_HASH_SIZE;
+            long fileLength = randomAccessFile.length();
+            if (fileLength < HEADER_SIZE) {
+                // New file, or a crash before the header was fully written. A legacy SHA-384 file is never this
+                // short, so it is safe to start over with a fresh header.
+                randomAccessFile.setLength(0);
+                randomAccessFile.write(MAGIC);
+            } else {
+                final byte[] header = new byte[HEADER_SIZE];
+                randomAccessFile.readFully(header);
+                if (!Arrays.equals(header, MAGIC)) {
+                    randomAccessFile.close();
+                    throw new IllegalStateException(blockHashesFilePath
+                            + " is not a SHA-256 block hash registry (missing header). It is probably SHA-384 output"
+                            + " from an older CLI version. Wrap into a fresh output directory.");
+                }
+                long remainder = (fileLength - HEADER_SIZE) % Sha256.SHA_256_HASH_SIZE;
                 if (remainder != 0) {
                     // Partial write detected — truncate to last complete record
                     long truncatedLength = fileLength - remainder;
@@ -49,9 +70,9 @@ public class BlockStreamBlockHashRegistry implements AutoCloseable {
                     randomAccessFile.setLength(truncatedLength);
                     fileLength = truncatedLength;
                 }
-                if (fileLength > 0) {
+                if (fileLength > HEADER_SIZE) {
                     // compute the highestBlockNumberStored based on file size
-                    highestBlockNumberStored = (fileLength / Sha256.SHA_256_HASH_SIZE) - 1;
+                    highestBlockNumberStored = ((fileLength - HEADER_SIZE) / Sha256.SHA_256_HASH_SIZE) - 1;
                     // read mostRecentBlockHash
                     mostRecentBlockHash = getBlockHash(highestBlockNumberStored);
                 }
@@ -75,7 +96,7 @@ public class BlockStreamBlockHashRegistry implements AutoCloseable {
                     "Block number " + blockNumber + " is not the next block after " + highestBlockNumberStored);
         }
         try {
-            randomAccessFile.seek(blockNumber * Sha256.SHA_256_HASH_SIZE);
+            randomAccessFile.seek(offsetOf(blockNumber));
             randomAccessFile.write(blockHash);
             highestBlockNumberStored = blockNumber;
             mostRecentBlockHash = blockHash;
@@ -96,7 +117,7 @@ public class BlockStreamBlockHashRegistry implements AutoCloseable {
                     + " is out of range. Highest block stored is " + highestBlockNumberStored);
         }
         try {
-            randomAccessFile.seek(blockNumber * Sha256.SHA_256_HASH_SIZE);
+            randomAccessFile.seek(offsetOf(blockNumber));
             byte[] hash = new byte[Sha256.SHA_256_HASH_SIZE];
             randomAccessFile.readFully(hash);
             return hash;
@@ -141,7 +162,7 @@ public class BlockStreamBlockHashRegistry implements AutoCloseable {
                     "Cannot truncate to block " + blockNumber + "; highest stored is " + highestBlockNumberStored);
         }
         try {
-            final long newLength = (blockNumber + 1) * Sha256.SHA_256_HASH_SIZE;
+            final long newLength = offsetOf(blockNumber + 1);
             randomAccessFile.setLength(newLength);
             highestBlockNumberStored = blockNumber;
             mostRecentBlockHash = blockNumber >= 0 ? getBlockHash(blockNumber) : EMPTY_TREE_HASH;
@@ -178,7 +199,7 @@ public class BlockStreamBlockHashRegistry implements AutoCloseable {
                     + highestBlockNumberStored);
         }
         try {
-            randomAccessFile.seek(fromBlock * Sha256.SHA_256_HASH_SIZE);
+            randomAccessFile.seek(offsetOf(fromBlock));
             // Use a 1 MiB read buffer (holds 32,768 hashes) for efficient sequential I/O
             final int bufferSize = 1 << 20;
             final byte[] buffer = new byte[bufferSize];
@@ -206,6 +227,16 @@ public class BlockStreamBlockHashRegistry implements AutoCloseable {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    /**
+     * Returns the file offset of the hash slot for the given block number.
+     *
+     * @param blockNumber the block number
+     * @return the offset of that block's hash, after the header
+     */
+    private static long offsetOf(long blockNumber) {
+        return HEADER_SIZE + blockNumber * Sha256.SHA_256_HASH_SIZE;
     }
 
     /**

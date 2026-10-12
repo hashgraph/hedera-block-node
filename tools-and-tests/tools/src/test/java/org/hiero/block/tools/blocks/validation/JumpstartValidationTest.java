@@ -19,6 +19,7 @@ import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.io.DataOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import org.hiero.block.internal.BlockUnparsed;
 import org.hiero.block.tools.blocks.model.hashing.StreamingHasher;
@@ -218,6 +219,30 @@ class JumpstartValidationTest {
 
         JumpstartValidation validation = new JumpstartValidation(jumpstartFile, tree, null);
         assertThrows(ValidationException.class, () -> validation.finalize(1, 0));
+    }
+
+    @Test
+    void legacySha384Jumpstart_failsWithClearMessage(@TempDir Path tempDir) throws Exception {
+        BlockChainValidation chain = new BlockChainValidation();
+        HistoricalBlockTreeValidation tree = new HistoricalBlockTreeValidation(chain);
+
+        // Same field order as today, but every hash is 48 bytes (SHA-384), as older CLI versions wrote it
+        Path jumpstartFile = tempDir.resolve("jumpstart.bin");
+        byte[] legacyHash = new byte[48];
+        Arrays.fill(legacyHash, (byte) 0x11);
+        try (DataOutputStream out = new DataOutputStream(Files.newOutputStream(jumpstartFile))) {
+            out.writeLong(0);
+            out.write(legacyHash); // block hash
+            out.write(legacyHash); // consensus timestamp hash
+            out.write(legacyHash); // output items tree root hash
+            out.writeLong(1);
+            out.writeInt(1);
+            out.write(legacyHash);
+        }
+
+        JumpstartValidation validation = new JumpstartValidation(jumpstartFile, tree, null);
+        ValidationException ex = assertThrows(ValidationException.class, () -> validation.finalize(1, 0));
+        assertTrue(ex.getMessage().contains("SHA-384"));
     }
 
     @Test

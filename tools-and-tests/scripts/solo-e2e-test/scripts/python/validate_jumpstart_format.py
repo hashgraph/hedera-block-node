@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 HASH_SIZE = 32  # SHA-256
+FIXED_FIELDS_SIZE = 8 + 3 * HASH_SIZE + 8 + 4  # block number, 3 hashes, leaf count, hash count
 
 def main():
     if len(sys.argv) != 2:
@@ -33,6 +34,14 @@ def main():
 
         # Read hash count (4 bytes, big-endian int)
         hash_count = struct.unpack('>I', f.read(4))[0]
+
+        # A legacy SHA-384 file (48-byte hashes) never has the size a 32-byte layout expects
+        expected_size = FIXED_FIELDS_SIZE + hash_count * HASH_SIZE
+        actual_size = jumpstart_file.stat().st_size
+        if actual_size != expected_size:
+            print(f"ERROR: {jumpstart_file} is {actual_size} bytes but a hash count of {hash_count} needs "
+                  f"{expected_size}. It is probably SHA-384 output from an older CLI version.", file=sys.stderr)
+            sys.exit(1)
 
         # Read pending subtree hashes (32 bytes each)
         pending_hashes = []

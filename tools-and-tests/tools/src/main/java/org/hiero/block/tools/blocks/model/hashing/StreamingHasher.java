@@ -12,6 +12,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -137,6 +138,13 @@ public class StreamingHasher implements Hasher {
         try (DataInputStream din = new DataInputStream(new BufferedInputStream(Files.newInputStream(filePath), 8192))) {
             newLeafCount = din.readLong();
             int hashCount = din.readInt();
+            // A legacy SHA-384 file (48-byte hashes) never has the size a 32-byte layout expects for its hash count
+            final long expectedSize = Long.BYTES + Integer.BYTES + (long) hashCount * SHA_256_HASH_SIZE;
+            final long actualSize = Files.size(filePath);
+            if (hashCount < 0 || actualSize != expectedSize) {
+                throw new IOException(filePath + " is " + actualSize + " bytes but a hash count of " + hashCount
+                        + " needs " + expectedSize + ". It is probably SHA-384 output from an older CLI version.");
+            }
             for (int i = 0; i < hashCount; i++) {
                 byte[] hash = new byte[SHA_256_HASH_SIZE]; // SHA-256 produces 32-byte hashes
                 din.readFully(hash);

@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Dict, Any
 
 HASH_SIZE = 32  # SHA-256
+FIXED_FIELDS_SIZE = 8 + 3 * HASH_SIZE + 8 + 4  # block number, 3 hashes, leaf count, hash count
 
 
 class JumpstartFile:
@@ -56,6 +57,14 @@ class JumpstartFile:
             # Read streaming hasher state
             self.leaf_count = struct.unpack('>Q', f.read(8))[0]
             self.hash_count = struct.unpack('>I', f.read(4))[0]
+
+            # A legacy SHA-384 file (48-byte hashes) never has the size a 32-byte layout expects
+            expected_size = FIXED_FIELDS_SIZE + self.hash_count * HASH_SIZE
+            actual_size = file_path.stat().st_size
+            if actual_size != expected_size:
+                print(f"ERROR: {file_path} is {actual_size} bytes but a hash count of {self.hash_count} needs "
+                      f"{expected_size}. It is probably SHA-384 output from an older CLI version.", file=sys.stderr)
+                sys.exit(1)
 
             # Read pending subtree hashes
             self.pending_hashes = []

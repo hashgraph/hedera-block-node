@@ -94,6 +94,14 @@ public final class JumpstartValidation implements BlockValidation {
             din.readFully(jOutputItemsTreeRootHash);
             long jLeafCount = din.readLong();
             int jHashCount = din.readInt();
+            // A legacy SHA-384 file (48-byte hashes) never has the size a 32-byte layout expects for its hash count
+            final long expectedSize = Long.BYTES * 2 + Integer.BYTES + (3L + jHashCount) * Sha256.SHA_256_HASH_SIZE;
+            final long actualSize = Files.size(jumpstartPath);
+            if (jHashCount < 0 || actualSize != expectedSize) {
+                throw new ValidationException("jumpstart.bin is " + actualSize + " bytes but a hash count of "
+                        + jHashCount + " needs " + expectedSize
+                        + ". It is probably SHA-384 output from an older CLI version.");
+            }
             List<byte[]> jHashes = new ArrayList<>();
             for (int i = 0; i < jHashCount; i++) {
                 byte[] h = new byte[Sha256.SHA_256_HASH_SIZE];

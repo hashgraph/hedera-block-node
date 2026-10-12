@@ -9,8 +9,13 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -293,6 +298,30 @@ class StreamingHasherTest {
         assertEquals(originalLeafCount, loaded.leafCount(), "Loaded hasher should have same leaf count as original");
         assertArrayEquals(
                 originalRoot, loaded.computeRootHash(), "Loaded hasher should produce same root hash as original");
+    }
+
+    /**
+     * Verifies that a state file written with 48-byte SHA-384 hashes by an older CLI version is rejected instead of
+     * being parsed as garbage 32-byte hashes, and that the current state is left untouched.
+     */
+    @Test
+    @DisplayName("Loading a legacy SHA-384 state file should fail")
+    void testLoadLegacySha384StateFails() throws Exception {
+        Path legacyFile = tempDir.resolve("legacy_streaming_hasher.bin");
+        byte[] legacyHash = new byte[48];
+        Arrays.fill(legacyHash, (byte) 0x11);
+        try (DataOutputStream out = new DataOutputStream(Files.newOutputStream(legacyFile))) {
+            out.writeLong(3);
+            out.writeInt(2);
+            out.write(legacyHash);
+            out.write(legacyHash);
+        }
+
+        StreamingHasher hasher = new StreamingHasher();
+        hasher.addLeaf("leaf".getBytes(StandardCharsets.UTF_8));
+        IOException ex = assertThrows(IOException.class, () -> hasher.load(legacyFile));
+        assertTrue(ex.getMessage().contains("SHA-384"));
+        assertEquals(1, hasher.leafCount(), "Failed load must not replace the current state");
     }
 
     /**
