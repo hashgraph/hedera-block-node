@@ -95,11 +95,11 @@ jobs:
 
       - name: Use PR build of plugins not yet in Maven
         if: steps.install-needed.outputs.needed == 'true'
-        run: bash tools-and-tests/scripts/chart-tests/prepare-pr-plugins.sh "$(cat version.txt)" chart-testing /tmp/pr-plugins-values.yaml
+        run: bash tools-and-tests/scripts/chart-tests/prepare-pr-plugins.sh "$(cat version.txt)" chart-testing
 
       - name: Run chart-testing (install)
         if: steps.install-needed.outputs.needed == 'true'
-        run: ${CGEXEC} ct install --config ct.yaml --all --helm-extra-args "--values /tmp/pr-plugins-values.yaml"
+        run: ${CGEXEC} ct install --config ct.yaml --all
 
   backfill-sources-render-test:
     timeout-minutes: 10
@@ -237,7 +237,7 @@ jobs:
 
       - name: Use PR build of plugins not yet in Maven
         if: steps.install-needed.outputs.needed == 'true'
-        run: bash tools-and-tests/scripts/chart-tests/prepare-pr-plugins.sh "$(cat version.txt)" chart-testing /tmp/pr-plugins-values.yaml
+        run: bash tools-and-tests/scripts/chart-tests/prepare-pr-plugins.sh "$(cat version.txt)" chart-testing
 
       - name: Install chart with multi-port values
         if: steps.install-needed.outputs.needed == 'true'
@@ -246,7 +246,6 @@ jobs:
           helm install bn-multi-port-test charts/block-node-server \
             --namespace default \
             --values charts/block-node-server/ci/multi-port/multi-port-values.yaml \
-            --values /tmp/pr-plugins-values.yaml \
             --set image.tag="${APP_VERSION}" \
             --wait \
             --timeout 300s
@@ -387,7 +386,7 @@ jobs:
 
       - name: Use PR build of plugins not yet in Maven
         if: steps.install-needed.outputs.needed == 'true'
-        run: bash tools-and-tests/scripts/chart-tests/prepare-pr-plugins.sh "$(cat version.txt)" chart-testing /tmp/pr-plugins-values.yaml
+        run: bash tools-and-tests/scripts/chart-tests/prepare-pr-plugins.sh "$(cat version.txt)" chart-testing
 
       - name: Install chart with LB multi-port values
         if: steps.install-needed.outputs.needed == 'true'
@@ -398,7 +397,6 @@ jobs:
           helm install bn-lb-multi-port-test charts/block-node-server \
             --namespace default \
             --values charts/block-node-server/ci/lb/lb-multi-port-values.yaml \
-            --values /tmp/pr-plugins-values.yaml \
             --set image.tag="${APP_VERSION}" \
             --timeout 300s
           kubectl wait pod \
