@@ -124,16 +124,6 @@ public interface StreamPublisherManager extends BlockNotificationHandler {
         return getLatestBlockNumber();
     }
 
-    /// Record that a passive handler reported progress at the given block number via
-    /// [org.hiero.block.api.PublishStreamRequest.AcknowledgeOnly]. Used by the manager
-    /// to feed stall detection and connected-publisher progress tracking.
-    ///
-    /// @param handlerId the id of the handler that sent the AcknowledgeOnly request
-    /// @param blockNumber the block number the handler claims to be at or past
-    default void recordPassiveHandlerAck(final long handlerId, final long blockNumber) {
-        // default: no-op
-    }
-
     /// Notify the manager that a handler has transitioned between active and passive mode.
     /// Used to maintain per-mode gauges and other mode-aware bookkeeping.
     ///

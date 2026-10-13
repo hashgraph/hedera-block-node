@@ -65,7 +65,6 @@ public class TestStreamPublisherManager implements StreamPublisherManager {
     private final ConcurrentMap<Long, Deque<BlockItemSetUnparsed>> queueByBlockMap = new ConcurrentSkipListMap<>();
     private final ConcurrentMap<Long, Bytes> cachedBlockRootHashes = new ConcurrentHashMap<>();
     private final ConcurrentMap<Long, Boolean> handlerPassiveMode = new ConcurrentHashMap<>();
-    private final ConcurrentMap<Long, Long> passiveHandlerLastBlock = new ConcurrentHashMap<>();
     private volatile long latestAckedBlockNumber = -1L;
 
     public TestStreamPublisherManager(
@@ -229,11 +228,6 @@ public class TestStreamPublisherManager implements StreamPublisherManager {
     }
 
     @Override
-    public void recordPassiveHandlerAck(final long handlerId, final long blockNumber) {
-        passiveHandlerLastBlock.merge(handlerId, blockNumber, Math::max);
-    }
-
-    @Override
     public void notifyHandlerModeChange(final long handlerId, final boolean passive) {
         handlerPassiveMode.put(handlerId, passive);
     }
@@ -252,12 +246,6 @@ public class TestStreamPublisherManager implements StreamPublisherManager {
     /// no transition has been observed.
     public Boolean getHandlerPassiveMode(final long handlerId) {
         return handlerPassiveMode.get(handlerId);
-    }
-
-    /// Fixture method. Returns the latest recorded passive-handler block number for the given handler,
-    /// or null if none has been recorded.
-    public Long getPassiveHandlerLastBlock(final long handlerId) {
-        return passiveHandlerLastBlock.get(handlerId);
     }
 
     /// Fixture method to get the number of calls to closeBlock for a handler.
