@@ -231,11 +231,28 @@ call ends (noting "the call ends" is not signaled the same way for every RPC sha
 *outgoing* `responses` pipeline (the pipeline passed into `open()`), not the pipeline that `open()` returns. For a
 server-streaming call such as `subscribeBlockStream`, the client sends one request and then half-closes its side
 almost immediately. This does not mean the call is finished, since the server may continue streaming responses
-for a long time afterward. The `responses` pipeline's completion callbacks, by contrast, reliably fire exactly once
-when the call actually ends (on normal completion, on a business-logic error, on client cancellation, and on a
-deadline being exceeded) for both unary and streaming calls alike. The release logic needs its own single-fire
-guard, since more than one of those signals can arrive for the same call (for example, a cancellation arriving
+for a long time afterward. The `responses` pipeline's completion callbacks reliably fire exactly once when the call
+actually ends on normal completion, on a business-logic error, or on a deadline being exceeded, for both unary and
+streaming calls alike — **with one confirmed exception, below.** The release logic needs its own single-fire guard
+regardless, since more than one of those signals can arrive for the same call (for example, a cancellation arriving
 immediately after a business-logic error).
+
+**Known gap: cancellation of an idle, half-closed streaming call is not detected promptly.** Once a
+server-streaming call's client has half-closed (the normal shape described above) and the call is otherwise idle —
+the common case for `subscribeBlockStream` waiting on a not-yet-published block — a subsequent client cancellation
+or disconnection does **not** trigger `onComplete`/`onError` on the `responses` pipeline. This is a confirmed
+limitation of the underlying PBJ/Helidon transport stack (an SPI gap in how Helidon's HTTP/2 stream handler learns
+of connection-state changes), not a defect in this decorator's own logic — verified with a minimal,
+hiero-block-node-code-free repro against the exact Helidon/PBJ versions this project uses. In this situation the
+permit is only released reactively: the next time the plugin attempts to write a response into the dead pipeline
+(the write throws, and that exception does reach `onError`), or, if no further write is ever attempted, once the
+connection's own `idleConnectionTimeoutMinutes` reaper closes the underlying socket (bounded, but a multi-hour
+window at today's default, and even then only discovered by the plugin on its *next* write attempt, not
+proactively). A cancelled-but-abandoned subscription on a quiet chain can therefore hold its permit well past when
+the call actually needed it. This does not threaten the node-wide concurrency ceiling's correctness (the accounted
+total never exceeds the configured value), but it can reduce real available capacity for legitimate clients while
+a phantom permit is held. Filing a tracking issue for this transport-level gap, independent of this design, is a
+reasonable follow-up.
 
 **Content-aware weighting for `getBlock` and `subscribeBlockStream`.** A single static weight per API can't express
 that a historical block read is more expensive than a live one. Both APIs register a `ContentAwareWeigher` that
@@ -630,7 +647,12 @@ produced. `publishBlockStream` is not subject to any admission check and is unaf
 4. `getBlock` and `subscribeBlockStream` requests for historical blocks are limited independently of requests for
    live/recent blocks, using the same client's traffic on both tiers.
 5. A concurrency permit is released exactly once for a call that completes normally, for a call cancelled by the
-   client, and for a call that exceeds its deadline — verified for both a unary call and a long-lived streaming call.
+   client, and for a call that exceeds its deadline — verified for a unary call, and for a long-lived streaming
+   call cancelled *while actively exchanging data*. For a long-lived streaming call cancelled while idle and
+   half-closed (the normal shape for `subscribeBlockStream`), release is verified to happen reactively — on the
+   plugin's next write attempt, or via the idle-connection reaper — per the known gap documented under
+   [Component A](#component-a--per-client-admission-gate); this test must not assert immediate release for that
+   specific case.
 6. Sustained subscribe/unsubscribe churn from many clients does not cause per-client or node-wide in-flight counts,
    or the client-state table size, to grow without bound.
 7. Concurrent `getBlock` (historical) and subscriber catch-up traffic together are capped by the shared block-read
