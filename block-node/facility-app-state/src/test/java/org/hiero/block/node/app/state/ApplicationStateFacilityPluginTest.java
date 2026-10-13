@@ -135,7 +135,7 @@ class ApplicationStateFacilityPluginTest {
     /// One plugin wired to a context whose state files all live under a directory.
     private static final class Fixture {
         final ApplicationStateFacilityPlugin plugin = new ApplicationStateFacilityPlugin();
-        final TestBlockMessagingFacility messaging = new TestBlockMessagingFacility();
+        final TestBlockMessagingFacility messaging;
         final TestHistoricalBlockFacility historical = new TestHistoricalBlockFacility();
         final TestMetricsExporter metricsExporter = new TestMetricsExporter();
         final TestThreadPoolManager<?, ?> threadPoolManager = new TestThreadPoolManager<>(
@@ -145,6 +145,11 @@ class ApplicationStateFacilityPluginTest {
         final BlockNodeContext context;
 
         Fixture(final Path dir) {
+            this(dir, new TestBlockMessagingFacility());
+        }
+
+        Fixture(final Path dir, final TestBlockMessagingFacility messaging) {
+            this.messaging = messaging;
             configuration = ConfigurationBuilder.create()
                     .withConfigDataType(ApplicationStateConfig.class)
                     .withValue(
@@ -473,6 +478,58 @@ class ApplicationStateFacilityPluginTest {
             assertThat(seen.get(i).validFromBlock())
                     .isGreaterThan(seen.get(i - 1).validFromBlock());
         }
+    }
+
+    @Test
+    @DisplayName("a failed state file write does not throw into the caller, and the notification is still sent")
+    void failedPersistDoesNotReachCallerAndStillNotifies() throws IOException {
+        final Fixture f = newFixture();
+        // a directory where the file belongs makes every write of the TSS file fail
+        Files.createDirectory(f.config.tssBootstrapFilePath());
+        final RecordingHandler handler = new RecordingHandler();
+        f.register(handler);
+        f.initAndStart();
+
+        final TssData tssData = buildTssData(10, "040506");
+        assertThatCode(() -> f.plugin.updateTssData(tssData)).doesNotThrowAnyException();
+        f.plugin.stop();
+
+        assertThat(f.plugin.tssData()).isEqualTo(tssData);
+        assertThat(handler.tssDataNotifications).containsExactly(tssData);
+        assertThat(f.config.tssBootstrapFilePath()).isDirectory();
+    }
+
+    @Test
+    @DisplayName("a failing notification send does not throw into the caller or stop later updates")
+    void failedSendDoesNotReachCallerAndDispatcherKeepsRunning() throws InterruptedException {
+        final CountDownLatch firstSendAttempted = new CountDownLatch(1);
+        final AtomicBoolean firstSend = new AtomicBoolean(true);
+        final TestBlockMessagingFacility failingOnce = new TestBlockMessagingFacility() {
+            @Override
+            public void sendTssDataUpdate(final TssDataNotification notification) {
+                if (firstSend.compareAndSet(true, false)) {
+                    firstSendAttempted.countDown();
+                    throw new IllegalStateException("simulated send failure");
+                }
+                super.sendTssDataUpdate(notification);
+            }
+        };
+        final Fixture f = new Fixture(tempDir, failingOnce);
+        fixtures.add(f);
+        final RecordingHandler handler = new RecordingHandler();
+        f.register(handler);
+        f.initAndStart();
+
+        assertThatCode(() -> f.plugin.updateTssData(buildTssData(10, "040506"))).doesNotThrowAnyException();
+        assertThat(firstSendAttempted.await(5, TimeUnit.SECONDS)).isTrue();
+
+        // the dispatcher thread survived the failure and handles the next update
+        final TssData second = buildTssData(20, "040506");
+        assertThatCode(() -> f.plugin.updateTssData(second)).doesNotThrowAnyException();
+        f.plugin.stop();
+
+        assertThat(f.plugin.tssData()).isEqualTo(second);
+        assertThat(handler.tssDataNotifications).containsExactly(second);
     }
 
     @Test

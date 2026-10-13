@@ -60,6 +60,21 @@ import org.hiero.metrics.core.MetricKey;
 /// The messaging facility must be started before this plugin, because loading the persisted state
 /// dispatches notifications immediately. The plugin must also be initialized before any block
 /// provider plugin, because providers may report blocks from their own `init()`.
+///
+/// ## Failure handling
+/// The update methods (`updateTssData`, `updateAddressBookHistory`, `addStoredBlockRange`,
+/// `updateAvailableBlocks`) install the new value in memory and hand the persist and notification work
+/// to a single dispatcher thread. A failure in that work never reaches the calling plugin:
+/// - a failed write of a state file is logged at WARNING and the notification is still sent, so the
+///   plugins stay informed even when the file could not be written;
+/// - any other exception thrown by a sync, for example from the messaging facility, goes to
+///   `ApplicationStateUtility#uncaughtExceptionHandler`, which logs it at WARNING, and the dispatcher
+///   keeps running for later updates;
+/// - once the facility is stopped, syncs are dropped (see [#dispatch]), because the value is already
+///   held in memory.
+///
+/// Exceptions from loading the persisted state in `start()` are the exception: they propagate to the
+/// application, so a corrupt bootstrap file aborts startup.
 public class ApplicationStateFacilityPlugin implements ApplicationStateFacility {
     /// An address book history paired with the lookup index built from it, so both can be
     /// installed with one compare-and-set.
@@ -248,6 +263,9 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
     /// sync is dropped rather than throwing [RejectedExecutionException] into the caller: plugins that
     /// are stopped after this facility may still report state. The update itself is already installed in
     /// memory by then.
+    ///
+    /// An exception thrown by the sync itself is not seen here: it happens later on the dispatcher thread
+    /// and is logged by the uncaught exception handler, see the class documentation.
     ///
     /// @param sync the sync method to run on the dispatcher thread
     private void dispatch(final Runnable sync) {
