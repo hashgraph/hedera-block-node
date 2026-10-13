@@ -825,8 +825,7 @@ class BackfillRunnerTest {
             long lastSuccessful = retrySubject.run(gap);
 
             // then - the notification landed right after the first attempt's timeout and must not be lost
-            assertEquals(
-                    0L, lastSuccessful, "Notification landing in the untracked retry window should not be lost");
+            assertEquals(0L, lastSuccessful, "Notification landing in the untracked retry window should not be lost");
         }
 
         @Test
@@ -911,13 +910,12 @@ class BackfillRunnerTest {
         /**
          * Runs a single-block gap whose only block gets the given outcome published for it as soon as it
          * is dispatched. TestBlockMessagingFacility dispatches synchronously on the caller's thread, so
-         * the outcome always lands before the runner starts awaiting. Uses more than one retry attempt so
-         * a definitively failed block that gets re-awaited on a later attempt must keep reporting failure
-         * rather than being mistaken for an untracked (and therefore "already persisted") block.
+         * the outcome always lands before the runner starts awaiting. Uses more than one attempt so a
+         * failed block is re-awaited and must keep reporting failure.
          */
         private long runSingleBlockGapWithOutcome(
                 long blockNumber, Consumer<BackfilledBlockNotification> outcomePublisher) throws Exception {
-            BackfillConfiguration singleAttemptConfig = BackfillPluginTest.BackfillConfigBuilder.NewBuilder()
+            BackfillConfiguration retryConfig = BackfillPluginTest.BackfillConfigBuilder.NewBuilder()
                     .delayBetweenBatches(0)
                     .perBlockProcessingTimeout(50)
                     .initialRetryDelay(10)
@@ -925,7 +923,7 @@ class BackfillRunnerTest {
                     .buildRecord();
             BackfillRunner failureSubject = new BackfillRunner(
                     mockFetcher,
-                    singleAttemptConfig,
+                    retryConfig,
                     messaging,
                     logger,
                     mockMetricsHolder,

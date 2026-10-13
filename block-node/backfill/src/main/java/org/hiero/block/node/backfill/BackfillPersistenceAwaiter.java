@@ -202,13 +202,10 @@ public class BackfillPersistenceAwaiter implements BlockNotificationHandler {
         }
     }
 
-    /**
-     * Stops tracking a block. Used once a caller is done with a block - whether it persisted,
-     * definitively failed, or its retry budget was exhausted while still unresolved - so its entry
-     * does not remain in the map indefinitely.
-     *
-     * @param blockNumber the block number to stop tracking
-     */
+    /// Stops tracking a block. Called once the caller is done with it (persisted, definitively failed, or
+    /// retry budget exhausted while unresolved) so its entry does not stay in the map.
+    ///
+    /// @param blockNumber the block number to stop tracking
     public void stopTracking(long blockNumber) {
         pendingBlocks.remove(blockNumber);
     }

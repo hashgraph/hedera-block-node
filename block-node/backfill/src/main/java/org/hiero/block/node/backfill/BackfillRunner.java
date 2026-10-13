@@ -280,30 +280,33 @@ final class BackfillRunner {
      */
     private boolean sendChunkAndAwaitPersistenceWithRetries(
             List<BlockUnparsed> blocks, List<Long> blockNumbers, LongRange chunk) {
-        sendBlocksForPersistence(blocks, blockNumbers, chunk);
-        List<Long> stillPending = blockNumbers;
-        for (int attempt = 1; attempt <= config.maxRetries() && !stillPending.isEmpty(); attempt++) {
-            stillPending = awaitBlocksPersistence(stillPending, chunk);
-            if (!stillPending.isEmpty() && attempt < config.maxRetries()) {
-                final String retryingChunkMsg =
-                        "Chunk [{0}] persistence attempt [{1}/{2}] incomplete for [{3}] block(s), continuing to "
-                                + "wait on the same in-flight session(s)";
-                logger.log(DEBUG, retryingChunkMsg, chunk, attempt, config.maxRetries(), stillPending.size());
-                // awaitPersistence never clears its own bookkeeping entry, so the next attempt simply
-                // re-awaits the same latch instead of needing to re-track here, and a notification that
-                // lands between attempts - or a failure already reported - is never lost or forgotten.
-                LockSupport.parkNanos(
-                        TimeUnit.MILLISECONDS.toNanos(Math.max(0, (long) config.initialRetryDelay() * attempt)));
+        try {
+            sendBlocksForPersistence(blocks, blockNumbers, chunk);
+            List<Long> stillPending = blockNumbers;
+            for (int attempt = 1; attempt <= config.maxRetries() && !stillPending.isEmpty(); attempt++) {
+                stillPending = awaitBlocksPersistence(stillPending, chunk);
+                if (!stillPending.isEmpty() && attempt < config.maxRetries()) {
+                    final String retryingChunkMsg =
+                            "Chunk [{0}] persistence attempt [{1}/{2}] incomplete for [{3}] block(s), continuing to "
+                                    + "wait on the same in-flight session(s)";
+                    logger.log(DEBUG, retryingChunkMsg, chunk, attempt, config.maxRetries(), stillPending.size());
+                    // awaitPersistence never clears its own bookkeeping entry, so the next attempt simply
+                    // re-awaits the same latch instead of needing to re-track here, and a notification that
+                    // lands between attempts - or a failure already reported - is never lost or forgotten.
+                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(
+                            Math.max(0, (long) config.initialRetryDelay() * attempt)));
+                }
+            }
+            return stillPending.isEmpty();
+        } finally {
+            // Every block's fate for this chunk is now settled - persisted, definitively failed, or the retry
+            // budget was exhausted while still unresolved - so stop tracking all of them here; awaitPersistence
+            // itself never does, and a persisted block's entry would otherwise remain in the map forever. Also
+            // covers the case where sendBlocksForPersistence throws partway through, leaving some blocks tracked.
+            for (long blockNumber : blockNumbers) {
+                persistenceAwaiter.stopTracking(blockNumber);
             }
         }
-        boolean persisted = stillPending.isEmpty();
-        // Every block's fate for this chunk is now settled - persisted, definitively failed, or the retry
-        // budget was exhausted while still unresolved - so stop tracking all of them here; awaitPersistence
-        // itself never does, and a persisted block's entry would otherwise remain in the map forever.
-        for (long blockNumber : blockNumbers) {
-            persistenceAwaiter.stopTracking(blockNumber);
-        }
-        return persisted;
     }
 
     /**

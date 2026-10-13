@@ -182,12 +182,11 @@ class BackfillPersistenceAwaiterTest {
             // when - first wait times out without a notification
             assertFalse(subject.awaitPersistence(blockNumber, 50));
 
-            // and - the notification arrives afterward, with nothing actively awaiting it
-            subject.handlePersisted(new PersistedNotification(blockNumber, true, 1, BlockSource.BACKFILL));
+            // and - a failure notification arrives afterward, with nothing actively awaiting it
+            subject.handlePersisted(new PersistedNotification(blockNumber, false, 1, BlockSource.BACKFILL));
 
-            // then - a later await for the same block still observes it, instead of treating a block that
-            // merely timed out once as no longer tracked
-            assertTrue(subject.awaitPersistence(blockNumber, 50));
+            // then - a later await still observes it; an untracked block would wrongly report true here
+            assertFalse(subject.awaitPersistence(blockNumber, 50));
         }
 
         @Test
