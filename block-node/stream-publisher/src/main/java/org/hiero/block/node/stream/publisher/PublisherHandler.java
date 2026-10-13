@@ -486,7 +486,6 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
             publisherManager.blockIsEnding(blockInProgress, handlerId);
             resetState();
         }
-        publisherManager.recordPassiveHandlerAck(handlerId, requestedBlockNumber);
         final long latestAcked = publisherManager.getLatestAckedBlockNumber();
         if (requestedBlockNumber > UNKNOWN_BLOCK_NUMBER
                 && latestAcked > UNKNOWN_BLOCK_NUMBER
@@ -823,15 +822,6 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
 
     /// Handle the SKIP action for a block.
     private PublisherRequestResult handleSkip(final long blockNumber) {
-        if (handlerMode.get() == HandlerMode.PASSIVE) {
-            LOGGER.log(
-                    DEBUG,
-                    "[{0}] Handler {1} suppressing SKIP for block {2} (passive mode)",
-                    correlationIdPrefix,
-                    handlerId,
-                    blockNumber);
-            return new ContinueResult(this);
-        }
         LOGGER.log(
                 DEBUG, "[{0}] Handler {1} is sending SKIP for block {2}", correlationIdPrefix, handlerId, blockNumber);
         // If the action is SKIP, we need to send a skip response
@@ -841,15 +831,6 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
 
     /// Handle the SKIP_AND_ACK action for a block.
     private PublisherRequestResult handleSkipAndAck(final long blockNumber) {
-        if (handlerMode.get() == HandlerMode.PASSIVE) {
-            LOGGER.log(
-                    DEBUG,
-                    "[{0}] Handler {1} suppressing SKIP_AND_ACK for block {2} (passive mode)",
-                    correlationIdPrefix,
-                    handlerId,
-                    blockNumber);
-            return new ContinueResult(this);
-        }
         LOGGER.log(
                 DEBUG, "[{0}] Handler {1} is sending SKIP for block {2}", correlationIdPrefix, handlerId, blockNumber);
         // If the action is SKIP, we need to send a skip response
@@ -893,15 +874,6 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
 
     /// Handle the END_DUPLICATE action for a block.
     private PublisherRequestResult handleEndDuplicate() {
-        if (handlerMode.get() == HandlerMode.PASSIVE) {
-            LOGGER.log(
-                    DEBUG,
-                    "[{0}] Handler {1} suppressing DUPLICATE_BLOCK ({2}) (passive mode)",
-                    correlationIdPrefix,
-                    handlerId,
-                    publisherManager.getLatestBlockNumber());
-            return new ContinueResult(this);
-        }
         LOGGER.log(
                 DEBUG,
                 "[{0}] Handler {1} is sending DUPLICATE_BLOCK({2}).",

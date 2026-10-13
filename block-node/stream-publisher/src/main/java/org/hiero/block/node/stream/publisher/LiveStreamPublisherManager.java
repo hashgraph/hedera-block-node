@@ -152,10 +152,6 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
     /// [#notifyHandlerModeChange(long, boolean)]. Used to maintain the
     /// `publisher_active_handlers` and `publisher_passive_handlers` gauges.
     private final ConcurrentSkipListMap<Long, Boolean> handlerPassiveMode;
-    /// The highest block number reported by a passive handler via
-    /// [#recordPassiveHandlerAck(long, long)]. Fed into stall tracking so
-    /// that progress reported by a passive handler is visible to the manager.
-    private final ConcurrentSkipListMap<Long, Long> passiveHandlerLastBlock;
     /// Bounded LRU cache of recently acknowledged block root hashes, keyed by block
     /// number. The size cap comes from [PublisherConfig#ackCacheSize()]. Access is
     /// synchronized on the map itself because LinkedHashMap's access-order iteration
@@ -205,7 +201,6 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
         activeStreamHandlerByBlock = new ConcurrentSkipListMap<>();
         handlerFlowState = new ConcurrentSkipListMap<>();
         handlerPassiveMode = new ConcurrentSkipListMap<>();
-        passiveHandlerLastBlock = new ConcurrentSkipListMap<>();
         ackCacheSize = publisherConfig.ackCacheSize();
         ackedBlockRootHashes = new LinkedHashMap<>(Math.max(16, ackCacheSize), 0.75f, true) {
             @Override
@@ -285,7 +280,6 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
         final PublisherHandler handlerRemoved = handlers.remove(handlerId);
         handlerFlowState.remove(handlerId);
         handlerPassiveMode.remove(handlerId);
-        passiveHandlerLastBlock.remove(handlerId);
         // If there are no more active publishers, schedule the
         // unavailability timeout task.
         if (handlerRemoved != null && handlers.isEmpty()) {
@@ -302,22 +296,11 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
     @Override
     public void notifyHandlerModeChange(final long handlerId, final boolean passive) {
         final Boolean previous = handlerPassiveMode.put(handlerId, passive);
-        if (!passive) {
-            // Clear any passive-progress record when a handler returns to active mode
-            passiveHandlerLastBlock.remove(handlerId);
-        }
         if (previous != null && previous.booleanValue() == passive) {
             return; // no transition, nothing to update
         }
         metrics.activeHandlerCount().set(countHandlersByMode(false));
         metrics.passiveHandlerCount().set(countHandlersByMode(true));
-    }
-
-    @Override
-    public void recordPassiveHandlerAck(final long handlerId, final long blockNumber) {
-        if (blockNumber > UNKNOWN_BLOCK_NUMBER) {
-            passiveHandlerLastBlock.merge(handlerId, blockNumber, Math::max);
-        }
     }
 
     @Override

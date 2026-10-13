@@ -3852,13 +3852,6 @@ class LiveStreamPublisherManagerTest {
         }
 
         @Test
-        @DisplayName("recordPassiveHandlerAck ignores UNKNOWN_BLOCK_NUMBER")
-        void recordPassiveHandlerAckIgnoresUnknown() {
-            // No throw, no state change - purely a smoke test
-            assertThatNoException().isThrownBy(() -> toTest.recordPassiveHandlerAck(0L, -1L));
-        }
-
-        @Test
         @DisplayName("Ack cache evicts oldest entry once ackCacheSize is exceeded")
         void ackCacheEvictsOldestEntry() {
             final int cap = 3;

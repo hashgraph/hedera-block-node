@@ -125,7 +125,7 @@ class PublisherHandlerAcknowledgeOnlyTest {
             handler.onNext(ackOnlyRequest(8L));
 
             assertThat(replies.getOnNextCalls()).isEmpty();
-            assertThat(manager.getPassiveHandlerLastBlock(HANDLER_ID)).isEqualTo(8L);
+            assertThat(handler.getMode()).isEqualTo(HandlerMode.PASSIVE);
         }
 
         @Test
@@ -202,29 +202,6 @@ class PublisherHandlerAcknowledgeOnlyTest {
 
             assertThat(manager.getBlocksEndedMidBlock()).isEmpty();
             assertThat(handler.getMode()).isEqualTo(HandlerMode.PASSIVE);
-        }
-    }
-
-    @Nested
-    @DisplayName("Progress tracking tests")
-    class ProgressTrackingTests {
-
-        @Test
-        @DisplayName("Receiving AcknowledgeOnly records the block number as last-seen for the handler")
-        void recordsPassiveLastBlock() {
-            handler.onNext(ackOnlyRequest(42L));
-
-            assertThat(manager.getPassiveHandlerLastBlock(HANDLER_ID)).isEqualTo(42L);
-        }
-
-        @Test
-        @DisplayName("Multiple AcknowledgeOnly requests retain the max block number")
-        void retainsMaxProgress() {
-            handler.onNext(ackOnlyRequest(5L));
-            handler.onNext(ackOnlyRequest(10L));
-            handler.onNext(ackOnlyRequest(7L));
-
-            assertThat(manager.getPassiveHandlerLastBlock(HANDLER_ID)).isEqualTo(10L);
         }
     }
 
