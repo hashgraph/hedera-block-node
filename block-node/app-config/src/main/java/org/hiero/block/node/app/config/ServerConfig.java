@@ -47,5 +47,24 @@ public record ServerConfig(
         @Loggable @ConfigProperty(defaultValue = "120") @Min(1) @Max(1_440) int idleConnectionTimeoutMinutes,
         @Loggable @ConfigProperty(defaultValue = "true") boolean tcpNoDelay,
         @Loggable @ConfigProperty(defaultValue = "8_192") int backlogSize,
-        @Loggable @ConfigProperty(defaultValue = "8_192") int writeQueueLength) {}
+        @Loggable @ConfigProperty(defaultValue = "8_192") int writeQueueLength) {
 // spotless:on
+
+    /// Smallest explicit socket buffer size; `0` means unset (kernel autotune).
+    public static final int MIN_EXPLICIT_SOCKET_BUFFER_BYTES = 32_768;
+
+    public ServerConfig {
+        requireUnsetOrAtLeastMinimum(socketSendBufferSizeBytes, "server.socketSendBufferSizeBytes");
+        requireUnsetOrAtLeastMinimum(socketReceiveBufferSizeBytes, "server.socketReceiveBufferSizeBytes");
+    }
+
+    /// `@Min(0)` admits the autotune sentinel, but a tiny explicit size (e.g. a typo like `128`) would lock the
+    /// buffer at the kernel minimum without any warning, so explicit sizes keep the old 32 KiB floor. Negative
+    /// values are left to `@Min`.
+    private static void requireUnsetOrAtLeastMinimum(final int bytes, final String property) {
+        if (bytes > 0 && bytes < MIN_EXPLICIT_SOCKET_BUFFER_BYTES) {
+            throw new IllegalArgumentException("%s must be 0 (kernel autotune) or at least %d, was %d"
+                    .formatted(property, MIN_EXPLICIT_SOCKET_BUFFER_BYTES, bytes));
+        }
+    }
+}

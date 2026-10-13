@@ -50,30 +50,38 @@ public class NetworkCapacityServer {
         final PbjRouting.Builder pbjRoutingBuilder = PbjRouting.builder();
         pbjRoutingBuilder.service(new TestPublishInterface());
 
-        Http2Config h2 = Http2Config.builder()
+        // Named like the BN's WebServerHttp2Config.HELIDON_PROTOCOL_CONFIG_NAME, otherwise Helidon appends its own
+        // default Http2Config next to this one.
+        final Http2Config h2 = Http2Config.builder()
+                .name("http_2")
                 .initialWindowSize(config.initialWindowSize())
                 .maxFrameSize(config.maxFrameSize())
                 .maxConcurrentStreams(config.maxConcurrentStreams())
                 .flowControlTimeout(Duration.ofMillis(config.flowControlTimeoutMillis()))
                 .build();
 
-        webServer = WebServerConfig.builder()
+        // A size of 0 leaves the buffer unset so the kernel autotunes it, same as the Block Node.
+        final SocketOptions.Builder connectionOptions = SocketOptions.builder().tcpNoDelay(config.tcpNoDelay());
+        if (config.sendBufferSize() > 0) {
+            connectionOptions.socketSendBufferSize(config.sendBufferSize());
+        }
+        if (config.receiveBufferSize() > 0) {
+            connectionOptions.socketReceiveBufferSize(config.receiveBufferSize());
+        }
+        final WebServerConfig.Builder serverBuilder = WebServerConfig.builder()
                 .port(port)
                 .addProtocol(pbjConfig)
                 .addProtocol(h2)
                 .addRouting(pbjRoutingBuilder)
-                .connectionOptions(SocketOptions.builder()
-                        .socketSendBufferSize(config.sendBufferSize())
-                        .socketReceiveBufferSize(config.receiveBufferSize())
-                        .tcpNoDelay(config.tcpNoDelay())
-                        .build())
-                // Helidon applies connectionOptions after accept(); the listener must carry the receive buffer so
-                // accepted connections inherit it at the handshake, otherwise the receive window stays at ~32 KB.
-                // SO_SNDBUF is not a valid server socket option, so the send buffer stays in connectionOptions.
-                .putListenerSocketOption(StandardSocketOptions.SO_RCVBUF, config.receiveBufferSize())
+                .connectionOptions(connectionOptions.build())
                 .backlog(config.backlogSize())
-                .writeQueueLength(config.writeQueueLength())
-                .build();
+                .writeQueueLength(config.writeQueueLength());
+        // Helidon applies connectionOptions after accept(); the listener must carry an explicit receive buffer so
+        // accepted connections inherit it at the handshake. SO_SNDBUF is not a valid server socket option.
+        if (config.receiveBufferSize() > 0) {
+            serverBuilder.putListenerSocketOption(StandardSocketOptions.SO_RCVBUF, config.receiveBufferSize());
+        }
+        webServer = serverBuilder.build();
 
         webServer.start();
         System.out.printf("Network Capacity Server started on port %d%n", port);
