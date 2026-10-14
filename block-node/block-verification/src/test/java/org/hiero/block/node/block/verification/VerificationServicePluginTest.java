@@ -26,6 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import org.assertj.core.api.ObjectAssert;
+import org.hiero.block.api.BlockRange;
 import org.hiero.block.common.hasher.HashAlgorithm;
 import org.hiero.block.internal.BlockItemUnparsed;
 import org.hiero.block.internal.BlockUnparsed;
@@ -42,6 +43,7 @@ import org.hiero.block.node.block.verification.harness.HarnessChainBuilder;
 import org.hiero.block.node.spi.blockmessaging.BackfilledBlockNotification;
 import org.hiero.block.node.spi.blockmessaging.BlockItems;
 import org.hiero.block.node.spi.blockmessaging.BlockSource;
+import org.hiero.block.node.spi.blockmessaging.StoredBlocksNotification;
 import org.hiero.block.node.spi.blockmessaging.VerificationNotification;
 import org.hiero.block.node.spi.blockmessaging.VerificationNotification.FailureInfo;
 import org.hiero.block.node.spi.blockmessaging.VerificationNotification.FailureType;
@@ -1058,11 +1060,24 @@ class VerificationServicePluginTest {
             start(new VerificationServicePlugin(), new SimpleInMemoryHistoricalBlockFacility(), configOverrides);
         }
 
+        /// Seeds the last verified block with block 0, as if block 0 was already stored. Every
+        /// block from block 2 on then waits in result ordering for block 1, which these tests
+        /// never supply, so each session stays active until it is evicted or the plugin stops.
+        /// Without the seed, nothing is verified yet and the first success establishes the last
+        /// verified block: block 2 could complete before block 4 fills the buffer, and blocks 3
+        /// and 4 complete right after the eviction, so the number of notifications would depend
+        /// on timing.
+        private void holdSessionsInResultOrdering() {
+            plugin.handleStoredBlocksUpdate(new StoredBlocksNotification(List.of(new BlockRange(0L, 0L))));
+        }
+
         /// This test aims to verify that when the active sessions buffer is full and a new session comes,
         /// the lowest active session will be canceled to make room, so long as the lowest active session is not
         /// the one we just submitted.
         /// Because the evicted session had already received its complete block, the failure is reported
-        /// with the CANCELLED failure type and not CANCELLED_INCOMPLETE.
+        /// with the CANCELLED failure type and not CANCELLED_INCOMPLETE. Blocks 2, 3 and 4 are held in
+        /// result ordering (see [#holdSessionsInResultOrdering()]), so block 2 is still active when
+        /// block 4 fills the buffer and the eviction is the only notification sent.
         @Test
         @DisplayName(
                 "Active Sessions Buffer - cancel lowest session when buffer full and new submission is not the lowest active session")
@@ -1073,6 +1088,7 @@ class VerificationServicePluginTest {
             final ResourceTestWRBBlock block3 = loadedBlocks.get(3);
             final ResourceTestWRBBlock block4 = loadedBlocks.get(4);
             updateAddressBook(block2.nodeAddressBook());
+            holdSessionsInResultOrdering();
             plugin.handleBlockItemsReceived(block2.asBlockItems());
             plugin.handleBlockItemsReceived(block3.asBlockItems());
             plugin.handleBlockItemsReceived(block4.asBlockItems());
@@ -1094,7 +1110,8 @@ class VerificationServicePluginTest {
         /// supplied by the publisher as a header only batch, so its session never receives the end of
         /// the block. Blocks 3 and 4 are then supplied as backfilled blocks, which do not supersede the
         /// live publisher session, filling the buffer and forcing the eviction of the incomplete
-        /// session for block 2.
+        /// session for block 2. Blocks 3 and 4 are held in result ordering (see
+        /// [#holdSessionsInResultOrdering()]), so the eviction is the only notification sent.
         @Test
         @DisplayName(
                 "Active Sessions Buffer - evicted session that has not received its full block reports CANCELLED_INCOMPLETE")
@@ -1105,6 +1122,7 @@ class VerificationServicePluginTest {
             final ResourceTestWRBBlock block3 = loadedBlocks.get(3);
             final ResourceTestWRBBlock block4 = loadedBlocks.get(4);
             updateAddressBook(block2.nodeAddressBook());
+            holdSessionsInResultOrdering();
             final BlockItems headerOnly =
                     new BlockItems(List.of(block2.getHeaderUnparsed()), block2.number(), true, false);
             plugin.handleBlockItemsReceived(headerOnly);
@@ -1405,14 +1423,18 @@ class VerificationServicePluginTest {
                     .returns(null, VerificationNotification::blockHash);
         }
 
-        /// This test aims to assert that an admitted block is hashed with SHA-256 regardless of
-        /// the digest size of the hashes it carries: the genesis block of a chain built and signed
-        /// for SHA2_384, with its header rewritten to declare SHA2_256, passes the header check
-        /// and is hashed with SHA-256, which refuses its footer hashes of the SHA-384 digest
-        /// size, so the session fails instead of hashing with the algorithm the hashes fit.
+        /// This test aims to assert that a block hashed with SHA-384 whose header declares
+        /// SHA2_256 is refused by the hashing stage with `UNSUPPORTED_STREAM_FORMAT`, the same
+        /// failure type as a header declaring SHA2_384, and never as an unknown error. This is
+        /// the shape of a block from before the move to SHA-256: SHA2_384 was the enumeration
+        /// default then, so its header carries no hash algorithm and decodes as SHA2_256, which
+        /// passes the header check. The genesis block of a chain built and signed for SHA2_384,
+        /// with its header rewritten to declare SHA2_256, carries footer hashes of the SHA-384
+        /// digest size, which the hashing stage refuses before computing a root hash, so the
+        /// failure notification carries no block and no hash.
         @Test
-        @DisplayName("Block declaring SHA2_256 but carrying SHA-384 sized hashes fails")
-        void testAdmittedBlockHashedWithSha256() throws NoSuchAlgorithmException {
+        @DisplayName("Block declaring SHA2_256 but carrying SHA-384 sized footer hashes is refused - Live RB")
+        void testSha384SizedFooterHashesRefusedLiveRB() throws NoSuchAlgorithmException {
             final TestBlock sha384Block = HarnessChainBuilder.create(TssBlockSigner.create(), HashAlgorithm.SHA2_384)
                     .genesisWithPublication()
                     .block();
@@ -1424,9 +1446,40 @@ class VerificationServicePluginTest {
                     .hasSize(1)
                     .first()
                     .returns(false, VerificationNotification::success)
-                    .returns(FailureInfo.standard(FailureType.UNKNOWN_ERROR), VerificationNotification::failureInfo)
+                    .returns(
+                            FailureInfo.standard(FailureType.UNSUPPORTED_STREAM_FORMAT),
+                            VerificationNotification::failureInfo)
                     .returns(sha384Block.number(), VerificationNotification::blockNumber)
-                    .returns(BlockSource.PUBLISHER, VerificationNotification::source);
+                    .returns(BlockSource.PUBLISHER, VerificationNotification::source)
+                    .returns(null, VerificationNotification::block)
+                    .returns(null, VerificationNotification::blockHash);
+        }
+
+        /// This test aims to assert that the backfill path refuses a block hashed with SHA-384
+        /// whose header declares SHA2_256 exactly like the live path: the hashing stage refuses
+        /// its footer hashes of the SHA-384 digest size with `UNSUPPORTED_STREAM_FORMAT`, and the
+        /// failure notification carries the backfill source, no block and no hash.
+        @Test
+        @DisplayName("Block declaring SHA2_256 but carrying SHA-384 sized footer hashes is refused - Backfill")
+        void testSha384SizedFooterHashesRefusedBackfill() throws NoSuchAlgorithmException {
+            final TestBlock sha384Block = HarnessChainBuilder.create(TssBlockSigner.create(), HashAlgorithm.SHA2_384)
+                    .genesisWithPublication()
+                    .block();
+            final TestBlock declaringSha256 = sha384Block.replace(
+                    BlockItemUnparsed::hasBlockHeader, headerDeclaring(sha384Block, BlockHashAlgorithm.SHA2_256));
+            plugin.handleBackfilled(declaringSha256.asBackfilledNotification());
+            final List<VerificationNotification> notifications = blockMessaging.getSentVerificationNotifications(1);
+            assertThat(notifications)
+                    .hasSize(1)
+                    .first()
+                    .returns(false, VerificationNotification::success)
+                    .returns(
+                            FailureInfo.standard(FailureType.UNSUPPORTED_STREAM_FORMAT),
+                            VerificationNotification::failureInfo)
+                    .returns(sha384Block.number(), VerificationNotification::blockNumber)
+                    .returns(BlockSource.BACKFILL, VerificationNotification::source)
+                    .returns(null, VerificationNotification::block)
+                    .returns(null, VerificationNotification::blockHash);
         }
 
         /// This test aims to assert that a block whose header declares a hash algorithm the node

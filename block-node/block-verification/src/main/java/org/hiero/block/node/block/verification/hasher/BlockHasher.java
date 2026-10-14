@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Supplier;
 import org.hiero.block.api.TssData;
+import org.hiero.block.common.hasher.HashAlgorithm;
 import org.hiero.block.common.hasher.HashingUtilities;
 import org.hiero.block.common.hasher.NaiveStreamingTreeHasher;
 import org.hiero.block.internal.BlockItemUnparsed;
@@ -53,6 +54,16 @@ public final class BlockHasher implements Supplier<HashingResult> {
     /// [#FIRST_FORWARD_COMPATIBLE_FIELD_NUMBER] or above, the hashing category is the field
     /// number modulo this value.
     private static final int CATEGORY_MODULUS = 20;
+    /// The algorithm the block root tree is hashed with. Every hash a block footer carries must
+    /// be a digest of this algorithm; a footer hash of any other size refuses the block.
+    private static final HashAlgorithm HASH_ALGORITHM = HashAlgorithm.SHA2_256;
+    /// The message of the failure for a footer carrying hashes that are not digests of
+    /// [#HASH_ALGORITHM]: block number, source, failure type, the size of each footer hash and
+    /// the expected digest size.
+    private static final String FOOTER_HASH_SIZE_MESSAGE =
+            "Verification session for block %d with source %s failed with %s: footer hashes have %d, %d and %d"
+                    + " bytes (previous block root, root of all previous blocks, start of block state root),"
+                    + " expected %d byte SHA-256 digests";
     /// The number of the block being hashed.
     private final long blockNumber;
     /// The source of the block, carried through to the result and failures.
@@ -391,6 +402,13 @@ public final class BlockHasher implements Supplier<HashingResult> {
     /// Finish the hashing operation.
     /// This method will finalize the hashing process. Root hash will be calculated and
     /// a [HashingResult] will be returned.
+    ///
+    /// The footer hashes are leaves of the block root tree, so each must be one SHA-256 digest.
+    /// A footer hash of another size was computed with another algorithm: the block cannot be
+    /// hashed by this node and is refused with `UNSUPPORTED_STREAM_FORMAT` before the root hash
+    /// is computed. This is the check that refuses a block from before the move to SHA-256: its
+    /// header carries no hash algorithm, because `SHA2_384` was the enumeration default then, so
+    /// the header decodes as `SHA2_256` and passes the header check of the plugin.
     /// @throws VerificationSessionFailedException in case a known failure occurs
     /// @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the hash algorithm
     private HashingResult finalHashingResult() throws NoSuchAlgorithmException {
@@ -403,7 +421,25 @@ public final class BlockHasher implements Supplier<HashingResult> {
             final Bytes rootOfAllPreviousBlockHashes = blockFooter.rootHashOfAllBlockHashesTree();
             final Bytes previousBlockHash = blockFooter.previousBlockRootHash();
             final Bytes startOfBlockStateRootHash = blockFooter.startOfBlockStateRootHash();
-            if (validFields(timestamp, rootOfAllPreviousBlockHashes, previousBlockHash, startOfBlockStateRootHash)) {
+            if (!validFields(timestamp, rootOfAllPreviousBlockHashes, previousBlockHash, startOfBlockStateRootHash)) {
+                throw new VerificationSessionFailedException(
+                        blockNumber, SessionFailureType.MISSING_MANDATORY_FIELD, blockSource);
+            } else if (!hasDigestSize(previousBlockHash)
+                    || !hasDigestSize(rootOfAllPreviousBlockHashes)
+                    || !hasDigestSize(startOfBlockStateRootHash)) {
+                throw new VerificationSessionFailedException(
+                        blockNumber,
+                        SessionFailureType.UNSUPPORTED_STREAM_FORMAT,
+                        blockSource,
+                        FOOTER_HASH_SIZE_MESSAGE.formatted(
+                                blockNumber,
+                                blockSource,
+                                SessionFailureType.UNSUPPORTED_STREAM_FORMAT,
+                                previousBlockHash.length(),
+                                rootOfAllPreviousBlockHashes.length(),
+                                startOfBlockStateRootHash.length(),
+                                HASH_ALGORITHM.hashSize()));
+            } else {
                 final Bytes blockRootHash = HashingUtilities.computeFinalBlockHash(
                         timestamp,
                         previousBlockHash,
@@ -435,12 +471,17 @@ public final class BlockHasher implements Supplier<HashingResult> {
                         blockFooter,
                         proofs,
                         hapiProtoVersion);
-            } else {
-                throw new VerificationSessionFailedException(
-                        blockNumber, SessionFailureType.MISSING_MANDATORY_FIELD, blockSource);
             }
         }
         return hashingResult;
+    }
+
+    /// Returns `true` when the given footer hash has exactly the digest size of
+    /// [#HASH_ALGORITHM], the size of one leaf of the block root tree.
+    /// @param hash the footer hash to check
+    /// @return `true` if the hash is exactly one SHA-256 digest long
+    private static boolean hasDigestSize(final Bytes hash) {
+        return hash.length() == HASH_ALGORITHM.hashSize();
     }
 
     ///  Find and parse ledger id publication.

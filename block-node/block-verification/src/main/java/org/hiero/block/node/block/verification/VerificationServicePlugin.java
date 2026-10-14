@@ -55,6 +55,9 @@ public final class VerificationServicePlugin
     /// The value a block header must declare for the block to be admitted: `SHA2_256`, the
     /// algorithm the `BlockHasher` always hashes with. A header declaring any other value,
     /// including a value this node does not recognize, is refused before a session is started.
+    /// A block from before the move to SHA-256 carries no algorithm in its header, because
+    /// `SHA2_384` was the enumeration default then, so it decodes as `SHA2_256` and passes this
+    /// check; the `BlockHasher` refuses it by the size of its footer hashes.
     private static final BlockHashAlgorithm DECLARED_HASH_ALGORITHM = BlockHashAlgorithm.SHA2_256;
     /// The last successfully verified block.
     private final AtomicLong lastVerifiedBlock;

@@ -70,6 +70,8 @@ class BlockHasherTest {
             "org.hiero.block.node.app.fixtures.blocks.ResourceTestBlockBuilder#realBlocks";
     private static final String FOOTER_WITH_MISSING_VALUES =
             "org.hiero.block.node.block.verification.hasher.BlockHasherTest#footerWithMissingValues";
+    private static final String FOOTER_HASHES_OF_OTHER_SIZE =
+            "org.hiero.block.node.block.verification.hasher.BlockHasherTest#footerHashesOfOtherSize";
     private static final String UNSUPPORTED_ITEM_TYPES =
             "org.hiero.block.node.block.verification.hasher.BlockHasherTest#unsupportedItemTypes";
     private static final String ITEM_TYPES_ALLOWED_ONLY_ONCE_PER_BLOCK =
@@ -614,31 +616,43 @@ class BlockHasherTest {
                     });
         }
 
-        /// This test aims to assert that a block whose footer hashes have the digest size of
-        /// another algorithm (here the size of a SHA-384 digest, where the block hash algorithm
-        /// produces 32 byte digests) is refused: such a block was hashed by a network computing
-        /// with another algorithm, and folding its footer hashes into this tree would silently
-        /// truncate them. The hashing stage reports it as an illegal argument today, which the
-        /// session result handler turns into an unknown error notification.
-        @Test
-        @DisplayName("get() refuses footer hashes of another digest size")
-        void testFooterHashesOfOtherDigestSizeRefused() throws ParseException {
+        /// This test aims to assert that a block whose footer carries a hash that is not one
+        /// SHA-256 digest is refused with `UNSUPPORTED_STREAM_FORMAT`, never as an unknown error.
+        /// The footer hashes are leaves of the block root tree, so a hash of another size was
+        /// computed with another algorithm and the block cannot be hashed by this node. Each
+        /// footer hash is checked on its own: the cases cover each hash alone of the SHA-384
+        /// digest size, all three of it (the footer of a block from before the move to SHA-256,
+        /// whose header passes the header check because it carries no hash algorithm), and a
+        /// hash one byte short of a SHA-256 digest. The session failure names the block number
+        /// and source, so the failure notification is reported for the right block.
+        @ParameterizedTest(name = "{0}")
+        @MethodSource(FOOTER_HASHES_OF_OTHER_SIZE)
+        @DisplayName("get() refuses footer hashes that are not SHA-256 digests")
+        void testFooterHashesOfOtherSizeRefused(final String name, final BlockItemUnparsed footer) {
             final long blockNumber = 0;
-            final Bytes otherSizeHash = Bytes.wrap(new byte[HashAlgorithm.SHA2_384.hashSize()]);
-            final BlockItemUnparsed footer = TestBlockBuilder.convertToUnparsedItem(new BlockItem(new OneOf<>(
-                    ItemOneOfType.BLOCK_FOOTER, new BlockFooter(otherSizeHash, otherSizeHash, otherSizeHash))));
             final TestBlock block = TestBlockBuilder.generateBlockWithNumber(blockNumber)
                     .replace(BlockItemUnparsed::hasBlockFooter, footer);
             final ConcurrentLinkedDeque<BlockItems> blockItemsDeque = new ConcurrentLinkedDeque<>();
+            final BlockSource blockSource = BlockSource.PUBLISHER;
             final BlockHasher toTest = new BlockHasher(
                     new AtomicBoolean(false),
                     blockItemsDeque,
                     metrics.hashingMetrics(),
                     block.number(),
-                    BlockSource.PUBLISHER,
+                    blockSource,
                     verificationDataProvider);
             blockItemsDeque.offer(block.asBlockItems());
-            assertThatThrownBy(toTest::get).isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(toTest::get)
+                    .isInstanceOf(VerificationSessionFailedException.class)
+                    .asInstanceOf(type(VerificationSessionFailedException.class))
+                    .satisfies(e -> {
+                        assertThat(e)
+                                .returns(block.number(), VerificationSessionFailedException::getBlockNumber)
+                                .returns(blockSource, VerificationSessionFailedException::getBlockSource)
+                                .returns(
+                                        SessionFailureType.UNSUPPORTED_STREAM_FORMAT,
+                                        VerificationSessionFailedException::getFailureType);
+                    });
         }
     }
 
@@ -1479,6 +1493,31 @@ class BlockHasherTest {
                         new OneOf<>(ItemOneOfType.BLOCK_FOOTER, new BlockFooter(someBytes, someBytes, null))))),
                 Arguments.of(TestBlockBuilder.convertToUnparsedItem(new BlockItem(
                         new OneOf<>(ItemOneOfType.BLOCK_FOOTER, new BlockFooter(someBytes, someBytes, empty))))));
+    }
+
+    /// Footers carrying at least one hash that is not one SHA-256 digest, every other hash
+    /// being a SHA-256 digest, named by the case they cover.
+    private static Stream<Arguments> footerHashesOfOtherSize() throws ParseException {
+        final Bytes digest = Bytes.wrap(new byte[HashAlgorithm.SHA2_256.hashSize()]);
+        final Bytes sha384Size = Bytes.wrap(new byte[HashAlgorithm.SHA2_384.hashSize()]);
+        final Bytes oneByteShort = Bytes.wrap(new byte[HashAlgorithm.SHA2_256.hashSize() - 1]);
+        return Stream.of(
+                Arguments.of("previous block root hash of the SHA-384 size", footerOf(sha384Size, digest, digest)),
+                Arguments.of("root of all previous blocks of the SHA-384 size", footerOf(digest, sha384Size, digest)),
+                Arguments.of("start of block state root of the SHA-384 size", footerOf(digest, digest, sha384Size)),
+                Arguments.of("all footer hashes of the SHA-384 size", footerOf(sha384Size, sha384Size, sha384Size)),
+                Arguments.of("previous block root hash one byte short", footerOf(oneByteShort, digest, digest)));
+    }
+
+    /// Returns an unparsed footer item carrying the given hashes.
+    private static BlockItemUnparsed footerOf(
+            final Bytes previousBlockRootHash,
+            final Bytes rootHashOfAllBlockHashesTree,
+            final Bytes startOfBlockStateRootHash)
+            throws ParseException {
+        return TestBlockBuilder.convertToUnparsedItem(new BlockItem(new OneOf<>(
+                ItemOneOfType.BLOCK_FOOTER,
+                new BlockFooter(previousBlockRootHash, rootHashOfAllBlockHashesTree, startOfBlockStateRootHash))));
     }
 
     private static Stream<Arguments> unsupportedItemTypes() throws ParseException {
