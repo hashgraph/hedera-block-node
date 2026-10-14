@@ -2,6 +2,7 @@
 package org.hiero.block.common.hasher;
 
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -25,8 +26,10 @@ public class StreamingHasher {
 
     /**
      * Create a new StreamingHasher with an empty state.
+     *
+     * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
-    public StreamingHasher() {
+    public StreamingHasher() throws NoSuchAlgorithmException {
         this.digest = ALGORITHM.newDigest();
     }
 
@@ -36,8 +39,10 @@ public class StreamingHasher {
      *
      * @param intermediateHashingState the intermediate hashing state
      * @param leafCount the number of leaves the state was built from
+     * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
-    public StreamingHasher(final List<byte[]> intermediateHashingState, final long leafCount) {
+    public StreamingHasher(final List<byte[]> intermediateHashingState, final long leafCount)
+            throws NoSuchAlgorithmException {
         this();
         this.hashList.addAll(Objects.requireNonNull(intermediateHashingState));
         this.leafCount = leafCount;

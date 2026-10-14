@@ -8,6 +8,7 @@ import com.hedera.hapi.block.stream.output.BlockFooter;
 import com.hedera.hapi.block.stream.output.BlockHeader;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -121,7 +122,7 @@ public final class HarnessChainBuilder {
      * embedded as a signed transaction, so the verifier self-provisions TSS parameters from the block
      * stream (rather than needing a pre-written tss-parameters.bin bootstrap file). Advances chain state.
      */
-    public Signed genesisWithPublication() {
+    public Signed genesisWithPublication() throws NoSuchAlgorithmException {
         final TestBlock draft =
                 TestBlockBuilder.generateGenesisBlockWithSignedTransaction(signer.genesisLedgerIdSignedTransaction());
         return finalize(0L, draft);
@@ -131,11 +132,11 @@ public final class HarnessChainBuilder {
      * Emits a plain block at the given block number with the chained footer and signed proof.
      * Advances chain state.
      */
-    public Signed next(final long blockNumber) {
+    public Signed next(final long blockNumber) throws NoSuchAlgorithmException {
         return finalize(blockNumber, TestBlockBuilder.generateBlockWithNumber(blockNumber));
     }
 
-    private Signed finalize(final long blockNumber, final TestBlock draft) {
+    private Signed finalize(final long blockNumber, final TestBlock draft) throws NoSuchAlgorithmException {
         final TestBlock declared = withDeclaredAlgorithm(draft);
         final TestBlock chained = withChainedFooter(declared);
         final Bytes rootHash = computeRootHash(chained, blockNumber);
@@ -162,7 +163,7 @@ public final class HarnessChainBuilder {
      * block carries. A chain of {@link HashAlgorithm#SHA2_256} computes it with the common
      * {@link StreamingHasher}; a chain of another algorithm with {@link LegacyBlockRootTree}.
      */
-    private Bytes allPreviousBlocksRootHash() {
+    private Bytes allPreviousBlocksRootHash() throws NoSuchAlgorithmException {
         final Bytes result;
         if (algorithm == HashAlgorithm.SHA2_256) {
             final StreamingHasher hasher = new StreamingHasher();
@@ -176,7 +177,7 @@ public final class HarnessChainBuilder {
         return result;
     }
 
-    private TestBlock withChainedFooter(final TestBlock draft) {
+    private TestBlock withChainedFooter(final TestBlock draft) throws NoSuchAlgorithmException {
         final Bytes emptyTreeHash = algorithm.emptyTreeHash();
         final Bytes prev = previousBlockRootHash != null ? Bytes.wrap(previousBlockRootHash) : emptyTreeHash;
         final BlockFooter footer = BlockFooter.newBuilder()
@@ -205,7 +206,7 @@ public final class HarnessChainBuilder {
      * other algorithm, so a chain of another algorithm, {@link HashAlgorithm#SHA2_384} for a release
      * from before the move to SHA-256, is hashed with {@link LegacyBlockRootTree} instead.
      */
-    private Bytes computeRootHash(final TestBlock block, final long blockNumber) {
+    private Bytes computeRootHash(final TestBlock block, final long blockNumber) throws NoSuchAlgorithmException {
         final Bytes result;
         if (algorithm == HashAlgorithm.SHA2_256) {
             final ConcurrentLinkedDeque<BlockItems> deque = new ConcurrentLinkedDeque<>();

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -402,7 +403,7 @@ public final class BlockItemBuilderUtils {
      * The proof is a real TSS signature from the shared {@link #blockSigner()}; provision the block
      * node with that signer's roster via {@link #provisionTssBootstrap()}.
      */
-    public static BlockItem[] createSimpleBlockWithNumber(final long blockNumber) {
+    public static BlockItem[] createSimpleBlockWithNumber(final long blockNumber) throws NoSuchAlgorithmException {
         return createSimpleBlockWithNumber(blockNumber, null);
     }
 
@@ -414,7 +415,8 @@ public final class BlockItemBuilderUtils {
      * @param blockNumber the block number
      * @param previousBlockHash the hash of the previous block, or null for genesis (uses zero hash)
      */
-    public static BlockItem[] createSimpleBlockWithNumber(final long blockNumber, final Bytes previousBlockHash) {
+    public static BlockItem[] createSimpleBlockWithNumber(final long blockNumber, final Bytes previousBlockHash)
+            throws NoSuchAlgorithmException {
         final BlockItem[] blockItems = new BlockItem[4];
         blockItems[0] = sampleBlockHeader(blockNumber);
         blockItems[1] = sampleRoundHeader(blockNumber * 10L);
@@ -431,7 +433,8 @@ public final class BlockItemBuilderUtils {
      * @param previousBlockHash the hash of the previous block, or null for genesis
      * @return the computed block root hash
      */
-    public static Bytes computeBlockHash(final long blockNumber, final Bytes previousBlockHash) {
+    public static Bytes computeBlockHash(final long blockNumber, final Bytes previousBlockHash)
+            throws NoSuchAlgorithmException {
         final BlockItemUnparsed blockHeaderUnparsed = sampleBlockHeaderUnparsed(blockNumber);
         final BlockItemUnparsed roundHeaderUnparsed = sampleRoundHeaderUnparsed(blockNumber * 10L);
 
@@ -478,7 +481,8 @@ public final class BlockItemBuilderUtils {
         return new BlockItem(new OneOf<>(ItemOneOfType.BLOCK_FOOTER, footer));
     }
 
-    private static BlockItem createVerifiableBlockProof(final long blockNumber, final Bytes previousBlockHash) {
+    private static BlockItem createVerifiableBlockProof(final long blockNumber, final Bytes previousBlockHash)
+            throws NoSuchAlgorithmException {
         final Bytes blockHash = computeBlockHash(blockNumber, previousBlockHash);
         final Bytes blockSignature = blockSigner()
                 .signBlockProof(blockNumber, blockHash)

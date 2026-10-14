@@ -32,7 +32,7 @@ class NaiveStreamingTreeHasherTest {
         /// defined value.
         @Test
         @DisplayName("rootHash() of an empty tree is the empty tree hash")
-        void testEmptyTreeRoot() {
+        void testEmptyTreeRoot() throws NoSuchAlgorithmException {
             final NaiveStreamingTreeHasher hasher = new NaiveStreamingTreeHasher();
             assertThat(hasher.rootHash()).isEqualTo(Bytes.wrap(refDigest(new byte[] {0x00})));
         }
@@ -41,7 +41,7 @@ class NaiveStreamingTreeHasherTest {
         /// streaming fold has nothing to combine, so the leaf hash is returned unchanged.
         @Test
         @DisplayName("rootHash() of a single leaf is the leaf")
-        void testSingleLeafRoot() {
+        void testSingleLeafRoot() throws NoSuchAlgorithmException {
             final byte[] leaf = randomHash();
             final NaiveStreamingTreeHasher hasher = new NaiveStreamingTreeHasher();
             hasher.addLeaf(ByteBuffer.wrap(leaf));
@@ -52,7 +52,7 @@ class NaiveStreamingTreeHasherTest {
         /// with the 0x02 prefix under SHA-256.
         @Test
         @DisplayName("rootHash() of two leaves is their node hash")
-        void testTwoLeavesRoot() {
+        void testTwoLeavesRoot() throws NoSuchAlgorithmException {
             final byte[] first = randomHash();
             final byte[] second = randomHash();
             final NaiveStreamingTreeHasher hasher = new NaiveStreamingTreeHasher();
@@ -65,7 +65,7 @@ class NaiveStreamingTreeHasherTest {
         /// to left: three leaves give node(node(l0, l1), l2).
         @Test
         @DisplayName("rootHash() of three leaves folds the open branch right to left")
-        void testThreeLeavesRoot() {
+        void testThreeLeavesRoot() throws NoSuchAlgorithmException {
             final byte[][] leaves = randomHashes(3);
             final NaiveStreamingTreeHasher hasher = new NaiveStreamingTreeHasher();
             for (final byte[] leaf : leaves) {
@@ -80,7 +80,7 @@ class NaiveStreamingTreeHasherTest {
         /// open branch.
         @Test
         @DisplayName("rootHash() of five leaves matches the reference fold")
-        void testFiveLeavesRoot() {
+        void testFiveLeavesRoot() throws NoSuchAlgorithmException {
             final byte[][] leaves = randomHashes(5);
             final NaiveStreamingTreeHasher hasher = new NaiveStreamingTreeHasher();
             for (final byte[] leaf : leaves) {
@@ -96,7 +96,7 @@ class NaiveStreamingTreeHasherTest {
         /// number of leaves.
         @Test
         @DisplayName("rootHash() is one SHA-256 digest")
-        void testRootHashSize() {
+        void testRootHashSize() throws NoSuchAlgorithmException {
             for (int leafCount = 0; leafCount < 6; leafCount++) {
                 final NaiveStreamingTreeHasher hasher = new NaiveStreamingTreeHasher();
                 for (final byte[] leaf : randomHashes(leafCount)) {
@@ -116,7 +116,7 @@ class NaiveStreamingTreeHasherTest {
         /// equals the root of the same leaves added one by one.
         @Test
         @DisplayName("addLeaf() consumes exactly one digest per call")
-        void testAddLeafConsumesOneDigest() {
+        void testAddLeafConsumesOneDigest() throws NoSuchAlgorithmException {
             final byte[][] leaves = randomHashes(3);
             final ByteBuffer packed = ByteBuffer.allocate(3 * HASH_SIZE);
             for (final byte[] leaf : leaves) {
@@ -150,7 +150,7 @@ class NaiveStreamingTreeHasherTest {
         /// requested, so a finished tree cannot be changed afterwards.
         @Test
         @DisplayName("addLeaf() refuses leaves after rootHash()")
-        void testAddLeafRefusedAfterRootHash() {
+        void testAddLeafRefusedAfterRootHash() throws NoSuchAlgorithmException {
             final NaiveStreamingTreeHasher hasher = new NaiveStreamingTreeHasher();
             hasher.addLeaf(ByteBuffer.wrap(randomHash()));
             hasher.rootHash();
@@ -174,21 +174,17 @@ class NaiveStreamingTreeHasherTest {
     }
 
     /// Reference two children node hash with the 0x02 domain separation prefix.
-    private static byte[] refNode(final byte[] left, final byte[] right) {
+    private static byte[] refNode(final byte[] left, final byte[] right) throws NoSuchAlgorithmException {
         return refDigest(new byte[] {0x02}, left, right);
     }
 
     /// SHA-256 over the concatenation of the given parts, the JDK digest spelled out here so the
     /// reference stays independent of the production code.
-    private static byte[] refDigest(final byte[]... parts) {
-        try {
-            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            for (final byte[] part : parts) {
-                digest.update(part);
-            }
-            return digest.digest();
-        } catch (final NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
+    private static byte[] refDigest(final byte[]... parts) throws NoSuchAlgorithmException {
+        final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        for (final byte[] part : parts) {
+            digest.update(part);
         }
+        return digest.digest();
     }
 }

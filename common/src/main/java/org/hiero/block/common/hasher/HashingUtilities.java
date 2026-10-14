@@ -5,6 +5,7 @@ import com.hedera.hapi.node.base.Timestamp;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Objects;
 import org.hiero.block.internal.BlockItemUnparsed;
@@ -62,8 +63,9 @@ public final class HashingUtilities {
      *
      * @param recordFileContents the verbatim {@code record_file_contents} bytes
      * @return the 48-byte SHA-384 digest
+     * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
-    public static byte[] computeV6SignedPayload(final Bytes recordFileContents) {
+    public static byte[] computeV6SignedPayload(final Bytes recordFileContents) throws NoSuchAlgorithmException {
         Objects.requireNonNull(recordFileContents);
         final MessageDigest digest = HashAlgorithm.SHA2_384.newDigest();
         digest.update(new byte[] {0, 0, 0, 6}); // int32(6) big-endian
@@ -75,8 +77,9 @@ public final class HashingUtilities {
      * Hash a leaf node with domain separation: {@code hash(0x00 || leafData)}.
      * @param leafData the serialized leaf data
      * @return the hash of the prefixed leaf data, one SHA-256 digest
+     * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
-    public static byte[] hashLeaf(final byte[] leafData) {
+    public static byte[] hashLeaf(final byte[] leafData) throws NoSuchAlgorithmException {
         Objects.requireNonNull(leafData);
         final MessageDigest digest = ALGORITHM.newDigest();
         digest.update(LEAF_PREFIX);
@@ -88,8 +91,10 @@ public final class HashingUtilities {
      * @param leftHash the hash of the left child
      * @param rightHash the hash of the right child
      * @return the hash of the prefixed internal node, one SHA-256 digest
+     * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
-    public static byte[] hashInternalNode(final byte[] leftHash, final byte[] rightHash) {
+    public static byte[] hashInternalNode(final byte[] leftHash, final byte[] rightHash)
+            throws NoSuchAlgorithmException {
         Objects.requireNonNull(leftHash);
         Objects.requireNonNull(rightHash);
         final MessageDigest digest = ALGORITHM.newDigest();
@@ -102,8 +107,9 @@ public final class HashingUtilities {
      * Hash an internal node with a single child using domain separation: {@code hash(0x01 || childHash)}.
      * @param childHash the hash of the single child
      * @return the hash of the prefixed single-child node, one SHA-256 digest
+     * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
-    public static byte[] hashInternalNodeSingleChild(final byte[] childHash) {
+    public static byte[] hashInternalNodeSingleChild(final byte[] childHash) throws NoSuchAlgorithmException {
         Objects.requireNonNull(childHash);
         final MessageDigest digest = ALGORITHM.newDigest();
         digest.update(SINGLE_CHILD_PREFIX);
@@ -115,8 +121,9 @@ public final class HashingUtilities {
      * hashes of one item category back to back, every leaf hash being one SHA-256 digest.
      * @param blockItems the block items
      * @return the Hashes of the block items
+     * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
-    public static Hashes getBlockHashes(final List<BlockItemUnparsed> blockItems) {
+    public static Hashes getBlockHashes(final List<BlockItemUnparsed> blockItems) throws NoSuchAlgorithmException {
         Objects.requireNonNull(blockItems);
         int numInputs = 0;
         int numOutputs = 0;
@@ -191,8 +198,10 @@ public final class HashingUtilities {
      * Returns the ByteBuffer of the leaf hash of the given block item: {@code hash(0x00 || itemBytes)}.
      * @param blockItemUnparsed the block item
      * @return the ByteBuffer of the hash of the given block item, one SHA-256 digest
+     * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
-    public static ByteBuffer getBlockItemHash(final BlockItemUnparsed blockItemUnparsed) {
+    public static ByteBuffer getBlockItemHash(final BlockItemUnparsed blockItemUnparsed)
+            throws NoSuchAlgorithmException {
         Objects.requireNonNull(blockItemUnparsed);
         final MessageDigest digest = ALGORITHM.newDigest();
         final ByteBuffer buffer = ByteBuffer.allocate(ALGORITHM.hashSize());
@@ -236,6 +245,7 @@ public final class HashingUtilities {
      * @param extensionSubtreeHasherSeven the Extension 7 subtree hasher at leaf position 16
      * @return the final block hash
      * @throws IllegalArgumentException if a fixed position hash does not have the SHA-256 digest size
+     * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
     public static Bytes computeFinalBlockHash( // @todo(3372) re-evaluate this signature
             final Timestamp blockTimestamp,
@@ -254,7 +264,8 @@ public final class HashingUtilities {
             final StreamingTreeHasher extensionSubtreeHasherFour,
             final StreamingTreeHasher extensionSubtreeHasherFive,
             final StreamingTreeHasher extensionSubtreeHasherSix,
-            final StreamingTreeHasher extensionSubtreeHasherSeven) {
+            final StreamingTreeHasher extensionSubtreeHasherSeven)
+            throws NoSuchAlgorithmException {
         Objects.requireNonNull(blockTimestamp);
         Objects.requireNonNull(previousBlockHash);
         Objects.requireNonNull(rootHashOfAllPreviousBlockHashes);

@@ -3,6 +3,7 @@ package org.hiero.block.common.hasher;
 
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.nio.ByteBuffer;
+import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.Objects;
 
@@ -33,7 +34,7 @@ public class NaiveStreamingTreeHasher implements StreamingTreeHasher {
     private boolean rootHashRequested = false;
 
     @Override
-    public void addLeaf(final ByteBuffer hash) {
+    public void addLeaf(final ByteBuffer hash) throws NoSuchAlgorithmException {
         Objects.requireNonNull(hash);
         if (rootHashRequested) {
             throw new IllegalStateException("Root hash already requested");
@@ -54,7 +55,7 @@ public class NaiveStreamingTreeHasher implements StreamingTreeHasher {
     }
 
     @Override
-    public Bytes rootHash() {
+    public Bytes rootHash() throws NoSuchAlgorithmException {
         rootHashRequested = true;
         final Bytes result;
         if (hashList.isEmpty()) {

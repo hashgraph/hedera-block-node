@@ -14,6 +14,7 @@ import com.hedera.hapi.block.stream.protoc.BlockItem;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -70,7 +71,8 @@ class CraftBlockStreamManagerTest {
     }
 
     @Test
-    void testEndBlockNumber() throws BlockSimulatorParsingException, IOException, ParseException {
+    void testEndBlockNumber()
+            throws BlockSimulatorParsingException, IOException, ParseException, NoSuchAlgorithmException {
         Mockito.when(generatorConfigMock.endBlockNumber()).thenReturn(3);
         manager = new CraftBlockStreamManager(generatorConfigMock, startupDataMock, unorderedStreamConfigMock);
         final Block block2 = manager.getNextBlock();
@@ -86,7 +88,8 @@ class CraftBlockStreamManagerTest {
     }
 
     @Test
-    void testGetNextBlock() throws IOException, BlockSimulatorParsingException, ParseException {
+    void testGetNextBlock()
+            throws IOException, BlockSimulatorParsingException, ParseException, NoSuchAlgorithmException {
         final Block block = manager.getNextBlock();
         assertNotNull(block);
         assertTrue(block.getItemsCount() > 0);
@@ -96,7 +99,8 @@ class CraftBlockStreamManagerTest {
     }
 
     @Test
-    void testMultipleBlockGeneration() throws IOException, BlockSimulatorParsingException, ParseException {
+    void testMultipleBlockGeneration()
+            throws IOException, BlockSimulatorParsingException, ParseException, NoSuchAlgorithmException {
         final Block block1 = manager.getNextBlock();
         final Block block2 = manager.getNextBlock();
         assertNotNull(block1);
@@ -113,7 +117,7 @@ class CraftBlockStreamManagerTest {
      */
     @Test
     void testFooterHashesHaveDigestSizeOfBlockHashAlgorithm()
-            throws IOException, BlockSimulatorParsingException, ParseException {
+            throws IOException, BlockSimulatorParsingException, ParseException, NoSuchAlgorithmException {
         final int hashSize = Constants.BLOCK_HASH_ALGORITHM.hashSize();
         final Block first = manager.getNextBlock();
         final Block second = manager.getNextBlock();
@@ -138,7 +142,8 @@ class CraftBlockStreamManagerTest {
     }
 
     @Test
-    void testBlockGenerationWithCustomValues() throws IOException, BlockSimulatorParsingException, ParseException {
+    void testBlockGenerationWithCustomValues()
+            throws IOException, BlockSimulatorParsingException, ParseException, NoSuchAlgorithmException {
         Mockito.when(generatorConfigMock.minEventsPerBlock()).thenReturn(3);
         Mockito.when(generatorConfigMock.maxEventsPerBlock()).thenReturn(4);
         Mockito.when(generatorConfigMock.minTransactionsPerEvent()).thenReturn(2);
@@ -186,7 +191,7 @@ class CraftBlockStreamManagerTest {
      */
     @Test
     void testUnorderedBlockGenerationWithScrambleLevelMoreThanZero()
-            throws IOException, BlockSimulatorParsingException, ParseException {
+            throws IOException, BlockSimulatorParsingException, ParseException, NoSuchAlgorithmException {
         Set<Long> availableBlockNumbers = Set.of(2L, 3L, 4L, 6L, 7L, 8L, 9L, 13L);
 
         Mockito.when(unorderedStreamConfigMock.enabled()).thenReturn(true);
@@ -206,7 +211,7 @@ class CraftBlockStreamManagerTest {
      */
     @Test
     void testUnorderedBlockGenerationWithScrambleLevelMoreThanFive()
-            throws IOException, BlockSimulatorParsingException, ParseException {
+            throws IOException, BlockSimulatorParsingException, ParseException, NoSuchAlgorithmException {
         Set<Long> availableBlockNumbers = Set.of(2L, 3L, 4L, 6L, 7L, 8L, 9L, 13L);
 
         Mockito.when(unorderedStreamConfigMock.enabled()).thenReturn(true);
@@ -226,7 +231,7 @@ class CraftBlockStreamManagerTest {
      */
     @Test
     void testUnorderedBlockGenerationWithScrambleLevelZero()
-            throws IOException, BlockSimulatorParsingException, ParseException {
+            throws IOException, BlockSimulatorParsingException, ParseException, NoSuchAlgorithmException {
         LinkedHashSet<Long> fixedStreamingSequence = new LinkedHashSet<>();
         fixedStreamingSequence.add(1L);
         fixedStreamingSequence.add(2L);
@@ -316,7 +321,7 @@ class CraftBlockStreamManagerTest {
      * @throws BlockSimulatorParsingException if a parsing error occurs
      */
     private List<Long> getExpectedStreamBlockNumbers()
-            throws IOException, BlockSimulatorParsingException, ParseException {
+            throws IOException, BlockSimulatorParsingException, ParseException, NoSuchAlgorithmException {
         List<Long> expectedBlockNumbers = new ArrayList<>();
         while (true) {
             Block block = manager.getNextBlock();

@@ -11,6 +11,7 @@ import com.hedera.hapi.block.stream.StateProof;
 import com.hedera.hapi.block.stream.TssSignedBlockProof;
 import com.hedera.hapi.block.stream.output.BlockFooter;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -61,7 +62,8 @@ public final class StateProofChainBuilder {
     public StateProofChainBuilder(
             final TssBlockSigner signer,
             final VerificationDataProvider verificationDataProvider,
-            final MetricsHolder metricsHolder) {
+            final MetricsHolder metricsHolder)
+            throws NoSuchAlgorithmException {
         this.signer = signer;
         this.verificationDataProvider = verificationDataProvider;
         this.metricsHolder = metricsHolder;
@@ -69,7 +71,7 @@ public final class StateProofChainBuilder {
     }
 
     /** Factory with an isolated MetricRegistry, safe to call inside plugin-based tests. */
-    public static StateProofChainBuilder create(final TssBlockSigner signer) {
+    public static StateProofChainBuilder create(final TssBlockSigner signer) throws NoSuchAlgorithmException {
         final org.hiero.block.node.spi.BlockNodeContext isolated =
                 org.hiero.block.node.app.fixtures.TestUtils.testContext(
                         new org.hiero.block.node.app.fixtures.TestConfigurationBuilder().getOrCreateConfig(),
@@ -89,7 +91,7 @@ public final class StateProofChainBuilder {
      * Emits a genesis (block 0) gap block with the signer's LedgerIdPublication in a signed
      * transaction (so the verifier self-provisions TSS state) and an indirect state proof.
      */
-    public Signed genesisWithPublication() {
+    public Signed genesisWithPublication() throws NoSuchAlgorithmException {
         final TestBlock draft =
                 TestBlockBuilder.generateGenesisBlockWithSignedTransaction(signer.genesisLedgerIdSignedTransaction());
         return finalize(0L, draft);
@@ -100,13 +102,13 @@ public final class StateProofChainBuilder {
      * carries a dummy signed-transaction item so tampering tests that mutate SIGNED_TRANSACTION
      * always have something to modify.
      */
-    public Signed next(final long blockNumber) {
+    public Signed next(final long blockNumber) throws NoSuchAlgorithmException {
         return finalize(
                 blockNumber,
                 TestBlockBuilder.generateBlockWithSignedTransaction(blockNumber, Bytes.wrap(new byte[16])));
     }
 
-    private Signed finalize(final long blockNumber, final TestBlock draft) {
+    private Signed finalize(final long blockNumber, final TestBlock draft) throws NoSuchAlgorithmException {
         final TestBlock chained = withChainedFooter(draft);
         final Bytes rootHash = computeRootHash(chained, blockNumber);
         final TestBlock signed = withStateProof(chained, blockNumber, rootHash);
@@ -129,7 +131,8 @@ public final class StateProofChainBuilder {
         return replace(draft, StateProofChainBuilder::isFooter, footerItem);
     }
 
-    private TestBlock withStateProof(final TestBlock draft, final long blockNumber, final Bytes rootHash) {
+    private TestBlock withStateProof(final TestBlock draft, final long blockNumber, final Bytes rootHash)
+            throws NoSuchAlgorithmException {
         // Path 0: TIMESTAMP_LEAF + one right sibling. Deterministic zero-filled placeholders of
         // one digest of the block hash algorithm.
         final int hashSize = ALGORITHM.hashSize();

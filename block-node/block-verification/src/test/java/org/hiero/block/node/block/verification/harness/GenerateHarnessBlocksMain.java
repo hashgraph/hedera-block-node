@@ -5,6 +5,7 @@ import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
 import java.util.zip.GZIPOutputStream;
 import org.hiero.block.common.hasher.HashAlgorithm;
 import org.hiero.block.internal.BlockUnparsed;
@@ -31,7 +32,7 @@ public final class GenerateHarnessBlocksMain {
 
     private GenerateHarnessBlocksMain() {}
 
-    public static void main(final String[] args) throws IOException {
+    public static void main(final String[] args) throws IOException, NoSuchAlgorithmException {
         if (args.length < 2 || args.length > 3) {
             System.err.println("Usage: GenerateHarnessBlocksMain <outputDir> <count> [algorithm]");
             System.exit(2);

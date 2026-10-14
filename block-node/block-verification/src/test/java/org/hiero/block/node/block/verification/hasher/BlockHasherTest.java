@@ -319,7 +319,7 @@ class BlockHasherTest {
         /// chains into the next block is therefore a SHA-256 digest.
         @Test
         @DisplayName("get() hashes with SHA-256")
-        void testHashesWithSha256() throws ParseException {
+        void testHashesWithSha256() throws ParseException, NoSuchAlgorithmException {
             final List<BlockItemUnparsed> items = TestBlockBuilder.generateBlockWithNumber(BLOCK_NUMBER)
                     .blockUnparsed()
                     .blockItems();
@@ -674,7 +674,8 @@ class BlockHasherTest {
         @ParameterizedTest
         @ValueSource(ints = {23, 24, 25, 26, 27, 43, 47})
         @DisplayName("get() future item in a defined category is hashed into that subtree")
-        void testFutureItemHashedIntoExistingSubtree(final int fieldNumber) throws ParseException {
+        void testFutureItemHashedIntoExistingSubtree(final int fieldNumber)
+                throws ParseException, NoSuchAlgorithmException {
             final List<BlockItemUnparsed> baseItems = TestBlockBuilder.generateBlockWithNumber(BLOCK_NUMBER)
                     .blockUnparsed()
                     .blockItems();
@@ -693,7 +694,8 @@ class BlockHasherTest {
         @ParameterizedTest
         @ValueSource(ints = {28, 29, 30, 31, 32, 33, 34, 35, 48, 55})
         @DisplayName("get() future item in an extension category is hashed into the extension subtree")
-        void testFutureItemHashedIntoExtensionSubtree(final int fieldNumber) throws ParseException {
+        void testFutureItemHashedIntoExtensionSubtree(final int fieldNumber)
+                throws ParseException, NoSuchAlgorithmException {
             final List<BlockItemUnparsed> baseItems = TestBlockBuilder.generateBlockWithNumber(BLOCK_NUMBER)
                     .blockUnparsed()
                     .blockItems();
@@ -710,7 +712,7 @@ class BlockHasherTest {
         /// not hashed item, produces the root hash computed by the reference implementation.
         @Test
         @DisplayName("get() future items across several categories hash correctly together")
-        void testMultipleFutureItemsAcrossSubtrees() throws ParseException {
+        void testMultipleFutureItemsAcrossSubtrees() throws ParseException, NoSuchAlgorithmException {
             final List<BlockItemUnparsed> baseItems = TestBlockBuilder.generateBlockWithNumber(BLOCK_NUMBER)
                     .blockUnparsed()
                     .blockItems();
@@ -911,7 +913,8 @@ class BlockHasherTest {
         @ParameterizedTest
         @ValueSource(ints = {23, 24, 25, 26, 27, 43, 47})
         @DisplayName("get() fixture item in a defined category is hashed into that subtree")
-        void testFixtureItemHashedIntoExistingSubtree(final int fieldNumber) throws ParseException {
+        void testFixtureItemHashedIntoExistingSubtree(final int fieldNumber)
+                throws ParseException, NoSuchAlgorithmException {
             final List<BlockItemUnparsed> baseItems = TestBlockBuilder.generateBlockWithNumber(BLOCK_NUMBER)
                     .blockUnparsed()
                     .blockItems();
@@ -930,7 +933,8 @@ class BlockHasherTest {
         @ParameterizedTest
         @ValueSource(ints = {28, 29, 30, 31, 32, 33, 34, 35, 48, 55})
         @DisplayName("get() fixture item in an extension category is hashed into the extension subtree")
-        void testFixtureItemHashedIntoExtensionSubtree(final int fieldNumber) throws ParseException {
+        void testFixtureItemHashedIntoExtensionSubtree(final int fieldNumber)
+                throws ParseException, NoSuchAlgorithmException {
             final List<BlockItemUnparsed> baseItems = TestBlockBuilder.generateBlockWithNumber(BLOCK_NUMBER)
                     .blockUnparsed()
                     .blockItems();
@@ -948,7 +952,7 @@ class BlockHasherTest {
         /// implementation.
         @Test
         @DisplayName("get() fixture items across several categories hash correctly together")
-        void testMultipleFixtureItemsAcrossSubtrees() throws ParseException {
+        void testMultipleFixtureItemsAcrossSubtrees() throws ParseException, NoSuchAlgorithmException {
             final List<BlockItemUnparsed> baseItems = TestBlockBuilder.generateBlockWithNumber(BLOCK_NUMBER)
                     .blockUnparsed()
                     .blockItems();
@@ -966,7 +970,7 @@ class BlockHasherTest {
         /// inside a oneof, so the item is hashed like any other future item.
         @Test
         @DisplayName("get() single field from the multi field fixture message is a valid future item")
-        void testSingleFieldFromMultiFieldMessageIsValid() throws ParseException {
+        void testSingleFieldFromMultiFieldMessageIsValid() throws ParseException, NoSuchAlgorithmException {
             final Bytes wireBytes = MultiFieldBlockItem.PROTOBUF.toBytes(MultiFieldBlockItem.newBuilder()
                     .futureConsensusHeader23(FUTURE_PAYLOAD)
                     .build());
@@ -1070,7 +1074,7 @@ class BlockHasherTest {
         /// hashed into its category like any other future item.
         @Test
         @DisplayName("get() outside field set alone is a valid future item")
-        void testOutsideFieldAloneIsValidFutureItem() throws ParseException {
+        void testOutsideFieldAloneIsValidFutureItem() throws ParseException, NoSuchAlgorithmException {
             final Bytes wireBytes =
                     OneofWithExtraFieldBlockItem.PROTOBUF.toBytes(OneofWithExtraFieldBlockItem.newBuilder()
                             .outsideTraceData27(FUTURE_PAYLOAD)
@@ -1300,7 +1304,8 @@ class BlockHasherTest {
     /// with the streaming merkle tree algorithm, and the category roots are combined into the
     /// fixed 16 leaf block root tree, where every empty subtree and the absent state root
     /// contribute the empty tree hash (SHA-256 of a single 0x00 byte).
-    private static Bytes referenceRootHash(final List<BlockItemUnparsed> items) throws ParseException {
+    private static Bytes referenceRootHash(final List<BlockItemUnparsed> items)
+            throws ParseException, NoSuchAlgorithmException {
         final List<byte[]> consensusLeaves = new ArrayList<>();
         final List<byte[]> inputLeaves = new ArrayList<>();
         final List<byte[]> outputLeaves = new ArrayList<>();
@@ -1375,7 +1380,7 @@ class BlockHasherTest {
     /// Reference streaming merkle tree root over the given leaf hashes: fold complete sibling
     /// pairs as leaves arrive, then fold the remaining open branches right to left. An empty
     /// tree is the hash of a single zero byte.
-    private static byte[] refStreamingRoot(final List<byte[]> leafHashes) {
+    private static byte[] refStreamingRoot(final List<byte[]> leafHashes) throws NoSuchAlgorithmException {
         if (leafHashes.isEmpty()) {
             return refSha256(new byte[] {0x00});
         }
@@ -1396,27 +1401,23 @@ class BlockHasherTest {
     }
 
     /// Reference leaf hash with the 0x00 domain separation prefix.
-    private static byte[] refLeaf(final byte[] data) {
+    private static byte[] refLeaf(final byte[] data) throws NoSuchAlgorithmException {
         return refSha256(new byte[] {0x00}, data);
     }
 
     /// Reference two children internal node hash with the 0x02 domain separation prefix.
-    private static byte[] refNode(final byte[] left, final byte[] right) {
+    private static byte[] refNode(final byte[] left, final byte[] right) throws NoSuchAlgorithmException {
         return refSha256(new byte[] {0x02}, left, right);
     }
 
     /// SHA-256 over the concatenation of the given parts, the block hash algorithm spelled out
     /// here so the reference stays independent of the production code.
-    private static byte[] refSha256(final byte[]... parts) {
-        try {
-            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            for (final byte[] part : parts) {
-                digest.update(part);
-            }
-            return digest.digest();
-        } catch (final NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
+    private static byte[] refSha256(final byte[]... parts) throws NoSuchAlgorithmException {
+        final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        for (final byte[] part : parts) {
+            digest.update(part);
         }
+        return digest.digest();
     }
 
     private BlockItemUnparsed headerWithNoValues(final long blockNumber) throws ParseException {

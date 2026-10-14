@@ -32,7 +32,7 @@ class StreamingHasherTest {
         /// hash, the value the protocol defines for the all blocks tree of block 0.
         @Test
         @DisplayName("computeRootHash() of an empty tree is the empty tree hash")
-        void testEmptyTreeRoot() {
+        void testEmptyTreeRoot() throws NoSuchAlgorithmException {
             final StreamingHasher hasher = new StreamingHasher();
             assertThat(hasher.computeRootHash()).isEqualTo(refHash(new byte[] {0x00}));
         }
@@ -41,7 +41,7 @@ class StreamingHasherTest {
         /// prefix under SHA-256 and returned as the root.
         @Test
         @DisplayName("computeRootHash() of one leaf is the prefixed leaf hash")
-        void testSingleLeafRoot() {
+        void testSingleLeafRoot() throws NoSuchAlgorithmException {
             final byte[] data = randomBytes(100);
             final StreamingHasher hasher = new StreamingHasher();
             hasher.addLeaf(data);
@@ -53,7 +53,7 @@ class StreamingHasherTest {
         /// blocks tree.
         @Test
         @DisplayName("computeRootHash() of two nodes added by hash is their node hash")
-        void testTwoNodesByHashRoot() {
+        void testTwoNodesByHashRoot() throws NoSuchAlgorithmException {
             final byte[] first = randomBytes(HASH_SIZE);
             final byte[] second = randomBytes(HASH_SIZE);
             final StreamingHasher hasher = new StreamingHasher();
@@ -66,7 +66,7 @@ class StreamingHasherTest {
         /// node(node(leaf0, leaf1), leaf2), the same shape the streaming tree hasher produces.
         @Test
         @DisplayName("computeRootHash() of three leaves folds right to left")
-        void testThreeLeavesRoot() {
+        void testThreeLeavesRoot() throws NoSuchAlgorithmException {
             final byte[][] data = {randomBytes(10), randomBytes(20), randomBytes(30)};
             final StreamingHasher hasher = new StreamingHasher();
             for (final byte[] leaf : data) {
@@ -81,7 +81,7 @@ class StreamingHasherTest {
         /// gives the root the streaming hasher computes from the data.
         @Test
         @DisplayName("computeRootHash() agrees with the streaming tree hasher")
-        void testAgreesWithStreamingTreeHasher() {
+        void testAgreesWithStreamingTreeHasher() throws NoSuchAlgorithmException {
             final StreamingHasher hasher = new StreamingHasher();
             final NaiveStreamingTreeHasher treeHasher = new NaiveStreamingTreeHasher();
             for (int i = 0; i < 7; i++) {
@@ -96,7 +96,7 @@ class StreamingHasherTest {
         /// give the same root, and a leaf added afterwards still changes the root.
         @Test
         @DisplayName("computeRootHash() leaves the state unchanged")
-        void testComputeRootHashIsNonDestructive() {
+        void testComputeRootHashIsNonDestructive() throws NoSuchAlgorithmException {
             final StreamingHasher hasher = new StreamingHasher();
             hasher.addLeaf(randomBytes(12));
             hasher.addLeaf(randomBytes(12));
@@ -118,7 +118,7 @@ class StreamingHasherTest {
         /// root and leaf count after the same further leaves.
         @Test
         @DisplayName("resumed hasher continues the interrupted computation")
-        void testResumeFromIntermediateState() {
+        void testResumeFromIntermediateState() throws NoSuchAlgorithmException {
             final StreamingHasher original = new StreamingHasher();
             for (int i = 0; i < 3; i++) {
                 original.addNodeByHash(randomBytes(HASH_SIZE));
@@ -136,7 +136,7 @@ class StreamingHasherTest {
         /// data and for every node added by hash.
         @Test
         @DisplayName("leafCount() counts leaves and nodes")
-        void testLeafCount() {
+        void testLeafCount() throws NoSuchAlgorithmException {
             final StreamingHasher hasher = new StreamingHasher();
             assertThat(hasher.leafCount()).isZero();
             hasher.addLeaf(randomBytes(8));
@@ -153,26 +153,22 @@ class StreamingHasherTest {
     }
 
     /// Reference leaf hash with the 0x00 domain separation prefix.
-    private static byte[] refLeaf(final byte[] data) {
+    private static byte[] refLeaf(final byte[] data) throws NoSuchAlgorithmException {
         return refHash(new byte[] {0x00}, data);
     }
 
     /// Reference two children node hash with the 0x02 domain separation prefix.
-    private static byte[] refNode(final byte[] left, final byte[] right) {
+    private static byte[] refNode(final byte[] left, final byte[] right) throws NoSuchAlgorithmException {
         return refHash(new byte[] {0x02}, left, right);
     }
 
     /// SHA-256 over the concatenation of the given parts, the JDK digest spelled out here so the
     /// reference stays independent of the production code.
-    private static byte[] refHash(final byte[]... parts) {
-        try {
-            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            for (final byte[] part : parts) {
-                digest.update(part);
-            }
-            return digest.digest();
-        } catch (final NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
+    private static byte[] refHash(final byte[]... parts) throws NoSuchAlgorithmException {
+        final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        for (final byte[] part : parts) {
+            digest.update(part);
         }
+        return digest.digest();
     }
 }

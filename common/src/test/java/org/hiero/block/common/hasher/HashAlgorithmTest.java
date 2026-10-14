@@ -62,7 +62,7 @@ class HashAlgorithmTest {
         @ParameterizedTest
         @EnumSource(HashAlgorithm.class)
         @DisplayName("newDigest() returns a fresh digest every time")
-        void testNewDigestReturnsFreshInstances(final HashAlgorithm algorithm) {
+        void testNewDigestReturnsFreshInstances(final HashAlgorithm algorithm) throws NoSuchAlgorithmException {
             final MessageDigest first = algorithm.newDigest();
             final MessageDigest second = algorithm.newDigest();
             assertThat(first).isNotSameAs(second);
@@ -71,13 +71,51 @@ class HashAlgorithmTest {
         }
     }
 
-    /// Tests for the empty tree hash of the constants.
+    /// Tests for the empty tree hash of the constants. The empty tree hash is a hardcoded literal
+    /// on every constant, so these tests prove each literal is the digest of a single zero byte,
+    /// computed with [HashAlgorithm#newDigest()] exactly as an empty tree hash is defined.
     @Nested
     @DisplayName("Empty Tree Hash Tests")
     class EmptyTreeHashTests {
+        /// This test aims to assert that the hardcoded SHA-256 empty tree hash is exactly the
+        /// value computed by digesting a single zero byte with a fresh SHA-256 digest from
+        /// newDigest(). A wrong literal would give every empty SHA-256 subtree a wrong hash and
+        /// therefore every block a wrong root hash.
+        @Test
+        @DisplayName("SHA2_256 empty tree hash equals the computed digest of a single zero byte")
+        void testSha256EmptyTreeHashMatchesComputedDigest() throws NoSuchAlgorithmException {
+            final HashAlgorithm algorithm = HashAlgorithm.SHA2_256;
+            final byte[] computed = algorithm.newDigest().digest(new byte[] {0x00});
+            assertThat(algorithm.emptyTreeHash()).isEqualTo(Bytes.wrap(computed));
+        }
+
+        /// This test aims to assert that the hardcoded SHA-384 empty tree hash is exactly the
+        /// value computed by digesting a single zero byte with a fresh SHA-384 digest from
+        /// newDigest().
+        @Test
+        @DisplayName("SHA2_384 empty tree hash equals the computed digest of a single zero byte")
+        void testSha384EmptyTreeHashMatchesComputedDigest() throws NoSuchAlgorithmException {
+            final HashAlgorithm algorithm = HashAlgorithm.SHA2_384;
+            final byte[] computed = algorithm.newDigest().digest(new byte[] {0x00});
+            assertThat(algorithm.emptyTreeHash()).isEqualTo(Bytes.wrap(computed));
+        }
+
+        /// This test aims to assert that the hardcoded empty tree hash of every constant, including
+        /// any constant added later, is the digest of a single zero byte computed with newDigest()
+        /// and has exactly the digest size of the algorithm. A new constant with a wrong or
+        /// missing literal fails here even before a dedicated test is written for it.
+        @ParameterizedTest
+        @EnumSource(HashAlgorithm.class)
+        @DisplayName("emptyTreeHash() equals the computed digest of a single zero byte for every constant")
+        void testEmptyTreeHashMatchesComputedDigest(final HashAlgorithm algorithm) throws NoSuchAlgorithmException {
+            final byte[] computed = algorithm.newDigest().digest(new byte[] {0x00});
+            assertThat(algorithm.emptyTreeHash()).isEqualTo(Bytes.wrap(computed));
+            assertThat(algorithm.emptyTreeHash().length()).isEqualTo(algorithm.hashSize());
+        }
+
         /// This test aims to assert that the SHA-256 empty tree hash equals the externally
-        /// computed SHA-256 digest of a single zero byte, pinning the wiring of the constant to a
-        /// value produced outside the JVM.
+        /// computed SHA-256 digest of a single zero byte, pinning the hardcoded literal of the
+        /// constant to a value produced outside the JVM.
         @Test
         @DisplayName("SHA2_256 empty tree hash matches the golden vector")
         void testSha256EmptyTreeHashGoldenVector() {
@@ -91,18 +129,6 @@ class HashAlgorithmTest {
         @DisplayName("SHA2_384 empty tree hash matches the golden vector")
         void testSha384EmptyTreeHashGoldenVector() {
             assertThat(HashAlgorithm.SHA2_384.emptyTreeHash()).isEqualTo(Bytes.fromHex(SHA2_384_EMPTY_TREE_HASH));
-        }
-
-        /// This test aims to assert that the empty tree hash of every constant is the digest of
-        /// a single zero byte under that algorithm and has the digest size of the algorithm.
-        @ParameterizedTest
-        @EnumSource(HashAlgorithm.class)
-        @DisplayName("emptyTreeHash() is the digest of a single zero byte")
-        void testEmptyTreeHashIsDigestOfZeroByte(final HashAlgorithm algorithm) throws NoSuchAlgorithmException {
-            final byte[] expected =
-                    MessageDigest.getInstance(algorithm.jcaName()).digest(new byte[] {0x00});
-            assertThat(algorithm.emptyTreeHash()).isEqualTo(Bytes.wrap(expected));
-            assertThat(algorithm.emptyTreeHash().length()).isEqualTo(algorithm.hashSize());
         }
     }
 }

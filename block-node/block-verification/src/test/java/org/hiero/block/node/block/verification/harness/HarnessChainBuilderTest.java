@@ -9,6 +9,7 @@ import com.hedera.hapi.block.stream.output.BlockFooter;
 import com.hedera.hapi.node.base.BlockHashAlgorithm;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -55,7 +56,7 @@ class HarnessChainBuilderTest {
 
     @Test
     @DisplayName("Every block in a 3-block chain verifies via TSSVerifier")
-    void threeBlockChainAllVerify() throws ParseException {
+    void threeBlockChainAllVerify() throws ParseException, NoSuchAlgorithmException {
         final TssBlockSigner signer = TssBlockSigner.create();
         verificationDataProvider.safeUpdateTssData(signer.verificationMaterial().tssData(), false);
         final HarnessChainBuilder builder = new HarnessChainBuilder(signer, verificationDataProvider, metricsHolder);
@@ -83,7 +84,7 @@ class HarnessChainBuilderTest {
     /// proves equal to the production hashers.
     @Test
     @DisplayName("Chain built for SHA2_384 carries SHA-384 hashes and verifies")
-    void chainForOtherAlgorithmMatchesThatAlgorithm() throws ParseException {
+    void chainForOtherAlgorithmMatchesThatAlgorithm() throws ParseException, NoSuchAlgorithmException {
         final TssBlockSigner signer = TssBlockSigner.create();
         verificationDataProvider.safeUpdateTssData(signer.verificationMaterial().tssData(), false);
         final HarnessChainBuilder builder =
@@ -117,7 +118,7 @@ class HarnessChainBuilderTest {
     /// built for SHA2_384 hashed the way a release from before the move to SHA-256 hashes it.
     @Test
     @DisplayName("Legacy block root tree computes the roots the production hashers compute")
-    void legacyBlockRootTreeMatchesProductionHashers() {
+    void legacyBlockRootTreeMatchesProductionHashers() throws NoSuchAlgorithmException {
         final HarnessChainBuilder builder =
                 new HarnessChainBuilder(TssBlockSigner.create(), verificationDataProvider, metricsHolder);
         final List<HarnessChainBuilder.Signed> chain =

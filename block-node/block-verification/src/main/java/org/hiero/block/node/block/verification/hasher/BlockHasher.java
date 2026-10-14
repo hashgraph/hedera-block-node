@@ -15,6 +15,7 @@ import com.hedera.hapi.node.tss.LedgerIdPublicationTransactionBody;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.UnknownField;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -195,6 +196,9 @@ public final class BlockHasher implements Supplier<HashingResult> {
         } catch (final ParseException e) {
             throw new VerificationSessionFailedException(
                     blockNumber, SessionFailureType.UNABLE_TO_PARSE, blockSource, e);
+        } catch (final NoSuchAlgorithmException e) {
+            throw new VerificationSessionFailedException(
+                    blockNumber, SessionFailureType.MISSING_VERIFICATION_DATA, blockSource, e);
         }
     }
 
@@ -216,8 +220,9 @@ public final class BlockHasher implements Supplier<HashingResult> {
     /// @param itemsBlockNumber the block number carried by the current block items record
     /// @return null on success, or the failure type when the block must be refused
     /// @throws ParseException if a known item fails to parse
+    /// @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the hash algorithm
     private SessionFailureType processItem(final BlockItemUnparsed item, final long itemsBlockNumber)
-            throws ParseException {
+            throws ParseException, NoSuchAlgorithmException {
         final BlockItemUnparsed.ItemOneOfType kind = item.item().kind();
         final List<UnknownField> unknownFields = item.getUnknownFields();
         final SessionFailureType failure;
@@ -314,7 +319,9 @@ public final class BlockHasher implements Supplier<HashingResult> {
     /// @param item the block item carrying the unknown field
     /// @param unknownFields the unknown fields of the item
     /// @return null on success, or the failure type when the block must be refused
-    private SessionFailureType processFutureItem(final BlockItemUnparsed item, final List<UnknownField> unknownFields) {
+    /// @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the hash algorithm
+    private SessionFailureType processFutureItem(final BlockItemUnparsed item, final List<UnknownField> unknownFields)
+            throws NoSuchAlgorithmException {
         final SessionFailureType failure;
         if (unknownFields.isEmpty()) {
             // an item with no field at all, nothing valid to process
@@ -373,7 +380,9 @@ public final class BlockHasher implements Supplier<HashingResult> {
     /// @param item the block item to hash
     /// @param hasher the subtree hasher the item's category maps to
     /// @return always null, the item was hashed successfully
-    private SessionFailureType hashFutureItem(final BlockItemUnparsed item, final NaiveStreamingTreeHasher hasher) {
+    /// @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the hash algorithm
+    private SessionFailureType hashFutureItem(final BlockItemUnparsed item, final NaiveStreamingTreeHasher hasher)
+            throws NoSuchAlgorithmException {
         hasher.addLeaf(getBlockItemHash(item));
         hashingMetrics.futureItemsHashed().increment();
         return null;
@@ -383,7 +392,8 @@ public final class BlockHasher implements Supplier<HashingResult> {
     /// This method will finalize the hashing process. Root hash will be calculated and
     /// a [HashingResult] will be returned.
     /// @throws VerificationSessionFailedException in case a known failure occurs
-    private HashingResult finalHashingResult() {
+    /// @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the hash algorithm
+    private HashingResult finalHashingResult() throws NoSuchAlgorithmException {
         final HashingResult hashingResult;
         if (blockHeader == null || blockFooter == null || blockProofs.isEmpty()) {
             throw new VerificationSessionFailedException(

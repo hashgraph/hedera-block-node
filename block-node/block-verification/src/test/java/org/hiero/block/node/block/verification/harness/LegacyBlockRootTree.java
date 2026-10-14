@@ -8,6 +8,7 @@ import com.hedera.hapi.block.stream.output.BlockFooter;
 import com.hedera.hapi.node.base.Timestamp;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import org.hiero.block.common.hasher.HashAlgorithm;
@@ -37,7 +38,7 @@ final class LegacyBlockRootTree {
     /// @param algorithm the algorithm every hash of the tree is computed with
     /// @param block the harness block, its footer hashes having the digest size of the algorithm
     /// @return the block root hash
-    static Bytes blockRootHash(final HashAlgorithm algorithm, final TestBlock block) {
+    static Bytes blockRootHash(final HashAlgorithm algorithm, final TestBlock block) throws NoSuchAlgorithmException {
         final List<byte[]> consensusHeaderLeaves = new ArrayList<>();
         final List<byte[]> inputLeaves = new ArrayList<>();
         final List<byte[]> outputLeaves = new ArrayList<>();
@@ -94,7 +95,8 @@ final class LegacyBlockRootTree {
     /// @param algorithm the algorithm every node of the tree is computed with
     /// @param leafHashes the leaf hashes in order, each one digest of the algorithm
     /// @return the root of the tree
-    static byte[] treeRoot(final HashAlgorithm algorithm, final List<byte[]> leafHashes) {
+    static byte[] treeRoot(final HashAlgorithm algorithm, final List<byte[]> leafHashes)
+            throws NoSuchAlgorithmException {
         final byte[] result;
         if (leafHashes.isEmpty()) {
             result = algorithm.emptyTreeHash().toByteArray();
@@ -118,7 +120,7 @@ final class LegacyBlockRootTree {
     }
 
     /// Returns the digest of the given algorithm over the concatenation of the given parts.
-    private static byte[] digest(final HashAlgorithm algorithm, final byte[]... parts) {
+    private static byte[] digest(final HashAlgorithm algorithm, final byte[]... parts) throws NoSuchAlgorithmException {
         final MessageDigest digest = algorithm.newDigest();
         for (final byte[] part : parts) {
             digest.update(part);

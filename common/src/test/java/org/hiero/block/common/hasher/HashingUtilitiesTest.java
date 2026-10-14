@@ -43,7 +43,7 @@ class HashingUtilitiesTest {
         @ParameterizedTest
         @ValueSource(ints = {0b00000001, 0b00000010, 0b10000000, 0b00001001, 0b01100110, 0b11111111})
         @DisplayName("computeFinalBlockHash() extension presence patterns match reference")
-        void testExtensionPresencePatternsMatchReference(final int presenceMask) {
+        void testExtensionPresencePatternsMatchReference(final int presenceMask) throws NoSuchAlgorithmException {
             final FixedTreeInputs inputs = randomInputs();
             final StreamingTreeHasher[] extensionHashers = emptyExtensionHashers();
             for (int i = 0; i < extensionHashers.length; i++) {
@@ -60,7 +60,7 @@ class HashingUtilitiesTest {
         /// items can never be dropped without changing the block hash.
         @Test
         @DisplayName("computeFinalBlockHash() extension presence changes the root hash")
-        void testExtensionPresenceChangesRootHash() {
+        void testExtensionPresenceChangesRootHash() throws NoSuchAlgorithmException {
             final FixedTreeInputs inputs = randomInputs();
             final StreamingTreeHasher[] noExtensions = emptyExtensionHashers();
             final StreamingTreeHasher[] withExtension = emptyExtensionHashers();
@@ -86,7 +86,7 @@ class HashingUtilitiesTest {
         @ParameterizedTest
         @ValueSource(ints = {0b000000, 0b000001, 0b100000, 0b100001, 0b100010, 0b111111})
         @DisplayName("computeFinalBlockHash() pre-defined presence patterns match reference")
-        void testPreDefinedPresencePatternsMatchReference(final int presenceMask) {
+        void testPreDefinedPresencePatternsMatchReference(final int presenceMask) throws NoSuchAlgorithmException {
             final FixedTreeInputs inputs = randomInputsWithPreDefinedPresence(presenceMask);
             final StreamingTreeHasher[] noExtensions = emptyExtensionHashers();
             final Bytes actual = computeFinalHash(inputs, noExtensions);
@@ -99,7 +99,7 @@ class HashingUtilitiesTest {
         /// go unnoticed.
         @Test
         @DisplayName("computeFinalBlockHash() position 7 presence changes the root hash")
-        void testPositionSevenPresenceChangesRootHash() {
+        void testPositionSevenPresenceChangesRootHash() throws NoSuchAlgorithmException {
             final FixedTreeInputs traceEmptyInputs = new FixedTreeInputs(
                     fixedTimestamp(),
                     fixedHash(),
@@ -130,7 +130,7 @@ class HashingUtilitiesTest {
         /// tree hash.
         @Test
         @DisplayName("computeFinalBlockHash() only positions 0-1 populated matches reference")
-        void testOnlyRequiredPositionsMatchesReference() {
+        void testOnlyRequiredPositionsMatchesReference() throws NoSuchAlgorithmException {
             final FixedTreeInputs inputs = new FixedTreeInputs(
                     new Timestamp(1234567890L, 0),
                     Bytes.wrap(randomHash()),
@@ -155,7 +155,7 @@ class HashingUtilitiesTest {
         /// This test aims to assert that the root hash is one SHA-256 digest.
         @Test
         @DisplayName("computeFinalBlockHash() root hash is one SHA-256 digest")
-        void testRootHashHasDigestSize() {
+        void testRootHashHasDigestSize() throws NoSuchAlgorithmException {
             final Bytes actual = computeFinalHash(randomInputs(), emptyExtensionHashers());
             assertThat(actual.length()).isEqualTo(HASH_SIZE);
         }
@@ -165,7 +165,7 @@ class HashingUtilitiesTest {
         /// with a less specific message, and could never be the root of the previous block.
         @Test
         @DisplayName("computeFinalBlockHash() short previousBlockHash throws")
-        void testShortPreviousBlockHashRejected() {
+        void testShortPreviousBlockHashRejected() throws NoSuchAlgorithmException {
             final FixedTreeInputs inputs = inputsWithPreviousBlockHash(Bytes.wrap(new byte[16]));
             assertThatThrownBy(() -> computeFinalHash(inputs, emptyExtensionHashers()))
                     .isInstanceOf(IllegalArgumentException.class);
@@ -176,7 +176,7 @@ class HashingUtilitiesTest {
         /// into this tree would silently truncate it.
         @Test
         @DisplayName("computeFinalBlockHash() previousBlockHash of the SHA-384 digest size throws")
-        void testPreviousBlockHashOfOtherDigestSizeRejected() {
+        void testPreviousBlockHashOfOtherDigestSizeRejected() throws NoSuchAlgorithmException {
             final Bytes otherSize = Bytes.wrap(randomBytes(SHA384_HASH_SIZE));
             final FixedTreeInputs inputs = inputsWithPreviousBlockHash(otherSize);
             assertThatThrownBy(() -> computeFinalHash(inputs, emptyExtensionHashers()))
@@ -188,7 +188,7 @@ class HashingUtilitiesTest {
         /// digest size is refused, for the same reason as the previous block hash.
         @Test
         @DisplayName("computeFinalBlockHash() rootHashOfAllPreviousBlockHashes of the SHA-384 digest size throws")
-        void testRootOfAllPreviousBlockHashesOfOtherDigestSizeRejected() {
+        void testRootOfAllPreviousBlockHashesOfOtherDigestSizeRejected() throws NoSuchAlgorithmException {
             final FixedTreeInputs valid = randomInputs();
             final FixedTreeInputs inputs = new FixedTreeInputs(
                     valid.timestamp(),
@@ -211,7 +211,7 @@ class HashingUtilitiesTest {
         /// state root stays allowed and contributes the empty tree hash.
         @Test
         @DisplayName("computeFinalBlockHash() non-empty startOfBlockStateRootHash of the SHA-384 digest size throws")
-        void testNonEmptyStateRootOfOtherDigestSizeRejected() {
+        void testNonEmptyStateRootOfOtherDigestSizeRejected() throws NoSuchAlgorithmException {
             final FixedTreeInputs valid = randomInputs();
             final FixedTreeInputs inputs = new FixedTreeInputs(
                     valid.timestamp(),
@@ -237,7 +237,7 @@ class HashingUtilitiesTest {
         /// under SHA-256 and that the result is one SHA-256 digest.
         @Test
         @DisplayName("hashLeaf() is the prefixed digest of the leaf data")
-        void testHashLeafMatchesReference() {
+        void testHashLeafMatchesReference() throws NoSuchAlgorithmException {
             final byte[] data = randomBytes(77);
             final byte[] actual = HashingUtilities.hashLeaf(data);
             assertThat(actual).isEqualTo(refLeaf(data));
@@ -248,7 +248,7 @@ class HashingUtilitiesTest {
         /// separation prefix in left to right order under SHA-256.
         @Test
         @DisplayName("hashInternalNode() is the prefixed digest of left then right")
-        void testHashInternalNodeMatchesReference() {
+        void testHashInternalNodeMatchesReference() throws NoSuchAlgorithmException {
             final byte[] left = randomHash();
             final byte[] right = randomHash();
             final byte[] actual = HashingUtilities.hashInternalNode(left, right);
@@ -261,7 +261,7 @@ class HashingUtilitiesTest {
         /// separation prefix under SHA-256, distinct from the leaf and the two children prefixes.
         @Test
         @DisplayName("hashInternalNodeSingleChild() is the prefixed digest of the child")
-        void testHashInternalNodeSingleChildMatchesReference() {
+        void testHashInternalNodeSingleChildMatchesReference() throws NoSuchAlgorithmException {
             final byte[] child = randomHash();
             final byte[] actual = HashingUtilities.hashInternalNodeSingleChild(child);
             assertThat(actual).isEqualTo(refHash(new byte[] {0x01}, child));
@@ -278,7 +278,7 @@ class HashingUtilitiesTest {
         /// its serialized bytes, returned in a buffer holding exactly one SHA-256 digest.
         @Test
         @DisplayName("getBlockItemHash() is the leaf hash of the serialized item")
-        void testGetBlockItemHashIsLeafHash() {
+        void testGetBlockItemHashIsLeafHash() throws NoSuchAlgorithmException {
             final BlockItemUnparsed item = BlockItemUnparsed.newBuilder()
                     .transactionResult(Bytes.wrap("transaction result"))
                     .build();
@@ -294,7 +294,7 @@ class HashingUtilitiesTest {
         /// trace data to their own buffers, while a block proof is not hashed at all.
         @Test
         @DisplayName("getBlockHashes() routes the item hashes by category")
-        void testGetBlockHashesRoutesItemsByCategory() {
+        void testGetBlockHashesRoutesItemsByCategory() throws NoSuchAlgorithmException {
             final BlockItemUnparsed header = BlockItemUnparsed.newBuilder()
                     .blockHeader(Bytes.wrap("header"))
                     .build();
@@ -355,7 +355,7 @@ class HashingUtilitiesTest {
         /// block root algorithm.
         @Test
         @DisplayName("computeV6SignedPayload() is SHA-384 of the version prefix and the contents")
-        void testComputeV6SignedPayloadIsSha384OfVersionAndContents() {
+        void testComputeV6SignedPayloadIsSha384OfVersionAndContents() throws NoSuchAlgorithmException {
             final byte[] contents = randomBytes(300);
             final byte[] actual = HashingUtilities.computeV6SignedPayload(Bytes.wrap(contents));
             final byte[] expected = refDigest("SHA-384", new byte[] {0, 0, 0, 6}, contents);
@@ -378,7 +378,7 @@ class HashingUtilitiesTest {
 
     /// Builds deterministic pseudo random inputs: the block level values and the five category
     /// subtree hashers with varying leaf counts, including an empty one at position 3.
-    private static FixedTreeInputs randomInputs() {
+    private static FixedTreeInputs randomInputs() throws NoSuchAlgorithmException {
         return new FixedTreeInputs(
                 new Timestamp(RANDOM.nextLong(0, Long.MAX_VALUE), RANDOM.nextInt(0, 1_000_000_000)),
                 Bytes.wrap(randomHash()),
@@ -395,7 +395,8 @@ class HashingUtilitiesTest {
     /// the given bitmask (bit 0 = position 2 state root, bit 1 = position 3 consensus headers,
     /// bit 2 = position 4 inputs, bit 3 = position 5 outputs, bit 4 = position 6 state changes,
     /// bit 5 = position 7 trace). Positions 0-1 are always populated with random hashes.
-    private static FixedTreeInputs randomInputsWithPreDefinedPresence(final int presenceMask) {
+    private static FixedTreeInputs randomInputsWithPreDefinedPresence(final int presenceMask)
+            throws NoSuchAlgorithmException {
         return new FixedTreeInputs(
                 new Timestamp(RANDOM.nextLong(0, Long.MAX_VALUE), RANDOM.nextInt(0, 1_000_000_000)),
                 Bytes.wrap(randomHash()),
@@ -409,7 +410,8 @@ class HashingUtilitiesTest {
     }
 
     /// Builds valid random inputs with the given previous block hash in place of the random one.
-    private static FixedTreeInputs inputsWithPreviousBlockHash(final Bytes previousBlockHash) {
+    private static FixedTreeInputs inputsWithPreviousBlockHash(final Bytes previousBlockHash)
+            throws NoSuchAlgorithmException {
         final FixedTreeInputs valid = randomInputs();
         return new FixedTreeInputs(
                 valid.timestamp(),
@@ -423,7 +425,7 @@ class HashingUtilitiesTest {
                 valid.traceDataHasher());
     }
 
-    private static StreamingTreeHasher hasherWithLeaves(final int leafCount) {
+    private static StreamingTreeHasher hasherWithLeaves(final int leafCount) throws NoSuchAlgorithmException {
         final NaiveStreamingTreeHasher hasher = new NaiveStreamingTreeHasher();
         for (int i = 0; i < leafCount; i++) {
             hasher.addLeaf(ByteBuffer.wrap(randomHash()));
@@ -434,7 +436,8 @@ class HashingUtilitiesTest {
     /// Calls [HashingUtilities#computeFinalBlockHash], expanding the given hashers into the
     /// individual extension subtree hasher parameters. Absent slots in {@code extensionHashers}
     /// must be a fresh empty {@link NaiveStreamingTreeHasher} via {@link #emptyExtensionHashers}.
-    private static Bytes computeFinalHash(final FixedTreeInputs inputs, final StreamingTreeHasher[] extensionHashers) {
+    private static Bytes computeFinalHash(final FixedTreeInputs inputs, final StreamingTreeHasher[] extensionHashers)
+            throws NoSuchAlgorithmException {
         return HashingUtilities.computeFinalBlockHash(
                 inputs.timestamp(),
                 inputs.previousBlockHash(),
@@ -468,7 +471,7 @@ class HashingUtilitiesTest {
 
     /// Builds a fresh {@link NaiveStreamingTreeHasher} with a single random leaf, so its
     /// {@code rootHash()} is non-empty and deterministically depends on the seeded content.
-    private static StreamingTreeHasher hasherWithRandomLeaf() {
+    private static StreamingTreeHasher hasherWithRandomLeaf() throws NoSuchAlgorithmException {
         final NaiveStreamingTreeHasher hasher = new NaiveStreamingTreeHasher();
         hasher.addLeaf(ByteBuffer.wrap(randomHash()));
         return hasher;
@@ -518,7 +521,8 @@ class HashingUtilitiesTest {
     /// it. The 16-leaf tree shape is fully stable so Merkle proof paths are independent of
     /// presence patterns. The root combines the consensus timestamp leaf with the Mountain Top
     /// root.
-    private static Bytes referenceRootHash(final FixedTreeInputs inputs, final StreamingTreeHasher[] extensionHashers) {
+    private static Bytes referenceRootHash(final FixedTreeInputs inputs, final StreamingTreeHasher[] extensionHashers)
+            throws NoSuchAlgorithmException {
         final byte[] stateRoot = inputs.startOfBlockStateRootHash().length() == 0
                 ? refEmptyTreeHash()
                 : inputs.startOfBlockStateRootHash().toByteArray();
@@ -542,7 +546,7 @@ class HashingUtilitiesTest {
 
     /// Mirrors [NaiveStreamingTreeHasher]: pair-combine leaves at 0x02, promoting odd survivors
     /// to the next round until a single hash remains.
-    private static byte[] refFoldUp(final List<byte[]> leaves) {
+    private static byte[] refFoldUp(final List<byte[]> leaves) throws NoSuchAlgorithmException {
         List<byte[]> current = new ArrayList<>(leaves);
         while (current.size() > 1) {
             final List<byte[]> next = new ArrayList<>();
@@ -559,39 +563,35 @@ class HashingUtilitiesTest {
     }
 
     /// The reference empty tree hash: the leaf hash of empty data equals hash(0x00).
-    private static byte[] refEmptyTreeHash() {
+    private static byte[] refEmptyTreeHash() throws NoSuchAlgorithmException {
         return refLeaf(new byte[0]);
     }
 
     /// Reference leaf hash of a serialized block item.
-    private static byte[] refItemLeaf(final BlockItemUnparsed item) {
+    private static byte[] refItemLeaf(final BlockItemUnparsed item) throws NoSuchAlgorithmException {
         return refLeaf(BlockItemUnparsed.PROTOBUF.toBytes(item).toByteArray());
     }
 
-    private static byte[] refLeaf(final byte[] data) {
+    private static byte[] refLeaf(final byte[] data) throws NoSuchAlgorithmException {
         return refHash(new byte[] {0x00}, data);
     }
 
-    private static byte[] refNode(final byte[] left, final byte[] right) {
+    private static byte[] refNode(final byte[] left, final byte[] right) throws NoSuchAlgorithmException {
         return refHash(new byte[] {0x02}, left, right);
     }
 
     /// SHA-256 over the concatenation of the given parts, the JDK digest spelled out here so the
     /// reference stays independent of the production code.
-    private static byte[] refHash(final byte[]... parts) {
+    private static byte[] refHash(final byte[]... parts) throws NoSuchAlgorithmException {
         return refDigest("SHA-256", parts);
     }
 
     /// The named JDK digest over the concatenation of the given parts.
-    private static byte[] refDigest(final String jcaName, final byte[]... parts) {
-        try {
-            final MessageDigest digest = MessageDigest.getInstance(jcaName);
-            for (final byte[] part : parts) {
-                digest.update(part);
-            }
-            return digest.digest();
-        } catch (final NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
+    private static byte[] refDigest(final String jcaName, final byte[]... parts) throws NoSuchAlgorithmException {
+        final MessageDigest digest = MessageDigest.getInstance(jcaName);
+        for (final byte[] part : parts) {
+            digest.update(part);
         }
+        return digest.digest();
     }
 }

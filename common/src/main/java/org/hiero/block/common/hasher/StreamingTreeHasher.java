@@ -3,6 +3,7 @@ package org.hiero.block.common.hasher;
 
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.nio.ByteBuffer;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Defines a streaming hash computation for a binary Merkle tree of leaf hashes. Leaves are folded
@@ -18,12 +19,14 @@ public interface StreamingTreeHasher {
      * @param hash the leaf hash to add
      * @throws IllegalStateException if the root hash has already been requested
      * @throws IllegalArgumentException if the buffer does not have at least one digest of bytes remaining
+     * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
-    void addLeaf(ByteBuffer hash);
+    void addLeaf(ByteBuffer hash) throws NoSuchAlgorithmException;
 
     /**
      * Returns the root hash of the tree of items. Once called, this hasher will not accept any more leaf items.
      * @return the root hash of the tree of items
+     * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
-    Bytes rootHash();
+    Bytes rootHash() throws NoSuchAlgorithmException;
 }
