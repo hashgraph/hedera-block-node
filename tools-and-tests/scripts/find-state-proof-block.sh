@@ -170,7 +170,7 @@ function inspect_block_once {
     -d "{\"block_number\": ${block_number}}" \
     "${BN_ENDPOINT}" org.hiero.block.api.BlockAccessService/getBlock 2>&1) || true
 
-  if echo "${raw}" | grep -q '"status": *"NOT_FOUND"\|"status": *"NOT_AVAILABLE"'; then
+  if echo "${raw}" | grep -qE '"status": *"NOT_FOUND"|"status": *"NOT_AVAILABLE"'; then
     echo "NOT_AVAILABLE"
     return
   fi

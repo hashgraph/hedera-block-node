@@ -69,7 +69,6 @@ def probe_many(endpoint: str, block_numbers, parallel: int = 16) -> list:
 def compute_tps(rows: list) -> list:
     """Annotate rows with tps (dt to next sample). Rows must be sorted by block_number."""
     rows_sorted = sorted([r for r in rows if r.get("status") == "OK"], key=lambda r: r["block_number"])
-    by_num = {r["block_number"]: r for r in rows_sorted}
     for i, row in enumerate(rows_sorted):
         row["tps"] = None
         if i + 1 < len(rows_sorted):

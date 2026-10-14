@@ -132,5 +132,3 @@ So 1,000 blocks at 10k TPS takes ~1.5h. For bigger captures consider switching t
 - **`NOT_AVAILABLE` on a few blocks in a 1,000-block run** — transient. Just re-run the same command; the downloader is resumable.
 - **Block 361 (or whichever the WRAPS transition is) fails with timeout** — that block is ~95 MB. Bump `--timeout 240` and run with `--parallel 1`.
 - **`platform' is not a package`** — `setup.sh` did not rename the generated `platform/` package to `_bn_platform/`. Re-run `./setup.sh`.
-
-See `.claude/commands/bn-backup.md` for the higher-level workflow doc that wraps this README.
