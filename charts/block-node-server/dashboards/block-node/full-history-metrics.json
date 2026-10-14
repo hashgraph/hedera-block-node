@@ -1121,6 +1121,7 @@
                 "group": "merge",
                 "kind": "Transformation",
                 "spec": {
+                  "id": "merge",
                   "options": {}
                 }
               },
@@ -1128,6 +1129,7 @@
                 "group": "organize",
                 "kind": "Transformation",
                 "spec": {
+                  "id": "organize",
                   "options": {
                     "excludeByName": {
                       "Time": true
