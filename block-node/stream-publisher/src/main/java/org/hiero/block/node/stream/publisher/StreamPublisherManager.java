@@ -109,29 +109,14 @@ public interface StreamPublisherManager extends BlockNotificationHandler {
     ///
     /// @param blockNumber the block number to look up
     /// @return the recorded root hash, or [Bytes#EMPTY] when unknown
-    default Bytes getCachedBlockRootHash(final long blockNumber) {
-        return Bytes.EMPTY;
-    }
-
-    /// Return the latest block number that has been acknowledged (i.e. verified and
-    /// persisted) by this Block-Node. Used by the publisher handler to decide whether
-    /// to immediately acknowledge an [org.hiero.block.api.PublishStreamRequest.AcknowledgeOnly]
-    /// request.
-    ///
-    /// @return the latest acknowledged block number, or a value less than zero when
-    ///     nothing has been acknowledged yet
-    default long getLatestAckedBlockNumber() {
-        return getLatestBlockNumber();
-    }
+    Bytes getCachedBlockRootHash(final long blockNumber);
 
     /// Notify the manager that a handler has transitioned between active and passive mode.
     /// Used to maintain per-mode gauges and other mode-aware bookkeeping.
     ///
     /// @param handlerId the id of the handler
     /// @param passive `true` if the handler is now passive, `false` if active
-    default void notifyHandlerModeChange(final long handlerId, final boolean passive) {
-        // default: no-op
-    }
+    void notifyHandlerModeChange(final long handlerId, final boolean passive);
 
     /// The action to take within the PublisherHandler for a block.
     enum BlockAction {

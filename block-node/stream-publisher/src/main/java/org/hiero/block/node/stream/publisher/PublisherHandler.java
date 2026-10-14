@@ -153,7 +153,7 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
 
     /// Handler-level mode: active = actively streaming block items, passive = only
     /// reporting progress via AcknowledgeOnly.
-    public enum HandlerMode {
+    enum HandlerMode {
         ACTIVE,
         PASSIVE
     }
@@ -186,11 +186,6 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
         maxTotalBlockBytes = publisherManager.serverConfiguration().maxMessageSizeBytes();
         messageBudget = new AtomicLong(configuration.perHandlerMessageBudget());
         handlerMode = new AtomicReference<>(HandlerMode.ACTIVE);
-    }
-
-    /// Returns the current handler mode, for testing and metric observation.
-    HandlerMode getMode() {
-        return handlerMode.get();
     }
 
     // A package-private method for accessing correlation ID for tracing support.
@@ -486,7 +481,7 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
             publisherManager.blockIsEnding(blockInProgress, handlerId);
             resetState();
         }
-        final long latestAcked = publisherManager.getLatestAckedBlockNumber();
+        final long latestAcked = publisherManager.getLatestBlockNumber();
         if (requestedBlockNumber > UNKNOWN_BLOCK_NUMBER
                 && latestAcked > UNKNOWN_BLOCK_NUMBER
                 && requestedBlockNumber <= latestAcked) {

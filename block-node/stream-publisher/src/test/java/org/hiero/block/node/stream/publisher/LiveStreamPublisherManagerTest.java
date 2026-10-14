@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 import org.hiero.block.api.BlockRange;
+import org.hiero.block.api.PublishStreamRequest.AcknowledgeOnly;
 import org.hiero.block.api.PublishStreamRequest.EndStream;
 import org.hiero.block.api.PublishStreamResponse;
 import org.hiero.block.api.PublishStreamResponse.EndOfStream.Code;
@@ -3978,6 +3979,32 @@ class LiveStreamPublisherManagerTest {
                     true, null, 42L, Bytes.wrap(new byte[] {7}), new BlockUnparsed(List.of()), BlockSource.PUBLISHER));
 
             assertThat(disabledManager.getCachedBlockRootHash(42L)).isEqualTo(Bytes.EMPTY);
+        }
+
+        @Test
+        @DisplayName("Passive handler receives Acknowledgement on next handlePersisted broadcast")
+        void passiveHandlerStillGetsAcksOnPersistedBroadcast() {
+            final TestResponsePipeline<PublishStreamResponse> aReplies = new TestResponsePipeline<>();
+            final PublisherHandler handlerA = toTest.addHandler(aReplies, generateHandlerMetrics(), null);
+            final TestResponsePipeline<PublishStreamResponse> bReplies = new TestResponsePipeline<>();
+            toTest.addHandler(bReplies, generateHandlerMetrics(), null);
+
+            // A sends AcknowledgeOnly for a block ahead of the current watermark. This flips A
+            // to PASSIVE on the manager; no immediate ack because N > latest acked.
+            final PublishStreamRequestUnparsed ackOnly = PublishStreamRequestUnparsed.newBuilder()
+                    .acknowledgeOnly(
+                            AcknowledgeOnly.newBuilder().blockNumber(50L).build())
+                    .build();
+            handlerA.onNext(ackOnly);
+            assertThat(aReplies.getOnNextCalls()).isEmpty();
+
+            // Simulate B's blocks being persisted. The broadcast must reach handler A too.
+            toTest.handlePersisted(new PersistedNotification(0L, true, 0, BlockSource.PUBLISHER));
+
+            assertThat(aReplies.getOnNextCalls()).hasSize(1);
+            assertThat(aReplies.getOnNextCalls().get(0).response().kind()).isEqualTo(ResponseOneOfType.ACKNOWLEDGEMENT);
+            assertThat(aReplies.getOnNextCalls().get(0).acknowledgement().blockNumber())
+                    .isEqualTo(0L);
         }
     }
 

@@ -65,7 +65,6 @@ public class TestStreamPublisherManager implements StreamPublisherManager {
     private final ConcurrentMap<Long, Deque<BlockItemSetUnparsed>> queueByBlockMap = new ConcurrentSkipListMap<>();
     private final ConcurrentMap<Long, Bytes> cachedBlockRootHashes = new ConcurrentHashMap<>();
     private final ConcurrentMap<Long, Boolean> handlerPassiveMode = new ConcurrentHashMap<>();
-    private volatile long latestAckedBlockNumber = -1L;
 
     public TestStreamPublisherManager(
             final TestBlockMessagingFacility testBlockMessagingFacility,
@@ -223,11 +222,6 @@ public class TestStreamPublisherManager implements StreamPublisherManager {
     }
 
     @Override
-    public long getLatestAckedBlockNumber() {
-        return latestAckedBlockNumber;
-    }
-
-    @Override
     public void notifyHandlerModeChange(final long handlerId, final boolean passive) {
         handlerPassiveMode.put(handlerId, passive);
     }
@@ -235,11 +229,6 @@ public class TestStreamPublisherManager implements StreamPublisherManager {
     /// Fixture method. Insert a block root hash into the ack cache for the given block.
     public void setCachedBlockRootHash(final long blockNumber, final Bytes rootHash) {
         cachedBlockRootHashes.put(blockNumber, Objects.requireNonNull(rootHash));
-    }
-
-    /// Fixture method. Set the latest acked block number returned by [#getLatestAckedBlockNumber()].
-    public void setLatestAckedBlockNumber(final long blockNumber) {
-        this.latestAckedBlockNumber = blockNumber;
     }
 
     /// Fixture method. Returns the recorded passive-mode flag for the given handler, or null if
