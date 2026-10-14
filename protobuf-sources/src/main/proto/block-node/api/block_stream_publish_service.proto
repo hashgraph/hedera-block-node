@@ -90,12 +90,12 @@ message PublishStreamRequest {
          * believes the Block-Node already holds.<br/>
          * When `block_number` is at or before the Block-Node's current
          * latest-acknowledged block, the Block-Node SHALL respond with an
-         * immediate `Acknowledge` for that block.<br/>
+         * immediate `Acknowledge` for its latest-acknowledged block, which
+         * implicitly acknowledges `block_number`.<br/>
          * When `block_number` is greater than the current latest-acknowledged
-         * block, the Block-Node SHALL NOT send an immediate response; it
-         * records the Publisher as passive and will emit the next
-         * `Acknowledge` through the normal verification path once the
-         * acknowledged watermark advances to or past `block_number`.<br/>
+         * block, the Block-Node SHALL NOT send an immediate response; the
+         * Publisher receives the regular `Acknowledge` the next time a block
+         * is verified and persisted.<br/>
          * In either case the Block-Node SHALL NOT respond with `SKIP` or
          * `DUPLICATE`.
          */

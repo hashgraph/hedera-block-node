@@ -295,9 +295,11 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
 
     @Override
     public void notifyHandlerModeChange(final long handlerId, final boolean passive) {
-        final Boolean previous = handlerPassiveMode.put(handlerId, passive);
-        if (previous != null && previous.booleanValue() == passive) {
-            return; // no transition, nothing to update
+        // Use replace so a mode-change racing with removeHandler cannot reinsert
+        // a stale entry and leave a ghost handler counted in the gauges.
+        final Boolean previous = handlerPassiveMode.replace(handlerId, passive);
+        if (previous == null || previous.booleanValue() == passive) {
+            return; // handler already removed, or no transition
         }
         metrics.activeHandlerCount().set(countHandlersByMode(false));
         metrics.passiveHandlerCount().set(countHandlersByMode(true));
@@ -312,11 +314,6 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
             final Bytes cached = ackedBlockRootHashes.get(blockNumber);
             return cached != null ? cached : Bytes.EMPTY;
         }
-    }
-
-    @Override
-    public long getLatestAckedBlockNumber() {
-        return lastPersistedBlockNumber.get();
     }
 
     /// Insert a verified block root hash into the bounded LRU cache. Called from

@@ -17,7 +17,6 @@ import org.hiero.block.node.app.fixtures.blocks.TestBlock;
 import org.hiero.block.node.app.fixtures.blocks.TestBlockBuilder;
 import org.hiero.block.node.app.fixtures.pipeline.TestResponsePipeline;
 import org.hiero.block.node.app.fixtures.plugintest.TestBlockMessagingFacility;
-import org.hiero.block.node.stream.publisher.PublisherHandler.HandlerMode;
 import org.hiero.block.node.stream.publisher.PublisherHandler.MetricsHolder;
 import org.hiero.block.node.stream.publisher.StreamPublisherManager.BlockAction;
 import org.hiero.block.node.stream.publisher.fixtures.TestStreamPublisherManager;
@@ -30,8 +29,8 @@ import org.junit.jupiter.api.Test;
 /// Tests for the AcknowledgeOnly request-handling behavior of [PublisherHandler].
 ///
 /// Covers mode transitions, immediate acknowledgement for already-persisted block numbers,
-/// deferred acknowledgement when the Block-Node is behind, and suppression of SKIP /
-/// SKIP_AND_ACK / DUPLICATE_BLOCK responses while the handler is in `PASSIVE` mode.
+/// deferred acknowledgement when the Block-Node is behind, and mid-block cancellation
+/// when a Publisher switches from streaming to AcknowledgeOnly.
 @DisplayName("PublisherHandler AcknowledgeOnly Tests")
 class PublisherHandlerAcknowledgeOnlyTest {
 
@@ -58,17 +57,10 @@ class PublisherHandlerAcknowledgeOnlyTest {
     class ModeTransitionTests {
 
         @Test
-        @DisplayName("Handler starts in ACTIVE mode")
-        void handlerStartsActive() {
-            assertThat(handler.getMode()).isEqualTo(HandlerMode.ACTIVE);
-        }
-
-        @Test
         @DisplayName("Receiving AcknowledgeOnly flips the handler to PASSIVE and notifies the manager")
         void acknowledgeOnlyFlipsToPassive() {
             handler.onNext(ackOnlyRequest(5L));
 
-            assertThat(handler.getMode()).isEqualTo(HandlerMode.PASSIVE);
             assertThat(manager.getHandlerPassiveMode(HANDLER_ID)).isTrue();
         }
 
@@ -76,12 +68,11 @@ class PublisherHandlerAcknowledgeOnlyTest {
         @DisplayName("Receiving BlockItems after AcknowledgeOnly flips the handler back to ACTIVE")
         void blockItemsFlipsBackToActive() {
             handler.onNext(ackOnlyRequest(5L));
-            assertThat(handler.getMode()).isEqualTo(HandlerMode.PASSIVE);
+            assertThat(manager.getHandlerPassiveMode(HANDLER_ID)).isTrue();
 
             manager.setBlockActionForBlock(BlockAction.ACCEPT);
             handler.onNext(blockItemsRequest(0L));
 
-            assertThat(handler.getMode()).isEqualTo(HandlerMode.ACTIVE);
             assertThat(manager.getHandlerPassiveMode(HANDLER_ID)).isFalse();
         }
     }
@@ -93,7 +84,7 @@ class PublisherHandlerAcknowledgeOnlyTest {
         @Test
         @DisplayName("AcknowledgeOnly below the latest acked block triggers immediate ack at latest")
         void immediateAckWhenBelowLatest() {
-            manager.setLatestAckedBlockNumber(10L);
+            manager.setLatestBlockNumber(10L);
 
             handler.onNext(ackOnlyRequest(5L));
 
@@ -108,7 +99,7 @@ class PublisherHandlerAcknowledgeOnlyTest {
         @Test
         @DisplayName("AcknowledgeOnly equal to the latest acked block triggers immediate ack")
         void immediateAckWhenEqualToLatest() {
-            manager.setLatestAckedBlockNumber(7L);
+            manager.setLatestBlockNumber(7L);
 
             handler.onNext(ackOnlyRequest(7L));
 
@@ -120,18 +111,18 @@ class PublisherHandlerAcknowledgeOnlyTest {
         @Test
         @DisplayName("AcknowledgeOnly ahead of the latest acked block does NOT trigger an ack")
         void noAckWhenAheadOfLatest() {
-            manager.setLatestAckedBlockNumber(3L);
+            manager.setLatestBlockNumber(3L);
 
             handler.onNext(ackOnlyRequest(8L));
 
             assertThat(replies.getOnNextCalls()).isEmpty();
-            assertThat(handler.getMode()).isEqualTo(HandlerMode.PASSIVE);
+            assertThat(manager.getHandlerPassiveMode(HANDLER_ID)).isTrue();
         }
 
         @Test
         @DisplayName("Immediate acknowledgement populates block_root_hash from the manager cache when present")
         void ackCarriesCachedRootHash() {
-            manager.setLatestAckedBlockNumber(10L);
+            manager.setLatestBlockNumber(10L);
             final Bytes expectedHash = Bytes.wrap(new byte[] {1, 2, 3, 4});
             manager.setCachedBlockRootHash(10L, expectedHash);
 
@@ -145,30 +136,13 @@ class PublisherHandlerAcknowledgeOnlyTest {
         @Test
         @DisplayName("Immediate acknowledgement carries empty block_root_hash when cache is empty")
         void ackCarriesEmptyRootHashOnCacheMiss() {
-            manager.setLatestAckedBlockNumber(10L);
+            manager.setLatestBlockNumber(10L);
 
             handler.onNext(ackOnlyRequest(10L));
 
             assertThat(replies.getOnNextCalls()).hasSize(1);
             final BlockAcknowledgement ack = replies.getOnNextCalls().get(0).acknowledgement();
             assertThat(ack.blockRootHash()).isEqualTo(Bytes.EMPTY);
-        }
-    }
-
-    @Nested
-    @DisplayName("Passive handler response-suppression tests")
-    class PassiveSuppressionTests {
-
-        @Test
-        @DisplayName("Consecutive AcknowledgeOnly requests never emit SKIP responses")
-        void consecutiveAckOnlyNeverEmitsSkip() {
-            handler.onNext(ackOnlyRequest(1L));
-            handler.onNext(ackOnlyRequest(2L));
-            handler.onNext(ackOnlyRequest(3L));
-
-            assertThat(replies.getOnNextCalls())
-                    .allSatisfy(r -> assertThat(r.response().kind())
-                            .isNotIn(ResponseOneOfType.SKIP_BLOCK, ResponseOneOfType.END_STREAM));
         }
     }
 
@@ -188,11 +162,11 @@ class PublisherHandlerAcknowledgeOnlyTest {
             handler.onNext(ackOnlyRequest(7L));
 
             assertThat(manager.getBlocksEndedMidBlock()).contains(7L);
-            assertThat(handler.getMode()).isEqualTo(HandlerMode.PASSIVE);
+            assertThat(manager.getHandlerPassiveMode(HANDLER_ID)).isTrue();
             // A subsequent BlockItems request with a new header must be accepted as a fresh block
             // (i.e. the handler is no longer mid-block on 7).
             handler.onNext(blockItemsRequest(8L));
-            assertThat(handler.getMode()).isEqualTo(HandlerMode.ACTIVE);
+            assertThat(manager.getHandlerPassiveMode(HANDLER_ID)).isFalse();
         }
 
         @Test
@@ -201,7 +175,7 @@ class PublisherHandlerAcknowledgeOnlyTest {
             handler.onNext(ackOnlyRequest(5L));
 
             assertThat(manager.getBlocksEndedMidBlock()).isEmpty();
-            assertThat(handler.getMode()).isEqualTo(HandlerMode.PASSIVE);
+            assertThat(manager.getHandlerPassiveMode(HANDLER_ID)).isTrue();
         }
     }
 
