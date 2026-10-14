@@ -115,6 +115,7 @@ Note 2: Some steps are marked as intermediate, indicating they will change due t
    in your values file. See
    [Use Pre-Provisioned Host Storage](https://github.com/hiero-ledger/hiero-block-node/blob/main/charts/block-node-server/README.md#use-pre-provisioned-host-storage-hostpath--local)
    in the chart README.
+
 5. **Configure Helm Chart Values**: Customize the Helm chart values for your deployment.
 
    Update [./lfh-values.yaml](https://github.com/hiero-ledger/hiero-block-node/blob/main/charts/block-node-server/values-overrides/lfh-values.yaml) or [./rfh-values.yaml](https://github.com/hiero-ledger/hiero-block-node/blob/main/charts/block-node-server/values-overrides/rfh-values.yaml) with your specific configuration settings.
