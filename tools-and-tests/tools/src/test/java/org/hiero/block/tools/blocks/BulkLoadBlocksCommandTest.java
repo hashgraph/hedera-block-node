@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import org.hiero.block.internal.BulkLoadState;
+import org.hiero.block.tools.blocks.model.hashing.BlockStreamBlockHashRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -95,6 +96,52 @@ class BulkLoadBlocksCommandTest {
 
             assertEquals(0, exitCode);
             assertTrue(Files.isDirectory(newDest));
+        }
+
+        @Test
+        @DisplayName("Should refuse a source with a legacy SHA-384 hash registry")
+        void legacyRegistryRejected() throws IOException {
+            Path zipFile = sourceDir.resolve("000/00000s.zip");
+            Files.createDirectories(zipFile.getParent());
+            Files.writeString(zipFile, "test content");
+            // Headerless registry: two 48-byte SHA-384 slots
+            Path registry = sourceDir.resolve("blockStreamBlockHashes.bin");
+            Files.write(registry, new byte[96]);
+
+            int exitCode = new CommandLine(new BulkLoadBlocksCommand())
+                    .execute("--source", sourceDir.toString(), "--dest", destDir.toString());
+
+            assertEquals(1, exitCode);
+            assertFalse(Files.exists(destDir.resolve("000/00000s.zip")));
+            assertEquals(96, Files.size(registry));
+        }
+
+        @Test
+        @DisplayName("Should accept a source with a SHA-256 hash registry")
+        void sha256RegistryAccepted() throws Exception {
+            Path zipFile = sourceDir.resolve("000/00000s.zip");
+            Files.createDirectories(zipFile.getParent());
+            Files.writeString(zipFile, "test content");
+            try (BlockStreamBlockHashRegistry registry =
+                    new BlockStreamBlockHashRegistry(sourceDir.resolve("blockStreamBlockHashes.bin"))) {
+                registry.addBlock(0, new byte[32]);
+            }
+
+            int exitCode = new CommandLine(new BulkLoadBlocksCommand())
+                    .execute("--source", sourceDir.toString(), "--dest", destDir.toString());
+
+            assertEquals(0, exitCode);
+            assertTrue(Files.exists(destDir.resolve("000/00000s.zip")));
+        }
+
+        @Test
+        @DisplayName("Should not create a hash registry in a source that has none")
+        void missingRegistryNotCreated() {
+            int exitCode = new CommandLine(new BulkLoadBlocksCommand())
+                    .execute("--source", sourceDir.toString(), "--dest", destDir.toString());
+
+            assertEquals(0, exitCode);
+            assertFalse(Files.exists(sourceDir.resolve("blockStreamBlockHashes.bin")));
         }
     }
 

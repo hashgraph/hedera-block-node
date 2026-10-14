@@ -4,12 +4,17 @@ package org.hiero.block.tools.blocks;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.DataOutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import org.hiero.block.tools.blocks.model.hashing.BlockStreamBlockHashRegistry;
+import org.hiero.block.tools.blocks.model.hashing.LegacyHashFormatException;
 import org.hiero.block.tools.blocks.model.hashing.StreamingHasher;
 import org.hiero.block.tools.utils.Sha256;
 import org.junit.jupiter.api.DisplayName;
@@ -223,6 +228,70 @@ class HasherStateFilesTest {
             HasherStateFiles.loadWithFallback(primary, loaded::load);
 
             assertEquals(0, loaded.leafCount(), "Should start fresh when both files are corrupt");
+        }
+
+        @Test
+        @DisplayName("Legacy SHA-384 primary and backup: throws and keeps both files")
+        void legacyPrimary_throwsAndKeepsFiles() throws Exception {
+            Path primary = tempDir.resolve("hasher.bin");
+            Path bak = Path.of(primary + ".bak");
+            writeLegacyState(primary);
+            writeLegacyState(bak);
+            long legacySize = Files.size(primary);
+
+            StreamingHasher loaded = new StreamingHasher();
+            UncheckedIOException ex = assertThrows(
+                    UncheckedIOException.class, () -> HasherStateFiles.loadWithFallback(primary, loaded::load));
+
+            assertInstanceOf(LegacyHashFormatException.class, ex.getCause());
+            assertEquals(legacySize, Files.size(primary), "Primary must not be deleted or changed");
+            assertEquals(legacySize, Files.size(bak), "Backup must not be deleted or changed");
+            assertEquals(0, loaded.leafCount());
+        }
+
+        @Test
+        @DisplayName("Missing primary, legacy SHA-384 backup: throws and keeps the backup")
+        void missingPrimary_legacyBackup_throwsAndKeepsBackup() throws Exception {
+            Path primary = tempDir.resolve("hasher.bin");
+            Path bak = Path.of(primary + ".bak");
+            writeLegacyState(bak);
+            long legacySize = Files.size(bak);
+
+            StreamingHasher loaded = new StreamingHasher();
+            assertThrows(UncheckedIOException.class, () -> HasherStateFiles.loadWithFallback(primary, loaded::load));
+
+            assertEquals(legacySize, Files.size(bak), "Backup must not be deleted or changed");
+        }
+
+        @Test
+        @DisplayName("Truncated SHA-256 primary, good backup: still falls back to .bak")
+        void truncatedPrimary_goodBackup_loadsFromBackup() throws Exception {
+            StreamingHasher saved = new StreamingHasher();
+            saved.addNodeByHash(fakeHash(7));
+            Path primary = tempDir.resolve("hasher.bin");
+            saved.save(Path.of(primary + ".bak"));
+            // Header claims 3 hashes but only one 32-byte hash follows: corrupt, not legacy
+            try (DataOutputStream out = new DataOutputStream(Files.newOutputStream(primary))) {
+                out.writeLong(5);
+                out.writeInt(3);
+                out.write(fakeHash(1));
+            }
+
+            StreamingHasher loaded = new StreamingHasher();
+            HasherStateFiles.loadWithFallback(primary, loaded::load);
+
+            assertEquals(1, loaded.leafCount(), "Should fall back to the .bak state");
+        }
+
+        /** Writes a state file in the layout an older SHA-384 CLI produced: three 48-byte hashes. */
+        private static void writeLegacyState(Path path) throws Exception {
+            try (DataOutputStream out = new DataOutputStream(Files.newOutputStream(path))) {
+                out.writeLong(5);
+                out.writeInt(3);
+                for (int i = 0; i < 3; i++) {
+                    out.write(new byte[48]);
+                }
+            }
         }
     }
 

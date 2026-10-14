@@ -18,6 +18,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 import org.hiero.block.internal.BulkLoadState;
 import org.hiero.block.tools.blocks.model.BlockZipsUtilities;
+import org.hiero.block.tools.blocks.model.hashing.BlockStreamBlockHashRegistry;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.Option;
@@ -124,6 +125,18 @@ public class BulkLoadBlocksCommand implements Callable<Integer> {
         if (!Files.isDirectory(sourceDir)) {
             System.err.println("Error: Source directory does not exist: " + sourceDir);
             return 1;
+        }
+
+        // Refuse SHA-384 output from an older CLI. Only open an existing registry, since the
+        // constructor creates the file when it is missing.
+        final Path registryPath = sourceDir.resolve("blockStreamBlockHashes.bin");
+        if (Files.exists(registryPath)) {
+            try (BlockStreamBlockHashRegistry ignored = new BlockStreamBlockHashRegistry(registryPath)) {
+                // opening validates the header
+            } catch (IllegalStateException e) {
+                System.err.println("Error: " + e.getMessage());
+                return 1;
+            }
         }
 
         // Warn if destination already exists

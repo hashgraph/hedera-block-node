@@ -6,6 +6,7 @@ import static org.hiero.block.tools.blocks.model.hashing.HashingUtils.hashIntern
 import static org.hiero.block.tools.blocks.model.hashing.HashingUtils.hashLeaf;
 import static org.hiero.block.tools.utils.Sha256.SHA_256_HASH_SIZE;
 import static org.hiero.block.tools.utils.Sha256.sha256Digest;
+import static org.hiero.block.tools.utils.Sha384.SHA_384_HASH_SIZE;
 
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.io.BufferedInputStream;
@@ -140,10 +141,15 @@ public class StreamingHasher implements Hasher {
             int hashCount = din.readInt();
             // A legacy SHA-384 file (48-byte hashes) never has the size a 32-byte layout expects for its hash count
             final long expectedSize = Long.BYTES + Integer.BYTES + (long) hashCount * SHA_256_HASH_SIZE;
+            final long legacySize = Long.BYTES + Integer.BYTES + (long) hashCount * SHA_384_HASH_SIZE;
             final long actualSize = Files.size(filePath);
+            if (hashCount > 0 && actualSize == legacySize) {
+                throw new LegacyHashFormatException(filePath + " is " + actualSize + " bytes, the size of " + hashCount
+                        + " SHA-384 hashes. It is SHA-384 output from an older CLI version.");
+            }
             if (hashCount < 0 || actualSize != expectedSize) {
                 throw new IOException(filePath + " is " + actualSize + " bytes but a hash count of " + hashCount
-                        + " needs " + expectedSize + ". It is probably SHA-384 output from an older CLI version.");
+                        + " needs " + expectedSize + ". The file is corrupt.");
             }
             for (int i = 0; i < hashCount; i++) {
                 byte[] hash = new byte[SHA_256_HASH_SIZE]; // SHA-256 produces 32-byte hashes
