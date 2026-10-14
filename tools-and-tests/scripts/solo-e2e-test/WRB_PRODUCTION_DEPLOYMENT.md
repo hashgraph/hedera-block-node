@@ -438,5 +438,5 @@ jq '.differences' detailed-diff.json
 
 For issues or questions:
 - GitHub Issues: https://github.com/hiero-ledger/hiero-block-node/issues
-- Documentation: https://docs.hiero.org/block-node
+- Documentation: https://docs.hiero.org/block-node-home
 - Community: https://discord.gg/hiero
