@@ -7,7 +7,6 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.Objects;
 import org.hiero.block.internal.BlockItemUnparsed;
 
 /**
@@ -66,7 +65,6 @@ public final class HashingUtilities {
      * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
     public static byte[] computeV6SignedPayload(final Bytes recordFileContents) throws NoSuchAlgorithmException {
-        Objects.requireNonNull(recordFileContents);
         final MessageDigest digest = HashAlgorithm.SHA2_384.newDigest();
         digest.update(new byte[] {0, 0, 0, 6}); // int32(6) big-endian
         recordFileContents.writeTo(digest);
@@ -80,7 +78,6 @@ public final class HashingUtilities {
      * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
     public static byte[] hashLeaf(final byte[] leafData) throws NoSuchAlgorithmException {
-        Objects.requireNonNull(leafData);
         final MessageDigest digest = ALGORITHM.newDigest();
         digest.update(LEAF_PREFIX);
         return digest.digest(leafData);
@@ -95,8 +92,6 @@ public final class HashingUtilities {
      */
     public static byte[] hashInternalNode(final byte[] leftHash, final byte[] rightHash)
             throws NoSuchAlgorithmException {
-        Objects.requireNonNull(leftHash);
-        Objects.requireNonNull(rightHash);
         final MessageDigest digest = ALGORITHM.newDigest();
         digest.update(TWO_CHILDREN_NODE_PREFIX);
         digest.update(leftHash);
@@ -110,7 +105,6 @@ public final class HashingUtilities {
      * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
     public static byte[] hashInternalNodeSingleChild(final byte[] childHash) throws NoSuchAlgorithmException {
-        Objects.requireNonNull(childHash);
         final MessageDigest digest = ALGORITHM.newDigest();
         digest.update(SINGLE_CHILD_PREFIX);
         return digest.digest(childHash);
@@ -124,7 +118,6 @@ public final class HashingUtilities {
      * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
      */
     public static Hashes getBlockHashes(final List<BlockItemUnparsed> blockItems) throws NoSuchAlgorithmException {
-        Objects.requireNonNull(blockItems);
         int numInputs = 0;
         int numOutputs = 0;
         int numConsensusHeaders = 0;
@@ -202,7 +195,6 @@ public final class HashingUtilities {
      */
     public static ByteBuffer getBlockItemHash(final BlockItemUnparsed blockItemUnparsed)
             throws NoSuchAlgorithmException {
-        Objects.requireNonNull(blockItemUnparsed);
         final MessageDigest digest = ALGORITHM.newDigest();
         final ByteBuffer buffer = ByteBuffer.allocate(ALGORITHM.hashSize());
         digest.update(LEAF_PREFIX);
@@ -266,10 +258,6 @@ public final class HashingUtilities {
             final StreamingTreeHasher extensionSubtreeHasherSix,
             final StreamingTreeHasher extensionSubtreeHasherSeven)
             throws NoSuchAlgorithmException {
-        Objects.requireNonNull(blockTimestamp);
-        Objects.requireNonNull(previousBlockHash);
-        Objects.requireNonNull(rootHashOfAllPreviousBlockHashes);
-        Objects.requireNonNull(startOfBlockStateRootHash);
         // Merkle Mountain Top: feed all 16 leaves (positions 0-7 pre-defined, 8-15 extensions)
         // into a single NaiveStreamingTreeHasher, the same streaming hasher used within each
         // subtree. Empty subtree hashers naturally contribute the empty tree hash via their own
@@ -288,36 +276,38 @@ public final class HashingUtilities {
             stateRootHash =
                     requireHashSize(startOfBlockStateRootHash.toByteArray(), hashSize, "startOfBlockStateRootHash");
         }
-        // leaf positions 3 to 15 of the Merkle Mountain Top, in order
-        final StreamingTreeHasher[] subtreeHashers = {
-            consensusHeaderHasher,
-            inputTreeHasher,
-            outputTreeHasher,
-            stateChangesHasher,
-            traceDataHasher,
-            extensionSubtreeHasherZero,
-            extensionSubtreeHasherOne,
-            extensionSubtreeHasherTwo,
-            extensionSubtreeHasherThree,
-            extensionSubtreeHasherFour,
-            extensionSubtreeHasherFive,
-            extensionSubtreeHasherSix,
-            extensionSubtreeHasherSeven
-        };
         final NaiveStreamingTreeHasher mountainTopHasher = new NaiveStreamingTreeHasher();
         mountainTopHasher.addLeaf(ByteBuffer.wrap(previousBlockHashBytes));
         mountainTopHasher.addLeaf(ByteBuffer.wrap(rootHashOfAllPreviousBlockHashesBytes));
         mountainTopHasher.addLeaf(ByteBuffer.wrap(stateRootHash));
-        for (final StreamingTreeHasher subtreeHasher : subtreeHashers) {
-            mountainTopHasher.addLeaf(ByteBuffer.wrap(
-                    Objects.requireNonNull(subtreeHasher).rootHash().toByteArray()));
-        }
+        mountainTopHasher.addLeaf(subtreeRootBuffer(consensusHeaderHasher));
+        mountainTopHasher.addLeaf(subtreeRootBuffer(inputTreeHasher));
+        mountainTopHasher.addLeaf(subtreeRootBuffer(outputTreeHasher));
+        mountainTopHasher.addLeaf(subtreeRootBuffer(stateChangesHasher));
+        mountainTopHasher.addLeaf(subtreeRootBuffer(traceDataHasher));
+        mountainTopHasher.addLeaf(subtreeRootBuffer(extensionSubtreeHasherZero));
+        mountainTopHasher.addLeaf(subtreeRootBuffer(extensionSubtreeHasherOne));
+        mountainTopHasher.addLeaf(subtreeRootBuffer(extensionSubtreeHasherTwo));
+        mountainTopHasher.addLeaf(subtreeRootBuffer(extensionSubtreeHasherThree));
+        mountainTopHasher.addLeaf(subtreeRootBuffer(extensionSubtreeHasherFour));
+        mountainTopHasher.addLeaf(subtreeRootBuffer(extensionSubtreeHasherFive));
+        mountainTopHasher.addLeaf(subtreeRootBuffer(extensionSubtreeHasherSix));
+        mountainTopHasher.addLeaf(subtreeRootBuffer(extensionSubtreeHasherSeven));
         final byte[] mountainTopRoot = mountainTopHasher.rootHash().toByteArray();
         final byte[] timestampLeaf =
                 hashLeaf(Timestamp.PROTOBUF.toBytes(blockTimestamp).toByteArray());
         final byte[] rootHash = hashInternalNode(timestampLeaf, mountainTopRoot);
 
         return Bytes.wrap(rootHash);
+    }
+
+    /**
+     * Materializes a subtree hasher's root as a {@link ByteBuffer} ready to feed into the
+     * Mountain Top hasher.
+     * @throws NoSuchAlgorithmException if the Java runtime provides no implementation of the algorithm
+     */
+    private static ByteBuffer subtreeRootBuffer(final StreamingTreeHasher hasher) throws NoSuchAlgorithmException {
+        return ByteBuffer.wrap(hasher.rootHash().toByteArray());
     }
 
     /**
