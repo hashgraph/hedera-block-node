@@ -192,7 +192,10 @@ jobs:
         id: versions
         run: |
           if [[ -n "${{ inputs.base-version }}" ]]; then
+            # Release tags carry a leading v (v0.44.1) but images and charts are published without
+            # it, so a tag given as the base version is normalized like the release lookup below.
             BASE="${{ inputs.base-version }}"
+            BASE="${BASE#v}"
           else
             # Prefer GA (draft or published) over RC: the tag push triggers image publication
             # before the release manager clicks "Publish", so the GHCR image exists regardless
@@ -212,7 +215,9 @@ jobs:
             fi
           fi
           if [[ -n "${{ inputs.snapshot-version }}" ]]; then
+            # Normalized like the base version: the snapshot image tag and chart version have no v.
             SNAP="${{ inputs.snapshot-version }}"
+            SNAP="${SNAP#v}"
           else
             SNAP=$(cat version.txt)
           fi
@@ -223,8 +228,15 @@ jobs:
           # Block hashing moved from SHA-384 to SHA-256 in 0.45.0 (#3688). A base release from before
           # that verifies SHA-384 blocks only, so the install phase pushes a chain hashed with SHA-384
           # to it; the post-upgrade and post-reset phases push the SHA-256 chain the snapshot verifies.
-          BASE_MAJOR="${BASE%%.*}"
-          BASE_MINOR="$(echo "${BASE}" | cut -d. -f2)"
+          # The version is parsed strictly: inside (( )) a non numeric value such as v1 is read as an
+          # unset variable, which is 0, and would silently select the wrong algorithm.
+          if [[ "${BASE}" =~ ^([0-9]+)\.([0-9]+)\.[0-9]+ ]]; then
+            BASE_MAJOR="${BASH_REMATCH[1]}"
+            BASE_MINOR="${BASH_REMATCH[2]}"
+          else
+            echo "::error::base version '${BASE}' is not a MAJOR.MINOR.PATCH version"
+            exit 1
+          fi
           if (( BASE_MAJOR == 0 && BASE_MINOR < 45 )); then
             BASE_HASH_ALGORITHM="SHA2_384"
           else
