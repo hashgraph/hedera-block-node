@@ -324,8 +324,8 @@ plugins:
 
 ### Enable Prometheus + Grafana Stack
 
-By default the stack includes a chart dependency that includes a prometheus + grafana + node-exporter stack, also adds 3 provisioned dashboards
-- **Hiero Block Node Dashboard:** to monitor the Hiero Block Node metrics, this are the server application specific metrics.
+By default the stack includes a chart dependency that includes a prometheus + grafana + node-exporter stack, also adds provisioned dashboards (see [dashboards/README.md](dashboards/README.md))
+- **Block-Node dashboards:** to monitor the Hiero Block Node metrics: an overview, full-history and performance views, and one dashboard per plugin.
 - **Node Exporter Full:** to monitor the node-exporter metrics, system metrics at the K8 cluster/node level.
 - **Kubernetes View Pods:** to monitor the kubernetes pods metrics, system metrics at the container level.
 
