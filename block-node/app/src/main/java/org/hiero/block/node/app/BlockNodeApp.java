@@ -77,9 +77,6 @@ public class BlockNodeApp implements HealthFacility {
     public static final SemanticVersion BLOCK_NODE_VERSION = SemanticVersionUtility.from(BlockNodeApp.class);
     /// The version of the Block Stream specification compiled into this block node.
     public static final SemanticVersion BLOCK_STREAM_VERSION = SemanticVersionUtility.from(Block.class);
-    /// Number of leading entries in `loadedPlugins` (messaging, then application state) that are started
-    /// before, and stopped separately from, all other plugins.
-    private static final int STARTUP_FACILITY_COUNT = 2;
     /// The state of the server.
     private final AtomicReference<State> state = new AtomicReference<>(State.STARTING);
     /// A ServiceBuilder that creates, starts, and stops webservers.
@@ -94,6 +91,10 @@ public class BlockNodeApp implements HealthFacility {
     private final ApplicationStateFacility applicationStateFacility;
     /// The block messaging facility, loaded as a plugin
     private final BlockMessagingFacility blockMessagingFacility;
+    /// The facilities that must be loaded, initialized and started before every other plugin, in that order,
+    /// and are stopped after every other plugin, in the reverse order. Each is required: loading fails if
+    /// one is missing.
+    private final List<BlockNodePlugin> startupFacilities;
     /// The historical block node facility
     private final HistoricalBlockFacilityImpl historicalBlockFacility;
     /// Should the shutdown() method exit the JVM.
@@ -160,7 +161,6 @@ public class BlockNodeApp implements HealthFacility {
                 .loadServices(BlockMessagingFacility.class)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No BlockMessagingFacility provided"));
-        loadedPlugins.add(blockMessagingFacility);
         // Load the ApplicationStateFacility plugin. It must be initialized right after the messaging facility
         // and before any block provider, because providers may report blocks from their own init().
         applicationStateFacility = serviceLoader
@@ -169,7 +169,8 @@ public class BlockNodeApp implements HealthFacility {
                 .orElseThrow(() -> new IllegalStateException("No ApplicationStateFacility provided. The"
                         + " facility-app-state plugin is required; if plugins.names is set, add facility-app-state"
                         + " to it."));
-        loadedPlugins.add(applicationStateFacility);
+        startupFacilities = List.of(blockMessagingFacility, applicationStateFacility);
+        loadedPlugins.addAll(startupFacilities);
         // Load HistoricalBlockFacilityImpl
         historicalBlockFacility = new HistoricalBlockFacilityImpl(serviceLoader);
         loadedPlugins.add(historicalBlockFacility);
@@ -296,12 +297,13 @@ public class BlockNodeApp implements HealthFacility {
     /// Starts the block node server. This method initializes all the plugins, starts the web server,
     /// and starts the metrics.
     public void start() {
-        // Start the messaging facility first so the application state facility can dispatch notifications
-        // while it loads the persisted state in its own start().
-        blockMessagingFacility.start();
-        applicationStateFacility.start();
-        // Start the remaining plugins; the messaging and application state facilities are already running.
-        startPlugins(loadedPlugins.subList(STARTUP_FACILITY_COUNT, loadedPlugins.size()));
+        // Start the facilities first, in order: the messaging facility must be running so the application state
+        // facility can dispatch notifications while it loads the persisted state in its own start().
+        for (final BlockNodePlugin facility : startupFacilities) {
+            facility.start();
+        }
+        // Start the remaining plugins; the facilities are already running.
+        startPlugins(otherPlugins());
         // mark the server as started
         state.set(State.RUNNING);
         serviceBuilder.startAll();
@@ -336,16 +338,19 @@ public class BlockNodeApp implements HealthFacility {
             LockSupport.parkNanos(serverConfig.shutdownDelayMillis() * 1_000_000L);
             serviceBuilder.stopAll();
             // Stop the other plugins first: they use the facilities from their own stop(), e.g. to
-            // unregister handlers or report final state.
-            for (BlockNodePlugin plugin : loadedPlugins.subList(STARTUP_FACILITY_COUNT, loadedPlugins.size())) {
+            // unregister handlers or report final state. A plugin that fails to stop is logged and skipped,
+            // so the others and the facilities below still stop and application state is still persisted.
+            for (BlockNodePlugin plugin : otherPlugins()) {
                 LOGGER.log(INFO, "\t{0}", plugin.name());
-                plugin.stop();
+                stopPlugin(plugin);
             }
             // Then stop the facilities in the reverse of their start order. The application state facility
             // goes before messaging because it sends notifications while it flushes, and it persists the
-            // block ranges last so they include anything reported by the plugins above.
-            applicationStateFacility.stop();
-            blockMessagingFacility.stop();
+            // state last so it includes anything reported by the plugins above. Each is stopped even if the
+            // one before it failed.
+            for (final BlockNodePlugin facility : startupFacilities.reversed()) {
+                stopPlugin(facility);
+            }
             // Stop metrics
             blockNodeContext.metricRegistry().close();
             LOGGER.log(DEBUG, "Metric registry successfully closed.");
@@ -355,6 +360,27 @@ public class BlockNodeApp implements HealthFacility {
         } catch (IOException e) {
             LOGGER.log(INFO, "Could not properly shut down due to IO failure.", e);
             if (shouldExitJvmOnShutdown) System.exit(0);
+        }
+    }
+
+    /// The loaded plugins other than the startup facilities, in load order.
+    ///
+    /// @return the plugins that are started after, and stopped before, the startup facilities
+    private List<BlockNodePlugin> otherPlugins() {
+        return loadedPlugins.stream()
+                .filter(plugin -> startupFacilities.stream().noneMatch(facility -> facility == plugin))
+                .toList();
+    }
+
+    /// Stops one plugin. A failure is logged and swallowed so that it cannot prevent the remaining plugins
+    /// and facilities from stopping.
+    ///
+    /// @param plugin the plugin to stop
+    private static void stopPlugin(final BlockNodePlugin plugin) {
+        try {
+            plugin.stop();
+        } catch (final Throwable e) {
+            LOGGER.log(WARNING, "Plugin " + plugin.name() + " failed to stop", e);
         }
     }
 

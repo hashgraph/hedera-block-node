@@ -533,6 +533,89 @@ class ApplicationStateFacilityPluginTest {
     }
 
     @Test
+    @DisplayName("stop writes TSS data and address book history that were not synced before shutdown")
+    void stopFlushesStateThatWasNotSynced() throws Exception {
+        final Fixture f = newFixture();
+        f.initAndStart();
+        f.plugin.stop();
+        // the dispatcher is shut down now, so these syncs are dropped and nothing is written
+        final TssData tssData = buildTssData(10, "040506");
+        final RangedAddressBookHistory history = singleEraHistory(100, 1, "aaaa");
+        f.plugin.updateTssData(tssData);
+        f.plugin.updateAddressBookHistory(history);
+        assertThat(f.config.tssBootstrapFilePath()).doesNotExist();
+        assertThat(f.config.rsaBootstrapFilePath()).doesNotExist();
+
+        f.plugin.stop();
+
+        assertThat(TssData.JSON.parse(Bytes.wrap(Files.readAllBytes(f.config.tssBootstrapFilePath()))))
+                .isEqualTo(tssData);
+        assertThat(RangedAddressBookHistory.JSON.parse(Bytes.wrap(Files.readAllBytes(f.config.rsaBootstrapFilePath()))))
+                .isEqualTo(history);
+    }
+
+    @Test
+    @DisplayName("known publishers from the file and from the address book history are both present after start")
+    void knownPublishersFromFileAndHistoryAreMerged() throws Exception {
+        final Fixture f = newFixture();
+        final NetworkData fromFile = NetworkData.newBuilder()
+                .activeEndpoints(NetworkConnection.newBuilder()
+                        .remote(new NetworkConnection.ConnectionReference("file.example.com", "40840"))
+                        .local(new NetworkConnection.ConnectionReference("*", "*"))
+                        .category("publisher")
+                        .scheme("grpc")
+                        .build())
+                .build();
+        Files.write(
+                f.config.knownPublishersFilePath(),
+                NetworkData.JSON.toBytes(fromFile).toByteArray());
+        final RangedAddressBookHistory history = RangedAddressBookHistory.newBuilder()
+                .addressBooks(List.of(RangedNodeAddressBook.newBuilder()
+                        .addressBook(NodeAddressBook.newBuilder()
+                                .nodeAddress(NodeAddress.newBuilder()
+                                        .nodeId(1)
+                                        .serviceEndpoint(ServiceEndpoint.newBuilder()
+                                                .domainName("node1.example.com")
+                                                .port(50211)
+                                                .build())
+                                        .build())
+                                .build())
+                        .startBlock(0)
+                        .endBlock(-1)
+                        .build()))
+                .build();
+        Files.write(
+                f.config.rsaBootstrapFilePath(),
+                RangedAddressBookHistory.JSON.toBytes(history).toByteArray());
+
+        // Hold the dispatcher thread, so none of the syncs queued by the load can run. The dispatcher's own
+        // merge of the history's publishers would otherwise hide a load that overwrote them.
+        final CountDownLatch releaseDispatcher = new CountDownLatch(1);
+        f.threadPoolManager.executor().execute(() -> {
+            try {
+                releaseDispatcher.await();
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        f.init();
+        try {
+            f.plugin.start();
+
+            assertThat(f.plugin.knownPublishers().activeEndpoints())
+                    .extracting(connection -> connection.remote().address())
+                    .containsExactlyInAnyOrder("file.example.com", "node1.example.com");
+        } finally {
+            releaseDispatcher.countDown();
+            f.plugin.stop();
+        }
+        // and the dispatcher's merge, once it runs, leaves the same set
+        assertThat(f.plugin.knownPublishers().activeEndpoints())
+                .extracting(connection -> connection.remote().address())
+                .containsExactlyInAnyOrder("file.example.com", "node1.example.com");
+    }
+
+    @Test
     @DisplayName("an empty TssData file does not fail startup and leaves the TSS data unset")
     void badTssDataFileIsIgnored() throws IOException {
         final Fixture f = newFixture();
@@ -781,7 +864,7 @@ class ApplicationStateFacilityPluginTest {
             public void handleStoredBlocksUpdate(final StoredBlocksNotification notification) {
                 if (firstDispatch.compareAndSet(true, false)) {
                     // Hold thread A's dispatch so thread B completes its whole read-modify-write
-                    // of currentStoredBlocks before A's notification lands.
+                    // of blockRanges before A's notification lands.
                     firstDispatchEntered.countDown();
                     try {
                         assertThat(secondUpdateComplete.await(5, TimeUnit.SECONDS))
@@ -806,13 +889,60 @@ class ApplicationStateFacilityPluginTest {
         threadA.join(TimeUnit.SECONDS.toMillis(5));
         assertThat(bothDelivered.await(5, TimeUnit.SECONDS)).isTrue();
 
-        final List<BlockRange> field = f.plugin.currentStoredBlocks.get();
+        final List<BlockRange> field = f.plugin.blockRanges.get().stored();
         assertThat(field).hasSize(4);
         assertThat(f.plugin.storedBlocks.contains(100, 109)).isTrue();
         assertThat(f.plugin.storedBlocks.contains(200, 209)).isTrue();
         assertThat(delivered).hasSize(2);
         assertThat(delivered.getLast()).isEqualTo(field);
         f.plugin.stop();
+    }
+
+    @Test
+    @DisplayName("concurrent updateAvailableBlocks calls leave the live blocks in memory and in the last notification")
+    void concurrentUpdateAvailableBlocksConverges() throws Exception {
+        final int threads = 8;
+        final int perThread = 150;
+        final Fixture f = newFixture();
+        final RecordingHandler handler = new RecordingHandler();
+        f.register(handler);
+        f.initAndStart();
+
+        final CountDownLatch startLine = new CountDownLatch(1);
+        final List<Thread> workers = new ArrayList<>();
+        for (int t = 0; t < threads; t++) {
+            final long base = t * 10_000L;
+            workers.add(Thread.ofVirtual().start(() -> {
+                try {
+                    startLine.await();
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+                for (int i = 0; i < perThread; i++) {
+                    // disjoint, non-adjacent ranges keep the range list long and fragmented
+                    f.historical.available.add(base + i * 2L, base + i * 2L);
+                    f.plugin.updateAvailableBlocks();
+                }
+            }));
+        }
+        startLine.countDown();
+        for (final Thread worker : workers) {
+            worker.join();
+        }
+        // flushes the dispatcher
+        f.plugin.stop();
+
+        final List<BlockRange> live = f.historical
+                .available
+                .streamRanges()
+                .map(r -> new BlockRange(r.start(), r.end()))
+                .toList();
+        assertThat(live).hasSize(threads * perThread);
+        assertThat(f.plugin.blockRanges.get().available()).isEqualTo(live);
+        assertThat(f.plugin.blockRanges.get().stored()).isEqualTo(live);
+        assertThat(handler.lastAvailableBlocks).isEqualTo(live);
+        assertThat(handler.lastStoredBlocks).isEqualTo(live);
     }
 
     @Test

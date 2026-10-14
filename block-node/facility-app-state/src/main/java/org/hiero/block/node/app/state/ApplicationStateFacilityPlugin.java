@@ -87,6 +87,16 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
                 new AddressBookState(null, Collections.unmodifiableNavigableMap(new TreeMap<>()));
     }
 
+    /// The available blocks (union across all providers) and the stored blocks (the stored set merged with
+    /// the available blocks), derived together from one view of the live state.
+    ///
+    /// @param available the available block ranges, in ascending order
+    /// @param stored the stored block ranges, in ascending order
+    record BlockRanges(List<BlockRange> available, List<BlockRange> stored) {
+        /// The state before any blocks have been reported.
+        static final BlockRanges EMPTY = new BlockRanges(List.of(), List.of());
+    }
+
     /// The logger for this class.
     private static final Logger LOGGER = System.getLogger(ApplicationStateFacilityPlugin.class.getCanonicalName());
     /// Metric key for the oldest historical block available
@@ -109,15 +119,10 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
     /// never sees an index built from a different history. Compare-and-set for the same reason as
     /// currentTssData: the RSA bootstrap plugin updates it from two independent executors.
     final AtomicReference<AddressBookState> addressBookState = new AtomicReference<>(AddressBookState.EMPTY);
-    /// The latest merged stored-blocks list (stored ConcurrentLongRangeSet merged with available
-    /// blocks). Updated by [#addStoredBlockRange] and [#updateAvailableBlocks].
-    /// Provider threads update it concurrently, so it is compare-and-set in
-    /// `refreshStoredBlocks` rather than plainly assigned.
-    final AtomicReference<List<BlockRange>> currentStoredBlocks = new AtomicReference<>(List.of());
-    /// The current available-blocks list (union across all providers). Updated by
-    /// [#updateAvailableBlocks] and [#start]. Compare-and-set for the same reason as
-    /// `currentStoredBlocks`.
-    final AtomicReference<List<BlockRange>> currentAvailableBlocks = new AtomicReference<>(List.of());
+    /// The current available and stored block lists, installed together so they always come from the same
+    /// moment. Provider threads update it concurrently, so it is updated with `getAndUpdate` in
+    /// `refreshBlockRanges` rather than plainly assigned.
+    final AtomicReference<BlockRanges> blockRanges = new AtomicReference<>(BlockRanges.EMPTY);
     /// Blocks reported as stored by plugins that do not serve them for retrieval
     final ConcurrentLongRangeSet storedBlocks = new ConcurrentLongRangeSet();
     /// Known inbound publishers loaded from configuration on startup; exposed for /statusz/inbound.
@@ -173,8 +178,7 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
         // Anything dispatched during plugin init() was published before the messaging facility attached
         // any handler, so it was lost. Clear the snapshots so the startup available and stored blocks
         // (including the stored ranges just loaded) are dispatched now, whatever init() already recorded.
-        currentAvailableBlocks.set(List.of());
-        currentStoredBlocks.set(List.of());
+        blockRanges.set(BlockRanges.EMPTY);
         updateAvailableBlocks();
 
         // Periodically hand the persist-interval check to the dispatcher, so it never runs concurrently
@@ -191,9 +195,9 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
 
     /// {@inheritDoc}
     ///
-    /// Stops the dispatcher, letting queued syncs finish, and persists the block ranges regardless
-    /// of the persist threshold. The messaging facility must still be running, and is stopped by the
-    /// application after this plugin.
+    /// Stops the dispatcher, letting queued syncs finish, then persists the current TSS data, address
+    /// book history and block ranges (the block ranges regardless of the persist threshold). The
+    /// messaging facility must still be running, and is stopped by the application after this plugin.
     @Override
     public void stop() {
         final ScheduledExecutorService timer = persistTimer;
@@ -216,7 +220,18 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        // Persist all block ranges at shutdown regardless of threshold.
+        // Final flush, after the dispatcher has drained. A queued sync that did not finish in time, or an
+        // update that arrived after the dispatcher shut down and so was dropped, is still in memory; write the
+        // current TSS data, address book history and block ranges so none of it is lost. The block ranges
+        // are persisted regardless of the persist threshold.
+        final TssData tssData = currentTssData.get();
+        if (tssData != null) {
+            persistTssData(tssData);
+        }
+        final RangedAddressBookHistory history = addressBookState.get().history();
+        if (history != null) {
+            persistNodeAddressBookHistory(history);
+        }
         persistBlockRanges();
     }
 
@@ -294,7 +309,7 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
     @Override
     public void addStoredBlockRange(LongRange blockRange) {
         storedBlocks.add(blockRange);
-        refreshStoredBlocks(historicalBlockFacility().availableBlocks());
+        refreshBlockRanges();
     }
 
     @Override
@@ -334,7 +349,7 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
 
     @Override
     public List<BlockRange> storedBlocks() {
-        return currentStoredBlocks.get();
+        return blockRanges.get().stored();
     }
 
     @Override
@@ -400,19 +415,32 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
 
     @Override
     public void updateAvailableBlocks() {
-        // Capture one snapshot so both Available and Stored notifications are always derived from
-        // the same moment in time, preserving the invariant stored >= available.
-        final BlockRangeSet snapshot = historicalBlockFacility().availableBlocks();
-        refreshAvailableBlocks(snapshot);
-        refreshStoredBlocks(snapshot);
+        refreshBlockRanges();
     }
 
-    private void refreshAvailableBlocks(BlockRangeSet availableBlocks) {
-        final List<BlockRange> candidate = toBlockRange(availableBlocks);
-        // Nothing to notify if there was no change, either because there was no update or because
-        // another thread already installed an identical snapshot.
-        if (!candidate.equals(currentAvailableBlocks.getAndSet(candidate))) {
+    /// Recomputes the available and stored block lists from the live state and installs them together,
+    /// then dispatches whichever of the two changed.
+    ///
+    /// The lists are rebuilt inside the update function from the live available blocks and the live stored
+    /// set, so when another thread installs a value first and this call has to retry, it recomputes from
+    /// fresh state rather than overwriting the newer value with one built from an older snapshot. Holding
+    /// both lists in one reference means they always come from the same moment, preserving the invariant
+    /// stored >= available. The function returns the very same pair when nothing changed.
+    private void refreshBlockRanges() {
+        final BlockRanges previous = blockRanges.getAndUpdate(current -> {
+            final BlockRangeSet liveAvailable = historicalBlockFacility().availableBlocks();
+            final List<BlockRange> available = toBlockRange(liveAvailable);
+            final List<BlockRange> stored = mergeRanges(storedBlocks, liveAvailable);
+            return available.equals(current.available()) && stored.equals(current.stored())
+                    ? current
+                    : new BlockRanges(available, stored);
+        });
+        final BlockRanges installed = blockRanges.get();
+        if (!installed.available().equals(previous.available())) {
             dispatch(this::syncAvailableBlocks);
+        }
+        if (!installed.stored().equals(previous.stored())) {
+            dispatch(this::syncStoredBlocks);
         }
     }
 
@@ -421,27 +449,17 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
     /// carry an older snapshot than one already dispatched.
     private void syncAvailableBlocks() {
         context.blockMessaging()
-                .sendAvailableBlocksUpdate(new AvailableBlocksNotification(currentAvailableBlocks.get()));
-    }
-
-    private void refreshStoredBlocks(BlockRangeSet availableBlocks) {
-        // The merge is recomputed on each internal retry, so a range added concurrently by another
-        // provider thread is never lost. The function returns the very same list when nothing changed,
-        // so a different reference afterwards means a change was installed.
-        final List<BlockRange> previous = currentStoredBlocks.getAndUpdate(current -> {
-            final List<BlockRange> candidate = mergeRanges(storedBlocks, availableBlocks);
-            return candidate.equals(current) ? current : candidate;
-        });
-        if (currentStoredBlocks.get() != previous) {
-            dispatch(this::syncStoredBlocks);
-        }
+                .sendAvailableBlocksUpdate(
+                        new AvailableBlocksNotification(blockRanges.get().available()));
     }
 
     /// Dispatches the current stored blocks to the plugins. Runs on the ApplicationStateDispatcher
     /// thread and reads the current value rather than taking one, so a notification can never
     /// carry an older snapshot than one already dispatched.
     private void syncStoredBlocks() {
-        context.blockMessaging().sendStoredBlocksUpdate(new StoredBlocksNotification(currentStoredBlocks.get()));
+        context.blockMessaging()
+                .sendStoredBlocksUpdate(
+                        new StoredBlocksNotification(blockRanges.get().stored()));
     }
 
     /// Rebuilds the set of known publisher connections from the newest era in the supplied
@@ -566,6 +584,14 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
     /// almost every sub block of code and calling methods that throw instead
     /// of returning errors. This needs to be fixed.
     private void loadApplicationState() {
+        // Load the connection-information sets (JSON-serialized NetworkData) used by the /statusz endpoints
+        // first. These are read-only configuration; absent or unreadable files yield an empty set. Loading the
+        // address book history below merges the publishers it derives into knownPublishers, so the file must
+        // already be in place for that merge to land on top of it.
+        knownPublishers.set(loadNetworkData(appStateConfig.knownPublishersFilePath()));
+        inboundPartners.set(loadNetworkData(appStateConfig.inboundPartnersFilePath()));
+        outboundPartners.set(loadNetworkData(appStateConfig.outboundPartnersFilePath()));
+
         // Load TssData (JSON format). Installing it persists and dispatches it on the dispatcher thread.
         final Path tssDataJsonPath = appStateConfig.tssBootstrapFilePath();
         if (Files.exists(tssDataJsonPath)) {
@@ -674,11 +700,5 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
                 LOGGER.log(WARNING, "Failed to create block ranges directory: " + parent, e);
             }
         }
-
-        // Load the connection-information sets (JSON-serialized NetworkData) used by the /statusz endpoints.
-        // These are read-only configuration; absent or unreadable files yield an empty set.
-        knownPublishers.set(loadNetworkData(appStateConfig.knownPublishersFilePath()));
-        inboundPartners.set(loadNetworkData(appStateConfig.inboundPartnersFilePath()));
-        outboundPartners.set(loadNetworkData(appStateConfig.outboundPartnersFilePath()));
     }
 }

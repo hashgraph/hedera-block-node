@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -151,6 +152,32 @@ class BlockNodeAppTest {
         blockNodeApp.shutdown("TestClass", "TestReason");
         // check status is set to SHUTTING_DOWN
         assertEquals(State.SHUTTING_DOWN, blockNodeApp.blockNodeState());
+    }
+
+    @Test
+    @DisplayName("A plugin that fails to stop does not stop the others, the facilities, or state persistence")
+    void testShutdownContinuesWhenAPluginFailsToStop() throws IOException {
+        doThrow(new IllegalStateException("simulated stop failure"))
+                .when(plugin1)
+                .stop();
+        final Path rangesFile = blockNodeApp
+                .blockNodeContext
+                .configuration()
+                .getConfigData(ApplicationStateConfig.class)
+                .blockRangesFilePath();
+        Files.deleteIfExists(rangesFile);
+        blockNodeApp.start();
+
+        assertDoesNotThrow(() -> blockNodeApp.shutdown("TestClass", "TestReason"));
+
+        verify(plugin1, times(1)).stop();
+        verify(plugin2, times(1)).stop();
+        verify(providerPlugin1, times(1)).stop();
+        verify(providerPlugin2, times(1)).stop();
+        // the messaging facility stops after the plugins, even though one of them threw
+        verify(mockBlockMessagingFacility, times(1)).stop();
+        // the application state facility stopped, persisting the block ranges
+        assertTrue(Files.exists(rangesFile), "block ranges must be persisted even though a plugin failed to stop");
     }
 
     @Test

@@ -61,7 +61,7 @@ jobs:
         id: install-needed
         run: |
           changed_files=$(git diff --name-only origin/${{ github.event.repository.default_branch }}...HEAD)
-          if echo "$changed_files" | grep -qE "^(block-node/app/(docker/|build\.gradle\.kts)|charts/|tools-and-tests/scripts/chart-tests/|tools-and-tests/simulator/(docker/|build\.gradle\.kts))"; then
+          if echo "$changed_files" | grep -qE "^(block-node/app/(docker/|build\.gradle\.kts)|charts/|tools-and-tests/scripts/(chart-tests|lib)/|tools-and-tests/simulator/(docker/|build\.gradle\.kts))"; then
             echo "needed=true" >> "$GITHUB_OUTPUT"
             echo "Image/chart/build files changed - will build and test"
           else
@@ -192,7 +192,7 @@ jobs:
         id: install-needed
         run: |
           changed_files=$(git diff --name-only origin/${{ github.event.repository.default_branch }}...HEAD)
-          if echo "$changed_files" | grep -qE "^(block-node/app/(docker/|build\.gradle\.kts)|charts/|tools-and-tests/scripts/chart-tests/|tools-and-tests/simulator/(docker/|build\.gradle\.kts))"; then
+          if echo "$changed_files" | grep -qE "^(block-node/app/(docker/|build\.gradle\.kts)|charts/|tools-and-tests/scripts/(chart-tests|lib)/|tools-and-tests/simulator/(docker/|build\.gradle\.kts))"; then
             echo "needed=true" >> "$GITHUB_OUTPUT"
             echo "Image/chart/build files changed - will run multi-port test"
           else
@@ -341,7 +341,7 @@ jobs:
         id: install-needed
         run: |
           changed_files=$(git diff --name-only origin/${{ github.event.repository.default_branch }}...HEAD)
-          if echo "$changed_files" | grep -qE "^(block-node/app/(docker/|build\.gradle\.kts)|charts/|tools-and-tests/scripts/chart-tests/|tools-and-tests/simulator/(docker/|build\.gradle\.kts))"; then
+          if echo "$changed_files" | grep -qE "^(block-node/app/(docker/|build\.gradle\.kts)|charts/|tools-and-tests/scripts/(chart-tests|lib)/|tools-and-tests/simulator/(docker/|build\.gradle\.kts))"; then
             echo "needed=true" >> "$GITHUB_OUTPUT"
             echo "Image/chart/build files changed - will run LB multi-port test"
           else

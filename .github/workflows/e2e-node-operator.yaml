@@ -46,6 +46,7 @@ on:
       - "charts/**"
       - "protobuf-sources/**"
       - "tools-and-tests/scripts/e2e-node-operator/**"
+      - "tools-and-tests/scripts/lib/**"
       - "tools-and-tests/scripts/node-operations/**"
       - "tools-and-tests/suites/src/main/java/**/e2e/**"
       - "version.txt"
@@ -264,29 +265,7 @@ jobs:
           # dropped from that phase's list before resolution. The snapshot phase gets the PR build of every
           # profile plugin from inject-pr-plugins.sh, which adds the jar when Maven lacks it and replaces
           # it when Maven has an older one.
-          is_published() { # $1 = plugin (name or name:version), $2 = version
-            local artifact="${1%%:*}" version="${1#*:}" url
-            [[ "${version}" == "$1" ]] && version="$2"
-            if [[ "${version}" == *-SNAPSHOT ]]; then
-              url="https://central.sonatype.com/repository/maven-snapshots/org/hiero/block-node/${artifact}/${version}/maven-metadata.xml"
-            else
-              url="https://repo1.maven.org/maven2/org/hiero/block-node/${artifact}/${version}/${artifact}-${version}.pom"
-            fi
-            curl -fsI "${url}" >/dev/null 2>&1
-          }
-          names_for() { # $1 = names, $2 = version; prints the names published at that version
-            local kept=() name
-            IFS=',' read -ra entries <<< "$1"
-            for name in "${entries[@]}"; do
-              [[ -z "${name}" ]] && continue
-              if is_published "${name}" "$2"; then
-                kept+=("${name}")
-              else
-                echo "::notice::${name} is not on Maven for $2; not resolving it" >&2
-              fi
-            done
-            (IFS=','; echo "${kept[*]}")
-          }
+          source tools-and-tests/scripts/lib/maven-published.sh
           echo "PLUGIN_NAMES=${NAMES}" >> "$GITHUB_OUTPUT"
           echo "BASE_PLUGIN_NAMES=$(names_for "${NAMES}" "${BASE}")" >> "$GITHUB_OUTPUT"
           echo "SNAP_PLUGIN_NAMES=$(names_for "${NAMES}" "${SNAP}")" >> "$GITHUB_OUTPUT"

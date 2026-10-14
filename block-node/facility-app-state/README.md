@@ -47,11 +47,13 @@ plugins:
    providers may report blocks from their own `init()`. It registers the oldest and newest block
    gauges, `app_historical_oldest_block` and `app_historical_newest_block`.
 2. `start()` runs after the messaging facility has started, before all other plugins. It loads the
-   TSS data, address book history and block ranges, dispatches them, then starts the dispatcher
-   thread. A corrupt RSA bootstrap file aborts startup with `IllegalStateException`.
+   TSS data, address book history and block ranges, dispatches them, then schedules the periodic
+   block range persist check. The dispatcher thread itself is created in `init()`. A corrupt RSA
+   bootstrap file aborts startup with `IllegalStateException`.
 3. `stop()` runs after the web servers close and after every other plugin has stopped, but before
-   the messaging facility stops. It finishes queued updates and persists the block ranges, so the
-   persisted ranges include anything plugins reported while stopping.
+   the messaging facility stops. It finishes queued updates and persists the TSS data, address book
+   history and block ranges, so the persisted state includes anything plugins reported while
+   stopping.
 
 Block ranges are also persisted every `1000` stored blocks, checked every `app.state.updateScanInterval`
 milliseconds. Files are replaced atomically (write to a temporary sibling, then move).
