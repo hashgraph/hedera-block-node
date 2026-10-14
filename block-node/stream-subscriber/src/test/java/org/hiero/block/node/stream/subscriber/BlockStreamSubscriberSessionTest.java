@@ -1386,6 +1386,47 @@ class BlockStreamSubscriberSessionTest {
         }
 
         /**
+         * This test verifies that chunked sending stops as soon as the session is closed,
+         * instead of sending every remaining chunk of a large block.
+         */
+        @Test
+        @DisplayName("should stop sending further chunks once the session is closed")
+        void testChunkedSendStopsWhenClosed() {
+            // Large block requiring multiple chunks (same shape as testLargeBlockMultipleChunks).
+            final List<BlockItemUnparsed> largeBlock = new java.util.ArrayList<>();
+            largeBlock.add(sampleHeaderUnparsed(0));
+            largeBlock.add(createLargeBlockItem(50_000));
+            largeBlock.add(createLargeBlockItem(50_000));
+            largeBlock.add(createLargeBlockItem(50_000));
+            largeBlock.add(sampleProofUnparsed(0));
+
+            final SubscribeStreamRequest request = SubscribeStreamRequest.newBuilder()
+                    .startBlockNumber(0L)
+                    .endBlockNumber(0L)
+                    .build();
+            final BlockStreamSubscriberSession session = new BlockStreamSubscriberSession(
+                    SessionContext.create(clientId, request, chunkingContext),
+                    chunkingPipeline,
+                    chunkingContext,
+                    sessionReadyLatch);
+
+            // Simulate the session already being closed when a chunked send is in progress (e.g.
+            // a concurrent close(), or a future force-cancellation of this thread).
+            Thread.currentThread().interrupt();
+            try {
+                session.sendBlockItemsChunked(largeBlock);
+            } finally {
+                // Clear the interrupt so it doesn't leak into any other test sharing this thread.
+                assertThat(Thread.interrupted()).isTrue();
+            }
+
+            // Exactly one chunk should have been sent before the closed check stopped the loop.
+            final var responses = chunkingPipeline.getOnNextCalls();
+            assertThat(responses).hasSize(1);
+            assertThat(responses.getFirst().response().kind()).isEqualTo(ResponseOneOfType.BLOCK_ITEMS);
+        }
+
+        /**
          * This test verifies that an empty block list results in no responses.
          */
         @Test
@@ -1471,6 +1512,78 @@ class BlockStreamSubscriberSessionTest {
             }
 
             assertThat(failingPipeline.getOnNextCalls()).hasSize(1);
+        }
+    }
+
+    /**
+     * Tests for how a session waiting to resolve the first live block reacts to being closed.
+     */
+    @Nested
+    @DisplayName("Live Tip Cancellation Tests")
+    class LiveTipCancellationTests {
+        /** Upper bound for waits, so a regression fails the test instead of hanging it. */
+        private static final long WAIT_TIMEOUT_SECONDS = 10L;
+
+        /**
+         * This test verifies that a live-stream session that is closed before any live block
+         * has reached the head of the queue still terminates. Before the fix, the wait for the
+         * first live block ignored the closed/interrupted flag and parked forever, leaking the
+         * session (and its thread) whenever a client disconnected while no block was flowing yet.
+         */
+        @Test
+        @DisplayName("should stop waiting for the first live block once the session is closed")
+        void testResolveLiveNextBlockStopsOnClose() throws Exception {
+            final SubscribeStreamRequest liveRequest = SubscribeStreamRequest.newBuilder()
+                    .startBlockNumber(-1L)
+                    .endBlockNumber(-1L)
+                    .build();
+            final BlockStreamSubscriberSession session = new BlockStreamSubscriberSession(
+                    SessionContext.create(clientId, liveRequest, blockNodeContext),
+                    responsePipeline,
+                    blockNodeContext,
+                    sessionReadyLatch);
+
+            try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                final Future<BlockStreamSubscriberSession> sessionFuture = executor.submit(session);
+                assertThat(sessionReadyLatch.await(WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS))
+                        .isTrue();
+                // No live block is ever sent, so without the fix the session would park here forever.
+                session.close(Code.SUCCESS);
+
+                assertThatNoException().isThrownBy(() -> sessionFuture.get(WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            }
+        }
+
+        /**
+         * This test verifies that a live-stream session stops waiting for the first live block
+         * when its thread is interrupted directly, even though nothing ever calls close(). This
+         * covers a future force-cancellation mechanism (e.g. a watchdog calling
+         * {@code Future.cancel(true)} on a stuck session) that stops a session without going
+         * through the normal close() path.
+         */
+        @Test
+        @DisplayName("should stop waiting for the first live block on a raw thread interrupt, without close()")
+        void testResolveLiveNextBlockStopsOnRawInterrupt() throws Exception {
+            final SubscribeStreamRequest liveRequest = SubscribeStreamRequest.newBuilder()
+                    .startBlockNumber(-1L)
+                    .endBlockNumber(-1L)
+                    .build();
+            final BlockStreamSubscriberSession session = new BlockStreamSubscriberSession(
+                    SessionContext.create(clientId, liveRequest, blockNodeContext),
+                    responsePipeline,
+                    blockNodeContext,
+                    sessionReadyLatch);
+
+            final Thread sessionThread = new Thread(session::call, "test-session-thread");
+            sessionThread.start();
+            assertThat(sessionReadyLatch.await(WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS))
+                    .isTrue();
+            // No live block is ever sent and close() is never called - only a raw interrupt, as a
+            // future force-cancellation mechanism would do.
+            sessionThread.interrupt();
+            sessionThread.join(TimeUnit.SECONDS.toMillis(WAIT_TIMEOUT_SECONDS));
+
+            assertThat(sessionThread.isAlive()).isFalse();
         }
     }
 
