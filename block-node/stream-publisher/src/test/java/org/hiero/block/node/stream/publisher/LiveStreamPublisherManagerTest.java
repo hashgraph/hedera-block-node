@@ -3929,6 +3929,20 @@ class LiveStreamPublisherManagerTest {
         }
 
         @Test
+        @DisplayName("notifyHandlerModeChange after removeHandler does not resurrect the handler")
+        void modeChangeAfterRemoveHandlerIsIgnored() {
+            final long handlerId = toTest.addHandler(new TestResponsePipeline<>(), generateHandlerMetrics(), null)
+                    .getId();
+            toTest.removeHandler(handlerId);
+
+            toTest.notifyHandlerModeChange(handlerId, true);
+            toTest.notifyHandlerModeChange(handlerId, false);
+
+            assertThat(managerMetrics.activeHandlerCount().get()).isZero();
+            assertThat(managerMetrics.passiveHandlerCount().get()).isZero();
+        }
+
+        @Test
         @DisplayName("Ack cache evicts oldest entry once ackCacheSize is exceeded")
         void ackCacheEvictsOldestEntry() {
             final int cap = 3;
@@ -3997,10 +4011,13 @@ class LiveStreamPublisherManagerTest {
                     .build();
             handlerA.onNext(ackOnly);
             assertThat(aReplies.getOnNextCalls()).isEmpty();
+            assertThat(managerMetrics.passiveHandlerCount().get()).isEqualTo(1L);
+            assertThat(managerMetrics.activeHandlerCount().get()).isEqualTo(1L);
 
             // Simulate B's blocks being persisted. The broadcast must reach handler A too.
             toTest.handlePersisted(new PersistedNotification(0L, true, 0, BlockSource.PUBLISHER));
 
+            assertThat(bReplies.getOnNextCalls()).hasSize(1);
             assertThat(aReplies.getOnNextCalls()).hasSize(1);
             assertThat(aReplies.getOnNextCalls().get(0).response().kind()).isEqualTo(ResponseOneOfType.ACKNOWLEDGEMENT);
             assertThat(aReplies.getOnNextCalls().get(0).acknowledgement().blockNumber())

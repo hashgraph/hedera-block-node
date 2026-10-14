@@ -458,9 +458,9 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
     /// the Block-Node that it believes `blockNumber` is the latest block to have
     /// been acknowledged on the network. If the Block-Node has already acknowledged
     /// a block at or past that number, respond with the latest acknowledgement
-    /// immediately so the publisher can confirm it is in sync; otherwise take no
-    /// action beyond recording the progress for stall tracking (the publisher will
-    /// receive the next regular acknowledgement when it is produced).
+    /// immediately so the publisher can confirm it is in sync; otherwise send
+    /// nothing (the publisher will receive the next regular acknowledgement when
+    /// it is produced).
     ///
     /// @param request the parsed AcknowledgeOnly request
     /// @return a `ContinueResult` to leave the stream open
