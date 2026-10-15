@@ -152,6 +152,9 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
     /// [#notifyHandlerModeChange(long, boolean)]. Used to maintain the
     /// `publisher_active_handlers` and `publisher_passive_handlers` gauges.
     private final ConcurrentSkipListMap<Long, Boolean> handlerPassiveMode;
+    /// Serializes recounting and publishing the handler gauges, so a slower thread cannot
+    /// overwrite a newer count with a stale one.
+    private final Object handlerGaugeLock = new Object();
     /// Bounded LRU cache of recently acknowledged block root hashes, keyed by block
     /// number. The size cap comes from [PublisherConfig#ackCacheSize()]. Access is
     /// synchronized on the map itself because LinkedHashMap's access-order iteration
@@ -243,12 +246,21 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
         handlerPassiveMode.put(handlerId, Boolean.FALSE);
         // Now we can safely update the metrics and send the notification
         // for the new publisher.
-        metrics.currentPublisherCount().set(handlers.size());
-        metrics.activeHandlerCount().set(countHandlersByMode(false));
-        metrics.passiveHandlerCount().set(countHandlersByMode(true));
+        refreshHandlerGauges();
         sendPublisherStatusUpdate(UpdateType.PUBLISHER_CONNECTED, handlers);
         LOGGER.log(DEBUG, "Added new handler {0}", handlerId);
         return newHandler;
+    }
+
+    /// Recount the connected, active and passive handlers and publish them to the gauges.
+    /// Called after every change to the handler maps. The recount and the set happen under one
+    /// lock, so the last refresh always reflects the final state of the maps.
+    private void refreshHandlerGauges() {
+        synchronized (handlerGaugeLock) {
+            metrics.currentPublisherCount().set(handlers.size());
+            metrics.activeHandlerCount().set(countHandlersByMode(false));
+            metrics.passiveHandlerCount().set(countHandlersByMode(true));
+        }
     }
 
     private long countHandlersByMode(final boolean passive) {
@@ -286,9 +298,7 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
             publisherUnavailabilityTimeoutFuture = schedulePublisherUnavailabilityTimeout();
         }
         // Update metrics and publish the status update
-        metrics.currentPublisherCount().set(handlers.size());
-        metrics.activeHandlerCount().set(countHandlersByMode(false));
-        metrics.passiveHandlerCount().set(countHandlersByMode(true));
+        refreshHandlerGauges();
         sendPublisherStatusUpdate(UpdateType.PUBLISHER_DISCONNECTED, handlers);
         LOGGER.log(DEBUG, "Removed handler {0}", handlerId);
     }
@@ -301,8 +311,7 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
         if (previous == null || previous.booleanValue() == passive) {
             return; // handler already removed, or no transition
         }
-        metrics.activeHandlerCount().set(countHandlersByMode(false));
-        metrics.passiveHandlerCount().set(countHandlersByMode(true));
+        refreshHandlerGauges();
     }
 
     @Override

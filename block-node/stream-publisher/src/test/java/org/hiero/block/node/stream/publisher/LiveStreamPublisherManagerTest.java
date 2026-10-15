@@ -9,12 +9,16 @@ import static org.hiero.block.node.stream.publisher.PublishApiUtility.sendHeader
 
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import com.swirlds.config.api.Configuration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -3864,6 +3868,46 @@ class LiveStreamPublisherManagerTest {
 
             assertThat(managerMetrics.activeHandlerCount().get()).isZero();
             assertThat(managerMetrics.passiveHandlerCount().get()).isZero();
+        }
+
+        @Test
+        @DisplayName("Handler gauges match the real counts after concurrent connects, mode changes and removals")
+        void gaugesStayConsistentUnderConcurrentChanges() throws Exception {
+            final int handlerCount = 256;
+            final ExecutorService executor = Executors.newFixedThreadPool(8);
+            try {
+                final CountDownLatch start = new CountDownLatch(1);
+                final List<Future<?>> tasks = new ArrayList<>();
+                for (int i = 0; i < handlerCount; i++) {
+                    final boolean finishPassive = i % 2 == 0;
+                    final boolean remove = i % 4 == 0;
+                    tasks.add(executor.submit(() -> {
+                        start.await();
+                        final long id = toTest.addHandler(new TestResponsePipeline<>(), generateHandlerMetrics(), null)
+                                .getId();
+                        for (int flip = 0; flip < 20; flip++) {
+                            toTest.notifyHandlerModeChange(id, flip % 2 == 0);
+                        }
+                        toTest.notifyHandlerModeChange(id, finishPassive);
+                        if (remove) {
+                            toTest.removeHandler(id);
+                        }
+                        return null;
+                    }));
+                }
+                start.countDown();
+                for (final Future<?> task : tasks) {
+                    task.get(30, TimeUnit.SECONDS);
+                }
+            } finally {
+                executor.shutdownNow();
+            }
+
+            // Every 4th handler (all passive) was removed; of the remaining ones, i % 4 == 2 are
+            // passive and the odd ones are active.
+            assertThat(managerMetrics.currentPublisherCount().get()).isEqualTo(handlerCount * 3L / 4);
+            assertThat(managerMetrics.passiveHandlerCount().get()).isEqualTo(handlerCount / 4L);
+            assertThat(managerMetrics.activeHandlerCount().get()).isEqualTo(handlerCount / 2L);
         }
 
         @Test
