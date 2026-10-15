@@ -237,13 +237,23 @@ tasks.named("test") { dependsOn(copyRsaTestFixture) }
 
 val dockerProjectRootDirectory: Directory = layout.projectDirectory.dir("docker")
 val dockerBuildRootDirectory: Directory = layout.buildDirectory.dir("docker").get()
+// The Helm chart holds the one copy of the shared dashboards; the docker-compose Grafana gets them
+// at staging time.
+val sharedDashboardsDirectory: Directory =
+    layout.projectDirectory.dir("../../charts/block-node-server/dashboards/block-node")
 
 val copyDockerFolder: TaskProvider<Copy> =
     tasks.register<Copy>("copyDockerFolder") {
-        description = "Copies the docker folder to the build root directory"
+        description =
+            "Copies the docker folder and the shared Grafana dashboards to the build root directory"
         group = "docker"
 
+        // Copy never removes stale outputs; dashboards left from an older layout would duplicate
+        // UIDs.
+        val stagedDashboardsDir: File = dockerBuildRootDirectory.dir("metrics/dashboards").asFile
+        doFirst { stagedDashboardsDir.deleteRecursively() }
         from(dockerProjectRootDirectory)
+        from(sharedDashboardsDirectory) { into("metrics/dashboards/block-node") }
         into(dockerBuildRootDirectory)
     }
 
