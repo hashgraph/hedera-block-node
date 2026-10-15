@@ -150,12 +150,7 @@ public class SubscriberServicePlugin implements BlockNodePlugin, BlockStreamSubs
 
         private final ExecutorService virtualThreadExecutor;
         private volatile CompletionService<BlockStreamSubscriberSession> streamSessions;
-        /**
-         * Periodically reaps completed sessions, so cleanup of {@link #openSessions} and the
-         * open-connections gauge never depends on a new client connecting to trigger it.
-         * Runs on a dedicated scheduled executor, not {@link #virtualThreadExecutor}, so it never
-         * competes with (or is starved by) actual session work.
-         */
+        /** Dedicated executor for the periodic session reaper, separate from {@link #virtualThreadExecutor}. */
         private final ScheduledExecutorService reaperExecutor;
         /** Handle used to stop further reaper executions from {@link #stop()}. */
         private final ScheduledFuture<?> reaperTask;
@@ -187,11 +182,7 @@ public class SubscriberServicePlugin implements BlockNodePlugin, BlockStreamSubs
                     this::reapCompletedSessions, REAP_INTERVAL_SECONDS, REAP_INTERVAL_SECONDS, TimeUnit.SECONDS);
         }
 
-        /**
-         * Drains whatever sessions have already completed, independent of any new client
-         * connecting. Non-blocking: only touches futures that are already done, so it cannot
-         * itself stall on a session that is still running.
-         */
+        /** Drains already-completed sessions; non-blocking, so it never stalls on a running one. */
         private void reapCompletedSessions() {
             final CompletionService<BlockStreamSubscriberSession> streams = streamSessions;
             if (streams == null) {
@@ -208,11 +199,7 @@ public class SubscriberServicePlugin implements BlockNodePlugin, BlockStreamSubs
         }
 
         private void stop() {
-            // Stop further reaper executions before touching openSessions/streamSessions below, so
-            // it cannot race the drain loop over the same completion queue. A reap already in
-            // flight at this point is non-blocking and near-instant (see reapCompletedSessions()),
-            // so the tiny residual window here is no larger than this method's pre-existing
-            // reliance on every session actually completing.
+            // Cancel the reaper first so it can't race the drain loop below over the same queue.
             reaperTask.cancel(false);
             // Stop allowing new connection threads.
             CompletionService<BlockStreamSubscriberSession> sessionsToClose = streamSessions;
@@ -257,9 +244,7 @@ public class SubscriberServicePlugin implements BlockNodePlugin, BlockStreamSubs
                 final SessionContext sessionContext = SessionContext.create(clientId, request, context);
                 final BlockStreamSubscriberSession blockStreamSession =
                         new BlockStreamSubscriberSession(sessionContext, responsePipeline, context, sessionReadyLatch);
-                // Register the session before submitting it, so it is impossible for the
-                // background reaper (see reapCompletedSessions()) to observe this session as
-                // completed and remove it before it has ever been added.
+                // Register before submitting, so the reaper can never reap it before it's tracked.
                 sessions.put(clientId, blockStreamSession);
                 numberOfSubscribers.set(sessionCount.incrementAndGet());
                 streams.submit(blockStreamSession);

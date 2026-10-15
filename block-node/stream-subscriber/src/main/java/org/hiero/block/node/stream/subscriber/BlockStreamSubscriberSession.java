@@ -737,10 +737,7 @@ public class BlockStreamSubscriberSession implements Callable<BlockStreamSubscri
      */
     synchronized void close(final SubscribeStreamResponse.Code endStreamResponseCode) {
         LOGGER.log(Level.TRACE, "Closing BlockStreamSubscriberSession for client {0}", sessionContext.clientId);
-        // A raw thread interrupt (e.g. a future force-cancellation mechanism) may leave this
-        // thread's interrupt status set. Clear it before the sends below, otherwise an
-        // interruptible I/O call could fail immediately because of the stale interrupt flag
-        // rather than because the connection is actually gone.
+        // Clear a possible stale interrupt flag so it doesn't fail the sends below.
         Thread.interrupted();
         try {
             // Might get here before the session is ready, so check the countdown latch

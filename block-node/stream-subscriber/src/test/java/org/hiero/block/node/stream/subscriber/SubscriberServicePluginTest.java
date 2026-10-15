@@ -1196,18 +1196,10 @@ class SubscriberServicePluginTest {
             }
         }
 
-        /**
-         * Tests for the periodic session reaper (cleanup of completed sessions that does not
-         * depend on a new client request arriving to trigger it).
-         */
+        /** Tests for the periodic session reaper, independent of new client requests. */
         @Nested
         @DisplayName("Session Reaper Tests")
         class SessionReaperTests {
-            /**
-             * This test aims to assert that a session that has already completed is removed
-             * from the open-sessions tracking once the periodic reaper runs, even though no new
-             * client request was made after it completed.
-             */
             @Test
             @DisplayName("should reap a completed session without a new client request")
             void testCompletedSessionIsReapedWithoutNewRequest() {
@@ -1219,9 +1211,7 @@ class SubscriberServicePluginTest {
                 toPluginPipe.onNext(SubscribeStreamRequest.PROTOBUF.toBytes(invalidRequest));
                 awaitResponse(fromPluginBytes, 1);
 
-                // Nothing on the request path drains openSessions anymore; only the periodic
-                // reaper does. Keep pumping it until the session is reaped, bounded so a
-                // regression fails the test instead of hanging it.
+                // Pump the reaper until it reaps the session; bounded so a regression fails, not hangs.
                 final long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
                 while (!plugin.getOpenSessions().isEmpty() && System.nanoTime() < deadlineNanos) {
                     testThreadPoolManager.scheduledExecutor().executeSerially();

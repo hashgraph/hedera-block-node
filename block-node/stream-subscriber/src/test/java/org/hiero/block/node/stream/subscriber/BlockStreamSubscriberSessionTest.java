@@ -1553,10 +1553,7 @@ class BlockStreamSubscriberSessionTest {
 
                 assertThatNoException().isThrownBy(() -> sessionFuture.get(WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS));
             } finally {
-                // shutdownNow() interrupts a still-running task instead of waiting for it, so a
-                // regression here fails within WAIT_TIMEOUT_SECONDS instead of hanging the build.
-                // Try-with-resources would use ExecutorService.close(), which blocks waiting for
-                // the stuck session thread to terminate on its own, defeating the bound above.
+                // shutdownNow(), not close(), so a regression fails fast instead of hanging the build.
                 executor.shutdownNow();
             }
         }
