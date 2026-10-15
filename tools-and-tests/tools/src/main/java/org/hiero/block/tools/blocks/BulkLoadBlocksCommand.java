@@ -127,14 +127,18 @@ public class BulkLoadBlocksCommand implements Callable<Integer> {
             return 1;
         }
 
-        // Refuse SHA-384 output from an older CLI. Only open an existing registry, since the
-        // constructor creates the file when it is missing.
+        // Refuse SHA-384 output from an older CLI. Only read the header, so the source is never written.
         final Path registryPath = sourceDir.resolve("blockStreamBlockHashes.bin");
         if (Files.exists(registryPath)) {
-            try (BlockStreamBlockHashRegistry ignored = new BlockStreamBlockHashRegistry(registryPath)) {
-                // opening validates the header
-            } catch (IllegalStateException e) {
-                System.err.println("Error: " + e.getMessage());
+            try {
+                if (!BlockStreamBlockHashRegistry.hasSha256Header(registryPath)) {
+                    System.err.println("Error: " + registryPath
+                            + " is not a SHA-256 block hash registry (missing header). The source is probably"
+                            + " SHA-384 output from an older CLI version.");
+                    return 1;
+                }
+            } catch (IOException e) {
+                System.err.println("Error: Failed to read " + registryPath + ": " + e.getMessage());
                 return 1;
             }
         }

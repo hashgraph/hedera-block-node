@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.hiero.block.tools.blocks;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -13,6 +14,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.List;
 import org.hiero.block.internal.BulkLoadState;
@@ -132,6 +134,29 @@ class BulkLoadBlocksCommandTest {
 
             assertEquals(0, exitCode);
             assertTrue(Files.exists(destDir.resolve("000/00000s.zip")));
+        }
+
+        @Test
+        @DisplayName("Should accept a read-only SHA-256 hash registry with a partial tail and leave it unchanged")
+        void readOnlyRegistryWithPartialTailUntouched() throws Exception {
+            Path zipFile = sourceDir.resolve("000/00000s.zip");
+            Files.createDirectories(zipFile.getParent());
+            Files.writeString(zipFile, "test content");
+            Path registry = sourceDir.resolve("blockStreamBlockHashes.bin");
+            try (BlockStreamBlockHashRegistry hashRegistry = new BlockStreamBlockHashRegistry(registry)) {
+                hashRegistry.addBlock(0, new byte[32]);
+            }
+            // Partial write of a second hash
+            Files.write(registry, new byte[5], StandardOpenOption.APPEND);
+            final byte[] before = Files.readAllBytes(registry);
+            assertTrue(registry.toFile().setWritable(false));
+
+            int exitCode = new CommandLine(new BulkLoadBlocksCommand())
+                    .execute("--source", sourceDir.toString(), "--dest", destDir.toString());
+
+            assertEquals(0, exitCode);
+            assertTrue(Files.exists(destDir.resolve("000/00000s.zip")));
+            assertArrayEquals(before, Files.readAllBytes(registry));
         }
 
         @Test

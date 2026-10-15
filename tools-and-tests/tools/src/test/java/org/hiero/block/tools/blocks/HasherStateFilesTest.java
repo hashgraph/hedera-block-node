@@ -10,8 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.DataOutputStream;
 import java.io.UncheckedIOException;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import org.hiero.block.tools.blocks.model.hashing.BlockStreamBlockHashRegistry;
 import org.hiero.block.tools.blocks.model.hashing.LegacyHashFormatException;
@@ -261,6 +263,24 @@ class HasherStateFilesTest {
             assertThrows(UncheckedIOException.class, () -> HasherStateFiles.loadWithFallback(primary, loaded::load));
 
             assertEquals(legacySize, Files.size(bak), "Backup must not be deleted or changed");
+        }
+
+        @Test
+        @DisplayName("Truncated legacy SHA-384 primary, no backup: throws and keeps the primary")
+        void truncatedLegacyPrimary_throwsAndKeepsPrimary() throws Exception {
+            Path primary = tempDir.resolve("hasher.bin");
+            writeLegacyState(primary);
+            long truncatedSize = Files.size(primary) - 10;
+            try (FileChannel channel = FileChannel.open(primary, StandardOpenOption.WRITE)) {
+                channel.truncate(truncatedSize);
+            }
+
+            StreamingHasher loaded = new StreamingHasher();
+            UncheckedIOException ex = assertThrows(
+                    UncheckedIOException.class, () -> HasherStateFiles.loadWithFallback(primary, loaded::load));
+
+            assertInstanceOf(LegacyHashFormatException.class, ex.getCause());
+            assertEquals(truncatedSize, Files.size(primary), "Primary must not be deleted or changed");
         }
 
         @Test

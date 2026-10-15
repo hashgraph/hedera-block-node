@@ -4,8 +4,10 @@ package org.hiero.block.tools.blocks.model.hashing;
 import static org.hiero.block.tools.blocks.model.hashing.HashingUtils.EMPTY_TREE_HASH;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.function.Consumer;
@@ -80,6 +82,23 @@ public class BlockStreamBlockHashRegistry implements AutoCloseable {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    /**
+     * Check, without opening the registry for writing, whether an existing registry file is a SHA-256 one. Only the
+     * header is read, so the file is never created, truncated or modified, and a read-only file can be checked. A file
+     * shorter than the header holds no hashes yet and is accepted, as the constructor does.
+     *
+     * @param blockHashesFilePath path to an existing registry file
+     * @return false if the file is long enough to have a header but does not start with {@link #MAGIC}
+     * @throws IOException if the file cannot be read
+     */
+    public static boolean hasSha256Header(Path blockHashesFilePath) throws IOException {
+        final byte[] header;
+        try (InputStream in = Files.newInputStream(blockHashesFilePath)) {
+            header = in.readNBytes(HEADER_SIZE);
+        }
+        return header.length < HEADER_SIZE || Arrays.equals(header, MAGIC);
     }
 
     /**
