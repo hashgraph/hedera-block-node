@@ -52,7 +52,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -189,13 +189,13 @@ jobs:
           passphrase: ${{ secrets.GPG_KEY_PASSPHRASE }}
 
       - name: Install JDK
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: "temurin"
           java-version: "25.0.2"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
 
       - name: Create and Switch to Release Branch
         # alpha and custom never use a release/X.Y branch - they tag directly off
@@ -226,7 +226,7 @@ jobs:
 
       - name: Commit and Tag
         if: ${{ github.event.inputs.release_type != 'GA' }}
-        uses: step-security/git-auto-commit-action@749bc1cc775376092cc4227ba537137f445ca7c3 # v7.1.1
+        uses: step-security/git-auto-commit-action@ca31fda53dd20a6864523b29798308a4c5fa5cfa # v7.2.0
         with:
           commit_author: ${{ steps.gpg_importer.outputs.name }} <${{ steps.gpg_importer.outputs.email }}>
           commit_message: Bump versions for ${{ env.RELEASE_TAG }}
@@ -283,7 +283,7 @@ jobs:
         run: ./gradlew :protobuf-sources:generateBlockNodeProtoArtifact
 
       - name: Upload Protobuf Artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: block-node-protobuf-${{ env.RELEASE_TAG }}
           path: ./protobuf-sources/block-node-protobuf-*.tgz
@@ -297,7 +297,7 @@ jobs:
              ./tools-and-tests/tools/build/libs/block-stream-tools-${{ env.VERSION }}.jar
 
       - name: Upload Block-Stream-Tools Artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: block-stream-tools-${{ env.RELEASE_TAG }}
           path: ./tools-and-tests/tools/build/libs/block-stream-tools-${{ env.VERSION }}.jar
@@ -338,7 +338,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -413,7 +413,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -435,13 +435,13 @@ jobs:
           passphrase: ${{ secrets.GPG_KEY_PASSPHRASE }}
 
       - name: Install JDK
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: "temurin"
           java-version: "25.0.2"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
 
       - name: Reset main to release branch
         run: |

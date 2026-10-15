@@ -6,6 +6,7 @@ import static java.lang.System.Logger.Level.INFO;
 import static java.lang.System.Logger.Level.WARNING;
 
 import com.hedera.hapi.block.stream.output.BlockHeader;
+import com.hedera.hapi.node.base.BlockHashAlgorithm;
 import com.hedera.pbj.runtime.ParseException;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
 import java.net.InetAddress;
@@ -24,12 +25,15 @@ import org.hiero.block.node.block.verification.session.SessionFailureType;
 import org.hiero.block.node.spi.BlockNodeContext;
 import org.hiero.block.node.spi.BlockNodePlugin;
 import org.hiero.block.node.spi.ServiceBuilder;
+import org.hiero.block.node.spi.blockmessaging.ApplicationStateNotificationHandler;
 import org.hiero.block.node.spi.blockmessaging.BackfilledBlockNotification;
 import org.hiero.block.node.spi.blockmessaging.BlockItemHandler;
 import org.hiero.block.node.spi.blockmessaging.BlockItems;
 import org.hiero.block.node.spi.blockmessaging.BlockNotificationHandler;
 import org.hiero.block.node.spi.blockmessaging.BlockSource;
 import org.hiero.block.node.spi.blockmessaging.PersistedNotification;
+import org.hiero.block.node.spi.blockmessaging.StoredBlocksNotification;
+import org.hiero.block.node.spi.blockmessaging.TssDataNotification;
 import org.hiero.block.node.spi.blockmessaging.VerificationNotification;
 import org.hiero.block.node.spi.blockmessaging.VerificationNotification.FailureInfo;
 
@@ -44,9 +48,17 @@ import org.hiero.block.node.spi.blockmessaging.VerificationNotification.FailureI
 ///
 /// This plugin is effectively the implementation of the verification component
 /// design as specified in the design documentation.
-public final class VerificationServicePlugin implements BlockNodePlugin, BlockItemHandler, BlockNotificationHandler {
+public final class VerificationServicePlugin
+        implements BlockNodePlugin, BlockItemHandler, BlockNotificationHandler, ApplicationStateNotificationHandler {
     /// Logger for the plugin.
     private static final System.Logger LOGGER = System.getLogger(VerificationServicePlugin.class.getName());
+    /// The value a block header must declare for the block to be admitted: `SHA2_256`, the
+    /// algorithm the `BlockHasher` always hashes with. A header declaring any other value,
+    /// including a value this node does not recognize, is refused before a session is started.
+    /// A block from before the move to SHA-256 carries no algorithm in its header, because
+    /// `SHA2_384` was the enumeration default then, so it decodes as `SHA2_256` and passes this
+    /// check; the `BlockHasher` refuses it by the size of its footer hashes.
+    private static final BlockHashAlgorithm DECLARED_HASH_ALGORITHM = BlockHashAlgorithm.SHA2_256;
     /// The last successfully verified block.
     private final AtomicLong lastVerifiedBlock;
     /// The set of recently verified blocks.
@@ -98,6 +110,7 @@ public final class VerificationServicePlugin implements BlockNodePlugin, BlockIt
                 new ConcurrentSkipListMap<>(),
                 executor,
                 badBlockDumper);
+        context.blockMessaging().registerApplicationStateNotificationHandler(this, false, name());
     }
 
     /// Uncaught exception handler method handle for verification pool.
@@ -112,6 +125,9 @@ public final class VerificationServicePlugin implements BlockNodePlugin, BlockIt
     /// last verified block, that is the same as the latest persisted block.
     @Override
     public void start() {
+        verificationDataProvider.safeUpdateTssData(
+                context.applicationStateFacility().tssData(), false);
+        updateLastVerifiedBlock(context.applicationStateFacility().storedBlocks());
         this.context.blockMessaging().registerBlockNotificationHandler(this, true, name());
         this.context.blockMessaging().registerBlockItemHandler(this, true, name());
         badBlockDumper.start(context.threadPoolManager());
@@ -132,26 +148,27 @@ public final class VerificationServicePlugin implements BlockNodePlugin, BlockIt
         // unregister from listening to incoming block items
         context.blockMessaging().unregisterBlockItemHandler(this);
         context.blockMessaging().unregisterBlockNotificationHandler(this);
+        context.blockMessaging().unregisterApplicationStateNotificationHandler(this);
         // immediately shutdown the executor
         executor.shutdownNow();
         badBlockDumper.stop();
     }
 
-    /// {@inheritDoc}
-    /// ---
-    /// Receive application state updates.
-    /// _NOTE_: we are expected to receive an update right after [#init(BlockNodeContext, ServiceBuilder)]
-    /// and just before [#start()]. If any initial data is available, we will see it before starting.
-    /// This is also an important assumption for setting the last verified block initially.
     @Override
-    public void onContextUpdate(final BlockNodeContext updatedContext) {
+    public void handleTssDataUpdate(final TssDataNotification notification) {
         try {
-            if (updatedContext != null) {
-                verificationDataProvider.safeUpdateTssData(updatedContext.tssData(), false);
-                updateLastVerifiedBlock(updatedContext.storedBlocks());
-            }
+            verificationDataProvider.safeUpdateTssData(notification.tssData(), false);
         } catch (final RuntimeException e) {
-            LOGGER.log(INFO, "onContextUpdate failed", e);
+            LOGGER.log(INFO, "handleTssDataUpdate failed", e);
+        }
+    }
+
+    @Override
+    public void handleStoredBlocksUpdate(final StoredBlocksNotification notification) {
+        try {
+            updateLastVerifiedBlock(notification.storedBlocks());
+        } catch (final RuntimeException e) {
+            LOGGER.log(INFO, "handleStoredBlocksUpdate failed", e);
         }
     }
 
@@ -170,7 +187,7 @@ public final class VerificationServicePlugin implements BlockNodePlugin, BlockIt
                 localLastVerified = lastVerifiedBlock.get();
             }
             if (updateHappened) {
-                final String message = "onContextUpdate received, updated last verified block to {0}";
+                final String message = "Updated last verified block from stored blocks to {0}";
                 LOGGER.log(INFO, message, lastVerifiedBlock.get());
             }
         }
@@ -199,11 +216,7 @@ public final class VerificationServicePlugin implements BlockNodePlugin, BlockIt
         final BlockSource source = BlockSource.PUBLISHER;
         try {
             if (blockItems != null) {
-                if (validateStartOfBlock(blockItems)) {
-                    sessionHandler.processBlockItems(blockItems, source);
-                } else {
-                    safeSendNotification(blockItems.blockNumber(), source, SessionFailureType.MISSING_MANDATORY_ITEM);
-                }
+                validateAndProcess(blockItems, source);
             } else {
                 LOGGER.log(INFO, "Received null block items on live items ring buffer");
             }
@@ -235,11 +248,7 @@ public final class VerificationServicePlugin implements BlockNodePlugin, BlockIt
                     && !notification.block().blockItems().isEmpty()) {
                 final BlockItems blockItems =
                         new BlockItems(notification.block().blockItems(), notification.blockNumber(), true, true);
-                if (validateStartOfBlock(blockItems)) {
-                    sessionHandler.processBlockItems(blockItems, source);
-                } else {
-                    safeSendNotification(blockItems.blockNumber(), source, SessionFailureType.MISSING_MANDATORY_ITEM);
-                }
+                validateAndProcess(blockItems, source);
             } else {
                 LOGGER.log(INFO, "Received invalid backfill notification: {0}", notification);
             }
@@ -299,33 +308,65 @@ public final class VerificationServicePlugin implements BlockNodePlugin, BlockIt
         }
     }
 
-    /// Validate the start of a block. When the supplied items mark the start of a
-    /// new block, the first item must be a block header and the header's number
-    /// must match the block number announced with the items. Items that do not
-    /// mark the start of a block are always considered valid here.
+    /// Validate the supplied items and hand them to the session handler. Items that
+    /// start a new block are validated first: the first item must be a valid block
+    /// header, and the header must declare the one algorithm this node hashes with,
+    /// [#DECLARED_HASH_ALGORITHM]. The session started for the block hashes with SHA-256.
+    /// The algorithm is never resolved from the header. Items that continue a block are
+    /// handed over as they are. Items that fail validation end in a failure notification and
+    /// no session is started for them.
     ///
-    /// @param blockItems the block items to validate
-    /// @return `true` if the items are valid to process, `false` otherwise
-    private boolean validateStartOfBlock(final BlockItems blockItems) {
+    /// @param blockItems the block items to validate and process
+    /// @param source the source the items were received from
+    private void validateAndProcess(final BlockItems blockItems, final BlockSource source) {
+        if (blockItems.isStartOfNewBlock()) {
+            final BlockHeader header = validateStartOfBlock(blockItems);
+            if (header == null) {
+                safeSendNotification(blockItems.blockNumber(), source, SessionFailureType.MISSING_MANDATORY_ITEM);
+            } else if (header.hashAlgorithm() != DECLARED_HASH_ALGORITHM) {
+                LOGGER.log(
+                        INFO,
+                        "Block {0} from {1} declares hash algorithm {2}, this node hashes with {3} only",
+                        blockItems.blockNumber(),
+                        source,
+                        header.hashAlgorithm(),
+                        DECLARED_HASH_ALGORITHM);
+                safeSendNotification(blockItems.blockNumber(), source, SessionFailureType.UNSUPPORTED_STREAM_FORMAT);
+            } else {
+                sessionHandler.processBlockItems(blockItems, source);
+            }
+        } else {
+            sessionHandler.processBlockItems(blockItems, source);
+        }
+    }
+
+    /// Validate the start of a block. The first item must be a block header and the
+    /// header's number must match the block number announced with the items. The parsed
+    /// header is returned so the caller can check the hash algorithm the block declares
+    /// without parsing the header a second time.
+    ///
+    /// @param blockItems the block items starting a block
+    /// @return the parsed block header when the items are valid to process, `null` otherwise
+    private BlockHeader validateStartOfBlock(final BlockItems blockItems) {
         try {
-            final boolean result;
-            if (blockItems.isStartOfNewBlock()) {
-                final BlockItemUnparsed first = blockItems.blockItems().getFirst();
-                if (first != null && first.hasBlockHeader()) {
-                    final Bytes bytes = first.blockHeaderOrThrow();
-                    final BlockHeader header = ParseHelper.standardParse(BlockHeader.PROTOBUF, bytes);
-                    result = header.number() == blockItems.blockNumber();
+            final BlockHeader result;
+            final BlockItemUnparsed first = blockItems.blockItems().getFirst();
+            if (first != null && first.hasBlockHeader()) {
+                final Bytes bytes = first.blockHeaderOrThrow();
+                final BlockHeader header = ParseHelper.standardParse(BlockHeader.PROTOBUF, bytes);
+                if (header.number() == blockItems.blockNumber()) {
+                    result = header;
                 } else {
-                    result = false;
+                    result = null;
                 }
             } else {
-                result = true;
+                result = null;
             }
             return result;
         } catch (final ParseException e) {
             final String message = "Failed to parse block header";
             LOGGER.log(DEBUG, message, e);
-            return false;
+            return null;
         }
     }
 
