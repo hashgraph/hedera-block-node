@@ -1211,7 +1211,37 @@ class SubscriberServicePluginTest {
                 toPluginPipe.onNext(SubscribeStreamRequest.PROTOBUF.toBytes(invalidRequest));
                 awaitResponse(fromPluginBytes, 1);
 
-                // Pump the reaper until it reaps the session; bounded so a regression fails, not hangs.
+                assertThat(plugin.getOpenSessions())
+                        .as("session must still be tracked after closing, otherwise this test proves nothing")
+                        .isNotEmpty();
+                pumpReaperUntilEmpty();
+
+                assertThat(plugin.getOpenSessions()).isEmpty();
+            }
+
+            @Test
+            @DisplayName("should reap a session that completed successfully without a new client request")
+            void testCompletedValidSessionIsReapedWithoutNewRequest() {
+                // A single, already-available block: the request is fulfilled and closes almost immediately.
+                final TestBlock blockZero = TestBlockBuilder.generateBlockWithNumber(0);
+                blockMessaging.sendBlockItems(blockZero.asBlockItems());
+                final SubscribeStreamRequest request = SubscribeStreamRequest.newBuilder()
+                        .startBlockNumber(0L)
+                        .endBlockNumber(0L)
+                        .build();
+                toPluginPipe.onNext(SubscribeStreamRequest.PROTOBUF.toBytes(request));
+                awaitResponse(fromPluginBytes, 3); // items, end of block, success status
+
+                assertThat(plugin.getOpenSessions())
+                        .as("session must still be tracked after completing, otherwise this test proves nothing")
+                        .isNotEmpty();
+                pumpReaperUntilEmpty();
+
+                assertThat(plugin.getOpenSessions()).isEmpty();
+            }
+
+            /** Pumps the test scheduled executor until the reaper empties {@code openSessions}, bounded so a regression fails fast instead of hanging. */
+            private void pumpReaperUntilEmpty() {
                 final long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
                 while (!plugin.getOpenSessions().isEmpty() && System.nanoTime() < deadlineNanos) {
                     testThreadPoolManager.scheduledExecutor().executeSerially();
@@ -1219,8 +1249,6 @@ class SubscriberServicePluginTest {
                         parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
                     }
                 }
-
-                assertThat(plugin.getOpenSessions()).isEmpty();
             }
         }
     }

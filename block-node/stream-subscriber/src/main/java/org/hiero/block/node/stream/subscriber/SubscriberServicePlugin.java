@@ -154,8 +154,6 @@ public class SubscriberServicePlugin implements BlockNodePlugin, BlockStreamSubs
         private final ScheduledExecutorService reaperExecutor;
         /** Handle used to stop further reaper executions from {@link #stop()}. */
         private final ScheduledFuture<?> reaperTask;
-        /** How often the reaper drains already-completed sessions. */
-        private static final long REAP_INTERVAL_SECONDS = 5L;
 
         private SubscribeBlockStreamHandler(@NonNull final BlockNodeContext context) {
             this.context = requireNonNull(context);
@@ -178,8 +176,11 @@ public class SubscriberServicePlugin implements BlockNodePlugin, BlockStreamSubs
                             "SubscriberSessionReaper",
                             (thread, error) ->
                                     LOGGER.log(Level.ERROR, "Uncaught exception in subscriber session reaper", error));
+            final long reapIntervalSeconds = context.configuration()
+                    .getConfigData(SubscriberConfig.class)
+                    .completedSessionReapIntervalSeconds();
             reaperTask = reaperExecutor.scheduleAtFixedRate(
-                    this::reapCompletedSessions, REAP_INTERVAL_SECONDS, REAP_INTERVAL_SECONDS, TimeUnit.SECONDS);
+                    this::reapCompletedSessions, reapIntervalSeconds, reapIntervalSeconds, TimeUnit.SECONDS);
         }
 
         /** Drains already-completed sessions; non-blocking, so it never stalls on a running one. */
