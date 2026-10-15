@@ -319,7 +319,7 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
         checkForStalledHandlers(blockNumber);
         // Check for new blocks to resend (previous method might have added one)
         // and send a resend response if there are blocks needing to resend.
-        final long blockToResend = nextBlockToResend(blockNumber);
+        final long blockToResend = nextBlockToResend();
         if (blockToResend != UNKNOWN_BLOCK_NUMBER) {
             return new ActionForBlock(BlockAction.RESEND, blockToResend);
         } else {
@@ -1008,21 +1008,15 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
         }
     }
 
-    /// This method will return the next block number for the next block that must be resent to the
-    /// publisher that just completed `completedBlockNumber`. A resend is only offered for a block
-    /// at or below the one that publisher completed, because a publisher that has not reached a
-    /// block cannot resend it and closes the connection when asked. The entry stays in the set so
-    /// a publisher that has reached the block can still be asked.
+    /// This method will return the next block number for the next block that must be resent.
     /// This method could also return {@link org.hiero.block.node.spi.BlockNodePlugin#UNKNOWN_BLOCK_NUMBER} if no
-    /// more blocks are awaiting resend, or none that publisher can supply.
-    private long nextBlockToResend(final long completedBlockNumber) {
+    /// more blocks are awaiting resend.
+    private long nextBlockToResend() {
         long nextBlock;
         if (!blocksToResend.isEmpty()) {
             try {
                 // The blocksToResend set is a SortedSet, so first item will be the lowest one.
-                // If the lowest is beyond what this publisher has produced, so is every other entry.
-                final long lowest = blocksToResend.first();
-                nextBlock = lowest <= completedBlockNumber ? lowest : UNKNOWN_BLOCK_NUMBER;
+                nextBlock = blocksToResend.first();
             } catch (final NoSuchElementException e) {
                 // do nothing; we have no more blocks to resend.
                 nextBlock = UNKNOWN_BLOCK_NUMBER;

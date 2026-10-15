@@ -3446,31 +3446,6 @@ class LiveStreamPublisherManagerTest {
                         .returns(BlockAction.RESEND, ActionForBlock::action)
                         .returns(blockThatFailsVerification.number(), ActionForBlock::blockNumber);
             }
-            /// A publisher that has not yet reached the failed block cannot resend it. It must
-            /// not be asked, and the entry must remain for a publisher that has reached it.
-            @Test
-            @DisplayName("endOfBlock() - no RESEND for a block beyond what the publisher completed")
-            void testEndOfBlockNoResendBeyondCompletedBlock() {
-                // Publisher 1 completes block 0, publisher 2 streams block 1; block 1 then fails verification.
-                final TestBlock block0 = TestBlockBuilder.generateBlockWithNumber(0);
-                final TestBlock block1 = TestBlockBuilder.generateBlockWithNumber(1);
-                publisherHandler.onNext(block0.asPublishStreamRequestUnparsed());
-                endThisBlock(publisherHandler, block0.number());
-                publisherHandler2.onNext(block1.asPublishStreamRequestUnparsed());
-                toTest.handleVerification(new VerificationNotification(
-                        false,
-                        FailureInfo.standard(FailureType.BAD_BLOCK_PROOF),
-                        block1.number(),
-                        null,
-                        null,
-                        BlockSource.PUBLISHER));
-                // A publisher that only completed block 0 is behind block 1: it must not be asked to resend it.
-                assertThat(toTest.endOfBlock(block0.number())).returns(BlockAction.ACCEPT, ActionForBlock::action);
-                // A publisher that completed block 1 is asked, because the entry was kept.
-                assertThat(toTest.endOfBlock(block1.number()))
-                        .returns(BlockAction.RESEND, ActionForBlock::action)
-                        .returns(block1.number(), ActionForBlock::blockNumber);
-            }
         }
 
         /// Tests for stall detection via [LiveStreamPublisherManager#checkForStalledHandlers].
