@@ -1543,7 +1543,8 @@ class BlockStreamSubscriberSessionTest {
                     blockNodeContext,
                     sessionReadyLatch);
 
-            try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+            try {
                 final Future<BlockStreamSubscriberSession> sessionFuture = executor.submit(session);
                 assertThat(sessionReadyLatch.await(WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                         .isTrue();
@@ -1551,6 +1552,12 @@ class BlockStreamSubscriberSessionTest {
                 session.close(Code.SUCCESS);
 
                 assertThatNoException().isThrownBy(() -> sessionFuture.get(WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            } finally {
+                // shutdownNow() interrupts a still-running task instead of waiting for it, so a
+                // regression here fails within WAIT_TIMEOUT_SECONDS instead of hanging the build.
+                // Try-with-resources would use ExecutorService.close(), which blocks waiting for
+                // the stuck session thread to terminate on its own, defeating the bound above.
+                executor.shutdownNow();
             }
         }
 
