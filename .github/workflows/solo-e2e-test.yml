@@ -1008,7 +1008,7 @@ jobs:
           fi
 
       - name: BN Based - SDK TCK Regression Test Report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled()  &&  inputs.run-tck-regression-tests }}
         with:
           name: SDK TCK Regression Test Report-${{ inputs.topology }}
@@ -1160,7 +1160,7 @@ jobs:
       - name: Upload CN Logs
         if: always()
         id: upload_logs_cn
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cn-logs-${{ inputs.topology }}
           path: ${{ env.CN_LOG_FOLDER }}/
@@ -1169,7 +1169,7 @@ jobs:
         if: always()
         continue-on-error: true
         id: upload_logs_bn
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: BN-logs-${{ inputs.topology }}
           path: bn-logs/
@@ -1178,7 +1178,7 @@ jobs:
         if: always()
         continue-on-error: true
         id: upload_logs_mn
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: MN-logs-${{ inputs.topology }}
           path: mn-logs/

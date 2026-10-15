@@ -283,7 +283,7 @@ jobs:
         run: ./gradlew :protobuf-sources:generateBlockNodeProtoArtifact
 
       - name: Upload Protobuf Artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: block-node-protobuf-${{ env.RELEASE_TAG }}
           path: ./protobuf-sources/block-node-protobuf-*.tgz
@@ -297,7 +297,7 @@ jobs:
              ./tools-and-tests/tools/build/libs/block-stream-tools-${{ env.VERSION }}.jar
 
       - name: Upload Block-Stream-Tools Artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: block-stream-tools-${{ env.RELEASE_TAG }}
           path: ./tools-and-tests/tools/build/libs/block-stream-tools-${{ env.VERSION }}.jar
