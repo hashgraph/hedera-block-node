@@ -19,14 +19,17 @@ This folder holds the only copy of the Block Node Grafana dashboards. Edit them 
 
 ## Writing a dashboard
 
-The `block-node/` dashboards use the Grafana v2 dashboard schema (Grafana 12+) and work unchanged on docker,
-Kubernetes, and Grafana Cloud:
+The `block-node/` dashboards use the classic Grafana dashboard model (`panels`, `templating`) and work unchanged on
+docker, Kubernetes, and Grafana Cloud:
 
+- the model is classic, not the v2 schema (`elements`, `layout`): a Grafana with the v2 dashboard features off (the
+  docker and chart defaults) provisions a v2 file without error but renders it empty;
 - the datasource is the `DS_PROMETHEUS` variable;
 - `environment` and `instance` are include-all variables with `allValue: ".*"`, and every query filters with
   `{environment=~"$environment", instance=~"$instance"}`. `.*` also matches series that do not have the label, so
   the default "All" shows everything where those labels are not set (docker, a single Kubernetes install);
-- each dashboard has a fixed top-level `uid`, so links and bookmarks survive a fresh Grafana.
+- each dashboard has a fixed top-level `uid`, so links and bookmarks survive a fresh Grafana;
+- table `organize` transformations index and rename by the original field names (`Value #A`, `instance`).
 
-To change a dashboard, edit it in Grafana, export it as v2 JSON (**Export > Export as JSON**, v2 resource off), keep
-the `uid`, and replace the file here.
+To change a dashboard, edit it in Grafana, export it as classic JSON (**Export > Export as JSON**, classic), keep the
+`uid`, and replace the file here. Open it in the docker-compose Grafana to check that every panel renders.
