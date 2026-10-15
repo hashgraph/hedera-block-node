@@ -201,8 +201,9 @@ the S3 client (blank endpoint URL, bad credentials, unreachable endpoint), `s3Cl
 `start()` creates a dedicated single-thread scheduled executor
 (`ThreadPoolManager.createSingleThreadScheduledExecutor`) and schedules the drain tick
 (`drainTick()`) on it every `DRAIN_INTERVAL_MS` (100 ms); see [Drain tick](#drain-tick). When
-`retryEnabled` is `true`, `start()` also schedules `retryStagedBlocks()` on the same executor at
-`retryIntervalSeconds` intervals. `stop()` shuts this scheduler down, waits for in-flight uploads
+`retryEnabled` is `true`, `start()` also schedules the retry tick (`retryTick()`, which runs
+`retryStagedBlocks()`) on the same executor at `retryIntervalSeconds` intervals. Both ticks catch
+any `RuntimeException`, since one escaping a periodic task cancels all its later runs. `stop()` shuts this scheduler down, waits for in-flight uploads
 to drain, then flushes any block still left in the `RetryBuffer` as a terminal
 `PersistedNotification(succeeded=false)` — since nothing persists across a restart, a block left
 buffered here would otherwise never receive any notification at all.
@@ -438,7 +439,8 @@ classDiagram
         +buildBlockObjectKey(blockNumber) String
         -drainCompletedTasks()
         -drainTick()
-        ~retryStagedBlocks()
+        ~retryTick()
+        -retryStagedBlocks()
         -processCompletedFuture(future)
         -publishResult(result)
         -executeRetry(entry)
@@ -601,7 +603,7 @@ crash the node.
 14. **Deferred notification on buffered failure**: with retry enabled (default), a failed upload
     buffers the compressed bytes in memory and sends **no** `PersistedNotification` yet; the
     `cloud_expanded_pending_retry_blocks` gauge reflects the buffered block.
-15. **Retry recovers a transient failure**: driving `retryStagedBlocks()` after a block that
+15. **Retry recovers a transient failure**: driving `retryTick()` after a block that
     failed once now succeeds → publishes `PersistedNotification(succeeded=true)`, clears
     the buffer, increments `cloud_expanded_retry_success_total`.
 16. **Retry exhaustion**: with `retryMaxAgeSeconds=1`, a retry tick after the block has been
@@ -614,3 +616,10 @@ crash the node.
 19. **stop() flushes pending retries**: any block still in the `RetryBuffer` when `stop()` is
     called is reported as `PersistedNotification(succeeded=false)` before the buffer is
     discarded — since nothing persists across a restart, this is the only chance to report it.
+20. **Evicted block reported as failure**: with `retryMaxPendingBlocks=1`, a second buffered
+    failure evicts the first, which is reported as `PersistedNotification(succeeded=false)` and
+    counted in `cloud_expanded_retry_exhausted_total`.
+21. **Drain tick survives an exception**: a `RuntimeException` from one send does not stop later
+    blocks from being published.
+22. **stop() bounds a hung tick**: with `uploadTimeoutSeconds=1`, `stop()` returns even while a
+    tick is stuck in a send.

@@ -162,7 +162,7 @@ public class ExpandedCloudStoragePlugin implements BlockNodePlugin, BlockNotific
 
     /// Single-threaded scheduler that runs the drain tick ({@link #drainTick}) and, when
     /// {@link ExpandedCloudStorageConfig#retryEnabled()} is `true`, the retry tick
-    /// ({@link #retryStagedBlocks}). Being the only thread that drains keeps each drain's
+    /// ({@link #retryTick}). Being the only thread that drains keeps each drain's
     /// results in ascending block-number order; two concurrent drainers could interleave and
     /// publish them out of order. Order across drains is not enforced.
     private ScheduledExecutorService scheduler;
@@ -244,10 +244,7 @@ public class ExpandedCloudStoragePlugin implements BlockNodePlugin, BlockNotific
         if (config.retryEnabled()) {
             retryCompletionService = new ExecutorCompletionService<>(virtualThreadExecutor);
             scheduler.scheduleAtFixedRate(
-                    this::retryStagedBlocks,
-                    config.retryIntervalSeconds(),
-                    config.retryIntervalSeconds(),
-                    TimeUnit.SECONDS);
+                    this::retryTick, config.retryIntervalSeconds(), config.retryIntervalSeconds(), TimeUnit.SECONDS);
         }
     }
 
@@ -264,7 +261,7 @@ public class ExpandedCloudStoragePlugin implements BlockNodePlugin, BlockNotific
         // Unregister first so no new upload tasks are submitted during drain.
         blockMessaging.unregisterBlockNotificationHandler(this);
         if (scheduler != null) {
-            scheduler.shutdownNow();
+            scheduler.shutdown();
             try {
                 // Wait out an in-progress tick so it doesn't race the final drain below. A tick
                 // never waits on uploads, so it only outlasts this wait if a send hangs; then the
@@ -272,7 +269,7 @@ public class ExpandedCloudStoragePlugin implements BlockNodePlugin, BlockNotific
                 final boolean terminated = scheduler.awaitTermination(config.uploadTimeoutSeconds(), TimeUnit.SECONDS);
                 if (!terminated) {
                     LOGGER.log(
-                            DEBUG,
+                            WARNING,
                             "Scheduled drain/retry tick did not complete within the {0}s timeout.",
                             config.uploadTimeoutSeconds());
                 }
@@ -506,17 +503,28 @@ public class ExpandedCloudStoragePlugin implements BlockNodePlugin, BlockNotific
         }
     }
 
-    /// Scheduled tick (see {@link #start}) that first drains any retry attempts completed since
-    /// the last tick, then scans {@link #retryBuffer} for blocks whose backoff has elapsed and
-    /// submits a {@link RetryUploadTask} for each to {@link #retryCompletionService}.
+    /// Scheduled tick (see {@link #start}) that runs {@link #retryStagedBlocks()}. Catches any
+    /// {@link RuntimeException}, since one escaping would cancel all later retry ticks and every
+    /// buffered block would wait until {@link #stop()} to be reported.
+    ///
+    /// Package-private visibility allows tests to drive a retry tick without waiting on the
+    /// real scheduler interval.
+    void retryTick() {
+        try {
+            retryStagedBlocks();
+        } catch (final RuntimeException e) {
+            LOGGER.log(WARNING, "Failed to run retry tick.", e);
+        }
+    }
+
+    /// First drains any retry attempts completed since the last tick, then scans
+    /// {@link #retryBuffer} for blocks whose backoff has elapsed and submits a
+    /// {@link RetryUploadTask} for each to {@link #retryCompletionService}.
     ///
     /// Retries run independently of {@link #completionService}/{@link #pendingPublish} — that
     /// machinery exists to keep the *live* block stream monotonically increasing; retries are
     /// out-of-band corrections for already-verified blocks and don't need it.
-    ///
-    /// Package-private visibility allows tests to drive a retry tick without waiting on the
-    /// real scheduler interval.
-    void retryStagedBlocks() {
+    private void retryStagedBlocks() {
         if (s3Client == null || retryCompletionService == null) {
             return;
         }

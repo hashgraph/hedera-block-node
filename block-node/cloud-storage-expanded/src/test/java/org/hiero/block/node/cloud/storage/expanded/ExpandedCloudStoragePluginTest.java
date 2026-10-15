@@ -147,10 +147,7 @@ class ExpandedCloudStoragePluginTest
     /// retry state (see `retryFutureBlockNumbers`) instead of racing the drain tick.
     private void runRetryTick() throws InterruptedException {
         try {
-            testThreadPoolManager
-                    .scheduledExecutor()
-                    .submit(plugin::retryStagedBlocks)
-                    .get(5, TimeUnit.SECONDS);
+            testThreadPoolManager.scheduledExecutor().submit(plugin::retryTick).get(5, TimeUnit.SECONDS);
         } catch (final ExecutionException | TimeoutException e) {
             throw new AssertionError("Retry tick did not complete", e);
         }
@@ -1252,5 +1249,134 @@ class ExpandedCloudStoragePluginTest
                 1,
                 blockMessaging.getSentPersistedNotifications().size(),
                 "no further notification should be produced for an already-delivered block");
+    }
+
+    @Test
+    @DisplayName("A block evicted from a full retry buffer is reported as PersistedNotification(succeeded=false)")
+    void evictedBlockReportedAsFailure() throws InterruptedException {
+        final S3UploadClient alwaysFailingClient = new S3UploadClient() {
+            @Override
+            public void uploadFile(
+                    final String objectKey,
+                    final String storageClass,
+                    final Iterator<byte[]> contentIterable,
+                    final String contentType)
+                    throws UploadException {
+                throw new UploadException("Simulated S3 failure", null);
+            }
+
+            @Override
+            public void close() {}
+        };
+        start(
+                new ExpandedCloudStoragePlugin(alwaysFailingClient),
+                new SimpleInMemoryHistoricalBlockFacility(),
+                Map.of(
+                        "cloud.storage.expanded.endpointUrl", "http://fake:9000",
+                        "cloud.storage.expanded.bucketName", "test-bucket",
+                        "cloud.storage.expanded.regionName", "us-east-1",
+                        "cloud.storage.expanded.retryMaxPendingBlocks", "1"));
+
+        plugin.handleVerification(verifiedNotification(10L, testBlock(10L).blockUnparsed()));
+        awaitPendingRetryCount(1);
+        assertTrue(blockMessaging.getSentPersistedNotifications().isEmpty());
+
+        // The buffer holds one block, so staging block 11 evicts block 10.
+        plugin.handleVerification(verifiedNotification(11L, testBlock(11L).blockUnparsed()));
+        awaitNotifications(1);
+
+        final List<PersistedNotification> notifications = blockMessaging.getSentPersistedNotifications();
+        assertEquals(1, notifications.size(), "only the evicted block must be reported");
+        assertEquals(10L, notifications.getFirst().blockNumber());
+        assertFalse(notifications.getFirst().succeeded(), "an evicted block must be reported as failed");
+        assertEquals(
+                1L, getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_RETRY_EXHAUSTED_TOTAL));
+        assertEquals(1L, getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_PENDING_RETRY_BLOCKS));
+    }
+
+    @Test
+    @DisplayName("A RuntimeException from one send does not stop the drain tick from publishing later blocks")
+    void drainTickSurvivesExceptionFromSend() throws InterruptedException {
+        final AtomicInteger sendAttempts = new AtomicInteger();
+        blockMessaging = new TestBlockMessagingFacility() {
+            @Override
+            public void sendBlockPersisted(final PersistedNotification notification) {
+                if (sendAttempts.getAndIncrement() == 0) {
+                    throw new IllegalStateException("Simulated send failure");
+                }
+                super.sendBlockPersisted(notification);
+            }
+        };
+        start(
+                new ExpandedCloudStoragePlugin(new CapturingS3Client()),
+                new SimpleInMemoryHistoricalBlockFacility(),
+                Map.of(
+                        "cloud.storage.expanded.retryEnabled", "false",
+                        "cloud.storage.expanded.endpointUrl", "http://fake:9000",
+                        "cloud.storage.expanded.bucketName", "test-bucket",
+                        "cloud.storage.expanded.regionName", "us-east-1"));
+
+        plugin.handleVerification(verifiedNotification(1L, testBlock(1L).blockUnparsed()));
+        final long deadline = System.currentTimeMillis() + 5_000L;
+        while (sendAttempts.get() == 0 && System.currentTimeMillis() < deadline) {
+            Thread.sleep(10);
+        }
+        assertEquals(1, sendAttempts.get(), "the first send must have been attempted and thrown");
+
+        plugin.handleVerification(verifiedNotification(2L, testBlock(2L).blockUnparsed()));
+        awaitNotifications(1);
+
+        final List<PersistedNotification> notifications = blockMessaging.getSentPersistedNotifications();
+        assertEquals(1, notifications.size(), "a later tick must still publish block 2");
+        assertEquals(2L, notifications.getFirst().blockNumber());
+        assertTrue(notifications.getFirst().succeeded());
+    }
+
+    @Test
+    @DisplayName("stop() returns after uploadTimeoutSeconds even while a tick is stuck in a send")
+    void stopReturnsWhenTickHangs() throws InterruptedException {
+        final CountDownLatch sendEntered = new CountDownLatch(1);
+        final CountDownLatch releaseSend = new CountDownLatch(1);
+        blockMessaging = new TestBlockMessagingFacility() {
+            @Override
+            public void sendBlockPersisted(final PersistedNotification notification) {
+                sendEntered.countDown();
+                try {
+                    releaseSend.await(10, TimeUnit.SECONDS);
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                super.sendBlockPersisted(notification);
+            }
+        };
+        start(
+                new ExpandedCloudStoragePlugin(new CapturingS3Client()),
+                new SimpleInMemoryHistoricalBlockFacility(),
+                Map.of(
+                        "cloud.storage.expanded.retryEnabled", "false",
+                        "cloud.storage.expanded.endpointUrl", "http://fake:9000",
+                        "cloud.storage.expanded.bucketName", "test-bucket",
+                        "cloud.storage.expanded.regionName", "us-east-1",
+                        "cloud.storage.expanded.uploadTimeoutSeconds", "1"));
+
+        try {
+            plugin.handleVerification(verifiedNotification(1L, testBlock(1L).blockUnparsed()));
+            assertTrue(sendEntered.await(5, TimeUnit.SECONDS), "the drain tick must enter the send");
+
+            final long startNanos = System.nanoTime();
+            plugin.stop();
+            final Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            assertTrue(
+                    elapsed.compareTo(Duration.ofSeconds(5)) < 0,
+                    "stop() must give up on the hung tick after uploadTimeoutSeconds, took " + elapsed);
+        } finally {
+            releaseSend.countDown();
+        }
+
+        // Once released, the stuck tick still delivers its notification.
+        awaitNotifications(1);
+        assertEquals(1, blockMessaging.getSentPersistedNotifications().size());
+        assertEquals(
+                1L, blockMessaging.getSentPersistedNotifications().getFirst().blockNumber());
     }
 }
