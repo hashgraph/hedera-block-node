@@ -248,6 +248,10 @@ val copyDockerFolder: TaskProvider<Copy> =
             "Copies the docker folder and the shared Grafana dashboards to the build root directory"
         group = "docker"
 
+        // Copy never removes stale outputs; dashboards left from an older layout would duplicate
+        // UIDs.
+        val stagedDashboardsDir: File = dockerBuildRootDirectory.dir("metrics/dashboards").asFile
+        doFirst { stagedDashboardsDir.deleteRecursively() }
         from(dockerProjectRootDirectory)
         from(sharedDashboardsDirectory) { into("metrics/dashboards/block-node") }
         into(dockerBuildRootDirectory)
