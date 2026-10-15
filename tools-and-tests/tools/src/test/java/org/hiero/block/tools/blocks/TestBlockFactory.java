@@ -173,7 +173,7 @@ public final class TestBlockFactory {
                 .build();
         BlockHeader header = BlockHeader.newBuilder()
                 .number(blockNumber)
-                .hashAlgorithm(com.hedera.hapi.node.base.BlockHashAlgorithm.SHA2_384)
+                .hashAlgorithm(com.hedera.hapi.node.base.BlockHashAlgorithm.SHA2_256)
                 .hapiProtoVersion(HAPI_VERSION)
                 .blockTimestamp(consensusTs)
                 .build();
