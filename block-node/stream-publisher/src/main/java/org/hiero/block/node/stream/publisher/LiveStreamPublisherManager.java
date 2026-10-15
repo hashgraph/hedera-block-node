@@ -960,10 +960,16 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
     /// before it clears the resend entry, so either that clear sees this entry or this check
     /// sees the block stored. No lock is needed.
     ///
+    /// Callers check `blockNumber > lastPersistedBlockNumber` before calling, but
+    /// [#handlePersisted] can persist and acknowledge the block between that check and the add.
+    /// The block is then forgotten by `persistedAheadOfAck` and the add lands below the
+    /// acknowledgement, where it would clamp acks until pruned. `lastPersistedBlockNumber` is
+    /// set before `persistedAheadOfAck` is trimmed, so checking it after the add closes that window.
+    ///
     /// @param blockNumber the block to schedule for resend
-    private void scheduleResend(final long blockNumber) {
+    void scheduleResend(final long blockNumber) {
         blocksToResend.add(blockNumber);
-        if (persistedAheadOfAck.contains(blockNumber)) {
+        if (persistedAheadOfAck.contains(blockNumber) || blockNumber <= lastPersistedBlockNumber.get()) {
             blocksToResend.remove(blockNumber);
         }
     }

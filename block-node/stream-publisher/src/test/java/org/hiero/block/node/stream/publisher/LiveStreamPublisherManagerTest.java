@@ -1523,6 +1523,27 @@ class LiveStreamPublisherManagerTest {
                 assertThat(toTest.endOfBlock(2L)).returns(BlockAction.ACCEPT, ActionForBlock::action);
             }
 
+            /// Callers check the block is above the acknowledged block before scheduling a resend, but a
+            /// persist and acknowledgement of the same block can run between that check and the add. The
+            /// late add must not leave an entry at or below the acknowledged block, as it would clamp
+            /// every later acknowledgement until pruned.
+            @Test
+            @DisplayName("scheduleResend() leaves no entry for a block acknowledged after the caller's check")
+            void testScheduleResendIgnoresAcknowledgedBlock() {
+                assertThat(toTest.getActionForBlock(0L, null, publisherHandlerId))
+                        .isEqualTo(BlockAction.ACCEPT);
+                toTest.handlePersisted(new PersistedNotification(0L, true, 0, BlockSource.PUBLISHER));
+                assertThat(toTest.getActionForBlock(1L, null, publisherHandlerId))
+                        .isEqualTo(BlockAction.ACCEPT);
+                // Block 1 is persisted and acknowledged, so it is no longer tracked as persisted-ahead.
+                toTest.handlePersisted(new PersistedNotification(1L, true, 0, BlockSource.PUBLISHER));
+                assertThat(toTest.getLatestBlockNumber()).isEqualTo(1L);
+                // The racing add from a caller that checked before the persist.
+                toTest.scheduleResend(1L);
+                // No publisher is asked to resend the acknowledged block.
+                assertThat(toTest.endOfBlock(1L)).returns(BlockAction.ACCEPT, ActionForBlock::action);
+            }
+
             /// This test aims to assert that the
             /// [LiveStreamPublisherManager#handleVerification(VerificationNotification)]
             /// does not schedule a resend for a failed verification whose
