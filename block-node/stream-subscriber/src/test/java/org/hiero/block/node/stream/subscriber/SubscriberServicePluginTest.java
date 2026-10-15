@@ -1214,7 +1214,7 @@ class SubscriberServicePluginTest {
                 assertThat(plugin.getOpenSessions())
                         .as("session must still be tracked after closing, otherwise this test proves nothing")
                         .isNotEmpty();
-                pumpReaperUntilEmpty();
+                waitOnEmptyOpenSessions();
 
                 assertThat(plugin.getOpenSessions()).isEmpty();
             }
@@ -1235,13 +1235,13 @@ class SubscriberServicePluginTest {
                 assertThat(plugin.getOpenSessions())
                         .as("session must still be tracked after completing, otherwise this test proves nothing")
                         .isNotEmpty();
-                pumpReaperUntilEmpty();
+                waitOnEmptyOpenSessions();
 
                 assertThat(plugin.getOpenSessions()).isEmpty();
             }
 
             /** Pumps the test scheduled executor until the reaper empties {@code openSessions}, bounded so a regression fails fast instead of hanging. */
-            private void pumpReaperUntilEmpty() {
+            private void waitOnEmptyOpenSessions() {
                 final long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
                 while (!plugin.getOpenSessions().isEmpty() && System.nanoTime() < deadlineNanos) {
                     testThreadPoolManager.scheduledExecutor().executeSerially();
