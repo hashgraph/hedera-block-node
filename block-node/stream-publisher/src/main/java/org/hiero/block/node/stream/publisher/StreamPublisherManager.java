@@ -102,21 +102,13 @@ public interface StreamPublisherManager extends BlockNotificationHandler {
     /// @return The server configuration data.
     ServerConfig serverConfiguration();
 
-    /// Return the block root hash recorded for a previously acknowledged block, or
-    /// [Bytes#EMPTY] when no hash is available (either not acknowledged yet, or
-    /// evicted from the bounded cache). Populated best-effort by the manager when
-    /// it receives a successful verification notification.
+    /// Return the root hash retained for the most recently acknowledged block, or [Bytes#EMPTY]
+    /// when the retained hash is for a different block or no hash is known. Callers pass the block
+    /// number they are about to acknowledge, so a hash is never paired with another block.
     ///
-    /// @param blockNumber the block number to look up
-    /// @return the recorded root hash, or [Bytes#EMPTY] when unknown
-    Bytes getCachedBlockRootHash(final long blockNumber);
-
-    /// Notify the manager that a handler has transitioned between active and passive mode.
-    /// Used to maintain per-mode gauges and other mode-aware bookkeeping.
-    ///
-    /// @param handlerId the id of the handler
-    /// @param passive `true` if the handler is now passive, `false` if active
-    void notifyHandlerModeChange(final long handlerId, final boolean passive);
+    /// @param blockNumber the block number the hash must belong to
+    /// @return the root hash of `blockNumber` if it is the latest acknowledged block, else [Bytes#EMPTY]
+    Bytes getLatestAckedBlockRootHash(final long blockNumber);
 
     /// The action to take within the PublisherHandler for a block.
     enum BlockAction {

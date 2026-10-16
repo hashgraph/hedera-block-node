@@ -3866,155 +3866,120 @@ class LiveStreamPublisherManagerTest {
         }
     }
 
-    /// Tests for the AcknowledgeOnly / passive-handler bookkeeping on the
-    /// [LiveStreamPublisherManager] itself: ack-cache LRU, mode-aware
-    /// `publisher_active_handlers` / `publisher_passive_handlers` gauges, and
-    /// the SPI methods the [PublisherHandler] uses to interact with them.
+    /// Tests for how the [LiveStreamPublisherManager] acknowledges persisted blocks to handlers, including
+    /// the retained root hash of the latest acknowledged block and passive handlers still receiving acks.
     @Nested
-    @DisplayName("AcknowledgeOnly Bookkeeping Tests")
-    class AcknowledgeOnlyBookkeepingTests {
+    @DisplayName("Acknowledgement Root Hash Tests")
+    class AcknowledgementRootHashTests {
         private LiveStreamPublisherManager toTest;
-        private MetricsHolder managerMetrics;
 
         @BeforeEach
         void setup() {
-            managerMetrics = generateManagerMetrics();
-            toTest = new LiveStreamPublisherManager(generateContext(), managerMetrics, List.of());
+            toTest = new LiveStreamPublisherManager(generateContext(), generateManagerMetrics(), List.of());
         }
 
         @Test
-        @DisplayName("getCachedBlockRootHash returns Bytes.EMPTY when nothing is cached")
-        void getCachedReturnsEmptyWhenMissing() {
-            assertThat(toTest.getCachedBlockRootHash(1L)).isEqualTo(Bytes.EMPTY);
+        @DisplayName("No root hash is retained before anything is acknowledged")
+        void noHashBeforeFirstAck() {
+            assertThat(toTest.getLatestAckedBlockRootHash(-1L)).isEqualTo(Bytes.EMPTY);
+            assertThat(toTest.getLatestAckedBlockRootHash(0L)).isEqualTo(Bytes.EMPTY);
         }
 
         @Test
-        @DisplayName("handleVerification(success) caches the verified root hash")
-        void handleVerificationSuccessCachesHash() {
+        @DisplayName("The root hash on a PersistedNotification reaches the Acknowledgement and is retained")
+        void persistedHashReachesAckAndIsRetained() {
+            final TestResponsePipeline<PublishStreamResponse> replies = new TestResponsePipeline<>();
+            toTest.addHandler(replies, generateHandlerMetrics(), null);
             final Bytes hash = Bytes.wrap(new byte[] {9, 8, 7});
-            toTest.handleVerification(new VerificationNotification(
-                    true, null, 10L, hash, new BlockUnparsed(List.of()), BlockSource.PUBLISHER));
 
-            assertThat(toTest.getCachedBlockRootHash(10L)).isEqualTo(hash);
+            toTest.handlePersisted(new PersistedNotification(0L, true, 0, BlockSource.PUBLISHER, hash));
+
+            assertThat(replies.getOnNextCalls()).hasSize(1);
+            assertThat(replies.getOnNextCalls().get(0).acknowledgement().blockNumber())
+                    .isEqualTo(0L);
+            assertThat(replies.getOnNextCalls().get(0).acknowledgement().blockRootHash())
+                    .isEqualTo(hash);
+            assertThat(toTest.getLatestAckedBlockRootHash(0L)).isEqualTo(hash);
         }
 
         @Test
-        @DisplayName("notifyHandlerModeChange updates the active and passive gauges")
-        void modeChangeUpdatesGauges() {
+        @DisplayName("The retained root hash is only returned for the latest acknowledged block")
+        void retainedHashIsForLatestBlockOnly() {
             toTest.addHandler(new TestResponsePipeline<>(), generateHandlerMetrics(), null);
-            final long active0 = managerMetrics.activeHandlerCount().get();
-            assertThat(active0).isEqualTo(1L);
-            assertThat(managerMetrics.passiveHandlerCount().get()).isZero();
+            final Bytes first = Bytes.wrap(new byte[] {1});
+            final Bytes second = Bytes.wrap(new byte[] {2});
 
-            toTest.notifyHandlerModeChange(0L, true);
-            assertThat(managerMetrics.activeHandlerCount().get()).isZero();
-            assertThat(managerMetrics.passiveHandlerCount().get()).isEqualTo(1L);
+            toTest.handlePersisted(new PersistedNotification(0L, true, 0, BlockSource.PUBLISHER, first));
+            toTest.handlePersisted(new PersistedNotification(1L, true, 0, BlockSource.PUBLISHER, second));
 
-            toTest.notifyHandlerModeChange(0L, false);
-            assertThat(managerMetrics.activeHandlerCount().get()).isEqualTo(1L);
-            assertThat(managerMetrics.passiveHandlerCount().get()).isZero();
+            assertThat(toTest.getLatestBlockNumber()).isEqualTo(1L);
+            assertThat(toTest.getLatestAckedBlockRootHash(1L)).isEqualTo(second);
+            assertThat(toTest.getLatestAckedBlockRootHash(0L)).isEqualTo(Bytes.EMPTY);
         }
 
         @Test
-        @DisplayName("removeHandler decrements the mode-aware gauges")
-        void removeHandlerDecrementsGauges() {
-            final long handlerId = toTest.addHandler(new TestResponsePipeline<>(), generateHandlerMetrics(), null)
-                    .getId();
-            toTest.notifyHandlerModeChange(handlerId, true);
-            assertThat(managerMetrics.passiveHandlerCount().get()).isEqualTo(1L);
+        @DisplayName("A notification that does not advance the acknowledgement does not replace the retained hash")
+        void staleNotificationKeepsRetainedHash() {
+            toTest.addHandler(new TestResponsePipeline<>(), generateHandlerMetrics(), null);
+            final Bytes first = Bytes.wrap(new byte[] {1});
+            toTest.handlePersisted(new PersistedNotification(0L, true, 0, BlockSource.PUBLISHER, first));
 
-            toTest.removeHandler(handlerId);
-            assertThat(managerMetrics.activeHandlerCount().get()).isZero();
-            assertThat(managerMetrics.passiveHandlerCount().get()).isZero();
+            toTest.handlePersisted(
+                    new PersistedNotification(0L, true, 0, BlockSource.PUBLISHER, Bytes.wrap(new byte[] {5})));
+
+            assertThat(toTest.getLatestAckedBlockRootHash(0L)).isEqualTo(first);
         }
 
         @Test
-        @DisplayName("notifyHandlerModeChange after removeHandler does not resurrect the handler")
-        void modeChangeAfterRemoveHandlerIsIgnored() {
-            final long handlerId = toTest.addHandler(new TestResponsePipeline<>(), generateHandlerMetrics(), null)
-                    .getId();
-            toTest.removeHandler(handlerId);
+        @DisplayName("A notification without a root hash acknowledges with an empty hash")
+        void notificationWithoutHashAcksWithEmptyHash() {
+            final TestResponsePipeline<PublishStreamResponse> replies = new TestResponsePipeline<>();
+            toTest.addHandler(replies, generateHandlerMetrics(), null);
 
-            toTest.notifyHandlerModeChange(handlerId, true);
-            toTest.notifyHandlerModeChange(handlerId, false);
+            toTest.handlePersisted(new PersistedNotification(0L, true, 0, BlockSource.PUBLISHER));
 
-            assertThat(managerMetrics.activeHandlerCount().get()).isZero();
-            assertThat(managerMetrics.passiveHandlerCount().get()).isZero();
+            assertThat(replies.getOnNextCalls().get(0).acknowledgement().blockRootHash())
+                    .isEqualTo(Bytes.EMPTY);
+            assertThat(toTest.getLatestAckedBlockRootHash(0L)).isEqualTo(Bytes.EMPTY);
         }
 
         @Test
-        @DisplayName("Ack cache evicts oldest entry once ackCacheSize is exceeded")
-        void ackCacheEvictsOldestEntry() {
-            final int cap = 3;
-            final BlockNodeContext boundedContext = generateContext(
-                    new SimpleInMemoryHistoricalBlockFacility(),
-                    new TestThreadPoolManager<>(
-                            new BlockingExecutor(new LinkedBlockingQueue<>()),
-                            new ScheduledBlockingExecutor(new LinkedBlockingQueue<>())),
-                    new TestBlockMessagingFacility(),
-                    TestStreamPublisherManager.createTestConfiguration(
-                            Map.of("producer.ackCacheSize", String.valueOf(cap))));
-            final LiveStreamPublisherManager boundedManager =
-                    new LiveStreamPublisherManager(boundedContext, generateManagerMetrics(), List.of());
+        @DisplayName("An AcknowledgeOnly for an acknowledged block gets the retained hash of the latest block")
+        void acknowledgeOnlyGetsRetainedHash() {
+            final TestResponsePipeline<PublishStreamResponse> replies = new TestResponsePipeline<>();
+            final PublisherHandler handler = toTest.addHandler(replies, generateHandlerMetrics(), null);
+            final Bytes hash = Bytes.wrap(new byte[] {4, 5, 6});
+            toTest.handlePersisted(new PersistedNotification(0L, true, 0, BlockSource.PUBLISHER, hash));
+            final int acksBefore = replies.getOnNextCalls().size();
 
-            for (long i = 1; i <= cap + 1; i++) {
-                boundedManager.handleVerification(new VerificationNotification(
-                        true,
-                        null,
-                        i,
-                        Bytes.wrap(new byte[] {(byte) i}),
-                        new BlockUnparsed(List.of()),
-                        BlockSource.PUBLISHER));
-            }
+            handler.onNext(PublishStreamRequestUnparsed.newBuilder()
+                    .acknowledgeOnly(
+                            AcknowledgeOnly.newBuilder().blockNumber(0L).build())
+                    .build());
 
-            // The oldest (block 1) must have been evicted
-            assertThat(boundedManager.getCachedBlockRootHash(1L)).isEqualTo(Bytes.EMPTY);
-            for (long i = 2; i <= cap + 1; i++) {
-                assertThat(boundedManager.getCachedBlockRootHash(i))
-                        .as("block %d should still be cached", i)
-                        .isEqualTo(Bytes.wrap(new byte[] {(byte) i}));
-            }
-        }
-
-        @Test
-        @DisplayName("Ack cache disabled when ackCacheSize is zero")
-        void ackCacheDisabledWhenSizeZero() {
-            final BlockNodeContext disabledContext = generateContext(
-                    new SimpleInMemoryHistoricalBlockFacility(),
-                    new TestThreadPoolManager<>(
-                            new BlockingExecutor(new LinkedBlockingQueue<>()),
-                            new ScheduledBlockingExecutor(new LinkedBlockingQueue<>())),
-                    new TestBlockMessagingFacility(),
-                    TestStreamPublisherManager.createTestConfiguration(Map.of("producer.ackCacheSize", "0")));
-            final LiveStreamPublisherManager disabledManager =
-                    new LiveStreamPublisherManager(disabledContext, generateManagerMetrics(), List.of());
-
-            disabledManager.handleVerification(new VerificationNotification(
-                    true, null, 42L, Bytes.wrap(new byte[] {7}), new BlockUnparsed(List.of()), BlockSource.PUBLISHER));
-
-            assertThat(disabledManager.getCachedBlockRootHash(42L)).isEqualTo(Bytes.EMPTY);
+            assertThat(replies.getOnNextCalls()).hasSize(acksBefore + 1);
+            final var ack = replies.getOnNextCalls().getLast().acknowledgement();
+            assertThat(ack.blockNumber()).isEqualTo(0L);
+            assertThat(ack.blockRootHash()).isEqualTo(hash);
         }
 
         @Test
         @DisplayName("Passive handler receives Acknowledgement on next handlePersisted broadcast")
         void passiveHandlerStillGetsAcksOnPersistedBroadcast() {
+            final PublisherHandler.MetricsHolder handlerMetrics = generateHandlerMetrics();
             final TestResponsePipeline<PublishStreamResponse> aReplies = new TestResponsePipeline<>();
-            final PublisherHandler handlerA = toTest.addHandler(aReplies, generateHandlerMetrics(), null);
+            final PublisherHandler handlerA = toTest.addHandler(aReplies, handlerMetrics, null);
             final TestResponsePipeline<PublishStreamResponse> bReplies = new TestResponsePipeline<>();
-            toTest.addHandler(bReplies, generateHandlerMetrics(), null);
+            toTest.addHandler(bReplies, handlerMetrics, null);
 
-            // A sends AcknowledgeOnly for a block ahead of the current watermark. This flips A
-            // to PASSIVE on the manager; no immediate ack because N > latest acked.
-            final PublishStreamRequestUnparsed ackOnly = PublishStreamRequestUnparsed.newBuilder()
+            handlerA.onNext(PublishStreamRequestUnparsed.newBuilder()
                     .acknowledgeOnly(
                             AcknowledgeOnly.newBuilder().blockNumber(50L).build())
-                    .build();
-            handlerA.onNext(ackOnly);
+                    .build());
             assertThat(aReplies.getOnNextCalls()).isEmpty();
-            assertThat(managerMetrics.passiveHandlerCount().get()).isEqualTo(1L);
-            assertThat(managerMetrics.activeHandlerCount().get()).isEqualTo(1L);
+            assertThat(handlerMetrics.passiveHandlers().get()).isEqualTo(1L);
+            assertThat(handlerMetrics.activeHandlers().get()).isEqualTo(1L);
 
-            // Simulate B's blocks being persisted. The broadcast must reach handler A too.
             toTest.handlePersisted(new PersistedNotification(0L, true, 0, BlockSource.PUBLISHER));
 
             assertThat(bReplies.getOnNextCalls()).hasSize(1);

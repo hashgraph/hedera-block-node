@@ -7,6 +7,7 @@ import static java.lang.System.Logger.Level.TRACE;
 import static java.lang.System.Logger.Level.WARNING;
 import static org.hiero.block.node.base.ParseHelper.standardParse;
 import static org.hiero.block.node.spi.BlockNodePlugin.UNKNOWN_BLOCK_NUMBER;
+import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_ACTIVE_HANDLERS;
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_BLOCKS_ACK_SENT;
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_BLOCKS_RESEND_SENT;
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_BLOCKS_SKIPS_SENT;
@@ -17,6 +18,7 @@ import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_BLOCK_SEND_RESPONSE_FAILED;
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_DISCONNECTED_OVERSIZE;
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_FLOW_CONTROL_INDIVIDUAL_PAUSES;
+import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_PASSIVE_HANDLERS;
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_RECEIVE_LATENCY_NS;
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_STREAM_ERRORS;
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_STREAM_SETS_DROPPED;
@@ -60,6 +62,7 @@ import org.hiero.block.node.spi.BlockNodePlugin;
 import org.hiero.block.node.stream.publisher.StreamPublisherManager.ActionForBlock;
 import org.hiero.block.node.stream.publisher.StreamPublisherManager.BlockAction;
 import org.hiero.metrics.LongCounter;
+import org.hiero.metrics.ObservableGauge;
 import org.hiero.metrics.core.MetricRegistry;
 
 /// A handler for processing publish stream requests.
@@ -140,22 +143,19 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
     /// block.
     private final AtomicReference<BlockAction> blockAction;
 
-    /// Tracks whether this handler is currently in `ACTIVE` or `PASSIVE` mode.
+    /// Tracks whether this handler is `ACTIVE` or `PASSIVE`, or `CLOSED` once it has shut down.
     /// A handler starts out `ACTIVE`; receiving an
     /// [org.hiero.block.api.PublishStreamRequest.AcknowledgeOnly] flips it to
     /// `PASSIVE`, and receiving any other request flips it back to `ACTIVE`.
-    ///
-    /// A `PASSIVE` handler suppresses `SKIP` / `SKIP_AND_ACK` / `END_DUPLICATE`
-    /// responses the manager returns for stale block numbers, because a passive
-    /// handler is only reporting a high-watermark and does not want to be told to
-    /// skip or to reconnect for a block it is not actually streaming.
+    /// The mode decides which of the active and passive handler gauges counts this handler.
     private final AtomicReference<HandlerMode> handlerMode;
 
     /// Handler-level mode: active = actively streaming block items, passive = only
-    /// reporting progress via AcknowledgeOnly.
+    /// reporting progress via AcknowledgeOnly, closed = no longer counted by any gauge.
     enum HandlerMode {
         ACTIVE,
-        PASSIVE
+        PASSIVE,
+        CLOSED
     }
 
     /// Initialize a new publisher handler.
@@ -186,6 +186,7 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
         maxTotalBlockBytes = publisherManager.serverConfiguration().maxMessageSizeBytes();
         messageBudget = new AtomicLong(configuration.perHandlerMessageBudget());
         handlerMode = new AtomicReference<>(HandlerMode.ACTIVE);
+        metrics.activeHandlers().incrementAndGet();
     }
 
     // A package-private method for accessing correlation ID for tracing support.
@@ -296,12 +297,12 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
     ///
     /// @param blockToAcknowledge the last block number that was
     ///     verified and persisted.
-    public void sendAcknowledgement(final long blockToAcknowledge) {
+    public void sendAcknowledgement(final long blockToAcknowledge, @NonNull final Bytes rootHash) {
         // We only ever need to acknowledge once for a given block number, even
         // if there are several blocks "behind" that acknowledgement.
         // The publishers expect that acknowledgement for block N implicitly
         // acknowledges all blocks up to and including N.
-        if (baseSendBlockAcknowledgement(blockToAcknowledge)) {
+        if (baseSendBlockAcknowledgement(blockToAcknowledge, rootHash)) {
             // if response was sent successfully, we can remove
             // all unacknowledged blocks that are less than or equal to the
             // new last acknowledged block number.
@@ -309,11 +310,10 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
         }
     }
 
-    private boolean baseSendBlockAcknowledgement(final long blockToAcknowledge) {
-        final Bytes rootHash = publisherManager.getCachedBlockRootHash(blockToAcknowledge);
+    private boolean baseSendBlockAcknowledgement(final long blockToAcknowledge, @NonNull final Bytes rootHash) {
         final BlockAcknowledgement ack = BlockAcknowledgement.newBuilder()
                 .blockNumber(blockToAcknowledge)
-                .blockRootHash(rootHash != null ? rootHash : Bytes.EMPTY)
+                .blockRootHash(rootHash)
                 .build();
         final PublishStreamResponse response =
                 PublishStreamResponse.newBuilder().acknowledgement(ack).build();
@@ -441,15 +441,33 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
         return result;
     }
 
-    /// Transition this handler to the given mode and notify the manager if the mode
-    /// actually changed. Called at the entry of every inbound request dispatch so the
-    /// manager's active/passive bookkeeping tracks the most recent request kind.
+    /// Move this handler to the given mode, if it is not already closed, and keep the active and
+    /// passive handler gauges in step. Called at the entry of every inbound request dispatch so the
+    /// gauges follow the most recent request kind.
     ///
-    /// @param newMode the mode to transition to
+    /// @param newMode the mode to transition to, `ACTIVE` or `PASSIVE`
     private void transitionMode(final HandlerMode newMode) {
-        final HandlerMode previous = handlerMode.getAndSet(newMode);
-        if (previous != newMode) {
-            publisherManager.notifyHandlerModeChange(handlerId, newMode == HandlerMode.PASSIVE);
+        final HandlerMode previous =
+                handlerMode.getAndUpdate(current -> current == HandlerMode.CLOSED ? HandlerMode.CLOSED : newMode);
+        if (previous != newMode && previous != HandlerMode.CLOSED) {
+            adjustModeGauge(previous, -1L);
+            adjustModeGauge(newMode, 1L);
+        }
+    }
+
+    /// Stop counting this handler in the active and passive handler gauges. Safe to call more than once.
+    private void closeMode() {
+        final HandlerMode previous = handlerMode.getAndSet(HandlerMode.CLOSED);
+        if (previous != HandlerMode.CLOSED) {
+            adjustModeGauge(previous, -1L);
+        }
+    }
+
+    private void adjustModeGauge(final HandlerMode mode, final long delta) {
+        if (mode == HandlerMode.ACTIVE) {
+            metrics.activeHandlers().addAndGet(delta);
+        } else if (mode == HandlerMode.PASSIVE) {
+            metrics.passiveHandlers().addAndGet(delta);
         }
     }
 
@@ -492,7 +510,7 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
                     handlerId,
                     requestedBlockNumber,
                     latestAcked);
-            baseSendBlockAcknowledgement(latestAcked);
+            baseSendBlockAcknowledgement(latestAcked, publisherManager.getLatestAckedBlockRootHash(latestAcked));
         } else {
             LOGGER.log(
                     DEBUG,
@@ -938,6 +956,7 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
     /// This method is called when we want to orderly shut down the handler.
     /// Any cleanup that is needed should be done here.
     private void shutdown() {
+        closeMode();
         safeRemoveHandler(publisherManager, handlerId);
         safeComplete(replies);
         messageBudget.set(1); // release the onNext thread enough to close
@@ -1125,7 +1144,9 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
         public void handle() {
             if (handler.sendSkipForBlock(skipBlockResponse, currentWhenSkipped)) {
                 // send acknowledgement, but don't clear queues
-                handler.baseSendBlockAcknowledgement(publisherManager.getLatestBlockNumber());
+                final long latestAcked = publisherManager.getLatestBlockNumber();
+                handler.baseSendBlockAcknowledgement(
+                        latestAcked, publisherManager.getLatestAckedBlockRootHash(latestAcked));
             }
         }
     }
@@ -1262,7 +1283,9 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
             LongCounter.Measurement endStreamsReceived,
             LongCounter.Measurement receiveBlockTimeLatencyNs,
             LongCounter.Measurement flowControlIndividualPauses,
-            LongCounter.Measurement disconnectedOversize) {
+            LongCounter.Measurement disconnectedOversize,
+            AtomicLong activeHandlers,
+            AtomicLong passiveHandlers) {
         /// Factory method.
         /// Creates a new instance of [MetricsHolder] using the provided
         /// [MetricRegistry] instance.
@@ -1324,6 +1347,14 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
                                     .setDescription(
                                             "Publishers disconnected because a block exceeded the cumulative per-block byte ceiling"))
                     .getOrCreateNotLabeled();
+            final AtomicLong activeHandlers = new AtomicLong();
+            final AtomicLong passiveHandlers = new AtomicLong();
+            metricRegistry.register(ObservableGauge.builder(METRIC_PUBLISHER_ACTIVE_HANDLERS)
+                    .setDescription("Connected publishers currently in active mode")
+                    .observe(activeHandlers::get));
+            metricRegistry.register(ObservableGauge.builder(METRIC_PUBLISHER_PASSIVE_HANDLERS)
+                    .setDescription("Connected publishers currently in passive mode")
+                    .observe(passiveHandlers::get));
 
             return new MetricsHolder(
                     liveBlockItemsReceived,
@@ -1338,7 +1369,9 @@ public final class PublisherHandler implements Pipeline<PublishStreamRequestUnpa
                     endStreamsReceived,
                     receiveBlockTimeLatencyNs,
                     flowControlIndividualPauses,
-                    disconnectedOversize);
+                    disconnectedOversize,
+                    activeHandlers,
+                    passiveHandlers);
         }
     }
 }

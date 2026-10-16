@@ -8,7 +8,6 @@ import static java.lang.System.Logger.Level.WARNING;
 import static java.util.concurrent.locks.LockSupport.parkNanos;
 import static org.hiero.block.api.PublishStreamResponse.EndOfStream.Code.TIMEOUT;
 import static org.hiero.block.node.spi.BlockNodePlugin.UNKNOWN_BLOCK_NUMBER;
-import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_ACTIVE_HANDLERS;
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_BLOCKS_CLOSED_COMPLETE;
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_BLOCK_BATCHES_MESSAGED;
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_BLOCK_ITEMS_MESSAGED;
@@ -18,7 +17,6 @@ import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_LATEST_BLOCK_NUMBER_ACKNOWLEDGED;
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_LOWEST_BLOCK_NUMBER_INBOUND;
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_OPEN_CONNECTIONS;
-import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_PASSIVE_HANDLERS;
 import static org.hiero.block.node.stream.publisher.StreamPublisherPlugin.METRIC_PUBLISHER_STALL_TIMEOUTS_SENT;
 
 import com.hedera.pbj.runtime.grpc.Pipeline;
@@ -29,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -155,18 +152,9 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
     private final ConcurrentSkipListMap<Long, Long> activeResendBlocks;
     /// Flow state per handler ID; created in addHandler, removed in removeHandler.
     private final ConcurrentSkipListMap<Long, HandlerFlowState> handlerFlowState;
-    /// Mode (ACTIVE / PASSIVE) per handler ID, updated by the handler via
-    /// [#notifyHandlerModeChange(long, boolean)]. Used to maintain the
-    /// `publisher_active_handlers` and `publisher_passive_handlers` gauges.
-    private final ConcurrentSkipListMap<Long, Boolean> handlerPassiveMode;
-    /// Bounded LRU cache of recently acknowledged block root hashes, keyed by block
-    /// number. The size cap comes from [PublisherConfig#ackCacheSize()]. Access is
-    /// synchronized on the map itself because LinkedHashMap's access-order iteration
-    /// requires exclusive access.
-    private final LinkedHashMap<Long, Bytes> ackedBlockRootHashes;
-    /// Cache cap for [#ackedBlockRootHashes]; captured at construction time so the
-    /// hot path does not read config on every write.
-    private final int ackCacheSize;
+    /// The latest acknowledged block together with its root hash, replaced as one value so a
+    /// reader never pairs a hash with a different block number.
+    private final AtomicReference<AckedBlock> latestAckedBlock;
     /// Maps block number to the ID of the handler that currently holds ACCEPT for that block.
     /// An entry is added when a handler wins ACCEPT via registerQueueForBlock().
     /// An entry is removed when endOfBlock() is called for that block, when blockIsEnding()
@@ -208,14 +196,7 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
         activeResendBlocks = new ConcurrentSkipListMap<>();
         activeStreamHandlerByBlock = new ConcurrentSkipListMap<>();
         handlerFlowState = new ConcurrentSkipListMap<>();
-        handlerPassiveMode = new ConcurrentSkipListMap<>();
-        ackCacheSize = publisherConfig.ackCacheSize();
-        ackedBlockRootHashes = new LinkedHashMap<>(Math.max(16, ackCacheSize), 0.75f, true) {
-            @Override
-            protected boolean removeEldestEntry(final Map.Entry<Long, Bytes> eldest) {
-                return size() > ackCacheSize;
-            }
-        };
+        latestAckedBlock = new AtomicReference<>(AckedBlock.NONE);
         initializeBlockNumbers(storedBlocks);
         scheduleFlowControlRefresh();
         resetIsActive.compareAndSet(true, false);
@@ -248,25 +229,12 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
         cancelExistingFuture();
         handlers.put(handlerId, newHandler);
         handlerFlowState.put(handlerId, new HandlerFlowState());
-        handlerPassiveMode.put(handlerId, Boolean.FALSE);
         // Now we can safely update the metrics and send the notification
         // for the new publisher.
         metrics.currentPublisherCount().set(handlers.size());
-        metrics.activeHandlerCount().set(countHandlersByMode(false));
-        metrics.passiveHandlerCount().set(countHandlersByMode(true));
         sendPublisherStatusUpdate(UpdateType.PUBLISHER_CONNECTED, handlers);
         LOGGER.log(DEBUG, "Added new handler {0}", handlerId);
         return newHandler;
-    }
-
-    private long countHandlersByMode(final boolean passive) {
-        long count = 0L;
-        for (final Boolean mode : handlerPassiveMode.values()) {
-            if (mode != null && mode.booleanValue() == passive) {
-                count++;
-            }
-        }
-        return count;
     }
 
     /// Method to wait for a boolean value to be false.
@@ -287,7 +255,6 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
     public void removeHandler(final long handlerId) {
         final PublisherHandler handlerRemoved = handlers.remove(handlerId);
         handlerFlowState.remove(handlerId);
-        handlerPassiveMode.remove(handlerId);
         // If there are no more active publishers, schedule the
         // unavailability timeout task.
         if (handlerRemoved != null && handlers.isEmpty()) {
@@ -295,48 +262,14 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
         }
         // Update metrics and publish the status update
         metrics.currentPublisherCount().set(handlers.size());
-        metrics.activeHandlerCount().set(countHandlersByMode(false));
-        metrics.passiveHandlerCount().set(countHandlersByMode(true));
         sendPublisherStatusUpdate(UpdateType.PUBLISHER_DISCONNECTED, handlers);
         LOGGER.log(DEBUG, "Removed handler {0}", handlerId);
     }
 
     @Override
-    public void notifyHandlerModeChange(final long handlerId, final boolean passive) {
-        // Use replace so a mode-change racing with removeHandler cannot reinsert
-        // a stale entry and leave a ghost handler counted in the gauges.
-        final Boolean previous = handlerPassiveMode.replace(handlerId, passive);
-        if (previous == null || previous.booleanValue() == passive) {
-            return; // handler already removed, or no transition
-        }
-        metrics.activeHandlerCount().set(countHandlersByMode(false));
-        metrics.passiveHandlerCount().set(countHandlersByMode(true));
-    }
-
-    @Override
-    public Bytes getCachedBlockRootHash(final long blockNumber) {
-        if (ackCacheSize <= 0) {
-            return Bytes.EMPTY;
-        }
-        synchronized (ackedBlockRootHashes) {
-            final Bytes cached = ackedBlockRootHashes.get(blockNumber);
-            return cached != null ? cached : Bytes.EMPTY;
-        }
-    }
-
-    /// Insert a verified block root hash into the bounded LRU cache. Called from
-    /// [#handleVerification(VerificationNotification)] on successful verifications.
-    ///
-    /// @param blockNumber the block the hash is for
-    /// @param rootHash the verified root hash; silently ignored when null, empty,
-    ///     or when the cache is disabled
-    private void cacheBlockRootHash(final long blockNumber, final Bytes rootHash) {
-        if (ackCacheSize <= 0 || rootHash == null || rootHash.length() == 0) {
-            return;
-        }
-        synchronized (ackedBlockRootHashes) {
-            ackedBlockRootHashes.put(blockNumber, rootHash);
-        }
+    public Bytes getLatestAckedBlockRootHash(final long blockNumber) {
+        final AckedBlock acked = latestAckedBlock.get();
+        return acked.blockNumber() == blockNumber ? acked.rootHash() : Bytes.EMPTY;
     }
 
     @Override
@@ -523,9 +456,6 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
     public void handleVerification(@NonNull final VerificationNotification notification) {
         final long blockNumber = notification.blockNumber();
         if (notification.success()) {
-            // Record the verified root hash best-effort so that subsequent
-            // BlockAcknowledgement responses can populate `block_root_hash`.
-            cacheBlockRootHash(blockNumber, notification.blockHash());
             return;
         }
         // Only _failed_ verifications beyond this point.
@@ -666,11 +596,16 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
                     // acknowledged isn't greater than previous acknowledgement(s).
                     if (blockToAcknowledge >= 0 && blockToAcknowledge > lastPersistedBlockNumber.get()) {
                         // Update internal manager state before sending acknowledgement
+                        // The hash belongs to the notified block, which is not necessarily the block
+                        // acknowledged when a known gap clamps the acknowledgement.
+                        final Bytes rootHash =
+                                blockToAcknowledge == blockNumber ? notification.blockRootHash() : Bytes.EMPTY;
+                        latestAckedBlock.set(new AckedBlock(blockToAcknowledge, rootHash));
                         lastPersistedBlockNumber.set(blockToAcknowledge);
                         handlers.values().parallelStream().unordered().forEach(handler -> {
                             // _Important_, we only need the last persisted block number
                             // all previous blocks are implicitly acknowledged.
-                            handler.sendAcknowledgement(lastPersistedBlockNumber.get());
+                            handler.sendAcknowledgement(blockToAcknowledge, rootHash);
                         });
                         metrics.latestBlockNumberAcknowledged.set(blockToAcknowledge);
                     }
@@ -1545,6 +1480,14 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
         }
     }
 
+    /// A block number paired with the root hash it was acknowledged with.
+    ///
+    /// @param blockNumber the acknowledged block number
+    /// @param rootHash the root hash of that block, or [Bytes#EMPTY] when unknown
+    private record AckedBlock(long blockNumber, Bytes rootHash) {
+        static final AckedBlock NONE = new AckedBlock(-1L, Bytes.EMPTY);
+    }
+
     /// Metrics for tracking publisher handler activity:
     /// blockItemsMessaged - Number of block items delivered to the messaging service
     /// currentPublisherCount - Number of currently connected publishers
@@ -1562,9 +1505,7 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
             LongCounter.Measurement blocksClosedComplete,
             LongCounter.Measurement stallTimeoutsSent,
             LongCounter.Measurement flowControlAggregatePauses,
-            LongCounter.Measurement flowControlPenaltiesApplied,
-            LongGauge.Measurement activeHandlerCount,
-            LongGauge.Measurement passiveHandlerCount) {
+            LongCounter.Measurement flowControlPenaltiesApplied) {
         /// todo(1420) add documentation
         static MetricsHolder createMetrics(@NonNull final MetricRegistry metricRegistry) {
             final LongCounter.Measurement blockItemsMessaged = metricRegistry
@@ -1609,14 +1550,6 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
                     .register(LongGauge.builder(METRIC_PUBLISHER_LATEST_BLOCK_NUMBER_ACKNOWLEDGED)
                             .setDescription("Latest block number acknowledged"))
                     .getOrCreateNotLabeled();
-            final LongGauge.Measurement activeHandlerCount = metricRegistry
-                    .register(LongGauge.builder(METRIC_PUBLISHER_ACTIVE_HANDLERS)
-                            .setDescription("Connected publishers currently in active mode"))
-                    .getOrCreateNotLabeled();
-            final LongGauge.Measurement passiveHandlerCount = metricRegistry
-                    .register(LongGauge.builder(METRIC_PUBLISHER_PASSIVE_HANDLERS)
-                            .setDescription("Connected publishers currently in passive mode"))
-                    .getOrCreateNotLabeled();
             return new MetricsHolder(
                     blockItemsMessaged,
                     blockBatchesMessaged,
@@ -1627,9 +1560,7 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
                     blocksClosedComplete,
                     stallTimeoutsSent,
                     flowControlAggregatePauses,
-                    flowControlPenaltiesApplied,
-                    activeHandlerCount,
-                    passiveHandlerCount);
+                    flowControlPenaltiesApplied);
         }
     }
 

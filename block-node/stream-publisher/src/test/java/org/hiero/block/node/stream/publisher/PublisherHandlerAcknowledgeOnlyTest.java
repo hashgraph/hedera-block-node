@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 
 /// Tests for the AcknowledgeOnly request-handling behavior of [PublisherHandler].
 ///
-/// Covers mode transitions, immediate acknowledgement for already-persisted block numbers,
+/// Covers the active and passive handler gauges, immediate acknowledgement for already-persisted block numbers,
 /// deferred acknowledgement when the Block-Node is behind, and mid-block cancellation
 /// when a Publisher switches from streaming to AcknowledgeOnly.
 @DisplayName("PublisherHandler AcknowledgeOnly Tests")
@@ -53,27 +53,90 @@ class PublisherHandlerAcknowledgeOnlyTest {
     }
 
     @Nested
-    @DisplayName("Mode transition tests")
-    class ModeTransitionTests {
+    @DisplayName("Mode gauge tests")
+    class ModeGaugeTests {
 
         @Test
-        @DisplayName("Receiving AcknowledgeOnly flips the handler to PASSIVE and notifies the manager")
-        void acknowledgeOnlyFlipsToPassive() {
-            handler.onNext(ackOnlyRequest(5L));
-
-            assertThat(manager.getHandlerPassiveMode(HANDLER_ID)).isTrue();
+        @DisplayName("A new handler is counted as active")
+        void newHandlerIsActive() {
+            assertCounts(1L, 0L);
         }
 
         @Test
-        @DisplayName("Receiving BlockItems after AcknowledgeOnly flips the handler back to ACTIVE")
+        @DisplayName("Receiving AcknowledgeOnly moves the handler from the active to the passive gauge")
+        void acknowledgeOnlyFlipsToPassive() {
+            handler.onNext(ackOnlyRequest(5L));
+
+            assertCounts(0L, 1L);
+        }
+
+        @Test
+        @DisplayName("A repeated AcknowledgeOnly does not change the gauges")
+        void repeatedAcknowledgeOnlyIsStable() {
+            handler.onNext(ackOnlyRequest(5L));
+            handler.onNext(ackOnlyRequest(6L));
+
+            assertCounts(0L, 1L);
+        }
+
+        @Test
+        @DisplayName("Receiving BlockItems after AcknowledgeOnly moves the handler back to the active gauge")
         void blockItemsFlipsBackToActive() {
             handler.onNext(ackOnlyRequest(5L));
-            assertThat(manager.getHandlerPassiveMode(HANDLER_ID)).isTrue();
+            assertCounts(0L, 1L);
 
             manager.setBlockActionForBlock(BlockAction.ACCEPT);
             handler.onNext(blockItemsRequest(0L));
 
-            assertThat(manager.getHandlerPassiveMode(HANDLER_ID)).isFalse();
+            assertCounts(1L, 0L);
+        }
+
+        @Test
+        @DisplayName("Closing an active handler removes it from the active gauge")
+        void closeFromActive() {
+            handler.onComplete();
+
+            assertCounts(0L, 0L);
+        }
+
+        @Test
+        @DisplayName("Closing a passive handler removes it from the passive gauge")
+        void closeFromPassive() {
+            handler.onNext(ackOnlyRequest(5L));
+
+            handler.onComplete();
+
+            assertCounts(0L, 0L);
+        }
+
+        @Test
+        @DisplayName("Closing a handler more than once does not decrement the gauges again")
+        void closeIsExactlyOnce() {
+            final PublisherHandler other = new PublisherHandler(HANDLER_ID + 1, replies, metrics, manager, null);
+            assertCounts(2L, 0L);
+
+            handler.onComplete();
+            handler.onComplete();
+            handler.onError(new RuntimeException("closed twice"));
+
+            assertCounts(1L, 0L);
+            other.onComplete();
+            assertCounts(0L, 0L);
+        }
+
+        @Test
+        @DisplayName("A request received after close does not put the handler back in a gauge")
+        void requestAfterCloseIsNotCounted() {
+            handler.onComplete();
+
+            handler.onNext(ackOnlyRequest(5L));
+
+            assertCounts(0L, 0L);
+        }
+
+        private void assertCounts(final long active, final long passive) {
+            assertThat(metrics.activeHandlers().get()).isEqualTo(active);
+            assertThat(metrics.passiveHandlers().get()).isEqualTo(passive);
         }
     }
 
@@ -116,27 +179,29 @@ class PublisherHandlerAcknowledgeOnlyTest {
             handler.onNext(ackOnlyRequest(8L));
 
             assertThat(replies.getOnNextCalls()).isEmpty();
-            assertThat(manager.getHandlerPassiveMode(HANDLER_ID)).isTrue();
+            assertThat(metrics.passiveHandlers().get()).isEqualTo(1L);
         }
 
         @Test
-        @DisplayName("Immediate acknowledgement populates block_root_hash from the manager cache when present")
-        void ackCarriesCachedRootHash() {
+        @DisplayName("Immediate acknowledgement carries the retained root hash of the latest acked block")
+        void ackCarriesRetainedRootHash() {
             manager.setLatestBlockNumber(10L);
             final Bytes expectedHash = Bytes.wrap(new byte[] {1, 2, 3, 4});
-            manager.setCachedBlockRootHash(10L, expectedHash);
+            manager.setLatestAckedBlockRootHash(10L, expectedHash);
 
-            handler.onNext(ackOnlyRequest(10L));
+            handler.onNext(ackOnlyRequest(5L));
 
             assertThat(replies.getOnNextCalls()).hasSize(1);
             final BlockAcknowledgement ack = replies.getOnNextCalls().get(0).acknowledgement();
+            assertThat(ack.blockNumber()).isEqualTo(10L);
             assertThat(ack.blockRootHash()).isEqualTo(expectedHash);
         }
 
         @Test
-        @DisplayName("Immediate acknowledgement carries empty block_root_hash when cache is empty")
-        void ackCarriesEmptyRootHashOnCacheMiss() {
+        @DisplayName("Immediate acknowledgement carries an empty root hash when none is retained for the latest block")
+        void ackCarriesEmptyRootHashWhenNoneRetained() {
             manager.setLatestBlockNumber(10L);
+            manager.setLatestAckedBlockRootHash(9L, Bytes.wrap(new byte[] {9}));
 
             handler.onNext(ackOnlyRequest(10L));
 
@@ -162,11 +227,11 @@ class PublisherHandlerAcknowledgeOnlyTest {
             handler.onNext(ackOnlyRequest(7L));
 
             assertThat(manager.getBlocksEndedMidBlock()).contains(7L);
-            assertThat(manager.getHandlerPassiveMode(HANDLER_ID)).isTrue();
+            assertThat(metrics.passiveHandlers().get()).isEqualTo(1L);
             // A subsequent BlockItems request with a new header must be accepted as a fresh block
             // (i.e. the handler is no longer mid-block on 7).
             handler.onNext(blockItemsRequest(8L));
-            assertThat(manager.getHandlerPassiveMode(HANDLER_ID)).isFalse();
+            assertThat(metrics.activeHandlers().get()).isEqualTo(1L);
         }
 
         @Test
@@ -175,7 +240,7 @@ class PublisherHandlerAcknowledgeOnlyTest {
             handler.onNext(ackOnlyRequest(5L));
 
             assertThat(manager.getBlocksEndedMidBlock()).isEmpty();
-            assertThat(manager.getHandlerPassiveMode(HANDLER_ID)).isTrue();
+            assertThat(metrics.passiveHandlers().get()).isEqualTo(1L);
         }
     }
 

@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -63,8 +62,8 @@ public class TestStreamPublisherManager implements StreamPublisherManager {
     private final NavigableSet<Long> endOfBlocksReceived = new ConcurrentSkipListSet<>();
     private final NavigableSet<Long> blocksEndedMidBlock = new ConcurrentSkipListSet<>();
     private final ConcurrentMap<Long, Deque<BlockItemSetUnparsed>> queueByBlockMap = new ConcurrentSkipListMap<>();
-    private final ConcurrentMap<Long, Bytes> cachedBlockRootHashes = new ConcurrentHashMap<>();
-    private final ConcurrentMap<Long, Boolean> handlerPassiveMode = new ConcurrentHashMap<>();
+    private volatile long latestAckedBlock = -1L;
+    private volatile Bytes latestAckedBlockRootHash = Bytes.EMPTY;
 
     public TestStreamPublisherManager(
             final TestBlockMessagingFacility testBlockMessagingFacility,
@@ -208,7 +207,7 @@ public class TestStreamPublisherManager implements StreamPublisherManager {
     public void handlePersisted(final PersistedNotification notification) {
         final long newLastPersistedBlock = notification.blockNumber();
         if (newLastPersistedBlock > latestBlockNumber) {
-            publisherHandlers.forEach(h -> h.sendAcknowledgement(newLastPersistedBlock));
+            publisherHandlers.forEach(h -> h.sendAcknowledgement(newLastPersistedBlock, notification.blockRootHash()));
         } else {
             throw new IllegalStateException(
                     PERSISTED_NOTIFICATION_ILLEGAL_STATE_MESSAGE.formatted(latestBlockNumber, newLastPersistedBlock));
@@ -216,25 +215,14 @@ public class TestStreamPublisherManager implements StreamPublisherManager {
     }
 
     @Override
-    public Bytes getCachedBlockRootHash(final long blockNumber) {
-        final Bytes cached = cachedBlockRootHashes.get(blockNumber);
-        return cached != null ? cached : Bytes.EMPTY;
+    public Bytes getLatestAckedBlockRootHash(final long blockNumber) {
+        return blockNumber == latestAckedBlock ? latestAckedBlockRootHash : Bytes.EMPTY;
     }
 
-    @Override
-    public void notifyHandlerModeChange(final long handlerId, final boolean passive) {
-        handlerPassiveMode.put(handlerId, passive);
-    }
-
-    /// Fixture method. Insert a block root hash into the ack cache for the given block.
-    public void setCachedBlockRootHash(final long blockNumber, final Bytes rootHash) {
-        cachedBlockRootHashes.put(blockNumber, Objects.requireNonNull(rootHash));
-    }
-
-    /// Fixture method. Returns the recorded passive-mode flag for the given handler, or null if
-    /// no transition has been observed.
-    public Boolean getHandlerPassiveMode(final long handlerId) {
-        return handlerPassiveMode.get(handlerId);
+    /// Fixture method. Sets the root hash retained for the latest acknowledged block.
+    public void setLatestAckedBlockRootHash(final long blockNumber, final Bytes rootHash) {
+        latestAckedBlock = blockNumber;
+        latestAckedBlockRootHash = Objects.requireNonNull(rootHash);
     }
 
     /// Fixture method to get the number of calls to closeBlock for a handler.

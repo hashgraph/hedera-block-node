@@ -58,7 +58,21 @@ message PublishStreamRequest {
 
         /**
          * A lightweight acknowledgement-only request.
-         * See the `AcknowledgeOnly` message definition for semantics.
+         * <p>
+         * A Publisher that is currently "passive" MAY send an `AcknowledgeOnly`
+         * message in place of streaming the full block items for a block,
+         * requesting that the Block-Node acknowledge that it already holds the
+         * named block.<br/>
+         * The Block-Node SHALL treat a received `AcknowledgeOnly` as a signal
+         * that the Publisher has transitioned to passive for this connection:
+         * it SHALL NOT wait for `block_items`, a `BlockProof`, or
+         * `end_of_block` for the named block from this Publisher.<br/>
+         * The Block-Node SHALL respond with an immediate `Acknowledge` if the
+         * named block is at or before the current latest-acknowledged block.
+         * The Block-Node SHALL NOT emit `SKIP` or `DUPLICATE` responses in
+         * response to an `AcknowledgeOnly` request.<br/>
+         * A Publisher that subsequently sends `block_items` on the same
+         * connection transitions back to active for that connection.
          */
         AcknowledgeOnly acknowledge_only = 4;
     }
@@ -66,20 +80,12 @@ message PublishStreamRequest {
     /**
      * A lightweight acknowledgement-only request from a Publisher.
      *
-     * A Publisher that is currently "passive" MAY send an `AcknowledgeOnly`
-     * message in place of streaming the full block items for a block,
-     * requesting that the Block-Node acknowledge that it already holds the
-     * named block. It converts an active Publisher connection into a
-     * passive one (and keeps a passive connection passive) for the
-     * purposes of the Block-Node's publisher state tracking.<br/>
-     * The Block-Node SHALL treat a received `AcknowledgeOnly` as a signal
-     * that the Publisher has transitioned to passive for this connection:
-     * it SHALL NOT wait for `block_items`, a `BlockProof`, or
-     * `end_of_block` for the named block from this Publisher.<br/>
-     * The Block-Node SHALL NOT emit `SKIP` or `DUPLICATE` responses in
-     * response to an `AcknowledgeOnly` request.<br/>
-     * A Publisher that subsequently sends `block_items` on the same
-     * connection transitions back to active for that connection.
+     * This message is used by a Publisher that wishes to confirm the
+     * Block-Node holds a given block without sending the full block items
+     * for that block. It is the signal that converts an active Publisher
+     * connection into a passive one (and keeps a passive connection
+     * passive) for the purposes of the Block-Node's publisher state
+     * tracking.
      */
     message AcknowledgeOnly {
         /**
