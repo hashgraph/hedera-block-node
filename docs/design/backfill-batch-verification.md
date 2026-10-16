@@ -80,9 +80,13 @@ the same way, with hashing offline and one anchor every N blocks.
 
 ## Current State (facts from the code)
 
-- **No chain-of-hashes check today.** `previousBlockRootHash` is only hashed into the root
-  (`BlockHasher.finalHashingResult` :414-477). Nothing compares it with the previous block's
-  computed root. `lastVerifiedBlock` tracks a block number, not a hash.
+- **No cross-block hash check today, and none is needed per block.** `previousBlockRootHash`
+  is only hashed into the root (`BlockHasher.finalHashingResult` :414-477). Each block carries
+  its own signature over a root that already commits to its predecessor, so per-block
+  verification does not need the previous block. That is why sessions can verify out of order,
+  which is common during backfill. The link check in this design is needed only inside a batch,
+  where all blocks are in hand, because the intermediate blocks have no verified signature of
+  their own.
 - **Block proofs are not covered by the root hash.** `BLOCK_PROOF` items are collected and
   never hashed (`BlockHasher.processItem`).
 - **Backfill is batched only at fetch time.** `BackfillRunner` fetches `fetchBatchSize`
@@ -107,8 +111,8 @@ verification explicitly.
 2. **Verification plugin.** Add a `BatchVerificationSession` with these stages:
    - **Hash.** Hash every block in parallel with the existing `BlockHasher`, giving
      `HashingResult` per block.
-   - **Link.** Check the footers from `s+1` to `e`. Optionally also check `s` against a cached
-     root hash of `s-1` when that block was verified in this process.
+   - **Link.** Check the footers from `s+1` to `e`. Block `s` is not linked to `s-1`: batches
+     are independent, can verify out of order, and do not depend on each other.
    - **Segment.** A link break at `k` splits the batch into `[s .. k-1]` and `[k .. e]`.
      Each segment is anchored on its own last block, so it costs one TSS check per segment.
    - **Anchor.** Run the existing `BlockVerifier` on the last block of each segment. TSS,
@@ -277,6 +281,3 @@ mainnet block size. Re-measure on mainnet captures before setting a target.
 - **Concurrent TSS.** Question 2 in hiero-cryptography#753 (is `verifyTSS` thread-safe on
   3.21.0?) was not answered when the issue closed. If it is safe, dropping the lock scales
   with cores and combines with batching.
-- **Chain continuity hardening (separate small issue).** The node never checks that
-  `previousBlockRootHash` equals the last verified block's hash, even on the live path.
-  The link check from this design can be reused there.
