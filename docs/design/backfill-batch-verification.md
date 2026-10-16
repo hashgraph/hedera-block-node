@@ -186,8 +186,28 @@ at low priority. It would spend the same TSS cost that batching saves.
   span a ledger id or TSS-data change.
 - The publisher (live) path is not affected: one block per about 2 s does not need batching.
 - `allSourcesRequireOrdering=true` (the Tier 1 default) is preserved, because emission is ordered.
-- Memory: a batch holds B parsed blocks until its anchor verifies. This is bounded by
-  `fetchBatchSize` and already by `maxIncomingBufferSize` on fetch.
+- Memory: see [Memory bound](#memory-bound).
+
+### Memory bound
+
+A batch holds all of its blocks in memory until its anchor verifies. A block count alone is
+not a safe bound, because block size varies widely. For example, 100 blocks of 31.6 MB
+(fixture block 322) would hold over 3 GB in memory. A batch is therefore capped by **total
+serialized bytes** as well as by block count:
+
+- **Building batches.** Backfill adds blocks in order to a verification batch until either:
+  - the next block would push the batch over `backfill.maxBatchBytes`, or
+  - the batch reaches `fetchBatchSize` blocks.
+- **Large chunks.** A fetched chunk above the cap is split into several verification batches.
+  Each one is anchored on its own last block, so it costs one TSS check per batch.
+- **Oversized blocks.** A single block larger than the cap becomes a batch of one, verified per
+  block as today.
+- **Total memory.** Each backfill scheduler (historical and live tail) keeps one batch in flight
+  at a time. So batch memory stays at about 2 × `maxBatchBytes`, plus the hashing working set.
+- **Fetch side.** The bound sits next to the existing ones: `maxIncomingBufferSize` (100 MiB)
+  and `maxProtobufMessageSizeBytes` (about 131 MB per message).
+- **Throughput.** With small blocks the byte cap is never hit. With large blocks, hashing time
+  already dominates the one TSS call, so smaller batches cost little.
 
 ## Diagram
 
@@ -244,16 +264,17 @@ mainnet block size. Re-measure on mainnet captures before setting a target.
 
 ## Configuration
 
-|                Property                 |         Default          |                   Notes                   |
-|-----------------------------------------|--------------------------|-------------------------------------------|
-| `verification.batchVerificationEnabled` | `true`                   | Kill switch, falls back to per-block      |
-| `backfill.fetchBatchSize`               | revisit (10 today)       | Directly sets the TSS amortization factor |
-| `backfill.delayBetweenBatches`          | revisit (1,000 ms today) | Currently a throughput cap on its own     |
-| `backfill.batchProcessingTimeout`       | new                      | Replaces per-block awaiting for batches   |
+|                Property                 |         Default          |                       Notes                        |
+|-----------------------------------------|--------------------------|----------------------------------------------------|
+| `verification.batchVerificationEnabled` | `true`                   | Kill switch, falls back to per-block               |
+| `backfill.fetchBatchSize`               | revisit (10 today)       | Directly sets the TSS amortization factor          |
+| `backfill.delayBetweenBatches`          | revisit (1,000 ms today) | Currently a throughput cap on its own              |
+| `backfill.batchProcessingTimeout`       | new                      | Replaces per-block awaiting for batches            |
+| `backfill.maxBatchBytes`                | new, 256 MiB             | Upper bound on the bytes of one verification batch |
 
 ## Metrics
 
-- `verification_batch_total{result}` and `verification_batch_size` (histogram)
+- `verification_batch_total{result}`, `verification_batch_size` and `verification_batch_bytes` (histograms)
 - `verification_batch_link_breaks_total`
 - `verification_tss_lock_wait_time`, which is missing today, and is useful regardless of this change
 - `verification_proof_shape_check_failures_total`
@@ -275,6 +296,8 @@ mainnet block size. Re-measure on mainnet captures before setting a target.
 5. A batch with a link break costs one TSS call per segment.
 6. Per-block fallback behaves exactly like today when `batchVerificationEnabled=false`.
 7. A backfill throughput benchmark shows a gain over the 7.7 blocks/s ceiling on 3.21.0.
+8. No verification batch exceeds `maxBatchBytes`. A chunk above the cap is split into several
+   batches, and a single block larger than the cap is verified per block.
 
 ## Related / Complementary
 
