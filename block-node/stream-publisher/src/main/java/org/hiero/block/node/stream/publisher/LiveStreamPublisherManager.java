@@ -455,11 +455,12 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
     @Override
     public void handleVerification(@NonNull final VerificationNotification notification) {
         final long blockNumber = notification.blockNumber();
-        if (notification.success()) {
-            return;
-        }
-        // Only _failed_ verifications beyond this point.
-        final boolean shouldHandle = notification.source() == BlockSource.PUBLISHER
+        // Critical note: Only handle _failed_ verifications.
+        // If we ever handle successful verifications, we must add conditions
+        // to handle if the block is the first block received after a
+        // restart.
+        final boolean shouldHandle = !notification.success()
+                && notification.source() == BlockSource.PUBLISHER
                 && blockNumber > lastPersistedBlockNumber.get()
                 && blockNumber < nextUnstreamedBlockNumber.get();
         if (shouldHandle) {
