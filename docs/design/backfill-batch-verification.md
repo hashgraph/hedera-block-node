@@ -1,0 +1,201 @@
+# Chain-Anchored Batch Verification for Backfill
+
+Status: draft, tracked by #3859.
+Baseline: `main` at `5c1994fdf`, plus the hedera-cryptography 3.21.0 move in #3853.
+
+## Purpose
+
+Backfill verifies every block with its own TSS check. On hedera-cryptography 3.21.0 one
+`TSS.verifyTSS` call takes about 130 ms (hiero-ledger/hiero-cryptography#753, closed as
+expected for Nova WRAPS). `NativeVerificationLibrary` serializes every call behind one
+process-wide lock, so the most a node can verify is about 7.7 blocks/s. Observed backfill
+runs at 6 to 7 blocks/s. A day of blocks (about 43k) takes about 1.5 h of verification
+alone.
+
+This proposal verifies a contiguous batch of backfilled blocks with **one** signature check
+plus a hash chain check, instead of one signature check per block.
+
+## Goals
+
+1. Use one TSS verification for each contiguous batch of backfilled blocks. Today it is one
+   per block.
+2. Keep the security level at the current per-block verification level. The batch check
+   relies only on SHA-256 collision resistance, which the TSS signature already depends on.
+3. Keep the downstream contract unchanged: one `VerificationNotification` per block, in
+   order, with the same `source` and `blockHash`.
+4. Keep the worst case no slower than today. Any batch failure falls back to per-block cost.
+5. Leave the live publisher path unchanged.
+
+## Why It Is Sound
+
+The block root hash commits to the previous block. In `HashingUtilities.computeFinalBlockHash`,
+leaf 1 of the 16-leaf root tree is `BlockFooter.previousBlockRootHash`.
+
+For a batch `[s .. e]`:
+
+1. Hash every block and compute `R(s) .. R(e)`.
+2. **Link check.** For each `i` in `s+1 .. e`, require `footer(i).previousBlockRootHash == R(i-1)`.
+3. **Anchor check.** Verify the proof of block `e` (TSS, or a state proof) against `R(e)`.
+
+If step 3 passes, the network signed `R(e)`. `R(e)` commits to `footer(e).previousBlockRootHash`,
+and step 2 shows that value equals `R(e-1)`. So `R(e-1)` is the hash the network chained from.
+Applied inductively down to `s`, every block in the batch is authenticated. To forge block `k`,
+an attacker must find a second preimage for `R(k)` under SHA-256.
+
+The anchor must be the **last** block of the batch. The chain points backward, so a verified
+first block says nothing about the blocks after it.
+
+## Current State (facts from the code)
+
+- **No chain-of-hashes check today.** `previousBlockRootHash` is only hashed into the root
+  (`BlockHasher.finalHashingResult` :414-477). Nothing compares it with the previous block's
+  computed root. `lastVerifiedBlock` tracks a block number, not a hash.
+- **Block proofs are not covered by the root hash.** `BLOCK_PROOF` items are collected and
+  never hashed (`BlockHasher.processItem`).
+- **Backfill is batched only at fetch time.** `BackfillRunner` fetches `fetchBatchSize`
+  (default 10, max 1,024) blocks. It then sends one `BackfilledBlockNotification` per block,
+  awaits persistence per block (`perBlockProcessingTimeout` 1,000 ms), and sleeps
+  `delayBetweenBatches` (1,000 ms) before the next chunk.
+- **Hashing runs in parallel, TSS does not.** Each block has its own `CompletableVerificationSession`
+  on a virtual-thread executor. All `verifyTss` calls go through `NativeVerificationLibrary.LOCK`.
+- **`StateProofVerifier`** already does "one signature covers another root". It only proves the
+  current block's own root, inside that block's session.
+
+## Design
+
+### Option A (recommended): explicit batch notification
+
+The batch boundary is chosen by backfill, which already holds the batch, and is passed to
+verification explicitly.
+
+1. **SPI.** Add `BackfilledBatchNotification(long startBlockNumber, List<BlockUnparsed> blocks)`.
+   The blocks must be contiguous. Backfill sends one notification per chunk instead of N.
+   The single-block `BackfilledBlockNotification` stays for block 0, retries, and single-block gaps.
+2. **Verification plugin.** Add a `BatchVerificationSession` with these stages:
+   - **Hash.** Hash every block in parallel with the existing `BlockHasher`, giving
+     `HashingResult` per block.
+   - **Link.** Check the footers from `s+1` to `e`. Optionally also check `s` against a cached
+     root hash of `s-1` when that block was verified in this process.
+   - **Segment.** A link break at `k` splits the batch into `[s .. k-1]` and `[k .. e]`.
+     Each segment is anchored on its own last block, so it costs one TSS check per segment.
+   - **Anchor.** Run the existing `BlockVerifier` on the last block of each segment. TSS,
+     state proof and RSA all work unchanged.
+   - **Emit.** Send one success `VerificationNotification` per block through
+     `ResultOrderingManager`, in order. Downstream sees exactly what it sees today.
+3. **Anchor failure.** Report the anchor block as `BAD_BLOCK_PROOF`. Re-anchor the rest of the
+   segment on block `e-1`, or simply fall back to per-block sessions. The worst case is then
+   today's cost. Blocks above a failed anchor are never reported as verified.
+4. **Backfill.** Await persistence with a batch-scoped deadline, not a per-block timeout:
+   the first block completes only when the whole batch is verified. Raise the effective
+   `fetchBatchSize` (for example 100). Revisit `delayBetweenBatches`, which caps throughput
+   at about B blocks per second on its own, whatever the verify cost.
+
+### Option B: deferred anchoring inside per-block sessions
+
+Keep the per-block notifications. A backfill session whose root hash equals the
+`previousBlockRootHash` of a verified block `N+1` is marked verified. Sessions park until
+an anchor arrives. This needs no SPI change. It does need lookahead state, anchor timeouts
+and interaction with session eviction (`activeSessionsBufferSize`). It is harder to reason
+about, and is not recommended.
+
+### Proofs of intermediate blocks (decision: shape check)
+
+Because proofs are outside the root hash, a batch-verified intermediate block's
+`BLOCK_PROOF` bytes are **not authenticated**. A malicious peer could keep the block contents
+and swap in garbage proofs. The node would then persist and serve blocks whose own proofs
+fail for downstream consumers that verify per block (Mirror Node, other BNs,
+`BlockContentProof`).
+
+**Decision:** every intermediate proof gets a cheap shape check. It must have:
+- the expected oneof;
+- the expected signature length (13,712 B on the current format);
+- a ledger id / VK prefix equal to the anchor's.
+
+A block whose proof fails the shape check fails with `BAD_BLOCK_PROOF`, and the batch splits
+around it.
+
+This catches malformed or substituted proofs from a broken peer. It does not catch a
+well-formed proof with forged signature bytes. That gap is accepted, and documented in
+`docs/design/block-verification.md`.
+
+Considered and rejected for now: a background audit that fully verifies intermediate proofs
+at low priority. It would spend the same TSS cost that batching saves.
+
+### Constraints
+
+- Batches never include block 0, which is already sent alone for TSS bootstrap. A batch must not
+  span a ledger id or TSS-data change.
+- The publisher (live) path is not affected: one block per about 2 s does not need batching.
+- `allSourcesRequireOrdering=true` (the Tier 1 default) is preserved, because emission is ordered.
+- Memory: a batch holds B parsed blocks until its anchor verifies. This is bounded by
+  `fetchBatchSize` and already by `maxIncomingBufferSize` on fetch.
+
+## Diagram
+
+```mermaid
+sequenceDiagram
+    participant BF as Backfill
+    participant BV as Verification
+    participant P as Persistence
+    BF->>BF: fetch blocks s..e from peer
+    BF->>BV: BackfilledBatchNotification(s, [s..e])
+    par hash in parallel
+        BV->>BV: R(s) .. R(e)
+    end
+    BV->>BV: link check footer(i).prev == R(i-1)
+    BV->>BV: TSS verify proof(e) against R(e) (one locked call)
+    loop i = s..e, in order
+        BV->>P: VerificationNotification(i, success, R(i))
+    end
+    P-->>BF: PersistedNotification(i)
+```
+
+## Expected Throughput
+
+The TSS cost per block becomes `130 ms / B`. For example, B = 100 gives 1.3 ms per block,
+so throughput is then bounded by fetch, hashing (`hashing_block_time`), and persistence,
+not by the native lock. **To measure:** per-block hashing time on 3.21.0 mainnet-sized blocks
+before committing to a target number.
+
+## Configuration
+
+|                Property                 |         Default          |                   Notes                   |
+|-----------------------------------------|--------------------------|-------------------------------------------|
+| `verification.batchVerificationEnabled` | `true`                   | Kill switch, falls back to per-block      |
+| `backfill.fetchBatchSize`               | revisit (10 today)       | Directly sets the TSS amortization factor |
+| `backfill.delayBetweenBatches`          | revisit (1,000 ms today) | Currently a throughput cap on its own     |
+| `backfill.batchProcessingTimeout`       | new                      | Replaces per-block awaiting for batches   |
+
+## Metrics
+
+- `verification_batch_total{result}` and `verification_batch_size` (histogram)
+- `verification_batch_link_breaks_total`
+- `verification_tss_lock_wait_time`, which is missing today, and is useful regardless of this change
+- `verification_proof_shape_check_failures_total`
+
+## Exceptions
+
+- Link break: split into segments. This is not a failure by itself.
+- Anchor `BAD_BLOCK_PROOF`: fail only the anchor, then re-anchor or fall back per block.
+- Malformed block inside a batch (parse error, missing footer): fail that block, then split
+  the batch around it.
+
+## Acceptance Tests
+
+1. A valid batch of N blocks makes exactly one `verifyTss` call and sends N in-order success notifications.
+2. Tampered contents in block `k < e` cause a link break at `k+1`. Block `k` is never reported verified.
+3. A tampered anchor signature sends no success for any block in the segment.
+4. A garbage proof on an intermediate block (wrong type, wrong length, or a mismatched prefix)
+   fails the shape check, and that block is not reported verified.
+5. A batch with a link break costs one TSS call per segment.
+6. Per-block fallback behaves exactly like today when `batchVerificationEnabled=false`.
+7. A backfill throughput benchmark shows a gain over the 7.7 blocks/s ceiling on 3.21.0.
+
+## Related / Complementary
+
+- **Concurrent TSS.** Question 2 in hiero-cryptography#753 (is `verifyTSS` thread-safe on
+  3.21.0?) was not answered when the issue closed. If it is safe, dropping the lock scales
+  with cores and combines with batching.
+- **Chain continuity hardening (separate small issue).** The node never checks that
+  `previousBlockRootHash` equals the last verified block's hash, even on the live path.
+  The link check from this design can be reused there.
