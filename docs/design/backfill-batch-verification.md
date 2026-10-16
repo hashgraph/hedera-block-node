@@ -45,6 +45,39 @@ an attacker must find a second preimage for `R(k)` under SHA-256.
 The anchor must be the **last** block of the batch. The chain points backward, so a verified
 first block says nothing about the blocks after it.
 
+## Concerns Raised in Review
+
+**"Trusting blocks based on a later proof makes it too easy to sneak in a flawed block."**
+It does not. Changing any byte of a block inside the batch changes its root hash. Then the next
+block's `previousBlockRootHash` no longer matches, and the block is rejected. Forging a block
+requires a SHA-256 second preimage. Every TSS check already relies on that assumption, since
+TSS signs only a 32-byte hash. The protocol already accepts this trust model for
+`block_state_proof`.
+
+**"…or a proof-free block."**
+Every block must still carry a proof, or it fails `MISSING_MANDATORY_ITEM` as today. Every
+intermediate proof gets a shape check. The remaining gap, a well-formed proof with forged
+signature bytes, is described in
+[Proofs of intermediate blocks](#proofs-of-intermediate-blocks-decision-shape-check).
+
+**"We need to verify every block proof for every block."**
+Per-block proof verification gives no extra assurance about a block's contents beyond the
+chain. Its only additional guarantee is that the stored proof bytes are valid. Recovering that
+guarantee costs the full 130 ms per block that this design removes.
+
+**"Verification is already parallel, one thread per block."**
+Hashing is parallel: each block has its own session on a virtual thread. TSS is not. Every
+`TSS.verifyTSS` call goes through the process-wide lock in `NativeVerificationLibrary`, because
+concurrent calls corrupted native state on 3.13.0. The expensive step runs one call at a time,
+and that sets the ceiling of about 7.7 blocks/s. Parallel TSS depends on the thread-safety
+question in hiero-cryptography#753. If it is safe, it combines with batching.
+
+**"Bulk load from a trusted, signed package is the fastest option."**
+Agreed for raw load speed. It trusts the packager. Batch verification trusts only the network's
+signature and SHA-256, at a comparable verification speed (see
+[Expected Throughput](#expected-throughput)). The two combine: a bulk package can be verified
+the same way, with hashing offline and one anchor every N blocks.
+
 ## Current State (facts from the code)
 
 - **No chain-of-hashes check today.** `previousBlockRootHash` is only hashed into the root
@@ -117,6 +150,28 @@ around it.
 This catches malformed or substituted proofs from a broken peer. It does not catch a
 well-formed proof with forged signature bytes. That gap is accepted, and documented in
 `docs/design/block-verification.md`.
+
+The impact of the gap is bounded:
+- The block's **contents** are still authenticated through the chain. A forged proof cannot
+make any consumer accept bad data.
+- The worst case is that a correct block fails a downstream per-block proof check. That is a
+visible failure, not silent corruption.
+- It requires a malicious peer to serve the batch.
+
+#### How this differs from state proofs
+
+Batch verification and `block_state_proof` share the same trust model: a signature on a later
+root authenticates an earlier block's contents through hashes. They differ in what the node
+stores:
+
+|                      |                                          State proof                                           |                 Batch, intermediate block                 |
+|----------------------|------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
+| Proof in the block   | The state proof itself: Merkle paths up to a later signed root, plus that root's TSS signature | The block's own TSS signature                             |
+| Verified by the node | Fully, by `StateProofVerifier`                                                                 | Shape check only                                          |
+| Stored proof valid   | Yes, always                                                                                    | Yes for honest peers; not guaranteed for a malicious peer |
+
+The gap is therefore specific to batching. A state proof block carries the very proof that
+was checked. A batch-verified intermediate block carries a proof that was not checked.
 
 Considered and rejected for now: a background audit that fully verifies intermediate proofs
 at low priority. It would spend the same TSS cost that batching saves.
