@@ -72,6 +72,14 @@ concurrent calls corrupted native state on 3.13.0. The expensive step runs one c
 and that sets the ceiling of about 7.7 blocks/s. Parallel TSS depends on the thread-safety
 question in hiero-cryptography#753. If it is safe, it combines with batching.
 
+**"Holding a whole batch in memory until the last block verifies is a risk."**
+Holding the whole batch is not new. Backfill already fetches 10 to 20 blocks per request
+(`fetchBatchSize`). It holds all of them until they are verified and persisted:
+`fetchBlocksFromNode` returns the full chunk, and every block is sent to verification back to
+back. What changes is the batch size. With batches of 100, the worst case would be 100 blocks ×
+20 MB, about 2 GB. Each batch is therefore also capped by total bytes, not only by block count
+(see [Memory bound](#memory-bound)).
+
 **"Bulk load from a trusted, signed package is the fastest option."**
 Agreed for raw load speed. It trusts the packager. Batch verification trusts only the network's
 signature and SHA-256, at a comparable verification speed (see
