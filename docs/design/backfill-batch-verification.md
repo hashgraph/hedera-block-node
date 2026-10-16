@@ -153,9 +153,35 @@ sequenceDiagram
 ## Expected Throughput
 
 The TSS cost per block becomes `130 ms / B`. For example, B = 100 gives 1.3 ms per block,
-so throughput is then bounded by fetch, hashing (`hashing_block_time`), and persistence,
-not by the native lock. **To measure:** per-block hashing time on 3.21.0 mainnet-sized blocks
-before committing to a target number.
+so throughput is then bounded by fetch, hashing, and persistence, not by the native lock.
+
+### Measured hashing cost
+
+The real `BlockHasher` was timed on the fixture blocks (Apple M1 Max, 10 cores, JDK 25.0.2).
+Each block was warmed up first, then timed on one thread (median) and on a fixed pool of
+10 threads. Hashing is pure SHA-256 in Java and does not touch the native TSS library.
+
+|          Block          |  Size   | One thread, median |       One thread        |       10 threads        |
+|-------------------------|---------|--------------------|-------------------------|-------------------------|
+| WRAPS block 3 (small)   | 14 KB   | 0.67 ms            | ~1,500 blocks/s         | ~7,700 blocks/s         |
+| WRAPS block 0 (genesis) | 365 KB  | 1.36 ms            | ~735 blocks/s           | ~720 blocks/s (1)       |
+| WRAPS block 322 (large) | 31.6 MB | 37.7 ms            | ~27 blocks/s (840 MB/s) | ~77 blocks/s (2.4 GB/s) |
+
+(1) Block 0 runs the one-off TSS bootstrap path and does not scale. It is always sent alone.
+
+For comparison, one `TSS.verifyTSS` call takes about 130 ms, one call at a time. A 31.6 MB
+block hashes about 3.4 times faster than one signature check, and a small block about 200
+times faster.
+
+Estimated verification cost per batch of B = 100 small blocks:
+- about 13 ms of parallel hashing, plus one 130 ms TSS call;
+- so about 143 ms per batch, or **about 700 blocks/s**;
+- today's ceiling is about 7.7 blocks/s.
+
+At that rate, fetch and persistence limit throughput before verification does.
+
+These are test-network fixtures, not mainnet captures. The MB/s figures scale to any
+mainnet block size. Re-measure on mainnet captures before setting a target.
 
 ## Configuration
 
