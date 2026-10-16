@@ -42,9 +42,11 @@ on:
       - ".github/workflows/e2e-node-operator.yaml"
       - "block-node/app/**"
       - "block-node/app-config/**"
+      - "block-node/facility-app-state/**"
       - "charts/**"
       - "protobuf-sources/**"
       - "tools-and-tests/scripts/e2e-node-operator/**"
+      - "tools-and-tests/scripts/lib/**"
       - "tools-and-tests/scripts/node-operations/**"
       - "tools-and-tests/suites/src/main/java/**/e2e/**"
       - "version.txt"
@@ -258,7 +260,15 @@ jobs:
                 | sed -E 's/.*names:[[:space:]]*"?([^"]*)"?.*/\1/') ;;
             *) echo "::error::unknown plugin-profile '${PROFILE}'"; exit 1 ;;
           esac
+          # The chart's resolve-plugins init container fails the whole install when any listed plugin is not
+          # on Maven. A plugin that is new in this PR (or new since the base release) therefore has to be
+          # dropped from that phase's list before resolution. The snapshot phase gets the PR build of every
+          # profile plugin from inject-pr-plugins.sh, which adds the jar when Maven lacks it and replaces
+          # it when Maven has an older one.
+          source tools-and-tests/scripts/lib/maven-published.sh
           echo "PLUGIN_NAMES=${NAMES}" >> "$GITHUB_OUTPUT"
+          echo "BASE_PLUGIN_NAMES=$(names_for "${NAMES}" "${BASE}")" >> "$GITHUB_OUTPUT"
+          echo "SNAP_PLUGIN_NAMES=$(names_for "${NAMES}" "${SNAP}")" >> "$GITHUB_OUTPUT"
           echo "Plugin profile: ${PROFILE} -> ${NAMES:-<all>}"
         env:
           GH_TOKEN: ${{ github.token }}
@@ -358,7 +368,7 @@ jobs:
 
           # Render CI values for this phase (image tag + plugin profile); volumes use chart defaults.
           sed -e "s/__BN_TAG__/${{ steps.versions.outputs.BASE_VERSION }}/g" \
-              -e "s/__PLUGIN_NAMES__/${{ steps.versions.outputs.PLUGIN_NAMES }}/g" \
+              -e "s/__PLUGIN_NAMES__/${{ steps.versions.outputs.BASE_PLUGIN_NAMES }}/g" \
             tools-and-tests/scripts/e2e-node-operator/solo-ci-values.yaml > /tmp/solo-ci-values-base.yaml
 
           set +e
@@ -449,7 +459,7 @@ jobs:
           # ('spec.initContainers[0].volumeMounts[4].name: Not found: "plugins-storage"') for the
           # entire --timeout window. A non-empty PLUGIN_NAMES keeps the volume around.
           sed -e "s/__BN_TAG__/${{ steps.versions.outputs.SNAP_VERSION }}/g" \
-              -e "s/__PLUGIN_NAMES__/${{ steps.versions.outputs.PLUGIN_NAMES }}/g" \
+              -e "s/__PLUGIN_NAMES__/${{ steps.versions.outputs.SNAP_PLUGIN_NAMES }}/g" \
             tools-and-tests/scripts/e2e-node-operator/solo-ci-values.yaml > /tmp/solo-ci-values-snap.yaml
 
           # Watch loop — same pattern as install. --atomic rolls the release back to the base
@@ -478,7 +488,8 @@ jobs:
           INJECT_PID=""
           if [[ "${{ inputs.build-image }}" != "false" ]]; then
             bash tools-and-tests/scripts/e2e-node-operator/inject-pr-plugins.sh \
-              "${{ steps.versions.outputs.SNAP_VERSION }}" "${CLUSTER_NAME}" "${NAMESPACE}" "${RELEASE}" &
+              "${{ steps.versions.outputs.SNAP_VERSION }}" "${CLUSTER_NAME}" "${NAMESPACE}" "${RELEASE}" \
+              "${{ steps.versions.outputs.PLUGIN_NAMES }}" &
             INJECT_PID=$!
           fi
 
