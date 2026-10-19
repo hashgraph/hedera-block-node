@@ -16,7 +16,8 @@ import org.hiero.metrics.core.MetricRegistry;
 /// See `docs/design/apis/api-throttling.md`'s Metrics section.
 ///
 /// Every call outcome (admitted, or rejected by one of the three checks) is recorded against one
-/// counter, `throttle_calls_total`, labeled by `service`, `method`, `weightClass`, and `outcome` —
+/// counter, `throttle_calls` (exported as `throttle_calls_total`, the exporter appends that suffix
+/// itself), labeled by `service`, `method`, `weightClass`, and `outcome` —
 /// not four separately-named counters, one per outcome. Cardinality is identical either way (the
 /// same `service × method × weightClass × outcome` combinations exist regardless of how they're
 /// split across metric names); one counter means a query for "total calls" or "rejection rate" for
@@ -48,13 +49,12 @@ public final class ThrottleMetrics {
 
     /// @param metricRegistry the registry to register this mechanism's shared metrics with
     public ThrottleMetrics(@NonNull final MetricRegistry metricRegistry) {
-        callsCounter =
-                metricRegistry.register(LongCounter.builder(MetricKey.of("throttle_calls_total", LongCounter.class)
-                                .addCategory(BlockNodePlugin.METRICS_CATEGORY))
-                        .setDescription("Calls to a throttled method, by outcome")
-                        .addDynamicLabelNames(LABEL_SERVICE, LABEL_METHOD, LABEL_WEIGHT_CLASS, LABEL_OUTCOME));
+        callsCounter = metricRegistry.register(LongCounter.builder(
+                        MetricKey.of("throttle_calls", LongCounter.class).addCategory(BlockNodePlugin.METRICS_CATEGORY))
+                .setDescription("Calls to a throttled method, by outcome")
+                .addDynamicLabelNames(LABEL_SERVICE, LABEL_METHOD, LABEL_WEIGHT_CLASS, LABEL_OUTCOME));
         clientStateCountGauge = metricRegistry.register(
-                ObservableGauge.builder(MetricKey.of("throttle_client_state_count", ObservableGauge.class)
+                ObservableGauge.builder(MetricKey.of("throttle_client_state", ObservableGauge.class)
                                 .addCategory(BlockNodePlugin.METRICS_CATEGORY))
                         .setDescription("Number of distinct clients currently tracked by the throttle")
                         .addDynamicLabelNames(LABEL_SERVICE, LABEL_METHOD, LABEL_WEIGHT_CLASS));

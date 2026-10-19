@@ -30,16 +30,20 @@ import java.util.concurrent.atomic.AtomicReference;
 /// This class therefore always calls the delegate's `open()` immediately (cheap: for these call
 /// shapes that only builds a pipeline, it does not run business logic yet) and defers the
 /// admission decision to its own wrapper pipeline's `onNext`, once the real request bytes are in
-/// hand. If rejected there, the delegate's inbound pipeline is given a normal, empty completion
-/// (`onNext` is never called on it, immediately followed by `onComplete`) rather than being left
-/// dangling with no terminal signal at all, so its business logic never runs, but it is still told
-/// the call is over.
+/// hand. If rejected there, `replies.onError` is the only terminal signal sent; the delegate's
+/// inbound pipeline is left without `onNext` or a terminal call of its own. Completing it too
+/// would forward a second terminal signal to the client, since PBJ's `Pipelines`-built delegates
+/// forward their inbound pipeline's `onComplete` straight through to `replies`. A `Pipeline` that
+/// never receives another call after rejection needs no terminal signal of its own.
 ///
 /// Like [ThrottledServiceInterface], every `(method, weight class)` pair named in {@code
 /// perClientSettings} gets its own [SingleWeightThrottle]; a classified call with no matching
-/// entry falls back to that method's `WeightClass.STANDARD` entry, and a method with no entries
-/// at all falls back further still, to the shared [GlobalConcurrencyGate] for whichever weight
-/// class the weigher produced — see [ThrottleSpec#perClientSettings].
+/// entry falls back to that method's `WeightClass.STANDARD` entry — including `STANDARD`'s own
+/// node-wide concurrency gate, not one scoped to the classified weight class — and a method with
+/// no entries at all falls back further still, to the shared [GlobalConcurrencyGate] for whichever
+/// weight class the weigher produced — see [ThrottleSpec#perClientSettings]. This is a deliberate
+/// policy choice (an operator who cares about a heavier weight class's own ceiling must configure
+/// it explicitly) rather than a structural constraint, so it can change if that policy does.
 ///
 /// This class is deliberately the only place (besides [ContentAwareWeigher] implementations,
 /// which only parse request bytes) that references PBJ's `ServiceInterface`/`Pipeline` types —
@@ -226,10 +230,10 @@ public final class WeightedThrottledServiceInterface implements ServiceInterface
                 replies.onError(new GrpcException(GrpcStatus.RESOURCE_EXHAUSTED, result.rejectionReason()));
                 // delegateInbound already exists (open() built it before admission was known, see
                 // the class-level documentation on why that's unavoidable) but will never receive
-                // onNext now — give it a normal, empty completion instead of leaving it dangling
-                // with no terminal signal at all. Valid per Flow.Subscriber: onComplete with zero
-                // onNext calls is a normal empty stream, not an error condition.
-                delegateInbound.onComplete();
+                // onNext now. Do not complete it: PBJ's Pipelines-built delegates forward
+                // onComplete straight through to replies, which would send the client a second
+                // terminal signal after the onError above. Leaving it without any terminal call is
+                // fine, since nothing else will ever call it again.
                 return;
             }
             releasePermit.set(result.releasePermit());
