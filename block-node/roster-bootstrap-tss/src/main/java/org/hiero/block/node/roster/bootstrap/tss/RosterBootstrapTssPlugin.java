@@ -32,8 +32,8 @@ import org.hiero.metrics.core.MetricRegistry;
 /// `ApplicationStateFacility` and to the `ServerStatusServicePlugin`
 ///
 /// The TssData is retrieved by querying the peer BlockNodes listed in the block node sources file
-/// periodically, and handed to the application state facility, which installs it only when it is
-/// valid from the same or a later block than the data the node already holds.
+/// periodically, and handed to the application state facility, which installs it only when it carries a
+/// ledger id and is valid from a later block than the data the node already holds (or the node holds none).
 public class RosterBootstrapTssPlugin implements BlockNodePlugin {
     public static final MetricKey<ObservableGauge> METRIC_TSS_DATA_PEERS =
             MetricKey.of("tss_data_peers", ObservableGauge.class).addCategory(METRICS_CATEGORY);

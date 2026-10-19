@@ -221,11 +221,58 @@ class VerificationDataProviderTest {
             assertThat(provider.currentTssData()).isEqualTo(current);
         }
 
+        /// This test aims to assert that TSS data without a ledger id is ignored, both when no data is held
+        /// and when it is valid from a later block than the held data: TSS data SHALL carry a ledger id, and
+        /// data without one could not verify any TSS block proof.
+        @Test
+        @DisplayName("TSS data without a ledger id is ignored")
+        void tssDataWithoutLedgerIdIsIgnored() {
+            final TssData withoutLedgerId =
+                    TssData.newBuilder().validFromBlock(0L).build();
+            provider.safeUpdateTssData(withoutLedgerId, true);
+            assertThat(provider.hasTssData()).isFalse();
+
+            final TssData current = tssData(1, 10L);
+            provider.safeUpdateTssData(current, false);
+            provider.safeUpdateTssData(TssData.newBuilder().validFromBlock(20L).build(), false);
+
+            assertThat(provider.currentTssData()).isEqualTo(current);
+        }
+
         private static TssData tssData(final int ledgerIdSeed, final long validFromBlock) {
             return TssData.newBuilder()
                     .ledgerId(Bytes.wrap(new byte[] {(byte) ledgerIdSeed, 7, 7, 7}))
                     .validFromBlock(validFromBlock)
                     .build();
+        }
+    }
+
+    /// Tests of the record of TSS library rejections, which lets the verifier report a rejection once per
+    /// TSS data rather than once per block.
+    @Nested
+    @DisplayName("TSS library rejections")
+    class LibraryRejectionTests {
+        /// This test aims to assert that the first rejection under a TSS data is reported as the first one,
+        /// every following rejection under the same data is not, and a rejection under different data is
+        /// reported as the first one again, also when the earlier data comes back.
+        @Test
+        @DisplayName("the first rejection per TSS data is reported once")
+        void firstRejectionPerTssDataIsReportedOnce() {
+            final TssData first = TssData.newBuilder()
+                    .ledgerId(Bytes.wrap(new byte[] {1}))
+                    .validFromBlock(0L)
+                    .build();
+            final TssData second = TssData.newBuilder()
+                    .ledgerId(Bytes.wrap(new byte[] {2}))
+                    .validFromBlock(10L)
+                    .build();
+
+            assertThat(provider.firstLibraryRejectionFor(first)).isTrue();
+            assertThat(provider.firstLibraryRejectionFor(first)).isFalse();
+            assertThat(provider.firstLibraryRejectionFor(first)).isFalse();
+            assertThat(provider.firstLibraryRejectionFor(second)).isTrue();
+            assertThat(provider.firstLibraryRejectionFor(second)).isFalse();
+            assertThat(provider.firstLibraryRejectionFor(first)).isTrue();
         }
     }
 }

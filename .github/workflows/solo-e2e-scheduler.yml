@@ -137,6 +137,7 @@ jobs:
           sparse-checkout: |
             tools-and-tests/scripts/solo-e2e-test/scripts/resolve-versions.sh
             tools-and-tests/scripts/solo-e2e-test/scripts/lib/semver.sh
+            tools-and-tests/scripts/solo-e2e-test/scripts/lib/cn-application-properties.sh
             tools-and-tests/scripts/solo-e2e-test/scripts/wait-for-bn-artifacts.sh
           sparse-checkout-cone-mode: false
 

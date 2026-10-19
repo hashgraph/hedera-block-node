@@ -30,6 +30,9 @@ public final class VerificationDataProvider {
     private static final System.Logger LOGGER = System.getLogger(VerificationDataProvider.class.getName());
     private final BlockNodeContext context;
     private final AtomicReference<TssData> currentTssData;
+    /// The TSS data the TSS library last rejected a verification under with an exception, so that rejection
+    /// is reported once per TSS data rather than once per block.
+    private final AtomicReference<TssData> lastRejectedTssData;
     /// One-entry cache: avoids re-parsing RSA keys for every block in the same address-book era.
     /// Held as an atomic pair so no thread can observe the new book alongside the old key map.
     private final AtomicReference<CachedKeyMap> cachedKeyMap;
@@ -46,6 +49,7 @@ public final class VerificationDataProvider {
     public VerificationDataProvider(final BlockNodeContext context) {
         this.context = Objects.requireNonNull(context);
         this.currentTssData = new AtomicReference<>(null);
+        this.lastRejectedTssData = new AtomicReference<>(null);
         this.cachedKeyMap = new AtomicReference<>(null);
     }
 
@@ -61,6 +65,17 @@ public final class VerificationDataProvider {
     /// @return `true` when [#currentTssData()] would return a non-null value
     public boolean hasTssData() {
         return currentTssData.get() != null;
+    }
+
+    /// Records that the TSS library rejected a verification under the given TSS data with an exception and
+    /// reports whether it is the first such rejection under that data. The verifier reports the first one
+    /// prominently; the same rejection usually repeats for every following block until the data changes.
+    ///
+    /// @param tssData the TSS data the rejected verification used, must not be null
+    /// @return `true` for the first rejection under this TSS data, `false` for the following ones
+    public boolean firstLibraryRejectionFor(final TssData tssData) {
+        Objects.requireNonNull(tssData);
+        return !tssData.equals(lastRejectedTssData.getAndSet(tssData));
     }
 
     /// Returns the RSA public key map for the address book era that covers `blockNumber`,
@@ -109,17 +124,24 @@ public final class VerificationDataProvider {
         }
     }
 
-    /// Update the TSS data if the given data differs from the current data and is
-    /// valid from a later block than the current data. Nothing is installed into
-    /// the TSS library: the ledger id is handed to it on every verification, and the
-    /// roster is kept for information only, so data without a roster is accepted.
+    /// Update the TSS data if the given data carries a ledger id, differs from the
+    /// current data and is valid from a later block than the current data. TSS data
+    /// SHALL carry a ledger id (`node_service.proto`), so data without one is ignored;
+    /// beyond that the ledger id is opaque. Nothing is installed into the TSS library:
+    /// the ledger id is handed to it on every verification, and the roster is kept for
+    /// information only, so data without a roster is accepted.
     ///
     /// @param updatedTssData the new TSS data, must not be null
     /// @param sendUpdateToAppState if `true`, a successful update is also forwarded
     ///     to the application state facility
     private void updateTssData(final TssData updatedTssData, final boolean sendUpdateToAppState) {
         final TssData localCurrentTss = currentTssData.get();
-        if (updatedTssData.equals(localCurrentTss)) {
+        if (updatedTssData.ledgerId().length() == 0) {
+            LOGGER.log(
+                    WARNING,
+                    "Ignoring TSS data valid from block {0}: it carries no ledger id",
+                    updatedTssData.validFromBlock());
+        } else if (updatedTssData.equals(localCurrentTss)) {
             LOGGER.log(DEBUG, "TSS data update carries the current TSS data, nothing to update");
         } else if (localCurrentTss != null && updatedTssData.validFromBlock() <= localCurrentTss.validFromBlock()) {
             LOGGER.log(

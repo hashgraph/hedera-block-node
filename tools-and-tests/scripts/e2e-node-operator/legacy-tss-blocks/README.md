@@ -1,15 +1,16 @@
 # Legacy TSS harness blocks
 
-Blocks 0 to 2 of the test harness chain, signed with the TSS library the Block Node used before 0.46.0
-(hedera-cryptography 3.13.0). The node operator lifecycle workflow (`.github/workflows/e2e-node-operator.yaml`)
-installs the latest released Block Node and pushes these blocks to it before upgrading to the snapshot. A
-release from before 0.46.0 can only verify TSS block proofs of that library, and the snapshot's harness
-(`:block-verification:generateHarnessBlocks`) can no longer sign them, so they are kept here.
+Blocks 0 to 2 of the test harness chain, signed with the TSS library the Block Node used before 0.45.0
+(hedera-cryptography 3.13.0), which the 0.45.0 pre-releases before rc2 (rc1, sha256.*) still carry. The node
+operator lifecycle workflow (`.github/workflows/e2e-node-operator.yaml`) installs the latest released Block Node
+and pushes these blocks to it before upgrading to the snapshot. A base on that library can only verify TSS block
+proofs of that library, and the snapshot's harness (`:block-verification:generateHarnessBlocks`) can no longer
+sign them, so they are kept here.
 
-|   folder    | hash algorithm | used for a base release |
-|-------------|----------------|-------------------------|
-| `sha2-384/` | SHA-384        | before 0.45.0           |
-| `sha2-256/` | SHA-256        | 0.45.x                  |
+|   folder    | hash algorithm |            used for a base release             |
+|-------------|----------------|------------------------------------------------|
+| `sha2-384/` | SHA-384        | before 0.45.0                                  |
+| `sha2-256/` | SHA-256        | 0.45.0 pre-releases before rc2 (rc1, sha256.*) |
 
 Block 0 carries the `LedgerIdPublication` the base release provisions its TSS data from. After the base phase,
 the workflow resets the TSS bootstrap file on the state volume to the snapshot's before the upgrade, as an
@@ -31,5 +32,5 @@ Generated on 2026-10-15 at commit `c8d1bafbb` (hedera-cryptography 3.13.0) with:
 | `sha2-384/1.blk.gz` | 2217         | `44522c5523d35338c41396e64a68905eca0ecef327811c26796783fa653fcce9` |
 | `sha2-384/2.blk.gz` | 2263         | `028597fff4d2f601b5b0f7fa6ebd331df775de9a991c45016309cf4ae543715e` |
 
-Remove this folder, and the `BASE_TSS_ERA` gate in the workflow, once the latest released Block Node is 0.46.0
-or newer.
+Remove this folder, and the `BASE_TSS_ERA` gate in the workflow (including its list of 0.45.0 pre-release names),
+once the latest released Block Node is 0.45.0 or newer.

@@ -77,12 +77,14 @@ WRAPS therefore skip that check, the most expensive part of a verification, whil
 of the signed hash runs on every call. That cache, which the library synchronizes itself, is its
 only mutable state on the verification path.
 
-The gateway runs every call into the library under one process-wide lock, so TSS verifications
-complete one at a time, in the order the verification sessions reach the library. The library does
-not need the serialization; it exists because the plugin's result ordering relies on that
-completion order when a node starts without any verified block (the first session to complete
-establishes where strict ordering begins, see `ResultOrderingManager`). Throughput is therefore one
-TSS verification at a time. Measured on a laptop, a verification costs about 8 ms when its WRAPS
+The gateway runs every call into the library under one process-wide fair lock, so TSS
+verifications run one at a time, in the order their sessions ask for the lock. The library does not
+need the serialization. It narrows a start-up ordering gap of the plugin: on a node without any
+verified block, the first session to complete establishes where strict ordering begins (see
+`ResultOrderingManager`), and verifying one TSS proof at a time makes that the session that reached
+the library first, usually the lowest block. It does not close the gap, since sessions reach the
+library in any order and RSA proofs do not take the lock. Throughput is therefore one TSS
+verification at a time. Measured on a laptop, a verification costs about 8 ms when its WRAPS
 was among the recently verified ones and about 75 ms otherwise (the first block signed under a new
 WRAPS); small CI runners are slower.
 
@@ -127,10 +129,13 @@ through the gateway:
 - The library throws `IllegalArgumentException` (or `IllegalStateException`) because it
   considers the ledger ID or the signature malformed: `BAD_BLOCK_PROOF`, and a WARNING with the
   stack trace,
-  `The TSS library <version> rejected the block signature or the ledger id of the TSS data valid from block <N>`.
-  This usually means the TSS data comes from a network that used an earlier TSS library (see
+  `The TSS library <version> rejected the block signature or the ledger id of the TSS data valid from block <N>`,
+  logged for the first such rejection under that TSS data; the following ones are logged at DEBUG,
+  since the rejection repeats for every block until the data changes. This usually means the TSS
+  data comes from a network that used an earlier TSS library (see
   [Migration across TSS library changes](#migration-across-tss-library-changes)) or the publisher
-  signed with another TSS library.
+  signed with another TSS library. The Block Node cannot tell these two causes apart, so the failure
+  stays `BAD_BLOCK_PROOF`, which ends only the stream that supplied the block.
 
 An `Error` thrown by the library completes the verification session exceptionally and is
 reported as `UNKNOWN_ERROR`, not as a bad block proof.
@@ -162,10 +167,11 @@ reported as `UNKNOWN_ERROR`, not as a bad block proof.
    in `roster.bootstrap.tss.blockNodeSourcesPath` through `serverStatusDetail` and hands each
    answer to the application state facility.
 
-The application state facility installs data valid from the same or a later block than the data
-it holds, persists it and sends a `TssDataNotification`. `VerificationDataProvider` ignores data
-equal to its current data and installs data only when it is valid from a strictly later block (or
-when it holds none). Neither inspects the ledger ID, and neither needs a Roster.
+The application state facility and `VerificationDataProvider` both install data only when it is
+valid from a strictly later block than the data they hold (or when they hold none); the facility
+then persists it and sends a `TssDataNotification`. Both ignore data without a ledger ID, since TSS
+data SHALL carry one (`node_service.proto`). Neither inspects the ledger ID beyond requiring one,
+and neither needs a Roster.
 
 For a node joining an existing network where block 0 is never replayed, place the bootstrap file
 in the application state volume; the `blocks validate` command of the Block Stream tool
@@ -175,10 +181,10 @@ publication.
 ### Migration across TSS library changes
 
 A TSS library change can alter the proof format and the ledger ID of every TSS network. The move
-to hiero-cryptography 3.22.0 (Block Node 0.46.0) is such a change: the Block Node cannot verify
+to hiero-cryptography 3.22.0 (Block Node 0.45.0, with Consensus Node 0.79.0) is such a change: the Block Node cannot verify
 TSS block proofs produced with the earlier library, and earlier Block Nodes cannot verify the new
 ones. A node upgraded across the change still holds the old ledger ID in its bootstrap file, so
-every new TSS block fails with `BAD_BLOCK_PROOF` and the WARNING above. The verifier does not
+every new TSS block fails with `BAD_BLOCK_PROOF`, the first one with the WARNING above. The verifier does not
 filter such data, since the ledger ID is opaque; the operator resets the TSS data instead (delete
 or replace the bootstrap file, or let block 0 of the new stream provision it) and resets the block
 store if it holds TSS blocks from before the change. See
@@ -206,7 +212,7 @@ failures (see [Metrics](../block-node/metrics.md)).
 - The TSS library cannot be loaded at start: WARNING with the stack trace, ERROR, and the node
   shuts down (see [Start-up warm-up](#start-up-warm-up)).
 - `IllegalArgumentException` or `IllegalStateException` from `TSS.verifyTSS`: `BAD_BLOCK_PROOF`
-  and a WARNING with the stack trace.
+  and a WARNING with the stack trace for the first rejection under a TSS data, DEBUG afterwards.
 - An `Error` from the library during verification: `UNKNOWN_ERROR`.
 
 ## Acceptance Tests
@@ -216,7 +222,11 @@ failures (see [Metrics](../block-node/metrics.md)).
   the ledger ID makes verification fail; a truncated ledger ID makes the library throw
   `IllegalArgumentException`; concurrent callers get the same results as sequential ones.
 - `SignerTssVerificationTest` and `VerificationDataProviderTest`: tampered signatures fail, TSS
-  data without a Roster is installed, and the strictly later `valid_from_block` rule holds.
+  data without a Roster is installed, TSS data without a ledger ID is ignored, the strictly later
+  `valid_from_block` rule holds, and a library rejection is reported once per TSS data.
+- `ApplicationStateFacilityPluginTest`: the facility follows the same strictly later rule, does not
+  persist data for a block it already holds data for, and ignores TSS data (or a bootstrap file)
+  without a ledger ID.
 - The test blocks are signed by the deterministic `TssBlockSigner.create()`
   (`tools-and-tests/block-signing`) with a committed genesis WRAPS. Regenerating it needs the full
   library jar, which the build swaps in only for

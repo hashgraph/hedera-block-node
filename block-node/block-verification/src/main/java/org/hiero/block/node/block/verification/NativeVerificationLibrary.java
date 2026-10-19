@@ -26,11 +26,13 @@ import java.util.concurrent.locks.ReentrantLock;
 /// every call. That cache, which the library synchronizes itself, is its only mutable state on the
 /// verification path.
 ///
-/// Every call into the library runs under a single process-wide [ReentrantLock] owned here, so TSS
-/// verifications complete one at a time, in the order the verification sessions reach the library. The
-/// library does not need that serialization, but the plugin's result ordering relies on that completion
-/// order when a node starts without any verified block: the first session to complete establishes where
-/// strict ordering begins.
+/// Every call into the library runs under a single process-wide fair [ReentrantLock] owned here, so TSS
+/// verifications run one at a time, in the order their sessions ask for the lock. The library does not
+/// need that serialization. It narrows a start-up ordering gap of the plugin: on a node without any
+/// verified block, the first session to complete establishes where strict ordering begins, and verifying
+/// one TSS proof at a time makes that the session that reached the library first, usually the lowest
+/// block. It does not close the gap, since sessions reach the library in any order and proofs verified
+/// without the library (RSA) do not take the lock.
 public final class NativeVerificationLibrary {
     /// Logger for the gateway.
     private static final System.Logger LOGGER = System.getLogger(NativeVerificationLibrary.class.getName());
@@ -38,8 +40,8 @@ public final class NativeVerificationLibrary {
     /// Reported when the library module carries no version.
     private static final String UNKNOWN_VERSION = "unknown";
 
-    /// The single lock guarding every call into the TSS library in this module.
-    private static final ReentrantLock LOCK = new ReentrantLock();
+    /// The single fair lock guarding every call into the TSS library in this module.
+    private static final ReentrantLock LOCK = new ReentrantLock(true);
 
     private NativeVerificationLibrary() {
         // no instances - this class only exposes the guarded native calls

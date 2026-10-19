@@ -4,15 +4,16 @@
 # Shared generator for the CN application.properties override file.
 # Sourced by solo-deploy-network.sh (deploy-time) and
 # wrb-distribution/cn-upgrade-tss.sh (upgrade-time) so both paths
-# produce identical properties from a single source of truth.
+# produce identical properties from a single source of truth, and by
+# resolve-versions.sh for the Nova WRAPS decision (cn_is_nova_wraps).
 #
 # Reads:
 #   TSS_ENABLED                "true" enables tss.hintsEnabled/historyEnabled (and, for a CN
 #                              older than the Nova WRAPS library, tss.wrapsEnabled and
 #                              tss.wrapsProvingKeyDownloadEnabled)
 #   WRB_RSA                    "true" appends blockStream.streamWrappedRecordBlocks=true
-#   CN_NOVA_WRAPS              see cn_needs_wraps_proving_key
-#   CN_NOVA_WRAPS_MIN_VERSION  see cn_needs_wraps_proving_key
+#   CN_NOVA_WRAPS              see cn_is_nova_wraps
+#   CN_NOVA_WRAPS_MIN_VERSION  see cn_is_nova_wraps
 #
 # Usage: generate_cn_application_properties <output-file> [<cn-version>]
 #   The optional CN version decides whether the tss.wraps* properties are written
@@ -21,45 +22,52 @@
 # shellcheck source=semver.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/semver.sh"
 
-# The first Consensus Node version on the Nova WRAPS TSS library. Such a node signs every
-# block with the same block proof layout, needs no WRAPS proving key staged, and no
-# longer defines the tss.wrapsEnabled and tss.wrapsProvingKey* properties.
-# TODO(#3689): placeholder until the CN release carrying hiero-consensus-node#27506 is cut.
-CN_NOVA_WRAPS_MIN_VERSION="${CN_NOVA_WRAPS_MIN_VERSION:-0.80.0}"
+# The first Consensus Node release on the Nova WRAPS TSS library (hiero-consensus-node#27506,
+# cherry-picked into CN 0.79.0). Such a node signs every block with the same block proof
+# layout, needs no WRAPS proving key staged, and no longer defines the tss.wrapsEnabled and
+# tss.wrapsProvingKey* properties.
+# TODO(#3689): confirm once CN 0.79.0 is released.
+CN_NOVA_WRAPS_MIN_VERSION="${CN_NOVA_WRAPS_MIN_VERSION:-0.79.0}"
 
-# cn_needs_wraps_proving_key <cn-version>
-# Returns 0 (true) when the Consensus Node predates the Nova WRAPS TSS library, so Solo must
-# stage the WRAPS proving key for it and its application.properties must carry the
-# tss.wrapsEnabled and tss.wrapsProvingKeyDownloadEnabled properties.
-#   CN_NOVA_WRAPS=true   the CN is on the Nova library: no proving key, no tss.wraps* properties
-#   CN_NOVA_WRAPS=false  the CN predates it: proving key and tss.wraps* properties
-#   CN_NOVA_WRAPS unset  decided by comparing <cn-version> with CN_NOVA_WRAPS_MIN_VERSION
-#                        (compare_semver: a pre-release such as 0.80.0-rc.1 or
-#                        0.80.0-SNAPSHOT sorts below 0.80.0)
+# cn_is_nova_wraps <cn-version>
+# Returns 0 (true) when the Consensus Node is on the Nova WRAPS TSS library.
+#   CN_NOVA_WRAPS=true   it is
+#   CN_NOVA_WRAPS=false  it is not
+#   CN_NOVA_WRAPS unset  decided from <cn-version>: a version at or above
+#                        CN_NOVA_WRAPS_MIN_VERSION is, except that a pre-release counts as
+#                        earlier while the minimum is a release. The CN 0.79.0 and 0.80.0
+#                        pre-releases published so far (alpha) are on the earlier library,
+#                        although 0.80.0-alpha.N sorts above 0.79.0. Lowering
+#                        CN_NOVA_WRAPS_MIN_VERSION to a pre-release (for example 0.79.0-rc.3)
+#                        counts the versions from it, pre-releases included.
 # A CN built from a branch reports that branch's version.txt (for example 0.79.0-SNAPSHOT
 # on CN main), which says nothing about the library it carries, so such a build needs
 # CN_NOVA_WRAPS set explicitly. A value that is not a version (empty, or a keyword such
-# as "rc") keeps the older behaviour.
-cn_needs_wraps_proving_key() {
+# as "rc") counts as earlier.
+# Used by cn_needs_wraps_proving_key and by resolve-versions.sh (compatibility tier, CN floor).
+cn_is_nova_wraps() {
   local cn_version="${1:-}"
-  local needs_key
+  local nova
   case "${CN_NOVA_WRAPS:-}" in
     true)
-      needs_key="false"
+      nova="true"
       ;;
     false)
-      needs_key="true"
+      nova="false"
       ;;
     "")
       if [[ ! "${CN_NOVA_WRAPS_MIN_VERSION}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+ ]]; then
-        echo "ERROR: CN_NOVA_WRAPS_MIN_VERSION must be a version such as 0.80.0, got '${CN_NOVA_WRAPS_MIN_VERSION}'" >&2
+        echo "ERROR: CN_NOVA_WRAPS_MIN_VERSION must be a version such as 0.79.0, got '${CN_NOVA_WRAPS_MIN_VERSION}'" >&2
         exit 1
       fi
-      if [[ "${cn_version}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+ ]] \
-          && [[ "$(compare_semver "${cn_version}" "${CN_NOVA_WRAPS_MIN_VERSION}")" != "-1" ]]; then
-        needs_key="false"
+      if [[ ! "${cn_version}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+        nova="false"
+      elif [[ "$(compare_semver "${cn_version}" "${CN_NOVA_WRAPS_MIN_VERSION}")" == "-1" ]]; then
+        nova="false"
+      elif [[ "${cn_version}" == *-* && "${CN_NOVA_WRAPS_MIN_VERSION}" != *-* ]]; then
+        nova="false"
       else
-        needs_key="true"
+        nova="true"
       fi
       ;;
     *)
@@ -67,7 +75,20 @@ cn_needs_wraps_proving_key() {
       exit 1
       ;;
   esac
-  [[ "${needs_key}" == "true" ]]
+  [[ "${nova}" == "true" ]]
+}
+
+# cn_needs_wraps_proving_key <cn-version>
+# Returns 0 (true) when the Consensus Node predates the Nova WRAPS TSS library (see
+# cn_is_nova_wraps), so Solo must stage the WRAPS proving key for it and its
+# application.properties must carry the tss.wrapsEnabled and tss.wrapsProvingKeyDownloadEnabled
+# properties.
+cn_needs_wraps_proving_key() {
+  if cn_is_nova_wraps "${1:-}"; then
+    return 1
+  else
+    return 0
+  fi
 }
 
 generate_cn_application_properties() {

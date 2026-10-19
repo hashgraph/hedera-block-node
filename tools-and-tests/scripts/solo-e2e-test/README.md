@@ -306,22 +306,24 @@ longer has to match a published build; Solo explicitly tolerates the mismatch fo
 
 ### Consensus Nodes on the Nova WRAPS TSS library
 
-Consensus Nodes that adopt the Nova WRAPS TSS library (hiero-consensus-node#27506, expected in CN
-0.80.0) sign every block, block 0 included, with a single block proof layout, need no WRAPS
+Consensus Nodes that adopt the Nova WRAPS TSS library (hiero-consensus-node#27506, cherry-picked
+into CN 0.79.0) sign every block, block 0 included, with a single block proof layout, need no WRAPS
 proving key, and no longer define the `tss.wrapsEnabled` and `tss.wrapsProvingKey*` properties.
 WRAPS proving key staging (the ~2 GB `wraps-v1.0.0` tarball handed to Solo with
 `--wraps true --wraps-key-path`, which reaches the CN as `TSS_LIB_WRAPS_ARTIFACTS_PATH` and
 `data/keys/wraps.tar.gz`) and those properties therefore apply only to CNs older than that
-library. The deploy and CN upgrade scripts decide per CN with `cn_needs_wraps_proving_key` in
-`scripts/lib/cn-application-properties.sh`:
+library. The deploy and CN upgrade scripts decide per CN with `cn_needs_wraps_proving_key`, which
+asks `cn_is_nova_wraps` in `scripts/lib/cn-application-properties.sh`:
 
 - `CN_NOVA_WRAPS=true`: the CN is on the Nova WRAPS library; no proving key is staged and no
   `tss.wraps*` property is written.
 - `CN_NOVA_WRAPS=false`: the CN predates it; proving key and properties as before.
-- unset (the default): decided by comparing the CN version with `CN_NOVA_WRAPS_MIN_VERSION`
-  (default `0.80.0`, a placeholder until the CN release carrying the library is cut). A
-  pre-release sorts below its release, so `0.80.0-rc.1` counts as older unless
-  `CN_NOVA_WRAPS_MIN_VERSION` is lowered to it.
+- unset (the default): a CN release from `CN_NOVA_WRAPS_MIN_VERSION` (default `0.79.0`,
+  tentative until CN 0.79.0 is released) is on the Nova WRAPS library. Every pre-release counts as
+  older: the CN 0.79.0 and 0.80.0 pre-releases published so far (alpha) are on the earlier library,
+  although `0.80.0-alpha.3` sorts above `0.79.0`. Lowering `CN_NOVA_WRAPS_MIN_VERSION` to a
+  pre-release (for example `0.79.0-rc.3`) counts the versions from it, pre-releases included; or
+  set `CN_NOVA_WRAPS=true` for one run.
 
 A CN built from source reports its branch's `version.txt` (CN `main` still reads
 `0.79.0-SNAPSHOT`), which says nothing about the library it carries, so set `CN_NOVA_WRAPS` for a
@@ -332,9 +334,12 @@ Nova WRAPS library removed the proving key properties from the CN's `TssConfig`)
 pull request branch.
 
 The `tss-block-proofs` test reads the era from the block proofs and needs no setting.
-`resolve-versions.sh` pairs the eras: a CN from 0.80.0 needs a Block Node from 0.46.0 and a
-Mirror Node from 0.166.0, and a Block Node from 0.46.0 raises the CN to 0.80.0 (all placeholders
-until those releases exist).
+`resolve-versions.sh` pairs the eras with the same `cn_is_nova_wraps` rule: a Nova WRAPS CN (a
+release from 0.79.0) needs a Block Node from 0.45.0 and a Mirror Node from 0.166.0, and a Block
+Node release from 0.45.0 raises the CN to 0.79.0 (tentative until those releases exist). A Block
+Node pre-release such as `0.45.0-rc2` sorts below `0.45.0` and does not raise the CN. The resolver
+decides from the CN version only; the `consensus-node-nova-wraps` input reaches the deploy steps,
+not the resolver.
 
 ### Command-Line Overrides
 

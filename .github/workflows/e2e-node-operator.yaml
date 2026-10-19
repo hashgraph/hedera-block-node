@@ -235,12 +235,14 @@ jobs:
           # that verifies SHA-384 blocks only, so the install phase pushes a chain hashed with SHA-384
           # to it; the post-upgrade and post-reset phases push the SHA-256 chain the snapshot verifies.
           # The version is parsed strictly: inside (( )) a non numeric value such as v1 is read as an
-          # unset variable, which is 0, and would silently select the wrong algorithm.
-          if [[ "${BASE}" =~ ^([0-9]+)\.([0-9]+)\.[0-9]+ ]]; then
+          # unset variable, which is 0, and would silently select the wrong algorithm or TSS library.
+          if [[ "${BASE}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-([0-9A-Za-z.-]+))?$ ]]; then
             BASE_MAJOR="${BASH_REMATCH[1]}"
             BASE_MINOR="${BASH_REMATCH[2]}"
+            BASE_PATCH="${BASH_REMATCH[3]}"
+            BASE_PRE_RELEASE="${BASH_REMATCH[5]}"
           else
-            echo "::error::base version '${BASE}' is not a MAJOR.MINOR.PATCH version"
+            echo "::error::base version '${BASE}' is not a MAJOR.MINOR.PATCH[-PRE_RELEASE] version"
             exit 1
           fi
           if (( BASE_MAJOR == 0 && BASE_MINOR < 45 )); then
@@ -251,13 +253,28 @@ jobs:
           echo "BASE_HASH_ALGORITHM=${BASE_HASH_ALGORITHM}" >> "$GITHUB_OUTPUT"
           echo "Base ${BASE} verifies ${BASE_HASH_ALGORITHM} blocks"
 
-          # The TSS library moved to hedera-cryptography 3.22.0 in 0.46.0 (#3689), which changes the TSS
-          # block proofs and the ledger id. A base release from before that verifies only the earlier
-          # proofs, which the snapshot's harness can no longer sign, so the install phase pushes a
-          # committed legacy chain (tools-and-tests/scripts/e2e-node-operator/legacy-tss-blocks) and the
-          # TSS bootstrap file is reset to the snapshot's before the upgrade.
-          if (( BASE_MAJOR == 0 && BASE_MINOR < 46 )); then
+          # The TSS library moved to hedera-cryptography 3.22.0 in 0.45.0 (#3689), from 0.45.0-rc2 on,
+          # which changes the TSS block proofs and the ledger id. Releases before 0.45.0 and the 0.45.0
+          # pre-releases before rc2 (rc1, alpha, sha256) verify only the earlier proofs, which the
+          # snapshot's harness can no longer sign, so the install phase pushes a committed legacy chain
+          # (tools-and-tests/scripts/e2e-node-operator/legacy-tss-blocks) and the TSS bootstrap file is
+          # reset to the snapshot's before the upgrade. The 0.45.0 pre-releases are matched by name,
+          # since version precedence orders sha256.N after rc2; the tssupdate build carries 3.21.0,
+          # which is wire compatible with 3.22.0. A pre-release name not listed here stops the run
+          # instead of guessing which library the base carries.
+          if (( BASE_MAJOR == 0 && BASE_MINOR < 45 )); then
             BASE_TSS_ERA="legacy"
+          elif (( BASE_MAJOR == 0 && BASE_MINOR == 45 && BASE_PATCH == 0 )) && [[ -n "${BASE_PRE_RELEASE}" ]]; then
+            if [[ "${BASE_PRE_RELEASE}" =~ ^rc([0-9]+)$ ]] && (( 10#${BASH_REMATCH[1]} >= 2 )); then
+              BASE_TSS_ERA="current"
+            elif [[ "${BASE_PRE_RELEASE}" == "tssupdate" ]]; then
+              BASE_TSS_ERA="current"
+            elif [[ "${BASE_PRE_RELEASE}" =~ ^(rc1|alpha[0-9]+|sha256\.[0-9]+)$ ]]; then
+              BASE_TSS_ERA="legacy"
+            else
+              echo "::error::the TSS library of base ${BASE} is not known to the TSS era gate; add its pre-release name there"
+              exit 1
+            fi
           else
             BASE_TSS_ERA="current"
           fi

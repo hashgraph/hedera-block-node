@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.hiero.block.node.block.verification.verifier;
 
+import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.WARNING;
 
 import com.hedera.pbj.runtime.io.buffer.Bytes;
@@ -52,7 +53,11 @@ public final class TSSVerifier implements ProofVerifier {
     /// `IllegalArgumentException`. That is reported as a bad block proof and logged
     /// with the library's reason, since it usually means the TSS data comes from a
     /// network that used an earlier TSS library (see the reset procedure in the
-    /// Block Node docs) or the publisher sent a signature of another format.
+    /// Block Node docs) or the publisher sent a signature of another format. The
+    /// library cannot tell the two apart for the Block Node, so the failure stays a
+    /// bad block proof, which only ends the stream that supplied the block. The
+    /// rejection is logged at WARNING the first time under a given TSS data and at
+    /// DEBUG for the following blocks, since it repeats until the data changes.
     ///
     /// The success or failure TSS series of the proof verification metrics is
     /// incremented accordingly before returning.
@@ -81,12 +86,12 @@ public final class TSSVerifier implements ProofVerifier {
     /// Calls the TSS library. A malformed input is reported by the library as an
     /// exception rather than a `false` result; it is logged with the library's
     /// reason and reported as a bad block proof like any other signature that does
-    /// not verify.
+    /// not verify. Every path assigns the result exactly once.
     ///
     /// @param tssData the current TSS data providing the ledger id
     /// @return `null` if the signature verifies, [SessionFailureType#BAD_BLOCK_PROOF] otherwise
     private SessionFailureType verifyWithLibrary(final TssData tssData) {
-        SessionFailureType result = SessionFailureType.BAD_BLOCK_PROOF;
+        SessionFailureType result;
         try {
             final boolean verified = NativeVerificationLibrary.verifyTss(
                     tssData.ledgerId().toByteArray(), signature.toByteArray(), hashToVerify.toByteArray());
@@ -96,12 +101,30 @@ public final class TSSVerifier implements ProofVerifier {
                 result = SessionFailureType.BAD_BLOCK_PROOF;
             }
         } catch (final IllegalArgumentException | IllegalStateException e) {
+            logLibraryRejection(tssData, e);
+            result = SessionFailureType.BAD_BLOCK_PROOF;
+        }
+        return result;
+    }
+
+    /// Logs a rejection by the TSS library, at WARNING the first time under the given TSS data and at DEBUG
+    /// for the following blocks.
+    ///
+    /// @param tssData the TSS data the rejected verification used
+    /// @param e the exception the library rejected the input with
+    private void logLibraryRejection(final TssData tssData, final RuntimeException e) {
+        if (verificationDataProvider.firstLibraryRejectionFor(tssData)) {
             LOGGER.log(
                     WARNING,
                     "The TSS library %s rejected the block signature or the ledger id of the TSS data valid from block %d"
                             .formatted(NativeVerificationLibrary.libraryVersion(), tssData.validFromBlock()),
                     e);
+        } else if (LOGGER.isLoggable(DEBUG)) {
+            LOGGER.log(
+                    DEBUG,
+                    "The TSS library %s rejected the block signature or the ledger id of the TSS data valid from block %d"
+                            .formatted(NativeVerificationLibrary.libraryVersion(), tssData.validFromBlock()),
+                    e);
         }
-        return result;
     }
 }
