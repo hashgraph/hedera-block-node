@@ -658,18 +658,19 @@ public class BlockNodeThrottleTests {
         // proves the *metrics* wiring independently records the same thing, via a different code path
         // that could silently regress without any other test noticing.
         //
-        // throttle_calls_total is one counter labeled by service/method/weightClass/outcome (see
-        // ThrottleMetrics), not a separate metric per outcome — match on the outcome label rather
-        // than a per-outcome metric name. Labels are rendered alphabetically by name (method, outcome,
-        // service, weightClass), so match each label via a lookahead instead of assuming an order.
+        // throttle_calls (exported as throttle_calls_total, the exporter appends that suffix itself)
+        // is one counter labeled by service/method/weightClass/outcome (see ThrottleMetrics), not a
+        // separate metric per outcome — match on the outcome label rather than a per-outcome metric
+        // name. Labels are rendered alphabetically by name (method, outcome, service, weightClass),
+        // so match each label via a lookahead instead of assuming an order.
         final String metrics = scrapeMetrics();
         assertThat(metrics)
                 .as("expected an admitted-calls counter for BlockNodeService with a nonzero value")
                 .containsPattern(
-                        "throttle_calls_total_total\\{(?=[^}]*service=\"BlockNodeService\")(?=[^}]*outcome=\"admitted\")[^}]*}\\s+[1-9]\\d*");
+                        "throttle_calls_total\\{(?=[^}]*service=\"BlockNodeService\")(?=[^}]*outcome=\"admitted\")[^}]*}\\s+[1-9]\\d*");
         assertThat(metrics)
                 .as("expected a rejected-by-rate counter for BlockNodeService with a nonzero value")
                 .containsPattern(
-                        "throttle_calls_total_total\\{(?=[^}]*service=\"BlockNodeService\")(?=[^}]*outcome=\"rejected_rate\")[^}]*}\\s+[1-9]\\d*");
+                        "throttle_calls_total\\{(?=[^}]*service=\"BlockNodeService\")(?=[^}]*outcome=\"rejected_rate\")[^}]*}\\s+[1-9]\\d*");
     }
 }

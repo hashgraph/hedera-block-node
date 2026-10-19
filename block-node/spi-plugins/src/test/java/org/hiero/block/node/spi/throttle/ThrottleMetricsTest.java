@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 /// Verifies that [ThrottleMetrics] binds its shared, once-registered metrics to distinct
 /// `(service, method, weightClass, outcome)` combinations via labels on one counter
-/// (`throttle_calls_total`), instead of a separately-named counter per outcome, and that the
+/// (`throttle_calls`), instead of a separately-named counter per outcome, and that the
 /// client-state-count gauge keeps its own narrower label set. See
 /// `docs/design/apis/api-throttling.md`'s Metrics section and PR #3637's review thread 2.
 class ThrottleMetricsTest {

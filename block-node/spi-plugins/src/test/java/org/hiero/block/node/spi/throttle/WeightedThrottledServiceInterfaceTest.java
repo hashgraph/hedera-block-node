@@ -81,9 +81,9 @@ class WeightedThrottledServiceInterfaceTest {
     }
 
     @Test
-    @DisplayName("A rejected request still completes the delegate's inbound pipeline, instead of leaving it "
-            + "dangling with no terminal signal")
-    void rejectedRequestCompletesDelegateInboundPipeline() {
+    @DisplayName("A rejected request never completes the delegate's inbound pipeline, to avoid a second terminal "
+            + "signal reaching the client")
+    void rejectedRequestNeverCompletesDelegateInboundPipeline() {
         // maxConcurrentPerClient=0 for STANDARD means every standard call is rejected.
         final WeightedThrottledServiceInterface throttled =
                 throttledWith(new Tier(100, 10, 0, 5), new Tier(100, 10, 5, 5));
@@ -93,10 +93,11 @@ class WeightedThrottledServiceInterfaceTest {
         inbound.onNext(STANDARD_REQUEST);
 
         assertEquals(
-                1,
+                0,
                 recordingService.inboundCompletions,
-                "the delegate's own open()-built pipeline already exists by rejection time — it must be told the "
-                        + "call is over, not left with no terminal signal at all");
+                "completing the delegate's own open()-built pipeline after replies.onError() would forward a "
+                        + "second terminal signal to the client, since PBJ's Pipelines-built delegates forward "
+                        + "onComplete straight through to replies");
     }
 
     @Test
@@ -233,8 +234,8 @@ class WeightedThrottledServiceInterfaceTest {
     /// captures the outgoing pipeline it was given — but does *not* auto-complete the call, so
     /// tests can hold a call "in flight" to exercise concurrency-ceiling rejection, and complete it
     /// explicitly (via [#lastCapturedReplies]) when they need to free the permit. Also records
-    /// whether its inbound pipeline was ever completed, to verify a rejected call still signals a
-    /// terminal to the delegate rather than leaving its inbound pipeline dangling forever.
+    /// whether its inbound pipeline was ever completed, to verify a rejected call leaves it
+    /// without any terminal signal rather than forwarding a second one to the client.
     private static final class RecordingWeightedService implements ServiceInterface {
         private int businessLogicInvocations;
         private int inboundCompletions;
