@@ -1,7 +1,8 @@
 # Chain-Anchored Batch Verification for Backfill
 
-Status: **deferred**, tracked by #3859. This is a future improvement, not needed now; see
-[Assessment](#assessment-is-it-still-worth-it).
+Status: **deferred**, low priority, tracked by #3859. This is a future improvement, not needed
+now; see [Assessment](#assessment-is-it-still-worth-it). It is still open for review, for
+example alongside the parallel verification work.
 Baseline: `main` at `5c1994fdf`, plus the hedera-cryptography move in #3853 (3.21.0, then
 3.22.0).
 
