@@ -1,19 +1,67 @@
 # Chain-Anchored Batch Verification for Backfill
 
-Status: draft, tracked by #3859.
-Baseline: `main` at `5c1994fdf`, plus the hedera-cryptography 3.21.0 move in #3853.
+Status: **deferred**, tracked by #3859. This is a future improvement, not needed now; see
+[Assessment](#assessment-is-it-still-worth-it).
+Baseline: `main` at `5c1994fdf`, plus the hedera-cryptography move in #3853 (3.21.0, then
+3.22.0).
 
 ## Purpose
 
 Backfill verifies every block with its own TSS check. On hedera-cryptography 3.21.0 one
-`TSS.verifyTSS` call takes about 130 ms (hiero-ledger/hiero-cryptography#753, closed as
+`TSS.verifyTSS` call takes about 120 to 130 ms (hiero-ledger/hiero-cryptography#753, closed as
 expected for Nova WRAPS). `NativeVerificationLibrary` serializes every call behind one
-process-wide lock, so the most a node can verify is about 7.7 blocks/s. Observed backfill
-runs at 6 to 7 blocks/s. A day of blocks (about 43k) takes about 1.5 h of verification
-alone.
+process-wide lock, so the most a node can verify is about 8 blocks/s. Observed backfill ran at
+6 to 7 blocks/s.
+
+hedera-cryptography 3.22.0 (hiero-ledger/hiero-cryptography#755) caches the WRAPS proof
+result. That proof is about 85% of the cost, and it stays the same across blocks. With the
+cache, per-block verification takes about 13 ms, about 78 blocks/s. See
+[Library 3.22.0: WRAPS proof cache](#library-3220-wraps-proof-cache).
 
 This proposal verifies a contiguous batch of backfilled blocks with **one** signature check
 plus a hash chain check, instead of one signature check per block.
+
+## Assessment: is it still worth it?
+
+**Not now. Keep it as a future improvement.** The reasons, measured in
+[Expected Throughput](#expected-throughput):
+
+1. **The library fix removed most of the gap.** 3.22.0 makes per-block TSS about 9 times
+   faster (about 8 to about 78 blocks/s). A day of TSS blocks (about 43,200) now verifies in
+   about 9 minutes, instead of about 1.5 h. Live production is one block every 2 s, so a node
+   catches up at about 150 times real time.
+2. **Historical mainnet backfill is not TSS bound.** Blocks from before the TSS era are wrapped
+   record blocks (WRBs) with a `SignedRecordFileProof`. They are verified with RSA in plain Java,
+   with no native lock. On a real mainnet block that is about 1 ms per block, and about 7,200
+   blocks/s across 10 cores. The roughly 100 million historical blocks are therefore bounded by
+   fetch and persistence, not by TSS. Batching TSS would not change that.
+3. **What batching still buys.** On 3.22.0+, batches of 100 verify about 5,000 blocks/s
+   versus 78 per block, about 64 times faster. That only matters once the **TSS era**
+   itself is long:
+
+   |    TSS-era history     | Per block, 3.22.0+ | Batch of 100 |
+   |------------------------|--------------------|--------------|
+   | 1 month (~1.3M blocks) | ~4.6 h             | ~4 min       |
+   | 1 year (~15.8M blocks) | ~2.3 days          | ~53 min      |
+   | 5 years (~79M blocks)  | ~11.7 days         | ~4.4 h       |
+
+4. **The cost of batching has not changed.** It needs an SPI change, a new session type and
+   batch-scoped backfill awaiting. It also accepts the
+   [proof gap](#proofs-of-intermediate-blocks-decision-shape-check) for intermediate blocks.
+   With per-block verification at about 78 blocks/s, that complexity and that gap are hard to
+   justify today.
+
+**When to revisit:**
+- the TSS era passes roughly 6 to 12 months, so a new Tier 1 node would take days to backfill
+it per block; or
+- per-block TSS becomes the measured bottleneck of backfill, ahead of fetch and persistence
+(watch `verification_tss_lock_wait_time`, see [Metrics](#metrics)); or
+- WRAPS proofs start changing often enough that the 3.22.0 cache misses (about 120 ms each).
+
+**Cheaper step first:** confirm whether `TSS.verifyTSS` is thread safe on 3.22.0+ (question 2
+of hiero-cryptography#753). If it is, removing the process-wide lock scales the about 13 ms
+hinTS check across cores. That could give several hundred blocks/s per block, with none of
+batching's trade-offs.
 
 ## Goals
 
@@ -63,14 +111,16 @@ signature bytes, is described in
 **"We need to verify every block proof for every block."**
 Per-block proof verification gives no extra assurance about a block's contents beyond the
 chain. Its only additional guarantee is that the stored proof bytes are valid. Recovering that
-guarantee costs the full 130 ms per block that this design removes.
+guarantee costs the per-block TSS check that this design removes: about 120 ms on 3.21.0, and
+about 13 ms on 3.22.0+.
 
 **"Verification is already parallel, one thread per block."**
 Hashing is parallel: each block has its own session on a virtual thread. TSS is not. Every
 `TSS.verifyTSS` call goes through the process-wide lock in `NativeVerificationLibrary`, because
 concurrent calls corrupted native state on 3.13.0. The expensive step runs one call at a time,
-and that sets the ceiling of about 7.7 blocks/s. Parallel TSS depends on the thread-safety
-question in hiero-cryptography#753. If it is safe, it combines with batching.
+and that sets the ceiling: about 8 blocks/s on 3.21.0, and about 78 blocks/s on 3.22.0+.
+Parallel TSS depends on the thread-safety question in hiero-cryptography#753. If it is safe, it
+combines with batching.
 
 **"Holding a whole batch in memory until the last block verifies is a risk."**
 Holding the whole batch is not new. Backfill already fetches 10 to 20 blocks per request
@@ -239,8 +289,90 @@ sequenceDiagram
 
 ## Expected Throughput
 
-The TSS cost per block becomes `130 ms / B`. For example, B = 100 gives 1.3 ms per block,
-so throughput is then bounded by fetch, hashing, and persistence, not by the native lock.
+The TSS cost per block becomes `t / B`, where `t` is one `TSS.verifyTSS` call. For example,
+B = 100 on 3.21.0 gives about 1.2 ms per block, and on 3.22.0+ about 0.13 ms. Throughput is
+then bounded by fetch, hashing and persistence, not by the native lock.
+
+### Library 3.22.0: WRAPS proof cache
+
+A TSS signature is `hints_verification_key || hints_signature || compressed_wraps_proof`.
+`TSS.verifyTSS` checks two things:
+- the WRAPS proof, which ties the hinTS key to the ledger id;
+- the hinTS aggregate signature over the block root hash.
+
+The WRAPS proof only changes with the roster. hiero-cryptography#755, released in 3.22.0,
+caches the WRAPS result in an LRU of 8 entries. The key is
+`(wraps proof, ledger id, hinTS verification key)`. The hinTS check still runs on every call.
+The cache is sound for these reasons:
+- the WRAPS check gives the same result for the same inputs;
+- the WRAPS verification key is embedded in the library, with no runtime setter;
+- the hinTS key is part of the cache key, so a cached result can't be paired with a different key.
+
+Component timings on 3.21.0, with the cached path measured using the same inputs:
+
+|                Step                 |   p50    |
+|-------------------------------------|----------|
+| `TSS.verifyTSS`, no cache (3.21.0)  | 119.5 ms |
+| WRAPS `verifyCompressedProof` only  | 104.0 ms |
+| hinTS `verifyAggregate` only        | 12.8 ms  |
+| `TSS.verifyTSS`, cache hit (3.22.0) | 12.9 ms  |
+
+The cached path still rejects a wrong root hash and a tampered hinTS signature.
+
+### Measured end to end: per block vs batch
+
+These numbers use the real `BlockHasher` and the real locked `NativeVerificationLibrary.verifyTss`.
+The setup:
+- branch `tss-update` (#3853), Apple M1 Max, 10 cores, JDK 25.0.2;
+- a 14,451 B TSS fixture block;
+- real 13,712 B signatures from `TssBlockSigner`.
+
+The two modes:
+- **Per block:** each task hashes one block and calls `verifyTss`, on 10 threads.
+- **Batch of 100:** hash 100 blocks in parallel, then one `verifyTss`. Batches run one after
+another, with no pipelining, so the figure is conservative.
+
+| Library | `verifyTss` warm p50 | Hash only (10 threads) |    Per block    |    Batch of 100    |
+|---------|----------------------|------------------------|-----------------|--------------------|
+| 3.21.0  | 122.5 ms             | ~12,900 blocks/s       | **8 blocks/s**  | **762 blocks/s**   |
+| 3.22.0  | 13.4 ms              | ~10,900 blocks/s       | **77 blocks/s** | **4,879 blocks/s** |
+| 3.23.0  | 12.7 ms              | ~12,600 blocks/s       | **78 blocks/s** | **4,991 blocks/s** |
+
+The first call on 3.22.0+ is a cache miss and takes about 120 to 140 ms. After that it is a
+cache hit until the WRAPS proof changes (about once per roster change). 3.23.0 adds a hinTS CRS
+and aggregation key cache (hiero-cryptography#752), which makes no measurable difference here.
+
+### Historical blocks: RSA, not TSS
+
+Wrapped record blocks carry a `SignedRecordFileProof`. `RSAProofVerifier` checks it with
+`SHA384withRSA` in plain Java, with no native lock. It was measured on the real mainnet fixture
+`V5_BLOCK_26591040` (2022-01-01, 24,129 B, 12 signatures, 24-node address book):
+
+|      Mode       |                            Result                            |
+|-----------------|--------------------------------------------------------------|
+| One thread, p50 | 0.99 ms per block (0.082 ms per signature) = ~1,000 blocks/s |
+| 10 threads      | ~7,200 blocks/s                                              |
+
+This covers payload reconstruction and RSA. It does not include SHA-256 block hashing, because
+the legacy fixture predates the SHA-256 migration. Adding the hashing cost measured above, a
+reasonable estimate is about 4,000 to 7,000 blocks/s.
+
+### Mainnet backfill estimate (verification only)
+
+This is for about 100 million blocks, mostly small, on one 10-core node. It covers verification
+alone: no fetch, persistence, `delayBetweenBatches` or messaging overhead.
+
+|              Scenario               |           Rate           |  100M blocks  |
+|-------------------------------------|--------------------------|---------------|
+| All TSS, per block, 3.21.0          | 8 blocks/s               | ~145 days     |
+| All TSS, batch of 100, 3.21.0       | 762 blocks/s             | ~36 h         |
+| All TSS, per block, 3.22.0+         | 78 blocks/s              | ~15 days      |
+| All TSS, batch of 100, 3.22.0+      | ~5,000 blocks/s          | ~5.6 h        |
+| Hashing ceiling, 10 threads         | ~12,000 blocks/s         | ~2.3 h        |
+| **Realistic: historical WRBs, RSA** | ~4,000 to 7,000 blocks/s | **~4 to 7 h** |
+
+The "all TSS" rows are hypothetical: today's 100 million mainnet blocks are almost all
+historical WRBs. They show what a fully TSS-era history of that size would cost.
 
 ### Measured hashing cost
 
@@ -256,19 +388,13 @@ Each block was warmed up first, then timed on one thread (median) and on a fixed
 
 (1) Block 0 runs the one-off TSS bootstrap path and does not scale. It is always sent alone.
 
-For comparison, one `TSS.verifyTSS` call takes about 130 ms, one call at a time. A 31.6 MB
-block hashes about 3.4 times faster than one signature check, and a small block about 200
-times faster.
+For comparison, one `TSS.verifyTSS` call takes about 120 ms on 3.21.0. A 31.6 MB block hashes
+about 3.4 times faster than that, and a small block about 200 times faster. On 3.22.0+ the
+cached call takes about 13 ms. A small block still hashes about 20 times faster than that, but
+a 31.6 MB block now takes about 3 times longer to hash than to verify.
 
-Estimated verification cost per batch of B = 100 small blocks:
-- about 13 ms of parallel hashing, plus one 130 ms TSS call;
-- so about 143 ms per batch, or **about 700 blocks/s**;
-- today's ceiling is about 7.7 blocks/s.
-
-At that rate, fetch and persistence limit throughput before verification does.
-
-These are test-network fixtures, not mainnet captures. The MB/s figures scale to any
-mainnet block size. Re-measure on mainnet captures before setting a target.
+These are test-network fixtures, apart from the RSA mainnet block above. The MB/s figures scale
+to any mainnet block size. Re-measure on mainnet captures before setting a target.
 
 ## Configuration
 
@@ -303,12 +429,15 @@ mainnet block size. Re-measure on mainnet captures before setting a target.
    fails the shape check, and that block is not reported verified.
 5. A batch with a link break costs one TSS call per segment.
 6. Per-block fallback behaves exactly like today when `batchVerificationEnabled=false`.
-7. A backfill throughput benchmark shows a gain over the 7.7 blocks/s ceiling on 3.21.0.
+7. A backfill throughput benchmark shows a clear gain over per-block verification on the same
+   library (about 78 blocks/s on 3.22.0+).
 8. No verification batch exceeds `maxBatchBytes`. A chunk above the cap is split into several
    batches, and a single block larger than the cap is verified per block.
 
 ## Related / Complementary
 
-- **Concurrent TSS.** Question 2 in hiero-cryptography#753 (is `verifyTSS` thread-safe on
-  3.21.0?) was not answered when the issue closed. If it is safe, dropping the lock scales
-  with cores and combines with batching.
+- **WRAPS proof cache.** hiero-cryptography#755, released in 3.22.0, gives about 9 times
+  faster per-block TSS. It is the main reason this design is deferred.
+- **Concurrent TSS.** Question 2 in hiero-cryptography#753 (is `verifyTSS` thread-safe?) was
+  not answered when the issue closed. If it is safe on 3.22.0+, dropping the lock scales the
+  about 13 ms hinTS check with cores, and combines with batching.
