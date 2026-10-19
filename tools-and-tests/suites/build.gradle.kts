@@ -23,6 +23,7 @@ mainModuleInfo {
     runtimeOnly("org.hiero.block.node.health")
     runtimeOnly("org.hiero.block.node.messaging")
     runtimeOnly("org.hiero.block.node.server.status")
+    runtimeOnly("org.hiero.block.node.state.management")
     runtimeOnly("org.hiero.block.node.stream.publisher")
     runtimeOnly("org.hiero.block.node.stream.subscriber")
     runtimeOnly("org.hiero.block.node.tss.boostrap")
@@ -36,6 +37,8 @@ mainModuleInfo {
     runtimeOnly("org.testcontainers")
     runtimeOnly("org.testcontainers.junit.jupiter")
     runtimeOnly("s3mock.testcontainers")
+
+    // Block node plugins needed for in-JVM tests (BlockNodeAPITests)
 }
 
 // =============================================================================
