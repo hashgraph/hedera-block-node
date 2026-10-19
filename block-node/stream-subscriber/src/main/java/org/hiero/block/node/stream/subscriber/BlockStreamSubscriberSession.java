@@ -737,8 +737,9 @@ public class BlockStreamSubscriberSession implements Callable<BlockStreamSubscri
      */
     synchronized void close(final SubscribeStreamResponse.Code endStreamResponseCode) {
         LOGGER.log(Level.TRACE, "Closing BlockStreamSubscriberSession for client {0}", sessionContext.clientId);
-        // Clear a possible stale interrupt flag so it doesn't fail the sends below.
-        Thread.interrupted();
+        // Clear a possible stale interrupt flag so it doesn't fail the sends below; restored in finally
+        // since close() isn't always called from this session's own thread (e.g. stop() calls it too).
+        final boolean wasInterrupted = Thread.interrupted();
         try {
             // Might get here before the session is ready, so check the countdown latch
             if (sessionReadyLatch.getCount() > 0) {
@@ -772,6 +773,9 @@ public class BlockStreamSubscriberSession implements Callable<BlockStreamSubscri
             // unexpectedly: callers that wait on this flag (e.g. resolveLiveNextBlockToSend())
             // must never be left stuck because close() failed partway through.
             interruptedStream.set(true);
+            if (wasInterrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

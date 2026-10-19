@@ -22,7 +22,6 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.hiero.block.api.BlockStreamSubscribeServiceInterface;
@@ -152,8 +151,6 @@ public class SubscriberServicePlugin implements BlockNodePlugin, BlockStreamSubs
         private volatile CompletionService<BlockStreamSubscriberSession> streamSessions;
         /** Dedicated executor for the periodic session reaper, separate from {@link #virtualThreadExecutor}. */
         private final ScheduledExecutorService reaperExecutor;
-        /** Handle used to stop further reaper executions from {@link #stop()}. */
-        private final ScheduledFuture<?> reaperTask;
 
         private SubscribeBlockStreamHandler(@NonNull final BlockNodeContext context) {
             this.context = requireNonNull(context);
@@ -172,15 +169,17 @@ public class SubscriberServicePlugin implements BlockNodePlugin, BlockStreamSubs
                     .getOrCreateNotLabeled();
             reaperExecutor = context.threadPoolManager()
                     .createVirtualThreadScheduledExecutor(
-                            1,
-                            "SubscriberSessionReaper",
-                            (thread, error) ->
-                                    LOGGER.log(Level.ERROR, "Uncaught exception in subscriber session reaper", error));
+                            1, "SubscriberSessionReaper", this::onReaperUncaughtException);
             final long reapIntervalSeconds = context.configuration()
                     .getConfigData(SubscriberConfig.class)
                     .completedSessionReapIntervalSeconds();
-            reaperTask = reaperExecutor.scheduleAtFixedRate(
+            reaperExecutor.scheduleAtFixedRate(
                     this::reapCompletedSessions, reapIntervalSeconds, reapIntervalSeconds, TimeUnit.SECONDS);
+        }
+
+        private void onReaperUncaughtException(final Thread thread, final Throwable error) {
+            LOGGER.log(
+                    Level.ERROR, "Uncaught exception in subscriber session reaper thread {0}", thread.getName(), error);
         }
 
         /** Drains already-completed sessions; non-blocking, so it never stalls on a running one. */
@@ -191,17 +190,27 @@ public class SubscriberServicePlugin implements BlockNodePlugin, BlockStreamSubs
             }
             try {
                 Future<BlockStreamSubscriberSession> completedSessionFuture;
-                while ((completedSessionFuture = streams.poll()) != null) {
+                while (!Thread.currentThread().isInterrupted() && (completedSessionFuture = streams.poll()) != null) {
                     handleCompletedStream(completedSessionFuture);
                 }
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
+            } catch (final RuntimeException e) {
+                LOGGER.log(Level.WARNING, "Subscriber session reaper run failed, retrying next interval", e);
             }
         }
 
         private void stop() {
-            // Cancel the reaper first so it can't race the drain loop below over the same queue.
-            reaperTask.cancel(false);
+            // Stop the reaper and wait out an in-flight run, so it can't take a future the drain below waits on.
+            reaperExecutor.shutdown();
+            try {
+                if (!reaperExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    reaperExecutor.shutdownNow();
+                }
+            } catch (final InterruptedException e) {
+                reaperExecutor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
             // Stop allowing new connection threads.
             CompletionService<BlockStreamSubscriberSession> sessionsToClose = streamSessions;
             streamSessions = null;
