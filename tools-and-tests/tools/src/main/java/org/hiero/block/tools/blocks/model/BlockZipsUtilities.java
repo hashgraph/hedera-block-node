@@ -354,7 +354,7 @@ public final class BlockZipsUtilities {
                 BufferedData.wrap(decompress(raw, isZstd, isGz)),
                 true,
                 false,
-                1000,
+                ProtobufParsingConstants.MAX_DEPTH,
                 ProtobufParsingConstants.MAX_MESSAGE_SIZE);
     }
 
@@ -392,7 +392,11 @@ public final class BlockZipsUtilities {
      */
     public static BlockUnparsed partialParse(byte[] blockBytes) throws ParseException {
         return BlockUnparsed.PROTOBUF.parse(
-                BufferedData.wrap(blockBytes), true, false, 1000, ProtobufParsingConstants.MAX_MESSAGE_SIZE);
+                BufferedData.wrap(blockBytes),
+                true,
+                false,
+                ProtobufParsingConstants.MAX_DEPTH,
+                ProtobufParsingConstants.MAX_MESSAGE_SIZE);
     }
 
     /**

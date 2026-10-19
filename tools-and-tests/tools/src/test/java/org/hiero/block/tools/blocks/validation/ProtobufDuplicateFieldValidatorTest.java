@@ -285,7 +285,8 @@ class ProtobufDuplicateFieldValidatorTest {
 
     @Test
     void truncatedInput_fails() {
-        assertFails(hex("0A05 0A02"), "Malformed protobuf");
+        final byte[] blockBytes = hex("0A05 0A02");
+        assertThrows(IOException.class, () -> ProtobufDuplicateFieldValidator.validate(blockBytes, 0));
     }
 
     @Test
@@ -300,7 +301,11 @@ class ProtobufDuplicateFieldValidatorTest {
         final byte[] mapUpdate = field(2, field(1, field(3, key)));
         final byte[] stateChange = field(STATE_CHANGE_MAP_UPDATE, mapUpdate);
         final byte[] item = field(ITEM_STATE_CHANGES, field(STATE_CHANGES_STATE_CHANGES, stateChange));
-        assertFails(block(item), "Nesting deeper than " + ProtobufParsingConstants.MAX_DEPTH);
+        final byte[] blockBytes = block(item);
+        final IOException e =
+                assertThrows(IOException.class, () -> ProtobufDuplicateFieldValidator.validate(blockBytes, 0));
+        final String expected = "Nesting deeper than " + ProtobufParsingConstants.MAX_DEPTH;
+        assertTrue(e.getMessage().contains(expected), "Expected '" + expected + "' in: " + e.getMessage());
     }
 
     // ── Helpers ──

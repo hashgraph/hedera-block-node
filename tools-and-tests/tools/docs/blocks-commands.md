@@ -273,6 +273,8 @@ Not checked:
 - messages carried inside `bytes` fields (e.g. the `TransactionBody` inside `signed_transaction`)
 - unknown field numbers, which are skipped
 
+Bytes that are not valid protobuf, and messages nested deeper than 512 levels, fail the block under the separate name `Protobuf Encoding`.
+
 **Example failure:**
 
 ```
@@ -280,6 +282,13 @@ Block: 12345 - oneof 'item' set more than once (block_header, block_footer) at B
 ```
 
 **When to skip:** only to save the extra pass over the block bytes when the blocks are known to come from a trusted PBJ serializer, which cannot emit duplicates.
+
+The cost of the pass depends on the shape of a block more than its size, because it visits every nested message and jumps over `bytes` fields. Measured on one thread:
+
+- about 5 ms for a state-heavy block such as mainnet genesis (3.3 MB decompressed, thousands of small state changes), about as much as a full PBJ parse of that block
+- under 0.1 ms for a 31 MB block that is mostly opaque bytes
+
+The check runs on the parallel decompression threads (`--threads`), so it only lengthens a run when those threads, not the sequential validations, are the bottleneck.
 
 ##### SignatureValidation
 

@@ -1341,6 +1341,11 @@ public class ValidateBlocksCommand implements Callable<Integer> {
                 ProtobufDuplicateFieldValidator.validate(blockBytes, blockNumber);
             } catch (final ValidationException e) {
                 err = new Object[] {ProtobufDuplicateFieldValidator.NAME, e};
+            } catch (final IOException e) {
+                err = new Object[] {
+                    ProtobufDuplicateFieldValidator.MALFORMED_NAME,
+                    new ValidationException("Block: " + blockNumber + " - Malformed protobuf: " + e.getMessage())
+                };
             }
         }
         if (err == null) {

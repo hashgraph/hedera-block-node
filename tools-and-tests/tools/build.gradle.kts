@@ -56,10 +56,6 @@ testModuleInfo {
 
 pbj { generateTestClasses = false }
 
-// This module's own .proto files import nothing, so PBJ must not scan the .proto files packaged
-// in dependency jars. The protoc API jar ships partial sources whose imports cannot be resolved.
-tasks.generatePbjSource { classpath.setFrom() }
-
 tasks.test { maxParallelForks = Runtime.getRuntime().availableProcessors() }
 
 sourceSets {

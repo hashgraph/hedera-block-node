@@ -20,7 +20,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import org.hiero.block.api.TssData;
+import org.hiero.block.node.base.CompressionType;
+import org.hiero.block.tools.blocks.model.BlockWriter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.Execution;
@@ -31,7 +35,7 @@ import picocli.CommandLine;
  * Tests for {@link ValidateBlocksCommand}.
  *
  * <p>Uses {@link TestBlockFactory} to generate synthetic blocks with real RSA signatures.
- * Blocks are written as uncompressed {@code .blk} files (no zstd dependency needed).
+ * Blocks are written as uncompressed {@code .blk} files, except where a test needs zip input.
  */
 @Execution(ExecutionMode.SAME_THREAD)
 class ValidateBlocksCommandTest {
@@ -603,10 +607,45 @@ class ValidateBlocksCommandTest {
         writeBlocks(blocks);
         writeAddressBook();
 
-        // Re-encode the last block with block_header written twice in its first item. The copies are identical and
-        // PBJ keeps the last one, so every other validation sees the original block.
         Block last = blocks.getLast();
-        List<BlockItem> items = last.items();
+        long lastNumber = last.items().getFirst().blockHeaderOrThrow().number();
+        Files.write(tempDir.resolve(lastNumber + ".blk"), encodeWithDuplicateBlockHeader(last));
+
+        assertDuplicateDetectedUnlessSkipped();
+    }
+
+    @Test
+    void duplicateBlockHeaderFieldInZip_detectedUnlessSkipped() throws Exception {
+        List<Block> blocks = TestBlockFactory.createValidChain(5);
+        writeAddressBook();
+
+        // Write all blocks as zstd entries of one zip, in BlockWriter's layout, with the last one duplicated, so the
+        // check runs after zip decompression. The zip is written in one pass because BlockWriter.writeBlock appends
+        // through a zip FileSystem, which the command's streaming zip reader does not accept.
+        BlockWriter.BlockPath firstPath = BlockWriter.computeBlockPath(tempDir, 0);
+        Files.createDirectories(firstPath.dirPath());
+        try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(firstPath.zipFilePath()))) {
+            for (Block block : blocks) {
+                long number = block.items().getFirst().blockHeaderOrThrow().number();
+                byte[] bytes = block == blocks.getLast()
+                        ? encodeWithDuplicateBlockHeader(block)
+                        : Block.PROTOBUF.toBytes(block).toByteArray();
+                zip.putNextEntry(new ZipEntry(
+                        BlockWriter.computeBlockPath(tempDir, number).blockFileName()));
+                zip.write(CompressionType.ZSTD.compress(bytes));
+                zip.closeEntry();
+            }
+        }
+
+        assertDuplicateDetectedUnlessSkipped();
+    }
+
+    /**
+     * Re-encodes the block with block_header written twice in its first item. The copies are identical and PBJ keeps
+     * the last one, so every other validation sees the original block.
+     */
+    private static byte[] encodeWithDuplicateBlockHeader(Block block) throws IOException {
+        List<BlockItem> items = block.items();
         byte[] headerItem = BlockItem.PROTOBUF.toBytes(items.getFirst()).toByteArray();
         ByteArrayOutputStream encoded = new ByteArrayOutputStream();
         CodedOutputStream coded = CodedOutputStream.newInstance(encoded);
@@ -618,9 +657,10 @@ class ValidateBlocksCommandTest {
                 .toBytes(new Block(items.subList(1, items.size())))
                 .toByteArray());
         coded.flush();
-        long lastNumber = items.getFirst().blockHeaderOrThrow().number();
-        Files.write(tempDir.resolve(lastNumber + ".blk"), encoded.toByteArray());
+        return encoded.toByteArray();
+    }
 
+    private void assertDuplicateDetectedUnlessSkipped() {
         Object[] result = runValidate("--no-resume");
         String output = (String) result[1];
         assertTrue((int) result[0] != 0, "Should fail. Output:\n" + output);

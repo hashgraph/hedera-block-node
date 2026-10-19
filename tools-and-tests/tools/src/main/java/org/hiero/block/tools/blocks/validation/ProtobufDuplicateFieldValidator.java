@@ -5,6 +5,7 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.OneofDescriptor;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.WireFormat;
 import com.hedera.hapi.block.stream.protoc.Block;
 import java.io.IOException;
@@ -23,8 +24,11 @@ import org.hiero.block.tools.records.model.parsed.ValidationException;
  */
 public final class ProtobufDuplicateFieldValidator {
 
-    /** Name reported as the failed validation. */
+    /** Name reported as the failed validation when a duplicate is found. */
     public static final String NAME = "Duplicate Fields";
+
+    /** Name reported as the failed validation when the bytes are not valid protobuf or nest too deeply. */
+    public static final String MALFORMED_NAME = "Protobuf Encoding";
 
     private static final Descriptor BLOCK = Block.getDescriptor();
 
@@ -35,26 +39,29 @@ public final class ProtobufDuplicateFieldValidator {
      *
      * @param blockBytes the decompressed protobuf encoding of a {@code Block}
      * @param blockNumber the block number, used in error messages
-     * @throws ValidationException if a duplicate is found or the bytes are not valid protobuf
+     * @throws ValidationException if a duplicate is found
+     * @throws IOException if the bytes are not valid protobuf or nest deeper than
+     *     {@link ProtobufParsingConstants#MAX_DEPTH}
      */
-    public static void validate(final byte[] blockBytes, final long blockNumber) throws ValidationException {
-        try {
-            checkMessage(CodedInputStream.newInstance(blockBytes), BLOCK, "Block", 0, blockNumber);
-        } catch (final IOException e) {
-            throw new ValidationException("Block: " + blockNumber + " - Malformed protobuf: " + e.getMessage());
-        }
+    public static void validate(final byte[] blockBytes, final long blockNumber)
+            throws ValidationException, IOException {
+        checkMessage(CodedInputStream.newInstance(blockBytes), BLOCK, new StringBuilder("Block"), 0, blockNumber);
     }
 
+    /**
+     * Checks one message. {@code path} is shared down the recursion and restored after each child, so the path
+     * string is only built when an error is thrown.
+     */
     private static void checkMessage(
             final CodedInputStream in,
             final Descriptor type,
-            final String path,
+            final StringBuilder path,
             final int depth,
             final long blockNumber)
             throws IOException, ValidationException {
         if (depth > ProtobufParsingConstants.MAX_DEPTH) {
-            throw new ValidationException("Block: " + blockNumber + " - Nesting deeper than "
-                    + ProtobufParsingConstants.MAX_DEPTH + " at " + path);
+            throw new InvalidProtocolBufferException(
+                    "Nesting deeper than " + ProtobufParsingConstants.MAX_DEPTH + " at " + path);
         }
         // Allocated on first use and indexed by descriptor position, so leaf messages allocate nothing.
         int[] counts = null; // field index -> occurrences of that message field so far
@@ -84,16 +91,19 @@ public final class ProtobufDuplicateFieldValidator {
                         counts = new int[type.getFields().size()];
                     }
                     final int count = ++counts[field.getIndex()];
-                    final String childPath = field.isRepeated()
-                            ? path + "." + field.getName() + "[" + (count - 1) + "]"
-                            : path + "." + field.getName();
+                    final int oldLength = path.length();
+                    path.append('.').append(field.getName());
+                    if (field.isRepeated()) {
+                        path.append('[').append(count - 1).append(']');
+                    }
                     if (!field.isRepeated() && count > 1) {
                         throw new ValidationException(
-                                "Block: " + blockNumber + " - Non-repeated field set more than once: " + childPath);
+                                "Block: " + blockNumber + " - Non-repeated field set more than once: " + path);
                     }
                     final int oldLimit = in.pushLimit(in.readRawVarint32());
-                    checkMessage(in, field.getMessageType(), childPath, depth + 1, blockNumber);
+                    checkMessage(in, field.getMessageType(), path, depth + 1, blockNumber);
                     in.popLimit(oldLimit);
+                    path.setLength(oldLength);
                     descended = true;
                 }
             }
