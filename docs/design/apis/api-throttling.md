@@ -200,21 +200,23 @@ and, if authenticated client identity is introduced later, the caller's certific
 
 For every call, in order — the first check that rejects wins, and no later check runs:
 
-1. **Global concurrency check** — is the node-wide concurrency ceiling for this weight class already reached? (a
-   pure read of shared state, via [`GlobalConcurrencyGate`](#globalconcurrencygate)) Always runs, regardless of
-   whether this method has any per-client configuration.
-2. **Per-client concurrency check** — has this client already reached its own concurrency ceiling for this method and
-   weight class? (a pure read of per-client state) **Skipped entirely** for a method with no
+1. **Global concurrency check** — reserves a slot atomically (compare-and-swap, not check-then-increment, so
+   concurrent callers can never collectively overshoot the ceiling) against the node-wide concurrency ceiling for
+   this weight class, via [`GlobalConcurrencyGate`](#globalconcurrencygate). Always runs, regardless of whether this
+   method has any per-client configuration.
+2. **Per-client concurrency check** — reserves a slot atomically against this client's own concurrency ceiling for
+   this method and weight class. **Skipped entirely** for a method with no
    [`PerClientThrottleSettings`](#perclientthrottlesettings) configured — see
    ["Configuration ownership"](#configuration-ownership).
 3. **Rate check (leaky bucket, via GCRA)** — is this client calling faster than its allowed rate for this method and
    weight class? This check is the only one that mutates state (it advances the client's theoretical-arrival-time
    marker), so it deliberately runs last. A call that's going to be rejected by a cheaper check must not be allowed
-   to consume a rate-limiting slot first. Also skipped for an unconfigured method, for the same reason as check 2.
+   to consume a rate-limiting slot first. If this check rejects, the two slots reserved above are released. Also
+   skipped for an unconfigured method, for the same reason as check 2.
 
-If every check passes, the call is admitted: both concurrency counters are incremented, and the real service's
-business logic is invoked. If any check fails, the call is rejected immediately (see [Exceptions](#exceptions)) and
-that business logic is never invoked. For `getBlock` and `subscribeBlockStream`, this describes when the admission
+If every check passes, the call is admitted: both concurrency slots reserved above stay held for the call's
+duration, and the real service's business logic is invoked. If any check fails, the call is rejected immediately
+(see [Exceptions](#exceptions)) and that business logic is never invoked. For `getBlock` and `subscribeBlockStream`, this describes when the admission
 *decision* happens, not when the delegate's `open()` runs — their delegate's `open()` always runs immediately,
 regardless of the eventual decision, since it runs before the decision is made; see "Content-aware weighting" below
 for why, and for the constraint that imposes on weighted-method implementations.
@@ -278,6 +280,17 @@ together in the wrapping pipeline's `onNext`, before the delegate's `onNext` is 
 unweighted case (a rejected call's business logic never runs, nothing is charged twice); only the point where that
 decision happens moves, from `open()` to `onNext`.
 
+**An unconfigured heavier weight class falls back to `STANDARD`'s own ceiling, including its global gate.** A
+weighted method must configure a `STANDARD` entry for every weight class it wants its own ceiling for; if the
+weigher classifies a call into a weight class with no matching entry, admission falls back to that method's
+`STANDARD` entry — `STANDARD`'s per-client settings *and* `STANDARD`'s node-wide concurrency gate, not a gate scoped
+to the classified weight class. Concretely: a historical `getBlock` call on a method configured with only a
+`STANDARD` triple is checked against the same ceiling as a live `getBlock` call, not a stricter historical one. This
+is a deliberate policy choice — an operator who wants a heavier weight class's own ceiling enforced must configure
+it explicitly, rather than getting it by default — not a structural constraint, so it is not a one-way door: a
+future change to scope the fallback to the classified weight class's own gate is possible if this default proves
+wrong in practice.
+
 **Weighted-method delegates must keep `open()` side-effect-free.** Since the delegate's `open()` always runs before
 admission is decided, a weighted method's delegate must not acquire resources, perform I/O, or start any business
 logic inside `open()` — only inside its own `onNext`/handler logic, once called. Every current delegate satisfies
@@ -286,14 +299,15 @@ future weighted-method delegate implementation must uphold, not something the de
 a future delegate's `open()` ever acquired a resource eagerly, a rejected call would strand it, since a rejection
 never reaches that delegate's `onNext`.
 
-**A rejected call still completes the delegate's inbound pipeline — it isn't left dangling.** The delegate's
-inbound pipeline already exists by the time a weighted call is rejected (built by its `open()` above), but a
-rejection means it will never receive `onNext`. Rather than leaving that pipeline with no terminal signal at all,
-the decorator gives it a normal, empty completion (`onComplete`, with zero preceding `onNext` calls) immediately
-after rejecting the call — valid per `java.util.concurrent.Flow.Subscriber`, where a subscriber may complete having
-received no items. This keeps "a rejected call never reaches the delegate's business logic" true while still giving
-the delegate's inbound pipeline a definite end, rather than depending on it being silently abandoned and
-garbage-collected.
+**A rejected call still completes the delegate's inbound pipeline, without a second terminal to the client.** The
+delegate's inbound pipeline already exists by the time a weighted call is rejected (built by its `open()` above),
+but a rejection means it will never receive `onNext`. The decorator must not complete that pipeline itself: PBJ's
+`Pipelines`-built delegates (both unary and server-streaming) forward their inbound pipeline's `onComplete` straight
+through to the `responses` pipeline passed into `open()`, which here is the same pipeline the client-facing
+`onError(RESOURCE_EXHAUSTED)` was already sent on. Completing the delegate's inbound pipeline after that would
+forward a second terminal signal to the client, violating the single-terminal contract. The wrapper therefore leaves
+the delegate's inbound pipeline without any terminal call once a call is rejected; nothing else will ever call it
+again, so it needs none.
 
 ### Component B — shared backend block-read bulkhead
 
@@ -453,10 +467,10 @@ Three extension points are designed in from the start, since all three are antic
 - **Splitting the weighted admission decision — reject on global/per-client concurrency in `open()`, and defer
   only the rate check to `onNext` once classified.** Rejected: there's no weight-agnostic version of the
   concurrency checks to split off in the first place. `maxConcurrentPerClient` is a field on each weight class's own
-  `PerClientThrottleSettings`, and even `maxConcurrentGlobal` is keyed by weight class — shared across every method
-  within that class, but never pooled across different weight classes — so which ceiling applies is unknown until
-  classification happens in `onNext` regardless — there's nothing coherent to check
-  earlier. Doing this anyway would mean inventing a new policy value with no counterpart elsewhere in this
+  `PerClientThrottleSettings`, and even `maxConcurrentGlobal` is keyed by weight class, shared across every method
+  within that class but never pooled across different weight classes. Which ceiling applies is therefore unknown
+  until classification happens in `onNext` regardless, so there's nothing coherent to check earlier. Doing this
+  anyway would mean inventing a new policy value with no counterpart elsewhere in this
   design, plus a provisional-admit-then-reconcile step once the real class is known: a release-then-reacquire
   window in which a concurrent call can take the freed capacity, transiently exceeding the intended ceiling.
   That doubles the surface area of the permit-release subtlety described above, to save one cheap pipeline
@@ -598,13 +612,20 @@ service with only one weight class has just one ceiling.
 The shared block-read bulkhead has its own single configuration value: the number of permits in the pool, informed
 by the target deployment's storage characteristics.
 
+`getBlock` and `subscribeBlockStream` additionally share one `historicalThresholdBlocks` value — the recent/historical
+boundary described above — rather than each declaring its own copy, so the two cannot independently drift apart on
+what counts as historical. The client-state table's entry TTL and sweep interval (see
+[Client-state bookkeeping](#client-state-bookkeeping)) are also operator-configurable, node-wide values, not
+per-method.
+
 `publishBlockStream` declares no throttle configuration and is not subject to any of the checks above.
 
 ## Metrics
 
 Every call outcome — admitted, or rejected by one of the checks that ran for it (see
 ["Where admission control attaches"](#where-admission-control-attaches)) — is recorded against one counter,
-`throttle_calls_total`, labeled by `service`, `method`, `weightClass`, and `outcome`, rather than a separately-named
+`throttle_calls` (exported as `throttle_calls_total`; the exporter appends that suffix to every counter itself, so
+the declared name omits it), labeled by `service`, `method`, `weightClass`, and `outcome`, rather than a separately-named
 counter per outcome. Cardinality is identical either way (the same `service × method × weightClass × outcome`
 combinations exist regardless of how they're split across metric names); one counter means a query for "total
 calls" or "rejection rate" for a given service/method sums one metric name instead of enumerating every outcome's
@@ -620,8 +641,8 @@ are actually configured — there is no table, and therefore no gauge, for an un
 
 |             Metric              |                              Type                              |                                                                 Meaning                                                                  |
 |---------------------------------|----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| Calls                           | Counter, labeled by `service`/`method`/`weightClass`/`outcome` | Every call to a throttled method, by outcome (`admitted`, `rejected_global_concurrency`, `rejected_client_concurrency`, `rejected_rate`) |
-| Client-state table size         | Gauge, labeled by `service`/`method`/`weightClass`             | Number of distinct clients tracked by one configured method's throttle, to catch unexpected growth                                       |
+| `throttle_calls`                | Counter, labeled by `service`/`method`/`weightClass`/`outcome` | Every call to a throttled method, by outcome (`admitted`, `rejected_global_concurrency`, `rejected_client_concurrency`, `rejected_rate`) |
+| `throttle_client_state`         | Gauge, labeled by `service`/`method`/`weightClass`             | Number of distinct clients tracked by one configured method's throttle, to catch unexpected growth                                       |
 | `block_read_bulkhead_in_use`    | Gauge, unlabeled                                               | Permits currently held from the shared block-storage read bulkhead                                                                       |
 | `block_read_bulkhead_available` | Gauge, unlabeled                                               | Permits currently available in the shared block-storage read bulkhead                                                                    |
 
