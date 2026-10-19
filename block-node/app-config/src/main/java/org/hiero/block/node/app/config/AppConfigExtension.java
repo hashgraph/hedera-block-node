@@ -17,7 +17,6 @@ public class AppConfigExtension implements ConfigurationExtension {
     @NonNull
     @Override
     public Set<Class<? extends Record>> getConfigDataTypes() {
-        return Set.of(
-                ServerConfig.class, WebServerHttp2Config.class, NodeConfig.class, BlockReadBulkheadConfig.class);
+        return Set.of(ServerConfig.class, WebServerHttp2Config.class, NodeConfig.class, BlockReadBulkheadConfig.class);
     }
 }

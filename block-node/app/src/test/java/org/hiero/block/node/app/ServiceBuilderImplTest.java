@@ -428,11 +428,7 @@ class ServiceBuilderImplTest {
                 .setMetricsExporter(new TestMetricsExporter())
                 .build();
         return new ServiceBuilderImpl(
-                serverConfig,
-                http2Config,
-                SocketOptions.builder().build(),
-                blockReadBulkheadConfig,
-                metricRegistry);
+                serverConfig, http2Config, SocketOptions.builder().build(), blockReadBulkheadConfig, metricRegistry);
     }
 
     private static long countHttp2Configs(final List<ProtocolConfig> protocols) {
