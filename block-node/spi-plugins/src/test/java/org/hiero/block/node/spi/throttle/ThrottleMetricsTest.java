@@ -5,11 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Supplier;
 import org.hiero.metrics.LongCounter;
 import org.hiero.metrics.core.MetricRegistry;
 import org.hiero.metrics.core.MetricRegistrySnapshot;
+import org.hiero.metrics.core.MetricSnapshot;
 import org.hiero.metrics.core.MetricsExporter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -134,10 +138,54 @@ class ThrottleMetricsTest {
                 .accept(() -> 0L));
     }
 
+    @Test
+    @DisplayName("The calls counter and client-state gauge are registered under their documented metric names")
+    void registersMetricsUnderDocumentedNames() {
+        // The exported name a scraper sees can differ from the registered name (the exporter
+        // appends _total to every counter itself, per OpenMetrics convention, verified separately
+        // in BlockNodeThrottleTests' e2e scrape assertion) — this only verifies the name
+        // ThrottleMetrics itself registers, which is what a future accidental rename would change.
+        final CapturingMetricsExporter exporter = new CapturingMetricsExporter();
+        final MetricRegistry metricRegistry =
+                MetricRegistry.builder().setMetricsExporter(exporter).build();
+        new ThrottleMetrics(metricRegistry);
+
+        final Set<String> registeredNames = new HashSet<>();
+        for (final MetricSnapshot snapshot : exporter.snapshot()) {
+            registeredNames.add(snapshot.name());
+        }
+
+        // BlockNodePlugin.METRICS_CATEGORY ("blocknode") is prefixed onto every metric name here
+        // via addCategory, so the registered name is category_name, not the bare name.
+        assertTrue(
+                registeredNames.contains("blocknode_throttle_calls"),
+                "the calls counter must be named blocknode_throttle_calls, found: " + registeredNames);
+        assertTrue(
+                registeredNames.contains("blocknode_throttle_client_state"),
+                "the client-state gauge must be named blocknode_throttle_client_state, found: " + registeredNames);
+    }
+
     /// A no-op metrics exporter so tests don't need a real metrics backend.
     private static final class NoOpMetricsExporter implements MetricsExporter {
         @Override
         public void setSnapshotSupplier(final Supplier<MetricRegistrySnapshot> supplier) {}
+
+        @Override
+        public void close() {}
+    }
+
+    /// Captures the registry's snapshot supplier so a test can inspect registered metric names.
+    private static final class CapturingMetricsExporter implements MetricsExporter {
+        private Supplier<MetricRegistrySnapshot> supplier;
+
+        MetricRegistrySnapshot snapshot() {
+            return supplier.get();
+        }
+
+        @Override
+        public void setSnapshotSupplier(final Supplier<MetricRegistrySnapshot> supplier) {
+            this.supplier = supplier;
+        }
 
         @Override
         public void close() {}

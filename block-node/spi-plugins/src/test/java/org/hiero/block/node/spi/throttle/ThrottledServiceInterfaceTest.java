@@ -281,6 +281,25 @@ class ThrottledServiceInterfaceTest {
     }
 
     @Test
+    @DisplayName("The global-only ceiling (no per-client gate) releases its permit exactly once, even if the "
+            + "outgoing pipeline fires two completion signals")
+    void globalOnlyCeilingReleasesPermitExactlyOnce() {
+        // Covers GlobalConcurrencyGate.tryAdmit's own release guard, which the per-client-gated
+        // tests above never exercise: every unconfigured-method test elsewhere in this class holds
+        // its call open rather than completing it. Mirrors
+        // errorOnOutgoingPipelineReleasesPermitOnce's double-fire shape, for this path instead.
+        final ThrottledServiceInterface throttled = throttledWithOnlyGlobalCeiling(1);
+        throttled.open(ONLY_METHOD, optionsFor("10.0.0.1"), new CapturingPipeline()); // consumes the one permit
+
+        recordingService.capturedReplies.onError(new RuntimeException("simulated cancellation"));
+        recordingService.capturedReplies.onComplete(); // must be a no-op the second time, not a double-release
+
+        final CapturingPipeline secondReplies = new CapturingPipeline();
+        throttled.open(ONLY_METHOD, optionsFor("10.0.0.2"), secondReplies);
+        assertTrue(secondReplies.errors.isEmpty(), "the permit must be released after the error, exactly once");
+    }
+
+    @Test
     @DisplayName("defaultPerClientSettings gates an otherwise-unconfigured method instead of leaving it global-only")
     void defaultPerClientSettingsGatesUnconfiguredMethods() {
         final ThrottledServiceInterface throttled = new ThrottledServiceInterface(
