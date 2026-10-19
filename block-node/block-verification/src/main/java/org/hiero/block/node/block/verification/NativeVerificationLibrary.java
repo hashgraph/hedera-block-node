@@ -20,11 +20,17 @@ import java.util.concurrent.locks.ReentrantLock;
 /// code and that key once, at plugin start, so the first block does not pay for it and a library that
 /// cannot verify in this environment is noticed immediately instead of failing every TSS block proof.
 ///
+/// `TSS.verifyTSS` remembers the outcome of its WRAPS check for the last eight distinct combinations of
+/// WRAPS proof, ledger id and hinTS verification key, so consecutive blocks signed under the same WRAPS
+/// skip that check, the most expensive part of a verification. The hinTS check of the signed hash runs on
+/// every call. That cache, which the library synchronizes itself, is its only mutable state on the
+/// verification path.
+///
 /// Every call into the library runs under a single process-wide [ReentrantLock] owned here, so TSS
-/// verifications complete one at a time, in the order the verification sessions reach the library.
-/// The library itself keeps no mutable state on its verification path, but the plugin's result ordering
-/// relies on that completion order when a node starts without any verified block: the first session to
-/// complete establishes where strict ordering begins.
+/// verifications complete one at a time, in the order the verification sessions reach the library. The
+/// library does not need that serialization, but the plugin's result ordering relies on that completion
+/// order when a node starts without any verified block: the first session to complete establishes where
+/// strict ordering begins.
 public final class NativeVerificationLibrary {
     /// Logger for the gateway.
     private static final System.Logger LOGGER = System.getLogger(NativeVerificationLibrary.class.getName());

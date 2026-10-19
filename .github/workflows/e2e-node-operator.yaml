@@ -251,7 +251,7 @@ jobs:
           echo "BASE_HASH_ALGORITHM=${BASE_HASH_ALGORITHM}" >> "$GITHUB_OUTPUT"
           echo "Base ${BASE} verifies ${BASE_HASH_ALGORITHM} blocks"
 
-          # The TSS library moved to hedera-cryptography 3.21.0 in 0.46.0 (#3689), which changes the TSS
+          # The TSS library moved to hedera-cryptography 3.22.0 in 0.46.0 (#3689), which changes the TSS
           # block proofs and the ledger id. A base release from before that verifies only the earlier
           # proofs, which the snapshot's harness can no longer sign, so the install phase pushes a
           # committed legacy chain (tools-and-tests/scripts/e2e-node-operator/legacy-tss-blocks) and the

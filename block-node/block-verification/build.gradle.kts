@@ -22,11 +22,12 @@ mainModuleInfo {
     runtimeOnly("io.helidon.logging.jul")
 }
 
-// The TSS library is resolved through its 'verifier' variant (gradle/modules.properties),
-// which leaves out the parameters only needed to construct proofs. A POM cannot express
-// that Gradle capability, but the Helm chart resolves plugin jars with Maven from this
-// POM (the resolve-plugins init container), so the variant's classifier is written into
-// the POM to make Maven download the same jar Gradle selects.
+// The TSS library is resolved through its 'verifier' variant, which leaves out the
+// parameters only needed to construct proofs. Gradle selects that variant by capability
+// (the '|verifier' suffix in gradle/modules.properties) and does not translate a
+// capability into a classifier when it writes this module's POM. The Helm chart resolves
+// plugin jars with Maven from that POM (the resolve-plugins init container), so the
+// classifier is added here: Maven then downloads the same verifier jar Gradle selects.
 publishing.publications.withType<MavenPublication>().configureEach {
     pom.withXml {
         val dependencies = asElement().getElementsByTagName("dependency")

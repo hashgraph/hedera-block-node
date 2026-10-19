@@ -34,7 +34,7 @@ ID as the Roster changes (see the [glossary](../block-node/glossary.md#wraps)). 
 checks WRAPS whenever it verifies a block signature and embeds what it checks WRAPS against, so
 the Block Node configures, downloads or installs nothing for it.
 
-**TSS library**: hiero-cryptography, Maven group `com.hedera.cryptography`, version 3.21.0: the
+**TSS library**: hiero-cryptography, Maven group `com.hedera.cryptography`, version 3.22.0: the
 modules `hedera-cryptography-wraps` and `hedera-cryptography-hints`, plus
 `com.hedera.common:hedera-common-nativesupport`.
 
@@ -71,13 +71,20 @@ Nothing is installed into the library: the ledger ID is passed with every call, 
 embeds everything else it verifies against. Earlier library versions needed the Roster and a
 WRAPS verification key installed before verifying; the current API has neither.
 
+`TSS.verifyTSS` remembers the outcome of its WRAPS check for the last eight distinct combinations
+of WRAPS proof, ledger ID and hinTS verification key. Consecutive blocks signed under the same
+WRAPS therefore skip that check, the most expensive part of a verification, while the hinTS check
+of the signed hash runs on every call. That cache, which the library synchronizes itself, is its
+only mutable state on the verification path.
+
 The gateway runs every call into the library under one process-wide lock, so TSS verifications
-complete one at a time, in the order the verification sessions reach the library. The library
-keeps no mutable state on its verification path; the serialization exists because the plugin's
-result ordering relies on that completion order when a node starts without any verified block
-(the first session to complete establishes where strict ordering begins, see
-`ResultOrderingManager`). Throughput is therefore one TSS verification at a time, each costing
-tens of milliseconds of CPU on a laptop and more on small CI runners.
+complete one at a time, in the order the verification sessions reach the library. The library does
+not need the serialization; it exists because the plugin's result ordering relies on that
+completion order when a node starts without any verified block (the first session to complete
+establishes where strict ordering begins, see `ResultOrderingManager`). Throughput is therefore one
+TSS verification at a time. Measured on a laptop, a verification costs about 8 ms when its WRAPS
+was among the recently verified ones and about 75 ms otherwise (the first block signed under a new
+WRAPS); small CI runners are slower.
 
 ### Start-up warm-up
 
@@ -168,7 +175,7 @@ publication.
 ### Migration across TSS library changes
 
 A TSS library change can alter the proof format and the ledger ID of every TSS network. The move
-to hiero-cryptography 3.21.0 (Block Node 0.46.0) is such a change: the Block Node cannot verify
+to hiero-cryptography 3.22.0 (Block Node 0.46.0) is such a change: the Block Node cannot verify
 TSS block proofs produced with the earlier library, and earlier Block Nodes cannot verify the new
 ones. A node upgraded across the change still holds the old ledger ID in its bootstrap file, so
 every new TSS block fails with `BAD_BLOCK_PROOF` and the WARNING above. The verifier does not

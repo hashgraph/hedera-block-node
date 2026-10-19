@@ -29,10 +29,10 @@ or contact your Hashgraph point of contact.
 
 > **Tentative:** these versions are planned and may change until the releases exist.
 
-BN 0.46.0 moves block proof verification to hiero-cryptography 3.21.0, the TSS library release
+BN 0.46.0 moves block proof verification to hiero-cryptography 3.22.0, the TSS library release
 that the Consensus Node adopts with
 [hiero-consensus-node PR 27506](https://github.com/hiero-ledger/hiero-consensus-node/pull/27506)
-(it uses 3.20.1, which is wire compatible with 3.21.0) and the Mirror Node with
+(it uses 3.20.1, which is wire compatible with 3.22.0) and the Mirror Node with
 [hiero-mirror-node PR 14399](https://github.com/hiero-ledger/hiero-mirror-node/pull/14399). The
 library changes the TSS block signature and the ledger ID of every TSS network, so this is a hard
 compatibility break for TSS block proofs:
@@ -49,7 +49,7 @@ Block Node's TSS data at the same time as their Consensus Nodes:
 
 - Without that reset, the BN keeps the old ledger ID from its TSS bootstrap file and every new TSS
   block fails verification with `BAD_BLOCK_PROOF`. The node starts normally; each failing block
-  logs a WARNING `The TSS library 3.21.0 rejected the block signature or the ledger id of the TSS data valid from block <N>`.
+  logs a WARNING `The TSS library 3.22.0 rejected the block signature or the ledger id of the TSS data valid from block <N>`.
 - A BN that already stored TSS signed blocks from before the change must also reset its block
   store: those blocks do not verify on BN 0.46.0+.
 

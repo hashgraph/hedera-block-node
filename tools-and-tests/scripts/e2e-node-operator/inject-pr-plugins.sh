@@ -44,7 +44,7 @@ done
 node() { docker exec "${NODE}" "$@"; }
 
 # Prints the Maven artifact id of a jar file name (artifactId-version[-classifier].jar), or nothing when
-# the name does not follow that pattern. Example: hedera-cryptography-wraps-3.21.0-verifier.jar gives
+# the name does not follow that pattern. Example: hedera-cryptography-wraps-3.22.0-verifier.jar gives
 # hedera-cryptography-wraps.
 artifact_of() {
   if [[ "$1" =~ ^(.+)-([0-9][0-9A-Za-z.+_]*)(-[a-z][a-z0-9]*)?\.jar$ ]]; then

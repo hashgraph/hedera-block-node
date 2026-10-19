@@ -65,7 +65,9 @@ class TssBlockSignerTest {
 
         /// This test aims to assert that flipping a single byte anywhere in a signature, at its start
         /// (where the hinTS verification key is), in its middle and at its end (where the WRAPS is), makes
-        /// `TSS.verifyTSS` reject it, so every part of the signature is checked on every verification.
+        /// `TSS.verifyTSS` reject it, so a change in any part of the signature is detected. That includes
+        /// the WRAPS, whose verification result the library caches: a changed WRAPS is a different cache
+        /// entry and is verified again.
         ///
         /// @param position where to flip a byte, as a fraction of the signature length in percent
         @ParameterizedTest(name = "flipped byte at {0} percent")
