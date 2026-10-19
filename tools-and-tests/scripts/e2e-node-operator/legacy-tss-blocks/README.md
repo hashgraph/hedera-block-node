@@ -1,16 +1,16 @@
 # Legacy TSS harness blocks
 
 Blocks 0 to 2 of the test harness chain, signed with the TSS library the Block Node used before 0.45.0
-(hedera-cryptography 3.13.0), which the 0.45.0 pre-releases before rc2 (rc1, sha256.*) still carry. The node
+(hedera-cryptography 3.13.0), which the 0.45.0 pre-releases up to rc2 (rc1, rc2, sha256.*) still carry. The node
 operator lifecycle workflow (`.github/workflows/e2e-node-operator.yaml`) installs the latest released Block Node
 and pushes these blocks to it before upgrading to the snapshot. A base on that library can only verify TSS block
 proofs of that library, and the snapshot's harness (`:block-verification:generateHarnessBlocks`) can no longer
 sign them, so they are kept here.
 
-|   folder    | hash algorithm |            used for a base release             |
-|-------------|----------------|------------------------------------------------|
-| `sha2-384/` | SHA-384        | before 0.45.0                                  |
-| `sha2-256/` | SHA-256        | 0.45.0 pre-releases before rc2 (rc1, sha256.*) |
+|   folder    | hash algorithm |              used for a base release               |
+|-------------|----------------|----------------------------------------------------|
+| `sha2-384/` | SHA-384        | before 0.45.0                                      |
+| `sha2-256/` | SHA-256        | 0.45.0 pre-releases up to rc2 (rc1, rc2, sha256.*) |
 
 Block 0 carries the `LedgerIdPublication` the base release provisions its TSS data from. After the base phase,
 the workflow resets the TSS bootstrap file on the state volume to the snapshot's before the upgrade, as an

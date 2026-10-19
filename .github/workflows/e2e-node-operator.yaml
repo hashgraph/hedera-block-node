@@ -253,23 +253,21 @@ jobs:
           echo "BASE_HASH_ALGORITHM=${BASE_HASH_ALGORITHM}" >> "$GITHUB_OUTPUT"
           echo "Base ${BASE} verifies ${BASE_HASH_ALGORITHM} blocks"
 
-          # The TSS library moved to hedera-cryptography 3.22.0 in 0.45.0 (#3689), from 0.45.0-rc2 on,
+          # The TSS library moved to hedera-cryptography 3.22.0 in 0.45.0 (#3689), after 0.45.0-rc2,
           # which changes the TSS block proofs and the ledger id. Releases before 0.45.0 and the 0.45.0
-          # pre-releases before rc2 (rc1, alpha, sha256) verify only the earlier proofs, which the
+          # pre-releases up to rc2 (rc1, rc2, alpha, sha256) verify only the earlier proofs, which the
           # snapshot's harness can no longer sign, so the install phase pushes a committed legacy chain
           # (tools-and-tests/scripts/e2e-node-operator/legacy-tss-blocks) and the TSS bootstrap file is
           # reset to the snapshot's before the upgrade. The 0.45.0 pre-releases are matched by name,
           # since version precedence orders sha256.N after rc2; the tssupdate build carries 3.21.0,
-          # which is wire compatible with 3.22.0. A pre-release name not listed here stops the run
-          # instead of guessing which library the base carries.
+          # which is wire compatible with 3.22.0. A pre-release name not listed here, including later
+          # release candidates, stops the run instead of guessing which library the base carries.
           if (( BASE_MAJOR == 0 && BASE_MINOR < 45 )); then
             BASE_TSS_ERA="legacy"
           elif (( BASE_MAJOR == 0 && BASE_MINOR == 45 && BASE_PATCH == 0 )) && [[ -n "${BASE_PRE_RELEASE}" ]]; then
-            if [[ "${BASE_PRE_RELEASE}" =~ ^rc([0-9]+)$ ]] && (( 10#${BASH_REMATCH[1]} >= 2 )); then
+            if [[ "${BASE_PRE_RELEASE}" == "tssupdate" ]]; then
               BASE_TSS_ERA="current"
-            elif [[ "${BASE_PRE_RELEASE}" == "tssupdate" ]]; then
-              BASE_TSS_ERA="current"
-            elif [[ "${BASE_PRE_RELEASE}" =~ ^(rc1|alpha[0-9]+|sha256\.[0-9]+)$ ]]; then
+            elif [[ "${BASE_PRE_RELEASE}" =~ ^(rc[12]|alpha[0-9]+|sha256\.[0-9]+)$ ]]; then
               BASE_TSS_ERA="legacy"
             else
               echo "::error::the TSS library of base ${BASE} is not known to the TSS era gate; add its pre-release name there"

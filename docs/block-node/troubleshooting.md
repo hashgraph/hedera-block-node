@@ -404,7 +404,7 @@ Use the runbooks below during incidents. Each follows a consistent pattern:
 
 ### Block Node shuts down at start (TSS library cannot verify)
 
-> **Applies to:** Block Nodes from BN 0.45.0 (0.45.0-rc2 onward) with the `block-verification` plugin.
+> **Applies to:** Block Nodes from BN 0.45.0 (after 0.45.0-rc2) with the `block-verification` plugin.
 
 1. **Triage**
    - The pod restarts repeatedly shortly after start, and the log of the previous container ends with `The TSS library <version> cannot verify block proofs in this process, shutting down` (SEVERE), followed by `Shutting down, reason=...`.

@@ -20,9 +20,9 @@ who need to know which component versions are required to run together.
 Mirror Node versions are tracked from BN 0.41.0 onwards. The 0.45.0 row is tentative until those
 releases exist; see the [compatibility fence at BN 0.45.0](#compatibility-fence-at-bn-0450--cn-0790--mn-01660).
 Pre-releases on the earlier TSS library pair like the 0.41.x - 0.44.x row: the Block Node
-pre-releases 0.45.0-rc1 and 0.45.0-sha256.*, and the Consensus Node pre-releases of 0.79.0 and
-0.80.0 published so far (the alpha pre-releases). The Block Node carries the new library from
-0.45.0-rc2.
+pre-releases 0.45.0-rc1, 0.45.0-rc2 and 0.45.0-sha256.*, and the Consensus Node pre-releases of
+0.79.0 and 0.80.0 published so far (the alpha pre-releases). The Block Node carries the new library
+from the first 0.45.0 release candidate after rc2.
 For version combinations not listed here, check the
 [Block Node releases page](https://github.com/hiero-ledger/hiero-block-node/releases)
 or contact your Hashgraph point of contact.
@@ -44,8 +44,8 @@ compatibility break for TSS block proofs:
 
 - BN 0.45.0+ cannot verify TSS block proofs produced by a CN on an earlier TSS library (every CN
   release before 0.79.0, and the 0.79.0 and 0.80.0 alpha pre-releases, use hiero-cryptography
-  3.15.0 or older), and a BN older than 0.45.0 (including the 0.45.0-rc1 and 0.45.0-sha256.*
-  pre-releases) cannot verify TSS block proofs produced by CN 0.79.0+.
+  3.15.0 or older), and a BN older than 0.45.0 (including the 0.45.0-rc1, 0.45.0-rc2 and
+  0.45.0-sha256.* pre-releases) cannot verify TSS block proofs produced by CN 0.79.0+.
 - An MN older than 0.166.0 cannot verify TSS block proofs produced by CN 0.79.0+.
 - Wrapped Record Blocks (RSA block proofs) are not affected.
 
