@@ -250,8 +250,9 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
 
     /// {@inheritDoc}
     ///
-    /// Installs the data immediately if it is newer than the currently stored value; persisting it
-    /// and dispatching the notification happen on the ApplicationStateDispatcher thread.
+    /// Installs the data immediately if it carries a ledger id and is valid from a later block than the
+    /// currently stored value, or nothing is stored yet; persisting it and dispatching the notification
+    /// happen on the ApplicationStateDispatcher thread.
     @Override
     public void updateTssData(TssData tssData) {
         if (tssData == null) {
@@ -267,11 +268,13 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
         }
     }
 
-    /// A candidate replaces the current TSS data only if it differs and is not valid from an earlier
-    /// block, so a stale datum can never overwrite a newer one.
+    /// A candidate replaces the current TSS data only if it carries a ledger id (TSS data SHALL carry one,
+    /// see `node_service.proto`) and is valid from a strictly later block, so neither a stale datum nor
+    /// different data for the same block can overwrite what the node holds. With nothing stored, any
+    /// candidate that carries a ledger id is installed.
     private static boolean shouldInstall(final TssData candidate, final TssData current) {
-        return !candidate.equals(current)
-                && (current == null || candidate.validFromBlock() >= current.validFromBlock());
+        return candidate.ledgerId().length() > 0
+                && (current == null || candidate.validFromBlock() > current.validFromBlock());
     }
 
     /// Hands one of the sync methods to the dispatcher. Once [#stop] has shut the dispatcher down the
@@ -597,7 +600,11 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
         if (Files.exists(tssDataJsonPath)) {
             try {
                 TssData tssData = standardParse(TssData.JSON, Bytes.wrap(Files.readAllBytes(tssDataJsonPath)));
-                updateTssData(tssData);
+                if (tssData.ledgerId().length() == 0) {
+                    LOGGER.log(WARNING, "Ignoring the TSS data in {0}: it carries no ledger id", tssDataJsonPath);
+                } else {
+                    updateTssData(tssData);
+                }
             } catch (ParseException | IOException e) {
                 // @todo(3321) this is using an exception to decide to log, but
                 //      doesn't resolve the problem, so the code still fails
