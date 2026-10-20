@@ -136,8 +136,7 @@ class ExpandedCloudStoragePluginTest
     private void awaitPendingRetryCount(final int expectedCount) throws InterruptedException {
         final long deadline = System.currentTimeMillis() + 5_000L;
         while (System.currentTimeMillis() < deadline) {
-            if (getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_PENDING_RETRY_BLOCKS)
-                    >= expectedCount) return;
+            if (plugin.metricsHolder().pendingRetryBlocks().get() >= expectedCount) return;
             Thread.sleep(10);
         }
     }
@@ -561,18 +560,16 @@ class ExpandedCloudStoragePluginTest
         awaitNotifications(1);
 
         assertEquals(
-                1L,
-                getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_TOTAL_UPLOADS),
-                "uploadsTotal must be 1 after one successful upload");
+                1L, plugin.metricsHolder().uploadsTotal().get(), "uploadsTotal must be 1 after one successful upload");
         assertEquals(
                 0L,
-                getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_TOTAL_UPLOAD_FAILURES),
+                plugin.metricsHolder().uploadFailuresTotal().get(),
                 "uploadFailuresTotal must be 0 after a successful upload");
         assertTrue(
-                getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_TOTAL_UPLOADED_BYTES) > 0L,
+                plugin.metricsHolder().uploadBytesTotal().get() > 0L,
                 "uploadBytesTotal must be positive after a successful upload");
         assertTrue(
-                getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_UPLOAD_LATENCY_NS) > 0L,
+                plugin.metricsHolder().uploadLatencyNs().get() > 0L,
                 "uploadLatencyNs must be positive after a successful upload");
     }
 
@@ -605,20 +602,17 @@ class ExpandedCloudStoragePluginTest
         plugin.handleVerification(verifiedNotification(1L, testBlock(1).blockUnparsed()));
         awaitNotifications(1);
 
-        assertEquals(
-                0L,
-                getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_TOTAL_UPLOADS),
-                "uploadsTotal must be 0 after a failed upload");
+        assertEquals(0L, plugin.metricsHolder().uploadsTotal().get(), "uploadsTotal must be 0 after a failed upload");
         assertEquals(
                 1L,
-                getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_TOTAL_UPLOAD_FAILURES),
+                plugin.metricsHolder().uploadFailuresTotal().get(),
                 "uploadFailuresTotal must be 1 after a failed upload");
         assertEquals(
                 0L,
-                getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_TOTAL_UPLOADED_BYTES),
+                plugin.metricsHolder().uploadBytesTotal().get(),
                 "uploadBytesTotal must be 0 after a failed upload");
         assertTrue(
-                getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_UPLOAD_LATENCY_NS) > 0L,
+                plugin.metricsHolder().uploadLatencyNs().get() > 0L,
                 "uploadLatencyNs must be positive even after a failed upload");
     }
 
@@ -687,7 +681,7 @@ class ExpandedCloudStoragePluginTest
                 "PersistedNotification must report succeeded=false for the caught RuntimeException");
         assertEquals(
                 1L,
-                getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_TOTAL_UPLOAD_FAILURES),
+                plugin.metricsHolder().uploadFailuresTotal().get(),
                 "uploadFailuresTotal must still be incremented for the caught RuntimeException");
     }
 
@@ -881,12 +875,10 @@ class ExpandedCloudStoragePluginTest
                 notifications.stream().anyMatch(n -> n.blockNumber() == 2L && !n.succeeded()),
                 "Block 2 must have succeeded=false");
         assertEquals(
-                1L,
-                getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_TOTAL_UPLOADS),
-                "uploadsTotal must be 1 — only block 1 succeeded");
+                1L, plugin.metricsHolder().uploadsTotal().get(), "uploadsTotal must be 1 — only block 1 succeeded");
         assertEquals(
                 1L,
-                getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_TOTAL_UPLOAD_FAILURES),
+                plugin.metricsHolder().uploadFailuresTotal().get(),
                 "uploadFailuresTotal must be 1 — only block 2 failed");
     }
 
@@ -1056,8 +1048,8 @@ class ExpandedCloudStoragePluginTest
         assertTrue(
                 notifications.getFirst().succeeded(),
                 "block must be reported succeeded=true after recovering via retry");
-        assertEquals(0L, getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_PENDING_RETRY_BLOCKS));
-        assertEquals(1L, getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_RETRY_SUCCESS_TOTAL));
+        assertEquals(0L, plugin.metricsHolder().pendingRetryBlocks().get());
+        assertEquals(1L, plugin.metricsHolder().retrySuccessTotal().get());
     }
 
     @Test
@@ -1100,9 +1092,8 @@ class ExpandedCloudStoragePluginTest
         assertFalse(
                 notifications.getFirst().succeeded(),
                 "block must be reported succeeded=false once retries are exhausted");
-        assertEquals(
-                1L, getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_RETRY_EXHAUSTED_TOTAL));
-        assertEquals(0L, getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_PENDING_RETRY_BLOCKS));
+        assertEquals(1L, plugin.metricsHolder().retryExhaustedTotal().get());
+        assertEquals(0L, plugin.metricsHolder().pendingRetryBlocks().get());
     }
 
     @Test
@@ -1153,9 +1144,8 @@ class ExpandedCloudStoragePluginTest
         assertFalse(
                 notifications.getFirst().succeeded(),
                 "block must be reported succeeded=false once retries are exhausted, even via an Error");
-        assertEquals(
-                1L, getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_RETRY_EXHAUSTED_TOTAL));
-        assertEquals(0L, getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_PENDING_RETRY_BLOCKS));
+        assertEquals(1L, plugin.metricsHolder().retryExhaustedTotal().get());
+        assertEquals(0L, plugin.metricsHolder().pendingRetryBlocks().get());
     }
 
     @Test
@@ -1193,9 +1183,8 @@ class ExpandedCloudStoragePluginTest
         assertEquals(1, notifications.size(), "stop() must flush the still-buffered block as one notification");
         assertEquals(4L, notifications.getFirst().blockNumber());
         assertFalse(notifications.getFirst().succeeded(), "a block dropped at shutdown must be reported as failed");
-        assertEquals(
-                1L, getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_RETRY_EXHAUSTED_TOTAL));
-        assertEquals(0L, getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_PENDING_RETRY_BLOCKS));
+        assertEquals(1L, plugin.metricsHolder().retryExhaustedTotal().get());
+        assertEquals(0L, plugin.metricsHolder().pendingRetryBlocks().get());
     }
 
     @Test
@@ -1239,9 +1228,7 @@ class ExpandedCloudStoragePluginTest
         assertEquals(1, notifications.size());
         assertTrue(notifications.getFirst().succeeded());
         assertEquals(
-                0L,
-                getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_PENDING_RETRY_BLOCKS),
-                "gauge must reflect the cleared buffered entry");
+                0L, plugin.metricsHolder().pendingRetryBlocks().get(), "gauge must reflect the cleared buffered entry");
 
         // The retry scheduler must find nothing left to retry for this block.
         runRetryTick();
@@ -1289,9 +1276,9 @@ class ExpandedCloudStoragePluginTest
         assertEquals(1, notifications.size(), "only the evicted block must be reported");
         assertEquals(10L, notifications.getFirst().blockNumber());
         assertFalse(notifications.getFirst().succeeded(), "an evicted block must be reported as failed");
-        assertEquals(
-                1L, getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_RETRY_EXHAUSTED_TOTAL));
-        assertEquals(1L, getMetricValue(ExpandedCloudStoragePlugin.METRIC_EXPANDED_CLOUD_STORAGE_PENDING_RETRY_BLOCKS));
+
+        assertEquals(1L, plugin.metricsHolder().retryExhaustedTotal().get());
+        assertEquals(1L, plugin.metricsHolder().pendingRetryBlocks().get());
     }
 
     @Test
