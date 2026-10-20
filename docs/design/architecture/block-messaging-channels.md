@@ -326,6 +326,10 @@ handler on the loop publishes to must break the cycle. Here `BLOCK_VALIDATIONS` 
 `FORWARDED`, and the same-channel `ISE` catches the simple case. The forwarder queues are unbounded today, so the
 `messaging_forwarder_pending` gauge is how operators see a stuck consumer behind a forwarder.
 
+Rule for producers on the loop: a gating handler never publishes to another channel from its own thread. It hands
+the message to the plugin's own worker, so a full downstream ring blocks that worker instead of the upstream ring's
+gating sequence. With this rule, the loop no longer depends on unbounded forwarders for liveness.
+
 ### Test fixture
 
 `TestBlockMessagingFacility` implements the three generic methods. The typed getters
