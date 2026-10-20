@@ -527,7 +527,7 @@ class ValidateBlocksCommandTest {
         fakeCheckpoint.addProperty("schemaVersion", 3);
         fakeCheckpoint.addProperty("lastValidatedBlockNumber", 0);
         fakeCheckpoint.addProperty("blocksValidated", 1);
-        fakeCheckpoint.addProperty("previousBlockHashHex", "aa".repeat(48));
+        fakeCheckpoint.addProperty("previousBlockHashHex", "aa".repeat(32));
         Files.writeString(checkpointDir.resolve("validateProgress.json"), fakeCheckpoint.toString());
 
         // --no-resume should validate ALL 5 blocks from scratch
@@ -572,7 +572,8 @@ class ValidateBlocksCommandTest {
 
         TssData parsed = standardParse(TssData.PROTOBUF, Bytes.wrap(Files.readAllBytes(binPath)));
         assertEquals(ledgerId, parsed.ledgerId());
-        assertEquals(wrapsVerificationKey, parsed.wrapsVerificationKey());
+        assertEquals(
+                Bytes.EMPTY, parsed.wrapsVerificationKey(), "the publication key is no longer carried into TssData");
     }
 
     @Test

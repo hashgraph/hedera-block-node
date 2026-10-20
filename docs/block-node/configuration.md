@@ -65,7 +65,7 @@ grants less than configured. On high-latency links, raise the `tcp_rmem` / `tcp_
 
 | ENV Variable                                 | Description                                                                                                                                                                                                                                                                                                                            |                                Default                                |
 |:---------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------|
-| APP_STATE_TSS_BOOTSTRAP_FILE_PATH            | Path where [TSS](./glossary.md#tss-hints) data (ledger ID, current roster, [WRAPS](./glossary.md#wraps) VK) is persisted across restarts.                                                                                                                                                                                              | /opt/hiero/block-node/application-state/tss-bootstrap-roster.json     |
+| APP_STATE_TSS_BOOTSTRAP_FILE_PATH            | Path where [TSS](./glossary.md#tss-hints) data (ledger ID and the informational current Roster) is persisted across restarts.                                                                                                                                                                                                          | /opt/hiero/block-node/application-state/tss-bootstrap-roster.json     |
 | APP_STATE_RSA_BOOTSTRAP_FILE_PATH            | Path where the single current RSA node address book is persisted across restarts. Used by single-book deployments that have not yet migrated to the address book history file.                                                                                                                                                         | /opt/hiero/block-node/application-state/rsa-bootstrap-roster.json     |
 | APP_STATE_RSA_ADDRESS_BOOK_HISTORY_FILE_PATH | Path to the block-number-keyed RSA address book history file (JSON-encoded `RangedAddressBookHistory`). When present, this file takes precedence over `APP_STATE_RSA_BOOTSTRAP_FILE_PATH` and enables verification of historical [WRBs](./glossary.md#wrb-wrapped-record-block) against the address book that was in effect per block. | /opt/hiero/block-node/application-state/rsa-address-book-history.json |
 | APP_STATE_BLOCK_RANGES_FILE_PATH             | Path where the set of available and stored block ranges is persisted. Written every 1,000 blocks received.                                                                                                                                                                                                                             | /opt/hiero/block-node/application-state/block-ranges.json             |
@@ -119,10 +119,12 @@ A base Block Node deployment ships with no plugins; the Helm chart downloads the
 
 ```yaml
 plugins:
-  names: "facility-messaging,block-access-service,health,server-status,stream-publisher,stream-subscriber,block-verification,blocks-file-historic,blocks-file-recent,backfill"
+  names: "facility-app-state,facility-messaging,block-access-service,health,server-status,stream-publisher,stream-subscriber,block-verification,blocks-file-historic,blocks-file-recent,backfill"
 ```
 
 > **Note:** All [Tier 2](./glossary.md#tier-2-block-node) Block Nodes should drop `stream-publisher` from `plugins.names`. The presence of `stream-publisher` is the main difference between a Tier 1 and a Tier 2 deployment.
+>
+> **Upgrading to 0.46.0:** `facility-app-state` is now required. If you set your own `plugins.names`, add `facility-app-state` before upgrading, or the node fails at startup with `No ApplicationStateFacility provided`. If you roll back to an earlier version, remove it again, since earlier versions do not publish that plugin.
 
 To change which plugins load, edit the list. Adding a name causes that plugin to be downloaded and loaded on the next pod start. Removing a name skips it on the next start, but the previously-installed JAR remains in the plugins folder unless the folder is cleared between runs (for example, by recreating the PVC or the volume backing the plugins directory). Operators do not need to rebuild the Block Node image — the chart resolves plugins from configured sources at pod start.
 
@@ -133,11 +135,11 @@ The chart supports two sources for downloading plugins; both are configurable:
 - **`plugins.repositories`** (recommended for production): Maven repositories the init container queries to resolve plugin artifacts. Defaults to Maven Central and Sonatype Snapshots. Operators running at scale should add a local mirror to `plugins.repositories` to reduce dependency on public infrastructure.
 - **`plugins.mavenImage`** (intended for local and Solo testing): a container image with plugin JARs pre-built into it. Used as a fallback when network-based resolution from `plugins.repositories` isn't appropriate.
 
-|      Chart value       |                       Purpose                       |                                                                                                     Default                                                                                                     |
-|------------------------|-----------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `plugins.names`        | Comma-separated list of plugin identifiers to load  | `backfill,block-access-service,block-verification,blocks-file-historic,blocks-file-recent,facility-messaging,health,roster-bootstrap-rsa,roster-bootstrap-tss,server-status,stream-publisher,stream-subscriber` |
-| `plugins.repositories` | Maven repositories used to resolve plugin artifacts | `central` (`https://repo1.maven.org/maven2`), `sonatype-snapshots` (`https://central.sonatype.com/repository/maven-snapshots`)                                                                                  |
-| `plugins.mavenImage`   | Container image used as a fallback plugin source    | `maven:3-eclipse-temurin-25-alpine`                                                                                                                                                                             |
+|      Chart value       |                       Purpose                       |                                                                                                              Default                                                                                                               |
+|------------------------|-----------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `plugins.names`        | Comma-separated list of plugin identifiers to load  | `backfill,block-access-service,block-verification,blocks-file-historic,blocks-file-recent,facility-app-state,facility-messaging,health,roster-bootstrap-rsa,roster-bootstrap-tss,server-status,stream-publisher,stream-subscriber` |
+| `plugins.repositories` | Maven repositories used to resolve plugin artifacts | `central` (`https://repo1.maven.org/maven2`), `sonatype-snapshots` (`https://central.sonatype.com/repository/maven-snapshots`)                                                                                                     |
+| `plugins.mavenImage`   | Container image used as a fallback plugin source    | `maven:3-eclipse-temurin-25-alpine`                                                                                                                                                                                                |
 
 ### Third-party plugins (Maven-resolvable)
 
@@ -302,13 +304,14 @@ for the JSON schema.
 
 ### Subscriber Plugin Configuration
 
-| ENV Variable                               | Description                                                                                            |   Default |
-|:-------------------------------------------|:-------------------------------------------------------------------------------------------------------|----------:|
-| SUBSCRIBER_LIVE_QUEUE_SIZE                 | Queue size (in batches) for transferring live data between messaging and client threads. Must be ≥100. |      4000 |
-| SUBSCRIBER_MAXIMUM_FUTURE_REQUEST          | Max blocks ahead of latest "live" block a request can start from. Must be ≥10.                         |      4000 |
-| SUBSCRIBER_MINIMUM_LIVE_QUEUE_CAPACITY     | Minimum free capacity in the live queue before dropping oldest blocks. Typically ~10% of queue size.   |       400 |
-| SUBSCRIBER_MAX_PROTOBUF_MESSAGE_SIZE_BYTES | Max protobuf message size (bytes) accepted when parsing a block to stream to a subscriber.             | 131072000 |
-| SUBSCRIBER_PORT                            | Dedicated port for the subscriber gRPC service. When unset, the service shares `SERVER_PORT`.          |   (unset) |
+| ENV Variable                                       | Description                                                                                            |   Default |
+|:---------------------------------------------------|:-------------------------------------------------------------------------------------------------------|----------:|
+| SUBSCRIBER_LIVE_QUEUE_SIZE                         | Queue size (in batches) for transferring live data between messaging and client threads. Must be ≥100. |      4000 |
+| SUBSCRIBER_MAXIMUM_FUTURE_REQUEST                  | Max blocks ahead of latest "live" block a request can start from. Must be ≥10.                         |      4000 |
+| SUBSCRIBER_MINIMUM_LIVE_QUEUE_CAPACITY             | Minimum free capacity in the live queue before dropping oldest blocks. Typically ~10% of queue size.   |       400 |
+| SUBSCRIBER_MAX_PROTOBUF_MESSAGE_SIZE_BYTES         | Max protobuf message size (bytes) accepted when parsing a block to stream to a subscriber.             | 131072000 |
+| SUBSCRIBER_PORT                                    | Dedicated port for the subscriber gRPC service. When unset, the service shares `SERVER_PORT`.          |   (unset) |
+| SUBSCRIBER_COMPLETED_SESSION_REAP_INTERVAL_SECONDS | How often the background reaper drains completed subscriber sessions, independent of new traffic.      |         5 |
 
 ### TSS Bootstrap Plugin Configuration
 
@@ -338,6 +341,11 @@ for the JSON schema.
 > be imposed for the `PUBLISHER` source. In that scenario, it is possible that gaps can happen, because sources,
 > other than `PUBLISHER`, can supply a valid block, much higher than last verified. This concern is understood and
 > accepted.
+>
+> _NOTE_ the TSS library that verifies TSS block proofs has no configuration. At start it extracts its native libraries
+> (a few MB) into the directory named by the `java.io.tmpdir` system property (`/tmp` by default), which must be
+> writable and allow executing mapped files; the Block Node shuts down when the library cannot load. See
+> [TSS Block Proof Verification](../design/tss-block-proof-verification.md#start-up-warm-up).
 
 ### Verification Plugin Configuration (DEPRECATED)
 
@@ -346,7 +354,7 @@ for the JSON schema.
 | VERIFICATION_ALL_BLOCKS_HASHER_ENABLED              | Enable the all-blocks hasher to compute and verify a rolling root hash.        |                                                                   false |
 | VERIFICATION_ALL_BLOCKS_HASHER_FILE_PATH            | Path to the persisted root hash file for all previous blocks.                  | /opt/hiero/block-node/application-state/rootHashOfAllPreviousBlocks.bin |
 | VERIFICATION_ALL_BLOCKS_HASHER_PERSISTENCE_INTERVAL | How often (in blocks) the hasher persists its state to disk.                   |                                                                      10 |
-| VERIFICATION_TSS_PARAMETERS_FILE_PATH               | Path to the persisted TSS parameters file (ledger ID, address book, WRAPS VK). |              /opt/hiero/block-node/application-state/tss-parameters.bin |
+| VERIFICATION_TSS_PARAMETERS_FILE_PATH               | Not read: the TSS data is kept at `APP_STATE_TSS_BOOTSTRAP_FILE_PATH` instead. |              /opt/hiero/block-node/application-state/tss-parameters.bin |
 | VERIFICATION_DUMP_ENABLED                           | Write failing block bytes and metadata to disk for post-incident diagnostics.  |                                                                   false |
 | VERIFICATION_DUMP_DIRECTORY_PATH                    | Directory where bad-block dump files are written.                              |                                /opt/hiero/block-node/verification/dumps |
 | VERIFICATION_DUMP_RETENTION_DAYS                    | Number of days to retain dump files before the daily purge removes them.       |                                                                       7 |
