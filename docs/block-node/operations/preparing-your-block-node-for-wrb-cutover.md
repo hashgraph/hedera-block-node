@@ -211,7 +211,7 @@ Add `roster-bootstrap-rsa` to your plugin list in `block-node-values.yaml`. Appe
 
 ```yaml
 plugins:
-  names: facility-messaging,block-access-service,health,server-status,stream-publisher,stream-subscriber,block-verification,blocks-file-historic,blocks-file-recent,backfill,roster-bootstrap-rsa,roster-bootstrap-tss
+  names: facility-app-state,facility-messaging,block-access-service,health,server-status,stream-publisher,stream-subscriber,block-verification,blocks-file-historic,blocks-file-recent,backfill,roster-bootstrap-rsa,roster-bootstrap-tss
 ```
 
 **Mirror Node auto-fetch (mainnet cohort default)**
@@ -369,7 +369,6 @@ The file format:
 ```json
 {
   "ledgerId": "AAECAwQFBgc=",
-  "wrapsVerificationKey": "CAkKCwwNDg8=",
   "currentRoster": {
     "rosterEntries": [
       { "nodeId": 4, "weight": 100, "schnorrPublicKey": "EBESExQVFhc=" },
@@ -382,6 +381,10 @@ The file format:
 ```
 
 > Note: The values above are placeholders. Your Hashgraph PoC provides the actual base64-encoded values for your network.
+
+`ledgerId` is required, `validFromBlock` defaults to 0, and `currentRoster` is informational and may be omitted. Files written by earlier releases may also carry a
+`wrapsVerificationKey`, which the Block Node ignores: the TSS library embeds what it verifies against. TSS data from before the TSS library change in BN 0.45.0 does not verify blocks
+of the new library; see [Resetting TSS data across a TSS library change](./resetting-and-upgrading-the-block-node.md#resetting-tss-data-across-a-tss-library-change).
 
 **Peer Block Node query**
 
