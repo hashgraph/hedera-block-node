@@ -112,7 +112,8 @@ Facts below refer to `origin/main` at `e9354734a`.
 Processors are built with `BatchEventProcessorBuilder` (L882) and never get an exception handler.
 `setDefaultExceptionHandler` (L281–L282) only applies to handlers added through the Disruptor DSL. In Disruptor
 4.0.0 the fallback is `FatalExceptionHandler`, which rethrows, so a throwing handler kills its processor thread. If
-the handler was gating, the ring stalls. This is fixed in the first implementation PR regardless of this design.
+the handler was gating, the ring stalls. Tracked in
+[#3882](https://github.com/hiero-ledger/hiero-block-node/issues/3882) and fixed separately from this design.
 
 ### Cost of a new message kind today
 
@@ -302,8 +303,8 @@ One `ChannelRuntime<T>` per channel, held in an array indexed by `MessageChannel
 lambda. A forwarded send still allocates the submitted task and its queue node. Each processor wraps the handler to compute percentage behind head (as today), apply `EVICT_ON_LAG`,
 set the same-channel `ThreadLocal`, catch and count exceptions, and log them.
 
-Every processor gets an explicit exception handler (log, count in `messaging_handler_errors`, continue), fixing the
-[known defect](#known-defect).
+Every processor keeps the explicit exception handler added by the [#3882](https://github.com/hiero-ledger/hiero-block-node/issues/3882)
+fix and counts in `messaging_handler_errors` ([OQ11](#open-questions)).
 
 Memory held by a ring is `queueSize × largest payload`. Rings 3 and 4 carry whole blocks, so their sizes must
 be small. The numbers are left to #3615.
@@ -516,15 +517,15 @@ ones for one minor release so dashboards and alerts can move, then removed in #3
 
 ## Migration Plan
 
-| PR |                                Scope                                |                       Plugin changes                       |
-|----|---------------------------------------------------------------------|------------------------------------------------------------|
-| 1  | This design doc                                                     | none                                                       |
-| 2a | SPI types, channel engine, adapters, fixture, exception-handler fix | none; existing facility and plugin tests prove equivalence |
-| 2b | New metrics (dual-emitted), dashboard updates                       | none                                                       |
-| 3  | #3613 on `BLOCK_VALIDATIONS`                                        | verification producer, storage consumers                   |
-| 4  | #3614 on `UNVALIDATED_BLOCKS`, with #3743 and #3674                 | backfill, subscribe client, verification                   |
-| 5  | Plugins move to `send` / `register`; typed methods deprecated       | all plugins, one or a few per PR                           |
-| 6  | #3615 sizing and tuning; old metrics removed                        | none                                                       |
+| PR |                             Scope                             |                       Plugin changes                       |
+|----|---------------------------------------------------------------|------------------------------------------------------------|
+| 1  | This design doc                                               | none                                                       |
+| 2a | SPI types, channel engine, adapters, fixture                  | none; existing facility and plugin tests prove equivalence |
+| 2b | New metrics (dual-emitted), dashboard updates                 | none                                                       |
+| 3  | #3613 on `BLOCK_VALIDATIONS`                                  | verification producer, storage consumers                   |
+| 4  | #3614 on `UNVALIDATED_BLOCKS`, with #3743 and #3674           | backfill, subscribe client, verification                   |
+| 5  | Plugins move to `send` / `register`; typed methods deprecated | all plugins, one or a few per PR                           |
+| 6  | #3615 sizing and tuning; old metrics removed                  | none                                                       |
 
 The architecture documents (`current-plugin-architecture.md`, `new-plugin-architecture.md`, `data-flow.md` and
 plugin designs naming typed methods) are updated in PR 5, once the typed API is deprecated.
