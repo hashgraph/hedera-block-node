@@ -401,7 +401,10 @@ blockNode:
         path: /mnt/fast-storage/block-node/live
 ```
 
-See `values.yaml` for all `pv` options.
+See `values.yaml` for all `pv` options. Notes:
+- The volume's `subPath` (`archive-data`, `live-data` by default) still applies, so data lands under `<path>/<subPath>`. Set `subPath: ""` to use `path` directly.
+- `hostPath` volumes are not tied to a node unless you set `pv.nodeAffinity` (or a pod `nodeSelector`). On multi-node clusters, set one, otherwise a rescheduled pod gets an empty directory.
+- Switching an existing release between `volumeClaimTemplates` and `pv.path` changes the StatefulSet `volumeClaimTemplates`, which Kubernetes does not allow in place. Uninstall and reinstall the release (data on the host path is kept, `reclaimPolicy` defaults to `Retain`).
 
 ## Post-Installation
 
