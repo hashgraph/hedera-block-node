@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Stream;
 import org.hiero.block.api.BlockRange;
 import org.hiero.block.api.NetworkConnection;
@@ -590,7 +591,7 @@ class ApplicationStateUtilityTest {
         @Test
         @DisplayName("matches a set union for randomly fragmented inputs")
         void matchesSetUnionForRandomInputs() {
-            final java.util.Random random = new java.util.Random(3803);
+            final Random random = new Random(3803);
             for (int round = 0; round < 200; round++) {
                 final ConcurrentLongRangeSet stored = randomRanges(random);
                 final ConcurrentLongRangeSet available = randomRanges(random);
@@ -604,7 +605,7 @@ class ApplicationStateUtilityTest {
             }
         }
 
-        private static ConcurrentLongRangeSet randomRanges(final java.util.Random random) {
+        private static ConcurrentLongRangeSet randomRanges(final Random random) {
             final ConcurrentLongRangeSet set = new ConcurrentLongRangeSet();
             final int count = random.nextInt(20);
             for (int i = 0; i < count; i++) {
