@@ -393,6 +393,25 @@ blockNode:
     metrics: 16007  # binds the metrics container port to the host
 ```
 
+### Use Pre-Provisioned Host Storage (hostPath / local)
+
+Set `pv.path` on a volume (`archive`, `live`, `logging`, `applicationState` or `plugins`) to have the chart render a `PersistentVolume` and a bound `PersistentVolumeClaim` instead of a `volumeClaimTemplate`:
+
+```yaml
+blockNode:
+  persistence:
+    live:
+      size: 6Ti
+      pv:
+        type: hostPath  # hostPath | local (local requires nodeAffinity)
+        path: /mnt/fast-storage/block-node/live
+```
+
+See `values.yaml` for all `pv` options. Notes:
+- The volume's `subPath` (`archive-data`, `live-data` by default) still applies, so data lands under `<path>/<subPath>`. Set `subPath: ""` to use `path` directly.
+- `hostPath` volumes are not tied to a node unless you set `pv.nodeAffinity` (or a pod `nodeSelector`). On multi-node clusters, set one, otherwise a rescheduled pod gets an empty directory.
+- Switching an existing release between `volumeClaimTemplates` and `pv.path` changes the StatefulSet `volumeClaimTemplates`, which Kubernetes does not allow in place. Uninstall and reinstall the release (data on the host path is kept, `reclaimPolicy` defaults to `Retain`).
+
 ### Read-only Root Filesystem
 
 The chart leaves `securityContext` empty. If you set `readOnlyRootFilesystem: true`, keep the directory named by the
