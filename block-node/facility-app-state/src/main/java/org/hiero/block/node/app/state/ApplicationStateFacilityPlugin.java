@@ -600,19 +600,19 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
     /// and ignored.
     private void loadTssData() {
         final Path tssDataJsonPath = appStateConfig.tssBootstrapFilePath();
-        if (!Files.exists(tssDataJsonPath)) {
-            ensureParentDirectory(tssDataJsonPath);
-            return;
-        }
-        try {
-            TssData tssData = standardParse(TssData.JSON, Bytes.wrap(Files.readAllBytes(tssDataJsonPath)));
-            if (tssData.ledgerId().length() == 0) {
-                LOGGER.log(WARNING, "Ignoring the TSS data in {0}: it carries no ledger id", tssDataJsonPath);
-            } else {
-                updateTssData(tssData);
+        if (Files.exists(tssDataJsonPath)) {
+            try {
+                TssData tssData = standardParse(TssData.JSON, Bytes.wrap(Files.readAllBytes(tssDataJsonPath)));
+                if (tssData.ledgerId().length() == 0) {
+                    LOGGER.log(WARNING, "Ignoring the TSS data in {0}: it carries no ledger id", tssDataJsonPath);
+                } else {
+                    updateTssData(tssData);
+                }
+            } catch (ParseException | IOException e) {
+                LOGGER.log(WARNING, "Failed to read TssData file: " + tssDataJsonPath, e);
             }
-        } catch (ParseException | IOException e) {
-            LOGGER.log(WARNING, "Failed to read TssData file: " + tssDataJsonPath, e);
+        } else {
+            ensureParentDirectory(tssDataJsonPath);
         }
     }
 
@@ -620,21 +620,22 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
     /// for future writes. An unreadable or corrupt file aborts startup.
     private void loadAddressBookHistory() {
         final Path historyFilePath = appStateConfig.rsaBootstrapFilePath();
-        if (!Files.exists(historyFilePath)) {
+        if (Files.exists(historyFilePath)) {
+            final RangedAddressBookHistory history;
+            try {
+                history = readAddressBookHistory(historyFilePath);
+            } catch (IOException e) {
+                throw new IllegalStateException("Failed to read RSA address book history file: " + historyFilePath, e);
+            } catch (ParseException e) {
+                final String message =
+                        "Corrupt RSA bootstrap file at %s — delete and restart to re-fetch from Mirror Node"
+                                .formatted(historyFilePath);
+                throw new IllegalStateException(message, e);
+            }
+            updateAddressBookHistory(history);
+        } else {
             ensureParentDirectory(historyFilePath);
-            return;
         }
-        final RangedAddressBookHistory history;
-        try {
-            history = readAddressBookHistory(historyFilePath);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to read RSA address book history file: " + historyFilePath, e);
-        } catch (ParseException e) {
-            final String message = "Corrupt RSA bootstrap file at %s — delete and restart to re-fetch from Mirror Node"
-                    .formatted(historyFilePath);
-            throw new IllegalStateException(message, e);
-        }
-        updateAddressBookHistory(history);
     }
 
     /// Reads the address book history file. If it holds no history, the old single-book bootstrap format is
@@ -668,21 +669,41 @@ public class ApplicationStateFacilityPlugin implements ApplicationStateFacility 
     }
 
     /// Loads the block ranges (JSON format) if the file exists, restoring them directly into the in-memory
-    /// range sets, otherwise creates the directory for future writes. An unreadable file is logged and ignored.
+    /// range sets, otherwise creates the directory for future writes. An unreadable file, or one holding an
+    /// invalid range, is logged and ignored as a whole, so no part of it is restored.
     private void loadBlockRanges() {
         final Path blockRangesPath = appStateConfig.blockRangesFilePath();
-        if (!Files.exists(blockRangesPath)) {
+        if (Files.exists(blockRangesPath)) {
+            try {
+                final BlockRangesState rangeSet =
+                        standardParse(BlockRangesState.JSON, Bytes.wrap(Files.readAllBytes(blockRangesPath)));
+                restoreStoredBlocks(rangeSet.storedBlocks(), blockRangesPath);
+            } catch (ParseException | IOException e) {
+                LOGGER.log(WARNING, "Failed to read block ranges file: " + blockRangesPath, e);
+            }
+        } else {
             ensureParentDirectory(blockRangesPath);
-            return;
         }
-        try {
-            final BlockRangesState rangeSet =
-                    standardParse(BlockRangesState.JSON, Bytes.wrap(Files.readAllBytes(blockRangesPath)));
-            rangeSet.storedBlocks().forEach(r -> storedBlocks.add(new LongRange(r.rangeStart(), r.rangeEnd())));
-            LOGGER.log(INFO, "Loaded block ranges from file: {0}", blockRangesPath);
-        } catch (ParseException | IOException | IllegalArgumentException e) {
-            LOGGER.log(WARNING, "Failed to read block ranges file: " + blockRangesPath, e);
+    }
+
+    /// Adds the stored ranges read from the block ranges file to the in-memory set, but only if every one of
+    /// them is a valid {@link LongRange}.
+    ///
+    /// @param ranges the stored ranges read from the file
+    /// @param source the file the ranges were read from, for logging
+    private void restoreStoredBlocks(final List<BlockRange> ranges, final Path source) {
+        if (ranges.stream().allMatch(r -> isValidRange(r.rangeStart(), r.rangeEnd()))) {
+            ranges.forEach(r -> storedBlocks.add(new LongRange(r.rangeStart(), r.rangeEnd())));
+            LOGGER.log(INFO, "Loaded block ranges from file: {0}", source);
+        } else {
+            LOGGER.log(WARNING, "Ignoring block ranges file with an invalid range: {0}", source);
         }
+    }
+
+    /// Whether the values form a valid {@link LongRange}: both within 0 to `Long.MAX_VALUE - 1`, with start
+    /// not after end.
+    private static boolean isValidRange(final long start, final long end) {
+        return start >= 0 && end >= start && end < Long.MAX_VALUE;
     }
 
     /// Creates the parent directory of a state file so later writes can succeed. A failure is logged; the
