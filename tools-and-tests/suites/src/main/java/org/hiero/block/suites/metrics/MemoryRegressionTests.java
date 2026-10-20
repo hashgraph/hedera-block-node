@@ -19,7 +19,7 @@ import org.testcontainers.containers.GenericContainer;
 
 ///
 /// Regression guard for issue #3026: the block node must run within the nano profile's resource
-/// limits (`charts/block-node-server/values-overrides/nano.yaml`): 1 CPU and 192 MB.
+/// limits (`charts/block-node-server/values-overrides/nano.yaml`): 1 CPU and 192 MiB.
 ///
 /// The nano profile targets memory-constrained environments (minikube, laptops). Its key overrides:
 /// - `SERVER_SOCKET_RECEIVE_BUFFER_SIZE_BYTES=131072` (128 KB, vs kernel autotune in the production default)
@@ -49,8 +49,8 @@ public class MemoryRegressionTests extends BaseSuite {
     /// CPU limit of the nano profile (`limits.cpu: "1"`), in units of 10^-9 CPUs.
     private static final long NANO_CPU_LIMIT_NANO_CPUS = 1_000_000_000L;
 
-    /// Memory limit of the nano profile (`limits.memory: "192M"`), in bytes.
-    private static final long NANO_MEMORY_LIMIT_BYTES = 192_000_000L;
+    /// Memory limit of the nano profile (`limits.memory: "192Mi"`), in bytes.
+    private static final long NANO_MEMORY_LIMIT_BYTES = 192L * 1024 * 1024;
 
     /// Environment variable overrides mirroring `values-overrides/nano.yaml`.
     private static final Map<String, String> NANO_ENV = Map.of(
@@ -82,7 +82,7 @@ public class MemoryRegressionTests extends BaseSuite {
     }
 
     @Test
-    @DisplayName("Nano profile runs within its 1 CPU / 192 MB limits (issue #3026 regression guard)")
+    @DisplayName("Nano profile runs within its 1 CPU / 192 MiB limits (issue #3026 regression guard)")
     void nanoProfileRunsWithinItsResourceLimits() throws IOException, InterruptedException {
         BlockNodeContainerConfig nanoConfig = new BlockNodeContainerConfig(NANO_PORT, NANO_METRICS_PORT, "", NANO_ENV);
         GenericContainer<?> nanoContainer = createContainer(nanoConfig);
@@ -105,7 +105,7 @@ public class MemoryRegressionTests extends BaseSuite {
         Thread.sleep(2_000);
 
         long rssKb = readMaxVmRssKb(nanoContainer);
-        System.out.printf("Nano profile RSS: %d KB / %.1f MB%n", rssKb, rssKb / 1024.0);
+        System.out.printf("Nano profile RSS: %d KB / %.1f MiB%n", rssKb, rssKb / 1024.0);
     }
 
     /// Gives the container the CPU and memory limits of the nano pod, with no swap.
