@@ -117,7 +117,7 @@ final class ApplicationStateUtility {
         if (open) {
             merged.add(new BlockRange(start, end));
         }
-        return List.copyOf(merged);
+        return merged;
     }
 
     /// Convert BlockRangeSet to BlockRange
