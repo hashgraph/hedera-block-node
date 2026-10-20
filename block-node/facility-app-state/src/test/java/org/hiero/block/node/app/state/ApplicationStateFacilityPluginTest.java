@@ -423,6 +423,49 @@ class ApplicationStateFacilityPluginTest {
         assertThat(handler.tssDataNotifications).containsExactly(tssData);
     }
 
+    /// This test aims to assert that different TSS data valid from the same block as the installed data is
+    /// ignored: it is not installed, not dispatched and not persisted, so the facility follows the same
+    /// strictly-later rule as the verification plugin and a peer cannot replace the persisted data for a block
+    /// the node already holds data for.
+    @Test
+    @DisplayName("updateTssData ignores different data valid from the same block")
+    void updateTssDataIgnoresDifferentDataForTheSameBlock() throws Exception {
+        final Fixture f = newFixture();
+        final RecordingHandler handler = new RecordingHandler();
+        f.register(handler);
+        f.initAndStart();
+
+        final TssData installed = buildTssData(10, "040506");
+        f.plugin.updateTssData(installed);
+        f.plugin.updateTssData(buildTssData(10, "0a0b0c"));
+        f.plugin.stop();
+
+        assertThat(f.plugin.tssData()).isEqualTo(installed);
+        assertThat(handler.tssDataNotifications).containsExactly(installed);
+        assertThat(TssData.JSON.parse(Bytes.wrap(Files.readAllBytes(f.config.tssBootstrapFilePath()))))
+                .isEqualTo(installed);
+    }
+
+    /// This test aims to assert that TSS data without a ledger id is never installed, dispatched or
+    /// persisted, since TSS data SHALL carry a ledger id, while data with a ledger id is still installed
+    /// afterwards.
+    @Test
+    @DisplayName("updateTssData ignores data without a ledger id")
+    void updateTssDataIgnoresDataWithoutLedgerId() {
+        final Fixture f = newFixture();
+        final RecordingHandler handler = new RecordingHandler();
+        f.register(handler);
+        f.initAndStart();
+
+        f.plugin.updateTssData(buildTssData(10, ""));
+        final TssData withLedgerId = buildTssData(20, "040506");
+        f.plugin.updateTssData(withLedgerId);
+        f.plugin.stop();
+
+        assertThat(f.plugin.tssData()).isEqualTo(withLedgerId);
+        assertThat(handler.tssDataNotifications).containsExactly(withLedgerId);
+    }
+
     @Test
     @DisplayName("an update after stop is kept in memory and does not throw")
     void updateAfterStopIsKeptInMemory() {
@@ -613,6 +656,21 @@ class ApplicationStateFacilityPluginTest {
     void badTssDataFileIsIgnored() throws IOException {
         final Fixture f = newFixture();
         Files.createFile(f.config.tssBootstrapFilePath());
+
+        f.initAndStart();
+
+        assertThat(f.plugin.tssData()).isNull();
+        f.plugin.stop();
+    }
+
+    /// This test aims to assert that a TSS bootstrap file that parses but carries no ledger id (for example
+    /// `{}`) is ignored at start, so the node starts without TSS data instead of holding data that cannot
+    /// verify any TSS block proof.
+    @Test
+    @DisplayName("a TSS data file without a ledger id is ignored at start")
+    void tssDataFileWithoutLedgerIdIsIgnored() throws IOException {
+        final Fixture f = newFixture();
+        Files.writeString(f.config.tssBootstrapFilePath(), "{}");
 
         f.initAndStart();
 
