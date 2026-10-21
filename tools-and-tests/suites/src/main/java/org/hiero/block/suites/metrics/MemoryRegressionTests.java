@@ -3,6 +3,7 @@ package org.hiero.block.suites.metrics;
 
 import static org.hiero.block.suites.utils.BlockSimulatorUtils.createBlockSimulator;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import java.io.IOException;
@@ -32,6 +33,10 @@ import org.testcontainers.containers.GenericContainer;
 /// the machine running the test. If the node needs more memory than the limit, it is OOM-killed and the
 /// test fails. That covers removing or raising the socket buffer override (an 8 MB buffer pins ~640 MB),
 /// raising the JVM limits, and dropping `MALLOC_ARENA_MAX` (60 to 130 MB with TSS block proofs).
+/// The RSS must also stay under a soft ceiling below the limit, to catch growth before it ends in an OOM kill.
+///
+/// The image's entrypoint (`app || sleep 30d`) keeps the container running after the node dies, so the
+/// test relies on the container's OOM-killed flag and checks it again after reading the RSS.
 ///
 /// The streamed blocks carry TSS block proofs, and the verification plugin loads the TSS library's
 /// native code and embedded verification key at start. Measured at 1 CPU: 111 MB with
@@ -51,6 +56,9 @@ public class MemoryRegressionTests extends BaseSuite {
 
     /// Memory limit of the nano profile (`limits.memory: "192Mi"`), in bytes.
     private static final long NANO_MEMORY_LIMIT_BYTES = 192L * 1024 * 1024;
+
+    /// Soft RSS ceiling (160 MiB), in KB: ~20% above the measured 126 to 133 MiB, below the memory limit.
+    private static final long NANO_RSS_CEILING_KB = 160L * 1024;
 
     /// Environment variable overrides mirroring `values-overrides/nano.yaml`.
     private static final Map<String, String> NANO_ENV = Map.of(
@@ -95,17 +103,27 @@ public class MemoryRegressionTests extends BaseSuite {
         simulatorFuture = startSimulatorInThread(simulatorApp);
         Thread.sleep(30_000);
         // Checked before stopping the simulator: stopping it fails once the node is gone.
-        assertFalse(
-                wasOomKilled(nanoContainer),
-                "The nano profile node was OOM-killed at its %d byte memory limit. Check values-overrides/nano.yaml:"
-                                .formatted(NANO_MEMORY_LIMIT_BYTES)
-                        + " SERVER_SOCKET_RECEIVE_BUFFER_SIZE_BYTES must be 131072 (128 KB), JAVA_OPTS must"
-                        + " constrain heap and direct memory, and MALLOC_ARENA_MAX must be 2.");
+        assertNotOomKilled(nanoContainer);
         simulatorApp.stop();
         Thread.sleep(2_000);
 
         long rssKb = readMaxVmRssKb(nanoContainer);
         System.out.printf("Nano profile RSS: %d KB / %.1f MiB%n", rssKb, rssKb / 1024.0);
+        // Checked again: after a late OOM kill, the RSS read above only sees the entrypoint's shell.
+        assertNotOomKilled(nanoContainer);
+        assertTrue(
+                rssKb < NANO_RSS_CEILING_KB,
+                "Nano profile RSS (%d KB / %.1f MiB) exceeded the %d KB soft ceiling. Check values-overrides/nano.yaml"
+                        .formatted(rssKb, rssKb / 1024.0, NANO_RSS_CEILING_KB));
+    }
+
+    private static void assertNotOomKilled(GenericContainer<?> container) {
+        assertFalse(
+                wasOomKilled(container),
+                "The nano profile node was OOM-killed at its %d byte memory limit. Check values-overrides/nano.yaml:"
+                                .formatted(NANO_MEMORY_LIMIT_BYTES)
+                        + " SERVER_SOCKET_RECEIVE_BUFFER_SIZE_BYTES must be 131072 (128 KB), JAVA_OPTS must"
+                        + " constrain heap and direct memory, and MALLOC_ARENA_MAX must be 2.");
     }
 
     /// Gives the container the CPU and memory limits of the nano pod, with no swap.
