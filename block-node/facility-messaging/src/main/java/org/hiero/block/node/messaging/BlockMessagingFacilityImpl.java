@@ -2,6 +2,7 @@
 package org.hiero.block.node.messaging;
 
 import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.Logger.Level.TRACE;
 
 import com.lmax.disruptor.BatchEventProcessor;
@@ -156,54 +157,6 @@ public class BlockMessagingFacilityImpl implements BlockMessagingFacility {
             .factory();
 
     /**
-     * The exception handler for the block item batch disruptor. It handles exceptions in the block item batch event
-     * handlers.
-     */
-    private static final ExceptionHandler<BlockItemBatchRingEvent> BLOCK_ITEM_EXCEPTION_HANDLER =
-            new ExceptionHandler<>() {
-                @Override
-                public void handleEventException(
-                        final Throwable ex, final long sequence, final BlockItemBatchRingEvent event) {
-                    LOGGER.log(Level.ERROR, "Exception in block item batch event: " + ex.getMessage(), ex);
-                }
-
-                @Override
-                public void handleOnStartException(Throwable ex) {
-                    LOGGER.log(Level.ERROR, "Exception in block item disruptor startup: " + ex.getMessage(), ex);
-                }
-
-                @Override
-                public void handleOnShutdownException(Throwable ex) {
-                    LOGGER.log(Level.ERROR, "Exception in block item disruptor shutdown: " + ex.getMessage(), ex);
-                }
-            };
-
-    /**
-     * The exception handler for the block notification disruptor. It handles exceptions in the block notification
-     * event handlers.
-     */
-    private static final ExceptionHandler<BlockNotificationRingEvent> BLOCK_NOTIFICATION_EXCEPTION_HANDLER =
-            new ExceptionHandler<>() {
-                @Override
-                public void handleEventException(
-                        final Throwable ex, final long sequence, final BlockNotificationRingEvent event) {
-                    LOGGER.log(Level.ERROR, "Exception in block notification ring: " + ex.getMessage(), ex);
-                }
-
-                @Override
-                public void handleOnStartException(Throwable ex) {
-                    LOGGER.log(
-                            Level.ERROR, "Exception in block notification disruptor startup: " + ex.getMessage(), ex);
-                }
-
-                @Override
-                public void handleOnShutdownException(Throwable ex) {
-                    LOGGER.log(
-                            Level.ERROR, "Exception in block notification disruptor shutdown: " + ex.getMessage(), ex);
-                }
-            };
-
-    /**
      * The disruptor that handles the block item batches. It is used to send block items to the different handlers.
      * It is a single producer, multiple consumer disruptor.
      */
@@ -277,9 +230,6 @@ public class BlockMessagingFacilityImpl implements BlockMessagingFacility {
                 VIRTUAL_THREAD_FACTORY,
                 ProducerType.SINGLE,
                 new SleepingWaitStrategy());
-        // Set the exception handler for the disruptors
-        blockItemDisruptor.setDefaultExceptionHandler(BLOCK_ITEM_EXCEPTION_HANDLER);
-        blockNotificationDisruptor.setDefaultExceptionHandler(BLOCK_NOTIFICATION_EXCEPTION_HANDLER);
 
         // Initialize metrics
         initMetrics(context);
@@ -887,6 +837,9 @@ public class BlockMessagingFacilityImpl implements BlockMessagingFacility {
                     // send on the event
                     informedEventHandler.onEvent(event, sequence, endOfBatch, percentageBehindHead);
                 });
+        final String name = handlerName == null ? "Unknown" : handlerName;
+        // Without this the processor rethrows, its thread exits and a gating sequence stops the ring
+        batchEventProcessor.setExceptionHandler(new LoggingExceptionHandler<>(name));
         // Dynamically add sequences to the ring buffer
         if (handler.isGating()) {
             ringBuffer.addGatingSequences(batchEventProcessor.getSequence());
@@ -901,7 +854,7 @@ public class BlockMessagingFacilityImpl implements BlockMessagingFacility {
         final Thread handlerThread = cpuIntensiveHandler
                 ? PLATFORM_THREAD_FACTORY.newThread(batchEventProcessor)
                 : VIRTUAL_THREAD_FACTORY.newThread(batchEventProcessor);
-        handlerThread.setName("MessageHandler:" + (handlerName == null ? "Unknown" : handlerName));
+        handlerThread.setName("MessageHandler:" + name);
         // keep track of the event processor & thread so we can stop them later
         handlerToEventProcessor.put(handler, batchEventProcessor);
         handlerToThread.put(handler, handlerThread);
@@ -966,6 +919,45 @@ public class BlockMessagingFacilityImpl implements BlockMessagingFacility {
          * @param percentageBehindRingHead percentage 0.0 to 100.0 behind the ring head this handler is
          */
         void onEvent(T event, long sequence, boolean endOfBatch, double percentageBehindRingHead);
+    }
+
+    /**
+     * Exception handler for the event processor of a single message handler. It logs the failure and lets the
+     * processor move on to the next message, so one bad message does not stop the handler or stall the ring.
+     *
+     * @param <E> the type of the event
+     */
+    private static final class LoggingExceptionHandler<E> implements ExceptionHandler<E> {
+        /** The name of the message handler, used for logging */
+        private final String handlerName;
+
+        /**
+         * Create a new exception handler for the named message handler.
+         *
+         * @param handlerName the name of the message handler
+         */
+        private LoggingExceptionHandler(final String handlerName) {
+            this.handlerName = handlerName;
+        }
+
+        @Override
+        public void handleEventException(final Throwable throwable, final long sequence, final E event) {
+            LOGGER.log(
+                    ERROR,
+                    () -> "Message handler %s failed on sequence %d, skipping the message"
+                            .formatted(handlerName, sequence),
+                    throwable);
+        }
+
+        @Override
+        public void handleOnStartException(final Throwable throwable) {
+            LOGGER.log(ERROR, () -> "Message handler %s failed on start".formatted(handlerName), throwable);
+        }
+
+        @Override
+        public void handleOnShutdownException(final Throwable throwable) {
+            LOGGER.log(ERROR, () -> "Message handler %s failed on shutdown".formatted(handlerName), throwable);
+        }
     }
 
     /**
