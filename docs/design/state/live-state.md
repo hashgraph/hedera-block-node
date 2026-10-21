@@ -6,7 +6,7 @@
 
 Maintain a local, queryable copy of the Hashgraph network state inside the Block
 Node so that other plugins and external clients can answer state queries
-(`getBinaryKV`, `getBinarySingleton`, `getBinaryQueue`) without depending on a
+(`getKV`, `getSingleton`, `getQueue`) without depending on a
 Consensus Node.
 
 Initial scope (#196):
@@ -17,10 +17,11 @@ Initial scope (#196):
    `${snapshotRecentPath}/<blockNumber>` matching the consensus-node
    `data/state/` spec (see
    `hiero-consensus-node/platform-sdk/swirlds-state-api/docs/state-snapshot-spec.md`).
-3. New protobuf surface: `StateMetadata`, `BinaryStateQuery`,
-   `BinaryStateQueryResponse`, and three `getBinary*` RPCs on `StateService`.
-   `StateMetadata` is returned on every `BinaryStateQueryResponse` so a client
-   can see which block the latest state corresponds to.
+3. New protobuf surface: `BinaryStateQuery`, `BinaryStateQueryResponse`, and three
+   `get*` RPCs on `StateService`. `BinaryStateQueryResponse` carries the attested
+   `block_number` on every response (read directly from the state's own `BlockStreamInfo`
+   singleton, not a separately tracked copy) so a client can see which block the latest state
+   corresponds to.
 
 Explicitly out of scope:
 
@@ -53,11 +54,11 @@ Explicitly out of scope:
                                                        │  │ (every 15m)      │  │
                                                        │  └──────────────────┘  │
                                                        └────────────┬───────────┘
-                                                                    │ getBinaryKV / getBinarySingleton / getBinaryQueue
+                                                                    │ getKV / getSingleton / getQueue
                                                                     ▼
-                                                 ┌──────────────────────────────┐
-                                                 │ gRPC clients & other plugins  │
-                                                 └──────────────────────────────┘
+                                                     ┌──────────────────────────────┐
+                                                     │ gRPC clients & other plugins │
+                                                     └──────────────────────────────┘
 ```
 
 State is owned by `com.swirlds.state.merkle.VirtualMapStateLifecycleManager`.
@@ -74,7 +75,6 @@ block-node/state-management-hashgraph/
 │       ├── StateManagementPlugin.java    # BlockNodePlugin + BlockNotificationHandler + StateService gRPC + lifecycle/snapshot
 │       ├── StateManagementConfig.java    # @ConfigData("state.management")
 │       ├── StateChangeApplier.java       # parses StateChanges, calls BinaryState.update*
-│       ├── StateMetadataStore.java       # JSON load/save of stateMetadata.json
 │       ├── StateSource.java              # read-target selector (IMMUTABLE / MUTABLE / HISTORICAL)
 │       └── module-info.java
 └── src/test/java/...
@@ -104,10 +104,9 @@ used for `swirlds-config-*`.
 
 ## 4. Configuration (`@ConfigData("state.management")`)
 
-|            Property            |                        Default                        |                                         Notes                                          |
-|--------------------------------|-------------------------------------------------------|----------------------------------------------------------------------------------------|
-| `metadataPath`                 | `/opt/hiero/block-node/data/state/stateMetadata.json` | Path to the metadata file.                                                             |
-| `snapshotRecentPath`           | `/opt/hiero/block-node/data/state/snapshot/recent`    | Directory for live snapshot dirs (`<blockNumber>/`).                                   |
+|            Property            |                     Default                        |                                         Notes                                          |
+|---------------------------------|-----------------------------------------------------|----------------------------------------------------------------------------------------|
+| `snapshotRecentPath`           | `/opt/hiero/block-node/data/state/snapshot/recent`    | Directory for live snapshot dirs (`<blockNumber>/`). The block number is recovered on restart by scanning this directory for the highest-numbered entry (§6.2) — there is no separate metadata file. |
 | `snapshotIntervalMillis`       | `900000` (15m)                                        | Periodic snapshot cadence.                                                             |
 | `historicCatchUpBatchSize`     | `64`                                                  | Blocks pulled per catch-up loop iteration.                                             |
 | `snapshotRecentRetentionCount` | `3`                                                   | Recent snapshot dirs kept on disk (oldest pruned).                                     |
@@ -118,21 +117,33 @@ arrives (see §6.5), not on a timer.
 
 ## 5. Data model
 
-### 5.1 `StateMetadata` (protobuf — `shared_message_types.proto`)
+### 5.1 Identifying the attested block — no separate metadata
 
-```proto
-message StateMetadata {
-  uint64 block_number     = 1;
-  uint64 round_number     = 2;
-  bytes  state_root_hash  = 3;   // VirtualMap.getHash() bytes
-  uint64 state_size       = 4;   // VirtualMap.getMetadata().getSize()
-}
-```
+Earlier drafts of this design tracked a `StateMetadata` message
+(`block_number`/`round_number`/`state_root_hash`/`state_size`) as an independent copy, persisted
+alongside the snapshot and returned on every `BinaryStateQueryResponse`. This plugin does not
+maintain any such copy — all of it is either already tracked by the state itself or has no
+business being externally observable:
 
-Persisted on disk as JSON at `metadataPath` (lightweight, human-readable —
-the snapshot dir itself carries the binary state). Serialised form is
-PBJ-driven so the wire format on the new `BinaryStateQuery` flow is the same as
-what is held in memory.
+- `block_number` is read directly from the `BlockStreamInfo` state singleton, which `main`'s own
+  `state_changes` stream already updates on every applied block (§7's applier walks every
+  `state_changes` item generically, with no per-stateId filtering, so this singleton is populated
+  by construction, not by any extra bookkeeping this plugin would need to add).
+- `state_root_hash`/`state_size` are `VirtualMap.getHash()`/`.getMetadata().getSize()`, directly
+  queryable from the live `VirtualMap` at any time — not exposed on the query response at all
+  (nothing external currently needs them; internal code reads them from the `VirtualMap` where
+  needed, e.g. the hashing pipeline in §6.5 and the `state_size` metric in §9).
+- `round_number` is sourced purely from the last `RoundHeader` block item seen during apply
+  (§12) — it has no state-singleton equivalent, is not part of the query response, and is not
+  persisted: after a restore (§6.2) it is simply unknown until the next applied block's
+  `RoundHeader` repopulates it, exactly like the existing in-apply fallback for a block that
+  doesn't carry a `RoundHeader` of its own. This is harmless since every block carries at least
+  one `RoundHeader` (§12) and nothing reads `round_number` before the first post-restore apply.
+
+Tracking any of this independently was flagged (correctly) as a structural out-of-sync risk: a
+second copy can only ever be as correct as the code that keeps it in sync with the state it
+describes, where reading it from the state directly cannot disagree with itself. See §6.2 for
+how this plugin identifies which block it last applied on restart without a separate file.
 
 ### 5.2 Binary state query
 
@@ -149,32 +160,42 @@ message BinaryStateQuery {
   uint64 queue_index = 5;        // 1-indexed; 0 or unset = full queue
 }
 
+message QueueValues {
+  repeated bytes values = 1;    // wrapper, since protobuf disallows `repeated` directly in a `oneof`
+}
+
 message BinaryStateQueryResponse {
   enum Code {
     UNKNOWN          = 0;
     SUCCESS          = 1;
     INVALID_REQUEST  = 2;
     NOT_FOUND        = 3;       // requested key/singleton/queue index absent from the attested state
-    NOT_READY        = 4;       // state still loading / catching up
+    NOT_READY        = 4;       // nothing attested yet (true genesis); never returned again after the first attestation
     NOT_AVAILABLE    = 5;       // block_number isn't the attested block (no historical retention)
   }
-  Code              status          = 1;
-  StateMetadata     state_metadata  = 2;
-  bytes             kv_bytes        = 3;
-  bytes             singleton_bytes = 4;
-  repeated bytes    queue_bytes     = 5;
+  Code   status       = 1;
+  uint64 block_number = 2;      // attested block, read from BlockStreamInfo — never a separate copy
+  oneof result {
+    bytes       kv_bytes        = 3;
+    bytes       singleton_bytes = 4;
+    QueueValues queue_values    = 5;
+  }
 }
 ```
 
-`kv_bytes`/`singleton_bytes`/`queue_bytes` are mutually exclusive (exactly one populated per
-RPC method) and were considered for a `oneof`, but `queue_bytes` is `repeated` and protobuf
-does not allow `repeated` fields inside a `oneof` — it would need a wrapper message
-(`QueueValues { repeated bytes values = 1; }`). That wrapping cost more devex than the
-`oneof` saved, so left as plain fields; revisit if this becomes a pain point in practice.
+`kv_bytes`/`singleton_bytes`/`queue_values` are a `oneof`: exactly one populated per RPC method
+on `SUCCESS`, none on failure. An earlier draft left these as plain fields reasoning that
+`queue_bytes` being `repeated` (protobuf disallows `repeated` directly inside a `oneof`) cost
+more devex to wrap than the `oneof` saved — jsync's review pushed back on that: the wrapper
+message pattern (`QueueValues`) is already standard practice elsewhere in this API, and making
+mutual exclusivity a type-system guarantee is worth the one extra wrapper message. Applied here
+for the response only; `BinaryStateQuery`'s `key_bytes`/`queue_index` on the request side are
+not symmetric in the same way (`queue_index` narrows a queue read, it doesn't select between
+mutually exclusive request *kinds*) and are left as plain fields.
 
 `NOT_AVAILABLE` mirrors `BlockAccessService.getBlock()`'s `NOT_AVAILABLE` for a block outside
 the range this node currently holds. This plugin has no historical retention (§2/§7): the
-*only* block it ever holds is the currently attested one, so any other requested `block_number`
+*only* state it ever holds is the currently attested one, so any other requested `block_number`
 is `NOT_AVAILABLE`, never `NOT_FOUND` (`NOT_FOUND` is reserved for "the attested state doesn't
 have this key/singleton/queue index"). Whether apply has halted is an internal detail, not a
 query concern: `retrieve_latest` or a `block_number` matching the attested block still answers
@@ -185,11 +206,15 @@ RPC service updates on `state_service.proto`:
 
 ```proto
 service StateService {
-  rpc getBinaryKV(BinaryStateQuery)        returns (BinaryStateQueryResponse);
-  rpc getBinarySingleton(BinaryStateQuery) returns (BinaryStateQueryResponse);
-  rpc getBinaryQueue(BinaryStateQuery)     returns (BinaryStateQueryResponse);
+  rpc getKV(BinaryStateQuery)        returns (BinaryStateQueryResponse);
+  rpc getSingleton(BinaryStateQuery) returns (BinaryStateQueryResponse);
+  rpc getQueue(BinaryStateQuery)     returns (BinaryStateQueryResponse);
 }
 ```
+
+(Dropped the `Binary` prefix from the method names themselves — "binary" is already
+conveyed by `BinaryStateQuery`/`BinaryStateQueryResponse`, so it added nothing to the method
+name beyond length.)
 
 ## 6. Plugin lifecycle
 
@@ -209,16 +234,21 @@ service StateService {
 
 ### 6.2 `start()`
 
-1. Load `stateMetadata.json`. If it doesn't exist, there's no persisted operator intent to
-   honor — treat as genesis.
-2. If it does exist and names block N: if a recent snapshot dir at `${recentPath}/N` exists and
-   its hash matches the metadata, call `lifecycleManager.loadSnapshot(...)` to replace the eager
-   genesis state with the on-disk state. If the snapshot dir is missing, unreadable, or its hash
-   doesn't match the metadata, **halt** (`applyHalted=true`) rather than silently falling back to
-   genesis — persisted metadata is the operator's recorded intent, and discarding it quietly
-   would only surface later as a confusing hash mismatch on some unrelated block. The plugin
-   still starts successfully (no exception, no shutdown request); it just never becomes `ready`
-   and never applies or serves anything until a fixed snapshot is in place and the node restarts.
+1. Scan `${recentPath}/*` for numerically-named directories. If none exist, there's no persisted
+   operator intent to honor — treat as genesis.
+2. If one or more exist, take the highest-numbered directory `${recentPath}/N` as the restore
+   candidate and call `lifecycleManager.loadSnapshot(...)` to replace the eager genesis state
+   with the on-disk state. Then read `BlockStreamInfo.block_number` back out of the just-loaded
+   state and assert it equals `N` — a **self**-consistency check (does the loaded state agree
+   with the name of the directory it came from?) rather than a cross-check against a separate
+   file. If the directory is unreadable, fails to load, or its self-check fails, **halt**
+   (`applyHalted=true`) rather than silently falling back to genesis or an older directory — a
+   snapshot directory existing is the operator's recorded intent, and discarding it quietly would
+   only surface later as a confusing hash mismatch on some unrelated block. The plugin still
+   starts successfully (no exception, no shutdown request); it just never becomes `ready` and
+   never applies or serves anything until a fixed snapshot directory is in place and the node
+   restarts. `lastAppliedRound` is left unknown (`-1`) after a restore — it is not persisted (see
+   §5.1) and is repopulated by the first applied block's `RoundHeader`.
 3. Register self as `BlockNotificationHandler` via
    `context.blockMessaging().registerBlockNotificationHandler(this, true, "StateManagementPlugin")`.
    `cpuIntensive=true` because state apply is CPU-bound parsing work.
@@ -244,14 +274,14 @@ service StateService {
 
 ### 6.4 `catchUpFromHistoricalBlocks()` (one-shot on `start()`)
 
-Closes the gap between `metadata.blockNumber()` and the latest block the
+Closes the gap between `attested.blockNumber()` and the latest block the
 Block-Node has on hand without waiting for verification notifications.
 
 1. Read `context.historicalBlockProvider()`. If null or empty → set
    `ready=true` and return.
 2. Compute the catch-up window:
    - genesis → `from = availableBlocks().min()`
-   - otherwise → `from = metadata.blockNumber() + 1`
+   - otherwise → `from = attested.blockNumber() + 1`
    - `to = availableBlocks().max()`
 3. Walk `from..to` in batches of `historicCatchUpBatchSize` (default 64).
    For each block in the batch:
@@ -264,8 +294,12 @@ Block-Node has on hand without waiting for verification notifications.
 6. In `finally`, set `ready=true` **only if not `applyHalted`** — ready means catch-up finished
    *without* halting, not merely "catch-up attempt finished." This lets a monitoring consumer
    tell "healthy and caught up" apart from "caught up once, then halted" from `ready` alone,
-   without also having to check `apply_halted`. A halt leaves the node `NOT_READY` permanently
-   (until a restart) and logs a warning.
+   without also having to check `apply_halted`. A halt logs a warning and leaves `state_ready`
+   at `0`/`state_apply_halted` at `1` permanently (until a restart) — these metrics (§9), not the
+   query-level `NOT_READY` status, are the observable signal for this: a node that has already
+   attested at least one block keeps answering queries `SUCCESS` from that attested state even
+   after a halt (§8), so `NOT_READY` itself is unaffected by `applyHalted` once anything has been
+   attested.
 
 ### 6.5 `applyPending()` (event-driven: runs when the apply worker is woken by a new block)
 
@@ -275,7 +309,7 @@ arrives (no timer). `applyPending()` takes the `applyLock` and drains contiguous
 ```
 while (!pendingBlocks.isEmpty() && !stopping && !applyHalted) {
   long next = atGenesis ? pendingBlocks.firstKey()
-                        : max(lastAppliedBlock, metadata.blockNumber()) + 1;
+                        : max(lastAppliedBlock, attested.blockNumber()) + 1;
   BlockUnparsed b = pendingBlocks.get(next);
   if (b == null) return;            // gap → wait for the missing predecessor
   if (!applyBlockStateChanges(b)) return;   // failure → leave queued, stop draining
@@ -291,9 +325,9 @@ The apply pipeline runs three versions of the state concurrently:
   `state_changes` (library-managed).
 - **(2) HASHING** — `hashingImmutable`: sealed by `copyMutableState()`, awaiting hash +
   attestation by the next block's footer (library-managed, held by the plugin).
-- **(1) ATTESTED** — `attested` (an `AttestedSnapshot(state, metadata)` record behind a single
-  volatile field): the network-confirmed, query-serving copy and its `StateMetadata`, published
-  together — the only state the query API reads (§8).
+- **(1) ATTESTED** — `attested` (an `AttestedSnapshot(state, blockNumber)` record behind a single
+  volatile field): the network-confirmed, query-serving copy and the block number it corresponds
+  to, published together — the only state the query API reads (§8).
 
 A state is hashed **exactly once**, never while it is still mutable (3). `VirtualMap.getHash()`
 caches its result, so the total hashing work is the same whether it runs eagerly or lazily —
@@ -317,6 +351,17 @@ mutable, but only exposed once the *next* block's footer attests its root hash.
    differs per network/config, e.g. a seeded genesis bootstrap vs. a truly empty map), and this
    step computes that hash the same way it computes every other block's, rather than assuming
    it's empty or all-zeros.
+   - **Digest algorithm assumption:** this step only validates if the plugin hashes `VirtualMap`
+     with the same digest the consensus-node that wrote the chain used. Since #3780, `main`'s
+     `CN_11_12_TSS_SCHNORR` footers carry a 32-byte SHA-256 state root hash, while the published
+     state libraries this plugin depends on (`hederaVersion` 0.80.0-alpha.2) hash `VirtualMap`
+     with SHA-384 and have no override — so on today's chain this step halts at block 0 with a
+     digest-length mismatch, not a real divergence. #3813 already logs this distinctly (a
+     digest-length mismatch is reported separately from a same-length, genuinely divergent hash)
+     so the halt is diagnosable, but does not itself resolve the mismatch — that needs either a
+     CN release that hashes with SHA-256, or this plugin pinned to a state library release that
+     matches whatever digest the source chain actually used. See §10's failure-mode row for the
+     current, still-open state of this gap.
    - **Known gap, not yet handled:** a fresh node (no persisted metadata) whose *first* real
      block is N > 0, not 0 — e.g. a deployment pointed at a mid-chain `historicalBlockProvider`
      with no snapshot ever supplied — has no real seed state to validate against either; N's
@@ -333,9 +378,8 @@ mutable, but only exposed once the *next* block's footer attests its root hash.
      happened" from "happened repeatedly".
 3. A match means N's footer attests post-(N-1). **Promote** state 2 → state 1 (`attested`)
    unless it is already exposed (e.g. just after a snapshot reload): publish the state and its
-   just-built `StateMetadata` together as one `AttestedSnapshot`, in a single volatile write, so
-   a reader can never observe a new state paired with the previous block's metadata or vice
-   versa.
+   block number together as one `AttestedSnapshot`, in a single volatile write, so a reader can
+   never observe a new state paired with the previous block's number or vice versa.
 4. Apply N's `state_changes` via `StateChangeApplier.applyBlock(mutable, block)`.
 5. `lifecycleManager.copyMutableState()` fast-copies/seals post-N as the new state 2
    (`hashingImmutable`); record `lastAppliedBlock=N`, `lastAppliedRound`. Post-N is left
@@ -359,16 +403,22 @@ The schedule is the trigger — the executor invokes `saveSnapshot()` on a fixed
 regardless of whether anything changed. Step 1 below is a skip check, not the trigger: it
 decides whether that scheduled invocation has anything new to write.
 
-1. If `metadata.blockNumber <= lastSnapshottedBlock` → nothing new, skip.
-2. `lifecycleManager.createSnapshot(latestImmutable, recentPath/<blockNumber>)`
-   writes the canonical consensus-node `data/state/` layout into the directory.
+1. If `attested.blockNumber() <= lastSnapshottedBlock` → nothing new, skip.
+2. `lifecycleManager.createSnapshot(latestImmutable, recentPath/.tmp-<blockNumber>)` writes the
+   canonical consensus-node `data/state/` layout into a temporary sibling directory, then
+   `Files.move(..., ATOMIC_MOVE, REPLACE_EXISTING)` renames it into place as
+   `recentPath/<blockNumber>`. Restore (§6.2) identifies a snapshot purely by directory name, so
+   a snapshot directory being present must imply it is fully written — the same
+   temp-then-atomic-rename pattern this plugin's now-removed `StateMetadataStore.save()` used
+   correctly for its JSON writes, just applied to a directory instead of a file. A
+   crash between the two steps leaves either no `<blockNumber>` directory (if before the rename)
+   or a complete one (if after) — never a partial one.
 3. `pruneOldRecentSnapshots(blockNumber)`: delete recent snapshot dirs beyond
    `snapshotRecentRetentionCount`, oldest first; the just-written
    `<blockNumber>` dir is always kept. Snapshots live only under `recentPath`
    (each dir hard-links into the live MerkleDb, so they are cheap). Long-term
    archival is out of scope for this plugin — a future archiving plugin owns
    compaction / off-box transfer / random-read indexes.
-4. Atomically rewrite `stateMetadata.json`.
 
 ### 6.7 `stop()`
 
@@ -376,7 +426,7 @@ decides whether that scheduled invocation has anything new to write.
 - Unregister from `blockMessaging`.
 - Interrupt + join the apply worker (waking it out of the `BlockingQueue`) and shut down
   the snapshot executor with a short await.
-- One final `saveSnapshot()` if `metadata.blockNumber > lastSnapshottedBlock`.
+- One final `saveSnapshot()` if `attested.blockNumber() > lastSnapshottedBlock`.
 
 ## 7. State change application
 
@@ -400,15 +450,27 @@ walking the wire format directly needs no such switch.
 | `QueuePopChange`             | `popQueue(stateId)`                            | —                                               |
 | `STATE_ADD` / `STATE_REMOVE` | (skipped — schema events, out of scope for v1) | —                                               |
 
-Token-relationship keys (`stateId == 9`) need no special-casing: this plugin's pinned
-`state_changes.proto` carries that key as `AccountTokenAssociation` (field 25), introduced
-upstream specifically so its field order/types match state's `EntityIDPair` exactly — unlike
-the older `TokenAssociation` encoding (now reserved field 2) that consensus-node's own reference
-applier still remaps for compatibility with older captured chains.
+Token-relationship keys (`stateId == 9`) need no special-casing for the current wire format:
+this plugin's pinned `state_changes.proto` carries that key as `AccountTokenAssociation`
+(field 25), introduced upstream specifically so its field order/types match state's
+`EntityIDPair` exactly — unlike the older `TokenAssociation` encoding (now reserved field 2)
+that consensus-node's own reference applier still remaps for compatibility with older captured
+chains.
+
+This plugin does not remap field 2: `reserved` in protobuf is a compile-time guard against
+accidental reuse, not a runtime wire-format check, so wire bytes still carrying the old field-2
+encoding (a replayed pre-migration chain segment, or any producer still on the old encoding)
+would otherwise pass through `StateChangeApplier` unrecognized as the legacy shape, writing
+wrong state with no immediate error — surfacing only as a generic hash mismatch on some later
+block, indistinguishable from any other cause. Instead, the applier detects field 2 on
+`stateId == 9` specifically and halts immediately with a distinct "unsupported legacy
+token-association encoding" error, rather than the generic hash-mismatch halt. This keeps the
+applier's "no per-variant switch" simplicity for every other wire variant while still failing
+fast and legibly for the one encoding this plugin deliberately does not support.
 
 Because stored bytes are now the oneof payload rather than the wrapper carrier, a caller can no
 longer recover the concrete entity type from the bytes alone (the wrapper's field number, which
-disclosed the type, isn't stored) — `getBinary*` callers need that mapping from elsewhere, e.g.
+disclosed the type, isn't stored) — `get*` callers need that mapping from elsewhere, e.g.
 a `stateId → type` table. This is an open API-surface question for the not-yet-implemented
 `StateService` gRPC query path (§8); it doesn't affect this plugin's own apply-and-store logic.
 
@@ -430,21 +492,21 @@ registered as the gRPC service in `init`. Each RPC:
    actively writing/sealing concurrently with no synchronization a query thread could safely
    join.
 2. Returns `INVALID_REQUEST` if:
-   - `getBinaryKV` is called without `key_bytes`, or with `queue_index`;
-   - `getBinarySingleton` is called with `key_bytes` or `queue_index`;
-   - `getBinaryQueue` is called with `key_bytes`.
+   - `getKV` is called without `key_bytes`, or with `queue_index`;
+   - `getSingleton` is called with `key_bytes` or `queue_index`;
+   - `getQueue` is called with `key_bytes`.
 3. Returns `NOT_AVAILABLE` if an explicit `block_number` was set and it doesn't match
-   `attested.metadata().blockNumber()`. This holds regardless of `applyHalted`: a halted node's
+   `attested.blockNumber()`. This holds regardless of `applyHalted`: a halted node's
    attested block is simply frozen, so requests for that exact block (or `retrieve_latest`)
    still succeed — only a `block_number` beyond it is affected, and halting makes that
    permanently true rather than transiently true. Block 0 is a valid, non-special `block_number`.
 4. Delegates to `getKv` / `getSingleton` / `getQueueAsList` / `peekQueue` on `attested.state()`.
-5. `getBinaryQueue` defensively maps any `RuntimeException` from
+5. `getQueue` defensively maps any `RuntimeException` from
    `getQueueState`/`getQueueAsList`/`peekQueue` (which NPE on unknown
    state IDs in `VirtualMapStateImpl`) to `NOT_FOUND`.
-6. Wraps the result in `BinaryStateQueryResponse` with `attested.metadata()` always populated —
-   state and metadata come from the same `AttestedSnapshot` read, so a response can never pair
-   one block's data with another block's metadata.
+6. Wraps the result in `BinaryStateQueryResponse` with `attested.blockNumber()` always populated —
+   state and block number come from the same `AttestedSnapshot` read, so a response can never
+   pair one block's data with another block's number.
 
 Reader reservation on `attested.state()`'s `VirtualMap` root is **not yet designed**: today
 nothing reads it except the apply thread itself, so `setAttested`'s reserve/release pair is
@@ -476,22 +538,29 @@ plugin (see Roadmap); add them alongside those features.
 
 |                                          Failure                                           |                                                                                                                        Behaviour                                                                                                                         |
 |--------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| No persisted metadata at startup                                                           | Genesis, cleanly — there's no operator intent to honor, so this is the normal first-boot path, not a failure.                                                                                                                                            |
-| Persisted metadata names a block whose snapshot is missing, unreadable, or hash-mismatched | Halt (`applyHalted=true`), log at ERROR. Starting from genesis instead would silently discard the operator's recorded intent and surface only later as a confusing hash mismatch on an unrelated block. Plugin still starts; never becomes `ready`.      |
+| No snapshot directories under `recentPath` at startup                                      | Genesis, cleanly — there's no operator intent to honor, so this is the normal first-boot path, not a failure.                                                                                                                                            |
+| Highest-numbered snapshot directory is unreadable, fails to load, or fails its self-consistency check (loaded `BlockStreamInfo.block_number` disagrees with the directory name) | Halt (`applyHalted=true`), log at ERROR. Starting from genesis instead would silently discard the operator's recorded intent and surface only later as a confusing hash mismatch on an unrelated block. Plugin still starts; never becomes `ready`.      |
 | `startOfBlockStateRootHash` mismatch                                                       | Increment `hashMismatchTotal`, set `applyHalted=true`, log at ERROR. Apply loop short-circuits thereafter; further blocks ignored until restart.                                                                                                         |
+| Footer hash digest length differs from this build's (e.g. a SHA-256 footer against a SHA-384 `VirtualMap` hash) | Same halt as any other `startOfBlockStateRootHash` mismatch, but logged distinctly as a digest-length mismatch rather than genuine divergence (#3813). Does not self-resolve: needs a CN release or state-library pin that matches the source chain's digest. See §6.5. |
 | First block after a fresh (no-metadata) start is N > 0, not 0                              | **Not yet handled** — no real seed state exists to validate N's footer against; currently indistinguishable from a genuine hash mismatch. See §6.5. Needs a design decision.                                                                             |
 | Malformed `state_changes` item                                                             | `IllegalStateException` from the applier; plugin refuses to advance metadata for that block.                                                                                                                                                             |
+| Legacy field-2 token-association encoding on a `stateId == 9` change                       | Halt with a distinct "unsupported legacy token-association encoding" error, not a generic hash mismatch — this plugin does not remap field 2 the way consensus-node's reference applier does. See §7.                                                   |
 | Verification gap                                                                           | Block parks in `pendingBlocks` until the predecessor arrives (via notification or catch-up); apply loop retries from `historicalBlockProvider` on a delay. `pendingBlocks` is capped (`pendingBlocksMax`) so a long-lived gap can't grow it unboundedly. |
 | Historical block missing locally                                                           | Catch-up skips it; the same block can arrive via notification later.                                                                                                                                                                                     |
 | Snapshot write fails (I/O)                                                                 | Log at WARNING; recent dir not deleted; next snapshot cycle retries.                                                                                                                                                                                     |
 | Missing-queue query                                                                        | gRPC handler defensively maps NPE from `getQueueState`/`getQueueAsList`/`peekQueue` to `NOT_FOUND`.                                                                                                                                                      |
 
-**Recovery from a halt** is restart-from-snapshot, but *which* restart recovers depends on the
-cause: a code-apply hash mismatch recovers automatically on restart (the next boot starts clean
-and re-validates from the last good snapshot). A snapshot-hash-mismatch or missing-snapshot halt
-does **not** self-heal on restart — the same bad snapshot directory gets reloaded and halts
-again immediately. For that cause, the operator must remove or replace the snapshot directory
-before restarting. There is no distinct query-time signal for "halted" versus "healthy" today;
+**Recovery from a halt** is restart-from-snapshot, but *which* restart recovers depends on
+whether the cause is transient or deterministic. A snapshot-hash-mismatch or missing-snapshot
+halt is transient from the plugin's perspective and recovers once the underlying disk state is
+fixed, but does **not** self-heal on restart alone — the same bad snapshot directory gets
+reloaded and halts again immediately. For that cause, the operator must remove or replace the
+snapshot directory before restarting. A deterministic cause — an apply bug, or an unhandled
+wire encoding such as the field-2 case above — replays the exact same bytes for the exact same
+block on every restart, so it does **not** self-heal either: recovery needs a fixed build (or a
+snapshot taken past the bad block), not just a restart. Only a genuinely transient fault (e.g. a
+footer hash mismatch caused by a passing I/O glitch rather than an actual code or encoding bug)
+recovers from a plain restart. There is no distinct query-time signal for "halted" versus "healthy" today;
 `state_apply_halted` and `state_ready` are the only observable signals (see §9). Internally the
 halted/not-halted distinction doesn't change query behavior at all (§8) — a halted node still
 answers queries for its (frozen) attested block with `SUCCESS`, since that state remains valid;
@@ -511,9 +580,9 @@ and exercise the real `VirtualMapStateLifecycleManager`:
    then apply in order.
 4. **scenario4** — chained blocks `0..3` apply in order; under lag-1 the exposed
    block is `2` (the tip stays staged until confirmed).
-5. **scenario5** — `saveSnapshot` writes `stateMetadata.json` and the
-   `recent/<block>/` directory tree; a fresh plugin pointed at the same
-   dirs restores from disk.
+5. **scenario5** — `saveSnapshot` atomically writes the `recent/<block>/` directory tree; a
+   fresh plugin pointed at the same dirs restores from disk by scanning for the
+   highest-numbered directory.
 6. **scenario6** — footer hash mismatch refuses apply, increments
    `hashMismatchTotal`, sets `applyHalted=true`.
 7. **recentSnapshotRetentionKeepsConfiguredCount** — with retention 3,
@@ -532,8 +601,8 @@ Other test classes:
 
 E2E (`tools-and-tests/suites/.../StateManagementE2ETests.java`) boots the full
 `BlockNodeApp` and exercises `StateService` over real gRPC via the
-generated `StateServiceClient`. Two tests: `getBinarySingleton` round-trip
-and `getBinaryKV` / `getBinaryQueue` structured responses.
+generated `StateServiceClient`. Two tests: `getSingleton` round-trip
+and `getKV` / `getQueue` structured responses.
 
 ## 12. Design decisions
 
@@ -542,11 +611,19 @@ the `ConcurrentSkipListMap` (ordering + gap handling) and wakes a single
 apply-worker thread via a `BlockingQueue`; the worker drains under
 `applyLock`. State changes are applied the moment a block arrives.
 
-**`roundNumber` is sourced from `RoundHeader`.** Pulled directly from the
-`RoundHeader` block item — every block carries at least one. The applier
-tracks the last seen `RoundHeader.roundNumber()` during the block walk and
-writes it into `StateMetadata` after apply completes. No timestamp
-approximation.
+**`roundNumber` is sourced from `RoundHeader`, kept in-memory only.** Pulled directly from the
+`RoundHeader` block item — every block carries at least one. The applier tracks the last seen
+`RoundHeader.roundNumber()` during the block walk and keeps it as a plain in-memory field after
+apply completes; it is not persisted or exposed on the query response (§5.1) and is simply
+unknown after a restore until the next applied block repopulates it. No timestamp approximation.
+
+**Block identity lives in the snapshot directory name, not a separate metadata file.** Restoring
+which block was last applied (§6.2) and reporting it on queries (§8) both read
+`BlockStreamInfo.block_number` from the state itself, or the directory name a snapshot was
+restored from — never an independently-tracked copy. This removes an entire class of
+out-of-sync bug (a tracked copy disagreeing with the state it describes) at the cost of one
+extra singleton read per restore and per query response, which is cheap relative to the
+surrounding I/O.
 
 **Historical state is explicitly out of scope** for this plugin — only the
 current applied state is queryable.

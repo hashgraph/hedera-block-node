@@ -7,18 +7,16 @@ option java_package = "org.hiero.block.api.protoc";
 // <<<pbj.java_package = "org.hiero.block.api">>> This comment is special code for setting PBJ Compiler java package
 option java_multiple_files = true;
 
-import "block-node/api/shared_message_types.proto";
-
 /**
  * A request for a single piece of binary state held by the Block-Node.
  *
  * The combination of `state_id`, `key_bytes`, and `queue_index` determines
  * which RPC method should be used and the shape of the response:
  *
- *  - `getBinaryKV`        SHALL set `state_id` and `key_bytes`. `queue_index` MUST NOT be set.
- *  - `getBinarySingleton` SHALL set only `state_id`. `key_bytes` and `queue_index` MUST NOT be set.
- *  - `getBinaryQueue`     SHALL set `state_id`. `queue_index` MAY be set to read a single element;
- *                         when omitted the full queue is returned.
+ *  - `getKV`        SHALL set `state_id` and `key_bytes`. `queue_index` MUST NOT be set.
+ *  - `getSingleton` SHALL set only `state_id`. `key_bytes` and `queue_index` MUST NOT be set.
+ *  - `getQueue`     SHALL set `state_id`. `queue_index` MAY be set to read a single element;
+ *                   when omitted the full queue is returned.
  *
  * Exactly one of `block_specifier.block_number` or
  * `block_specifier.retrieve_latest` MUST be set. Block 0 (genesis) is a
@@ -63,13 +61,13 @@ message BinaryStateQuery {
     uint64 state_id = 3;
 
     /**
-     * Domain-encoded key bytes for `getBinaryKV`. MUST be empty for
+     * Domain-encoded key bytes for `getKV`. MUST be empty for
      * singleton and queue requests.
      */
     bytes key_bytes = 4;
 
     /**
-     * 1-indexed queue index for `getBinaryQueue`. Set to a value of `1` or greater to retrieve
+     * 1-indexed queue index for `getQueue`. Set to a value of `1` or greater to retrieve
      * a single queue element (`1` is the first element); omit (or set to `0`) to request the
      * full queue.
      */
@@ -77,10 +75,19 @@ message BinaryStateQuery {
 }
 
 /**
+ * A list of raw domain-value byte strings read from a queue, in head-to-tail
+ * order. Wraps `repeated bytes` since protobuf does not allow a `repeated`
+ * field directly inside a `oneof`.
+ */
+message QueueValues {
+    repeated bytes values = 1;
+}
+
+/**
  * Response carrying the requested binary state plus the metadata of the
  * state slice it was read from.
  *
- * Exactly one of `kv_bytes`, `singleton_bytes`, or `queue_bytes` SHALL be
+ * Exactly one of `kv_bytes`, `singleton_bytes`, or `queue_values` SHALL be
  * populated on success, matching the RPC method invoked.
  */
 message BinaryStateQueryResponse {
@@ -110,8 +117,11 @@ message BinaryStateQueryResponse {
         NOT_FOUND = 3;
 
         /**
-         * The Block-Node has not finished loading or catching up its live
-         * state. The client SHOULD retry after a short backoff.
+         * No state has been attested yet (true genesis — nothing has been
+         * fully confirmed). The client SHOULD retry after a short backoff.
+         * Once any state has been attested, this Block-Node answers from it
+         * even while still catching up or halted — this code is never
+         * returned again after the first attestation.
          */
         NOT_READY = 4;
 
@@ -131,28 +141,37 @@ message BinaryStateQueryResponse {
     Code status = 1;
 
     /**
-     * Metadata describing the state slice this response was sourced from.
-     * Populated on every response, including failures, so the client can
-     * decide whether to retry against a different Block-Node.
+     * The block number of the attested state this response was sourced
+     * from. Populated on every response, including failures, so the client
+     * can decide whether to retry against a different Block-Node. This is
+     * read directly from the state's own `BlockStreamInfo` singleton, never
+     * tracked as a separate copy, so it can never disagree with the state
+     * it describes.
      */
-    StateMetadata state_metadata = 2;
+    uint64 block_number = 2;
 
     /**
-     * Raw domain-value bytes for a `getBinaryKV` response.
+     * The result payload. Exactly one is set on `SUCCESS`, matching the RPC
+     * method invoked; none are set on failure (see `status`).
      */
-    bytes kv_bytes = 3;
+    oneof result {
+        /**
+         * Raw domain-value bytes for a `getKV` response.
+         */
+        bytes kv_bytes = 3;
 
-    /**
-     * Raw domain-value bytes for a `getBinarySingleton` response.
-     */
-    bytes singleton_bytes = 4;
+        /**
+         * Raw domain-value bytes for a `getSingleton` response.
+         */
+        bytes singleton_bytes = 4;
 
-    /**
-     * Raw domain-value bytes for a `getBinaryQueue` response. May contain
-     * a single element (indexed read) or every element from head to tail
-     * (full queue read).
-     */
-    repeated bytes queue_bytes = 5;
+        /**
+         * Raw domain-value bytes for a `getQueue` response. May contain
+         * a single element (indexed read) or every element from head to tail
+         * (full queue read).
+         */
+        QueueValues queue_values = 5;
+    }
 }
 
 /**
@@ -163,16 +182,16 @@ service StateService {
     /**
      * Read a key-value entry from the live state by `state_id` and `key_bytes`.
      */
-    rpc getBinaryKV(BinaryStateQuery) returns (BinaryStateQueryResponse);
+    rpc getKV(BinaryStateQuery) returns (BinaryStateQueryResponse);
 
     /**
      * Read a singleton from the live state by `state_id`.
      */
-    rpc getBinarySingleton(BinaryStateQuery) returns (BinaryStateQueryResponse);
+    rpc getSingleton(BinaryStateQuery) returns (BinaryStateQueryResponse);
 
     /**
      * Read a queue from the live state by `state_id`, optionally limited
      * to a single element via `queue_index`.
      */
-    rpc getBinaryQueue(BinaryStateQuery) returns (BinaryStateQueryResponse);
+    rpc getQueue(BinaryStateQuery) returns (BinaryStateQueryResponse);
 }
