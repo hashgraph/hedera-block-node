@@ -42,7 +42,7 @@ import org.hiero.block.api.RangedNodeAddressBook;
 import org.hiero.block.api.RosterEntry;
 import org.hiero.block.api.TssData;
 import org.hiero.block.api.TssRoster;
-import org.hiero.block.node.app.fixtures.TestMetricsExporter;
+import org.hiero.block.internal.BlockRangesState;
 import org.hiero.block.node.app.fixtures.async.TestThreadPoolManager;
 import org.hiero.block.node.app.fixtures.plugintest.TestBlockMessagingFacility;
 import org.hiero.block.node.app.fixtures.plugintest.TestHealthFacility;
@@ -137,7 +137,6 @@ class ApplicationStateFacilityPluginTest {
         final ApplicationStateFacilityPlugin plugin = new ApplicationStateFacilityPlugin();
         final TestBlockMessagingFacility messaging;
         final TestHistoricalBlockFacility historical = new TestHistoricalBlockFacility();
-        final TestMetricsExporter metricsExporter = new TestMetricsExporter();
         final TestThreadPoolManager<?, ?> threadPoolManager = new TestThreadPoolManager<>(
                 Executors.newSingleThreadExecutor(), Executors.newSingleThreadScheduledExecutor());
         final Configuration configuration;
@@ -174,7 +173,7 @@ class ApplicationStateFacilityPluginTest {
             config = configuration.getConfigData(ApplicationStateConfig.class);
             context = new BlockNodeContext(
                     configuration,
-                    MetricRegistry.builder().setMetricsExporter(metricsExporter).build(),
+                    MetricRegistry.builder().build(),
                     new TestHealthFacility(),
                     messaging,
                     historical,
@@ -324,17 +323,12 @@ class ApplicationStateFacilityPluginTest {
         f.historical.available.add(5, 9);
         f.init();
 
-        assertThat(f.metricsExporter.getMetricValue(
-                        ApplicationStateFacilityPlugin.METRIC_APP_HISTORICAL_OLDEST_BLOCK.name()))
-                .isEqualTo(5);
-        assertThat(f.metricsExporter.getMetricValue(
-                        ApplicationStateFacilityPlugin.METRIC_APP_HISTORICAL_NEWEST_BLOCK.name()))
-                .isEqualTo(9);
+        assertThat(f.context.historicalBlockProvider().availableBlocks().min()).isEqualTo(5);
+        assertThat(f.context.historicalBlockProvider().availableBlocks().max()).isEqualTo(9);
 
         f.historical.available.add(10, 20);
-        assertThat(f.metricsExporter.getMetricValue(
-                        ApplicationStateFacilityPlugin.METRIC_APP_HISTORICAL_NEWEST_BLOCK.name()))
-                .isEqualTo(20);
+
+        assertThat(f.context.historicalBlockProvider().availableBlocks().max()).isEqualTo(20);
     }
 
     @Test
@@ -428,6 +422,49 @@ class ApplicationStateFacilityPluginTest {
         f.plugin.stop();
 
         assertThat(handler.tssDataNotifications).containsExactly(tssData);
+    }
+
+    /// This test aims to assert that different TSS data valid from the same block as the installed data is
+    /// ignored: it is not installed, not dispatched and not persisted, so the facility follows the same
+    /// strictly-later rule as the verification plugin and a peer cannot replace the persisted data for a block
+    /// the node already holds data for.
+    @Test
+    @DisplayName("updateTssData ignores different data valid from the same block")
+    void updateTssDataIgnoresDifferentDataForTheSameBlock() throws Exception {
+        final Fixture f = newFixture();
+        final RecordingHandler handler = new RecordingHandler();
+        f.register(handler);
+        f.initAndStart();
+
+        final TssData installed = buildTssData(10, "040506");
+        f.plugin.updateTssData(installed);
+        f.plugin.updateTssData(buildTssData(10, "0a0b0c"));
+        f.plugin.stop();
+
+        assertThat(f.plugin.tssData()).isEqualTo(installed);
+        assertThat(handler.tssDataNotifications).containsExactly(installed);
+        assertThat(TssData.JSON.parse(Bytes.wrap(Files.readAllBytes(f.config.tssBootstrapFilePath()))))
+                .isEqualTo(installed);
+    }
+
+    /// This test aims to assert that TSS data without a ledger id is never installed, dispatched or
+    /// persisted, since TSS data SHALL carry a ledger id, while data with a ledger id is still installed
+    /// afterwards.
+    @Test
+    @DisplayName("updateTssData ignores data without a ledger id")
+    void updateTssDataIgnoresDataWithoutLedgerId() {
+        final Fixture f = newFixture();
+        final RecordingHandler handler = new RecordingHandler();
+        f.register(handler);
+        f.initAndStart();
+
+        f.plugin.updateTssData(buildTssData(10, ""));
+        final TssData withLedgerId = buildTssData(20, "040506");
+        f.plugin.updateTssData(withLedgerId);
+        f.plugin.stop();
+
+        assertThat(f.plugin.tssData()).isEqualTo(withLedgerId);
+        assertThat(handler.tssDataNotifications).containsExactly(withLedgerId);
     }
 
     @Test
@@ -620,6 +657,21 @@ class ApplicationStateFacilityPluginTest {
     void badTssDataFileIsIgnored() throws IOException {
         final Fixture f = newFixture();
         Files.createFile(f.config.tssBootstrapFilePath());
+
+        f.initAndStart();
+
+        assertThat(f.plugin.tssData()).isNull();
+        f.plugin.stop();
+    }
+
+    /// This test aims to assert that a TSS bootstrap file that parses but carries no ledger id (for example
+    /// `{}`) is ignored at start, so the node starts without TSS data instead of holding data that cannot
+    /// verify any TSS block proof.
+    @Test
+    @DisplayName("a TSS data file without a ledger id is ignored at start")
+    void tssDataFileWithoutLedgerIdIsIgnored() throws IOException {
+        final Fixture f = newFixture();
+        Files.writeString(f.config.tssBootstrapFilePath(), "{}");
 
         f.initAndStart();
 
@@ -1017,6 +1069,88 @@ class ApplicationStateFacilityPluginTest {
 
         assertThat(second.plugin.storedBlocks.streamRanges().toList()).containsExactly(new LongRange(0, 1099));
         second.plugin.stop();
+    }
+
+    @Test
+    @DisplayName("a block ranges file with an invalid range is ignored as a whole")
+    void blockRangesFileWithInvalidRangeIsIgnored() throws IOException {
+        final Fixture f = newFixture();
+        final BlockRangesState state =
+                new BlockRangesState(List.of(new BlockRange(0, 9), new BlockRange(20, 10)), List.of());
+        Files.write(
+                f.config.blockRangesFilePath(),
+                BlockRangesState.JSON.toBytes(state).toByteArray());
+
+        f.initAndStart();
+
+        assertThat(f.plugin.storedBlocks.streamRanges().toList()).isEmpty();
+        f.plugin.stop();
+    }
+
+    @Test
+    @DisplayName("a corrupt block ranges file does not fail startup")
+    void corruptBlockRangesFileIsIgnored() throws IOException {
+        final Fixture f = newFixture();
+        Files.write(f.config.blockRangesFilePath(), new byte[] {(byte) 0xFF, (byte) 0xFE, 0x00});
+
+        f.initAndStart();
+
+        assertThat(f.plugin.storedBlocks.streamRanges().toList()).isEmpty();
+        f.plugin.stop();
+    }
+
+    @Test
+    @DisplayName("start creates the directory for absent state files")
+    void startCreatesMissingStateDirectory() {
+        final Path dir = tempDir.resolve("does-not-exist-yet");
+        final Fixture f = new Fixture(dir);
+        fixtures.add(f);
+
+        f.initAndStart();
+
+        assertThat(dir).isDirectory();
+        f.plugin.stop();
+    }
+
+    @Test
+    @DisplayName("a failure to create the state directory does not fail startup")
+    void failureToCreateStateDirectoryDoesNotFailStartup() throws IOException {
+        // a regular file where the state directory should be makes createDirectories fail
+        final Path blocker = Files.createFile(tempDir.resolve("blocker"));
+        final Fixture f = new Fixture(blocker);
+        fixtures.add(f);
+
+        f.init();
+
+        assertThatCode(f.plugin::start).doesNotThrowAnyException();
+        assertThat(f.plugin.tssData()).isNull();
+        assertThat(f.plugin.rangedAddressBookHistory()).isNull();
+        assertThatCode(f.plugin::stop).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("a single-book RSA file with an invalid address book fails startup")
+    void invalidSingleBookFileThrows() throws IOException {
+        final Fixture f = newFixture();
+        Files.writeString(f.config.rsaBootstrapFilePath(), "{}");
+        f.init();
+
+        assertThatThrownBy(f.plugin::start).isInstanceOf(IllegalStateException.class);
+        f.plugin.stop();
+    }
+
+    @Test
+    @DisplayName("an unreadable RSA file fails startup")
+    void unreadableRsaFileThrows() throws IOException {
+        final Fixture f = newFixture();
+        // a directory in place of the file exists but cannot be read as bytes
+        Files.createDirectory(f.config.rsaBootstrapFilePath());
+        f.init();
+
+        assertThatThrownBy(f.plugin::start)
+                .isInstanceOf(IllegalStateException.class)
+                .hasCauseInstanceOf(IOException.class);
+        f.plugin.stop();
     }
 
     @Test
