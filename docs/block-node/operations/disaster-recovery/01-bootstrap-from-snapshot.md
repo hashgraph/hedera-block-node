@@ -278,8 +278,7 @@ Block Node data corruption can result from:
 ### Related playbooks
 
 - PB-02: Partial Tier-1 BN loss *(not yet written)* - route traffic to a standby before restoring
-- [PB-04: Network-wide backpressure](./04-network-wide-backpressure.md) - if corruption caused
-  CN buffer saturation
+- PB-04: Network-wide backpressure - if corruption caused CN buffer saturation
 - PB-06: BN data corruption or block verification errors *(not yet written)* - for verification
   failures that preceded the corruption
 
