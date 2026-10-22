@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.hiero.block.server.messaging;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.hedera.pbj.runtime.OneOf;
@@ -9,6 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Handler;
@@ -173,6 +175,29 @@ public class FacilityExceptionTest {
     }
 
     /**
+     * A handler interrupted by its own unregistration fails as part of a normal stop, so the failure is logged at
+     * DEBUG and not at ERROR.
+     */
+    @Test
+    void handlerInterruptedByUnregisterIsNotLoggedAtError() throws InterruptedException {
+        logger.setLevel(Level.FINE);
+        final BlockingBlockItemHandler handler = new BlockingBlockItemHandler();
+        service.registerBlockItemHandler(handler, false, "interrupted-on-unregister");
+        service.start();
+        sendBlockItemsInBackground(1);
+        assertTrue(handler.entered.await(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS), "Handler never received the batch");
+
+        service.unregisterBlockItemHandler(handler);
+        assertTrue(
+                logHandler.awaitRecord(Level.FINE, "interrupted-on-unregister", AWAIT_TIMEOUT_SECONDS),
+                "No DEBUG log for the interrupted handler: " + logHandler.messages());
+
+        assertFalse(
+                logHandler.containsRecord(Level.SEVERE, "interrupted-on-unregister"),
+                "Interrupted handler was logged at ERROR: " + logHandler.messages());
+    }
+
+    /**
      * Sends batches from a background thread, so a stalled ring blocks that thread instead of the test.
      *
      * @param totalBatches the number of batches to send
@@ -240,6 +265,25 @@ public class FacilityExceptionTest {
         }
     }
 
+    /**
+     * Block item handler that blocks until interrupted and then rethrows the interrupt wrapped, which clears the
+     * thread's interrupt flag as many real handlers do.
+     */
+    private static final class BlockingBlockItemHandler implements BlockItemHandler {
+        private final CountDownLatch entered = new CountDownLatch(1);
+        private final CountDownLatch neverReleased = new CountDownLatch(1);
+
+        @Override
+        public void handleBlockItemsReceived(final BlockItems blockItems) {
+            entered.countDown();
+            try {
+                neverReleased.await();
+            } catch (final InterruptedException e) {
+                throw new IllegalStateException("Handler interrupted", e);
+            }
+        }
+    }
+
     /** Block notification handler that always throws on persisted notifications. */
     private static final class ThrowingBlockNotificationHandler implements BlockNotificationHandler {
         @Override
@@ -261,10 +305,12 @@ public class FacilityExceptionTest {
      */
     private static class TestLogHandler extends Handler {
         private final List<LogRecord> records = new CopyOnWriteArrayList<>();
+        private final Semaphore published = new Semaphore(0);
 
         @Override
         public void publish(final LogRecord record) {
             records.add(record);
+            published.release();
         }
 
         @Override
@@ -295,6 +341,27 @@ public class FacilityExceptionTest {
                 }
             }
             return false;
+        }
+
+        private boolean containsRecord(final Level level, final String text) {
+            for (final LogRecord record : records) {
+                if (record.getLevel().equals(level) && record.getMessage().contains(text)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean awaitRecord(final Level level, final String text, final long timeoutSeconds)
+                throws InterruptedException {
+            final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(timeoutSeconds);
+            while (!containsRecord(level, text)) {
+                final long remaining = deadline - System.nanoTime();
+                if (remaining <= 0 || !published.tryAcquire(remaining, TimeUnit.NANOSECONDS)) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         private String messages() {

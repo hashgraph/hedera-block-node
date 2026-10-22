@@ -13,7 +13,9 @@ import com.lmax.disruptor.SequenceBarrier;
 import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
+import java.io.InterruptedIOException;
 import java.lang.System.Logger.Level;
+import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -924,6 +926,8 @@ public class BlockMessagingFacilityImpl implements BlockMessagingFacility {
     /**
      * Exception handler for the event processor of a single message handler. It logs the failure and lets the
      * processor move on to the next message, so one bad message does not stop the handler or stall the ring.
+     * Unregistering a handler or stopping the facility interrupts the handler thread, so a failure caused by that
+     * interrupt is expected and logged at DEBUG.
      *
      * @param <E> the type of the event
      */
@@ -942,11 +946,37 @@ public class BlockMessagingFacilityImpl implements BlockMessagingFacility {
 
         @Override
         public void handleEventException(final Throwable throwable, final long sequence, final E event) {
-            LOGGER.log(
-                    ERROR,
-                    () -> "Message handler %s failed on sequence %d, skipping the message"
-                            .formatted(handlerName, sequence),
-                    throwable);
+            if (Thread.currentThread().isInterrupted() || isCausedByInterrupt(throwable)) {
+                LOGGER.log(
+                        DEBUG,
+                        () -> "Message handler %s interrupted while stopping on sequence %d, skipping the message"
+                                .formatted(handlerName, sequence),
+                        throwable);
+            } else {
+                LOGGER.log(
+                        ERROR,
+                        () -> "Message handler %s failed on sequence %d, skipping the message"
+                                .formatted(handlerName, sequence),
+                        throwable);
+            }
+        }
+
+        /**
+         * Whether the throwable, or any of its causes, comes from an interrupt of the handler thread. A handler that
+         * catches the interrupt and rethrows clears the thread's interrupt flag, so only the cause chain shows it.
+         *
+         * @param throwable the failure thrown by the message handler
+         * @return true if the failure was caused by an interrupt
+         */
+        private static boolean isCausedByInterrupt(final Throwable throwable) {
+            for (Throwable cause = throwable; cause != null; cause = cause.getCause()) {
+                if (cause instanceof InterruptedException
+                        || cause instanceof InterruptedIOException
+                        || cause instanceof ClosedByInterruptException) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Override
