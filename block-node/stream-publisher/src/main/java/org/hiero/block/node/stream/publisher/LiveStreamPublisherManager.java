@@ -118,7 +118,17 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
     /// nanoTime of the last penalty-count reset (tumbling window).
     private long lastPenaltyResetNanos;
     /// Scheduled handle for the flow-control refresh task.
-    private ScheduledFuture<?> flowControlRefreshFuture;
+    volatile ScheduledFuture<?> flowControlRefreshFuture;
+    /// The refresh body run by the scheduled task. Package-private so tests can inject failures.
+    volatile Runnable flowControlRefreshAction = this::refreshFlowControl;
+    /// Guards (re)scheduling and cancelling the flow-control refresh task.
+    private final Object flowControlScheduleLock = new Object();
+    /// Number of consecutive failed flow-control refresh runs; only touched by the refresh task.
+    private int consecutiveFlowControlRefreshFailures;
+    /// Guards check-and-replace of the queue forwarder task.
+    private final Object forwarderLock = new Object();
+    /// Set once on shutdown so recovery checks never start tasks on a stopped manager.
+    private volatile boolean stopped;
     /// Reference to application state facility, used to update the next
     /// expected block value.
     private final ApplicationStateFacility applicationState;
@@ -220,6 +230,7 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
             @NonNull final PublisherHandler.MetricsHolder handlerMetrics,
             final String correlationId) {
         awaitReset();
+        ensureFlowControlRefreshScheduled();
         final long handlerId = nextHandlerId.getAndIncrement();
         final PublisherHandler newHandler =
                 new PublisherHandler(handlerId, replies, handlerMetrics, this, correlationId);
@@ -388,16 +399,23 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
             }
         }
         handlers.clear();
+        // Set before cancelling anything so the recovery checks cannot restart a task we are stopping.
+        stopped = true;
         // Cancel the queue forwarder task if it is running.
-        final var lastResult = queueForwarderResult.getAndSet(null);
+        final Future<Long> lastResult;
+        synchronized (forwarderLock) {
+            lastResult = queueForwarderResult.getAndSet(null);
+        }
         if (lastResult != null) {
             lastResult.cancel(true);
         }
         queueByBlockMap.clear();
         activeStreamHandlerByBlock.clear();
         // Cancel the flow control refresh task before executor shutdown.
-        if (flowControlRefreshFuture != null) {
-            flowControlRefreshFuture.cancel(false);
+        synchronized (flowControlScheduleLock) {
+            if (flowControlRefreshFuture != null) {
+                flowControlRefreshFuture.cancel(false);
+            }
         }
         // We can safely shut down the scheduled executor abruptly. The timeout
         // tasks can be ignored completely as we shut down the manager.
@@ -1194,23 +1212,47 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
     }
 
     /// Check the queue forwarder task and start, or restart, if it is
-    /// null or completed, respectively.
-    private void checkLogAndRestartForwarderTask() {
-        final Future<Long> currentResult = queueForwarderResult.get();
-        if (currentResult != null && currentResult.isDone()) {
+    /// null or completed, respectively. A completed task is logged and replaced.
+    /// This also checks that the flow control refresh task is still scheduled.
+    void checkLogAndRestartForwarderTask() {
+        if (stopped) {
+            return;
+        }
+        ensureFlowControlRefreshScheduled();
+        synchronized (forwarderLock) {
+            if (stopped) {
+                return;
+            }
+            final Future<Long> currentResult = queueForwarderResult.get();
+            if (currentResult != null && !currentResult.isDone()) {
+                return;
+            }
+            if (currentResult != null) {
+                logForwarderOutcome(currentResult);
+            }
             try {
-                final long blocksForwarded = currentResult.get();
-                metrics.blockBatchesMessaged().increment(blocksForwarded);
-                final String formatString = "Queue forwarder task completed normally after forwarding %d blocks.";
-                LOGGER.log(DEBUG, formatString.formatted(blocksForwarded));
-            } catch (CancellationException | ExecutionException e) {
-                LOGGER.log(INFO, "Queue forwarder task completed exceptionally.", e);
-            } catch (InterruptedException e) {
-                LOGGER.log(DEBUG, "Interrupted retrieving queue forwarder task result.");
+                queueForwarderResult.set(launchQueueForwarder());
+            } catch (final RuntimeException e) {
+                // Leave the reference empty so the next block proof tries again.
+                queueForwarderResult.set(null);
+                LOGGER.log(WARNING, "Unable to launch the queue forwarder task, will retry.", e);
             }
         }
-        if (queueForwarderResult.get() == null) {
-            queueForwarderResult.compareAndSet(null, launchQueueForwarder());
+    }
+
+    private void logForwarderOutcome(final Future<Long> completedResult) {
+        try {
+            final long blocksForwarded = completedResult.get();
+            metrics.blockBatchesMessaged().increment(blocksForwarded);
+            final String formatString = "Queue forwarder task completed normally after forwarding %d blocks.";
+            LOGGER.log(DEBUG, formatString.formatted(blocksForwarded));
+        } catch (final ExecutionException e) {
+            LOGGER.log(WARNING, "Queue forwarder task failed, restarting it.", e.getCause());
+        } catch (final CancellationException e) {
+            LOGGER.log(INFO, "Queue forwarder task was cancelled, restarting it.");
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.log(DEBUG, "Interrupted retrieving queue forwarder task result.");
         }
     }
 
@@ -1229,10 +1271,52 @@ public final class LiveStreamPublisherManager implements StreamPublisherManager 
     }
 
     private void scheduleFlowControlRefresh() {
+        startFlowControlRefreshTask();
+        lastPenaltyResetNanos = System.nanoTime();
+    }
+
+    private void startFlowControlRefreshTask() {
         final long intervalNanos = publisherConfig.flowControlRefreshIntervalNanos();
         flowControlRefreshFuture = scheduledExecutor.scheduleAtFixedRate(
-                this::refreshFlowControl, intervalNanos, intervalNanos, TimeUnit.NANOSECONDS);
-        lastPenaltyResetNanos = System.nanoTime();
+                this::refreshFlowControlSafely, intervalNanos, intervalNanos, TimeUnit.NANOSECONDS);
+    }
+
+    /// Reschedule the flow control refresh task if its future is gone or finished. A periodic
+    /// task that throws is silently dropped by the executor, so without this check a single
+    /// failure would stop all budget refills for the life of the process.
+    void ensureFlowControlRefreshScheduled() {
+        if (stopped) {
+            return;
+        }
+        final ScheduledFuture<?> current = flowControlRefreshFuture;
+        if (current != null && !current.isDone()) {
+            return;
+        }
+        synchronized (flowControlScheduleLock) {
+            final ScheduledFuture<?> latest = flowControlRefreshFuture;
+            if (stopped || (latest != null && !latest.isDone())) {
+                return;
+            }
+            LOGGER.log(WARNING, "Flow control refresh task is not running, rescheduling it.");
+            try {
+                startFlowControlRefreshTask();
+            } catch (final RuntimeException e) {
+                LOGGER.log(WARNING, "Unable to reschedule the flow control refresh task.", e);
+            }
+        }
+    }
+
+    private void refreshFlowControlSafely() {
+        try {
+            flowControlRefreshAction.run();
+            consecutiveFlowControlRefreshFailures = 0;
+        } catch (final RuntimeException e) {
+            if (consecutiveFlowControlRefreshFailures++ == 0) {
+                LOGGER.log(WARNING, "Flow control refresh failed, will retry on the next interval.", e);
+            } else {
+                LOGGER.log(DEBUG, "Flow control refresh failed again.", e);
+            }
+        }
     }
 
     private void refreshFlowControl() {
