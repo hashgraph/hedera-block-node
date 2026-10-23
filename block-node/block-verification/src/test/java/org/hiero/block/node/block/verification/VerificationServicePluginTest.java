@@ -27,7 +27,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import org.assertj.core.api.ObjectAssert;
-import org.hiero.block.api.BlockRange;
 import org.hiero.block.common.hasher.HashAlgorithm;
 import org.hiero.block.internal.BlockItemUnparsed;
 import org.hiero.block.internal.BlockUnparsed;
@@ -45,7 +44,6 @@ import org.hiero.block.node.block.verification.harness.HarnessChainBuilder;
 import org.hiero.block.node.spi.blockmessaging.BackfilledBlockNotification;
 import org.hiero.block.node.spi.blockmessaging.BlockItems;
 import org.hiero.block.node.spi.blockmessaging.BlockSource;
-import org.hiero.block.node.spi.blockmessaging.StoredBlocksNotification;
 import org.hiero.block.node.spi.blockmessaging.VerificationNotification;
 import org.hiero.block.node.spi.blockmessaging.VerificationNotification.FailureInfo;
 import org.hiero.block.node.spi.blockmessaging.VerificationNotification.FailureType;
@@ -1065,86 +1063,190 @@ class VerificationServicePluginTest {
             start(new VerificationServicePlugin(), new SimpleInMemoryHistoricalBlockFacility(), configOverrides);
         }
 
-        /// Seeds the last verified block with block 0, as if block 0 was already stored. Every
-        /// block from block 2 on then waits in result ordering for block 1, which these tests
-        /// never supply, so each session stays active until it is evicted or the plugin stops.
-        /// Without the seed, nothing is verified yet and the first success establishes the last
-        /// verified block: block 2 could complete before block 4 fills the buffer, and blocks 3
-        /// and 4 complete right after the eviction, so the number of notifications would depend
-        /// on timing.
-        private void holdSessionsInResultOrdering() {
-            plugin.handleStoredBlocksUpdate(new StoredBlocksNotification(List.of(new BlockRange(0L, 0L))));
-        }
-
-        /// This test aims to verify that when the active sessions buffer is full and a new session comes,
-        /// the lowest active session will be canceled to make room, so long as the lowest active session is not
-        /// the one we just submitted.
-        /// Because the evicted session had already received its complete block, the failure is reported
-        /// with the CANCELLED failure type and not CANCELLED_INCOMPLETE. Blocks 2, 3 and 4 are held in
-        /// result ordering (see [#holdSessionsInResultOrdering()]), so block 2 is still active when
-        /// block 4 fills the buffer and the eviction is the only notification sent.
+        /// This test aims to assert that when, after block 0 is verified, publisher blocks 2, 3 and 4 fill a
+        /// buffer of two, the session for block 3 is evicted and reports a standard CANCELLED failure, while
+        /// block 2, the lowest, is kept. Every session waits above the missing block 1, which no session holds,
+        /// so all three are stuck; block 4 is the active publisher session during its own admission, so block 3
+        /// is the highest stuck session that may go. The outcome does not depend on timing.
         @Test
         @DisplayName(
-                "Active Sessions Buffer - cancel lowest session when buffer full and new submission is not the lowest active session")
-        void testCancelLowestActiveSessionWhenBufferFullAndCurrentSubmissionNotLowest()
-                throws IOException, ParseException {
+                "Active Sessions Buffer - evicts the highest stuck high priority session other than the active one when the buffer is full")
+        void testEvictsTheHighestStuckHighPrioritySessionWhenTheBufferIsFull() throws IOException, ParseException {
             final List<ResourceTestWRBBlock> loadedBlocks = ResourceTestBlockBuilder.loadMultiple(consecutiveWRBBlocks);
+            final ResourceTestWRBBlock block0 = loadedBlocks.get(0);
             final ResourceTestWRBBlock block2 = loadedBlocks.get(2);
             final ResourceTestWRBBlock block3 = loadedBlocks.get(3);
             final ResourceTestWRBBlock block4 = loadedBlocks.get(4);
-            updateAddressBook(block2.nodeAddressBook());
-            holdSessionsInResultOrdering();
+            updateAddressBook(block0.nodeAddressBook());
+            plugin.handleBlockItemsReceived(block0.asBlockItems());
+            blockMessaging.getSentVerificationNotifications(1);
             plugin.handleBlockItemsReceived(block2.asBlockItems());
             plugin.handleBlockItemsReceived(block3.asBlockItems());
             plugin.handleBlockItemsReceived(block4.asBlockItems());
-            final List<VerificationNotification> notifications = blockMessaging.getSentVerificationNotifications(1);
+            final List<VerificationNotification> notifications = blockMessaging.getSentVerificationNotifications(2);
             assertThat(notifications)
-                    .hasSize(1)
-                    .first()
+                    .hasSize(2)
+                    .last()
                     .returns(false, VerificationNotification::success)
                     .returns(FailureInfo.standard(FailureType.CANCELLED), VerificationNotification::failureInfo)
-                    .returns(block2.number(), VerificationNotification::blockNumber)
+                    .returns(block3.number(), VerificationNotification::blockNumber)
                     .returns(BlockSource.PUBLISHER, VerificationNotification::source)
                     .returns(null, VerificationNotification::block)
                     .returns(null, VerificationNotification::blockHash);
         }
 
-        /// This test aims to assert that when the active sessions buffer is full and the lowest active
-        /// session is evicted while it has not yet received the batch that ends its block, the eviction
-        /// is reported with the CANCELLED_INCOMPLETE failure type and not CANCELLED. Here block 2 is
-        /// supplied by the publisher as a header only batch, so its session never receives the end of
-        /// the block. Blocks 3 and 4 are then supplied as backfilled blocks, which do not supersede the
-        /// live publisher session, filling the buffer and forcing the eviction of the incomplete
-        /// session for block 2. Blocks 3 and 4 are held in result ordering (see
-        /// [#holdSessionsInResultOrdering()]), so the eviction is the only notification sent.
+        /// This test aims to assert that a high priority session that has only received its header is never
+        /// evicted: after block 0 is verified, the active publisher session for block 2 and the backfilled
+        /// blocks 3 and 4 all wait above the missing block 1, so all three are stuck; the backfilled newcomer
+        /// 4 overflows the buffer, is the highest stuck session other than the active one, is evicted and
+        /// reports CANCELLED with source BACKFILL, while the incomplete high priority session for block 2
+        /// stays.
         @Test
         @DisplayName(
-                "Active Sessions Buffer - evicted session that has not received its full block reports CANCELLED_INCOMPLETE")
-        void testEvictIncompleteLowestActiveSessionWhenBufferFullReportsIncomplete()
+                "Active Sessions Buffer - keeps the high priority session still receiving items and evicts the backfilled newcomer")
+        void testProtectsTheHighPrioritySessionStillReceivingItemsAndEvictsTheBackfilledNewcomer()
                 throws IOException, ParseException {
             final List<ResourceTestWRBBlock> loadedBlocks = ResourceTestBlockBuilder.loadMultiple(consecutiveWRBBlocks);
+            final ResourceTestWRBBlock block0 = loadedBlocks.get(0);
             final ResourceTestWRBBlock block2 = loadedBlocks.get(2);
             final ResourceTestWRBBlock block3 = loadedBlocks.get(3);
             final ResourceTestWRBBlock block4 = loadedBlocks.get(4);
-            updateAddressBook(block2.nodeAddressBook());
-            holdSessionsInResultOrdering();
+            updateAddressBook(block0.nodeAddressBook());
+            plugin.handleBlockItemsReceived(block0.asBlockItems());
+            blockMessaging.getSentVerificationNotifications(1);
             final BlockItems headerOnly =
                     new BlockItems(List.of(block2.getHeaderUnparsed()), block2.number(), true, false);
             plugin.handleBlockItemsReceived(headerOnly);
             plugin.handleBackfilled(block3.asBackfilledNotification());
             plugin.handleBackfilled(block4.asBackfilledNotification());
-            final List<VerificationNotification> notifications = blockMessaging.getSentVerificationNotifications(1);
+            final List<VerificationNotification> notifications = blockMessaging.getSentVerificationNotifications(2);
             assertThat(notifications)
+                    .hasSize(2)
+                    .last()
+                    .returns(false, VerificationNotification::success)
+                    .returns(FailureInfo.standard(FailureType.CANCELLED), VerificationNotification::failureInfo)
+                    .returns(block4.number(), VerificationNotification::blockNumber)
+                    .returns(BlockSource.BACKFILL, VerificationNotification::source)
+                    .returns(null, VerificationNotification::block)
+                    .returns(null, VerificationNotification::blockHash);
+        }
+
+        /// This test aims to assert that a high priority session stuck above a missing block is evicted
+        /// rather than the backfilled blocks below it: after block 0 is verified, the complete high priority
+        /// session for block 4 and the backfilled session for block 2 wait for block 1; the backfilled block 1
+        /// then overflows the buffer and forms a run 1, 2 with block 0, so the first gap is block 3 and
+        /// block 4 is the only stuck session. It is evicted and reports CANCELLED with source PUBLISHER, and
+        /// blocks 1 and 2 verify in order.
+        @Test
+        @DisplayName(
+                "Active Sessions Buffer - evicts a far-ahead high priority session stuck above a missing block, keeping the backfilled run below it")
+        void testEvictsAFarAheadHighPrioritySessionAndKeepsTheBackfilledRunBelowIt()
+                throws IOException, ParseException {
+            final List<ResourceTestWRBBlock> loadedBlocks = ResourceTestBlockBuilder.loadMultiple(consecutiveWRBBlocks);
+            final ResourceTestWRBBlock block0 = loadedBlocks.get(0);
+            final ResourceTestWRBBlock block1 = loadedBlocks.get(1);
+            final ResourceTestWRBBlock block2 = loadedBlocks.get(2);
+            final ResourceTestWRBBlock block4 = loadedBlocks.get(4);
+            updateAddressBook(block0.nodeAddressBook());
+            plugin.handleBlockItemsReceived(block0.asBlockItems());
+            blockMessaging.getSentVerificationNotifications(1);
+            plugin.handleBlockItemsReceived(block4.asBlockItems());
+            plugin.handleBackfilled(block2.asBackfilledNotification());
+            plugin.handleBackfilled(block1.asBackfilledNotification());
+            final List<VerificationNotification> notifications = blockMessaging.getSentVerificationNotifications(4);
+            assertThat(notifications).hasSize(4);
+            assertThat(notifications)
+                    .filteredOn(VerificationNotification::success)
+                    .extracting(VerificationNotification::blockNumber)
+                    .containsExactly(block0.number(), block1.number(), block2.number());
+            assertThat(notifications)
+                    .filteredOn("success", false)
                     .hasSize(1)
                     .first()
-                    .returns(false, VerificationNotification::success)
-                    .returns(
-                            FailureInfo.standard(FailureType.CANCELLED_INCOMPLETE),
-                            VerificationNotification::failureInfo)
-                    .returns(block2.number(), VerificationNotification::blockNumber)
+                    .returns(FailureInfo.standard(FailureType.CANCELLED), VerificationNotification::failureInfo)
+                    .returns(block4.number(), VerificationNotification::blockNumber)
                     .returns(BlockSource.PUBLISHER, VerificationNotification::source)
                     .returns(null, VerificationNotification::block)
                     .returns(null, VerificationNotification::blockHash);
+            assertThat(notifications.getLast())
+                    .returns(true, VerificationNotification::success)
+                    .returns(block2.number(), VerificationNotification::blockNumber)
+                    .returns(BlockSource.BACKFILL, VerificationNotification::source)
+                    .returns(block2.blockUnparsed(), VerificationNotification::block)
+                    .returns(block2.blockRootHash(), VerificationNotification::blockHash);
+        }
+
+        /// This test aims to assert that backfilled blocks arriving in descending order into a full buffer are
+        /// evicted only while the lowest block is missing: after block 0 is verified, backfilled 4, 3 and 2
+        /// wait above the missing block 1, so all three are stuck and the overflowing admission of 2 evicts 4,
+        /// the highest; backfilled 1 then completes the run 1, 2, 3 with block 0, so nothing is stuck and
+        /// nothing is evicted although the buffer is over its limit, and 1, 2 and 3 verify in order. The
+        /// admission of 1 runs its eviction pass before the items of 1 are offered, so the outcome does not
+        /// depend on timing.
+        @Test
+        @DisplayName(
+                "Active Sessions Buffer - descending backfilled delivery evicts only while the lowest block is missing")
+        void testDescendingBackfilledDeliveryEvictsOnlyWhileTheLowestBlockIsMissing()
+                throws IOException, ParseException {
+            final List<ResourceTestWRBBlock> loadedBlocks = ResourceTestBlockBuilder.loadMultiple(consecutiveWRBBlocks);
+            final ResourceTestWRBBlock block0 = loadedBlocks.get(0);
+            final ResourceTestWRBBlock block1 = loadedBlocks.get(1);
+            final ResourceTestWRBBlock block2 = loadedBlocks.get(2);
+            final ResourceTestWRBBlock block3 = loadedBlocks.get(3);
+            final ResourceTestWRBBlock block4 = loadedBlocks.get(4);
+            updateAddressBook(block0.nodeAddressBook());
+            plugin.handleBlockItemsReceived(block0.asBlockItems());
+            blockMessaging.getSentVerificationNotifications(1);
+            plugin.handleBackfilled(block4.asBackfilledNotification());
+            plugin.handleBackfilled(block3.asBackfilledNotification());
+            plugin.handleBackfilled(block2.asBackfilledNotification());
+            plugin.handleBackfilled(block1.asBackfilledNotification());
+            final List<VerificationNotification> notifications = blockMessaging.getSentVerificationNotifications(5);
+            assertThat(notifications).hasSize(5);
+            assertThat(notifications)
+                    .filteredOn(VerificationNotification::success)
+                    .extracting(VerificationNotification::blockNumber)
+                    .containsExactly(block0.number(), block1.number(), block2.number(), block3.number());
+            assertThat(notifications)
+                    .filteredOn("success", false)
+                    .hasSize(1)
+                    .first()
+                    .returns(FailureInfo.standard(FailureType.CANCELLED), VerificationNotification::failureInfo)
+                    .returns(block4.number(), VerificationNotification::blockNumber)
+                    .returns(BlockSource.BACKFILL, VerificationNotification::source)
+                    .returns(null, VerificationNotification::block)
+                    .returns(null, VerificationNotification::blockHash);
+        }
+
+        /// This test aims to assert that backfilled blocks forming a run with the last verified block are never
+        /// evicted, whatever the timing: after block 0 is verified, backfilled 1, 2, 3 and 4 arrive in
+        /// ascending order into a buffer of two; every session is either the next expected block or waits only
+        /// for blocks held by the sessions below it, so none is stuck, nothing is cancelled, and all four
+        /// verify in order.
+        @Test
+        @DisplayName("Active Sessions Buffer - never evicts a backfilled run contiguous with the last verified block")
+        void testNeverEvictsABackfilledRunContiguousWithTheLastVerifiedBlock() throws IOException, ParseException {
+            final List<ResourceTestWRBBlock> loadedBlocks = ResourceTestBlockBuilder.loadMultiple(consecutiveWRBBlocks);
+            final ResourceTestWRBBlock block0 = loadedBlocks.get(0);
+            updateAddressBook(block0.nodeAddressBook());
+            plugin.handleBlockItemsReceived(block0.asBlockItems());
+            blockMessaging.getSentVerificationNotifications(1);
+            for (int i = 1; i <= 4; i++) {
+                plugin.handleBackfilled(loadedBlocks.get(i).asBackfilledNotification());
+            }
+            final List<VerificationNotification> notifications = blockMessaging.getSentVerificationNotifications(5);
+            assertThat(notifications).hasSize(5);
+            assertThat(notifications)
+                    .extracting(VerificationNotification::success)
+                    .containsOnly(true);
+            assertThat(notifications)
+                    .extracting(VerificationNotification::blockNumber)
+                    .containsExactly(
+                            block0.number(),
+                            loadedBlocks.get(1).number(),
+                            loadedBlocks.get(2).number(),
+                            loadedBlocks.get(3).number(),
+                            loadedBlocks.get(4).number());
         }
     }
 

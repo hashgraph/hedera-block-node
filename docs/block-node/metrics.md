@@ -158,6 +158,7 @@ Measures block‑verification throughput and success rate.
 |---------|-----------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
 | Counter | `verification_blocks_received`    | Blocks received for verification                                                                                               |
 | Gauge   | `verification_active_sessions`    | Currently active verification sessions (live size of the active sessions buffer)                                               |
+| Counter | `verification_sessions_evicted`   | Sessions evicted from the active sessions buffer, labels: `lane={high_priority,low_priority}`                                  |
 | Counter | `verification_blocks_verified`    | Blocks that passed verification                                                                                                |
 | Counter | `verification_blocks_failed`      | Blocks that failed verification                                                                                                |
 | Counter | `verification_blocks_error`       | Internal errors during verification                                                                                            |
@@ -356,6 +357,12 @@ is a block-count cap, not a disk-size cap (see [Host / Volume](#host--volume-ext
 |----------|---------------------------------------------|-----------------------------------------------------------|
 | L        | `messaging_item_queue_percent_used`         | If percentage exceeds 60%, otherwise, configure as needed |
 | L        | `messaging_notification_queue_percent_used` | If percentage exceeds 60%, otherwise, configure as needed |
+
+**Verification**: Alerts for the active sessions buffer of the verification plugin
+
+| Severity |             Metric             |                                          Alert Condition                                           |
+|----------|--------------------------------|----------------------------------------------------------------------------------------------------|
+| L        | `verification_active_sessions` | If above `VERIFICATION_ACTIVE_SESSIONS_BUFFER_SIZE` for 10 minutes, otherwise, configure as needed |
 
 **Latency**: Alerts for latency metrics in receiving, hashing, verifying, and persisting blocks
 
