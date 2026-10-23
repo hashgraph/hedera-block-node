@@ -23,13 +23,15 @@ defaults:
     shell: bash
 
 permissions:
-  statuses: write
+  contents: read
 
 jobs:
   pr-formatting-checks:
     timeout-minutes: 10
     name: PR Formatting Checks
     runs-on: hl-bn-lin-md
+    permissions:
+      statuses: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
