@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import org.hiero.block.api.BlockNodeVersions;
 import org.hiero.block.api.BlockNodeVersions.PluginVersion;
 import org.hiero.block.node.app.config.AutomaticEnvironmentVariableConfigSource;
+import org.hiero.block.node.app.config.BlockReadBulkheadConfig;
 import org.hiero.block.node.app.config.ServerConfig;
 import org.hiero.block.node.app.config.WebServerHttp2Config;
 import org.hiero.block.node.app.logging.CleanColorfulFormatter;
@@ -231,7 +232,10 @@ public class BlockNodeApp implements HealthFacility {
                 serverConfig.socketReceiveBufferSizeBytes(), serverConfig.socketSendBufferSizeBytes()));
 
         // Create HTTP & GRPC routing builders; null port in plugin registrations resolves to server.port
-        serviceBuilder = new ServiceBuilderImpl(serverConfig, http2Config, socketOptions);
+        final BlockReadBulkheadConfig blockReadBulkheadConfig =
+                configuration.getConfigData(BlockReadBulkheadConfig.class);
+        serviceBuilder = new ServiceBuilderImpl(
+                serverConfig, http2Config, socketOptions, blockReadBulkheadConfig, metricRegistry);
         // ==== INITIALIZE PLUGINS =====================================================================================
         // Initialize all the facilities & plugins, adding routing for each plugin
         for (BlockNodePlugin plugin : loadedPlugins) {

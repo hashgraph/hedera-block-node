@@ -15,7 +15,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Stream;
+import org.hiero.block.node.app.fixtures.TestMetricsExporter;
 import org.hiero.block.node.spi.ServiceBuilder;
+import org.hiero.block.node.spi.bulkhead.BlockReadBulkhead;
+import org.hiero.metrics.core.MetricRegistry;
 
 /// A [ServiceBuilder] test fixture that records every call and every input instead of creating
 /// real Helidon web servers. It never opens a socket; it simply captures what a plugin registered so
@@ -87,6 +90,12 @@ public final class RecordingServiceBuilder implements ServiceBuilder {
     /** The port a {@code null} port resolves to, and the general server's base port. */
     private final int defaultPort;
 
+    /// A generous default so fixture-based tests aren't throttled unless they explicitly drain permits.
+    private static final int DEFAULT_BLOCK_READ_BULKHEAD_PERMITS = 1_000;
+    /// Lazily created on first use; a self-contained, no-op-exported [MetricRegistry] is enough since
+    /// this fixture never opens a socket and has no shared "real" registry to reuse.
+    private BlockReadBulkhead blockReadBulkhead;
+
     /** Every {@link #registerHttpService} invocation, in call order. */
     private final List<HttpServiceRegistration> httpServiceRegistrations = new ArrayList<>();
     /** Every {@link #registerGrpcService} invocation, in call order. */
@@ -139,6 +148,21 @@ public final class RecordingServiceBuilder implements ServiceBuilder {
     @Override
     public void registerGrpcService(@Nullable final Integer port, @NonNull final ServiceInterface service) {
         grpcServiceRegistrations.add(new GrpcServiceRegistration(port, service));
+    }
+
+    /// {@inheritDoc}
+    /// Lazily creates a single shared [BlockReadBulkhead]. Tests exercising bulkhead denial can
+    /// call this accessor directly and drain permits with {@link BlockReadBulkhead#tryAcquire()}.
+    @NonNull
+    @Override
+    public BlockReadBulkhead blockReadBulkhead() {
+        if (blockReadBulkhead == null) {
+            final MetricRegistry metricRegistry = MetricRegistry.builder()
+                    .setMetricsExporter(new TestMetricsExporter())
+                    .build();
+            blockReadBulkhead = new BlockReadBulkhead(DEFAULT_BLOCK_READ_BULKHEAD_PERMITS, metricRegistry);
+        }
+        return blockReadBulkhead;
     }
 
     /// {@inheritDoc}
